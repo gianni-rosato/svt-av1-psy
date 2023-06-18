@@ -22,9 +22,7 @@
 typedef struct InitialRateControlResults {
     EbDctor          dctor;
     EbObjectWrapper *pcs_wrapper;
-#if !FIX_ISSUE_2064
-    Bool superres_recode;
-#endif
+    Bool             superres_recode;
 } InitialRateControlResults;
 
 typedef struct InitialRateControlResultInitData {
@@ -34,7 +32,6 @@ typedef struct InitialRateControlResultInitData {
 /**************************************
  * Extern Function Declarations
  **************************************/
-extern EbErrorType svt_aom_initial_rate_control_results_creator(EbPtr *object_dbl_ptr,
-                                                                EbPtr  object_init_data_ptr);
+extern EbErrorType svt_aom_initial_rate_control_results_creator(EbPtr *object_dbl_ptr, EbPtr object_init_data_ptr);
 
 #endif //EbInitialRateControlResults_h

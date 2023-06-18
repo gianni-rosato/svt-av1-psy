@@ -30,14 +30,12 @@ extern "C" {
 /**************************************
       * Macros
       **************************************/
-#define BAND_TOTAL_COUNT(sb_row_total_count, sb_col_total_count) \
-    ((sb_row_total_count) + (sb_col_total_count)-1)
+#define BAND_TOTAL_COUNT(sb_row_total_count, sb_col_total_count) ((sb_row_total_count) + (sb_col_total_count)-1)
 #define ROW_INDEX(y_sb_index, segment_row_count, sb_row_total_count) \
     (((y_sb_index) * (segment_row_count)) / (sb_row_total_count))
 #define BAND_INDEX(x_sb_index, y_sb_index, segment_band_count, sb_band_total_count) \
     ((((x_sb_index) + (y_sb_index)) * (segment_band_count)) / (sb_band_total_count))
-#define SEGMENT_INDEX(row_index, band_index, segment_band_count) \
-    (((row_index) * (segment_band_count)) + (band_index))
+#define SEGMENT_INDEX(row_index, band_index, segment_band_count) (((row_index) * (segment_band_count)) + (band_index))
 
 /**************************************
        * Member definitions
@@ -80,13 +78,11 @@ typedef struct EncDecSegments {
 /**************************************
      * Extern Function Declarations
      **************************************/
-extern EbErrorType svt_aom_enc_dec_segments_ctor(EncDecSegments *segments_ptr,
-                                                 uint32_t        segment_col_count,
-                                                 uint32_t        segment_row_count);
+extern EbErrorType svt_aom_enc_dec_segments_ctor(EncDecSegments *segments_ptr, uint32_t segment_col_count,
+                                                 uint32_t segment_row_count);
 
-extern void svt_aom_enc_dec_segments_init(EncDecSegments *segments_ptr, uint32_t col_count,
-                                          uint32_t row_count, uint32_t pic_width_sb,
-                                          uint32_t pic_height_sb);
+extern void svt_aom_enc_dec_segments_init(EncDecSegments *segments_ptr, uint32_t col_count, uint32_t row_count,
+                                          uint32_t pic_width_sb, uint32_t pic_height_sb);
 #ifdef __cplusplus
 }
 #endif

@@ -37,23 +37,20 @@ typedef struct EntropyCodingContext {
     //  Context Variables---------------------------------
     BlkStruct *blk_ptr;
     //const CodedBlockStats           *cu_stats;
-    uint32_t        blk_index;
-    uint8_t         cu_depth;
-    uint32_t        cu_size;
-    uint32_t        cu_size_log2;
-    uint32_t        blk_org_x;
-    uint32_t        blk_org_y;
-    uint32_t        sb_origin_x;
-    uint32_t        sb_origin_y;
-    uint32_t        pu_itr;
-#if !OPT_CHILD_PCS
-    PredictionUnit *pu_ptr;
-#endif
-    uint32_t        pu_origin_x;
-    uint32_t        pu_origin_y;
-    uint32_t        pu_width;
-    uint32_t        pu_height;
-    MvUnit          mv_unit;
+    uint32_t blk_index;
+    uint8_t  cu_depth;
+    uint32_t cu_size;
+    uint32_t cu_size_log2;
+    uint32_t blk_org_x;
+    uint32_t blk_org_y;
+    uint32_t sb_origin_x;
+    uint32_t sb_origin_y;
+    uint32_t pu_itr;
+    uint32_t pu_origin_x;
+    uint32_t pu_origin_y;
+    uint32_t pu_width;
+    uint32_t pu_height;
+    MvUnit   mv_unit;
 
     uint32_t txb_itr;
     uint32_t txb_origin_x;
@@ -65,17 +62,14 @@ typedef struct EntropyCodingContext {
     int32_t     coded_area_sb;
     int32_t     coded_area_sb_uv;
     TOKENEXTRA *tok;
-#if CLN_MBMI
     MbModeInfo *mbmi;
-#endif
 } EntropyCodingContext;
 
 /**************************************
  * Extern Function Declarations
  **************************************/
-extern EbErrorType svt_aom_entropy_coding_context_ctor(EbThreadContext   *thread_ctx,
-                                                       const EbEncHandle *enc_handle_ptr, int index,
-                                                       int rate_control_index);
+extern EbErrorType svt_aom_entropy_coding_context_ctor(EbThreadContext *thread_ctx, const EbEncHandle *enc_handle_ptr,
+                                                       int index, int rate_control_index);
 
 extern void *svt_aom_entropy_coding_kernel(void *input_ptr);
 

@@ -157,19 +157,17 @@ typedef struct MainParseCtxt {
     ParseTileData *parse_tile_data;
 } MainParseCtxt;
 
-void svt_aom_parse_super_block(EbDecHandle *dec_handle, ParseCtxt *parse_ctxt, uint32_t blk_row,
-                               uint32_t blk_col, SBInfo *sb_info);
+void svt_aom_parse_super_block(EbDecHandle *dec_handle, ParseCtxt *parse_ctxt, uint32_t blk_row, uint32_t blk_col,
+                               SBInfo *sb_info);
 
-void svt_tile_init(TileInfo *cur_tile_info, FrameHeader *frame_header, int32_t tile_row,
-                   int32_t tile_col);
+void svt_tile_init(TileInfo *cur_tile_info, FrameHeader *frame_header, int32_t tile_row, int32_t tile_col);
 
 static int read_is_valid(const uint8_t *start, size_t len, const uint8_t *end) {
     return len != 0 && len <= (size_t)(end - start);
 }
 
-static INLINE EbErrorType init_svt_reader(SvtReader *r, const uint8_t *data,
-                                          const uint8_t *data_end, const size_t read_size,
-                                          uint8_t allow_update_cdf) {
+static INLINE EbErrorType init_svt_reader(SvtReader *r, const uint8_t *data, const uint8_t *data_end,
+                                          const size_t read_size, uint8_t allow_update_cdf) {
     if (read_is_valid(data, read_size, data_end) && !svt_reader_init(r, data, read_size))
         r->allow_update_cdf = allow_update_cdf;
     else
@@ -177,11 +175,11 @@ static INLINE EbErrorType init_svt_reader(SvtReader *r, const uint8_t *data,
     return EB_ErrorNone;
 }
 
-EbErrorType svt_aom_start_parse_tile(EbDecHandle *dec_handle_ptr, ParseCtxt *parse_ctxt,
-                                     TilesInfo *tiles_info, int tile_num, int is_mt);
+EbErrorType svt_aom_start_parse_tile(EbDecHandle *dec_handle_ptr, ParseCtxt *parse_ctxt, TilesInfo *tiles_info,
+                                     int tile_num, int is_mt);
 
-EbErrorType parse_tile(EbDecHandle *dec_handle_ptr, ParseCtxt *parse_ctx, TilesInfo *tile_info,
-                       int tile_num, int32_t tile_row, int32_t tile_col, int32_t is_mt);
+EbErrorType parse_tile(EbDecHandle *dec_handle_ptr, ParseCtxt *parse_ctx, TilesInfo *tile_info, int tile_num,
+                       int32_t tile_row, int32_t tile_col, int32_t is_mt);
 
 #ifdef __cplusplus
 }

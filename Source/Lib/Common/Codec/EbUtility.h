@@ -25,7 +25,6 @@ typedef struct BlockList {
     uint8_t  list_size;
     uint16_t blk_mds_table[3]; //stores a max of 3 redundant blocks
 } BlockList_t;
-#if OPT_32x16_16x32_GEOM
 typedef enum GeomIndex {
     GEOM_0, //64x64  ->8x8  NSQ:OFF
     GEOM_1, //64x64  ->8x8  NSQ:ON (only H & V shapes, but not 8x4 and 4x8 and not 16x8 and 8x16)
@@ -36,17 +35,6 @@ typedef enum GeomIndex {
     GEOM_6, //128x128->4x4  NSQ:ON (all shapes
     GEOM_TOT
 } GeomIndex;
-#else
-typedef enum GeomIndex {
-    GEOM_0, //64x64  ->8x8  NSQ:OFF
-    GEOM_1, //64x64  ->8x8  NSQ:ON (only H & V shapes, but not 8x4 and 4x8)
-    GEOM_2, //64x64  ->8x8  NSQ:ON (only H & V shapes)
-    GEOM_3, //64x64  ->4x4  NSQ:ON (only H & V shapes)
-    GEOM_4, //64x64  ->4x4  NSQ:ON (all shapes)
-    GEOM_5, //128x128->4x4  NSQ:ON (all shapes
-    GEOM_TOT
-} GeomIndex;
-#endif
 void svt_aom_build_blk_geom(GeomIndex geom);
 
 typedef struct BlockGeom {
@@ -118,15 +106,13 @@ static const BlockSize ss_size_lookup[BlockSizeS_ALL][2][2] = {
     {{BLOCK_32X8, BLOCK_INVALID}, {BLOCK_16X8, BLOCK_16X4}},
     {{BLOCK_16X64, BLOCK_16X32}, {BLOCK_INVALID, BLOCK_8X32}},
     {{BLOCK_64X16, BLOCK_INVALID}, {BLOCK_32X16, BLOCK_32X8}}};
-static INLINE BlockSize get_plane_block_size(BlockSize bsize, int32_t subsampling_x,
-                                             int32_t subsampling_y) {
+static INLINE BlockSize get_plane_block_size(BlockSize bsize, int32_t subsampling_x, int32_t subsampling_y) {
     if (bsize == BLOCK_INVALID)
         return BLOCK_INVALID;
     return ss_size_lookup[bsize][subsampling_x][subsampling_y];
 }
 
-static INLINE TxSize av1_get_max_uv_txsize(BlockSize bsize, int32_t subsampling_x,
-                                           int32_t subsampling_y) {
+static INLINE TxSize av1_get_max_uv_txsize(BlockSize bsize, int32_t subsampling_x, int32_t subsampling_y) {
     const BlockSize plane_bsize = get_plane_block_size(bsize, subsampling_x, subsampling_y);
     TxSize          uv_tx       = TX_INVALID;
     if (plane_bsize < BlockSizeS_ALL)
@@ -135,25 +121,22 @@ static INLINE TxSize av1_get_max_uv_txsize(BlockSize bsize, int32_t subsampling_
 }
 
 #define NOT_USED_VALUE 0
-#if OPT_32x16_16x32_GEOM
 //gives the index of parent from the last qudrant child
-static const uint32_t parent_depth_offset[GEOM_TOT][6] = {
-    {NOT_USED_VALUE, 64, 16, 4, NOT_USED_VALUE, NOT_USED_VALUE},
-    {NOT_USED_VALUE, 80, 20, 4, NOT_USED_VALUE, NOT_USED_VALUE},
-    {NOT_USED_VALUE, 128, 32, 8, NOT_USED_VALUE, NOT_USED_VALUE},
-    {NOT_USED_VALUE, 320, 80, 20, NOT_USED_VALUE, NOT_USED_VALUE},
-    {NOT_USED_VALUE, 512, 128, 32, 8, NOT_USED_VALUE},
-    {NOT_USED_VALUE, 832, 208, 52, 8, NOT_USED_VALUE},
-    {NOT_USED_VALUE, 3320, 832, 208, 52, 8}};
+static const uint32_t parent_depth_offset[GEOM_TOT][6] = {{NOT_USED_VALUE, 64, 16, 4, NOT_USED_VALUE, NOT_USED_VALUE},
+                                                          {NOT_USED_VALUE, 80, 20, 4, NOT_USED_VALUE, NOT_USED_VALUE},
+                                                          {NOT_USED_VALUE, 128, 32, 8, NOT_USED_VALUE, NOT_USED_VALUE},
+                                                          {NOT_USED_VALUE, 320, 80, 20, NOT_USED_VALUE, NOT_USED_VALUE},
+                                                          {NOT_USED_VALUE, 512, 128, 32, 8, NOT_USED_VALUE},
+                                                          {NOT_USED_VALUE, 832, 208, 52, 8, NOT_USED_VALUE},
+                                                          {NOT_USED_VALUE, 3320, 832, 208, 52, 8}};
 //gives the index of next quadrant child within a depth
-static const uint32_t ns_depth_offset[GEOM_TOT][6] = {
-    {85, 21, 5, 1, NOT_USED_VALUE, NOT_USED_VALUE},
-    {105, 25, 5, 1, NOT_USED_VALUE, NOT_USED_VALUE},
-    {169, 41, 9, 1, NOT_USED_VALUE, NOT_USED_VALUE},
-    {425, 105, 25, 5, NOT_USED_VALUE, NOT_USED_VALUE},
-    {681, 169, 41, 9, 1, NOT_USED_VALUE},
-    {1101, 269, 61, 9, 1, NOT_USED_VALUE},
-    {4421, 1101, 269, 61, 9, 1}};
+static const uint32_t ns_depth_offset[GEOM_TOT][6] = {{85, 21, 5, 1, NOT_USED_VALUE, NOT_USED_VALUE},
+                                                      {105, 25, 5, 1, NOT_USED_VALUE, NOT_USED_VALUE},
+                                                      {169, 41, 9, 1, NOT_USED_VALUE, NOT_USED_VALUE},
+                                                      {425, 105, 25, 5, NOT_USED_VALUE, NOT_USED_VALUE},
+                                                      {681, 169, 41, 9, 1, NOT_USED_VALUE},
+                                                      {1101, 269, 61, 9, 1, NOT_USED_VALUE},
+                                                      {4421, 1101, 269, 61, 9, 1}};
 //gives the next depth block(first qudrant child) from a given parent square
 static const uint32_t d1_depth_offset[GEOM_TOT][6] = {{1, 1, 1, 1, 1, NOT_USED_VALUE},
                                                       {5, 5, 1, 1, 1, NOT_USED_VALUE},
@@ -162,36 +145,9 @@ static const uint32_t d1_depth_offset[GEOM_TOT][6] = {{1, 1, 1, 1, 1, NOT_USED_V
                                                       {5, 5, 5, 5, 1, NOT_USED_VALUE},
                                                       {25, 25, 25, 5, 1, NOT_USED_VALUE},
                                                       {17, 25, 25, 25, 5, 1}};
-#else
-//gives the index of parent from the last qudrant child
-static const uint32_t parent_depth_offset[GEOM_TOT][6] = {
-    {NOT_USED_VALUE, 64, 16, 4, NOT_USED_VALUE, NOT_USED_VALUE},
-    {NOT_USED_VALUE, 128, 32, 8, NOT_USED_VALUE, NOT_USED_VALUE},
-    {NOT_USED_VALUE, 320, 80, 20, NOT_USED_VALUE, NOT_USED_VALUE},
-    {NOT_USED_VALUE, 512, 128, 32, 8, NOT_USED_VALUE},
-    {NOT_USED_VALUE, 832, 208, 52, 8, NOT_USED_VALUE},
-    {NOT_USED_VALUE, 3320, 832, 208, 52, 8}};
-//gives the index of next quadrant child within a depth
-static const uint32_t ns_depth_offset[GEOM_TOT][6] = {
-    {85, 21, 5, 1, NOT_USED_VALUE, NOT_USED_VALUE},
-    {169, 41, 9, 1, NOT_USED_VALUE, NOT_USED_VALUE},
-    {425, 105, 25, 5, NOT_USED_VALUE, NOT_USED_VALUE},
-    {681, 169, 41, 9, 1, NOT_USED_VALUE},
-    {1101, 269, 61, 9, 1, NOT_USED_VALUE},
-    {4421, 1101, 269, 61, 9, 1}};
-//gives the next depth block(first qudrant child) from a given parent square
-static const uint32_t d1_depth_offset[GEOM_TOT][6] = {{1, 1, 1, 1, 1, NOT_USED_VALUE},
-                                                      {5, 5, 5, 1, 1, NOT_USED_VALUE},
-                                                      {5, 5, 5, 5, 1, NOT_USED_VALUE},
-                                                      {5, 5, 5, 5, 1, NOT_USED_VALUE},
-                                                      {25, 25, 25, 5, 1, NOT_USED_VALUE},
-                                                      {17, 25, 25, 25, 5, 1}};
-#endif
-extern BlockGeom svt_aom_blk_geom_mds[MAX_NUM_BLOCKS_ALLOC];
+extern BlockGeom      svt_aom_blk_geom_mds[MAX_NUM_BLOCKS_ALLOC];
 
-static INLINE const BlockGeom* get_blk_geom_mds(uint32_t bidx_mds) {
-    return &svt_aom_blk_geom_mds[bidx_mds];
-}
+static INLINE const BlockGeom* get_blk_geom_mds(uint32_t bidx_mds) { return &svt_aom_blk_geom_mds[bidx_mds]; }
 // CU Stats Helper Functions
 typedef struct CodedBlockStats {
     uint8_t depth;
@@ -231,10 +187,8 @@ extern const CodedBlockStats* svt_aom_get_coded_blk_stats(const uint32_t cu_idx)
 #define MAX(x, y) ((x) > (y) ? (x) : (y))
 #define MIN(x, y) ((x) < (y) ? (x) : (y))
 #define MEDIAN(a, b, c)                   ((a)>(b)?(a)>?(b)>?(b)::(a):(b)>?(a)>?(a)::(b))
-#define CLIP3(min_val, max_val, a) \
-    (((a) < (min_val)) ? (min_val) : (((a) > (max_val)) ? (max_val) : (a)))
-#define CLIP3EQ(min_val, max_val, a) \
-    (((a) <= (min_val)) ? (min_val) : (((a) >= (max_val)) ? (max_val) : (a)))
+#define CLIP3(min_val, max_val, a) (((a) < (min_val)) ? (min_val) : (((a) > (max_val)) ? (max_val) : (a)))
+#define CLIP3EQ(min_val, max_val, a) (((a) <= (min_val)) ? (min_val) : (((a) >= (max_val)) ? (max_val) : (a)))
 #define BITDEPTH_MIDRANGE_VALUE(precision) (1 << ((precision)-1))
 #define SWAP(a, b)                    \
     MULTI_LINE_MACRO_BEGIN(a) ^= (b); \
@@ -294,8 +248,7 @@ extern const CodedBlockStats* svt_aom_get_coded_blk_stats(const uint32_t cu_idx)
 
 // MAX_CU_COUNT is given by SUM from k=1 to n (4^(k-1)), reduces by using the following finite sum
 // SUM from k=1 to n (q^(k-1)) = (q^n - 1)/(q-1) => (4^n - 1) / 3
-#define MAX_CU_COUNT(max_depth_count) \
-    ((((1 << (max_depth_count)) * (1 << (max_depth_count))) - 1) / 3)
+#define MAX_CU_COUNT(max_depth_count) ((((1 << (max_depth_count)) * (1 << (max_depth_count))) - 1) / 3)
 
 //**************************************************
 // CONSTANTS
@@ -370,8 +323,7 @@ static INLINE int convert_to_trans_prec(int allow_hp, int coor) {
 }
 
 /* Convert Floating Point to Fixed Point example: int32_t val_fp8 = FLOAT2FP(val_float, 8, int32_t) */
-#define FLOAT2FP(x_float, base_move, fp_type) \
-    ((fp_type)((x_float) * (((fp_type)(1)) << (base_move))))
+#define FLOAT2FP(x_float, base_move, fp_type) ((fp_type)((x_float) * (((fp_type)(1)) << (base_move))))
 
 /* Convert Fixed Point to Floating Point example: double val = FP2FLOAT(val_fp8, 8, int32_t, double) */
 #define FP2FLOAT(x_fp, base_move, fp_type, float_type) \
@@ -387,15 +339,12 @@ static INLINE int convert_to_trans_prec(int allow_hp, int coor) {
 
 #if FIXED_POINT_ASSERT_TEST
 void svt_fixed_point_test_breakpoint(char* file, unsigned line);
-#define FP_ASSERT(expression)                                            \
-    if (!(expression)) {                                                 \
-        fprintf(stderr,                                                  \
-                "ERROR: FP_ASSERT Fixed Point overload %s:%u\n",         \
-                __FILE__,                                                \
-                (unsigned)(__LINE__));                                   \
-        svt_fixed_point_test_breakpoint(__FILE__, (unsigned)(__LINE__)); \
-        assert(0);                                                       \
-        abort();                                                         \
+#define FP_ASSERT(expression)                                                                             \
+    if (!(expression)) {                                                                                  \
+        fprintf(stderr, "ERROR: FP_ASSERT Fixed Point overload %s:%u\n", __FILE__, (unsigned)(__LINE__)); \
+        svt_fixed_point_test_breakpoint(__FILE__, (unsigned)(__LINE__));                                  \
+        assert(0);                                                                                        \
+        abort();                                                                                          \
     }
 #else /*FIXED_POINT_ASSERT_TEST*/
 #define FP_ASSERT(expression)

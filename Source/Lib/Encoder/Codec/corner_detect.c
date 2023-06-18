@@ -16,12 +16,10 @@
 
 // Fast_9 wrapper
 #define FAST_BARRIER 18
-int svt_av1_fast_corner_detect(unsigned char *buf, int width, int height, int stride, int *points,
-                               int max_points) {
+int svt_av1_fast_corner_detect(unsigned char *buf, int width, int height, int stride, int *points, int max_points) {
     int       num_points;
-    xy *const frm_corners_xy = svt_aom_fast9_detect_nonmax(
-        buf, width, height, stride, FAST_BARRIER, &num_points);
-    num_points = (num_points <= max_points ? num_points : max_points);
+    xy *const frm_corners_xy = svt_aom_fast9_detect_nonmax(buf, width, height, stride, FAST_BARRIER, &num_points);
+    num_points               = (num_points <= max_points ? num_points : max_points);
     if (num_points > 0 && frm_corners_xy) {
         svt_memcpy(points, frm_corners_xy, sizeof(*frm_corners_xy) * num_points);
         free(frm_corners_xy);

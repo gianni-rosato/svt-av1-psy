@@ -43,15 +43,13 @@ int svt_aom_neg_deinterleave(const int diff, int ref, int max) {
     }
 }
 
-void svt_aom_set_segment_id(EbDecHandle *dec_handle, int mi_offset, int x_mis, int y_mis,
-                            int segment_id) {
+void svt_aom_set_segment_id(EbDecHandle *dec_handle, int mi_offset, int x_mis, int y_mis, int segment_id) {
     assert(segment_id >= 0 && segment_id < MAX_SEGMENTS);
     FrameHeader *frm_header = &dec_handle->frame_header;
 
     for (int y = 0; y < y_mis; y++)
         for (int x = 0; x < x_mis; x++)
-            dec_handle->cur_pic_buf[0]->segment_maps[mi_offset + y * frm_header->mi_cols + x] =
-                segment_id;
+            dec_handle->cur_pic_buf[0]->segment_maps[mi_offset + y * frm_header->mi_cols + x] = segment_id;
 }
 
 static INLINE int get_tx_size_context(const PartitionInfo *xd, ParseCtxt *parse_ctxt) {
@@ -64,11 +62,9 @@ static INLINE int get_tx_size_context(const PartitionInfo *xd, ParseCtxt *parse_
     const int                  has_above   = xd->up_available;
     const int                  has_left    = xd->left_available;
 
-    int above = parse_ctxt->parse_above_nbr4x4_ctxt
-                    ->above_tx_wd[xd->mi_col - parse_ctxt->cur_tile_info.mi_col_start] >=
+    int above = parse_ctxt->parse_above_nbr4x4_ctxt->above_tx_wd[xd->mi_col - parse_ctxt->cur_tile_info.mi_col_start] >=
         max_tx_wide;
-    int left = parse_ctxt->parse_left_nbr4x4_ctxt->left_tx_ht[xd->mi_row - parse_ctxt->sb_row_mi] >=
-        max_tx_high;
+    int left = parse_ctxt->parse_left_nbr4x4_ctxt->left_tx_ht[xd->mi_row - parse_ctxt->sb_row_mi] >= max_tx_high;
 
     if (has_above)
         if (is_inter_block_dec(above_mbmi))
@@ -94,8 +90,8 @@ static INLINE TxSize depth_to_tx_size(int depth, BlockSize bsize) {
     return tx_size;
 }
 
-void svt_aom_update_tx_context(ParseCtxt *parse_ctxt, PartitionInfo *pi, BlockSize bsize,
-                               TxSize tx_size, int blk_row, int blk_col) {
+void svt_aom_update_tx_context(ParseCtxt *parse_ctxt, PartitionInfo *pi, BlockSize bsize, TxSize tx_size, int blk_row,
+                               int blk_col) {
     int                   mi_row          = pi->mi_row;
     int                   mi_col          = pi->mi_col;
     ParseAboveNbr4x4Ctxt *above_parse_ctx = parse_ctxt->parse_above_nbr4x4_ctxt;
@@ -105,8 +101,7 @@ void svt_aom_update_tx_context(ParseCtxt *parse_ctxt, PartitionInfo *pi, BlockSi
         b_size = txsize_to_bsize[tx_size];
     uint8_t *const above_ctx = above_parse_ctx->above_tx_wd +
         (mi_col - parse_ctxt->cur_tile_info.mi_col_start + blk_col);
-    uint8_t *const left_ctx = left_parse_ctx->left_tx_ht +
-        (mi_row - parse_ctxt->sb_row_mi + blk_row);
+    uint8_t *const left_ctx = left_parse_ctx->left_tx_ht + (mi_row - parse_ctxt->sb_row_mi + blk_row);
 
     const uint8_t tx_wide = tx_size_wide[tx_size];
     const uint8_t tx_high = tx_size_high[tx_size];
@@ -151,8 +146,8 @@ PredictionMode svt_aom_read_intra_mode(SvtReader *r, AomCdfProb *cdf) {
     return (PredictionMode)svt_read_symbol(r, cdf, INTRA_MODES, ACCT_STR);
 }
 
-UvPredictionMode svt_aom_read_intra_mode_uv(FRAME_CONTEXT *ec_ctx, SvtReader *r,
-                                            CflAllowedType cfl_allowed, PredictionMode y_mode) {
+UvPredictionMode svt_aom_read_intra_mode_uv(FRAME_CONTEXT *ec_ctx, SvtReader *r, CflAllowedType cfl_allowed,
+                                            PredictionMode y_mode) {
     const UvPredictionMode uv_mode = svt_read_symbol(
         r, ec_ctx->uv_mode_cdf[cfl_allowed][y_mode], UV_INTRA_MODES - !cfl_allowed, ACCT_STR);
     return uv_mode;
@@ -168,8 +163,8 @@ static INLINE int block_center_y(int mi_row, BlockSize bs) {
     return mi_row * MI_SIZE + bh / 2 - 1;
 }
 
-IntMv svt_aom_gm_get_motion_vector(const GlobalMotionParams *gm, int allow_hp, BlockSize bsize,
-                                   int mi_col, int mi_row, int is_integer) {
+IntMv svt_aom_gm_get_motion_vector(const GlobalMotionParams *gm, int allow_hp, BlockSize bsize, int mi_col, int mi_row,
+                                   int is_integer) {
     IntMv res;
 
     if (gm->gm_type == IDENTITY) {
@@ -241,17 +236,14 @@ int svt_aom_get_comp_reference_type_context(const PartitionInfo *xd) {
             const MvReferenceFrame frfl = left_mbmi->ref_frame[0];
 
             if (a_sg && l_sg) { // single/single
-                pred_context = 1 +
-                    2 * (!(IS_BACKWARD_REF_FRAME(frfa) ^ IS_BACKWARD_REF_FRAME(frfl)));
+                pred_context = 1 + 2 * (!(IS_BACKWARD_REF_FRAME(frfa) ^ IS_BACKWARD_REF_FRAME(frfl)));
             } else if (l_sg || a_sg) { // single/comp
-                const int uni_rfc = a_sg ? svt_aom_has_uni_comp_refs(left_mbmi)
-                                         : svt_aom_has_uni_comp_refs(above_mbmi);
+                const int uni_rfc = a_sg ? svt_aom_has_uni_comp_refs(left_mbmi) : svt_aom_has_uni_comp_refs(above_mbmi);
 
                 if (!uni_rfc) // comp bidir
                     pred_context = 1;
                 else // comp unidir
-                    pred_context = 3 +
-                        (!(IS_BACKWARD_REF_FRAME(frfa) ^ IS_BACKWARD_REF_FRAME(frfl)));
+                    pred_context = 3 + (!(IS_BACKWARD_REF_FRAME(frfa) ^ IS_BACKWARD_REF_FRAME(frfl)));
             } else { // comp/comp
                 const int a_uni_rfc = svt_aom_has_uni_comp_refs(above_mbmi);
                 const int l_uni_rfc = svt_aom_has_uni_comp_refs(left_mbmi);
@@ -283,7 +275,6 @@ int svt_aom_get_comp_reference_type_context(const PartitionInfo *xd) {
     return pred_context;
 }
 
-int svt_aom_seg_feature_active(SegmentationParams *seg, int segment_id,
-                               SEG_LVL_FEATURES feature_id) {
+int svt_aom_seg_feature_active(SegmentationParams *seg, int segment_id, SEG_LVL_FEATURES feature_id) {
     return seg->segmentation_enabled && seg->feature_enabled[segment_id][feature_id];
 }

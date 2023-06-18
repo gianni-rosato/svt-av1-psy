@@ -20,10 +20,8 @@ extern "C" {
 /**************************************
  * Extern Function Declarations
  **************************************/
-EbErrorType svt_aom_packetization_context_ctor(EbThreadContext   *thread_ctx,
-                                               const EbEncHandle *enc_handle_ptr,
-                                               int rate_control_index, int demux_index,
-                                               int me_port_index);
+EbErrorType svt_aom_packetization_context_ctor(EbThreadContext *thread_ctx, const EbEncHandle *enc_handle_ptr,
+                                               int rate_control_index, int demux_index, int me_port_index);
 
 extern void *svt_aom_packetization_kernel(void *input_ptr);
 #if OPT_LD_LATENCY2

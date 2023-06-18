@@ -94,11 +94,10 @@ typedef struct LrCtxt {
 
 } LrCtxt;
 
-void svt_aom_decode_super_block(DecModCtxt *dec_mod_ctxt, uint32_t mi_row, uint32_t mi_col,
-                                SBInfo *sb_info);
+void svt_aom_decode_super_block(DecModCtxt *dec_mod_ctxt, uint32_t mi_row, uint32_t mi_col, SBInfo *sb_info);
 
-EbErrorType svt_aom_start_decode_tile(EbDecHandle *dec_handle_ptr, DecModCtxt *dec_mod_ctxt,
-                                      TilesInfo *tiles_info, int32_t tile_num);
+EbErrorType svt_aom_start_decode_tile(EbDecHandle *dec_handle_ptr, DecModCtxt *dec_mod_ctxt, TilesInfo *tiles_info,
+                                      int32_t tile_num);
 EbErrorType decode_tile(DecModCtxt *dec_mod_ctxt, TilesInfo *tile_info,
                         DecMtParseReconTileInfo *parse_recon_tile_info_array, int32_t tile_col);
 

@@ -180,10 +180,8 @@ typedef struct EbConfig {
     EbBufferHeaderType *input_buffer_pool;
     EbBufferHeaderType *recon_buffer;
 
-#if FTR_ROI
     FILE         *roi_map_file;
     SvtAv1RoiMap *roi_map;
-#endif
 
     // Instance Index
     uint8_t instance_idx;

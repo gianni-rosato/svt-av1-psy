@@ -13,44 +13,37 @@
 #include "EbMemory_AVX2.h"
 #include "EbMemory_SSE4_1.h"
 /********************************************************************************************************************************/
-uint64_t svt_compute_mean8x8_avx2_intrin(
-    uint8_t *input_samples, // input parameter, input samples Ptr
-    uint32_t input_stride, // input parameter, input stride
-    uint32_t input_area_width, // input parameter, input area width
-    uint32_t input_area_height) // input parameter, input area height
+uint64_t svt_compute_mean8x8_avx2_intrin(uint8_t *input_samples, // input parameter, input samples Ptr
+                                         uint32_t input_stride, // input parameter, input stride
+                                         uint32_t input_area_width, // input parameter, input area width
+                                         uint32_t input_area_height) // input parameter, input area height
 {
     __m256i  sum, sum2, xmm2, xmm1, sum1, xmm0 = _mm256_setzero_si256();
     uint64_t result;
-    xmm1 = _mm256_sad_epu8(
-        xmm0,
-        _mm256_set_m128i(_mm_loadl_epi64((__m128i *)(input_samples + input_stride)),
-                         _mm_loadl_epi64((__m128i *)(input_samples))));
-    xmm2 = _mm256_sad_epu8(
-        xmm0,
-        _mm256_set_m128i(_mm_loadl_epi64((__m128i *)(input_samples + 3 * input_stride)),
-                         _mm_loadl_epi64((__m128i *)(input_samples + 2 * input_stride))));
+    xmm1 = _mm256_sad_epu8(xmm0,
+                           _mm256_set_m128i(_mm_loadl_epi64((__m128i *)(input_samples + input_stride)),
+                                            _mm_loadl_epi64((__m128i *)(input_samples))));
+    xmm2 = _mm256_sad_epu8(xmm0,
+                           _mm256_set_m128i(_mm_loadl_epi64((__m128i *)(input_samples + 3 * input_stride)),
+                                            _mm_loadl_epi64((__m128i *)(input_samples + 2 * input_stride))));
     sum1 = _mm256_add_epi16(xmm1, xmm2);
 
     input_samples += 4 * input_stride;
 
-    xmm1 = _mm256_sad_epu8(
-        xmm0,
-        _mm256_set_m128i(_mm_loadl_epi64((__m128i *)(input_samples + input_stride)),
-                         _mm_loadl_epi64((__m128i *)(input_samples))));
-    xmm2 = _mm256_sad_epu8(
-        xmm0,
-        _mm256_set_m128i(_mm_loadl_epi64((__m128i *)(input_samples + 3 * input_stride)),
-                         _mm_loadl_epi64((__m128i *)(input_samples + 2 * input_stride))));
+    xmm1 = _mm256_sad_epu8(xmm0,
+                           _mm256_set_m128i(_mm_loadl_epi64((__m128i *)(input_samples + input_stride)),
+                                            _mm_loadl_epi64((__m128i *)(input_samples))));
+    xmm2 = _mm256_sad_epu8(xmm0,
+                           _mm256_set_m128i(_mm_loadl_epi64((__m128i *)(input_samples + 3 * input_stride)),
+                                            _mm_loadl_epi64((__m128i *)(input_samples + 2 * input_stride))));
     sum2 = _mm256_add_epi16(xmm1, xmm2);
 
     sum           = _mm256_add_epi16(sum1, sum2);
     __m128i upper = _mm256_extractf128_si256(sum, 1); //extract upper 128 bit
-    upper         = _mm_add_epi32(upper,
-                          _mm_srli_si128(upper, 8)); // shift 2nd 16 bits to the 1st and sum both
+    upper         = _mm_add_epi32(upper, _mm_srli_si128(upper, 8)); // shift 2nd 16 bits to the 1st and sum both
 
     __m128i lower = _mm256_castsi256_si128(sum); //extract lower 128 bit
-    lower         = _mm_add_epi32(lower,
-                          _mm_srli_si128(lower, 8)); // shift 2nd 16 bits to the 1st and sum both
+    lower         = _mm_add_epi32(lower, _mm_srli_si128(lower, 8)); // shift 2nd 16 bits to the 1st and sum both
 
     __m128i mean = _mm_add_epi32(lower, upper);
 
@@ -67,9 +60,8 @@ void svt_compute_interm_var_four8x8_avx2_intrin(uint8_t *input_samples, uint16_t
 {
     __m256i ymm1, ymm2, ymm3, ymm4, ymm_sum1, ymm_sum2, ymm_final_sum, ymm_shift,
         /* ymm_blockMeanSquared*/ //,
-        ymm_in, ymm_in_2s, ymm_in_second, ymm_in_2s_second, ymm_shift_squared, ymm_permute8,
-        ymm_result, ymm_block_mean_squared_low, ymm_block_mean_squared_high, ymm_inputlo,
-        ymm_inputhi;
+        ymm_in, ymm_in_2s, ymm_in_second, ymm_in_2s_second, ymm_shift_squared, ymm_permute8, ymm_result,
+        ymm_block_mean_squared_low, ymm_block_mean_squared_high, ymm_inputlo, ymm_inputhi;
 
     __m128i ymm_block_mean_squared_lo, ymm_block_mean_squared_hi, ymm_resultlo, ymm_resulthi;
 
@@ -134,19 +126,17 @@ void svt_compute_interm_var_four8x8_avx2_intrin(uint8_t *input_samples, uint16_t
 
     ymm_block_mean_squared_low  = _mm256_add_epi32(ymm_block_mean_squared_low,
                                                   _mm256_srli_si256(ymm_block_mean_squared_low, 8));
-    ymm_block_mean_squared_high = _mm256_add_epi32(
-        ymm_block_mean_squared_high, _mm256_srli_si256(ymm_block_mean_squared_high, 8));
+    ymm_block_mean_squared_high = _mm256_add_epi32(ymm_block_mean_squared_high,
+                                                   _mm256_srli_si256(ymm_block_mean_squared_high, 8));
 
     ymm_block_mean_squared_low  = _mm256_add_epi32(ymm_block_mean_squared_low,
                                                   _mm256_srli_si256(ymm_block_mean_squared_low, 4));
-    ymm_block_mean_squared_high = _mm256_add_epi32(
-        ymm_block_mean_squared_high, _mm256_srli_si256(ymm_block_mean_squared_high, 4));
+    ymm_block_mean_squared_high = _mm256_add_epi32(ymm_block_mean_squared_high,
+                                                   _mm256_srli_si256(ymm_block_mean_squared_high, 4));
 
     ymm_permute8                = _mm256_set_epi32(0, 0, 0, 0, 0, 0, 4, 0);
-    ymm_block_mean_squared_low  = _mm256_permutevar8x32_epi32(ymm_block_mean_squared_low,
-                                                             ymm_permute8 /*8*/);
-    ymm_block_mean_squared_high = _mm256_permutevar8x32_epi32(ymm_block_mean_squared_high,
-                                                              ymm_permute8);
+    ymm_block_mean_squared_low  = _mm256_permutevar8x32_epi32(ymm_block_mean_squared_low, ymm_permute8 /*8*/);
+    ymm_block_mean_squared_high = _mm256_permutevar8x32_epi32(ymm_block_mean_squared_high, ymm_permute8);
 
     ymm_block_mean_squared_lo = _mm256_castsi256_si128(ymm_block_mean_squared_low); //lower 128
     ymm_block_mean_squared_hi = _mm256_castsi256_si128(ymm_block_mean_squared_high); //lower 128

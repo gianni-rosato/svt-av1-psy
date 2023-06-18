@@ -17,9 +17,8 @@
 correlation/standard deviation are taken over MATCH_SZ by MATCH_SZ windows
 of each image, centered at (x1, y1) and (x2, y2) respectively.
 */
-double svt_av1_compute_cross_correlation_avx2(unsigned char *im1, int stride1, int x1, int y1,
-                                              unsigned char *im2, int stride2, int x2, int y2,
-                                              uint8_t match_sz) {
+double svt_av1_compute_cross_correlation_avx2(unsigned char *im1, int stride1, int x1, int y1, unsigned char *im2,
+                                              int stride2, int x2, int y2, uint8_t match_sz) {
     int           i, stride1_i = 0, stride2_i = 0;
     __m256i       temp1, sum_vec, sumsq2_vec, cross_vec, v, v1_1, v2_1;
     const uint8_t match_sz_by2 = ((match_sz - 1) / 2);

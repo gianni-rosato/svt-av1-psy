@@ -18,8 +18,7 @@
 extern "C" {
 #endif
 
-#define MAX_ME_PU_COUNT \
-    209 // Sum of all the possible partitions which have both deminsions greater than 4.
+#define MAX_ME_PU_COUNT 209 // Sum of all the possible partitions which have both deminsions greater than 4.
 #define MAX_PA_ME_MV 7 // 1 per ref = up 7 = up 4+ up to 3
 #define MAX_PA_ME_CAND 23 // [Single Ref = 7] + [BiDir = 12 = 3*4 ] + [4 = 3+1]
 #define SQUARE_PU_COUNT 85

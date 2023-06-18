@@ -15,13 +15,11 @@
 
 static const int delta_lf_id_lut[MAX_MB_PLANE][2] = {{0, 1}, {2, 2}, {3, 3}};
 
-static const SEG_LVL_FEATURES seg_lvl_lf_lut[MAX_MB_PLANE][2] = {
-    {SEG_LVL_ALT_LF_Y_V, SEG_LVL_ALT_LF_Y_H},
-    {SEG_LVL_ALT_LF_U, SEG_LVL_ALT_LF_U},
-    {SEG_LVL_ALT_LF_V, SEG_LVL_ALT_LF_V}};
+static const SEG_LVL_FEATURES seg_lvl_lf_lut[MAX_MB_PLANE][2] = {{SEG_LVL_ALT_LF_Y_V, SEG_LVL_ALT_LF_Y_H},
+                                                                 {SEG_LVL_ALT_LF_U, SEG_LVL_ALT_LF_U},
+                                                                 {SEG_LVL_ALT_LF_V, SEG_LVL_ALT_LF_V}};
 
-static int svt_aom_seg_feature_active(SegmentationParams *seg, int segment_id,
-                                      SEG_LVL_FEATURES feature_id) {
+static int svt_aom_seg_feature_active(SegmentationParams *seg, int segment_id, SEG_LVL_FEATURES feature_id) {
     return seg->segmentation_enabled && seg->feature_enabled[segment_id][feature_id];
 }
 
@@ -36,9 +34,9 @@ static INLINE int16_t signed_char_clamp_high(int32_t t, int32_t bd) {
     }
 }
 
-uint8_t svt_aom_get_filter_level_delta_lf(FrameHeader *frm_hdr, const int32_t dir_idx,
-                                          int32_t plane, int32_t *sb_delta_lf, uint8_t seg_id,
-                                          PredictionMode pred_mode, MvReferenceFrame ref_frame_0) {
+uint8_t svt_aom_get_filter_level_delta_lf(FrameHeader *frm_hdr, const int32_t dir_idx, int32_t plane,
+                                          int32_t *sb_delta_lf, uint8_t seg_id, PredictionMode pred_mode,
+                                          MvReferenceFrame ref_frame_0) {
     //printf("ERROR[AN]: delta_lf_present not supported yet\n");
     int32_t delta_lf = -1;
     if (frm_hdr->delta_lf_params.delta_lf_multi) {
@@ -111,32 +109,26 @@ void svt_av1_loop_filter_frame_init(FrameHeader *frm_hdr, LoopFilterInfoN *lfi, 
                 int32_t lvl_seg = (dir == 0) ? filt_lvl[plane] : filt_lvl_r[plane];
                 assert(plane >= 0 && plane <= 2);
                 const int32_t seg_lf_feature_id = seg_lvl_lf_lut[plane][dir];
-                if (svt_aom_seg_feature_active(
-                        &frm_hdr->segmentation_params, seg_id, seg_lf_feature_id)) {
-                    const int32_t data = get_segdata(
-                        &frm_hdr->segmentation_params, seg_id, seg_lf_feature_id);
-                    lvl_seg = clamp(lvl_seg + data, 0, MAX_LOOP_FILTER);
+                if (svt_aom_seg_feature_active(&frm_hdr->segmentation_params, seg_id, seg_lf_feature_id)) {
+                    const int32_t data = get_segdata(&frm_hdr->segmentation_params, seg_id, seg_lf_feature_id);
+                    lvl_seg            = clamp(lvl_seg + data, 0, MAX_LOOP_FILTER);
                 }
 
                 if (!lf->mode_ref_delta_enabled) {
                     // we could get rid of this if we assume that deltas are set to
                     // zero when not in use; encoder always uses deltas
-                    memset(lfi->lvl[plane][seg_id][dir],
-                           lvl_seg,
-                           sizeof(lfi->lvl[plane][seg_id][dir]));
+                    memset(lfi->lvl[plane][seg_id][dir], lvl_seg, sizeof(lfi->lvl[plane][seg_id][dir]));
                 } else {
                     int32_t       ref, mode;
-                    const int32_t scale     = 1 << (lvl_seg >> 5);
-                    const int32_t intra_lvl = lvl_seg + lf->ref_deltas[INTRA_FRAME] * scale;
-                    lfi->lvl[plane][seg_id][dir][INTRA_FRAME][0] = (uint8_t)clamp(
-                        intra_lvl, 0, MAX_LOOP_FILTER);
+                    const int32_t scale                          = 1 << (lvl_seg >> 5);
+                    const int32_t intra_lvl                      = lvl_seg + lf->ref_deltas[INTRA_FRAME] * scale;
+                    lfi->lvl[plane][seg_id][dir][INTRA_FRAME][0] = (uint8_t)clamp(intra_lvl, 0, MAX_LOOP_FILTER);
 
                     for (ref = LAST_FRAME; ref < REF_FRAMES; ++ref) {
                         for (mode = 0; mode < MAX_MODE_LF_DELTAS; ++mode) {
                             const int32_t inter_lvl = lvl_seg + lf->ref_deltas[ref] * scale +
                                 lf->mode_deltas[mode] * scale;
-                            lfi->lvl[plane][seg_id][dir][ref][mode] = (uint8_t)clamp(
-                                inter_lvl, 0, MAX_LOOP_FILTER);
+                            lfi->lvl[plane][seg_id][dir][ref][mode] = (uint8_t)clamp(inter_lvl, 0, MAX_LOOP_FILTER);
                         }
                     }
                 }
@@ -146,8 +138,7 @@ void svt_av1_loop_filter_frame_init(FrameHeader *frm_hdr, LoopFilterInfoN *lfi, 
 }
 
 // should we apply any filter at all: 11111111 yes, 00000000 no
-static INLINE int8_t filter_mask2(uint8_t limit, uint8_t blimit, uint8_t p1, uint8_t p0, uint8_t q0,
-                                  uint8_t q1) {
+static INLINE int8_t filter_mask2(uint8_t limit, uint8_t blimit, uint8_t p1, uint8_t p0, uint8_t q0, uint8_t q1) {
     int8_t mask = 0;
     mask |= (abs(p1 - p0) > limit) * -1;
     mask |= (abs(q1 - q0) > limit) * -1;
@@ -155,8 +146,8 @@ static INLINE int8_t filter_mask2(uint8_t limit, uint8_t blimit, uint8_t p1, uin
     return ~mask;
 }
 
-static INLINE int8_t filter_mask(uint8_t limit, uint8_t blimit, uint8_t p3, uint8_t p2, uint8_t p1,
-                                 uint8_t p0, uint8_t q0, uint8_t q1, uint8_t q2, uint8_t q3) {
+static INLINE int8_t filter_mask(uint8_t limit, uint8_t blimit, uint8_t p3, uint8_t p2, uint8_t p1, uint8_t p0,
+                                 uint8_t q0, uint8_t q1, uint8_t q2, uint8_t q3) {
     int8_t mask = 0;
     mask |= (abs(p3 - p2) > limit) * -1;
     mask |= (abs(p2 - p1) > limit) * -1;
@@ -168,8 +159,8 @@ static INLINE int8_t filter_mask(uint8_t limit, uint8_t blimit, uint8_t p3, uint
     return ~mask;
 }
 
-static INLINE int8_t filter_mask3_chroma(uint8_t limit, uint8_t blimit, uint8_t p2, uint8_t p1,
-                                         uint8_t p0, uint8_t q0, uint8_t q1, uint8_t q2) {
+static INLINE int8_t filter_mask3_chroma(uint8_t limit, uint8_t blimit, uint8_t p2, uint8_t p1, uint8_t p0, uint8_t q0,
+                                         uint8_t q1, uint8_t q2) {
     int8_t mask = 0;
     mask |= (abs(p2 - p1) > limit) * -1;
     mask |= (abs(p1 - p0) > limit) * -1;
@@ -179,8 +170,8 @@ static INLINE int8_t filter_mask3_chroma(uint8_t limit, uint8_t blimit, uint8_t 
     return ~mask;
 }
 
-static INLINE int8_t flat_mask3_chroma(uint8_t thresh, uint8_t p2, uint8_t p1, uint8_t p0,
-                                       uint8_t q0, uint8_t q1, uint8_t q2) {
+static INLINE int8_t flat_mask3_chroma(uint8_t thresh, uint8_t p2, uint8_t p1, uint8_t p0, uint8_t q0, uint8_t q1,
+                                       uint8_t q2) {
     int8_t mask = 0;
     mask |= (abs(p1 - p0) > thresh) * -1;
     mask |= (abs(q1 - q0) > thresh) * -1;
@@ -189,8 +180,8 @@ static INLINE int8_t flat_mask3_chroma(uint8_t thresh, uint8_t p2, uint8_t p1, u
     return ~mask;
 }
 
-static INLINE int8_t highbd_flat_mask3_chroma(uint8_t thresh, uint16_t p2, uint16_t p1, uint16_t p0,
-                                              uint16_t q0, uint16_t q1, uint16_t q2, int bd) {
+static INLINE int8_t highbd_flat_mask3_chroma(uint8_t thresh, uint16_t p2, uint16_t p1, uint16_t p0, uint16_t q0,
+                                              uint16_t q1, uint16_t q2, int bd) {
     int8_t  mask     = 0;
     int16_t thresh16 = (uint16_t)thresh << (bd - 8);
     mask |= (abs(p1 - p0) > thresh16) * -1;
@@ -200,8 +191,8 @@ static INLINE int8_t highbd_flat_mask3_chroma(uint8_t thresh, uint16_t p2, uint1
     return ~mask;
 }
 
-static INLINE int8_t flat_mask4(uint8_t thresh, uint8_t p3, uint8_t p2, uint8_t p1, uint8_t p0,
-                                uint8_t q0, uint8_t q1, uint8_t q2, uint8_t q3) {
+static INLINE int8_t flat_mask4(uint8_t thresh, uint8_t p3, uint8_t p2, uint8_t p1, uint8_t p0, uint8_t q0, uint8_t q1,
+                                uint8_t q2, uint8_t q3) {
     int8_t mask = 0;
     mask |= (abs(p1 - p0) > thresh) * -1;
     mask |= (abs(q1 - q0) > thresh) * -1;
@@ -220,8 +211,7 @@ static INLINE int8_t hev_mask(uint8_t thresh, uint8_t p1, uint8_t p0, uint8_t q0
     return hev;
 }
 
-static INLINE void filter4(int8_t mask, uint8_t thresh, uint8_t *op1, uint8_t *op0, uint8_t *oq0,
-                           uint8_t *oq1) {
+static INLINE void filter4(int8_t mask, uint8_t thresh, uint8_t *op1, uint8_t *op0, uint8_t *oq0, uint8_t *oq1) {
     int8_t       filter1, filter2;
     const int8_t ps1 = (int8_t)(*op1 ^ 0x80);
     const int8_t ps0 = (int8_t)(*op0 ^ 0x80);
@@ -249,8 +239,8 @@ static INLINE void filter4(int8_t mask, uint8_t thresh, uint8_t *op1, uint8_t *o
     *op1   = (uint8_t)(signed_char_clamp(ps1 + filter) ^ 0x80);
 }
 
-void svt_aom_lpf_horizontal_4_c(uint8_t *s, int32_t p /* pitch */, const uint8_t *blimit,
-                                const uint8_t *limit, const uint8_t *thresh) {
+void svt_aom_lpf_horizontal_4_c(uint8_t *s, int32_t p /* pitch */, const uint8_t *blimit, const uint8_t *limit,
+                                const uint8_t *thresh) {
     int32_t i;
     int32_t count = 4;
 
@@ -265,8 +255,8 @@ void svt_aom_lpf_horizontal_4_c(uint8_t *s, int32_t p /* pitch */, const uint8_t
     }
 }
 
-void svt_aom_lpf_vertical_4_c(uint8_t *s, int32_t pitch, const uint8_t *blimit,
-                              const uint8_t *limit, const uint8_t *thresh) {
+void svt_aom_lpf_vertical_4_c(uint8_t *s, int32_t pitch, const uint8_t *blimit, const uint8_t *limit,
+                              const uint8_t *thresh) {
     int32_t i;
     int32_t count = 4;
 
@@ -281,8 +271,8 @@ void svt_aom_lpf_vertical_4_c(uint8_t *s, int32_t pitch, const uint8_t *blimit,
     }
 }
 
-static INLINE void filter6(int8_t mask, uint8_t thresh, int8_t flat, uint8_t *op2, uint8_t *op1,
-                           uint8_t *op0, uint8_t *oq0, uint8_t *oq1, uint8_t *oq2) {
+static INLINE void filter6(int8_t mask, uint8_t thresh, int8_t flat, uint8_t *op2, uint8_t *op1, uint8_t *op0,
+                           uint8_t *oq0, uint8_t *oq1, uint8_t *oq2) {
     if (flat && mask) {
         const uint8_t p2 = *op2, p1 = *op1, p0 = *op0;
         const uint8_t q0 = *oq0, q1 = *oq1, q2 = *oq2;
@@ -296,9 +286,8 @@ static INLINE void filter6(int8_t mask, uint8_t thresh, int8_t flat, uint8_t *op
         filter4(mask, thresh, op1, op0, oq0, oq1);
 }
 
-static INLINE void filter8(int8_t mask, uint8_t thresh, int8_t flat, uint8_t *op3, uint8_t *op2,
-                           uint8_t *op1, uint8_t *op0, uint8_t *oq0, uint8_t *oq1, uint8_t *oq2,
-                           uint8_t *oq3) {
+static INLINE void filter8(int8_t mask, uint8_t thresh, int8_t flat, uint8_t *op3, uint8_t *op2, uint8_t *op1,
+                           uint8_t *op0, uint8_t *oq0, uint8_t *oq1, uint8_t *oq2, uint8_t *oq3) {
     if (flat && mask) {
         const uint8_t p3 = *op3, p2 = *op2, p1 = *op1, p0 = *op0;
         const uint8_t q0 = *oq0, q1 = *oq1, q2 = *oq2, q3 = *oq3;
@@ -332,8 +321,8 @@ void svt_aom_lpf_horizontal_6_c(uint8_t *s, int32_t p, const uint8_t *blimit, co
     }
 }
 
-void svt_aom_lpf_vertical_6_c(uint8_t *s, int32_t pitch, const uint8_t *blimit,
-                              const uint8_t *limit, const uint8_t *thresh) {
+void svt_aom_lpf_vertical_6_c(uint8_t *s, int32_t pitch, const uint8_t *blimit, const uint8_t *limit,
+                              const uint8_t *thresh) {
     int32_t i;
     int32_t count = 4;
 
@@ -363,23 +352,13 @@ void svt_aom_lpf_horizontal_8_c(uint8_t *s, int32_t p, const uint8_t *blimit, co
 
         const int8_t mask = filter_mask(*limit, *blimit, p3, p2, p1, p0, q0, q1, q2, q3);
         const int8_t flat = flat_mask4(1, p3, p2, p1, p0, q0, q1, q2, q3);
-        filter8(mask,
-                *thresh,
-                flat,
-                s - 4 * p,
-                s - 3 * p,
-                s - 2 * p,
-                s - 1 * p,
-                s,
-                s + 1 * p,
-                s + 2 * p,
-                s + 3 * p);
+        filter8(mask, *thresh, flat, s - 4 * p, s - 3 * p, s - 2 * p, s - 1 * p, s, s + 1 * p, s + 2 * p, s + 3 * p);
         ++s;
     }
 }
 
-void svt_aom_lpf_vertical_8_c(uint8_t *s, int32_t pitch, const uint8_t *blimit,
-                              const uint8_t *limit, const uint8_t *thresh) {
+void svt_aom_lpf_vertical_8_c(uint8_t *s, int32_t pitch, const uint8_t *blimit, const uint8_t *limit,
+                              const uint8_t *thresh) {
     int32_t i;
     int32_t count = 4;
 
@@ -394,8 +373,8 @@ void svt_aom_lpf_vertical_8_c(uint8_t *s, int32_t pitch, const uint8_t *blimit,
 }
 
 // Should we apply any filter at all: 11111111 yes, 00000000 no ?
-static INLINE int8_t highbd_filter_mask2(uint8_t limit, uint8_t blimit, uint16_t p1, uint16_t p0,
-                                         uint16_t q0, uint16_t q1, int32_t bd) {
+static INLINE int8_t highbd_filter_mask2(uint8_t limit, uint8_t blimit, uint16_t p1, uint16_t p0, uint16_t q0,
+                                         uint16_t q1, int32_t bd) {
     int8_t  mask     = 0;
     int16_t limit16  = (uint16_t)limit << (bd - 8);
     int16_t blimit16 = (uint16_t)blimit << (bd - 8);
@@ -406,9 +385,8 @@ static INLINE int8_t highbd_filter_mask2(uint8_t limit, uint8_t blimit, uint16_t
 }
 
 // Should we apply any filter at all: 11111111 yes, 00000000 no ?
-static INLINE int8_t highbd_filter_mask(uint8_t limit, uint8_t blimit, uint16_t p3, uint16_t p2,
-                                        uint16_t p1, uint16_t p0, uint16_t q0, uint16_t q1,
-                                        uint16_t q2, uint16_t q3, int32_t bd) {
+static INLINE int8_t highbd_filter_mask(uint8_t limit, uint8_t blimit, uint16_t p3, uint16_t p2, uint16_t p1,
+                                        uint16_t p0, uint16_t q0, uint16_t q1, uint16_t q2, uint16_t q3, int32_t bd) {
     int8_t  mask     = 0;
     int16_t limit16  = (uint16_t)limit << (bd - 8);
     int16_t blimit16 = (uint16_t)blimit << (bd - 8);
@@ -422,9 +400,8 @@ static INLINE int8_t highbd_filter_mask(uint8_t limit, uint8_t blimit, uint16_t 
     return ~mask;
 }
 
-static INLINE int8_t highbd_flat_mask4(uint8_t thresh, uint16_t p3, uint16_t p2, uint16_t p1,
-                                       uint16_t p0, uint16_t q0, uint16_t q1, uint16_t q2,
-                                       uint16_t q3, int32_t bd) {
+static INLINE int8_t highbd_flat_mask4(uint8_t thresh, uint16_t p3, uint16_t p2, uint16_t p1, uint16_t p0, uint16_t q0,
+                                       uint16_t q1, uint16_t q2, uint16_t q3, int32_t bd) {
     int8_t  mask     = 0;
     int16_t thresh16 = (uint16_t)thresh << (bd - 8);
     mask |= (abs(p1 - p0) > thresh16) * -1;
@@ -438,8 +415,7 @@ static INLINE int8_t highbd_flat_mask4(uint8_t thresh, uint16_t p3, uint16_t p2,
 
 // Is there high edge variance internal edge:
 // 11111111_11111111 yes, 00000000_00000000 no ?
-static INLINE int16_t highbd_hev_mask(uint8_t thresh, uint16_t p1, uint16_t p0, uint16_t q0,
-                                      uint16_t q1, int32_t bd) {
+static INLINE int16_t highbd_hev_mask(uint8_t thresh, uint16_t p1, uint16_t p0, uint16_t q0, uint16_t q1, int32_t bd) {
     int16_t hev      = 0;
     int16_t thresh16 = (uint16_t)thresh << (bd - 8);
     hev |= (abs(p1 - p0) > thresh16) * -1;
@@ -447,8 +423,8 @@ static INLINE int16_t highbd_hev_mask(uint8_t thresh, uint16_t p1, uint16_t p0, 
     return hev;
 }
 
-static INLINE void highbd_filter4(int8_t mask, uint8_t thresh, uint16_t *op1, uint16_t *op0,
-                                  uint16_t *oq0, uint16_t *oq1, int32_t bd) {
+static INLINE void highbd_filter4(int8_t mask, uint8_t thresh, uint16_t *op1, uint16_t *op0, uint16_t *oq0,
+                                  uint16_t *oq1, int32_t bd) {
     int16_t filter1, filter2;
     // ^0x80 equivalent to subtracting 0x80 from the values to turn them
     // into -128 to +127 instead of 0 to 255.
@@ -481,8 +457,8 @@ static INLINE void highbd_filter4(int8_t mask, uint8_t thresh, uint16_t *op1, ui
     *op1 = signed_char_clamp_high(ps1 + filter, bd) + (0x80 << shift);
 }
 
-void svt_aom_highbd_lpf_horizontal_4_c(uint16_t *s, int32_t p /* pitch */, const uint8_t *blimit,
-                                       const uint8_t *limit, const uint8_t *thresh, int32_t bd) {
+void svt_aom_highbd_lpf_horizontal_4_c(uint16_t *s, int32_t p /* pitch */, const uint8_t *blimit, const uint8_t *limit,
+                                       const uint8_t *thresh, int32_t bd) {
     int32_t i;
     int32_t count = 4;
 
@@ -499,8 +475,8 @@ void svt_aom_highbd_lpf_horizontal_4_c(uint16_t *s, int32_t p /* pitch */, const
     }
 }
 
-void svt_aom_highbd_lpf_vertical_4_c(uint16_t *s, int32_t pitch, const uint8_t *blimit,
-                                     const uint8_t *limit, const uint8_t *thresh, int32_t bd) {
+void svt_aom_highbd_lpf_vertical_4_c(uint16_t *s, int32_t pitch, const uint8_t *blimit, const uint8_t *limit,
+                                     const uint8_t *thresh, int32_t bd) {
     int32_t i;
     int32_t count = 4;
 
@@ -515,9 +491,9 @@ void svt_aom_highbd_lpf_vertical_4_c(uint16_t *s, int32_t pitch, const uint8_t *
     }
 }
 
-static INLINE void highbd_filter8(int8_t mask, uint8_t thresh, int8_t flat, uint16_t *op3,
-                                  uint16_t *op2, uint16_t *op1, uint16_t *op0, uint16_t *oq0,
-                                  uint16_t *oq1, uint16_t *oq2, uint16_t *oq3, int32_t bd) {
+static INLINE void highbd_filter8(int8_t mask, uint8_t thresh, int8_t flat, uint16_t *op3, uint16_t *op2, uint16_t *op1,
+                                  uint16_t *op0, uint16_t *oq0, uint16_t *oq1, uint16_t *oq2, uint16_t *oq3,
+                                  int32_t bd) {
     if (flat && mask) {
         const uint16_t p3 = *op3, p2 = *op2, p1 = *op1, p0 = *op0;
         const uint16_t q0 = *oq0, q1 = *oq1, q2 = *oq2, q3 = *oq3;
@@ -533,8 +509,8 @@ static INLINE void highbd_filter8(int8_t mask, uint8_t thresh, int8_t flat, uint
         highbd_filter4(mask, thresh, op1, op0, oq0, oq1, bd);
 }
 
-void svt_aom_highbd_lpf_horizontal_8_c(uint16_t *s, int32_t p, const uint8_t *blimit,
-                                       const uint8_t *limit, const uint8_t *thresh, int32_t bd) {
+void svt_aom_highbd_lpf_horizontal_8_c(uint16_t *s, int32_t p, const uint8_t *blimit, const uint8_t *limit,
+                                       const uint8_t *thresh, int32_t bd) {
     int32_t i;
     int32_t count = 4;
 
@@ -546,32 +522,22 @@ void svt_aom_highbd_lpf_horizontal_8_c(uint16_t *s, int32_t p, const uint8_t *bl
 
         const int8_t mask = highbd_filter_mask(*limit, *blimit, p3, p2, p1, p0, q0, q1, q2, q3, bd);
         const int8_t flat = highbd_flat_mask4(1, p3, p2, p1, p0, q0, q1, q2, q3, bd);
-        highbd_filter8(mask,
-                       *thresh,
-                       flat,
-                       s - 4 * p,
-                       s - 3 * p,
-                       s - 2 * p,
-                       s - 1 * p,
-                       s,
-                       s + 1 * p,
-                       s + 2 * p,
-                       s + 3 * p,
-                       bd);
+        highbd_filter8(
+            mask, *thresh, flat, s - 4 * p, s - 3 * p, s - 2 * p, s - 1 * p, s, s + 1 * p, s + 2 * p, s + 3 * p, bd);
         ++s;
     }
 }
 
-void svt_aom_highbd_lpf_vertical_8_c(uint16_t *s, int32_t pitch, const uint8_t *blimit,
-                                     const uint8_t *limit, const uint8_t *thresh, int32_t bd) {
+void svt_aom_highbd_lpf_vertical_8_c(uint16_t *s, int32_t pitch, const uint8_t *blimit, const uint8_t *limit,
+                                     const uint8_t *thresh, int32_t bd) {
     int32_t i;
     int32_t count = 4;
 
     for (i = 0; i < count; ++i) {
         const uint16_t p3 = s[-4], p2 = s[-3], p1 = s[-2], p0 = s[-1];
         const uint16_t q0 = s[0], q1 = s[1], q2 = s[2], q3 = s[3];
-        const int8_t mask = highbd_filter_mask(*limit, *blimit, p3, p2, p1, p0, q0, q1, q2, q3, bd);
-        const int8_t flat = highbd_flat_mask4(1, p3, p2, p1, p0, q0, q1, q2, q3, bd);
+        const int8_t   mask = highbd_filter_mask(*limit, *blimit, p3, p2, p1, p0, q0, q1, q2, q3, bd);
+        const int8_t   flat = highbd_flat_mask4(1, p3, p2, p1, p0, q0, q1, q2, q3, bd);
         highbd_filter8(mask, *thresh, flat, s - 4, s - 3, s - 2, s - 1, s, s + 1, s + 2, s + 3, bd);
         s += pitch;
     }
@@ -605,10 +571,9 @@ void svt_aom_update_sharpness(LoopFilterInfoN *lfi, int32_t sharpness_lvl) {
         memset(lfi->lfthr[lvl].mblim, (2 * (lvl + 2) + block_inside_limit), SIMD_WIDTH);
     }
 }
-static INLINE void highbd_filter14(int8_t mask, uint8_t thresh, int8_t flat, int8_t flat2,
-                                   uint16_t *op6, uint16_t *op5, uint16_t *op4, uint16_t *op3,
-                                   uint16_t *op2, uint16_t *op1, uint16_t *op0, uint16_t *oq0,
-                                   uint16_t *oq1, uint16_t *oq2, uint16_t *oq3, uint16_t *oq4,
+static INLINE void highbd_filter14(int8_t mask, uint8_t thresh, int8_t flat, int8_t flat2, uint16_t *op6, uint16_t *op5,
+                                   uint16_t *op4, uint16_t *op3, uint16_t *op2, uint16_t *op1, uint16_t *op0,
+                                   uint16_t *oq0, uint16_t *oq1, uint16_t *oq2, uint16_t *oq3, uint16_t *oq4,
                                    uint16_t *oq5, uint16_t *oq6, int bd) {
     if (flat2 && flat && mask) {
         const uint16_t p6 = *op6;
@@ -629,47 +594,38 @@ static INLINE void highbd_filter14(int8_t mask, uint8_t thresh, int8_t flat, int
         // 13-tap filter [1, 1, 1, 1, 1, 2, 2, 2, 1, 1, 1, 1, 1]
         *op5 = ROUND_POWER_OF_TWO(p6 * 7 + p5 * 2 + p4 * 2 + p3 + p2 + p1 + p0 + q0, 4);
         *op4 = ROUND_POWER_OF_TWO(p6 * 5 + p5 * 2 + p4 * 2 + p3 * 2 + p2 + p1 + p0 + q0 + q1, 4);
-        *op3 = ROUND_POWER_OF_TWO(p6 * 4 + p5 + p4 * 2 + p3 * 2 + p2 * 2 + p1 + p0 + q0 + q1 + q2,
-                                  4);
-        *op2 = ROUND_POWER_OF_TWO(
-            p6 * 3 + p5 + p4 + p3 * 2 + p2 * 2 + p1 * 2 + p0 + q0 + q1 + q2 + q3, 4);
-        *op1 = ROUND_POWER_OF_TWO(
-            p6 * 2 + p5 + p4 + p3 + p2 * 2 + p1 * 2 + p0 * 2 + q0 + q1 + q2 + q3 + q4, 4);
-        *op0 = ROUND_POWER_OF_TWO(
-            p6 + p5 + p4 + p3 + p2 + p1 * 2 + p0 * 2 + q0 * 2 + q1 + q2 + q3 + q4 + q5, 4);
-        *oq0 = ROUND_POWER_OF_TWO(
-            p5 + p4 + p3 + p2 + p1 + p0 * 2 + q0 * 2 + q1 * 2 + q2 + q3 + q4 + q5 + q6, 4);
-        *oq1 = ROUND_POWER_OF_TWO(
-            p4 + p3 + p2 + p1 + p0 + q0 * 2 + q1 * 2 + q2 * 2 + q3 + q4 + q5 + q6 * 2, 4);
-        *oq2 = ROUND_POWER_OF_TWO(
-            p3 + p2 + p1 + p0 + q0 + q1 * 2 + q2 * 2 + q3 * 2 + q4 + q5 + q6 * 3, 4);
-        *oq3 = ROUND_POWER_OF_TWO(p2 + p1 + p0 + q0 + q1 + q2 * 2 + q3 * 2 + q4 * 2 + q5 + q6 * 4,
-                                  4);
+        *op3 = ROUND_POWER_OF_TWO(p6 * 4 + p5 + p4 * 2 + p3 * 2 + p2 * 2 + p1 + p0 + q0 + q1 + q2, 4);
+        *op2 = ROUND_POWER_OF_TWO(p6 * 3 + p5 + p4 + p3 * 2 + p2 * 2 + p1 * 2 + p0 + q0 + q1 + q2 + q3, 4);
+        *op1 = ROUND_POWER_OF_TWO(p6 * 2 + p5 + p4 + p3 + p2 * 2 + p1 * 2 + p0 * 2 + q0 + q1 + q2 + q3 + q4, 4);
+        *op0 = ROUND_POWER_OF_TWO(p6 + p5 + p4 + p3 + p2 + p1 * 2 + p0 * 2 + q0 * 2 + q1 + q2 + q3 + q4 + q5, 4);
+        *oq0 = ROUND_POWER_OF_TWO(p5 + p4 + p3 + p2 + p1 + p0 * 2 + q0 * 2 + q1 * 2 + q2 + q3 + q4 + q5 + q6, 4);
+        *oq1 = ROUND_POWER_OF_TWO(p4 + p3 + p2 + p1 + p0 + q0 * 2 + q1 * 2 + q2 * 2 + q3 + q4 + q5 + q6 * 2, 4);
+        *oq2 = ROUND_POWER_OF_TWO(p3 + p2 + p1 + p0 + q0 + q1 * 2 + q2 * 2 + q3 * 2 + q4 + q5 + q6 * 3, 4);
+        *oq3 = ROUND_POWER_OF_TWO(p2 + p1 + p0 + q0 + q1 + q2 * 2 + q3 * 2 + q4 * 2 + q5 + q6 * 4, 4);
         *oq4 = ROUND_POWER_OF_TWO(p1 + p0 + q0 + q1 + q2 + q3 * 2 + q4 * 2 + q5 * 2 + q6 * 5, 4);
         *oq5 = ROUND_POWER_OF_TWO(p0 + q0 + q1 + q2 + q3 + q4 * 2 + q5 * 2 + q6 * 7, 4);
     } else {
         highbd_filter8(mask, thresh, flat, op3, op2, op1, op0, oq0, oq1, oq2, oq3, bd);
     }
 }
-static void highbd_mb_lpf_horizontal_edge_w(uint16_t *s, int p, const uint8_t *blimit,
-                                            const uint8_t *limit, const uint8_t *thresh, int count,
-                                            int bd) {
+static void highbd_mb_lpf_horizontal_edge_w(uint16_t *s, int p, const uint8_t *blimit, const uint8_t *limit,
+                                            const uint8_t *thresh, int count, int bd) {
     int i;
     int step = 4;
 
     // loop filter designed to work using chars so that we can make maximum use
     // of 8 bit simd instructions.
     for (i = 0; i < step * count; ++i) {
-        const uint16_t p3 = s[-4 * p];
-        const uint16_t p2 = s[-3 * p];
-        const uint16_t p1 = s[-2 * p];
-        const uint16_t p0 = s[-p];
-        const uint16_t q0 = s[0 * p];
-        const uint16_t q1 = s[1 * p];
-        const uint16_t q2 = s[2 * p];
-        const uint16_t q3 = s[3 * p];
-        const int8_t mask = highbd_filter_mask(*limit, *blimit, p3, p2, p1, p0, q0, q1, q2, q3, bd);
-        const int8_t flat = highbd_flat_mask4(1, p3, p2, p1, p0, q0, q1, q2, q3, bd);
+        const uint16_t p3   = s[-4 * p];
+        const uint16_t p2   = s[-3 * p];
+        const uint16_t p1   = s[-2 * p];
+        const uint16_t p0   = s[-p];
+        const uint16_t q0   = s[0 * p];
+        const uint16_t q1   = s[1 * p];
+        const uint16_t q2   = s[2 * p];
+        const uint16_t q3   = s[3 * p];
+        const int8_t   mask = highbd_filter_mask(*limit, *blimit, p3, p2, p1, p0, q0, q1, q2, q3, bd);
+        const int8_t   flat = highbd_flat_mask4(1, p3, p2, p1, p0, q0, q1, q2, q3, bd);
 
         const int8_t flat2 = highbd_flat_mask4(
             1, s[-7 * p], s[-6 * p], s[-5 * p], p0, q0, s[4 * p], s[5 * p], s[6 * p], bd);
@@ -696,13 +652,12 @@ static void highbd_mb_lpf_horizontal_edge_w(uint16_t *s, int p, const uint8_t *b
         ++s;
     }
 }
-void svt_aom_highbd_lpf_horizontal_14_c(uint16_t *s, int pitch, const uint8_t *blimit,
-                                        const uint8_t *limit, const uint8_t *thresh, int bd) {
+void svt_aom_highbd_lpf_horizontal_14_c(uint16_t *s, int pitch, const uint8_t *blimit, const uint8_t *limit,
+                                        const uint8_t *thresh, int bd) {
     highbd_mb_lpf_horizontal_edge_w(s, pitch, blimit, limit, thresh, 1, bd);
 }
-static INLINE int8_t highbd_filter_mask3_chroma(uint8_t limit, uint8_t blimit, uint16_t p2,
-                                                uint16_t p1, uint16_t p0, uint16_t q0, uint16_t q1,
-                                                uint16_t q2, int bd) {
+static INLINE int8_t highbd_filter_mask3_chroma(uint8_t limit, uint8_t blimit, uint16_t p2, uint16_t p1, uint16_t p0,
+                                                uint16_t q0, uint16_t q1, uint16_t q2, int bd) {
     int8_t  mask     = 0;
     int16_t limit16  = (uint16_t)limit << (bd - 8);
     int16_t blimit16 = (uint16_t)blimit << (bd - 8);
@@ -713,9 +668,8 @@ static INLINE int8_t highbd_filter_mask3_chroma(uint8_t limit, uint8_t blimit, u
     mask |= (abs(p0 - q0) * 2 + abs(p1 - q1) / 2 > blimit16) * -1;
     return ~mask;
 }
-static INLINE void highbd_filter6(int8_t mask, uint8_t thresh, int8_t flat, uint16_t *op2,
-                                  uint16_t *op1, uint16_t *op0, uint16_t *oq0, uint16_t *oq1,
-                                  uint16_t *oq2, int bd) {
+static INLINE void highbd_filter6(int8_t mask, uint8_t thresh, int8_t flat, uint16_t *op2, uint16_t *op1, uint16_t *op0,
+                                  uint16_t *oq0, uint16_t *oq1, uint16_t *oq2, int bd) {
     if (flat && mask) {
         const uint16_t p2 = *op2, p1 = *op1, p0 = *op0;
         const uint16_t q0 = *oq0, q1 = *oq1, q2 = *oq2;
@@ -729,22 +683,22 @@ static INLINE void highbd_filter6(int8_t mask, uint8_t thresh, int8_t flat, uint
         highbd_filter4(mask, thresh, op1, op0, oq0, oq1, bd);
     }
 }
-void svt_aom_highbd_lpf_vertical_6_c(uint16_t *s, int pitch, const uint8_t *blimit,
-                                     const uint8_t *limit, const uint8_t *thresh, int bd) {
+void svt_aom_highbd_lpf_vertical_6_c(uint16_t *s, int pitch, const uint8_t *blimit, const uint8_t *limit,
+                                     const uint8_t *thresh, int bd) {
     int i;
     int count = 4;
 
     for (i = 0; i < count; ++i) {
         const uint16_t p2 = s[-3], p1 = s[-2], p0 = s[-1];
         const uint16_t q0 = s[0], q1 = s[1], q2 = s[2];
-        const int8_t mask = highbd_filter_mask3_chroma(*limit, *blimit, p2, p1, p0, q0, q1, q2, bd);
-        const int8_t flat = highbd_flat_mask3_chroma(1, p2, p1, p0, q0, q1, q2, bd);
+        const int8_t   mask = highbd_filter_mask3_chroma(*limit, *blimit, p2, p1, p0, q0, q1, q2, bd);
+        const int8_t   flat = highbd_flat_mask3_chroma(1, p2, p1, p0, q0, q1, q2, bd);
         highbd_filter6(mask, *thresh, flat, s - 3, s - 2, s - 1, s, s + 1, s + 2, bd);
         s += pitch;
     }
 }
-void svt_aom_highbd_lpf_horizontal_6_c(uint16_t *s, int p, const uint8_t *blimit,
-                                       const uint8_t *limit, const uint8_t *thresh, int bd) {
+void svt_aom_highbd_lpf_horizontal_6_c(uint16_t *s, int p, const uint8_t *blimit, const uint8_t *limit,
+                                       const uint8_t *thresh, int bd) {
     int i;
     int count = 4;
 
@@ -756,30 +710,27 @@ void svt_aom_highbd_lpf_horizontal_6_c(uint16_t *s, int p, const uint8_t *blimit
 
         const int8_t mask = highbd_filter_mask3_chroma(*limit, *blimit, p2, p1, p0, q0, q1, q2, bd);
         const int8_t flat = highbd_flat_mask3_chroma(1, p2, p1, p0, q0, q1, q2, bd);
-        highbd_filter6(
-            mask, *thresh, flat, s - 3 * p, s - 2 * p, s - 1 * p, s, s + 1 * p, s + 2 * p, bd);
+        highbd_filter6(mask, *thresh, flat, s - 3 * p, s - 2 * p, s - 1 * p, s, s + 1 * p, s + 2 * p, bd);
         ++s;
     }
 }
 
-static void highbd_mb_lpf_vertical_edge_w(uint16_t *s, int p, const uint8_t *blimit,
-                                          const uint8_t *limit, const uint8_t *thresh, int count,
-                                          int bd) {
+static void highbd_mb_lpf_vertical_edge_w(uint16_t *s, int p, const uint8_t *blimit, const uint8_t *limit,
+                                          const uint8_t *thresh, int count, int bd) {
     int i;
 
     for (i = 0; i < count; ++i) {
-        const uint16_t p3 = s[-4];
-        const uint16_t p2 = s[-3];
-        const uint16_t p1 = s[-2];
-        const uint16_t p0 = s[-1];
-        const uint16_t q0 = s[0];
-        const uint16_t q1 = s[1];
-        const uint16_t q2 = s[2];
-        const uint16_t q3 = s[3];
-        const int8_t mask = highbd_filter_mask(*limit, *blimit, p3, p2, p1, p0, q0, q1, q2, q3, bd);
-        const int8_t flat = highbd_flat_mask4(1, p3, p2, p1, p0, q0, q1, q2, q3, bd);
-        const int8_t flat2 = highbd_flat_mask4(
-            1, s[-7], s[-6], s[-5], p0, q0, s[4], s[5], s[6], bd);
+        const uint16_t p3    = s[-4];
+        const uint16_t p2    = s[-3];
+        const uint16_t p1    = s[-2];
+        const uint16_t p0    = s[-1];
+        const uint16_t q0    = s[0];
+        const uint16_t q1    = s[1];
+        const uint16_t q2    = s[2];
+        const uint16_t q3    = s[3];
+        const int8_t   mask  = highbd_filter_mask(*limit, *blimit, p3, p2, p1, p0, q0, q1, q2, q3, bd);
+        const int8_t   flat  = highbd_flat_mask4(1, p3, p2, p1, p0, q0, q1, q2, q3, bd);
+        const int8_t   flat2 = highbd_flat_mask4(1, s[-7], s[-6], s[-5], p0, q0, s[4], s[5], s[6], bd);
 
         highbd_filter14(mask,
                         *thresh,
@@ -803,15 +754,14 @@ static void highbd_mb_lpf_vertical_edge_w(uint16_t *s, int p, const uint8_t *bli
         s += p;
     }
 }
-void svt_aom_highbd_lpf_vertical_14_c(uint16_t *s, int p, const uint8_t *blimit,
-                                      const uint8_t *limit, const uint8_t *thresh, int bd) {
+void svt_aom_highbd_lpf_vertical_14_c(uint16_t *s, int p, const uint8_t *blimit, const uint8_t *limit,
+                                      const uint8_t *thresh, int bd) {
     highbd_mb_lpf_vertical_edge_w(s, p, blimit, limit, thresh, 4, bd);
 }
 
-static INLINE void filter14(int8_t mask, uint8_t thresh, int8_t flat, int8_t flat2, uint8_t *op6,
-                            uint8_t *op5, uint8_t *op4, uint8_t *op3, uint8_t *op2, uint8_t *op1,
-                            uint8_t *op0, uint8_t *oq0, uint8_t *oq1, uint8_t *oq2, uint8_t *oq3,
-                            uint8_t *oq4, uint8_t *oq5, uint8_t *oq6) {
+static INLINE void filter14(int8_t mask, uint8_t thresh, int8_t flat, int8_t flat2, uint8_t *op6, uint8_t *op5,
+                            uint8_t *op4, uint8_t *op3, uint8_t *op2, uint8_t *op1, uint8_t *op0, uint8_t *oq0,
+                            uint8_t *oq1, uint8_t *oq2, uint8_t *oq3, uint8_t *oq4, uint8_t *oq5, uint8_t *oq6) {
     if (flat2 && flat && mask) {
         const uint8_t p6 = *op6, p5 = *op5, p4 = *op4, p3 = *op3, p2 = *op2, p1 = *op1, p0 = *op0;
         const uint8_t q0 = *oq0, q1 = *oq1, q2 = *oq2, q3 = *oq3, q4 = *oq4, q5 = *oq5, q6 = *oq6;
@@ -819,22 +769,14 @@ static INLINE void filter14(int8_t mask, uint8_t thresh, int8_t flat, int8_t fla
         // 13-tap filter [1, 1, 1, 1, 1, 2, 2, 2, 1, 1, 1, 1, 1]
         *op5 = ROUND_POWER_OF_TWO(p6 * 7 + p5 * 2 + p4 * 2 + p3 + p2 + p1 + p0 + q0, 4);
         *op4 = ROUND_POWER_OF_TWO(p6 * 5 + p5 * 2 + p4 * 2 + p3 * 2 + p2 + p1 + p0 + q0 + q1, 4);
-        *op3 = ROUND_POWER_OF_TWO(p6 * 4 + p5 + p4 * 2 + p3 * 2 + p2 * 2 + p1 + p0 + q0 + q1 + q2,
-                                  4);
-        *op2 = ROUND_POWER_OF_TWO(
-            p6 * 3 + p5 + p4 + p3 * 2 + p2 * 2 + p1 * 2 + p0 + q0 + q1 + q2 + q3, 4);
-        *op1 = ROUND_POWER_OF_TWO(
-            p6 * 2 + p5 + p4 + p3 + p2 * 2 + p1 * 2 + p0 * 2 + q0 + q1 + q2 + q3 + q4, 4);
-        *op0 = ROUND_POWER_OF_TWO(
-            p6 + p5 + p4 + p3 + p2 + p1 * 2 + p0 * 2 + q0 * 2 + q1 + q2 + q3 + q4 + q5, 4);
-        *oq0 = ROUND_POWER_OF_TWO(
-            p5 + p4 + p3 + p2 + p1 + p0 * 2 + q0 * 2 + q1 * 2 + q2 + q3 + q4 + q5 + q6, 4);
-        *oq1 = ROUND_POWER_OF_TWO(
-            p4 + p3 + p2 + p1 + p0 + q0 * 2 + q1 * 2 + q2 * 2 + q3 + q4 + q5 + q6 * 2, 4);
-        *oq2 = ROUND_POWER_OF_TWO(
-            p3 + p2 + p1 + p0 + q0 + q1 * 2 + q2 * 2 + q3 * 2 + q4 + q5 + q6 * 3, 4);
-        *oq3 = ROUND_POWER_OF_TWO(p2 + p1 + p0 + q0 + q1 + q2 * 2 + q3 * 2 + q4 * 2 + q5 + q6 * 4,
-                                  4);
+        *op3 = ROUND_POWER_OF_TWO(p6 * 4 + p5 + p4 * 2 + p3 * 2 + p2 * 2 + p1 + p0 + q0 + q1 + q2, 4);
+        *op2 = ROUND_POWER_OF_TWO(p6 * 3 + p5 + p4 + p3 * 2 + p2 * 2 + p1 * 2 + p0 + q0 + q1 + q2 + q3, 4);
+        *op1 = ROUND_POWER_OF_TWO(p6 * 2 + p5 + p4 + p3 + p2 * 2 + p1 * 2 + p0 * 2 + q0 + q1 + q2 + q3 + q4, 4);
+        *op0 = ROUND_POWER_OF_TWO(p6 + p5 + p4 + p3 + p2 + p1 * 2 + p0 * 2 + q0 * 2 + q1 + q2 + q3 + q4 + q5, 4);
+        *oq0 = ROUND_POWER_OF_TWO(p5 + p4 + p3 + p2 + p1 + p0 * 2 + q0 * 2 + q1 * 2 + q2 + q3 + q4 + q5 + q6, 4);
+        *oq1 = ROUND_POWER_OF_TWO(p4 + p3 + p2 + p1 + p0 + q0 * 2 + q1 * 2 + q2 * 2 + q3 + q4 + q5 + q6 * 2, 4);
+        *oq2 = ROUND_POWER_OF_TWO(p3 + p2 + p1 + p0 + q0 + q1 * 2 + q2 * 2 + q3 * 2 + q4 + q5 + q6 * 3, 4);
+        *oq3 = ROUND_POWER_OF_TWO(p2 + p1 + p0 + q0 + q1 + q2 * 2 + q3 * 2 + q4 * 2 + q5 + q6 * 4, 4);
         *oq4 = ROUND_POWER_OF_TWO(p1 + p0 + q0 + q1 + q2 + q3 * 2 + q4 * 2 + q5 * 2 + q6 * 5, 4);
         *oq5 = ROUND_POWER_OF_TWO(p0 + q0 + q1 + q2 + q3 + q4 * 2 + q5 * 2 + q6 * 7, 4);
     } else {
@@ -850,10 +792,10 @@ static void mb_lpf_horizontal_edge_w(uint8_t *s, int p, const uint8_t *blimit, c
     // loop filter designed to work using chars so that we can make maximum use
     // of 8 bit simd instructions.
     for (i = 0; i < step * count; ++i) {
-        const uint8_t p6 = s[-7 * p], p5 = s[-6 * p], p4 = s[-5 * p], p3 = s[-4 * p],
-                      p2 = s[-3 * p], p1 = s[-2 * p], p0 = s[-p];
-        const uint8_t q0 = s[0 * p], q1 = s[1 * p], q2 = s[2 * p], q3 = s[3 * p], q4 = s[4 * p],
-                      q5 = s[5 * p], q6 = s[6 * p];
+        const uint8_t p6 = s[-7 * p], p5 = s[-6 * p], p4 = s[-5 * p], p3 = s[-4 * p], p2 = s[-3 * p], p1 = s[-2 * p],
+                      p0 = s[-p];
+        const uint8_t q0 = s[0 * p], q1 = s[1 * p], q2 = s[2 * p], q3 = s[3 * p], q4 = s[4 * p], q5 = s[5 * p],
+                      q6   = s[6 * p];
         const int8_t mask  = filter_mask(*limit, *blimit, p3, p2, p1, p0, q0, q1, q2, q3);
         const int8_t flat  = flat_mask4(1, p3, p2, p1, p0, q0, q1, q2, q3);
         const int8_t flat2 = flat_mask4(1, p6, p5, p4, p0, q0, q4, q5, q6);
@@ -890,8 +832,7 @@ static void mb_lpf_vertical_edge_w(uint8_t *s, int p, const uint8_t *blimit, con
     int i;
 
     for (i = 0; i < count; ++i) {
-        const uint8_t p6 = s[-7], p5 = s[-6], p4 = s[-5], p3 = s[-4], p2 = s[-3], p1 = s[-2],
-                      p0 = s[-1];
+        const uint8_t p6 = s[-7], p5 = s[-6], p4 = s[-5], p3 = s[-4], p2 = s[-3], p1 = s[-2], p0 = s[-1];
         const uint8_t q0 = s[0], q1 = s[1], q2 = s[2], q3 = s[3], q4 = s[4], q5 = s[5], q6 = s[6];
         const int8_t  mask  = filter_mask(*limit, *blimit, p3, p2, p1, p0, q0, q1, q2, q3);
         const int8_t  flat  = flat_mask4(1, p3, p2, p1, p0, q0, q1, q2, q3);
@@ -919,7 +860,6 @@ static void mb_lpf_vertical_edge_w(uint8_t *s, int p, const uint8_t *blimit, con
     }
 }
 
-void svt_aom_lpf_vertical_14_c(uint8_t *s, int p, const uint8_t *blimit, const uint8_t *limit,
-                               const uint8_t *thresh) {
+void svt_aom_lpf_vertical_14_c(uint8_t *s, int p, const uint8_t *blimit, const uint8_t *limit, const uint8_t *thresh) {
     mb_lpf_vertical_edge_w(s, p, blimit, limit, thresh, 4);
 }

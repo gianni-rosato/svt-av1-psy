@@ -23,9 +23,6 @@
 #include "EbLog.h"
 #include "EbPictureDecisionProcess.h"
 #include "firstpass.h"
-#if FIX_ISSUE_2064
-#include "EbPictureDemuxResults.h"
-#endif
 /**************************************
  * Context
  **************************************/
@@ -50,9 +47,6 @@ typedef struct InitialRateControlContext {
     EbFifo   *motion_estimation_results_input_fifo_ptr;
     EbFifo   *initialrate_control_results_output_fifo_ptr;
     LadQueue *lad_queue;
-#if FIX_ISSUE_2064
-    EbFifo *picture_demux_results_output_fifo_ptr;
-#endif
 
 } InitialRateControlContext;
 
@@ -71,13 +65,7 @@ static void initial_rate_control_context_dctor(EbPtr p) {
 /************************************************
  * Initial Rate Control Context Constructor
  ************************************************/
-EbErrorType svt_aom_initial_rate_control_context_ctor(EbThreadContext *thread_ctx,
-#if FIX_ISSUE_2064
-                                                      const EbEncHandle *enc_handle_ptr,
-                                                      int                index) {
-#else
-                                                      const EbEncHandle *enc_handle_ptr) {
-#endif
+EbErrorType svt_aom_initial_rate_control_context_ctor(EbThreadContext *thread_ctx, const EbEncHandle *enc_handle_ptr) {
     InitialRateControlContext *context_ptr;
     EB_CALLOC_ARRAY(context_ptr, 1);
     thread_ctx->priv  = context_ptr;
@@ -85,13 +73,8 @@ EbErrorType svt_aom_initial_rate_control_context_ctor(EbThreadContext *thread_ct
 
     context_ptr->motion_estimation_results_input_fifo_ptr = svt_system_resource_get_consumer_fifo(
         enc_handle_ptr->motion_estimation_results_resource_ptr, 0);
-    context_ptr->initialrate_control_results_output_fifo_ptr =
-        svt_system_resource_get_producer_fifo(
-            enc_handle_ptr->initial_rate_control_results_resource_ptr, 0);
-#if FIX_ISSUE_2064
-    context_ptr->picture_demux_results_output_fifo_ptr = svt_system_resource_get_producer_fifo(
-        enc_handle_ptr->picture_demux_results_resource_ptr, index);
-#endif
+    context_ptr->initialrate_control_results_output_fifo_ptr = svt_system_resource_get_producer_fifo(
+        enc_handle_ptr->initial_rate_control_results_resource_ptr, 0);
 
     EB_MALLOC(context_ptr->lad_queue, sizeof(LadQueue));
 
@@ -105,9 +88,8 @@ EbErrorType svt_aom_initial_rate_control_context_ctor(EbThreadContext *thread_ct
     return EB_ErrorNone;
 }
 
-void svt_av1_build_quantizer(EbBitDepth bit_depth, int32_t y_dc_delta_q, int32_t u_dc_delta_q,
-                             int32_t u_ac_delta_q, int32_t v_dc_delta_q, int32_t v_ac_delta_q,
-                             Quants *const quants, Dequants *const deq);
+void svt_av1_build_quantizer(EbBitDepth bit_depth, int32_t y_dc_delta_q, int32_t u_dc_delta_q, int32_t u_ac_delta_q,
+                             int32_t v_dc_delta_q, int32_t v_ac_delta_q, Quants *const quants, Dequants *const deq);
 
 #if LAD_MG_PRINT
 /*
@@ -145,41 +127,17 @@ static void push_to_lad_queue(PictureParentControlSet *pcs, InitialRateControlCo
 }
 
 /* send picture out from irc process */
-static void irc_send_picture_out(InitialRateControlContext *ctx, PictureParentControlSet *pcs,
-                                 Bool superres_recode) {
+static void irc_send_picture_out(InitialRateControlContext *ctx, PictureParentControlSet *pcs, Bool superres_recode) {
     EbObjectWrapper *out_results_wrapper;
-#if FIX_ISSUE_2064
-    if (!superres_recode) {
-        // Get Empty Results Object
-        svt_get_empty_object(ctx->initialrate_control_results_output_fifo_ptr,
-                             &out_results_wrapper);
-        InitialRateControlResults *out_results = (InitialRateControlResults *)
-                                                     out_results_wrapper->object_ptr;
-        // SVT_LOG("iRC Out:%lld\n",pcs->picture_number);
-        out_results->pcs_wrapper = pcs->p_pcs_wrapper_ptr;
-        svt_post_full_object(out_results_wrapper);
-    } else {
-        // Bypass SBO process (post frame to pic mgr process directly) since TPL will not be applied to
-        // super-res recode frames and these frames are already in EncodeContext::ref_pic_list.
-        svt_get_empty_object(ctx->picture_demux_results_output_fifo_ptr, &out_results_wrapper);
-        PictureDemuxResults *out_results = (PictureDemuxResults *)out_results_wrapper->object_ptr;
-        out_results->pcs_wrapper         = pcs->p_pcs_wrapper_ptr;
-        out_results->picture_type        = EB_PIC_SUPERRES_INPUT;
-        svt_post_full_object(out_results_wrapper);
-    }
-#else
     // Get Empty Results Object
     svt_get_empty_object(ctx->initialrate_control_results_output_fifo_ptr, &out_results_wrapper);
-    InitialRateControlResults *out_results = (InitialRateControlResults *)
-                                                 out_results_wrapper->object_ptr;
+    InitialRateControlResults *out_results = (InitialRateControlResults *)out_results_wrapper->object_ptr;
     // SVT_LOG("iRC Out:%lld\n",pcs->picture_number);
-    out_results->pcs_wrapper = pcs->p_pcs_wrapper_ptr;
+    out_results->pcs_wrapper     = pcs->p_pcs_wrapper_ptr;
     out_results->superres_recode = superres_recode;
     svt_post_full_object(out_results_wrapper);
-#endif
 }
-static uint8_t is_frame_already_exists(PictureParentControlSet *pcs, uint32_t end_index,
-                                       uint64_t pic_num) {
+static uint8_t is_frame_already_exists(PictureParentControlSet *pcs, uint32_t end_index, uint64_t pic_num) {
     for (uint32_t i = 0; i < end_index; i++)
         if (pcs->tpl_group[i]->picture_number == pic_num)
             return 1;
@@ -195,8 +153,7 @@ void validate_pic_for_tpl(PictureParentControlSet *pcs, uint32_t pic_index) {
         !svt_aom_is_pic_skipped(pcs->tpl_group[pic_index])) {
         // Discard low important pictures from tpl group
         if (pcs->tpl_ctrls.reduced_tpl_group >= 0) {
-            if (pcs->tpl_group[pic_index]->temporal_layer_index <=
-                pcs->tpl_ctrls.reduced_tpl_group) {
+            if (pcs->tpl_group[pic_index]->temporal_layer_index <= pcs->tpl_ctrls.reduced_tpl_group) {
                 pcs->tpl_valid_pic[pic_index] = 1;
                 pcs->used_tpl_frame_num++;
             }
@@ -210,8 +167,8 @@ void validate_pic_for_tpl(PictureParentControlSet *pcs, uint32_t pic_index) {
 /*
  copy the number of pcs entries from the the output queue to extended  buffer
 */
-void store_extended_group(PictureParentControlSet *pcs, InitialRateControlContext *ctx,
-                          uint32_t start_idx, int64_t end_mg) {
+void store_extended_group(PictureParentControlSet *pcs, InitialRateControlContext *ctx, uint32_t start_idx,
+                          int64_t end_mg) {
     LadQueue      *queue = ctx->lad_queue;
     uint32_t       pic_i = 0;
     uint32_t       q_idx = start_idx;
@@ -256,15 +213,13 @@ void store_extended_group(PictureParentControlSet *pcs, InitialRateControlContex
     if (pcs->scs->static_config.startup_mg_size > 0) {
         if (pcs->slice_type == I_SLICE) {
             limited_tpl_group_size = MIN(
-                1 + pcs->scs->tpl_lad_mg * (1 << pcs->scs->static_config.hierarchical_levels) +
-                    mg_size,
+                1 + pcs->scs->tpl_lad_mg * (1 << pcs->scs->static_config.hierarchical_levels) + mg_size,
                 pcs->ext_group_size);
         } else {
             const uint32_t startup_mg_size = 1 << pcs->scs->static_config.startup_mg_size;
             if (pcs->last_idr_picture + startup_mg_size == pcs->picture_number) {
                 limited_tpl_group_size = MIN(
-                    pcs->scs->tpl_lad_mg * (1 << pcs->scs->static_config.hierarchical_levels) +
-                        mg_size,
+                    pcs->scs->tpl_lad_mg * (1 << pcs->scs->static_config.hierarchical_levels) + mg_size,
                     pcs->ext_group_size);
             }
         }
@@ -302,8 +257,7 @@ void store_extended_group(PictureParentControlSet *pcs, InitialRateControlContex
     }
 #if LAD_MG_PRINT
     if (log) {
-        SVT_LOG(
-            "\n NEW TPL group Pic:%lld  size:%i  \n", pcs->picture_number, pcs->ntpl_group_size);
+        SVT_LOG("\n NEW TPL group Pic:%lld  size:%i  \n", pcs->picture_number, pcs->ntpl_group_size);
         for (uint32_t i = 0; i < pcs->ntpl_group_size; i++) {
             if (pcs->ext_group[i]->temporal_layer_index == 0)
                 SVT_LOG(" | ");
@@ -345,20 +299,17 @@ static void process_lad_queue(InitialRateControlContext *ctx, uint8_t pass_thru)
                     while (tmp_entry->pcs != NULL) {
                         PictureParentControlSet *tmp_pcs = tmp_entry->pcs;
 
-                        svt_aom_assert_err(tmp_pcs->ext_mg_id >= head_pcs->ext_mg_id,
-                                           "err in mg id");
+                        svt_aom_assert_err(tmp_pcs->ext_mg_id >= head_pcs->ext_mg_id, "err in mg id");
                         //adjust the lad if we hit an EOS
                         if (tmp_pcs->end_of_sequence_flag)
-                            target_mgs = MIN(
-                                target_mgs,
-                                (uint8_t)(tmp_pcs->ext_mg_id - head_pcs->ext_mg_id +
-                                          1)); //+1: to include the MG where the head belongs
+                            target_mgs = MIN(target_mgs,
+                                             (uint8_t)(tmp_pcs->ext_mg_id - head_pcs->ext_mg_id +
+                                                       1)); //+1: to include the MG where the head belongs
                         if (tmp_pcs->end_of_sequence_flag)
                             head_pcs->end_of_sequence_region = TRUE;
                         if (tmp_pcs->ext_mg_id >= cur_mg) {
                             if (tmp_pcs->ext_mg_id > cur_mg)
-                                svt_aom_assert_err(tmp_pcs->ext_mg_id == cur_mg + 1,
-                                                   "err continuity in mg id");
+                                svt_aom_assert_err(tmp_pcs->ext_mg_id == cur_mg + 1, "err continuity in mg id");
 
                             tot_acc_frames_in_cur_mg++;
 
@@ -369,8 +320,7 @@ static void process_lad_queue(InitialRateControlContext *ctx, uint8_t pass_thru)
                             }
 
                             if (num_mgs == target_mgs) {
-                                store_extended_group(
-                                    head_pcs, ctx, queue->head, tmp_pcs->ext_mg_id);
+                                store_extended_group(head_pcs, ctx, queue->head, tmp_pcs->ext_mg_id);
                                 send_out = 1;
                                 break;
                             }
@@ -400,21 +350,15 @@ static void process_lad_queue(InitialRateControlContext *ctx, uint8_t pass_thru)
                     : (uint64_t)(head_pcs->scs->twopass.stats_buf_ctx->stats_in_end_write -
                                  head_pcs->scs->twopass.stats_buf_ctx->stats_in_start);
                 svt_release_mutex(head_pcs->scs->twopass.stats_buf_ctx->stats_in_write_mutex);
-                head_pcs->frames_in_sw = (int)(head_pcs->stats_in_end_offset -
-                                               head_pcs->stats_in_offset);
+                head_pcs->frames_in_sw = (int)(head_pcs->stats_in_end_offset - head_pcs->stats_in_offset);
                 if (head_pcs->scs->enable_dec_order == 0 && head_pcs->scs->lap_rc &&
                     head_pcs->temporal_layer_index == 0) {
-                    for (uint64_t num_frames = head_pcs->stats_in_offset;
-                         num_frames < head_pcs->stats_in_end_offset;
+                    for (uint64_t num_frames = head_pcs->stats_in_offset; num_frames < head_pcs->stats_in_end_offset;
                          ++num_frames) {
-                        FIRSTPASS_STATS *cur_frame =
-                            head_pcs->scs->twopass.stats_buf_ctx->stats_in_start + num_frames;
-                        if ((int64_t)cur_frame->frame >
-                            head_pcs->scs->twopass.stats_buf_ctx->last_frame_accumulated) {
-                            svt_av1_accumulate_stats(
-                                head_pcs->scs->twopass.stats_buf_ctx->total_stats, cur_frame);
-                            head_pcs->scs->twopass.stats_buf_ctx->last_frame_accumulated =
-                                (int64_t)cur_frame->frame;
+                        FIRSTPASS_STATS *cur_frame = head_pcs->scs->twopass.stats_buf_ctx->stats_in_start + num_frames;
+                        if ((int64_t)cur_frame->frame > head_pcs->scs->twopass.stats_buf_ctx->last_frame_accumulated) {
+                            svt_av1_accumulate_stats(head_pcs->scs->twopass.stats_buf_ctx->total_stats, cur_frame);
+                            head_pcs->scs->twopass.stats_buf_ctx->last_frame_accumulated = (int64_t)cur_frame->frame;
                         }
                     }
                 }
@@ -467,13 +411,10 @@ void *svt_aom_initial_rate_control_kernel(void *input_ptr) {
     // Segments
     for (;;) {
         // Get Input Full Object
-        EB_GET_FULL_OBJECT(context_ptr->motion_estimation_results_input_fifo_ptr,
-                           &in_results_wrapper_ptr);
+        EB_GET_FULL_OBJECT(context_ptr->motion_estimation_results_input_fifo_ptr, &in_results_wrapper_ptr);
 
-        MotionEstimationResults *in_results_ptr = (MotionEstimationResults *)
-                                                      in_results_wrapper_ptr->object_ptr;
-        PictureParentControlSet *pcs = (PictureParentControlSet *)
-                                           in_results_ptr->pcs_wrapper->object_ptr;
+        MotionEstimationResults *in_results_ptr = (MotionEstimationResults *)in_results_wrapper_ptr->object_ptr;
+        PictureParentControlSet *pcs            = (PictureParentControlSet *)in_results_ptr->pcs_wrapper->object_ptr;
 
         // Set the segment counter
         pcs->me_segments_completion_count++;
@@ -491,12 +432,10 @@ void *svt_aom_initial_rate_control_kernel(void *input_ptr) {
                             for (uint32_t i = 0; i < pcs->tpl_group_size; i++) {
                                 if (pcs->tpl_group[i]->slice_type == P_SLICE) {
                                     if (pcs->tpl_group[i]->ext_mg_id == pcs->ext_mg_id + 1)
-                                        svt_aom_release_pa_reference_objects(scs,
-                                                                             pcs->tpl_group[i]);
+                                        svt_aom_release_pa_reference_objects(scs, pcs->tpl_group[i]);
                                 } else {
                                     if (pcs->tpl_group[i]->ext_mg_id == pcs->ext_mg_id)
-                                        svt_aom_release_pa_reference_objects(scs,
-                                                                             pcs->tpl_group[i]);
+                                        svt_aom_release_pa_reference_objects(scs, pcs->tpl_group[i]);
                                 }
                                 if (pcs->tpl_group[i]->non_tf_input)
                                     EB_DELETE(pcs->tpl_group[i]->non_tf_input);

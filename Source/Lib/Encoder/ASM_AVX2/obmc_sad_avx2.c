@@ -27,9 +27,8 @@ static INLINE int32_t xx_hsum_epi32_si32(__m128i v_d) {
 // 8 bit
 ////////////////////////////////////////////////////////////////////////////////
 
-static INLINE unsigned int obmc_sad_w4_avx2(const uint8_t *pre, const int pre_stride,
-                                            const int32_t *wsrc, const int32_t *mask,
-                                            const int height) {
+static INLINE unsigned int obmc_sad_w4_avx2(const uint8_t *pre, const int pre_stride, const int32_t *wsrc,
+                                            const int32_t *mask, const int height) {
     int           n        = 0;
     __m256i       v_sad_d  = _mm256_setzero_si256();
     const __m256i v_bias_d = _mm256_set1_epi32((1 << 12) >> 1);
@@ -67,9 +66,8 @@ static INLINE unsigned int obmc_sad_w4_avx2(const uint8_t *pre, const int pre_st
     return xx_hsum_epi32_si32(v_sad_d_0);
 }
 
-static INLINE unsigned int obmc_sad_w8n_avx2(const uint8_t *pre, const int pre_stride,
-                                             const int32_t *wsrc, const int32_t *mask,
-                                             const int width, const int height) {
+static INLINE unsigned int obmc_sad_w8n_avx2(const uint8_t *pre, const int pre_stride, const int32_t *wsrc,
+                                             const int32_t *mask, const int width, const int height) {
     const int     pre_step = pre_stride - width;
     int           n        = 0;
     __m256i       v_sad_d  = _mm256_setzero_si256();

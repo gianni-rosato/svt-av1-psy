@@ -31,17 +31,15 @@ static void rest_context_dctor(EbPtr p) {
 /******************************************************
  * Enc Dec Context Constructor
  ******************************************************/
-EbErrorType svt_aom_entropy_coding_context_ctor(EbThreadContext   *thread_ctx,
-                                                const EbEncHandle *enc_handle_ptr, int index,
-                                                int rate_control_index) {
+EbErrorType svt_aom_entropy_coding_context_ctor(EbThreadContext *thread_ctx, const EbEncHandle *enc_handle_ptr,
+                                                int index, int rate_control_index) {
     EntropyCodingContext *context_ptr;
     EB_CALLOC_ARRAY(context_ptr, 1);
     thread_ctx->priv  = context_ptr;
     thread_ctx->dctor = rest_context_dctor;
 
-    context_ptr->is_16bit =
-        (Bool)(enc_handle_ptr->scs_instance_array[0]->scs->static_config.encoder_bit_depth >
-               EB_EIGHT_BIT);
+    context_ptr->is_16bit = (Bool)(enc_handle_ptr->scs_instance_array[0]->scs->static_config.encoder_bit_depth >
+                                   EB_EIGHT_BIT);
     ;
 
     // Input/Output System Resource Manager FIFOs
@@ -59,37 +57,17 @@ EbErrorType svt_aom_entropy_coding_context_ctor(EbThreadContext   *thread_ctx,
  * Entropy Coding Reset Neighbor Arrays
  ***********************************************/
 static void entropy_coding_reset_neighbor_arrays(PictureControlSet *pcs, uint16_t tile_idx) {
-#if !CLN_REMOVE_NEIGH_ARRAYS_2
-    svt_aom_neighbor_array_unit_reset(pcs->mode_type_na[tile_idx]);
-#endif
-
     svt_aom_neighbor_array_unit_reset(pcs->partition_context_na[tile_idx]);
-#if !CLN_REMOVE_NEIGH_ARRAYS_2
-    svt_aom_neighbor_array_unit_reset(pcs->skip_flag_na[tile_idx]);
-#endif
 
-#if !FIX_SKIP_NEIGH_ARRAY
-    svt_aom_neighbor_array_unit_reset(pcs->skip_coeff_na[tile_idx]);
-#endif
     svt_aom_neighbor_array_unit_reset(pcs->luma_dc_sign_level_coeff_na[tile_idx]);
     svt_aom_neighbor_array_unit_reset(pcs->cb_dc_sign_level_coeff_na[tile_idx]);
     svt_aom_neighbor_array_unit_reset(pcs->cr_dc_sign_level_coeff_na[tile_idx]);
-#if !CLN_IFS_PATH
-    svt_aom_neighbor_array_unit_reset(pcs->ref_frame_type_na[tile_idx]);
-#endif
-#if !CLN_REMOVE_NEIGH_ARRAYS_2
-    svt_aom_neighbor_array_unit_reset(pcs->intra_luma_mode_na[tile_idx]);
-#endif
-#if !CLN_IFS_PATH
-    svt_aom_neighbor_array_unit_reset32(pcs->interpolation_type_na[tile_idx]);
-#endif
     svt_aom_neighbor_array_unit_reset(pcs->txfm_context_array[tile_idx]);
     svt_aom_neighbor_array_unit_reset(pcs->segmentation_id_pred_array[tile_idx]);
     return;
 }
 
-void svt_aom_get_syntax_rate_from_cdf(int32_t *costs, const AomCdfProb *cdf,
-                                      const int32_t *inv_map);
+void svt_aom_get_syntax_rate_from_cdf(int32_t *costs, const AomCdfProb *cdf, const int32_t *inv_map);
 
 void svt_av1_cost_tokens_from_cdf(int32_t *costs, const AomCdfProb *cdf, const int32_t *inv_map) {
     // int32_t i;
@@ -122,10 +100,8 @@ static void build_nmv_component_cost_table(int32_t *mvcost, const NmvComponent *
     svt_av1_cost_tokens_from_cdf(sign_cost, mvcomp->sign_cdf, NULL);
     svt_av1_cost_tokens_from_cdf(class_cost, mvcomp->classes_cdf, NULL);
     svt_av1_cost_tokens_from_cdf(class0_cost, mvcomp->class0_cdf, NULL);
-    for (i = 0; i < MV_OFFSET_BITS; ++i)
-        svt_av1_cost_tokens_from_cdf(bits_cost[i], mvcomp->bits_cdf[i], NULL);
-    for (i = 0; i < CLASS0_SIZE; ++i)
-        svt_av1_cost_tokens_from_cdf(class0_fp_cost[i], mvcomp->class0_fp_cdf[i], NULL);
+    for (i = 0; i < MV_OFFSET_BITS; ++i) svt_av1_cost_tokens_from_cdf(bits_cost[i], mvcomp->bits_cdf[i], NULL);
+    for (i = 0; i < CLASS0_SIZE; ++i) svt_av1_cost_tokens_from_cdf(class0_fp_cost[i], mvcomp->class0_fp_cdf[i], NULL);
     svt_av1_cost_tokens_from_cdf(fp_cost, mvcomp->fp_cdf, NULL);
 
     if (precision > MV_SUBPEL_LOW_PRECISION) {
@@ -246,8 +222,8 @@ void *svt_aom_entropy_coding_kernel(void *input_ptr) {
         EB_GET_FULL_OBJECT(context_ptr->enc_dec_input_fifo_ptr, &rest_results_wrapper);
 
         RestResults        *rest_results = (RestResults *)rest_results_wrapper->object_ptr;
-        PictureControlSet  *pcs = (PictureControlSet *)rest_results->pcs_wrapper->object_ptr;
-        SequenceControlSet *scs = pcs->scs;
+        PictureControlSet  *pcs          = (PictureControlSet *)rest_results->pcs_wrapper->object_ptr;
+        SequenceControlSet *scs          = pcs->scs;
         // SB Constants
 
         uint8_t sb_size = (uint8_t)scs->sb_size;
@@ -259,10 +235,8 @@ void *svt_aom_entropy_coding_kernel(void *input_ptr) {
         const uint16_t   tile_cnt        = cm->tiles_info.tile_rows * cm->tiles_info.tile_cols;
         const uint16_t   tile_col        = tile_idx % cm->tiles_info.tile_cols;
         const uint16_t   tile_row        = tile_idx / cm->tiles_info.tile_cols;
-        const uint16_t   tile_sb_start_x = cm->tiles_info.tile_col_start_mi[tile_col] >>
-            scs->seq_header.sb_size_log2;
-        const uint16_t tile_sb_start_y = cm->tiles_info.tile_row_start_mi[tile_row] >>
-            scs->seq_header.sb_size_log2;
+        const uint16_t   tile_sb_start_x = cm->tiles_info.tile_col_start_mi[tile_col] >> scs->seq_header.sb_size_log2;
+        const uint16_t   tile_sb_start_y = cm->tiles_info.tile_row_start_mi[tile_row] >> scs->seq_header.sb_size_log2;
 
         uint16_t tile_width_in_sb = (cm->tiles_info.tile_col_start_mi[tile_col + 1] -
                                      cm->tiles_info.tile_col_start_mi[tile_col]) >>
@@ -287,8 +261,7 @@ void *svt_aom_entropy_coding_kernel(void *input_ptr) {
             for (uint32_t y_sb_index = 0; y_sb_index < tile_height_in_sb; ++y_sb_index) {
                 for (uint32_t x_sb_index = 0; x_sb_index < tile_width_in_sb; ++x_sb_index) {
                     uint16_t    sb_index = (uint16_t)((x_sb_index + tile_sb_start_x) +
-                                                   (y_sb_index + tile_sb_start_y) *
-                                                       pic_width_in_sb);
+                                                   (y_sb_index + tile_sb_start_y) * pic_width_in_sb);
                     SuperBlock *sb_ptr   = pcs->sb_ptr_array[sb_index];
 
                     context_ptr->sb_origin_x = (x_sb_index + tile_sb_start_x) << sb_size_log2;
@@ -298,14 +271,8 @@ void *svt_aom_entropy_coding_kernel(void *input_ptr) {
                         context_ptr->tok = pcs->tile_tok[tile_row][tile_col];
                     }
 
-                    EbPictureBufferDesc *coeff_picture_ptr =
-                        pcs->ppcs->enc_dec_ptr->quantized_coeff[sb_index];
-                    svt_aom_write_sb(context_ptr,
-                                     sb_ptr,
-                                     pcs,
-                                     tile_idx,
-                                     pcs->ec_info[tile_idx]->ec,
-                                     coeff_picture_ptr);
+                    EbPictureBufferDesc *coeff_picture_ptr = pcs->ppcs->enc_dec_ptr->quantized_coeff[sb_index];
+                    svt_aom_write_sb(context_ptr, sb_ptr, pcs, tile_idx, pcs->ec_info[tile_idx]->ec, coeff_picture_ptr);
                 }
             }
 #if TURN_OFF_EC_FIRST_PASS
@@ -349,10 +316,8 @@ void *svt_aom_entropy_coding_kernel(void *input_ptr) {
 
         if (frame_entropy_done) {
             // Get Empty Entropy Coding Results
-            svt_get_empty_object(context_ptr->entropy_coding_output_fifo_ptr,
-                                 &entropy_coding_results_wrapper_ptr);
-            entropy_coding_results_ptr = (EntropyCodingResults *)
-                                             entropy_coding_results_wrapper_ptr->object_ptr;
+            svt_get_empty_object(context_ptr->entropy_coding_output_fifo_ptr, &entropy_coding_results_wrapper_ptr);
+            entropy_coding_results_ptr = (EntropyCodingResults *)entropy_coding_results_wrapper_ptr->object_ptr;
             entropy_coding_results_ptr->pcs_wrapper = rest_results->pcs_wrapper;
 
             // Post EntropyCoding Results

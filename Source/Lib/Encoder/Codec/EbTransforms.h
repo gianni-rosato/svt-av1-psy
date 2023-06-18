@@ -44,17 +44,9 @@ static const int8_t fwd_shift_16x64[3] = {0, -2, 0};
 static const int8_t fwd_shift_64x16[3] = {2, -4, 0};
 
 static const int8_t fwd_cos_bit_col[MAX_TXWH_IDX /*txw_idx*/][MAX_TXWH_IDX /*txh_idx*/] = {
-    {13, 13, 13, 0, 0},
-    {13, 13, 13, 12, 0},
-    {13, 13, 13, 12, 13},
-    {0, 13, 13, 12, 13},
-    {0, 0, 13, 12, 13}};
+    {13, 13, 13, 0, 0}, {13, 13, 13, 12, 0}, {13, 13, 13, 12, 13}, {0, 13, 13, 12, 13}, {0, 0, 13, 12, 13}};
 static const int8_t fwd_cos_bit_row[MAX_TXWH_IDX /*txw_idx*/][MAX_TXWH_IDX /*txh_idx*/] = {
-    {13, 13, 12, 0, 0},
-    {13, 13, 13, 12, 0},
-    {13, 13, 12, 13, 12},
-    {0, 12, 13, 12, 11},
-    {0, 0, 12, 11, 10}};
+    {13, 13, 12, 0, 0}, {13, 13, 13, 12, 0}, {13, 13, 12, 13, 12}, {0, 12, 13, 12, 11}, {0, 0, 12, 11, 10}};
 
 static const int8_t fdct4_range_mult2[4]    = {0, 2, 3, 3};
 static const int8_t fdct8_range_mult2[6]    = {0, 2, 4, 5, 5, 5};
@@ -118,29 +110,23 @@ typedef struct QuantParam {
 
 static const uint32_t q_func[] = {26214, 23302, 20560, 18396, 16384, 14564};
 
-extern EbErrorType svt_aom_estimate_transform(int16_t *residual_buffer, uint32_t residual_stride,
-                                              int32_t *coeff_buffer, uint32_t coeff_stride,
-                                              TxSize transform_size, uint64_t *three_quad_energy,
-                                              uint32_t bit_depth, TxType transform_type,
-                                              PlaneType            component_type,
+extern EbErrorType svt_aom_estimate_transform(int16_t *residual_buffer, uint32_t residual_stride, int32_t *coeff_buffer,
+                                              uint32_t coeff_stride, TxSize transform_size, uint64_t *three_quad_energy,
+                                              uint32_t bit_depth, TxType transform_type, PlaneType component_type,
                                               EB_TRANS_COEFF_SHAPE trans_coeff_shape);
 
 extern int32_t svt_aom_quantize_inv_quantize(
-    PictureControlSet *pcs, ModeDecisionContext *ctx, int32_t *coeff, const uint32_t coeff_stride,
-    int32_t *quant_coeff, int32_t *recon_coeff, uint32_t qindex, int32_t segmentation_qp_offset,
-    uint32_t width, uint32_t height, TxSize txsize, uint16_t *eob,
-    uint32_t *y_count_non_zero_coeffs, uint32_t component_type, uint32_t bit_increment,
-    TxType tx_type, ModeDecisionCandidateBuffer *cand_bf, int16_t txb_skip_context,
-    int16_t dc_sign_context, PredictionMode pred_mode, Bool is_intra_bc, uint32_t lambda,
-    Bool is_encode_pass);
+    PictureControlSet *pcs, ModeDecisionContext *ctx, int32_t *coeff, const uint32_t coeff_stride, int32_t *quant_coeff,
+    int32_t *recon_coeff, uint32_t qindex, int32_t segmentation_qp_offset, uint32_t width, uint32_t height,
+    TxSize txsize, uint16_t *eob, uint32_t *y_count_non_zero_coeffs, uint32_t component_type, uint32_t bit_increment,
+    TxType tx_type, ModeDecisionCandidateBuffer *cand_bf, int16_t txb_skip_context, int16_t dc_sign_context,
+    PredictionMode pred_mode, Bool is_intra_bc, uint32_t lambda, Bool is_encode_pass);
 
-int32_t svt_aom_quantize_inv_quantize_light(PictureControlSet *pcs, int32_t *coeff,
-                                            int32_t *quant_coeff, int32_t *recon_coeff,
-                                            uint32_t qindex, TxSize txsize, uint16_t *eob,
-                                            uint32_t *cnt_nz_coeff, uint32_t bit_depth,
-                                            TxType tx_type);
-void    svt_av1_wht_fwd_txfm(int16_t *src_diff, int bw, int32_t *coeff, TxSize tx_size,
-                             EB_TRANS_COEFF_SHAPE pf_shape, int bit_depth, int is_hbd);
+int32_t svt_aom_quantize_inv_quantize_light(PictureControlSet *pcs, int32_t *coeff, int32_t *quant_coeff,
+                                            int32_t *recon_coeff, uint32_t qindex, TxSize txsize, uint16_t *eob,
+                                            uint32_t *cnt_nz_coeff, uint32_t bit_depth, TxType tx_type);
+void    svt_av1_wht_fwd_txfm(int16_t *src_diff, int bw, int32_t *coeff, TxSize tx_size, EB_TRANS_COEFF_SHAPE pf_shape,
+                             int bit_depth, int is_hbd);
 
 TxfmFunc svt_aom_fwd_txfm_type_to_func(TxfmType txfmtype);
 

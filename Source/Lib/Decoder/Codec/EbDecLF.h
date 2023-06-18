@@ -18,11 +18,11 @@ Contains the Decoder Loop Filtering related functions*/
 
 extern const int32_t mode_lf_lut[];
 
-typedef void (*SvtLbdFilterTapFn)(uint8_t *s, int32_t pitch, const uint8_t *blimit,
-                                  const uint8_t *limit, const uint8_t *thresh);
+typedef void (*SvtLbdFilterTapFn)(uint8_t *s, int32_t pitch, const uint8_t *blimit, const uint8_t *limit,
+                                  const uint8_t *thresh);
 
-typedef void (*SvtHbdFilterTapFn)(uint16_t *s, int32_t pitch, const uint8_t *blimit,
-                                  const uint8_t *limit, const uint8_t *thresh, int32_t bd);
+typedef void (*SvtHbdFilterTapFn)(uint16_t *s, int32_t pitch, const uint8_t *blimit, const uint8_t *limit,
+                                  const uint8_t *thresh, int32_t bd);
 
 typedef struct LfCtxt {
     TxSize         *tx_size_l;
@@ -31,12 +31,11 @@ typedef struct LfCtxt {
     int32_t         delta_lf_stride;
 } LfCtxt;
 
-void svt_aom_fill_4x4_lf_param(LfCtxt *lf_ctxt, int32_t tu_x, int32_t tu_y, int32_t stride,
-                               TxSize tx_size, int32_t sub_x, int32_t sub_y, int plane);
+void svt_aom_fill_4x4_lf_param(LfCtxt *lf_ctxt, int32_t tu_x, int32_t tu_y, int32_t stride, TxSize tx_size,
+                               int32_t sub_x, int32_t sub_y, int plane);
 
-void svt_aom_dec_av1_loop_filter_frame(EbDecHandle         *dec_handle_ptr,
-                                       EbPictureBufferDesc *recon_picture_buf, LfCtxt *lf_ctxt,
-                                       int32_t plane_start, int32_t plane_end, int32_t is_mt,
+void svt_aom_dec_av1_loop_filter_frame(EbDecHandle *dec_handle_ptr, EbPictureBufferDesc *recon_picture_buf,
+                                       LfCtxt *lf_ctxt, int32_t plane_start, int32_t plane_end, int32_t is_mt,
                                        int enable_flag);
 
 void svt_aom_set_lbd_lf_filter_tap_functions(void);

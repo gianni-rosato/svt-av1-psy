@@ -17,14 +17,14 @@ extern "C" {
 #endif
 
 //Functions defined in mc_avx2.asm and mc16_avx2.asm
-void svt_dav1d_blend_v_8bpc_avx2(uint8_t *dst, ptrdiff_t dst_stride, const uint8_t *tmp,
-                                 ptrdiff_t tmp_stride, int w, int h);
-void svt_dav1d_blend_h_8bpc_avx2(uint8_t *dst, ptrdiff_t dst_stride, const uint8_t *tmp,
-                                 ptrdiff_t tmp_stride, int w, int h);
-void svt_dav1d_blend_v_16bpc_avx2(uint16_t *dst, ptrdiff_t dst_stride, const uint16_t *tmp,
-                                  ptrdiff_t tmp_stride, int w, int h);
-void svt_dav1d_blend_h_16bpc_avx2(uint16_t *dst, ptrdiff_t dst_stride, const uint16_t *tmp,
-                                  ptrdiff_t tmp_stride, int w, int h);
+void svt_dav1d_blend_v_8bpc_avx2(uint8_t *dst, ptrdiff_t dst_stride, const uint8_t *tmp, ptrdiff_t tmp_stride, int w,
+                                 int h);
+void svt_dav1d_blend_h_8bpc_avx2(uint8_t *dst, ptrdiff_t dst_stride, const uint8_t *tmp, ptrdiff_t tmp_stride, int w,
+                                 int h);
+void svt_dav1d_blend_v_16bpc_avx2(uint16_t *dst, ptrdiff_t dst_stride, const uint16_t *tmp, ptrdiff_t tmp_stride, int w,
+                                  int h);
+void svt_dav1d_blend_h_16bpc_avx2(uint16_t *dst, ptrdiff_t dst_stride, const uint16_t *tmp, ptrdiff_t tmp_stride, int w,
+                                  int h);
 
 #ifdef __cplusplus
 }

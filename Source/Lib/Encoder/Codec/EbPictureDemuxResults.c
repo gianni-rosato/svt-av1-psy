@@ -12,8 +12,7 @@
 #include <stdlib.h>
 #include "EbPictureDemuxResults.h"
 
-static EbErrorType picture_results_ctor(PictureDemuxResults *object_ptr,
-                                        EbPtr                object_init_data_ptr) {
+static EbErrorType picture_results_ctor(PictureDemuxResults *object_ptr, EbPtr object_init_data_ptr) {
     object_ptr->picture_type = EB_PIC_INVALID;
 
     (void)object_init_data_ptr;

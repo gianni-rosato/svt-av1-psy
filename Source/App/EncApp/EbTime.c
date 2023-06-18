@@ -38,10 +38,8 @@ void app_svt_av1_sleep(const unsigned milliseconds) {
 #endif
 }
 
-double app_svt_av1_compute_overall_elapsed_time(const uint64_t start_seconds,
-                                                const uint64_t start_useconds,
-                                                const uint64_t finish_seconds,
-                                                const uint64_t finish_useconds) {
+double app_svt_av1_compute_overall_elapsed_time(const uint64_t start_seconds, const uint64_t start_useconds,
+                                                const uint64_t finish_seconds, const uint64_t finish_useconds) {
     const int64_t s_diff = (int64_t)finish_seconds - (int64_t)start_seconds,
                   u_diff = (int64_t)finish_useconds - (int64_t)start_useconds;
     return ((double)s_diff * 1000.0 + (double)u_diff / 1000.0 + 0.5) / 1000.0;

@@ -61,9 +61,7 @@ static void set_num_thread(const char *value, EbSvtAv1DecConfiguration *cfg) {
 static void set_num_pframes(const char *value, EbSvtAv1DecConfiguration *cfg) {
     cfg->num_p_frames = strtoul(value, NULL, 0);
     if (cfg->num_p_frames != 1) {
-        fprintf(
-            stderr,
-            "Warning : Multi frame parallelism not supported. Setting parallel frames to 1. \n");
+        fprintf(stderr, "Warning : Multi frame parallelism not supported. Setting parallel frames to 1. \n");
         cfg->num_p_frames = 1;
     }
 };
@@ -109,8 +107,8 @@ static void show_help() {
     exit(1);
 }
 
-EbErrorType read_command_line(int32_t argc, char *const argv[], EbSvtAv1DecConfiguration *configs,
-                              CliInput *cli, ObuDecInputContext *obu_ctx) {
+EbErrorType read_command_line(int32_t argc, char *const argv[], EbSvtAv1DecConfiguration *configs, CliInput *cli,
+                              ObuDecInputContext *obu_ctx) {
     char   *cmd_copy[MAX_NUM_TOKENS]       = {NULL};
     char   *config_strings[MAX_NUM_TOKENS] = {NULL};
     int32_t cmd_token_cnt                  = 0;

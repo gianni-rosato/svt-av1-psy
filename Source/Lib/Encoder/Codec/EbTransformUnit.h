@@ -23,12 +23,10 @@ typedef struct TransformUnit {
     TxType   transform_type[PLANE_TYPES];
 } TransformUnit;
 
-#if OPT_CHILD_PCS
 typedef struct EcTransformUnit {
     uint16_t nz_coef_count[3];
     TxType   transform_type[PLANE_TYPES];
 } EcTransformUnit;
-#endif
 #pragma pack(pop)
 #ifdef __cplusplus
 }

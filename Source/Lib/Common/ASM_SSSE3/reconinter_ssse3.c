@@ -14,13 +14,11 @@
 #include <tmmintrin.h>
 #include "synonyms.h"
 
-void svt_av1_build_compound_diffwtd_mask_highbd_ssse3(uint8_t *mask, DIFFWTD_MASK_TYPE mask_type,
-                                                      const uint8_t *src0, int src0_stride,
-                                                      const uint8_t *src1, int src1_stride, int h,
+void svt_av1_build_compound_diffwtd_mask_highbd_ssse3(uint8_t *mask, DIFFWTD_MASK_TYPE mask_type, const uint8_t *src0,
+                                                      int src0_stride, const uint8_t *src1, int src1_stride, int h,
                                                       int w, int bd) {
     if (w < 8) {
-        svt_av1_build_compound_diffwtd_mask_highbd_c(
-            mask, mask_type, src0, src0_stride, src1, src1_stride, h, w, bd);
+        svt_av1_build_compound_diffwtd_mask_highbd_c(mask, mask_type, src0, src0_stride, src1, src1_stride, h, w, bd);
     } else {
         assert(bd >= 8);
         assert((w % 8) == 0);
@@ -37,13 +35,11 @@ void svt_av1_build_compound_diffwtd_mask_highbd_ssse3(uint8_t *mask, DIFFWTD_MAS
                     for (int j = 0; j < w; j += 8) {
                         __m128i s0   = _mm_loadu_si128((const __m128i *)&ssrc0[j]);
                         __m128i s1   = _mm_loadu_si128((const __m128i *)&ssrc1[j]);
-                        __m128i diff = _mm_srai_epi16(_mm_abs_epi16(_mm_sub_epi16(s0, s1)),
-                                                      DIFF_FACTOR_LOG2);
-                        __m128i m    = _mm_min_epi16(
-                            _mm_max_epi16(x0, _mm_add_epi16(diff, xmask_base)),
-                            x_aom_blend_a64_max_alpha);
-                        m = _mm_sub_epi16(x_aom_blend_a64_max_alpha, m);
-                        m = _mm_packus_epi16(m, m);
+                        __m128i diff = _mm_srai_epi16(_mm_abs_epi16(_mm_sub_epi16(s0, s1)), DIFF_FACTOR_LOG2);
+                        __m128i m    = _mm_min_epi16(_mm_max_epi16(x0, _mm_add_epi16(diff, xmask_base)),
+                                                  x_aom_blend_a64_max_alpha);
+                        m            = _mm_sub_epi16(x_aom_blend_a64_max_alpha, m);
+                        m            = _mm_packus_epi16(m, m);
                         _mm_storel_epi64((__m128i *)&mask[j], m);
                     }
                     ssrc0 += src0_stride;
@@ -55,12 +51,10 @@ void svt_av1_build_compound_diffwtd_mask_highbd_ssse3(uint8_t *mask, DIFFWTD_MAS
                     for (int j = 0; j < w; j += 8) {
                         __m128i s0   = _mm_loadu_si128((const __m128i *)&ssrc0[j]);
                         __m128i s1   = _mm_loadu_si128((const __m128i *)&ssrc1[j]);
-                        __m128i diff = _mm_srai_epi16(_mm_abs_epi16(_mm_sub_epi16(s0, s1)),
-                                                      DIFF_FACTOR_LOG2);
-                        __m128i m    = _mm_min_epi16(
-                            _mm_max_epi16(x0, _mm_add_epi16(diff, xmask_base)),
-                            x_aom_blend_a64_max_alpha);
-                        m = _mm_packus_epi16(m, m);
+                        __m128i diff = _mm_srai_epi16(_mm_abs_epi16(_mm_sub_epi16(s0, s1)), DIFF_FACTOR_LOG2);
+                        __m128i m    = _mm_min_epi16(_mm_max_epi16(x0, _mm_add_epi16(diff, xmask_base)),
+                                                  x_aom_blend_a64_max_alpha);
+                        m            = _mm_packus_epi16(m, m);
                         _mm_storel_epi64((__m128i *)&mask[j], m);
                     }
                     ssrc0 += src0_stride;
@@ -76,11 +70,10 @@ void svt_av1_build_compound_diffwtd_mask_highbd_ssse3(uint8_t *mask, DIFFWTD_MAS
                         __m128i s0   = _mm_loadu_si128((const __m128i *)&ssrc0[j]);
                         __m128i s1   = _mm_loadu_si128((const __m128i *)&ssrc1[j]);
                         __m128i diff = _mm_sra_epi16(_mm_abs_epi16(_mm_sub_epi16(s0, s1)), xshift);
-                        __m128i m    = _mm_min_epi16(
-                            _mm_max_epi16(x0, _mm_add_epi16(diff, xmask_base)),
-                            x_aom_blend_a64_max_alpha);
-                        m = _mm_sub_epi16(x_aom_blend_a64_max_alpha, m);
-                        m = _mm_packus_epi16(m, m);
+                        __m128i m    = _mm_min_epi16(_mm_max_epi16(x0, _mm_add_epi16(diff, xmask_base)),
+                                                  x_aom_blend_a64_max_alpha);
+                        m            = _mm_sub_epi16(x_aom_blend_a64_max_alpha, m);
+                        m            = _mm_packus_epi16(m, m);
                         _mm_storel_epi64((__m128i *)&mask[j], m);
                     }
                     ssrc0 += src0_stride;
@@ -93,10 +86,9 @@ void svt_av1_build_compound_diffwtd_mask_highbd_ssse3(uint8_t *mask, DIFFWTD_MAS
                         __m128i s0   = _mm_loadu_si128((const __m128i *)&ssrc0[j]);
                         __m128i s1   = _mm_loadu_si128((const __m128i *)&ssrc1[j]);
                         __m128i diff = _mm_sra_epi16(_mm_abs_epi16(_mm_sub_epi16(s0, s1)), xshift);
-                        __m128i m    = _mm_min_epi16(
-                            _mm_max_epi16(x0, _mm_add_epi16(diff, xmask_base)),
-                            x_aom_blend_a64_max_alpha);
-                        m = _mm_packus_epi16(m, m);
+                        __m128i m    = _mm_min_epi16(_mm_max_epi16(x0, _mm_add_epi16(diff, xmask_base)),
+                                                  x_aom_blend_a64_max_alpha);
+                        m            = _mm_packus_epi16(m, m);
                         _mm_storel_epi64((__m128i *)&mask[j], m);
                     }
                     ssrc0 += src0_stride;

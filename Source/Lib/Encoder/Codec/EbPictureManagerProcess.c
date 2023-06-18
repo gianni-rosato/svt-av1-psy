@@ -27,8 +27,7 @@
 #include "EbLog.h"
 
 // Token buffer is only used for palette tokens.
-static INLINE unsigned int get_token_alloc(int mb_rows, int mb_cols, int sb_size_log2,
-                                           const int num_planes) {
+static INLINE unsigned int get_token_alloc(int mb_rows, int mb_cols, int sb_size_log2, const int num_planes) {
     // Calculate the maximum number of max superblocks in the image.
     const int shift          = sb_size_log2 - 4;
     const int sb_size        = 1 << sb_size_log2;
@@ -41,7 +40,7 @@ static INLINE unsigned int get_token_alloc(int mb_rows, int mb_cols, int sb_size
 
     return sb_rows * sb_cols * sb_palette_toks;
 }
-void rtime_alloc_palette_tokens(SequenceControlSet *scs, PictureControlSet *child_pcs_ptr);
+void                    rtime_alloc_palette_tokens(SequenceControlSet *scs, PictureControlSet *child_pcs_ptr);
 extern MvReferenceFrame svt_get_ref_frame_type(uint8_t list, uint8_t ref_idx);
 
 void svt_aom_largest_coding_unit_dctor(EbPtr p);
@@ -55,9 +54,8 @@ static void picture_manager_context_dctor(EbPtr p) {
 /************************************************
  * Picture Manager Context Constructor
  ************************************************/
-EbErrorType svt_aom_picture_manager_context_ctor(EbThreadContext   *thread_ctx,
-                                                 const EbEncHandle *enc_handle_ptr,
-                                                 int                rate_control_index) {
+EbErrorType svt_aom_picture_manager_context_ctor(EbThreadContext *thread_ctx, const EbEncHandle *enc_handle_ptr,
+                                                 int rate_control_index) {
     PictureManagerContext *context_ptr;
     EB_CALLOC_ARRAY(context_ptr, 1);
     thread_ctx->priv  = context_ptr;
@@ -69,8 +67,8 @@ EbErrorType svt_aom_picture_manager_context_ctor(EbThreadContext   *thread_ctx,
         enc_handle_ptr->rate_control_tasks_resource_ptr, rate_control_index);
     context_ptr->picture_control_set_fifo_ptr = svt_system_resource_get_producer_fifo(
         enc_handle_ptr->picture_control_set_pool_ptr_array[0], 0); //The Child PCS Pool here
-    context_ptr->recon_coef_fifo_ptr = svt_system_resource_get_producer_fifo(
-        enc_handle_ptr->enc_dec_pool_ptr_array[0], 0); //The Child PCS Pool here
+    context_ptr->recon_coef_fifo_ptr = svt_system_resource_get_producer_fifo(enc_handle_ptr->enc_dec_pool_ptr_array[0],
+                                                                             0); //The Child PCS Pool here
 
     context_ptr->consecutive_dec_order           = 0;
     context_ptr->started_pics_dec_order_head_idx = 0;
@@ -115,27 +113,22 @@ ReferenceQueueEntry *search_ref_in_ref_queue(EncodeContext *enc_ctx, uint64_t re
 }
 
 void svt_aom_init_enc_dec_segement(PictureParentControlSet *ppcs) {
-    SequenceControlSet *scs = ppcs->scs;
-    uint8_t pic_width_in_sb = (uint8_t)((ppcs->aligned_width + scs->sb_size - 1) / scs->sb_size);
-    uint8_t picture_height_in_sb = (uint8_t)((ppcs->aligned_height + scs->sb_size - 1) /
-                                             scs->sb_size);
+    SequenceControlSet *scs                  = ppcs->scs;
+    uint8_t             pic_width_in_sb      = (uint8_t)((ppcs->aligned_width + scs->sb_size - 1) / scs->sb_size);
+    uint8_t             picture_height_in_sb = (uint8_t)((ppcs->aligned_height + scs->sb_size - 1) / scs->sb_size);
     svt_aom_set_tile_info(ppcs);
-    int      sb_size_log2        = scs->seq_header.sb_size_log2;
-    uint32_t enc_dec_seg_col_cnt = scs->enc_dec_segment_col_count_array[ppcs->temporal_layer_index];
-    uint32_t enc_dec_seg_row_cnt = scs->enc_dec_segment_row_count_array[ppcs->temporal_layer_index];
-    Av1Common *const cm          = ppcs->av1_cm;
-    const int        tile_cols   = ppcs->av1_cm->tiles_info.tile_cols;
-    const int        tile_rows   = ppcs->av1_cm->tiles_info.tile_rows;
-    uint8_t          tile_group_cols = MIN(tile_cols,
-                                  scs->tile_group_col_count_array[ppcs->temporal_layer_index]);
-    uint8_t          tile_group_rows = MIN(tile_rows,
-                                  scs->tile_group_row_count_array[ppcs->temporal_layer_index]);
+    int              sb_size_log2        = scs->seq_header.sb_size_log2;
+    uint32_t         enc_dec_seg_col_cnt = scs->enc_dec_segment_col_count_array[ppcs->temporal_layer_index];
+    uint32_t         enc_dec_seg_row_cnt = scs->enc_dec_segment_row_count_array[ppcs->temporal_layer_index];
+    Av1Common *const cm                  = ppcs->av1_cm;
+    const int        tile_cols           = ppcs->av1_cm->tiles_info.tile_cols;
+    const int        tile_rows           = ppcs->av1_cm->tiles_info.tile_rows;
+    uint8_t          tile_group_cols     = MIN(tile_cols, scs->tile_group_col_count_array[ppcs->temporal_layer_index]);
+    uint8_t          tile_group_rows     = MIN(tile_rows, scs->tile_group_row_count_array[ppcs->temporal_layer_index]);
 
     if (tile_group_cols * tile_group_rows > 1) {
-        enc_dec_seg_col_cnt = MIN(enc_dec_seg_col_cnt,
-                                  (uint8_t)(pic_width_in_sb / tile_group_cols));
-        enc_dec_seg_row_cnt = MIN(enc_dec_seg_row_cnt,
-                                  (uint8_t)(picture_height_in_sb / tile_group_rows));
+        enc_dec_seg_col_cnt = MIN(enc_dec_seg_col_cnt, (uint8_t)(pic_width_in_sb / tile_group_cols));
+        enc_dec_seg_row_cnt = MIN(enc_dec_seg_row_cnt, (uint8_t)(picture_height_in_sb / tile_group_rows));
     }
     ppcs->tile_group_cols = tile_group_cols;
     ppcs->tile_group_rows = tile_group_rows;
@@ -166,22 +159,21 @@ void svt_aom_init_enc_dec_segement(PictureParentControlSet *ppcs) {
             tg_info_ptr->tile_group_tile_start_y = top_left_tile_row_idx;
             tg_info_ptr->tile_group_tile_end_y   = bottom_right_tile_row_idx;
 
-            tg_info_ptr->tile_group_sb_start_x =
-                cm->tiles_info.tile_col_start_mi[top_left_tile_col_idx] >> sb_size_log2;
-            tg_info_ptr->tile_group_sb_start_y =
-                cm->tiles_info.tile_row_start_mi[top_left_tile_row_idx] >> sb_size_log2;
+            tg_info_ptr->tile_group_sb_start_x = cm->tiles_info.tile_col_start_mi[top_left_tile_col_idx] >>
+                sb_size_log2;
+            tg_info_ptr->tile_group_sb_start_y = cm->tiles_info.tile_row_start_mi[top_left_tile_row_idx] >>
+                sb_size_log2;
 
             // Get the SB end of the bottom right tile
-            tg_info_ptr->tile_group_sb_end_x =
-                (cm->tiles_info.tile_col_start_mi[bottom_right_tile_col_idx] >> sb_size_log2);
-            tg_info_ptr->tile_group_sb_end_y =
-                (cm->tiles_info.tile_row_start_mi[bottom_right_tile_row_idx] >> sb_size_log2);
+            tg_info_ptr->tile_group_sb_end_x = (cm->tiles_info.tile_col_start_mi[bottom_right_tile_col_idx] >>
+                                                sb_size_log2);
+            tg_info_ptr->tile_group_sb_end_y = (cm->tiles_info.tile_row_start_mi[bottom_right_tile_row_idx] >>
+                                                sb_size_log2);
 
             // Get the width/height of tile group in SB
             tg_info_ptr->tile_group_height_in_sb = tg_info_ptr->tile_group_sb_end_y -
                 tg_info_ptr->tile_group_sb_start_y;
-            tg_info_ptr->tile_group_width_in_sb = tg_info_ptr->tile_group_sb_end_x -
-                tg_info_ptr->tile_group_sb_start_x;
+            tg_info_ptr->tile_group_width_in_sb = tg_info_ptr->tile_group_sb_end_x - tg_info_ptr->tile_group_sb_start_x;
 
             // Init segments within the tile group
             svt_aom_enc_dec_segments_init(ppcs->child_pcs->enc_dec_segment_ctrl[tile_group_idx],
@@ -201,8 +193,7 @@ void svt_aom_init_enc_dec_segement(PictureParentControlSet *ppcs) {
     }
 }
 
-void superres_setup_child_pcs(SequenceControlSet      *entry_scs_ptr,
-                              PictureParentControlSet *entry_ppcs) {
+void superres_setup_child_pcs(SequenceControlSet *entry_scs_ptr, PictureParentControlSet *entry_ppcs) {
     PictureControlSet *child_pcs = entry_ppcs->child_pcs;
 
     uint8_t pic_width_in_sb;
@@ -210,8 +201,7 @@ void superres_setup_child_pcs(SequenceControlSet      *entry_scs_ptr,
 
     child_pcs->b64_total_count = entry_ppcs->b64_total_count;
 
-    pic_width_in_sb      = (uint8_t)((entry_ppcs->aligned_width + entry_scs_ptr->sb_size - 1) /
-                                entry_scs_ptr->sb_size);
+    pic_width_in_sb      = (uint8_t)((entry_ppcs->aligned_width + entry_scs_ptr->sb_size - 1) / entry_scs_ptr->sb_size);
     picture_height_in_sb = (uint8_t)((entry_ppcs->aligned_height + entry_scs_ptr->sb_size - 1) /
                                      entry_scs_ptr->sb_size);
 
@@ -261,12 +251,10 @@ void superres_setup_child_pcs(SequenceControlSet      *entry_scs_ptr,
             tile_info.tile_rs_index = tile_col + tile_row * tile_cols;
 
             for ((y_sb_index = cm->tiles_info.tile_row_start_mi[tile_row] >> sb_size_log2);
-                 (y_sb_index <
-                  ((uint32_t)cm->tiles_info.tile_row_start_mi[tile_row + 1] >> sb_size_log2));
+                 (y_sb_index < ((uint32_t)cm->tiles_info.tile_row_start_mi[tile_row + 1] >> sb_size_log2));
                  y_sb_index++) {
                 for ((x_sb_index = cm->tiles_info.tile_col_start_mi[tile_col] >> sb_size_log2);
-                     (x_sb_index <
-                      ((uint32_t)cm->tiles_info.tile_col_start_mi[tile_col + 1] >> sb_size_log2));
+                     (x_sb_index < ((uint32_t)cm->tiles_info.tile_col_start_mi[tile_col + 1] >> sb_size_log2));
                      x_sb_index++) {
                     int sb_index = (uint16_t)(x_sb_index + y_sb_index * pic_width_in_sb);
                     child_pcs->sb_ptr_array[sb_index]->tile_info = tile_info;
@@ -352,8 +340,7 @@ void *svt_aom_picture_manager_kernel(void *input_ptr) {
 
             EbObjectWrapper *out_results_wrapper;
             // Get Empty Results Object
-            svt_get_empty_object(context_ptr->picture_manager_output_fifo_ptr,
-                                 &out_results_wrapper);
+            svt_get_empty_object(context_ptr->picture_manager_output_fifo_ptr, &out_results_wrapper);
             RateControlTasks *rc_tasks = (RateControlTasks *)out_results_wrapper->object_ptr;
             rc_tasks->pcs_wrapper      = pcs->child_pcs->c_pcs_wrapper_ptr;
             rc_tasks->task_type        = RC_INPUT_SUPERRES_RECODE;
@@ -372,16 +359,14 @@ void *svt_aom_picture_manager_kernel(void *input_ptr) {
 
             // SVT_LOG("\nPicture Manager Process @ %d \n ", pcs->picture_number);
             CHECK_REPORT_ERROR(
-                (((enc_ctx->input_picture_queue_head_index !=
-                   enc_ctx->input_picture_queue_tail_index) ||
-                  (enc_ctx->input_picture_queue[enc_ctx->input_picture_queue_head_index]
-                       ->input_object_ptr == NULL))),
+                (((enc_ctx->input_picture_queue_head_index != enc_ctx->input_picture_queue_tail_index) ||
+                  (enc_ctx->input_picture_queue[enc_ctx->input_picture_queue_head_index]->input_object_ptr == NULL))),
                 enc_ctx->app_callback_ptr,
                 EB_ENC_PM_ERROR4);
 
             // Place Picture in input queue
-            input_entry = enc_ctx->input_picture_queue[enc_ctx->input_picture_queue_tail_index];
-            input_entry->input_object_ptr           = input_pic_demux->pcs_wrapper;
+            input_entry                   = enc_ctx->input_picture_queue[enc_ctx->input_picture_queue_tail_index];
+            input_entry->input_object_ptr = input_pic_demux->pcs_wrapper;
             enc_ctx->input_picture_queue_tail_index = (enc_ctx->input_picture_queue_tail_index ==
                                                        INPUT_QUEUE_MAX_DEPTH - 1)
                 ? 0
@@ -399,9 +384,8 @@ void *svt_aom_picture_manager_kernel(void *input_ptr) {
                         break;
                     }
                     // Check if the reference list is full
-                    CHECK_REPORT_ERROR(i != enc_ctx->ref_pic_list_length - 1,
-                                       enc_ctx->app_callback_ptr,
-                                       EB_ENC_PM_ERROR5);
+                    CHECK_REPORT_ERROR(
+                        i != enc_ctx->ref_pic_list_length - 1, enc_ctx->app_callback_ptr, EB_ENC_PM_ERROR5);
                 }
                 ref_entry->picture_number                = pcs->picture_number;
                 ref_entry->reference_object_ptr          = (EbObjectWrapper *)NULL;
@@ -418,10 +402,10 @@ void *svt_aom_picture_manager_kernel(void *input_ptr) {
                 ref_entry->dec_order_of_last_ref         = pcs->is_ref ? UINT64_MAX : 0;
                 ref_entry->frame_end_cdf_update_required = pcs->frame_end_cdf_update_mode;
 
-                CHECK_REPORT_ERROR((pcs->pred_struct_ptr->pred_struct_period * REF_LIST_MAX_DEPTH <
-                                    MAX_ELAPSED_IDR_COUNT),
-                                   enc_ctx->app_callback_ptr,
-                                   EB_ENC_PM_ERROR6);
+                CHECK_REPORT_ERROR(
+                    (pcs->pred_struct_ptr->pred_struct_period * REF_LIST_MAX_DEPTH < MAX_ELAPSED_IDR_COUNT),
+                    enc_ctx->app_callback_ptr,
+                    EB_ENC_PM_ERROR6);
 #if OPT_LD_LATENCY2
                 svt_release_mutex(enc_ctx->ref_pic_list_mutex);
 #endif
@@ -432,16 +416,15 @@ void *svt_aom_picture_manager_kernel(void *input_ptr) {
 
             scs     = input_pic_demux->scs;
             enc_ctx = scs->enc_ctx;
-            ((EbReferenceObject *)input_pic_demux->ref_pic_wrapper->object_ptr)
-                ->ds_pics.picture_number = input_pic_demux->picture_number;
+            ((EbReferenceObject *)input_pic_demux->ref_pic_wrapper->object_ptr)->ds_pics.picture_number =
+                input_pic_demux->picture_number;
             // Find the Reference in the Reference List
 #if OPT_LD_LATENCY2
             svt_block_on_mutex(enc_ctx->ref_pic_list_mutex);
 #endif
             for (uint32_t i = 0; i < enc_ctx->ref_pic_list_length; i++) {
                 ref_entry = enc_ctx->ref_pic_list[i];
-                if (ref_entry->is_valid &&
-                    ref_entry->picture_number == input_pic_demux->picture_number) {
+                if (ref_entry->is_valid && ref_entry->picture_number == input_pic_demux->picture_number) {
                     // Assign the reference object if there is a match
                     ref_entry->reference_object_ptr = input_pic_demux->ref_pic_wrapper;
 
@@ -450,9 +433,7 @@ void *svt_aom_picture_manager_kernel(void *input_ptr) {
                     break;
                 }
                 // Check if the reference list is full
-                CHECK_REPORT_ERROR(i != enc_ctx->ref_pic_list_length - 1,
-                                   enc_ctx->app_callback_ptr,
-                                   EB_ENC_PM_ERROR5);
+                CHECK_REPORT_ERROR(i != enc_ctx->ref_pic_list_length - 1, enc_ctx->app_callback_ptr, EB_ENC_PM_ERROR5);
             }
             CHECK_REPORT_ERROR((ref_entry->picture_number == input_pic_demux->picture_number),
                                enc_ctx->app_callback_ptr,
@@ -471,8 +452,7 @@ void *svt_aom_picture_manager_kernel(void *input_ptr) {
 #endif
             for (uint32_t i = 0; i < enc_ctx->ref_pic_list_length; i++) {
                 ref_entry = enc_ctx->ref_pic_list[i];
-                if (ref_entry->is_valid &&
-                    ref_entry->picture_number == input_pic_demux->picture_number) {
+                if (ref_entry->is_valid && ref_entry->picture_number == input_pic_demux->picture_number) {
                     // Set the feedback arrived
                     ref_entry->feedback_arrived      = TRUE;
                     ref_entry->frame_context_updated = TRUE;
@@ -512,8 +492,7 @@ void *svt_aom_picture_manager_kernel(void *input_ptr) {
                 input_entry = enc_ctx->input_picture_queue[input_queue_index];
 
                 if (input_entry->input_object_ptr != NULL) {
-                    entry_ppcs = (PictureParentControlSet *)
-                                     input_entry->input_object_ptr->object_ptr;
+                    entry_ppcs        = (PictureParentControlSet *)input_entry->input_object_ptr->object_ptr;
                     entry_scs_ptr     = entry_ppcs->scs;
                     availability_flag = TRUE;
                     if (entry_ppcs->decode_order != decode_order && (scs->enable_dec_order))
@@ -529,19 +508,15 @@ void *svt_aom_picture_manager_kernel(void *input_ptr) {
                     // but PM can't start those pictures until it has sufficient buffers to reach
                     // it.
                     if (entry_ppcs->decode_order >
-                        (context_ptr->consecutive_dec_order +
-                         scs->reference_picture_buffer_init_count - REF_FRAMES))
+                        (context_ptr->consecutive_dec_order + scs->reference_picture_buffer_init_count - REF_FRAMES))
                         availability_flag = FALSE;
-                    if ((entry_ppcs->slice_type == P_SLICE) ||
-                        (entry_ppcs->slice_type == B_SLICE)) {
-                        uint8_t max_ref_count = (entry_ppcs->slice_type == B_SLICE)
-                            ? ALT + 1
-                            : BWD; // no list1 refs for P_SLICE
+                    if ((entry_ppcs->slice_type == P_SLICE) || (entry_ppcs->slice_type == B_SLICE)) {
+                        uint8_t max_ref_count = (entry_ppcs->slice_type == B_SLICE) ? ALT + 1
+                                                                                    : BWD; // no list1 refs for P_SLICE
                         for (REF_FRAME_MINUS1 ref = LAST; ref < max_ref_count; ref++) {
                             // hardcode the reference for the overlay frame
-                            uint64_t ref_poc = entry_ppcs->is_overlay
-                                ? entry_ppcs->picture_number
-                                : entry_ppcs->av1_ref_signal.ref_poc_array[ref];
+                            uint64_t ref_poc = entry_ppcs->is_overlay ? entry_ppcs->picture_number
+                                                                      : entry_ppcs->av1_ref_signal.ref_poc_array[ref];
 
                             uint8_t list_idx = get_list_idx(ref + 1);
                             uint8_t ref_idx  = get_ref_frame_idx(ref + 1);
@@ -555,21 +530,16 @@ void *svt_aom_picture_manager_kernel(void *input_ptr) {
                             ref_entry = search_ref_in_ref_queue(enc_ctx, ref_poc);
 
                             if (ref_entry != NULL) {
-                                availability_flag = (availability_flag == FALSE)
-                                    ? FALSE
-                                    : // Don't update if already False
-                                    (scs->static_config.rate_control_mode &&
-                                     entry_ppcs->slice_type != I_SLICE &&
-                                     entry_ppcs->temporal_layer_index == 0 &&
-                                     !ref_entry->feedback_arrived &&
+                                availability_flag = (availability_flag == FALSE) ? FALSE
+                                                                                 : // Don't update if already False
+                                    (scs->static_config.rate_control_mode && entry_ppcs->slice_type != I_SLICE &&
+                                     entry_ppcs->temporal_layer_index == 0 && !ref_entry->feedback_arrived &&
                                      !enc_ctx->terminating_sequence_flag_received)
                                     ? FALSE
-                                    : (entry_ppcs->frame_end_cdf_update_mode &&
-                                       !ref_entry->frame_context_updated)
+                                    : (entry_ppcs->frame_end_cdf_update_mode && !ref_entry->frame_context_updated)
                                     ? FALSE
-                                    : (ref_entry->reference_available)
-                                    ? TRUE
-                                    : // The Reference has been completed
+                                    : (ref_entry->reference_available) ? TRUE
+                                                                       : // The Reference has been completed
                                     FALSE; // The Reference has not been completed
                             } else {
                                 availability_flag = FALSE;
@@ -584,13 +554,11 @@ void *svt_aom_picture_manager_kernel(void *input_ptr) {
                         if (entry_ppcs->is_ref) {
                             EbObjectWrapper *ref_pic_wrapper;
                             // Get Empty Reference Picture Object
-                            svt_get_empty_object(scs->enc_ctx->reference_picture_pool_fifo_ptr,
-                                                 &ref_pic_wrapper);
+                            svt_get_empty_object(scs->enc_ctx->reference_picture_pool_fifo_ptr, &ref_pic_wrapper);
                             entry_ppcs->ref_pic_wrapper = ref_pic_wrapper;
                             // reset reference object in case of its members are altered by superres
                             // tool
-                            EbReferenceObject *ref = (EbReferenceObject *)
-                                                         ref_pic_wrapper->object_ptr;
+                            EbReferenceObject *ref = (EbReferenceObject *)ref_pic_wrapper->object_ptr;
                             svt_reference_object_reset(ref, scs);
                             // Give the new Reference a nominal live_count of 1
                             svt_object_inc_live_count(entry_ppcs->ref_pic_wrapper, 1);
@@ -613,8 +581,7 @@ void *svt_aom_picture_manager_kernel(void *input_ptr) {
 
                         enc_dec_ptr->ppcs->enc_dec_ptr = enc_dec_ptr;
                         // Get New  Empty Child PCS from PCS Pool
-                        svt_get_empty_object(context_ptr->picture_control_set_fifo_ptr,
-                                             &child_pcs_wrapper);
+                        svt_get_empty_object(context_ptr->picture_control_set_fifo_ptr, &child_pcs_wrapper);
 
                         // Child PCS is released by Packetization
                         svt_object_inc_live_count(child_pcs_wrapper, 1);
@@ -644,11 +611,8 @@ void *svt_aom_picture_manager_kernel(void *input_ptr) {
                         child_pcs->b64_total_count      = entry_ppcs->b64_total_count;
 
                         child_pcs->enc_dec_coded_sb_count = 0;
-#if !MEM_SG
-                        child_pcs->ppcs->av1_cm->rst_tmpbuf = child_pcs->rst_tmpbuf;
-#endif
-                        child_pcs->hbd_md           = entry_ppcs->hbd_md;
-                        context_ptr->pmgr_dec_order = child_pcs->ppcs->decode_order;
+                        child_pcs->hbd_md                 = entry_ppcs->hbd_md;
+                        context_ptr->pmgr_dec_order       = child_pcs->ppcs->decode_order;
 
                         // Update the consecutive decode order count, if this picture is the next
                         // picture in decode order. Otherwise, add the picture to the
@@ -681,32 +645,29 @@ void *svt_aom_picture_manager_kernel(void *input_ptr) {
                                 /* clang-format on */
                             }
                         } else if (entry_ppcs->decode_order > 0) {
-                            context_ptr->started_pics_dec_order
-                                [context_ptr->started_pics_dec_order_tail_idx] =
+                            context_ptr->started_pics_dec_order[context_ptr->started_pics_dec_order_tail_idx] =
                                 entry_ppcs->decode_order;
                             context_ptr->started_pics_dec_order_tail_idx =
-                                (context_ptr->started_pics_dec_order_tail_idx ==
-                                 REFERENCE_QUEUE_MAX_DEPTH - 1)
+                                (context_ptr->started_pics_dec_order_tail_idx == REFERENCE_QUEUE_MAX_DEPTH - 1)
                                 ? 0
                                 : context_ptr->started_pics_dec_order_tail_idx + 1;
                         }
                         // 3.make all  init for ChildPCS
                         pic_width_in_sb = (entry_ppcs->aligned_width + entry_scs_ptr->sb_size - 1) /
                             entry_scs_ptr->sb_size;
-                        picture_height_in_sb = (entry_ppcs->aligned_height +
-                                                entry_scs_ptr->sb_size - 1) /
+                        picture_height_in_sb = (entry_ppcs->aligned_height + entry_scs_ptr->sb_size - 1) /
                             entry_scs_ptr->sb_size;
 
                         svt_aom_init_enc_dec_segement(entry_ppcs);
 
-                        int sb_size_log2 = entry_scs_ptr->seq_header.sb_size_log2;
-                        struct PictureParentControlSet *ppcs = child_pcs->ppcs;
-                        const int        tile_cols           = ppcs->av1_cm->tiles_info.tile_cols;
-                        const int        tile_rows           = ppcs->av1_cm->tiles_info.tile_rows;
-                        Av1Common *const cm                  = ppcs->av1_cm;
-                        uint16_t         tile_row, tile_col;
-                        uint32_t         x_sb_index, y_sb_index;
-                        TileInfo         tile_info;
+                        int                             sb_size_log2 = entry_scs_ptr->seq_header.sb_size_log2;
+                        struct PictureParentControlSet *ppcs         = child_pcs->ppcs;
+                        const int                       tile_cols    = ppcs->av1_cm->tiles_info.tile_cols;
+                        const int                       tile_rows    = ppcs->av1_cm->tiles_info.tile_rows;
+                        Av1Common *const                cm           = ppcs->av1_cm;
+                        uint16_t                        tile_row, tile_col;
+                        uint32_t                        x_sb_index, y_sb_index;
+                        TileInfo                        tile_info;
 
                         child_pcs->sb_total_count = pic_width_in_sb * picture_height_in_sb;
 
@@ -719,29 +680,23 @@ void *svt_aom_picture_manager_kernel(void *input_ptr) {
                             uint16_t sb_origin_x = 0;
                             uint16_t sb_origin_y = 0;
                             for (sb_index = 0; sb_index < child_pcs->sb_total_count; ++sb_index) {
-                                svt_aom_largest_coding_unit_dctor(
-                                    child_pcs->sb_ptr_array[sb_index]);
-                                svt_aom_largest_coding_unit_ctor(
-                                    child_pcs->sb_ptr_array[sb_index],
-                                    (uint8_t)scs->sb_size,
-                                    (uint16_t)(sb_origin_x * scs->sb_size),
-                                    (uint16_t)(sb_origin_y * scs->sb_size),
-                                    (uint16_t)sb_index,
-                                    child_pcs->enc_mode,
-                                    scs->max_block_cnt,
-                                    child_pcs);
+                                svt_aom_largest_coding_unit_dctor(child_pcs->sb_ptr_array[sb_index]);
+                                svt_aom_largest_coding_unit_ctor(child_pcs->sb_ptr_array[sb_index],
+                                                                 (uint8_t)scs->sb_size,
+                                                                 (uint16_t)(sb_origin_x * scs->sb_size),
+                                                                 (uint16_t)(sb_origin_y * scs->sb_size),
+                                                                 (uint16_t)sb_index,
+                                                                 child_pcs->enc_mode,
+                                                                 scs->max_block_cnt,
+                                                                 child_pcs);
                                 // Increment the Order in coding order (Raster Scan Order)
-                                sb_origin_y = (sb_origin_x == pic_width_in_sb - 1) ? sb_origin_y + 1
-                                                                                   : sb_origin_y;
-                                sb_origin_x = (sb_origin_x == pic_width_in_sb - 1)
-                                    ? 0
-                                    : sb_origin_x + 1;
+                                sb_origin_y = (sb_origin_x == pic_width_in_sb - 1) ? sb_origin_y + 1 : sb_origin_y;
+                                sb_origin_x = (sb_origin_x == pic_width_in_sb - 1) ? 0 : sb_origin_x + 1;
                             }
 
                             // reset input_frame16bit to align with enhanced_pic
                             if (scs->static_config.encoder_bit_depth > EB_EIGHT_BIT) {
-                                svt_aom_copy_buffer_info(entry_ppcs->enhanced_pic,
-                                                         child_pcs->input_frame16bit);
+                                svt_aom_copy_buffer_info(entry_ppcs->enhanced_pic, child_pcs->input_frame16bit);
                             }
                         }
 
@@ -750,11 +705,9 @@ void *svt_aom_picture_manager_kernel(void *input_ptr) {
 
                         // copy buffer info from the downsampled picture to the input frame 16 bit
                         // buffer
-                        if ((entry_ppcs->frame_superres_enabled ||
-                             entry_ppcs->frame_resize_enabled) &&
+                        if ((entry_ppcs->frame_superres_enabled || entry_ppcs->frame_resize_enabled) &&
                             scs->static_config.encoder_bit_depth > EB_EIGHT_BIT) {
-                            svt_aom_copy_buffer_info(entry_ppcs->enhanced_downscaled_pic,
-                                                     child_pcs->input_frame16bit);
+                            svt_aom_copy_buffer_info(entry_ppcs->enhanced_downscaled_pic, child_pcs->input_frame16bit);
                         }
 
                         //                        child_pcs->ppcs->av1_cm->pcs = child_pcs;
@@ -764,41 +717,29 @@ void *svt_aom_picture_manager_kernel(void *input_ptr) {
                         unsigned int tile_tok = 0;
                         // Tile Loop
                         for (tile_row = 0; tile_row < tile_rows; tile_row++) {
-                            svt_av1_tile_set_row(
-                                &tile_info, &cm->tiles_info, cm->mi_rows, tile_row);
+                            svt_av1_tile_set_row(&tile_info, &cm->tiles_info, cm->mi_rows, tile_row);
 
                             for (tile_col = 0; tile_col < tile_cols; tile_col++) {
-                                svt_av1_tile_set_col(
-                                    &tile_info, &cm->tiles_info, cm->mi_cols, tile_col);
+                                svt_av1_tile_set_col(&tile_info, &cm->tiles_info, cm->mi_cols, tile_col);
                                 tile_info.tile_rs_index = tile_col + tile_row * tile_cols;
 
                                 // Palette
                                 if (child_pcs->tile_tok[0][0]) {
                                     child_pcs->tile_tok[tile_row][tile_col] = pre_tok + tile_tok;
-                                    pre_tok          = child_pcs->tile_tok[tile_row][tile_col];
-                                    int tile_mb_rows = (tile_info.mi_row_end -
-                                                        tile_info.mi_row_start + 2) >>
-                                        2;
-                                    int tile_mb_cols = (tile_info.mi_col_end -
-                                                        tile_info.mi_col_start + 2) >>
-                                        2;
-                                    tile_tok = get_token_alloc(
-                                        tile_mb_rows, tile_mb_cols, (sb_size_log2 + 2), 2);
+                                    pre_tok                                 = child_pcs->tile_tok[tile_row][tile_col];
+                                    int tile_mb_rows = (tile_info.mi_row_end - tile_info.mi_row_start + 2) >> 2;
+                                    int tile_mb_cols = (tile_info.mi_col_end - tile_info.mi_col_start + 2) >> 2;
+                                    tile_tok = get_token_alloc(tile_mb_rows, tile_mb_cols, (sb_size_log2 + 2), 2);
                                 }
-                                for ((y_sb_index = cm->tiles_info.tile_row_start_mi[tile_row] >>
-                                          sb_size_log2);
+                                for ((y_sb_index = cm->tiles_info.tile_row_start_mi[tile_row] >> sb_size_log2);
                                      (y_sb_index <
-                                      ((uint32_t)cm->tiles_info.tile_row_start_mi[tile_row + 1] >>
-                                       sb_size_log2));
+                                      ((uint32_t)cm->tiles_info.tile_row_start_mi[tile_row + 1] >> sb_size_log2));
                                      y_sb_index++) {
-                                    for ((x_sb_index = cm->tiles_info.tile_col_start_mi[tile_col] >>
-                                              sb_size_log2);
-                                         (x_sb_index < ((uint32_t)cm->tiles_info
-                                                            .tile_col_start_mi[tile_col + 1] >>
-                                                        sb_size_log2));
+                                    for ((x_sb_index = cm->tiles_info.tile_col_start_mi[tile_col] >> sb_size_log2);
+                                         (x_sb_index <
+                                          ((uint32_t)cm->tiles_info.tile_col_start_mi[tile_col + 1] >> sb_size_log2));
                                          x_sb_index++) {
-                                        int sb_index = (uint16_t)(x_sb_index +
-                                                                  y_sb_index * pic_width_in_sb);
+                                        int sb_index = (uint16_t)(x_sb_index + y_sb_index * pic_width_in_sb);
                                         child_pcs->sb_ptr_array[sb_index]->tile_info = tile_info;
                                     }
                                 }
@@ -812,27 +753,16 @@ void *svt_aom_picture_manager_kernel(void *input_ptr) {
                         EB_MEMSET(child_pcs->ref_pic_ptr_array[REF_LIST_1],
                                   0,
                                   REF_LIST_MAX_DEPTH * sizeof(EbObjectWrapper *));
-                        EB_MEMSET(child_pcs->ref_pic_qp_array[REF_LIST_0],
-                                  0,
-                                  REF_LIST_MAX_DEPTH * sizeof(uint8_t));
-                        EB_MEMSET(child_pcs->ref_pic_qp_array[REF_LIST_1],
-                                  0,
-                                  REF_LIST_MAX_DEPTH * sizeof(uint8_t));
-                        EB_MEMSET(child_pcs->ref_slice_type_array[REF_LIST_0],
-                                  0,
-                                  REF_LIST_MAX_DEPTH * sizeof(SliceType));
-                        EB_MEMSET(child_pcs->ref_slice_type_array[REF_LIST_1],
-                                  0,
-                                  REF_LIST_MAX_DEPTH * sizeof(SliceType));
-                        EB_MEMSET(child_pcs->ref_pic_r0[REF_LIST_0],
-                                  0,
-                                  REF_LIST_MAX_DEPTH * sizeof(double));
-                        EB_MEMSET(child_pcs->ref_pic_r0[REF_LIST_1],
-                                  0,
-                                  REF_LIST_MAX_DEPTH * sizeof(double));
+                        EB_MEMSET(child_pcs->ref_pic_qp_array[REF_LIST_0], 0, REF_LIST_MAX_DEPTH * sizeof(uint8_t));
+                        EB_MEMSET(child_pcs->ref_pic_qp_array[REF_LIST_1], 0, REF_LIST_MAX_DEPTH * sizeof(uint8_t));
+                        EB_MEMSET(
+                            child_pcs->ref_slice_type_array[REF_LIST_0], 0, REF_LIST_MAX_DEPTH * sizeof(SliceType));
+                        EB_MEMSET(
+                            child_pcs->ref_slice_type_array[REF_LIST_1], 0, REF_LIST_MAX_DEPTH * sizeof(SliceType));
+                        EB_MEMSET(child_pcs->ref_pic_r0[REF_LIST_0], 0, REF_LIST_MAX_DEPTH * sizeof(double));
+                        EB_MEMSET(child_pcs->ref_pic_r0[REF_LIST_1], 0, REF_LIST_MAX_DEPTH * sizeof(double));
                         int8_t ref_index = 0;
-                        if ((entry_ppcs->slice_type == P_SLICE) ||
-                            (entry_ppcs->slice_type == B_SLICE)) {
+                        if ((entry_ppcs->slice_type == P_SLICE) || (entry_ppcs->slice_type == B_SLICE)) {
                             int8_t  max_temporal_index = -1;
                             uint8_t max_ref_count      = (entry_ppcs->slice_type == B_SLICE)
                                      ? ALT + 1
@@ -852,8 +782,7 @@ void *svt_aom_picture_manager_kernel(void *input_ptr) {
 
                                 ref_entry = search_ref_in_ref_queue(enc_ctx, ref_poc);
                                 assert(ref_entry != 0);
-                                CHECK_REPORT_ERROR(
-                                    (ref_entry), enc_ctx->app_callback_ptr, EB_ENC_PM_ERROR10);
+                                CHECK_REPORT_ERROR((ref_entry), enc_ctx->app_callback_ptr, EB_ENC_PM_ERROR10);
 
                                 /* clang-format off */
                                 if (entry_ppcs->frame_end_cdf_update_mode) {
@@ -876,20 +805,13 @@ void *svt_aom_picture_manager_kernel(void *input_ptr) {
                                 }
                                 /* clang-format on */
                                 // Set the Reference Object
-                                child_pcs->ref_pic_ptr_array[list_idx][ref_idx] =
-                                    ref_entry->reference_object_ptr;
+                                child_pcs->ref_pic_ptr_array[list_idx][ref_idx] = ref_entry->reference_object_ptr;
                                 child_pcs->ref_pic_qp_array[list_idx][ref_idx] =
-                                    (uint8_t)((EbReferenceObject *)
-                                                  ref_entry->reference_object_ptr->object_ptr)
-                                        ->qp;
+                                    (uint8_t)((EbReferenceObject *)ref_entry->reference_object_ptr->object_ptr)->qp;
                                 child_pcs->ref_slice_type_array[list_idx][ref_idx] =
-                                    ((EbReferenceObject *)
-                                         ref_entry->reference_object_ptr->object_ptr)
-                                        ->slice_type;
+                                    ((EbReferenceObject *)ref_entry->reference_object_ptr->object_ptr)->slice_type;
                                 child_pcs->ref_pic_r0[list_idx][ref_idx] =
-                                    ((EbReferenceObject *)
-                                         ref_entry->reference_object_ptr->object_ptr)
-                                        ->r0;
+                                    ((EbReferenceObject *)ref_entry->reference_object_ptr->object_ptr)->r0;
                                 // Increment the Reference's liveCount by the number of tiles in the
                                 // input picture
                                 svt_object_inc_live_count(ref_entry->reference_object_ptr, 1);
@@ -902,8 +824,7 @@ void *svt_aom_picture_manager_kernel(void *input_ptr) {
                                             (int)child_pcs->picture_number,
                                             entry_ppcs->temporal_layer_index,
                                             entry_ppcs->ref_list0_count,
-                                            (int)child_pcs->ppcs
-                                                ->ref_pic_poc_array[REF_LIST_0][ref_idx],
+                                            (int)child_pcs->ppcs->ref_pic_poc_array[REF_LIST_0][ref_idx],
                                             ref_entry->dependent_count);
                                 }
 #endif
@@ -940,8 +861,7 @@ void *svt_aom_picture_manager_kernel(void *input_ptr) {
                         }
 
                         if (entry_ppcs->frame_end_cdf_update_mode) {
-                            if (entry_ppcs->slice_type != I_SLICE &&
-                                entry_ppcs->frm_hdr.frame_type != S_FRAME)
+                            if (entry_ppcs->slice_type != I_SLICE && entry_ppcs->frm_hdr.frame_type != S_FRAME)
                                 child_pcs->ppcs->frm_hdr.primary_ref_frame = ref_index;
                             else
                                 child_pcs->ppcs->frm_hdr.primary_ref_frame = PRIMARY_REF_NONE;
@@ -956,12 +876,10 @@ void *svt_aom_picture_manager_kernel(void *input_ptr) {
                         }
                         EbObjectWrapper *out_results_wrapper;
                         // Get Empty Results Object
-                        svt_get_empty_object(context_ptr->picture_manager_output_fifo_ptr,
-                                             &out_results_wrapper);
-                        RateControlTasks *rc_tasks = (RateControlTasks *)
-                                                         out_results_wrapper->object_ptr;
-                        rc_tasks->pcs_wrapper = child_pcs->c_pcs_wrapper_ptr;
-                        rc_tasks->task_type   = RC_INPUT;
+                        svt_get_empty_object(context_ptr->picture_manager_output_fifo_ptr, &out_results_wrapper);
+                        RateControlTasks *rc_tasks = (RateControlTasks *)out_results_wrapper->object_ptr;
+                        rc_tasks->pcs_wrapper      = child_pcs->c_pcs_wrapper_ptr;
+                        rc_tasks->task_type        = RC_INPUT;
 
                         // printf("picMgr sending:%x \n", rc_tasks->pcs_wrapper);
 
@@ -975,8 +893,7 @@ void *svt_aom_picture_manager_kernel(void *input_ptr) {
                         for (uint32_t i = 0; i < enc_ctx->ref_pic_list_length; i++) {
                             ref_entry = enc_ctx->ref_pic_list[i];
                             if (ref_entry->is_valid) {
-                                for (uint8_t idx = 0; idx < entry_ppcs->released_pics_count;
-                                     idx++) {
+                                for (uint8_t idx = 0; idx < entry_ppcs->released_pics_count; idx++) {
                                     if (ref_entry->decode_order == entry_ppcs->released_pics[idx]) {
                                         ref_entry->dec_order_of_last_ref = entry_ppcs->decode_order;
                                     }
@@ -991,17 +908,14 @@ void *svt_aom_picture_manager_kernel(void *input_ptr) {
 
                 // Increment the head_index if the head is null
                 enc_ctx->input_picture_queue_head_index =
-                    (enc_ctx->input_picture_queue[enc_ctx->input_picture_queue_head_index]
-                         ->input_object_ptr)
+                    (enc_ctx->input_picture_queue[enc_ctx->input_picture_queue_head_index]->input_object_ptr)
                     ? enc_ctx->input_picture_queue_head_index
                     : (enc_ctx->input_picture_queue_head_index == INPUT_QUEUE_MAX_DEPTH - 1)
                     ? 0
                     : enc_ctx->input_picture_queue_head_index + 1;
 
                 // Increment the input_queue_index Iterator
-                input_queue_index = (input_queue_index == INPUT_QUEUE_MAX_DEPTH - 1)
-                    ? 0
-                    : input_queue_index + 1;
+                input_queue_index = (input_queue_index == INPUT_QUEUE_MAX_DEPTH - 1) ? 0 : input_queue_index + 1;
             }
 #if OPT_LD_LATENCY2
             svt_block_on_mutex(enc_ctx->ref_pic_list_mutex);
@@ -1013,8 +927,7 @@ void *svt_aom_picture_manager_kernel(void *input_ptr) {
                     if (ref_entry->dec_order_of_last_ref <= context_ptr->consecutive_dec_order &&
                         ref_entry->release_enable && ref_entry->reference_available &&
                         ref_entry->reference_object_ptr &&
-                        (!ref_entry->frame_end_cdf_update_required ||
-                         ref_entry->frame_context_updated)) {
+                        (!ref_entry->frame_end_cdf_update_required || ref_entry->frame_context_updated)) {
                         // Release the nominal live_count value
                         svt_release_object(ref_entry->reference_object_ptr);
                         ref_entry->reference_object_ptr  = (EbObjectWrapper *)NULL;

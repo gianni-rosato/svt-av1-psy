@@ -17,13 +17,13 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-typedef void (*CdefFilterBlockFunc)(uint8_t *dst8, uint16_t *dst16, int32_t dstride,
-                                    const uint16_t *in, int32_t pri_strength, int32_t sec_strength,
-                                    int32_t dir, int32_t pri_damping, int32_t sec_damping,
-                                    int32_t bsize, int32_t coeff_shift, uint8_t subsampling_factor);
+typedef void (*CdefFilterBlockFunc)(uint8_t *dst8, uint16_t *dst16, int32_t dstride, const uint16_t *in,
+                                    int32_t pri_strength, int32_t sec_strength, int32_t dir, int32_t pri_damping,
+                                    int32_t sec_damping, int32_t bsize, int32_t coeff_shift,
+                                    uint8_t subsampling_factor);
 
-void copy_cdef_16bit_to_16bit(uint16_t *dst, int32_t dstride, uint16_t *src, CdefList *dlist,
-                              int32_t cdef_count, int32_t bsize);
+void copy_cdef_16bit_to_16bit(uint16_t *dst, int32_t dstride, uint16_t *src, CdefList *dlist, int32_t cdef_count,
+                              int32_t bsize);
 
 #ifdef __cplusplus
 }

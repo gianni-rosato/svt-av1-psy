@@ -26,8 +26,7 @@
  */
 
 #define decl_itx_fn(name) \
-    void(name)(           \
-        uint16_t * dst, ptrdiff_t dst_stride, int32_t * coeff, int eob, const int bitdepth_max)
+    void(name)(uint16_t * dst, ptrdiff_t dst_stride, int32_t * coeff, int eob, const int bitdepth_max)
 
 #define BF_BPC(x, bits, suffix) svt_##x##_##bits##bpc_##suffix
 

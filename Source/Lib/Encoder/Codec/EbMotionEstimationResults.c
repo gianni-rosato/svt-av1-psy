@@ -13,15 +13,13 @@
 
 #include "EbMotionEstimationResults.h"
 
-static EbErrorType motion_estimation_results_ctor(MotionEstimationResults *context_ptr,
-                                                  EbPtr                    object_init_data_ptr) {
+static EbErrorType motion_estimation_results_ctor(MotionEstimationResults *context_ptr, EbPtr object_init_data_ptr) {
     (void)context_ptr;
     (void)(object_init_data_ptr);
     return EB_ErrorNone;
 }
 
-EbErrorType svt_aom_motion_estimation_results_creator(EbPtr *object_dbl_ptr,
-                                                      EbPtr  object_init_data_ptr) {
+EbErrorType svt_aom_motion_estimation_results_creator(EbPtr *object_dbl_ptr, EbPtr object_init_data_ptr) {
     MotionEstimationResults *obj;
 
     *object_dbl_ptr = NULL;

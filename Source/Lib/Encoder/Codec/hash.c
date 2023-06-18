@@ -10,18 +10,14 @@
  */
 
 #include "hash.h"
-static void crc_calculator_process_data(CRC_CALCULATOR *p_crc_calculator, uint8_t *pData,
-                                        uint32_t dataLength) {
+static void crc_calculator_process_data(CRC_CALCULATOR *p_crc_calculator, uint8_t *pData, uint32_t dataLength) {
     for (uint32_t i = 0; i < dataLength; i++) {
-        const uint8_t index =
-            (uint8_t)((p_crc_calculator->remainder >> (p_crc_calculator->bits - 8)) ^ pData[i]);
+        const uint8_t index = (uint8_t)((p_crc_calculator->remainder >> (p_crc_calculator->bits - 8)) ^ pData[i]);
         p_crc_calculator->remainder <<= 8;
         p_crc_calculator->remainder ^= p_crc_calculator->table[index];
     }
 }
-static void crc_calculator_reset(CRC_CALCULATOR *p_crc_calculator) {
-    p_crc_calculator->remainder = 0;
-}
+static void crc_calculator_reset(CRC_CALCULATOR *p_crc_calculator) { p_crc_calculator->remainder = 0; }
 
 static uint32_t crc_calculator_get_crc(CRC_CALCULATOR *p_crc_calculator) {
     return p_crc_calculator->remainder & p_crc_calculator->final_result_mask;
@@ -46,8 +42,7 @@ static void crc_calculator_init_table(CRC_CALCULATOR *p_crc_calculator) {
     }
 }
 
-void svt_av1_crc_calculator_init(CRC_CALCULATOR *p_crc_calculator, uint32_t bits,
-                                 uint32_t truncPoly) {
+void svt_av1_crc_calculator_init(CRC_CALCULATOR *p_crc_calculator, uint32_t bits, uint32_t truncPoly) {
     p_crc_calculator->remainder         = 0;
     p_crc_calculator->bits              = bits;
     p_crc_calculator->trunc_poly        = truncPoly;

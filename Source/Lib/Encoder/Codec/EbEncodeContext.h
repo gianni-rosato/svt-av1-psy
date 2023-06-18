@@ -168,7 +168,7 @@ typedef struct EncodeContext {
     uint32_t         previous_mini_gop_hierarchical_levels;
     uint64_t         mini_gop_cnt_per_gop;
     EbObjectWrapper *previous_picture_control_set_wrapper_ptr;
-    uint64_t picture_number_alt; // The picture number overlay includes all the overlay frames
+    uint64_t         picture_number_alt; // The picture number overlay includes all the overlay frames
 
     EbHandle stat_file_mutex;
 
@@ -199,10 +199,8 @@ typedef struct EncodeContext {
     // reference scaling random access event
     EbRefFrameScale resize_evt;
     //Superblock end index for cycling refresh through the frame.
-    uint32_t cr_sb_end;
-#if FTR_ROI
+    uint32_t         cr_sb_end;
     SvtAv1RoiMapEvt *roi_map_evt;
-#endif
 } EncodeContext;
 
 typedef struct EncodeContextInitData {

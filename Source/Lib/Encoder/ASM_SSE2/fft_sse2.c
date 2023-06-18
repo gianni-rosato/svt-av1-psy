@@ -96,8 +96,7 @@ void svt_aom_fft_unpack_2d_output_sse2(const float *packed, float *output, int32
 }
 
 // Generate definitions for 1d transforms using float and __mm128
-GEN_FFT_4(static INLINE void, sse2, float, __m128, _mm_loadu_ps, _mm_storeu_ps, _mm_set1_ps,
-          _mm_add_ps, _mm_sub_ps);
+GEN_FFT_4(static INLINE void, sse2, float, __m128, _mm_loadu_ps, _mm_storeu_ps, _mm_set1_ps, _mm_add_ps, _mm_sub_ps);
 
 void svt_aom_fft4x4_float_sse2(const float *input, float *temp, float *output) {
     svt_aom_fft_2d_gen(input,
@@ -111,8 +110,7 @@ void svt_aom_fft4x4_float_sse2(const float *input, float *temp, float *output) {
 }
 
 // Generate definitions for 1d inverse transforms using float and mm128
-GEN_IFFT_4(static INLINE void, sse2, float, __m128, _mm_loadu_ps, _mm_storeu_ps, _mm_set1_ps,
-           _mm_add_ps, _mm_sub_ps);
+GEN_IFFT_4(static INLINE void, sse2, float, __m128, _mm_loadu_ps, _mm_storeu_ps, _mm_set1_ps, _mm_add_ps, _mm_sub_ps);
 
 void svt_aom_ifft4x4_float_sse2(const float *input, float *temp, float *output) {
     svt_aom_ifft_2d_gen(input,

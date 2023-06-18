@@ -81,8 +81,7 @@ static INLINE TxType intra_mode_to_tx_type(PredictionMode pred_mode, UvPredictio
         DCT_ADST, // SMOOTH_H
         ADST_ADST, // PAETH
     };
-    const PredictionMode mode = (plane_type == PLANE_TYPE_Y) ? pred_mode
-                                                             : get_uv_mode(pred_mode_uv);
+    const PredictionMode mode = (plane_type == PLANE_TYPE_Y) ? pred_mode : get_uv_mode(pred_mode_uv);
     assert(mode < INTRA_MODES);
     return _intra_mode_to_tx_type[mode];
 }
@@ -103,15 +102,14 @@ static INLINE TxType intra_mode_to_tx_type_dec(const BlockModeInfo *mbmi, PlaneT
         DCT_ADST, // SMOOTH_H
         ADST_ADST, // PAETH
     };
-    const PredictionMode mode = (plane_type == PLANE_TYPE_Y) ? mbmi->mode
-                                                             : get_uv_mode(mbmi->uv_mode);
+    const PredictionMode mode = (plane_type == PLANE_TYPE_Y) ? mbmi->mode : get_uv_mode(mbmi->uv_mode);
 
     assert(mode < INTRA_MODES);
     return _intra_mode_to_tx_type[mode];
 }
 
-static INLINE int32_t is_chroma_reference(int32_t mi_row, int32_t mi_col, BlockSize bsize,
-                                          int32_t subsampling_x, int32_t subsampling_y) {
+static INLINE int32_t is_chroma_reference(int32_t mi_row, int32_t mi_col, BlockSize bsize, int32_t subsampling_x,
+                                          int32_t subsampling_y) {
     const int32_t bw      = mi_size_wide[bsize];
     const int32_t bh      = mi_size_high[bsize];
     int32_t       ref_pos = ((mi_row & 0x01) || !(bh & 0x01) || !subsampling_y) &&
@@ -119,13 +117,11 @@ static INLINE int32_t is_chroma_reference(int32_t mi_row, int32_t mi_col, BlockS
     return ref_pos;
 }
 
-static INLINE int get_segdata(SegmentationParams *seg, int segment_id,
-                              SEG_LVL_FEATURES feature_id) {
+static INLINE int get_segdata(SegmentationParams *seg, int segment_id, SEG_LVL_FEATURES feature_id) {
     return seg->feature_data[segment_id][feature_id];
 }
 
-static const PredictionMode fimode_to_intradir[FILTER_INTRA_MODES] = {
-    DC_PRED, V_PRED, H_PRED, D157_PRED, DC_PRED};
+static const PredictionMode fimode_to_intradir[FILTER_INTRA_MODES] = {DC_PRED, V_PRED, H_PRED, D157_PRED, DC_PRED};
 
 static AOM_FORCE_INLINE int get_br_ctx(const uint8_t *const levels,
                                        const int            c, // raster order

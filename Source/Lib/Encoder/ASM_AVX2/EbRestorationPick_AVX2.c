@@ -27,10 +27,9 @@ static INLINE void avx2_mul_epi16_epi32(__m256i *a, __m256i *b, __m256i *out) {
     out[0] = _mm256_mullo_epi32(a_32[0], b_32[0]);
     out[1] = _mm256_mullo_epi32(a_32[1], b_32[1]);
 }
-void svt_get_proj_subspace_avx2(const uint8_t *src8, int width, int height, int src_stride,
-                                const uint8_t *dat8, int dat_stride, int use_highbitdepth,
-                                int32_t *flt0, int flt0_stride, int32_t *flt1, int flt1_stride,
-                                int *xq, const SgrParamsType *params) {
+void svt_get_proj_subspace_avx2(const uint8_t *src8, int width, int height, int src_stride, const uint8_t *dat8,
+                                int dat_stride, int use_highbitdepth, int32_t *flt0, int flt0_stride, int32_t *flt1,
+                                int flt1_stride, int *xq, const SgrParamsType *params) {
     double    H[2][2] = {{0, 0}, {0, 0}};
     double    C[2]    = {0, 0};
     double    det;
@@ -62,19 +61,16 @@ void svt_get_proj_subspace_avx2(const uint8_t *src8, int width, int height, int 
         for (int i = 0; i < height; ++i) {
             int j = 0, avx2_cnt = 0;
             for (; avx2_cnt < width / 16; j += 16, ++avx2_cnt) {
-                u_256 = _mm256_cvtepu8_epi16(
-                    _mm_loadu_si128((const __m128i *)(dat + i * dat_stride + j)));
+                u_256 = _mm256_cvtepu8_epi16(_mm_loadu_si128((const __m128i *)(dat + i * dat_stride + j)));
                 u_256 = _mm256_slli_epi16(u_256, SGRPROJ_RST_BITS);
 
-                s_256 = _mm256_cvtepu8_epi16(
-                    _mm_loadu_si128((const __m128i *)(src + i * src_stride + j)));
+                s_256 = _mm256_cvtepu8_epi16(_mm_loadu_si128((const __m128i *)(src + i * src_stride + j)));
                 s_256 = _mm256_slli_epi16(s_256, SGRPROJ_RST_BITS);
                 s_256 = _mm256_sub_epi16(s_256, u_256);
 
                 if (params->r[0] > 0) {
                     f1_256     = _mm256_loadu_si256((const __m256i *)(flt0 + i * flt0_stride + j));
-                    f1_256_tmp = _mm256_loadu_si256(
-                        (const __m256i *)(flt0 + i * flt0_stride + j + 8));
+                    f1_256_tmp = _mm256_loadu_si256((const __m256i *)(flt0 + i * flt0_stride + j + 8));
 
                     f1_256 = _mm256_hadd_epi16(f1_256, f1_256_tmp);
                     f1_256 = _mm256_permute4x64_epi64(f1_256, 0xD8);
@@ -83,8 +79,7 @@ void svt_get_proj_subspace_avx2(const uint8_t *src8, int width, int height, int 
                     f1_256 = _mm256_set1_epi16(0);
                 if (params->r[1] > 0) {
                     f2_256     = _mm256_loadu_si256((const __m256i *)(flt1 + i * flt1_stride + j));
-                    f2_256_tmp = _mm256_loadu_si256(
-                        (const __m256i *)(flt1 + i * flt1_stride + j + 8));
+                    f2_256_tmp = _mm256_loadu_si256((const __m256i *)(flt1 + i * flt1_stride + j + 8));
 
                     f2_256 = _mm256_hadd_epi16(f2_256, f2_256_tmp);
                     f2_256 = _mm256_permute4x64_epi64(f2_256, 0xD8);
@@ -172,8 +167,7 @@ void svt_get_proj_subspace_avx2(const uint8_t *src8, int width, int height, int 
 
                 if (params->r[0] > 0) {
                     f1_256     = _mm256_loadu_si256((const __m256i *)(flt0 + i * flt0_stride + j));
-                    f1_256_tmp = _mm256_loadu_si256(
-                        (const __m256i *)(flt0 + i * flt0_stride + j + 8));
+                    f1_256_tmp = _mm256_loadu_si256((const __m256i *)(flt0 + i * flt0_stride + j + 8));
 
                     f1_256 = _mm256_hadd_epi16(f1_256, f1_256_tmp);
                     f1_256 = _mm256_permute4x64_epi64(f1_256, 0xD8);
@@ -182,8 +176,7 @@ void svt_get_proj_subspace_avx2(const uint8_t *src8, int width, int height, int 
                     f1_256 = _mm256_set1_epi16(0);
                 if (params->r[1] > 0) {
                     f2_256     = _mm256_loadu_si256((const __m256i *)(flt1 + i * flt1_stride + j));
-                    f2_256_tmp = _mm256_loadu_si256(
-                        (const __m256i *)(flt1 + i * flt1_stride + j + 8));
+                    f2_256_tmp = _mm256_loadu_si256((const __m256i *)(flt1 + i * flt1_stride + j + 8));
 
                     f2_256 = _mm256_hadd_epi16(f2_256, f2_256_tmp);
                     f2_256 = _mm256_permute4x64_epi64(f2_256, 0xD8);

@@ -31,157 +31,115 @@ const int16_t av1_down2_symodd_half_filter[]          = {64, 35, 0, -3};
 
 // Filters for interpolation (0.5-band) - note this also filters integer pels.
 const InterpKernel svt_aom_av1_filteredinterp_filters500[(1 << RS_SUBPEL_BITS)] = {
-    {-3, 0, 35, 64, 35, 0, -3, 0},    {-3, 0, 34, 64, 36, 0, -3, 0},
-    {-3, -1, 34, 64, 36, 1, -3, 0},   {-3, -1, 33, 64, 37, 1, -3, 0},
-    {-3, -1, 32, 64, 38, 1, -3, 0},   {-3, -1, 31, 64, 39, 1, -3, 0},
-    {-3, -1, 31, 63, 39, 2, -3, 0},   {-2, -2, 30, 63, 40, 2, -3, 0},
-    {-2, -2, 29, 63, 41, 2, -3, 0},   {-2, -2, 29, 63, 41, 3, -4, 0},
-    {-2, -2, 28, 63, 42, 3, -4, 0},   {-2, -2, 27, 63, 43, 3, -4, 0},
-    {-2, -3, 27, 63, 43, 4, -4, 0},   {-2, -3, 26, 62, 44, 5, -4, 0},
-    {-2, -3, 25, 62, 45, 5, -4, 0},   {-2, -3, 25, 62, 45, 5, -4, 0},
-    {-2, -3, 24, 62, 46, 5, -4, 0},   {-2, -3, 23, 61, 47, 6, -4, 0},
-    {-2, -3, 23, 61, 47, 6, -4, 0},   {-2, -3, 22, 61, 48, 7, -4, -1},
-    {-2, -3, 21, 60, 49, 7, -4, 0},   {-1, -4, 20, 60, 49, 8, -4, 0},
-    {-1, -4, 20, 60, 50, 8, -4, -1},  {-1, -4, 19, 59, 51, 9, -4, -1},
-    {-1, -4, 19, 59, 51, 9, -4, -1},  {-1, -4, 18, 58, 52, 10, -4, -1},
-    {-1, -4, 17, 58, 52, 11, -4, -1}, {-1, -4, 16, 58, 53, 11, -4, -1},
-    {-1, -4, 16, 57, 53, 12, -4, -1}, {-1, -4, 15, 57, 54, 12, -4, -1},
-    {-1, -4, 15, 56, 54, 13, -4, -1}, {-1, -4, 14, 56, 55, 13, -4, -1},
-    {-1, -4, 14, 55, 55, 14, -4, -1}, {-1, -4, 13, 55, 56, 14, -4, -1},
-    {-1, -4, 13, 54, 56, 15, -4, -1}, {-1, -4, 12, 54, 57, 15, -4, -1},
-    {-1, -4, 12, 53, 57, 16, -4, -1}, {-1, -4, 11, 53, 58, 16, -4, -1},
-    {-1, -4, 11, 52, 58, 17, -4, -1}, {-1, -4, 10, 52, 58, 18, -4, -1},
-    {-1, -4, 9, 51, 59, 19, -4, -1},  {-1, -4, 9, 51, 59, 19, -4, -1},
-    {-1, -4, 8, 50, 60, 20, -4, -1},  {0, -4, 8, 49, 60, 20, -4, -1},
-    {0, -4, 7, 49, 60, 21, -3, -2},   {-1, -4, 7, 48, 61, 22, -3, -2},
-    {0, -4, 6, 47, 61, 23, -3, -2},   {0, -4, 6, 47, 61, 23, -3, -2},
-    {0, -4, 5, 46, 62, 24, -3, -2},   {0, -4, 5, 45, 62, 25, -3, -2},
-    {0, -4, 5, 45, 62, 25, -3, -2},   {0, -4, 5, 44, 62, 26, -3, -2},
-    {0, -4, 4, 43, 63, 27, -3, -2},   {0, -4, 3, 43, 63, 27, -2, -2},
-    {0, -4, 3, 42, 63, 28, -2, -2},   {0, -4, 3, 41, 63, 29, -2, -2},
-    {0, -3, 2, 41, 63, 29, -2, -2},   {0, -3, 2, 40, 63, 30, -2, -2},
-    {0, -3, 2, 39, 63, 31, -1, -3},   {0, -3, 1, 39, 64, 31, -1, -3},
-    {0, -3, 1, 38, 64, 32, -1, -3},   {0, -3, 1, 37, 64, 33, -1, -3},
-    {0, -3, 1, 36, 64, 34, -1, -3},   {0, -3, 0, 36, 64, 34, 0, -3},
+    {-3, 0, 35, 64, 35, 0, -3, 0},    {-3, 0, 34, 64, 36, 0, -3, 0},    {-3, -1, 34, 64, 36, 1, -3, 0},
+    {-3, -1, 33, 64, 37, 1, -3, 0},   {-3, -1, 32, 64, 38, 1, -3, 0},   {-3, -1, 31, 64, 39, 1, -3, 0},
+    {-3, -1, 31, 63, 39, 2, -3, 0},   {-2, -2, 30, 63, 40, 2, -3, 0},   {-2, -2, 29, 63, 41, 2, -3, 0},
+    {-2, -2, 29, 63, 41, 3, -4, 0},   {-2, -2, 28, 63, 42, 3, -4, 0},   {-2, -2, 27, 63, 43, 3, -4, 0},
+    {-2, -3, 27, 63, 43, 4, -4, 0},   {-2, -3, 26, 62, 44, 5, -4, 0},   {-2, -3, 25, 62, 45, 5, -4, 0},
+    {-2, -3, 25, 62, 45, 5, -4, 0},   {-2, -3, 24, 62, 46, 5, -4, 0},   {-2, -3, 23, 61, 47, 6, -4, 0},
+    {-2, -3, 23, 61, 47, 6, -4, 0},   {-2, -3, 22, 61, 48, 7, -4, -1},  {-2, -3, 21, 60, 49, 7, -4, 0},
+    {-1, -4, 20, 60, 49, 8, -4, 0},   {-1, -4, 20, 60, 50, 8, -4, -1},  {-1, -4, 19, 59, 51, 9, -4, -1},
+    {-1, -4, 19, 59, 51, 9, -4, -1},  {-1, -4, 18, 58, 52, 10, -4, -1}, {-1, -4, 17, 58, 52, 11, -4, -1},
+    {-1, -4, 16, 58, 53, 11, -4, -1}, {-1, -4, 16, 57, 53, 12, -4, -1}, {-1, -4, 15, 57, 54, 12, -4, -1},
+    {-1, -4, 15, 56, 54, 13, -4, -1}, {-1, -4, 14, 56, 55, 13, -4, -1}, {-1, -4, 14, 55, 55, 14, -4, -1},
+    {-1, -4, 13, 55, 56, 14, -4, -1}, {-1, -4, 13, 54, 56, 15, -4, -1}, {-1, -4, 12, 54, 57, 15, -4, -1},
+    {-1, -4, 12, 53, 57, 16, -4, -1}, {-1, -4, 11, 53, 58, 16, -4, -1}, {-1, -4, 11, 52, 58, 17, -4, -1},
+    {-1, -4, 10, 52, 58, 18, -4, -1}, {-1, -4, 9, 51, 59, 19, -4, -1},  {-1, -4, 9, 51, 59, 19, -4, -1},
+    {-1, -4, 8, 50, 60, 20, -4, -1},  {0, -4, 8, 49, 60, 20, -4, -1},   {0, -4, 7, 49, 60, 21, -3, -2},
+    {-1, -4, 7, 48, 61, 22, -3, -2},  {0, -4, 6, 47, 61, 23, -3, -2},   {0, -4, 6, 47, 61, 23, -3, -2},
+    {0, -4, 5, 46, 62, 24, -3, -2},   {0, -4, 5, 45, 62, 25, -3, -2},   {0, -4, 5, 45, 62, 25, -3, -2},
+    {0, -4, 5, 44, 62, 26, -3, -2},   {0, -4, 4, 43, 63, 27, -3, -2},   {0, -4, 3, 43, 63, 27, -2, -2},
+    {0, -4, 3, 42, 63, 28, -2, -2},   {0, -4, 3, 41, 63, 29, -2, -2},   {0, -3, 2, 41, 63, 29, -2, -2},
+    {0, -3, 2, 40, 63, 30, -2, -2},   {0, -3, 2, 39, 63, 31, -1, -3},   {0, -3, 1, 39, 64, 31, -1, -3},
+    {0, -3, 1, 38, 64, 32, -1, -3},   {0, -3, 1, 37, 64, 33, -1, -3},   {0, -3, 1, 36, 64, 34, -1, -3},
+    {0, -3, 0, 36, 64, 34, 0, -3},
 };
 
 // Filters for interpolation (0.625-band) - note this also filters integer pels.
 const InterpKernel svt_aom_av1_filteredinterp_filters625[(1 << RS_SUBPEL_BITS)] = {
-    {-1, -8, 33, 80, 33, -8, -1, 0}, {-1, -8, 31, 80, 34, -8, -1, 1},
-    {-1, -8, 30, 80, 35, -8, -1, 1}, {-1, -8, 29, 80, 36, -7, -2, 1},
-    {-1, -8, 28, 80, 37, -7, -2, 1}, {-1, -8, 27, 80, 38, -7, -2, 1},
-    {0, -8, 26, 79, 39, -7, -2, 1},  {0, -8, 25, 79, 40, -7, -2, 1},
-    {0, -8, 24, 79, 41, -7, -2, 1},  {0, -8, 23, 78, 42, -6, -2, 1},
-    {0, -8, 22, 78, 43, -6, -2, 1},  {0, -8, 21, 78, 44, -6, -2, 1},
-    {0, -8, 20, 78, 45, -5, -3, 1},  {0, -8, 19, 77, 47, -5, -3, 1},
-    {0, -8, 18, 77, 48, -5, -3, 1},  {0, -8, 17, 77, 49, -5, -3, 1},
-    {0, -8, 16, 76, 50, -4, -3, 1},  {0, -8, 15, 76, 51, -4, -3, 1},
-    {0, -8, 15, 75, 52, -3, -4, 1},  {0, -7, 14, 74, 53, -3, -4, 1},
-    {0, -7, 13, 74, 54, -3, -4, 1},  {0, -7, 12, 73, 55, -2, -4, 1},
-    {0, -7, 11, 73, 56, -2, -4, 1},  {0, -7, 10, 72, 57, -1, -4, 1},
-    {1, -7, 10, 71, 58, -1, -5, 1},  {0, -7, 9, 71, 59, 0, -5, 1},
-    {1, -7, 8, 70, 60, 0, -5, 1},    {1, -7, 7, 69, 61, 1, -5, 1},
-    {1, -6, 6, 68, 62, 1, -5, 1},    {0, -6, 6, 68, 62, 2, -5, 1},
-    {1, -6, 5, 67, 63, 2, -5, 1},    {1, -6, 5, 66, 64, 3, -6, 1},
-    {1, -6, 4, 65, 65, 4, -6, 1},    {1, -6, 3, 64, 66, 5, -6, 1},
-    {1, -5, 2, 63, 67, 5, -6, 1},    {1, -5, 2, 62, 68, 6, -6, 0},
-    {1, -5, 1, 62, 68, 6, -6, 1},    {1, -5, 1, 61, 69, 7, -7, 1},
-    {1, -5, 0, 60, 70, 8, -7, 1},    {1, -5, 0, 59, 71, 9, -7, 0},
-    {1, -5, -1, 58, 71, 10, -7, 1},  {1, -4, -1, 57, 72, 10, -7, 0},
-    {1, -4, -2, 56, 73, 11, -7, 0},  {1, -4, -2, 55, 73, 12, -7, 0},
-    {1, -4, -3, 54, 74, 13, -7, 0},  {1, -4, -3, 53, 74, 14, -7, 0},
-    {1, -4, -3, 52, 75, 15, -8, 0},  {1, -3, -4, 51, 76, 15, -8, 0},
-    {1, -3, -4, 50, 76, 16, -8, 0},  {1, -3, -5, 49, 77, 17, -8, 0},
-    {1, -3, -5, 48, 77, 18, -8, 0},  {1, -3, -5, 47, 77, 19, -8, 0},
-    {1, -3, -5, 45, 78, 20, -8, 0},  {1, -2, -6, 44, 78, 21, -8, 0},
-    {1, -2, -6, 43, 78, 22, -8, 0},  {1, -2, -6, 42, 78, 23, -8, 0},
-    {1, -2, -7, 41, 79, 24, -8, 0},  {1, -2, -7, 40, 79, 25, -8, 0},
-    {1, -2, -7, 39, 79, 26, -8, 0},  {1, -2, -7, 38, 80, 27, -8, -1},
-    {1, -2, -7, 37, 80, 28, -8, -1}, {1, -2, -7, 36, 80, 29, -8, -1},
-    {1, -1, -8, 35, 80, 30, -8, -1}, {1, -1, -8, 34, 80, 31, -8, -1},
+    {-1, -8, 33, 80, 33, -8, -1, 0}, {-1, -8, 31, 80, 34, -8, -1, 1}, {-1, -8, 30, 80, 35, -8, -1, 1},
+    {-1, -8, 29, 80, 36, -7, -2, 1}, {-1, -8, 28, 80, 37, -7, -2, 1}, {-1, -8, 27, 80, 38, -7, -2, 1},
+    {0, -8, 26, 79, 39, -7, -2, 1},  {0, -8, 25, 79, 40, -7, -2, 1},  {0, -8, 24, 79, 41, -7, -2, 1},
+    {0, -8, 23, 78, 42, -6, -2, 1},  {0, -8, 22, 78, 43, -6, -2, 1},  {0, -8, 21, 78, 44, -6, -2, 1},
+    {0, -8, 20, 78, 45, -5, -3, 1},  {0, -8, 19, 77, 47, -5, -3, 1},  {0, -8, 18, 77, 48, -5, -3, 1},
+    {0, -8, 17, 77, 49, -5, -3, 1},  {0, -8, 16, 76, 50, -4, -3, 1},  {0, -8, 15, 76, 51, -4, -3, 1},
+    {0, -8, 15, 75, 52, -3, -4, 1},  {0, -7, 14, 74, 53, -3, -4, 1},  {0, -7, 13, 74, 54, -3, -4, 1},
+    {0, -7, 12, 73, 55, -2, -4, 1},  {0, -7, 11, 73, 56, -2, -4, 1},  {0, -7, 10, 72, 57, -1, -4, 1},
+    {1, -7, 10, 71, 58, -1, -5, 1},  {0, -7, 9, 71, 59, 0, -5, 1},    {1, -7, 8, 70, 60, 0, -5, 1},
+    {1, -7, 7, 69, 61, 1, -5, 1},    {1, -6, 6, 68, 62, 1, -5, 1},    {0, -6, 6, 68, 62, 2, -5, 1},
+    {1, -6, 5, 67, 63, 2, -5, 1},    {1, -6, 5, 66, 64, 3, -6, 1},    {1, -6, 4, 65, 65, 4, -6, 1},
+    {1, -6, 3, 64, 66, 5, -6, 1},    {1, -5, 2, 63, 67, 5, -6, 1},    {1, -5, 2, 62, 68, 6, -6, 0},
+    {1, -5, 1, 62, 68, 6, -6, 1},    {1, -5, 1, 61, 69, 7, -7, 1},    {1, -5, 0, 60, 70, 8, -7, 1},
+    {1, -5, 0, 59, 71, 9, -7, 0},    {1, -5, -1, 58, 71, 10, -7, 1},  {1, -4, -1, 57, 72, 10, -7, 0},
+    {1, -4, -2, 56, 73, 11, -7, 0},  {1, -4, -2, 55, 73, 12, -7, 0},  {1, -4, -3, 54, 74, 13, -7, 0},
+    {1, -4, -3, 53, 74, 14, -7, 0},  {1, -4, -3, 52, 75, 15, -8, 0},  {1, -3, -4, 51, 76, 15, -8, 0},
+    {1, -3, -4, 50, 76, 16, -8, 0},  {1, -3, -5, 49, 77, 17, -8, 0},  {1, -3, -5, 48, 77, 18, -8, 0},
+    {1, -3, -5, 47, 77, 19, -8, 0},  {1, -3, -5, 45, 78, 20, -8, 0},  {1, -2, -6, 44, 78, 21, -8, 0},
+    {1, -2, -6, 43, 78, 22, -8, 0},  {1, -2, -6, 42, 78, 23, -8, 0},  {1, -2, -7, 41, 79, 24, -8, 0},
+    {1, -2, -7, 40, 79, 25, -8, 0},  {1, -2, -7, 39, 79, 26, -8, 0},  {1, -2, -7, 38, 80, 27, -8, -1},
+    {1, -2, -7, 37, 80, 28, -8, -1}, {1, -2, -7, 36, 80, 29, -8, -1}, {1, -1, -8, 35, 80, 30, -8, -1},
+    {1, -1, -8, 34, 80, 31, -8, -1},
 };
 
 // Filters for interpolation (0.75-band) - note this also filters integer pels.
 const InterpKernel svt_aom_av1_filteredinterp_filters750[(1 << RS_SUBPEL_BITS)] = {
-    {2, -11, 25, 96, 25, -11, 2, 0}, {2, -11, 24, 96, 26, -11, 2, 0},
-    {2, -11, 22, 96, 28, -11, 2, 0}, {2, -10, 21, 96, 29, -12, 2, 0},
-    {2, -10, 19, 96, 31, -12, 2, 0}, {2, -10, 18, 95, 32, -11, 2, 0},
-    {2, -10, 17, 95, 34, -12, 2, 0}, {2, -9, 15, 95, 35, -12, 2, 0},
-    {2, -9, 14, 94, 37, -12, 2, 0},  {2, -9, 13, 94, 38, -12, 2, 0},
-    {2, -8, 12, 93, 40, -12, 1, 0},  {2, -8, 11, 93, 41, -12, 1, 0},
-    {2, -8, 9, 92, 43, -12, 1, 1},   {2, -8, 8, 92, 44, -12, 1, 1},
-    {2, -7, 7, 91, 46, -12, 1, 0},   {2, -7, 6, 90, 47, -12, 1, 1},
-    {2, -7, 5, 90, 49, -12, 1, 0},   {2, -6, 4, 89, 50, -12, 1, 0},
-    {2, -6, 3, 88, 52, -12, 0, 1},   {2, -6, 2, 87, 54, -12, 0, 1},
-    {2, -5, 1, 86, 55, -12, 0, 1},   {2, -5, 0, 85, 57, -12, 0, 1},
-    {2, -5, -1, 84, 58, -11, 0, 1},  {2, -5, -2, 83, 60, -11, 0, 1},
-    {2, -4, -2, 82, 61, -11, -1, 1}, {1, -4, -3, 81, 63, -10, -1, 1},
-    {2, -4, -4, 80, 64, -10, -1, 1}, {1, -4, -4, 79, 66, -10, -1, 1},
-    {1, -3, -5, 77, 67, -9, -1, 1},  {1, -3, -6, 76, 69, -9, -1, 1},
-    {1, -3, -6, 75, 70, -8, -2, 1},  {1, -2, -7, 74, 71, -8, -2, 1},
-    {1, -2, -7, 72, 72, -7, -2, 1},  {1, -2, -8, 71, 74, -7, -2, 1},
-    {1, -2, -8, 70, 75, -6, -3, 1},  {1, -1, -9, 69, 76, -6, -3, 1},
-    {1, -1, -9, 67, 77, -5, -3, 1},  {1, -1, -10, 66, 79, -4, -4, 1},
-    {1, -1, -10, 64, 80, -4, -4, 2}, {1, -1, -10, 63, 81, -3, -4, 1},
-    {1, -1, -11, 61, 82, -2, -4, 2}, {1, 0, -11, 60, 83, -2, -5, 2},
-    {1, 0, -11, 58, 84, -1, -5, 2},  {1, 0, -12, 57, 85, 0, -5, 2},
-    {1, 0, -12, 55, 86, 1, -5, 2},   {1, 0, -12, 54, 87, 2, -6, 2},
-    {1, 0, -12, 52, 88, 3, -6, 2},   {0, 1, -12, 50, 89, 4, -6, 2},
-    {0, 1, -12, 49, 90, 5, -7, 2},   {1, 1, -12, 47, 90, 6, -7, 2},
-    {0, 1, -12, 46, 91, 7, -7, 2},   {1, 1, -12, 44, 92, 8, -8, 2},
-    {1, 1, -12, 43, 92, 9, -8, 2},   {0, 1, -12, 41, 93, 11, -8, 2},
-    {0, 1, -12, 40, 93, 12, -8, 2},  {0, 2, -12, 38, 94, 13, -9, 2},
-    {0, 2, -12, 37, 94, 14, -9, 2},  {0, 2, -12, 35, 95, 15, -9, 2},
-    {0, 2, -12, 34, 95, 17, -10, 2}, {0, 2, -11, 32, 95, 18, -10, 2},
-    {0, 2, -12, 31, 96, 19, -10, 2}, {0, 2, -12, 29, 96, 21, -10, 2},
-    {0, 2, -11, 28, 96, 22, -11, 2}, {0, 2, -11, 26, 96, 24, -11, 2},
+    {2, -11, 25, 96, 25, -11, 2, 0}, {2, -11, 24, 96, 26, -11, 2, 0}, {2, -11, 22, 96, 28, -11, 2, 0},
+    {2, -10, 21, 96, 29, -12, 2, 0}, {2, -10, 19, 96, 31, -12, 2, 0}, {2, -10, 18, 95, 32, -11, 2, 0},
+    {2, -10, 17, 95, 34, -12, 2, 0}, {2, -9, 15, 95, 35, -12, 2, 0},  {2, -9, 14, 94, 37, -12, 2, 0},
+    {2, -9, 13, 94, 38, -12, 2, 0},  {2, -8, 12, 93, 40, -12, 1, 0},  {2, -8, 11, 93, 41, -12, 1, 0},
+    {2, -8, 9, 92, 43, -12, 1, 1},   {2, -8, 8, 92, 44, -12, 1, 1},   {2, -7, 7, 91, 46, -12, 1, 0},
+    {2, -7, 6, 90, 47, -12, 1, 1},   {2, -7, 5, 90, 49, -12, 1, 0},   {2, -6, 4, 89, 50, -12, 1, 0},
+    {2, -6, 3, 88, 52, -12, 0, 1},   {2, -6, 2, 87, 54, -12, 0, 1},   {2, -5, 1, 86, 55, -12, 0, 1},
+    {2, -5, 0, 85, 57, -12, 0, 1},   {2, -5, -1, 84, 58, -11, 0, 1},  {2, -5, -2, 83, 60, -11, 0, 1},
+    {2, -4, -2, 82, 61, -11, -1, 1}, {1, -4, -3, 81, 63, -10, -1, 1}, {2, -4, -4, 80, 64, -10, -1, 1},
+    {1, -4, -4, 79, 66, -10, -1, 1}, {1, -3, -5, 77, 67, -9, -1, 1},  {1, -3, -6, 76, 69, -9, -1, 1},
+    {1, -3, -6, 75, 70, -8, -2, 1},  {1, -2, -7, 74, 71, -8, -2, 1},  {1, -2, -7, 72, 72, -7, -2, 1},
+    {1, -2, -8, 71, 74, -7, -2, 1},  {1, -2, -8, 70, 75, -6, -3, 1},  {1, -1, -9, 69, 76, -6, -3, 1},
+    {1, -1, -9, 67, 77, -5, -3, 1},  {1, -1, -10, 66, 79, -4, -4, 1}, {1, -1, -10, 64, 80, -4, -4, 2},
+    {1, -1, -10, 63, 81, -3, -4, 1}, {1, -1, -11, 61, 82, -2, -4, 2}, {1, 0, -11, 60, 83, -2, -5, 2},
+    {1, 0, -11, 58, 84, -1, -5, 2},  {1, 0, -12, 57, 85, 0, -5, 2},   {1, 0, -12, 55, 86, 1, -5, 2},
+    {1, 0, -12, 54, 87, 2, -6, 2},   {1, 0, -12, 52, 88, 3, -6, 2},   {0, 1, -12, 50, 89, 4, -6, 2},
+    {0, 1, -12, 49, 90, 5, -7, 2},   {1, 1, -12, 47, 90, 6, -7, 2},   {0, 1, -12, 46, 91, 7, -7, 2},
+    {1, 1, -12, 44, 92, 8, -8, 2},   {1, 1, -12, 43, 92, 9, -8, 2},   {0, 1, -12, 41, 93, 11, -8, 2},
+    {0, 1, -12, 40, 93, 12, -8, 2},  {0, 2, -12, 38, 94, 13, -9, 2},  {0, 2, -12, 37, 94, 14, -9, 2},
+    {0, 2, -12, 35, 95, 15, -9, 2},  {0, 2, -12, 34, 95, 17, -10, 2}, {0, 2, -11, 32, 95, 18, -10, 2},
+    {0, 2, -12, 31, 96, 19, -10, 2}, {0, 2, -12, 29, 96, 21, -10, 2}, {0, 2, -11, 28, 96, 22, -11, 2},
+    {0, 2, -11, 26, 96, 24, -11, 2},
 };
 
 // Filters for interpolation (0.875-band) - note this also filters integer pels.
 const InterpKernel svt_aom_av1_filteredinterp_filters875[(1 << RS_SUBPEL_BITS)] = {
-    {3, -8, 13, 112, 13, -8, 3, 0},   {2, -7, 12, 112, 15, -8, 3, -1},
-    {3, -7, 10, 112, 17, -9, 3, -1},  {2, -6, 8, 112, 19, -9, 3, -1},
-    {2, -6, 7, 112, 21, -10, 3, -1},  {2, -5, 6, 111, 22, -10, 3, -1},
-    {2, -5, 4, 111, 24, -10, 3, -1},  {2, -4, 3, 110, 26, -11, 3, -1},
-    {2, -4, 1, 110, 28, -11, 3, -1},  {2, -4, 0, 109, 30, -12, 4, -1},
-    {1, -3, -1, 108, 32, -12, 4, -1}, {1, -3, -2, 108, 34, -13, 4, -1},
-    {1, -2, -4, 107, 36, -13, 4, -1}, {1, -2, -5, 106, 38, -13, 4, -1},
-    {1, -1, -6, 105, 40, -14, 4, -1}, {1, -1, -7, 104, 42, -14, 4, -1},
-    {1, -1, -7, 103, 44, -15, 4, -1}, {1, 0, -8, 101, 46, -15, 4, -1},
-    {1, 0, -9, 100, 48, -15, 4, -1},  {1, 0, -10, 99, 50, -15, 4, -1},
-    {1, 1, -11, 97, 53, -16, 4, -1},  {0, 1, -11, 96, 55, -16, 4, -1},
-    {0, 1, -12, 95, 57, -16, 4, -1},  {0, 2, -13, 93, 59, -16, 4, -1},
-    {0, 2, -13, 91, 61, -16, 4, -1},  {0, 2, -14, 90, 63, -16, 4, -1},
-    {0, 2, -14, 88, 65, -16, 4, -1},  {0, 2, -15, 86, 67, -16, 4, 0},
-    {0, 3, -15, 84, 69, -17, 4, 0},   {0, 3, -16, 83, 71, -17, 4, 0},
-    {0, 3, -16, 81, 73, -16, 3, 0},   {0, 3, -16, 79, 75, -16, 3, 0},
-    {0, 3, -16, 77, 77, -16, 3, 0},   {0, 3, -16, 75, 79, -16, 3, 0},
-    {0, 3, -16, 73, 81, -16, 3, 0},   {0, 4, -17, 71, 83, -16, 3, 0},
-    {0, 4, -17, 69, 84, -15, 3, 0},   {0, 4, -16, 67, 86, -15, 2, 0},
-    {-1, 4, -16, 65, 88, -14, 2, 0},  {-1, 4, -16, 63, 90, -14, 2, 0},
-    {-1, 4, -16, 61, 91, -13, 2, 0},  {-1, 4, -16, 59, 93, -13, 2, 0},
-    {-1, 4, -16, 57, 95, -12, 1, 0},  {-1, 4, -16, 55, 96, -11, 1, 0},
-    {-1, 4, -16, 53, 97, -11, 1, 1},  {-1, 4, -15, 50, 99, -10, 0, 1},
-    {-1, 4, -15, 48, 100, -9, 0, 1},  {-1, 4, -15, 46, 101, -8, 0, 1},
-    {-1, 4, -15, 44, 103, -7, -1, 1}, {-1, 4, -14, 42, 104, -7, -1, 1},
-    {-1, 4, -14, 40, 105, -6, -1, 1}, {-1, 4, -13, 38, 106, -5, -2, 1},
-    {-1, 4, -13, 36, 107, -4, -2, 1}, {-1, 4, -13, 34, 108, -2, -3, 1},
-    {-1, 4, -12, 32, 108, -1, -3, 1}, {-1, 4, -12, 30, 109, 0, -4, 2},
-    {-1, 3, -11, 28, 110, 1, -4, 2},  {-1, 3, -11, 26, 110, 3, -4, 2},
-    {-1, 3, -10, 24, 111, 4, -5, 2},  {-1, 3, -10, 22, 111, 6, -5, 2},
-    {-1, 3, -10, 21, 112, 7, -6, 2},  {-1, 3, -9, 19, 112, 8, -6, 2},
-    {-1, 3, -9, 17, 112, 10, -7, 3},  {-1, 3, -8, 15, 112, 12, -7, 2},
+    {3, -8, 13, 112, 13, -8, 3, 0},   {2, -7, 12, 112, 15, -8, 3, -1},  {3, -7, 10, 112, 17, -9, 3, -1},
+    {2, -6, 8, 112, 19, -9, 3, -1},   {2, -6, 7, 112, 21, -10, 3, -1},  {2, -5, 6, 111, 22, -10, 3, -1},
+    {2, -5, 4, 111, 24, -10, 3, -1},  {2, -4, 3, 110, 26, -11, 3, -1},  {2, -4, 1, 110, 28, -11, 3, -1},
+    {2, -4, 0, 109, 30, -12, 4, -1},  {1, -3, -1, 108, 32, -12, 4, -1}, {1, -3, -2, 108, 34, -13, 4, -1},
+    {1, -2, -4, 107, 36, -13, 4, -1}, {1, -2, -5, 106, 38, -13, 4, -1}, {1, -1, -6, 105, 40, -14, 4, -1},
+    {1, -1, -7, 104, 42, -14, 4, -1}, {1, -1, -7, 103, 44, -15, 4, -1}, {1, 0, -8, 101, 46, -15, 4, -1},
+    {1, 0, -9, 100, 48, -15, 4, -1},  {1, 0, -10, 99, 50, -15, 4, -1},  {1, 1, -11, 97, 53, -16, 4, -1},
+    {0, 1, -11, 96, 55, -16, 4, -1},  {0, 1, -12, 95, 57, -16, 4, -1},  {0, 2, -13, 93, 59, -16, 4, -1},
+    {0, 2, -13, 91, 61, -16, 4, -1},  {0, 2, -14, 90, 63, -16, 4, -1},  {0, 2, -14, 88, 65, -16, 4, -1},
+    {0, 2, -15, 86, 67, -16, 4, 0},   {0, 3, -15, 84, 69, -17, 4, 0},   {0, 3, -16, 83, 71, -17, 4, 0},
+    {0, 3, -16, 81, 73, -16, 3, 0},   {0, 3, -16, 79, 75, -16, 3, 0},   {0, 3, -16, 77, 77, -16, 3, 0},
+    {0, 3, -16, 75, 79, -16, 3, 0},   {0, 3, -16, 73, 81, -16, 3, 0},   {0, 4, -17, 71, 83, -16, 3, 0},
+    {0, 4, -17, 69, 84, -15, 3, 0},   {0, 4, -16, 67, 86, -15, 2, 0},   {-1, 4, -16, 65, 88, -14, 2, 0},
+    {-1, 4, -16, 63, 90, -14, 2, 0},  {-1, 4, -16, 61, 91, -13, 2, 0},  {-1, 4, -16, 59, 93, -13, 2, 0},
+    {-1, 4, -16, 57, 95, -12, 1, 0},  {-1, 4, -16, 55, 96, -11, 1, 0},  {-1, 4, -16, 53, 97, -11, 1, 1},
+    {-1, 4, -15, 50, 99, -10, 0, 1},  {-1, 4, -15, 48, 100, -9, 0, 1},  {-1, 4, -15, 46, 101, -8, 0, 1},
+    {-1, 4, -15, 44, 103, -7, -1, 1}, {-1, 4, -14, 42, 104, -7, -1, 1}, {-1, 4, -14, 40, 105, -6, -1, 1},
+    {-1, 4, -13, 38, 106, -5, -2, 1}, {-1, 4, -13, 36, 107, -4, -2, 1}, {-1, 4, -13, 34, 108, -2, -3, 1},
+    {-1, 4, -12, 32, 108, -1, -3, 1}, {-1, 4, -12, 30, 109, 0, -4, 2},  {-1, 3, -11, 28, 110, 1, -4, 2},
+    {-1, 3, -11, 26, 110, 3, -4, 2},  {-1, 3, -10, 24, 111, 4, -5, 2},  {-1, 3, -10, 22, 111, 6, -5, 2},
+    {-1, 3, -10, 21, 112, 7, -6, 2},  {-1, 3, -9, 19, 112, 8, -6, 2},   {-1, 3, -9, 17, 112, 10, -7, 3},
+    {-1, 3, -8, 15, 112, 12, -7, 2},
 };
 
-void svt_aom_downsample_decimation_input_picture(
-    PictureParentControlSet *pcs, EbPictureBufferDesc *input_padded_pic,
-    EbPictureBufferDesc *quarter_decimated_picture_ptr,
-    EbPictureBufferDesc *sixteenth_decimated_picture_ptr);
+void svt_aom_downsample_decimation_input_picture(PictureParentControlSet *pcs, EbPictureBufferDesc *input_padded_pic,
+                                                 EbPictureBufferDesc *quarter_decimated_picture_ptr,
+                                                 EbPictureBufferDesc *sixteenth_decimated_picture_ptr);
 
-void svt_aom_downsample_filtering_input_picture(PictureParentControlSet *pcs,
-                                                EbPictureBufferDesc     *input_padded_pic,
-                                                EbPictureBufferDesc     *quarter_picture_ptr,
-                                                EbPictureBufferDesc     *sixteenth_picture_ptr);
+void svt_aom_downsample_filtering_input_picture(PictureParentControlSet *pcs, EbPictureBufferDesc *input_padded_pic,
+                                                EbPictureBufferDesc *quarter_picture_ptr,
+                                                EbPictureBufferDesc *sixteenth_picture_ptr);
 
 void calculate_scaled_size_helper(uint16_t *dim, uint8_t denom);
 
@@ -232,18 +190,14 @@ void svt_av1_down2_symeven_c(const uint8_t *const input, int length, uint8_t *ou
         // Initial part.
         for (i = 0; i < l1; i += 2) {
             int sum = (1 << (FILTER_BITS - 1));
-            for (j = 0; j < filter_len_half; ++j) {
-                sum += (input[AOMMAX(i - j, 0)] + input[i + 1 + j]) * filter[j];
-            }
+            for (j = 0; j < filter_len_half; ++j) { sum += (input[AOMMAX(i - j, 0)] + input[i + 1 + j]) * filter[j]; }
             sum >>= FILTER_BITS;
             *optr++ = clip_pixel(sum);
         }
         // Middle part.
         for (; i < l2; i += 2) {
             int sum = (1 << (FILTER_BITS - 1));
-            for (j = 0; j < filter_len_half; ++j) {
-                sum += (input[i - j] + input[i + 1 + j]) * filter[j];
-            }
+            for (j = 0; j < filter_len_half; ++j) { sum += (input[i - j] + input[i + 1 + j]) * filter[j]; }
             sum >>= FILTER_BITS;
             *optr++ = clip_pixel(sum);
         }
@@ -274,9 +228,7 @@ static void down2_symodd(const uint8_t *const input, int length, uint8_t *output
         for (i = 0; i < length; i += 2) {
             int sum = (1 << (FILTER_BITS - 1)) + input[i] * filter[0];
             for (j = 1; j < filter_len_half; ++j) {
-                sum += (input[(i - j < 0 ? 0 : i - j)] +
-                        input[(i + j >= length ? length - 1 : i + j)]) *
-                    filter[j];
+                sum += (input[(i - j < 0 ? 0 : i - j)] + input[(i + j >= length ? length - 1 : i + j)]) * filter[j];
             }
             sum >>= FILTER_BITS;
             *optr++ = clip_pixel(sum);
@@ -294,9 +246,7 @@ static void down2_symodd(const uint8_t *const input, int length, uint8_t *output
         // Middle part.
         for (; i < l2; i += 2) {
             int sum = (1 << (FILTER_BITS - 1)) + input[i] * filter[0];
-            for (j = 1; j < filter_len_half; ++j) {
-                sum += (input[i - j] + input[i + j]) * filter[j];
-            }
+            for (j = 1; j < filter_len_half; ++j) { sum += (input[i - j] + input[i + j]) * filter[j]; }
             sum >>= FILTER_BITS;
             *optr++ = clip_pixel(sum);
         }
@@ -326,15 +276,12 @@ static const InterpKernel *choose_interp_filter(int in_length, int out_length) {
         return svt_aom_av1_filteredinterp_filters500;
 }
 
-void svt_av1_interpolate_core_c(const uint8_t *const input, int in_length, uint8_t *output,
-                                int out_length, const int16_t *interp_filters) {
-    const int32_t delta = (((uint32_t)in_length << RS_SCALE_SUBPEL_BITS) + out_length / 2) /
-        out_length;
+void svt_av1_interpolate_core_c(const uint8_t *const input, int in_length, uint8_t *output, int out_length,
+                                const int16_t *interp_filters) {
+    const int32_t delta  = (((uint32_t)in_length << RS_SCALE_SUBPEL_BITS) + out_length / 2) / out_length;
     const int32_t offset = in_length > out_length
-        ? (((int32_t)(in_length - out_length) << (RS_SCALE_SUBPEL_BITS - 1)) + out_length / 2) /
-            out_length
-        : -(((int32_t)(out_length - in_length) << (RS_SCALE_SUBPEL_BITS - 1)) + out_length / 2) /
-            out_length;
+        ? (((int32_t)(in_length - out_length) << (RS_SCALE_SUBPEL_BITS - 1)) + out_length / 2) / out_length
+        : -(((int32_t)(out_length - in_length) << (RS_SCALE_SUBPEL_BITS - 1)) + out_length / 2) / out_length;
     uint8_t      *optr   = output;
     int           x, x1, x2, sum, k, int_pel, sub_pel;
     int32_t       y;
@@ -372,8 +319,7 @@ void svt_av1_interpolate_core_c(const uint8_t *const input, int in_length, uint8
             sub_pel               = (y >> RS_SCALE_EXTRA_BITS) & RS_SUBPEL_MASK;
             const int16_t *filter = &interp_filters[sub_pel * SUBPEL_TAPS];
             sum                   = 0;
-            for (k = 0; k < SUBPEL_TAPS; ++k)
-                sum += filter[k] * input[AOMMAX(int_pel - SUBPEL_TAPS / 2 + 1 + k, 0)];
+            for (k = 0; k < SUBPEL_TAPS; ++k) sum += filter[k] * input[AOMMAX(int_pel - SUBPEL_TAPS / 2 + 1 + k, 0)];
             *optr++ = clip_pixel(ROUND_POWER_OF_TWO(sum, FILTER_BITS));
         }
         // Middle part.
@@ -382,8 +328,7 @@ void svt_av1_interpolate_core_c(const uint8_t *const input, int in_length, uint8
             sub_pel               = (y >> RS_SCALE_EXTRA_BITS) & RS_SUBPEL_MASK;
             const int16_t *filter = &interp_filters[sub_pel * SUBPEL_TAPS];
             sum                   = 0;
-            for (k = 0; k < SUBPEL_TAPS; ++k)
-                sum += filter[k] * input[int_pel - SUBPEL_TAPS / 2 + 1 + k];
+            for (k = 0; k < SUBPEL_TAPS; ++k) sum += filter[k] * input[int_pel - SUBPEL_TAPS / 2 + 1 + k];
             *optr++ = clip_pixel(ROUND_POWER_OF_TWO(sum, FILTER_BITS));
         }
         // End part.
@@ -399,15 +344,13 @@ void svt_av1_interpolate_core_c(const uint8_t *const input, int in_length, uint8
     }
 }
 
-static void interpolate(const uint8_t *const input, int in_length, uint8_t *output,
-                        int out_length) {
+static void interpolate(const uint8_t *const input, int in_length, uint8_t *output, int out_length) {
     const InterpKernel *interp_filters = choose_interp_filter(in_length, out_length);
 
     svt_av1_interpolate_core(input, in_length, output, out_length, &interp_filters[0][0]);
 }
 
-static void resize_multistep(const uint8_t *const input, int length, uint8_t *output, int olength,
-                             uint8_t *otmp) {
+static void resize_multistep(const uint8_t *const input, int length, uint8_t *output, int olength, uint8_t *otmp) {
     if (length == olength) {
         svt_memcpy(output, input, sizeof(output[0]) * length);
         return;
@@ -457,8 +400,8 @@ static void fill_col_to_arr(uint8_t *img, int stride, int len, uint8_t *arr) {
     for (i = 0; i < len; ++i, iptr += stride) { *aptr++ = *iptr; }
 }
 
-EbErrorType svt_av1_resize_plane_c(const uint8_t *const input, int height, int width, int in_stride,
-                                   uint8_t *output, int height2, int width2, int out_stride) {
+EbErrorType svt_av1_resize_plane_c(const uint8_t *const input, int height, int width, int in_stride, uint8_t *output,
+                                   int height2, int width2, int out_stride) {
     int      i;
     uint8_t *intbuf, *tmpbuf, *arrbuf, *arrbuf2;
 
@@ -478,8 +421,7 @@ EbErrorType svt_av1_resize_plane_c(const uint8_t *const input, int height, int w
         EB_FREE_ARRAY(arrbuf2);
         return EB_ErrorInsufficientResources;
     }
-    for (i = 0; i < height; ++i)
-        resize_multistep(input + in_stride * i, width, intbuf + width2 * i, width2, tmpbuf);
+    for (i = 0; i < height; ++i) resize_multistep(input + in_stride * i, width, intbuf + width2 * i, width2, tmpbuf);
 
     for (i = 0; i < width2; ++i) {
         // column to array conversion
@@ -498,9 +440,8 @@ EbErrorType svt_av1_resize_plane_c(const uint8_t *const input, int height, int w
     return EB_ErrorNone;
 }
 
-EbErrorType svt_av1_resize_plane_horizontal(const uint8_t *const input, int height, int width,
-                                            int in_stride, uint8_t *output, int height2, int width2,
-                                            int out_stride) {
+EbErrorType svt_av1_resize_plane_horizontal(const uint8_t *const input, int height, int width, int in_stride,
+                                            uint8_t *output, int height2, int width2, int out_stride) {
     int      i;
     uint8_t *tmpbuf;
 
@@ -522,15 +463,12 @@ EbErrorType svt_av1_resize_plane_horizontal(const uint8_t *const input, int heig
     return EB_ErrorNone;
 }
 
-void svt_av1_highbd_interpolate_core_c(const uint16_t *const input, int in_length, uint16_t *output,
-                                       int out_length, int bd, const int16_t *interp_filters) {
-    const int32_t delta = (((uint32_t)in_length << RS_SCALE_SUBPEL_BITS) + out_length / 2) /
-        out_length;
+void svt_av1_highbd_interpolate_core_c(const uint16_t *const input, int in_length, uint16_t *output, int out_length,
+                                       int bd, const int16_t *interp_filters) {
+    const int32_t delta  = (((uint32_t)in_length << RS_SCALE_SUBPEL_BITS) + out_length / 2) / out_length;
     const int32_t offset = in_length > out_length
-        ? (((int32_t)(in_length - out_length) << (RS_SCALE_SUBPEL_BITS - 1)) + out_length / 2) /
-            out_length
-        : -(((int32_t)(out_length - in_length) << (RS_SCALE_SUBPEL_BITS - 1)) + out_length / 2) /
-            out_length;
+        ? (((int32_t)(in_length - out_length) << (RS_SCALE_SUBPEL_BITS - 1)) + out_length / 2) / out_length
+        : -(((int32_t)(out_length - in_length) << (RS_SCALE_SUBPEL_BITS - 1)) + out_length / 2) / out_length;
     uint16_t     *optr   = output;
     int           x, x1, x2, sum, k, int_pel, sub_pel;
     int32_t       y;
@@ -568,8 +506,7 @@ void svt_av1_highbd_interpolate_core_c(const uint16_t *const input, int in_lengt
             sub_pel               = (y >> RS_SCALE_EXTRA_BITS) & RS_SUBPEL_MASK;
             const int16_t *filter = &interp_filters[sub_pel * SUBPEL_TAPS];
             sum                   = 0;
-            for (k = 0; k < SUBPEL_TAPS; ++k)
-                sum += filter[k] * input[AOMMAX(int_pel - SUBPEL_TAPS / 2 + 1 + k, 0)];
+            for (k = 0; k < SUBPEL_TAPS; ++k) sum += filter[k] * input[AOMMAX(int_pel - SUBPEL_TAPS / 2 + 1 + k, 0)];
             *optr++ = clip_pixel_highbd(ROUND_POWER_OF_TWO(sum, FILTER_BITS), bd);
         }
         // Middle part.
@@ -578,8 +515,7 @@ void svt_av1_highbd_interpolate_core_c(const uint16_t *const input, int in_lengt
             sub_pel               = (y >> RS_SCALE_EXTRA_BITS) & RS_SUBPEL_MASK;
             const int16_t *filter = &interp_filters[sub_pel * SUBPEL_TAPS];
             sum                   = 0;
-            for (k = 0; k < SUBPEL_TAPS; ++k)
-                sum += filter[k] * input[int_pel - SUBPEL_TAPS / 2 + 1 + k];
+            for (k = 0; k < SUBPEL_TAPS; ++k) sum += filter[k] * input[int_pel - SUBPEL_TAPS / 2 + 1 + k];
             *optr++ = clip_pixel_highbd(ROUND_POWER_OF_TWO(sum, FILTER_BITS), bd);
         }
         // End part.
@@ -595,16 +531,13 @@ void svt_av1_highbd_interpolate_core_c(const uint16_t *const input, int in_lengt
     }
 }
 
-static void highbd_interpolate(const uint16_t *const input, int in_length, uint16_t *output,
-                               int out_length, int bd) {
+static void highbd_interpolate(const uint16_t *const input, int in_length, uint16_t *output, int out_length, int bd) {
     const InterpKernel *interp_filters = choose_interp_filter(in_length, out_length);
 
-    svt_av1_highbd_interpolate_core(
-        input, in_length, output, out_length, bd, &interp_filters[0][0]);
+    svt_av1_highbd_interpolate_core(input, in_length, output, out_length, bd, &interp_filters[0][0]);
 }
 
-void svt_av1_highbd_down2_symeven_c(const uint16_t *const input, int length, uint16_t *output,
-                                    int bd) {
+void svt_av1_highbd_down2_symeven_c(const uint16_t *const input, int length, uint16_t *output, int bd) {
     // Actual filter len = 2 * filter_len_half.
     static const int16_t *filter          = svt_aom_av1_down2_symeven_half_filter;
     const int             filter_len_half = sizeof(svt_aom_av1_down2_symeven_half_filter) / 2;
@@ -628,18 +561,14 @@ void svt_av1_highbd_down2_symeven_c(const uint16_t *const input, int length, uin
         // Initial part.
         for (i = 0; i < l1; i += 2) {
             int sum = (1 << (FILTER_BITS - 1));
-            for (j = 0; j < filter_len_half; ++j) {
-                sum += (input[AOMMAX(0, i - j)] + input[i + 1 + j]) * filter[j];
-            }
+            for (j = 0; j < filter_len_half; ++j) { sum += (input[AOMMAX(0, i - j)] + input[i + 1 + j]) * filter[j]; }
             sum >>= FILTER_BITS;
             *optr++ = clip_pixel_highbd(sum, bd);
         }
         // Middle part.
         for (; i < l2; i += 2) {
             int sum = (1 << (FILTER_BITS - 1));
-            for (j = 0; j < filter_len_half; ++j) {
-                sum += (input[i - j] + input[i + 1 + j]) * filter[j];
-            }
+            for (j = 0; j < filter_len_half; ++j) { sum += (input[i - j] + input[i + 1 + j]) * filter[j]; }
             sum >>= FILTER_BITS;
             *optr++ = clip_pixel_highbd(sum, bd);
         }
@@ -679,18 +608,14 @@ static void highbd_down2_symodd(const uint16_t *const input, int length, uint16_
         // Initial part.
         for (i = 0; i < l1; i += 2) {
             int sum = (1 << (FILTER_BITS - 1)) + input[i] * filter[0];
-            for (j = 1; j < filter_len_half; ++j) {
-                sum += (input[AOMMAX(i - j, 0)] + input[i + j]) * filter[j];
-            }
+            for (j = 1; j < filter_len_half; ++j) { sum += (input[AOMMAX(i - j, 0)] + input[i + j]) * filter[j]; }
             sum >>= FILTER_BITS;
             *optr++ = clip_pixel_highbd(sum, bd);
         }
         // Middle part.
         for (; i < l2; i += 2) {
             int sum = (1 << (FILTER_BITS - 1)) + input[i] * filter[0];
-            for (j = 1; j < filter_len_half; ++j) {
-                sum += (input[i - j] + input[i + j]) * filter[j];
-            }
+            for (j = 1; j < filter_len_half; ++j) { sum += (input[i - j] + input[i + j]) * filter[j]; }
             sum >>= FILTER_BITS;
             *optr++ = clip_pixel_highbd(sum, bd);
         }
@@ -706,8 +631,8 @@ static void highbd_down2_symodd(const uint16_t *const input, int length, uint16_
     }
 }
 
-static void highbd_resize_multistep(const uint16_t *const input, int length, uint16_t *output,
-                                    int olength, uint16_t *otmp, int bd) {
+static void highbd_resize_multistep(const uint16_t *const input, int length, uint16_t *output, int olength,
+                                    uint16_t *otmp, int bd) {
     if (length == olength) {
         svt_memcpy(output, input, sizeof(output[0]) * length);
         return;
@@ -755,9 +680,8 @@ static void highbd_fill_arr_to_col(uint16_t *img, int stride, int len, uint16_t 
     for (i = 0; i < len; ++i, iptr += stride) { *iptr = *aptr++; }
 }
 
-EbErrorType svt_av1_highbd_resize_plane_c(const uint16_t *const input, int height, int width,
-                                          int in_stride, uint16_t *output, int height2, int width2,
-                                          int out_stride, int bd) {
+EbErrorType svt_av1_highbd_resize_plane_c(const uint16_t *const input, int height, int width, int in_stride,
+                                          uint16_t *output, int height2, int width2, int out_stride, int bd) {
     int       i;
     uint16_t *intbuf;
     uint16_t *tmpbuf;
@@ -776,8 +700,7 @@ EbErrorType svt_av1_highbd_resize_plane_c(const uint16_t *const input, int heigh
         return EB_ErrorInsufficientResources;
     }
     for (i = 0; i < height; ++i) {
-        highbd_resize_multistep(
-            input + in_stride * i, width, intbuf + width2 * i, width2, tmpbuf, bd);
+        highbd_resize_multistep(input + in_stride * i, width, intbuf + width2 * i, width2, tmpbuf, bd);
     }
     for (i = 0; i < width2; ++i) {
         highbd_fill_col_to_arr(intbuf + i, width2, height, arrbuf);
@@ -793,10 +716,8 @@ EbErrorType svt_av1_highbd_resize_plane_c(const uint16_t *const input, int heigh
     return EB_ErrorNone;
 }
 
-EbErrorType svt_av1_highbd_resize_plane_horizontal(const uint16_t *const input, int height,
-                                                   int width, int in_stride, uint16_t *output,
-                                                   int height2, int width2, int out_stride,
-                                                   int bd) {
+EbErrorType svt_av1_highbd_resize_plane_horizontal(const uint16_t *const input, int height, int width, int in_stride,
+                                                   uint16_t *output, int height2, int width2, int out_stride, int bd) {
     int       i;
     uint16_t *tmpbuf;
 
@@ -808,39 +729,34 @@ EbErrorType svt_av1_highbd_resize_plane_horizontal(const uint16_t *const input, 
         return EB_ErrorInsufficientResources;
     }
     for (i = 0; i < height; ++i) {
-        highbd_resize_multistep(
-            input + in_stride * i, width, output + out_stride * i, width2, tmpbuf, bd);
+        highbd_resize_multistep(input + in_stride * i, width, output + out_stride * i, width2, tmpbuf, bd);
     }
 
     EB_FREE_ARRAY(tmpbuf);
     return EB_ErrorNone;
 }
 
-void svt_aom_pack_highbd_pic(const EbPictureBufferDesc *pic_ptr, uint16_t *buffer_16bit[3],
-                             uint32_t ss_x, uint32_t ss_y, Bool include_padding);
+void svt_aom_pack_highbd_pic(const EbPictureBufferDesc *pic_ptr, uint16_t *buffer_16bit[3], uint32_t ss_x,
+                             uint32_t ss_y, Bool include_padding);
 
-void svt_aom_unpack_highbd_pic(uint16_t *buffer_highbd[3], EbPictureBufferDesc *pic_ptr,
-                               uint32_t ss_x, uint32_t ss_y, Bool include_padding);
+void svt_aom_unpack_highbd_pic(uint16_t *buffer_highbd[3], EbPictureBufferDesc *pic_ptr, uint32_t ss_x, uint32_t ss_y,
+                               Bool include_padding);
 #if DEBUG_SCALING
-void save_YUV_to_file(char *filename, EbByte buffer_y, EbByte buffer_u, EbByte buffer_v,
-                      uint16_t width, uint16_t height, uint16_t stride_y, uint16_t stride_u,
-                      uint16_t stride_v, uint16_t org_y, uint16_t org_x, uint32_t ss_x,
-                      uint32_t ss_y);
+void save_YUV_to_file(char *filename, EbByte buffer_y, EbByte buffer_u, EbByte buffer_v, uint16_t width,
+                      uint16_t height, uint16_t stride_y, uint16_t stride_u, uint16_t stride_v, uint16_t org_y,
+                      uint16_t org_x, uint32_t ss_x, uint32_t ss_y);
 
-void save_YUV_to_file_highbd(char *filename, uint16_t *buffer_y, uint16_t *buffer_u,
-                             uint16_t *buffer_v, uint16_t width, uint16_t height, uint16_t stride_y,
-                             uint16_t stride_u, uint16_t stride_v, uint16_t org_y, uint16_t org_x,
-                             uint32_t ss_x, uint32_t ss_y);
+void save_YUV_to_file_highbd(char *filename, uint16_t *buffer_y, uint16_t *buffer_u, uint16_t *buffer_v, uint16_t width,
+                             uint16_t height, uint16_t stride_y, uint16_t stride_u, uint16_t stride_v, uint16_t org_y,
+                             uint16_t org_x, uint32_t ss_x, uint32_t ss_y);
 #endif
-typedef EbErrorType (*Av1HighbdResizePlane)(const uint16_t *const input, int height, int width,
-                                            int in_stride, uint16_t *output, int height2,
-                                            int width2, int out_stride, int bd);
-typedef EbErrorType (*Av1ResizePlane)(const uint8_t *const input, int height, int width,
-                                      int in_stride, uint8_t *output, int height2, int width2,
-                                      int out_stride);
+typedef EbErrorType (*Av1HighbdResizePlane)(const uint16_t *const input, int height, int width, int in_stride,
+                                            uint16_t *output, int height2, int width2, int out_stride, int bd);
+typedef EbErrorType (*Av1ResizePlane)(const uint8_t *const input, int height, int width, int in_stride, uint8_t *output,
+                                      int height2, int width2, int out_stride);
 
-static void pack_highbd_pic_2d(const EbPictureBufferDesc *pic_ptr, uint16_t *buffer_16bit[3],
-                               uint32_t ss_x, uint32_t ss_y) {
+static void pack_highbd_pic_2d(const EbPictureBufferDesc *pic_ptr, uint16_t *buffer_16bit[3], uint32_t ss_x,
+                               uint32_t ss_y) {
     uint16_t width  = pic_ptr->stride_y;
     uint16_t height = (uint16_t)(pic_ptr->org_y + pic_ptr->height + pic_ptr->origin_bot_y);
 
@@ -873,8 +789,8 @@ static void pack_highbd_pic_2d(const EbPictureBufferDesc *pic_ptr, uint16_t *buf
                            (height + ss_y) >> ss_y);
 }
 
-static void svt_aom_unpack_highbd_pic_2d(uint16_t *buffer_highbd[3], EbPictureBufferDesc *pic_ptr,
-                                         uint32_t ss_x, uint32_t ss_y) {
+static void svt_aom_unpack_highbd_pic_2d(uint16_t *buffer_highbd[3], EbPictureBufferDesc *pic_ptr, uint32_t ss_x,
+                                         uint32_t ss_y) {
     uint16_t width  = pic_ptr->stride_y;
     uint16_t height = (uint16_t)(pic_ptr->org_y + pic_ptr->height + pic_ptr->origin_bot_y);
 
@@ -912,10 +828,9 @@ static void svt_aom_unpack_highbd_pic_2d(uint16_t *buffer_highbd[3], EbPictureBu
  * Resize frame according to dst resolution.
  * Supports 8-bit / 10-bit and either packed or unpacked buffers
  */
-EbErrorType svt_aom_resize_frame(const EbPictureBufferDesc *src, EbPictureBufferDesc *dst, int bd,
-                                 const int num_planes, const uint32_t ss_x, const uint32_t ss_y,
-                                 uint8_t is_packed, uint32_t buffer_enable_mask,
-                                 uint8_t is_2bcompress) {
+EbErrorType svt_aom_resize_frame(const EbPictureBufferDesc *src, EbPictureBufferDesc *dst, int bd, const int num_planes,
+                                 const uint32_t ss_x, const uint32_t ss_y, uint8_t is_packed,
+                                 uint32_t buffer_enable_mask, uint8_t is_2bcompress) {
     uint16_t *src_buffer_highbd[MAX_MB_PLANE];
     uint16_t *dst_buffer_highbd[MAX_MB_PLANE];
 
@@ -976,59 +891,51 @@ EbErrorType svt_aom_resize_frame(const EbPictureBufferDesc *src, EbPictureBuffer
                 : svt_av1_highbd_resize_plane;
             switch (plane) {
             case 0:
-                if ((buffer_enable_mask & PICTURE_BUFFER_DESC_Y_FLAG) && src_buffer_highbd[0] &&
-                    dst_buffer_highbd[0])
-                    resize_plane_func(
-                        src_buffer_highbd[0] + src->org_y * src->stride_y + src->org_x,
-                        src->height,
-                        src->width,
-                        src->stride_y,
-                        dst_buffer_highbd[0] + dst->org_y * dst->stride_y + dst->org_x,
-                        dst->height,
-                        dst->width,
-                        dst->stride_y,
-                        bd);
+                if ((buffer_enable_mask & PICTURE_BUFFER_DESC_Y_FLAG) && src_buffer_highbd[0] && dst_buffer_highbd[0])
+                    resize_plane_func(src_buffer_highbd[0] + src->org_y * src->stride_y + src->org_x,
+                                      src->height,
+                                      src->width,
+                                      src->stride_y,
+                                      dst_buffer_highbd[0] + dst->org_y * dst->stride_y + dst->org_x,
+                                      dst->height,
+                                      dst->width,
+                                      dst->stride_y,
+                                      bd);
                 break;
             case 1:
-                if ((buffer_enable_mask & PICTURE_BUFFER_DESC_Cb_FLAG) && src_buffer_highbd[1] &&
-                    dst_buffer_highbd[1])
-                    resize_plane_func(src_buffer_highbd[1] + (src->org_y >> ss_y) * src->stride_cb +
-                                          (src->org_x >> ss_x),
-                                      (src->height + ss_y) >> ss_y,
-                                      (src->width + ss_x) >> ss_x,
-                                      src->stride_cb,
-                                      dst_buffer_highbd[1] + (dst->org_y >> ss_y) * dst->stride_cb +
-                                          (dst->org_x >> ss_x),
-                                      (dst->height + ss_y) >> ss_y,
-                                      (dst->width + ss_x) >> ss_x,
-                                      dst->stride_cb,
-                                      bd);
+                if ((buffer_enable_mask & PICTURE_BUFFER_DESC_Cb_FLAG) && src_buffer_highbd[1] && dst_buffer_highbd[1])
+                    resize_plane_func(
+                        src_buffer_highbd[1] + (src->org_y >> ss_y) * src->stride_cb + (src->org_x >> ss_x),
+                        (src->height + ss_y) >> ss_y,
+                        (src->width + ss_x) >> ss_x,
+                        src->stride_cb,
+                        dst_buffer_highbd[1] + (dst->org_y >> ss_y) * dst->stride_cb + (dst->org_x >> ss_x),
+                        (dst->height + ss_y) >> ss_y,
+                        (dst->width + ss_x) >> ss_x,
+                        dst->stride_cb,
+                        bd);
                 break;
             case 2:
-                if ((buffer_enable_mask & PICTURE_BUFFER_DESC_Cr_FLAG) && src_buffer_highbd[2] &&
-                    dst_buffer_highbd[2])
-                    resize_plane_func(src_buffer_highbd[2] + (src->org_y >> ss_y) * src->stride_cr +
-                                          (src->org_x >> ss_x),
-                                      (src->height + ss_y) >> ss_y,
-                                      (src->width + ss_x) >> ss_x,
-                                      src->stride_cr,
-                                      dst_buffer_highbd[2] + (dst->org_y >> ss_y) * dst->stride_cr +
-                                          (dst->org_x >> ss_x),
-                                      (dst->height + ss_y) >> ss_y,
-                                      (dst->width + ss_x) >> ss_x,
-                                      dst->stride_cr,
-                                      bd);
+                if ((buffer_enable_mask & PICTURE_BUFFER_DESC_Cr_FLAG) && src_buffer_highbd[2] && dst_buffer_highbd[2])
+                    resize_plane_func(
+                        src_buffer_highbd[2] + (src->org_y >> ss_y) * src->stride_cr + (src->org_x >> ss_x),
+                        (src->height + ss_y) >> ss_y,
+                        (src->width + ss_x) >> ss_x,
+                        src->stride_cr,
+                        dst_buffer_highbd[2] + (dst->org_y >> ss_y) * dst->stride_cr + (dst->org_x >> ss_x),
+                        (dst->height + ss_y) >> ss_y,
+                        (dst->width + ss_x) >> ss_x,
+                        dst->stride_cr,
+                        bd);
                 break;
             default: break;
             }
         } else {
-            Av1ResizePlane resize_plane_func = (src->height == dst->height)
-                ? svt_av1_resize_plane_horizontal
-                : svt_av1_resize_plane;
+            Av1ResizePlane resize_plane_func = (src->height == dst->height) ? svt_av1_resize_plane_horizontal
+                                                                            : svt_av1_resize_plane;
             switch (plane) {
             case 0:
-                if ((buffer_enable_mask & PICTURE_BUFFER_DESC_Y_FLAG) && src->buffer_y &&
-                    dst->buffer_y)
+                if ((buffer_enable_mask & PICTURE_BUFFER_DESC_Y_FLAG) && src->buffer_y && dst->buffer_y)
                     resize_plane_func(src->buffer_y + src->org_y * src->stride_y + src->org_x,
                                       src->height,
                                       src->width,
@@ -1039,29 +946,23 @@ EbErrorType svt_aom_resize_frame(const EbPictureBufferDesc *src, EbPictureBuffer
                                       dst->stride_y);
                 break;
             case 1:
-                if ((buffer_enable_mask & PICTURE_BUFFER_DESC_Cb_FLAG) && src->buffer_cb &&
-                    dst->buffer_cb)
-                    resize_plane_func(src->buffer_cb + (src->org_y >> ss_y) * src->stride_cb +
-                                          (src->org_x >> ss_x),
+                if ((buffer_enable_mask & PICTURE_BUFFER_DESC_Cb_FLAG) && src->buffer_cb && dst->buffer_cb)
+                    resize_plane_func(src->buffer_cb + (src->org_y >> ss_y) * src->stride_cb + (src->org_x >> ss_x),
                                       (src->height + ss_y) >> ss_y,
                                       (src->width + ss_x) >> ss_x,
                                       src->stride_cb,
-                                      dst->buffer_cb + (dst->org_y >> ss_y) * dst->stride_cb +
-                                          (dst->org_x >> ss_x),
+                                      dst->buffer_cb + (dst->org_y >> ss_y) * dst->stride_cb + (dst->org_x >> ss_x),
                                       (dst->height + ss_y) >> ss_y,
                                       (dst->width + ss_x) >> ss_x,
                                       dst->stride_cb);
                 break;
             case 2:
-                if ((buffer_enable_mask & PICTURE_BUFFER_DESC_Cr_FLAG) && src->buffer_cr &&
-                    dst->buffer_cr)
-                    resize_plane_func(src->buffer_cr + (src->org_y >> ss_y) * src->stride_cr +
-                                          (src->org_x >> ss_x),
+                if ((buffer_enable_mask & PICTURE_BUFFER_DESC_Cr_FLAG) && src->buffer_cr && dst->buffer_cr)
+                    resize_plane_func(src->buffer_cr + (src->org_y >> ss_y) * src->stride_cr + (src->org_x >> ss_x),
                                       (src->height + ss_y) >> ss_y,
                                       (src->width + ss_x) >> ss_x,
                                       src->stride_cr,
-                                      dst->buffer_cr + (dst->org_y >> ss_y) * dst->stride_cr +
-                                          (dst->org_x >> ss_x),
+                                      dst->buffer_cr + (dst->org_y >> ss_y) * dst->stride_cr + (dst->org_x >> ss_x),
                                       (dst->height + ss_y) >> ss_y,
                                       (dst->width + ss_x) >> ss_x,
                                       dst->stride_cr);
@@ -1074,12 +975,8 @@ EbErrorType svt_aom_resize_frame(const EbPictureBufferDesc *src, EbPictureBuffer
     // padding before unpack to support 10-bit with 2b compressed format
     if (bd > 8) {
         if ((buffer_enable_mask & PICTURE_BUFFER_DESC_Y_FLAG) && dst_buffer_highbd[0])
-            svt_aom_generate_padding16_bit(dst_buffer_highbd[0],
-                                           dst->stride_y,
-                                           dst->width,
-                                           dst->height,
-                                           dst->org_x,
-                                           dst->org_y);
+            svt_aom_generate_padding16_bit(
+                dst_buffer_highbd[0], dst->stride_y, dst->width, dst->height, dst->org_x, dst->org_y);
         if ((buffer_enable_mask & PICTURE_BUFFER_DESC_Cb_FLAG) && dst_buffer_highbd[1])
             svt_aom_generate_padding16_bit(dst_buffer_highbd[1],
                                            dst->stride_cb,
@@ -1096,8 +993,7 @@ EbErrorType svt_aom_resize_frame(const EbPictureBufferDesc *src, EbPictureBuffer
                                            (dst->org_y + ss_y) >> ss_y);
     } else {
         if ((buffer_enable_mask & PICTURE_BUFFER_DESC_Y_FLAG) && dst->buffer_y)
-            svt_aom_generate_padding(
-                dst->buffer_y, dst->stride_y, dst->width, dst->height, dst->org_x, dst->org_y);
+            svt_aom_generate_padding(dst->buffer_y, dst->stride_y, dst->width, dst->height, dst->org_x, dst->org_y);
         if ((buffer_enable_mask & PICTURE_BUFFER_DESC_Cb_FLAG) && dst->buffer_cb)
             svt_aom_generate_padding(dst->buffer_cb,
                                      dst->stride_cb,
@@ -1173,9 +1069,9 @@ static void analyze_hor_freq(PictureParentControlSet *pcs, double *energy) {
     uint64_t freq_energy[16] = {0};
 
     EbPictureBufferDesc *input_pic = pcs->enhanced_pic;
-    uint8_t  *in = input_pic->buffer_y + input_pic->org_x + input_pic->org_y * input_pic->stride_y;
-    const int width  = input_pic->width;
-    const int height = input_pic->height;
+    uint8_t             *in        = input_pic->buffer_y + input_pic->org_x + input_pic->org_y * input_pic->stride_y;
+    const int            width     = input_pic->width;
+    const int            height    = input_pic->height;
 
     DECLARE_ALIGNED(64, int32_t, coeff[16 * 4]);
     int n = 0;
@@ -1186,14 +1082,11 @@ static void analyze_hor_freq(PictureParentControlSet *pcs, double *energy) {
     for (int i = 0; i < height - 4; i += 4) {
         for (int j = 0; j < width - 16; j += 16) {
             for (int ii = 0; ii < 4; ++ii)
-                for (int jj = 0; jj < 16; ++jj)
-                    src16[ii * 16 + jj] = in[(i + ii) * input_pic->stride_y + (j + jj)];
+                for (int jj = 0; jj < 16; ++jj) src16[ii * 16 + jj] = in[(i + ii) * input_pic->stride_y + (j + jj)];
             svt_av1_fwd_txfm2d_16x4(src16, coeff, 16, H_DCT, EB_EIGHT_BIT);
             for (int k = 1; k < 16; ++k) {
-                const uint64_t this_energy = ((int64_t)coeff[k] * coeff[k]) +
-                    ((int64_t)coeff[k + 16] * coeff[k + 16]) +
-                    ((int64_t)coeff[k + 32] * coeff[k + 32]) +
-                    ((int64_t)coeff[k + 48] * coeff[k + 48]);
+                const uint64_t this_energy = ((int64_t)coeff[k] * coeff[k]) + ((int64_t)coeff[k + 16] * coeff[k + 16]) +
+                    ((int64_t)coeff[k + 32] * coeff[k + 32]) + ((int64_t)coeff[k + 48] * coeff[k + 48]);
                 freq_energy[k] += ROUND_POWER_OF_TWO(this_energy, 2);
             }
             n++;
@@ -1239,8 +1132,7 @@ static int av1_superres_in_recode_allowed(SequenceControlSet *scs) {
         ;
 }
 
-static uint8_t get_superres_denom_from_qindex_energy(int qindex, double *energy, double threshq,
-                                                     double threshp) {
+static uint8_t get_superres_denom_from_qindex_energy(int qindex, double *energy, double threshq, double threshp) {
     const double q      = svt_av1_convert_qindex_to_q(qindex, EB_EIGHT_BIT);
     const double tq     = threshq * q * q;
     const double tp     = threshp * energy[1];
@@ -1274,8 +1166,8 @@ int32_t svt_aom_get_frame_update_type(SequenceControlSet *scs, PictureParentCont
     }
 }
 
-static uint8_t get_superres_denom_for_qindex(SequenceControlSet *scs, PictureParentControlSet *pcs,
-                                             int qindex, int sr_kf, int sr_arf) {
+static uint8_t get_superres_denom_for_qindex(SequenceControlSet *scs, PictureParentControlSet *pcs, int qindex,
+                                             int sr_kf, int sr_arf) {
     // Use superres for Key-frames and Alt-ref frames only.
     int32_t update_type = svt_aom_get_frame_update_type(scs, pcs);
     if (update_type != SVT_AV1_KF_UPDATE && update_type != SVT_AV1_ARF_UPDATE) {
@@ -1296,13 +1188,10 @@ static uint8_t get_superres_denom_for_qindex(SequenceControlSet *scs, PicturePar
         qindex, energy, energy_by_q2_thresh, SUPERRES_ENERGY_BY_AC_THRESH);
 
 #if DEBUG_SUPERRES_ENERGY
-    printf("\nFrame %d. energy_by_q2_thresh %.3f, energy = [",
-           (int)pcs->picture_number,
-           energy_by_q2_thresh);
+    printf("\nFrame %d. energy_by_q2_thresh %.3f, energy = [", (int)pcs->picture_number, energy_by_q2_thresh);
     for (int k = 1; k < 16; ++k) printf("%f, ", energy[k]);
     printf("]\n");
-    printf("boost = %d\n",
-           (update_type == KF_UPDATE) ? scs->enc_ctx->rc.kf_boost : scs->enc_ctx->rc.gfu_boost);
+    printf("boost = %d\n", (update_type == KF_UPDATE) ? scs->enc_ctx->rc.kf_boost : scs->enc_ctx->rc.gfu_boost);
     printf("denom = %d\n", denom);
 #endif
 
@@ -1399,9 +1288,9 @@ static void calc_superres_params(superres_params_type *spr_params, SequenceContr
     }
 }
 
-EbErrorType svt_aom_downscaled_source_buffer_desc_ctor(
-    EbPictureBufferDesc **picture_ptr, EbPictureBufferDesc *picture_ptr_for_reference,
-    superres_params_type spr_params) {
+EbErrorType svt_aom_downscaled_source_buffer_desc_ctor(EbPictureBufferDesc **picture_ptr,
+                                                       EbPictureBufferDesc  *picture_ptr_for_reference,
+                                                       superres_params_type  spr_params) {
     EbPictureBufferDescInitData initData;
 
     initData.buffer_enable_mask = PICTURE_BUFFER_DESC_FULL_MASK;
@@ -1442,9 +1331,8 @@ uint8_t svt_aom_get_denom_idx(uint8_t scale_denom) {
  * Modify encoder parameters and structures that depend on picture resolution
  * Performed after a source picture has been scaled
  */
-void scale_pcs_params(SequenceControlSet *scs, PictureParentControlSet *pcs,
-                      superres_params_type spr_params, uint16_t source_width,
-                      uint16_t source_height) {
+void scale_pcs_params(SequenceControlSet *scs, PictureParentControlSet *pcs, superres_params_type spr_params,
+                      uint16_t source_width, uint16_t source_height) {
     Av1Common *cm = pcs->av1_cm;
 
     UNUSED(source_width);
@@ -1476,9 +1364,8 @@ void scale_pcs_params(SequenceControlSet *scs, PictureParentControlSet *pcs,
     pcs->aligned_height = aligned_height;
 
     // number of SBs
-    const uint16_t picture_sb_width = (uint16_t)((aligned_width + scs->sb_size - 1) / scs->sb_size);
-    const uint16_t picture_sb_height = (uint16_t)((aligned_height + scs->sb_size - 1) /
-                                                  scs->sb_size);
+    const uint16_t picture_sb_width  = (uint16_t)((aligned_width + scs->sb_size - 1) / scs->sb_size);
+    const uint16_t picture_sb_height = (uint16_t)((aligned_height + scs->sb_size - 1) / scs->sb_size);
 
     pcs->picture_sb_width  = picture_sb_width; // TODO: use this instead of re-computing
     pcs->picture_sb_height = picture_sb_height;
@@ -1490,8 +1377,7 @@ void scale_pcs_params(SequenceControlSet *scs, PictureParentControlSet *pcs,
     cm->mi_cols   = aligned_width >> MI_SIZE_LOG2;
     cm->mi_rows   = aligned_height >> MI_SIZE_LOG2;
 
-    svt_aom_derive_input_resolution(&pcs->input_resolution,
-                                    spr_params.encoding_width * spr_params.encoding_height);
+    svt_aom_derive_input_resolution(&pcs->input_resolution, spr_params.encoding_width * spr_params.encoding_height);
 
     // create new picture level sb_params and sb_geom
     b64_geom_init_pcs(scs, pcs);
@@ -1510,9 +1396,9 @@ void scale_pcs_params(SequenceControlSet *scs, PictureParentControlSet *pcs,
 /*
  * Memory allocation for donwscaled reconstructed reference pictures
  */
-static EbErrorType allocate_downscaled_reference_pics(
-    EbPictureBufferDesc **downscaled_reference_picture_ptr,
-    EbPictureBufferDesc *picture_ptr_for_reference, PictureParentControlSet *pcs) {
+static EbErrorType allocate_downscaled_reference_pics(EbPictureBufferDesc    **downscaled_reference_picture_ptr,
+                                                      EbPictureBufferDesc     *picture_ptr_for_reference,
+                                                      PictureParentControlSet *pcs) {
     EbPictureBufferDescInitData ref_pic_buf_desc_init_data;
 
     // Initialize the various Picture types
@@ -1536,15 +1422,11 @@ static EbErrorType allocate_downscaled_reference_pics(
         // Use 10bit here to use in MD
         ref_pic_buf_desc_init_data.split_mode = TRUE;
         ref_pic_buf_desc_init_data.bit_depth  = EB_TEN_BIT;
-        EB_NEW(*downscaled_reference_picture_ptr,
-               svt_picture_buffer_desc_ctor,
-               (EbPtr)&ref_pic_buf_desc_init_data);
+        EB_NEW(*downscaled_reference_picture_ptr, svt_picture_buffer_desc_ctor, (EbPtr)&ref_pic_buf_desc_init_data);
     } else {
         // Hsan: set split_mode to 0 to as 8BIT input
         ref_pic_buf_desc_init_data.split_mode = FALSE;
-        EB_NEW(*downscaled_reference_picture_ptr,
-               svt_picture_buffer_desc_ctor,
-               (EbPtr)&ref_pic_buf_desc_init_data);
+        EB_NEW(*downscaled_reference_picture_ptr, svt_picture_buffer_desc_ctor, (EbPtr)&ref_pic_buf_desc_init_data);
     }
 
     return EB_ErrorNone;
@@ -1553,10 +1435,11 @@ static EbErrorType allocate_downscaled_reference_pics(
 /*
  * Memory allocation for donwscaled source reference pictures
  */
-static EbErrorType allocate_downscaled_source_reference_pics(
-    EbPictureBufferDesc **input_padded_pic, EbPictureBufferDesc **quarter_downsampled_picture_ptr,
-    EbPictureBufferDesc **sixteenth_downsampled_picture_ptr,
-    EbPictureBufferDesc *picture_ptr_for_reference, superres_params_type spr_params) {
+static EbErrorType allocate_downscaled_source_reference_pics(EbPictureBufferDesc **input_padded_pic,
+                                                             EbPictureBufferDesc **quarter_downsampled_picture_ptr,
+                                                             EbPictureBufferDesc **sixteenth_downsampled_picture_ptr,
+                                                             EbPictureBufferDesc  *picture_ptr_for_reference,
+                                                             superres_params_type  spr_params) {
     EbPictureBufferDescInitData initData;
 
     initData.buffer_enable_mask = PICTURE_BUFFER_DESC_LUMA_MASK;
@@ -1564,9 +1447,9 @@ static EbErrorType allocate_downscaled_source_reference_pics(
     initData.max_height         = spr_params.encoding_height;
     initData.bit_depth          = picture_ptr_for_reference->bit_depth;
     initData.color_format       = picture_ptr_for_reference->color_format;
-    initData.split_mode    = (picture_ptr_for_reference->bit_depth > EB_EIGHT_BIT) ? TRUE : FALSE;
-    initData.left_padding  = picture_ptr_for_reference->org_x;
-    initData.right_padding = picture_ptr_for_reference->org_x;
+    initData.split_mode         = (picture_ptr_for_reference->bit_depth > EB_EIGHT_BIT) ? TRUE : FALSE;
+    initData.left_padding       = picture_ptr_for_reference->org_x;
+    initData.right_padding      = picture_ptr_for_reference->org_x;
 
     initData.top_padding = picture_ptr_for_reference->org_y;
     initData.bot_padding = picture_ptr_for_reference->origin_bot_y;
@@ -1578,11 +1461,11 @@ static EbErrorType allocate_downscaled_source_reference_pics(
     initData.max_height         = spr_params.encoding_height >> 1;
     initData.bit_depth          = picture_ptr_for_reference->bit_depth;
     initData.color_format       = picture_ptr_for_reference->color_format;
-    initData.split_mode    = (picture_ptr_for_reference->bit_depth > EB_EIGHT_BIT) ? TRUE : FALSE;
-    initData.left_padding  = picture_ptr_for_reference->org_x >> 1;
-    initData.right_padding = picture_ptr_for_reference->org_x >> 1;
-    initData.top_padding   = picture_ptr_for_reference->org_y >> 1;
-    initData.bot_padding   = picture_ptr_for_reference->origin_bot_y >> 1;
+    initData.split_mode         = (picture_ptr_for_reference->bit_depth > EB_EIGHT_BIT) ? TRUE : FALSE;
+    initData.left_padding       = picture_ptr_for_reference->org_x >> 1;
+    initData.right_padding      = picture_ptr_for_reference->org_x >> 1;
+    initData.top_padding        = picture_ptr_for_reference->org_y >> 1;
+    initData.bot_padding        = picture_ptr_for_reference->origin_bot_y >> 1;
 
     EB_NEW(*quarter_downsampled_picture_ptr, svt_picture_buffer_desc_ctor, (EbPtr)&initData);
 
@@ -1591,11 +1474,11 @@ static EbErrorType allocate_downscaled_source_reference_pics(
     initData.max_height         = spr_params.encoding_height >> 2;
     initData.bit_depth          = picture_ptr_for_reference->bit_depth;
     initData.color_format       = picture_ptr_for_reference->color_format;
-    initData.split_mode    = (picture_ptr_for_reference->bit_depth > EB_EIGHT_BIT) ? TRUE : FALSE;
-    initData.left_padding  = picture_ptr_for_reference->org_x >> 2;
-    initData.right_padding = picture_ptr_for_reference->org_x >> 2;
-    initData.top_padding   = picture_ptr_for_reference->org_y >> 2;
-    initData.bot_padding   = picture_ptr_for_reference->origin_bot_y >> 2;
+    initData.split_mode         = (picture_ptr_for_reference->bit_depth > EB_EIGHT_BIT) ? TRUE : FALSE;
+    initData.left_padding       = picture_ptr_for_reference->org_x >> 2;
+    initData.right_padding      = picture_ptr_for_reference->org_x >> 2;
+    initData.top_padding        = picture_ptr_for_reference->org_y >> 2;
+    initData.bot_padding        = picture_ptr_for_reference->origin_bot_y >> 2;
 
     EB_NEW(*sixteenth_downsampled_picture_ptr, svt_picture_buffer_desc_ctor, (EbPtr)&initData);
     return EB_ErrorNone;
@@ -1606,17 +1489,15 @@ static EbErrorType allocate_downscaled_source_reference_pics(
  * and its decimated/filtered versions to match with the input picture resolution
  * This is used in the open-loop stage.
  */
-void scale_source_references(SequenceControlSet *scs, PictureParentControlSet *pcs,
-                             EbPictureBufferDesc *input_pic) {
+void scale_source_references(SequenceControlSet *scs, PictureParentControlSet *pcs, EbPictureBufferDesc *input_pic) {
     EbPaReferenceObject *ref_object;
 
-    uint8_t        sr_denom_idx     = svt_aom_get_denom_idx(pcs->superres_denom);
-    uint8_t        resize_denom_idx = svt_aom_get_denom_idx(pcs->resize_denom);
-    const int32_t  num_planes       = 0; // Y only
-    const uint32_t ss_x             = scs->subsampling_x;
-    const uint32_t ss_y             = scs->subsampling_y;
-    uint32_t       num_of_list_to_search =
-        (pcs->slice_type == P_SLICE) ? 1 /*List 0 only*/ : 2 /*List 0 + 1*/;
+    uint8_t        sr_denom_idx          = svt_aom_get_denom_idx(pcs->superres_denom);
+    uint8_t        resize_denom_idx      = svt_aom_get_denom_idx(pcs->resize_denom);
+    const int32_t  num_planes            = 0; // Y only
+    const uint32_t ss_x                  = scs->subsampling_x;
+    const uint32_t ss_y                  = scs->subsampling_y;
+    uint32_t       num_of_list_to_search = (pcs->slice_type == P_SLICE) ? 1 /*List 0 only*/ : 2 /*List 0 + 1*/;
 
     for (uint8_t list_index = REF_LIST_0; list_index < num_of_list_to_search; ++list_index) {
         uint8_t ref_pic_index;
@@ -1624,8 +1505,7 @@ void scale_source_references(SequenceControlSet *scs, PictureParentControlSet *p
             : (list_index == REF_LIST_0)                                ? pcs->ref_list0_count
                                                                         : pcs->ref_list1_count;
         for (ref_pic_index = 0; ref_pic_index < num_of_ref_pic_to_search; ++ref_pic_index) {
-            ref_object = (EbPaReferenceObject *)pcs->ref_pa_pic_ptr_array[list_index][ref_pic_index]
-                             ->object_ptr;
+            ref_object = (EbPaReferenceObject *)pcs->ref_pa_pic_ptr_array[list_index][ref_pic_index]->object_ptr;
 
             uint64_t ref_picture_number = pcs->ref_pic_poc_array[list_index][ref_pic_index];
 
@@ -1636,20 +1516,16 @@ void scale_source_references(SequenceControlSet *scs, PictureParentControlSet *p
                 Bool do_resize = FALSE;
 
                 svt_block_on_mutex(ref_object->resize_mutex[sr_denom_idx][resize_denom_idx]);
-                if (ref_object->downscaled_input_padded_picture_ptr[sr_denom_idx]
-                                                                   [resize_denom_idx] == NULL) {
+                if (ref_object->downscaled_input_padded_picture_ptr[sr_denom_idx][resize_denom_idx] == NULL) {
                     superres_params_type spr_params = {pcs->frame_width, // aligned_width
                                                        pcs->frame_height, // aligned_height
                                                        scs->static_config.superres_mode};
 
                     // Allocate downsampled reference picture buffer descriptors
                     allocate_downscaled_source_reference_pics(
-                        &ref_object
-                             ->downscaled_input_padded_picture_ptr[sr_denom_idx][resize_denom_idx],
-                        &ref_object->downscaled_quarter_downsampled_picture_ptr[sr_denom_idx]
-                                                                               [resize_denom_idx],
-                        &ref_object->downscaled_sixteenth_downsampled_picture_ptr[sr_denom_idx]
-                                                                                 [resize_denom_idx],
+                        &ref_object->downscaled_input_padded_picture_ptr[sr_denom_idx][resize_denom_idx],
+                        &ref_object->downscaled_quarter_downsampled_picture_ptr[sr_denom_idx][resize_denom_idx],
+                        &ref_object->downscaled_sixteenth_downsampled_picture_ptr[sr_denom_idx][resize_denom_idx],
                         ref_pic_ptr,
                         spr_params);
 
@@ -1657,15 +1533,13 @@ void scale_source_references(SequenceControlSet *scs, PictureParentControlSet *p
                 }
 
                 // skip the duplicated scaling on the same reference picture
-                if (ref_object->downscaled_picture_number[sr_denom_idx][resize_denom_idx] !=
-                    ref_picture_number) {
+                if (ref_object->downscaled_picture_number[sr_denom_idx][resize_denom_idx] != ref_picture_number) {
                     do_resize = TRUE;
                 }
 
                 if (do_resize) {
                     EbPictureBufferDesc *down_ref_pic_ptr =
-                        ref_object
-                            ->downscaled_input_padded_picture_ptr[sr_denom_idx][resize_denom_idx];
+                        ref_object->downscaled_input_padded_picture_ptr[sr_denom_idx][resize_denom_idx];
 
                     // downsample input padded picture buffer
                     svt_aom_resize_frame(ref_pic_ptr,
@@ -1683,26 +1557,17 @@ void scale_source_references(SequenceControlSet *scs, PictureParentControlSet *p
                         svt_aom_downsample_filtering_input_picture(
                             pcs,
                             down_ref_pic_ptr,
-                            ref_object
-                                ->downscaled_quarter_downsampled_picture_ptr[sr_denom_idx]
-                                                                            [resize_denom_idx],
-                            ref_object
-                                ->downscaled_sixteenth_downsampled_picture_ptr[sr_denom_idx]
-                                                                              [resize_denom_idx]);
+                            ref_object->downscaled_quarter_downsampled_picture_ptr[sr_denom_idx][resize_denom_idx],
+                            ref_object->downscaled_sixteenth_downsampled_picture_ptr[sr_denom_idx][resize_denom_idx]);
                     } else {
                         svt_aom_downsample_decimation_input_picture(
                             pcs,
                             down_ref_pic_ptr,
-                            ref_object
-                                ->downscaled_quarter_downsampled_picture_ptr[sr_denom_idx]
-                                                                            [resize_denom_idx],
-                            ref_object
-                                ->downscaled_sixteenth_downsampled_picture_ptr[sr_denom_idx]
-                                                                              [resize_denom_idx]);
+                            ref_object->downscaled_quarter_downsampled_picture_ptr[sr_denom_idx][resize_denom_idx],
+                            ref_object->downscaled_sixteenth_downsampled_picture_ptr[sr_denom_idx][resize_denom_idx]);
                     }
 
-                    ref_object->downscaled_picture_number[sr_denom_idx][resize_denom_idx] =
-                        ref_picture_number;
+                    ref_object->downscaled_picture_number[sr_denom_idx][resize_denom_idx] = ref_picture_number;
                 }
 
                 svt_release_mutex(ref_object->resize_mutex[sr_denom_idx][resize_denom_idx]);
@@ -1716,13 +1581,12 @@ void scale_source_references(SequenceControlSet *scs, PictureParentControlSet *p
  * and its decimated/filtered versions to match with the input picture resolution
  * This is used in the open-loop stage.
  */
-static void scale_input_references(PictureParentControlSet *pcs,
-                                   superres_params_type     svt_aom_superres_params) {
+static void scale_input_references(PictureParentControlSet *pcs, superres_params_type svt_aom_superres_params) {
     uint8_t sr_denom_idx     = svt_aom_get_denom_idx(svt_aom_superres_params.superres_denom);
     uint8_t resize_denom_idx = svt_aom_get_denom_idx(pcs->resize_denom);
 
     // reference structures (padded pictures + downsampled versions)
-    EbPaReferenceObject *src_object = (EbPaReferenceObject *)pcs->pa_ref_pic_wrapper->object_ptr;
+    EbPaReferenceObject *src_object     = (EbPaReferenceObject *)pcs->pa_ref_pic_wrapper->object_ptr;
     EbPictureBufferDesc *padded_pic_ptr = src_object->input_padded_pic;
     Bool                 do_resize      = FALSE;
 
@@ -1733,21 +1597,18 @@ static void scale_input_references(PictureParentControlSet *pcs,
         allocate_downscaled_source_reference_pics(
             &src_object->downscaled_input_padded_picture_ptr[sr_denom_idx][resize_denom_idx],
             &src_object->downscaled_quarter_downsampled_picture_ptr[sr_denom_idx][resize_denom_idx],
-            &src_object
-                 ->downscaled_sixteenth_downsampled_picture_ptr[sr_denom_idx][resize_denom_idx],
+            &src_object->downscaled_sixteenth_downsampled_picture_ptr[sr_denom_idx][resize_denom_idx],
             padded_pic_ptr,
             svt_aom_superres_params);
         do_resize = TRUE;
     }
 
-    if (src_object->downscaled_picture_number[sr_denom_idx][resize_denom_idx] !=
-        pcs->picture_number) {
+    if (src_object->downscaled_picture_number[sr_denom_idx][resize_denom_idx] != pcs->picture_number) {
         do_resize = TRUE;
     }
 
     if (do_resize) {
-        padded_pic_ptr =
-            src_object->downscaled_input_padded_picture_ptr[sr_denom_idx][resize_denom_idx];
+        padded_pic_ptr = src_object->downscaled_input_padded_picture_ptr[sr_denom_idx][resize_denom_idx];
         EbPictureBufferDesc *input_pic = pcs->enhanced_pic;
 
         for (uint32_t row = 0; row < (uint32_t)(input_pic->height + 2 * input_pic->org_y); row++)
@@ -1760,18 +1621,14 @@ static void scale_input_references(PictureParentControlSet *pcs,
             svt_aom_downsample_filtering_input_picture(
                 pcs,
                 padded_pic_ptr,
-                src_object
-                    ->downscaled_quarter_downsampled_picture_ptr[sr_denom_idx][resize_denom_idx],
-                src_object
-                    ->downscaled_sixteenth_downsampled_picture_ptr[sr_denom_idx][resize_denom_idx]);
+                src_object->downscaled_quarter_downsampled_picture_ptr[sr_denom_idx][resize_denom_idx],
+                src_object->downscaled_sixteenth_downsampled_picture_ptr[sr_denom_idx][resize_denom_idx]);
         } else {
             svt_aom_downsample_decimation_input_picture(
                 pcs,
                 padded_pic_ptr,
-                src_object
-                    ->downscaled_quarter_downsampled_picture_ptr[sr_denom_idx][resize_denom_idx],
-                src_object
-                    ->downscaled_sixteenth_downsampled_picture_ptr[sr_denom_idx][resize_denom_idx]);
+                src_object->downscaled_quarter_downsampled_picture_ptr[sr_denom_idx][resize_denom_idx],
+                src_object->downscaled_sixteenth_downsampled_picture_ptr[sr_denom_idx][resize_denom_idx]);
         }
 
         src_object->downscaled_picture_number[sr_denom_idx][resize_denom_idx] = pcs->picture_number;
@@ -1784,20 +1641,18 @@ static void scale_input_references(PictureParentControlSet *pcs,
  * Allocate memory and perform scaling of the reconstructed reference pictures
  * to match with the input picture resolution
  */
-void svt_aom_scale_rec_references(PictureControlSet *pcs, EbPictureBufferDesc *input_pic,
-                                  uint8_t hbd_md) {
+void svt_aom_scale_rec_references(PictureControlSet *pcs, EbPictureBufferDesc *input_pic, uint8_t hbd_md) {
     EbReferenceObject *ref_object;
 
     PictureParentControlSet *ppcs = pcs->ppcs;
     SequenceControlSet      *scs  = ppcs->scs;
 
-    uint8_t        sr_denom_idx     = svt_aom_get_denom_idx(ppcs->superres_denom);
-    uint8_t        resize_denom_idx = svt_aom_get_denom_idx(ppcs->resize_denom);
-    const int32_t  num_planes       = av1_num_planes(&scs->seq_header.color_config);
-    const uint32_t ss_x             = scs->subsampling_x;
-    const uint32_t ss_y             = scs->subsampling_y;
-    uint32_t       num_of_list_to_search =
-        (pcs->slice_type == P_SLICE) ? 1 /*List 0 only*/ : 2 /*List 0 + 1*/;
+    uint8_t        sr_denom_idx          = svt_aom_get_denom_idx(ppcs->superres_denom);
+    uint8_t        resize_denom_idx      = svt_aom_get_denom_idx(ppcs->resize_denom);
+    const int32_t  num_planes            = av1_num_planes(&scs->seq_header.color_config);
+    const uint32_t ss_x                  = scs->subsampling_x;
+    const uint32_t ss_y                  = scs->subsampling_y;
+    uint32_t       num_of_list_to_search = (pcs->slice_type == P_SLICE) ? 1 /*List 0 only*/ : 2 /*List 0 + 1*/;
 
     for (uint8_t list_index = REF_LIST_0; list_index < num_of_list_to_search; ++list_index) {
         uint8_t ref_pic_index;
@@ -1805,13 +1660,11 @@ void svt_aom_scale_rec_references(PictureControlSet *pcs, EbPictureBufferDesc *i
             : (list_index == REF_LIST_0)                                 ? ppcs->ref_list0_count
                                                                          : ppcs->ref_list1_count;
         for (ref_pic_index = 0; ref_pic_index < num_of_ref_pic_to_search; ++ref_pic_index) {
-            ref_object =
-                (EbReferenceObject *)pcs->ref_pic_ptr_array[list_index][ref_pic_index]->object_ptr;
+            ref_object = (EbReferenceObject *)pcs->ref_pic_ptr_array[list_index][ref_pic_index]->object_ptr;
 
             uint64_t ref_picture_number = ppcs->ref_pic_poc_array[list_index][ref_pic_index];
 
-            EbPictureBufferDesc *ref_pic_ptr = svt_aom_get_ref_pic_buffer(
-                pcs, hbd_md, list_index, ref_pic_index);
+            EbPictureBufferDesc *ref_pic_ptr = svt_aom_get_ref_pic_buffer(pcs, hbd_md, list_index, ref_pic_index);
             // if the size of the reference pic is different than the size of the input pic, then scale references
             if (ref_pic_ptr->width != input_pic->width) {
                 Bool do_resize = FALSE;
@@ -1825,8 +1678,7 @@ void svt_aom_scale_rec_references(PictureControlSet *pcs, EbPictureBufferDesc *i
 
                 if (down_ref_pic_ptr != NULL) {
                     if (ref_pic_ptr->bit_depth != down_ref_pic_ptr->bit_depth) {
-                        EB_DELETE(ref_object->downscaled_reference_picture[sr_denom_idx]
-                                                                          [resize_denom_idx]);
+                        EB_DELETE(ref_object->downscaled_reference_picture[sr_denom_idx][resize_denom_idx]);
                         down_ref_pic8bit = NULL;
                         down_ref_pic_ptr = NULL;
                     }
@@ -1835,18 +1687,14 @@ void svt_aom_scale_rec_references(PictureControlSet *pcs, EbPictureBufferDesc *i
                 if (down_ref_pic_ptr == NULL) {
                     // Allocate downsampled reference picture buffer descriptors
                     allocate_downscaled_reference_pics(
-                        &ref_object->downscaled_reference_picture[sr_denom_idx][resize_denom_idx],
-                        ref_pic_ptr,
-                        ppcs);
+                        &ref_object->downscaled_reference_picture[sr_denom_idx][resize_denom_idx], ref_pic_ptr, ppcs);
 
-                    down_ref_pic8bit =
-                        ref_object->downscaled_reference_picture[sr_denom_idx][resize_denom_idx];
-                    do_resize = TRUE;
+                    down_ref_pic8bit = ref_object->downscaled_reference_picture[sr_denom_idx][resize_denom_idx];
+                    do_resize        = TRUE;
                 }
 
                 // skip the duplicated scaling on the same reference picture
-                if (ref_object->downscaled_picture_number[sr_denom_idx][resize_denom_idx] !=
-                    ref_picture_number) {
+                if (ref_object->downscaled_picture_number[sr_denom_idx][resize_denom_idx] != ref_picture_number) {
                     do_resize = TRUE;
                 }
 
@@ -1862,8 +1710,7 @@ void svt_aom_scale_rec_references(PictureControlSet *pcs, EbPictureBufferDesc *i
                                          PICTURE_BUFFER_DESC_FULL_MASK, // buffer_enable_mask
                                          0); // is_2bcompress
 
-                    ref_object->downscaled_picture_number[sr_denom_idx][resize_denom_idx] =
-                        ref_picture_number;
+                    ref_object->downscaled_picture_number[sr_denom_idx][resize_denom_idx] = ref_picture_number;
                     //printf("rescaled reference picture %d\n", (int)ref_picture_number);
                 }
 
@@ -1878,8 +1725,7 @@ void svt_aom_scale_rec_references(PictureControlSet *pcs, EbPictureBufferDesc *i
  * if not, return pointers to downscaled reference picture of the correct resolution
  */
 void svt_aom_use_scaled_rec_refs_if_needed(PictureControlSet *pcs, EbPictureBufferDesc *input_pic,
-                                           EbReferenceObject    *ref_obj,
-                                           EbPictureBufferDesc **ref_pic, uint8_t hbd_md) {
+                                           EbReferenceObject *ref_obj, EbPictureBufferDesc **ref_pic, uint8_t hbd_md) {
     if ((*ref_pic)->width != input_pic->width) {
         uint8_t sr_denom_idx     = svt_aom_get_denom_idx(pcs->ppcs->superres_denom);
         uint8_t resize_denom_idx = svt_aom_get_denom_idx(pcs->ppcs->resize_denom);
@@ -1897,24 +1743,19 @@ void svt_aom_use_scaled_rec_refs_if_needed(PictureControlSet *pcs, EbPictureBuff
  * if not, return pointers to downscaled reference picture of the correct resolution.
  * These are used in the open-loop stage.
  */
-void svt_aom_use_scaled_source_refs_if_needed(PictureParentControlSet *pcs,
-                                              EbPictureBufferDesc     *input_pic,
-                                              EbPaReferenceObject     *ref_obj,
-                                              EbPictureBufferDesc    **ref_pic_ptr,
-                                              EbPictureBufferDesc    **quarter_ref_pic_ptr,
-                                              EbPictureBufferDesc    **sixteenth_ref_pic_ptr) {
+void svt_aom_use_scaled_source_refs_if_needed(PictureParentControlSet *pcs, EbPictureBufferDesc *input_pic,
+                                              EbPaReferenceObject *ref_obj, EbPictureBufferDesc **ref_pic_ptr,
+                                              EbPictureBufferDesc **quarter_ref_pic_ptr,
+                                              EbPictureBufferDesc **sixteenth_ref_pic_ptr) {
     if ((*ref_pic_ptr)->width != input_pic->width) {
         uint8_t sr_denom_idx     = svt_aom_get_denom_idx(pcs->superres_denom);
         uint8_t resize_denom_idx = svt_aom_get_denom_idx(pcs->resize_denom);
 
-        assert(ref_obj->downscaled_input_padded_picture_ptr[sr_denom_idx][resize_denom_idx] !=
-               NULL);
+        assert(ref_obj->downscaled_input_padded_picture_ptr[sr_denom_idx][resize_denom_idx] != NULL);
 
-        *ref_pic_ptr = ref_obj->downscaled_input_padded_picture_ptr[sr_denom_idx][resize_denom_idx];
-        *quarter_ref_pic_ptr =
-            ref_obj->downscaled_quarter_downsampled_picture_ptr[sr_denom_idx][resize_denom_idx];
-        *sixteenth_ref_pic_ptr =
-            ref_obj->downscaled_sixteenth_downsampled_picture_ptr[sr_denom_idx][resize_denom_idx];
+        *ref_pic_ptr           = ref_obj->downscaled_input_padded_picture_ptr[sr_denom_idx][resize_denom_idx];
+        *quarter_ref_pic_ptr   = ref_obj->downscaled_quarter_downsampled_picture_ptr[sr_denom_idx][resize_denom_idx];
+        *sixteenth_ref_pic_ptr = ref_obj->downscaled_sixteenth_downsampled_picture_ptr[sr_denom_idx][resize_denom_idx];
     }
     assert((*ref_pic_ptr)->width == input_pic->width);
 }
@@ -1937,8 +1778,7 @@ void svt_aom_reset_resized_picture(SequenceControlSet *scs, PictureParentControl
     EB_DELETE(pcs->enhanced_downscaled_pic);
 }
 
-static uint8_t calculate_next_resize_scale(const SequenceControlSet      *scs,
-                                           const PictureParentControlSet *pcs) {
+static uint8_t calculate_next_resize_scale(const SequenceControlSet *scs, const PictureParentControlSet *pcs) {
     // Choose an arbitrary random number
     static unsigned int seed = 56789;
 
@@ -1985,8 +1825,8 @@ static int dimensions_are_ok(int owidth, int oheight, superres_params_type *rsz)
     return dimension_is_ok(owidth, rsz->encoding_width, rsz->superres_denom);
 }
 
-static int validate_size_scales(RESIZE_MODE resize_mode, SUPERRES_MODE superres_mode, int owidth,
-                                int oheight, superres_params_type *rsz, uint8_t *resize_denom) {
+static int validate_size_scales(RESIZE_MODE resize_mode, SUPERRES_MODE superres_mode, int owidth, int oheight,
+                                superres_params_type *rsz, uint8_t *resize_denom) {
     if (dimensions_are_ok(owidth, oheight, rsz)) { // Nothing to do.
         return 1;
     }
@@ -2065,8 +1905,7 @@ void svt_aom_init_resize_picture(SequenceControlSet *scs, PictureParentControlSe
 
     // step 2: calculate super-res resolution
     if (scs->static_config.superres_mode > SUPERRES_NONE) {
-        Bool first_loop = !(scs->static_config.superres_mode == SUPERRES_AUTO &&
-                            pcs->superres_recode_loop > 0);
+        Bool first_loop = !(scs->static_config.superres_mode == SUPERRES_AUTO && pcs->superres_recode_loop > 0);
         if (first_loop) { // first loop of multiple coding loop (auto-dual or auto-all mode) or the only loop (all the other modes)
             // determine super-res denom
             calc_superres_params(&spr_params, scs, pcs);
@@ -2114,8 +1953,7 @@ void svt_aom_init_resize_picture(SequenceControlSet *scs, PictureParentControlSe
     // TODO: reuse the buffer if current picture's denom is the same as previous one's.
     EB_DELETE(pcs->enhanced_downscaled_pic);
 
-    if (spr_params.encoding_width != input_pic->width ||
-        spr_params.encoding_height != input_pic->height)
+    if (spr_params.encoding_width != input_pic->width || spr_params.encoding_height != input_pic->height)
         do_resize = TRUE;
 
     if (spr_params.superres_denom != SCALE_NUMERATOR) {
@@ -2125,8 +1963,7 @@ void svt_aom_init_resize_picture(SequenceControlSet *scs, PictureParentControlSe
 
     if (do_resize) {
         // Allocate downsampled picture buffer descriptor
-        svt_aom_downscaled_source_buffer_desc_ctor(
-            &pcs->enhanced_downscaled_pic, input_pic, spr_params);
+        svt_aom_downscaled_source_buffer_desc_ctor(&pcs->enhanced_downscaled_pic, input_pic, spr_params);
 
         const int32_t  num_planes = av1_num_planes(&scs->seq_header.color_config);
         const uint32_t ss_x       = scs->subsampling_x;

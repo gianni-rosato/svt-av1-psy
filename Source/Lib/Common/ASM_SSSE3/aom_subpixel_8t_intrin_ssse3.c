@@ -17,19 +17,17 @@
 
 // filters for 8_h8 and 16_h8
 DECLARE_ALIGNED(32, static const uint8_t, filt_h4[]) = {
-    0,  1,  1, 2,  2,  3,  3,  4,  4, 5,  5,  6,  6,  7,  7,  8,  0,  1,  1,  2,  2,  3,
-    3,  4,  4, 5,  5,  6,  6,  7,  7, 8,  2,  3,  3,  4,  4,  5,  5,  6,  6,  7,  7,  8,
-    8,  9,  9, 10, 2,  3,  3,  4,  4, 5,  5,  6,  6,  7,  7,  8,  8,  9,  9,  10, 4,  5,
-    5,  6,  6, 7,  7,  8,  8,  9,  9, 10, 10, 11, 11, 12, 4,  5,  5,  6,  6,  7,  7,  8,
-    8,  9,  9, 10, 10, 11, 11, 12, 6, 7,  7,  8,  8,  9,  9,  10, 10, 11, 11, 12, 12, 13,
-    13, 14, 6, 7,  7,  8,  8,  9,  9, 10, 10, 11, 11, 12, 12, 13, 13, 14};
+    0, 1, 1, 2, 2, 3, 3, 4,  4,  5,  5,  6,  6,  7,  7,  8,  0, 1, 1, 2, 2, 3, 3, 4,  4,  5,  5,  6,  6,  7,  7,  8,
+    2, 3, 3, 4, 4, 5, 5, 6,  6,  7,  7,  8,  8,  9,  9,  10, 2, 3, 3, 4, 4, 5, 5, 6,  6,  7,  7,  8,  8,  9,  9,  10,
+    4, 5, 5, 6, 6, 7, 7, 8,  8,  9,  9,  10, 10, 11, 11, 12, 4, 5, 5, 6, 6, 7, 7, 8,  8,  9,  9,  10, 10, 11, 11, 12,
+    6, 7, 7, 8, 8, 9, 9, 10, 10, 11, 11, 12, 12, 13, 13, 14, 6, 7, 7, 8, 8, 9, 9, 10, 10, 11, 11, 12, 12, 13, 13, 14};
 
 DECLARE_ALIGNED(32, static const uint8_t, filtd4[]) = {
     2, 3, 4, 5, 3, 4, 5, 6, 4, 5, 6, 7, 5, 6, 7, 8, 2, 3, 4, 5, 3, 4, 5, 6, 4, 5, 6, 7, 5, 6, 7, 8,
 };
 
-typedef void filter8_1dfunction(const uint8_t *src_ptr, ptrdiff_t src_pitch, uint8_t *output_ptr,
-                                ptrdiff_t out_pitch, uint32_t output_height, const int16_t *filter);
+typedef void filter8_1dfunction(const uint8_t *src_ptr, ptrdiff_t src_pitch, uint8_t *output_ptr, ptrdiff_t out_pitch,
+                                uint32_t output_height, const int16_t *filter);
 
 filter8_1dfunction svt_aom_filter_block1d16_v8_ssse3;
 filter8_1dfunction svt_aom_filter_block1d16_h8_ssse3;
@@ -45,99 +43,89 @@ filter8_1dfunction svt_aom_filter_block1d8_h2_ssse3;
 filter8_1dfunction svt_aom_filter_block1d4_v2_ssse3;
 filter8_1dfunction svt_aom_filter_block1d4_h2_ssse3;
 
-#define FUN_CONV_1D(name, step_q4, filter, dir, src_start, avg, opt)                               \
-    void svt_aom_convolve8_##name##_##opt(const uint8_t *src,                                      \
-                                          ptrdiff_t      src_stride,                               \
-                                          uint8_t       *dst,                                      \
-                                          ptrdiff_t      dst_stride,                               \
-                                          const int16_t *filter_x,                                 \
-                                          int            x_step_q4,                                \
-                                          const int16_t *filter_y,                                 \
-                                          int            y_step_q4,                                \
-                                          int            w,                                        \
-                                          int            h) {                                                 \
-        (void)filter_x;                                                                            \
-        (void)x_step_q4;                                                                           \
-        (void)filter_y;                                                                            \
-        (void)y_step_q4;                                                                           \
-        assert((-128 <= filter[3]) && (filter[3] <= 127));                                         \
-        assert(step_q4 == 16);                                                                     \
-        if (((filter[0] | filter[1] | filter[6] | filter[7]) == 0) && (filter[2] | filter[5])) {   \
-            while (w >= 16) {                                                                      \
-                svt_aom_filter_block1d16_##dir##4_##avg##opt(                                      \
-                    src_start, src_stride, dst, dst_stride, h, filter);                            \
-                src += 16;                                                                         \
-                dst += 16;                                                                         \
-                w -= 16;                                                                           \
-            }                                                                                      \
-            while (w >= 8) {                                                                       \
-                svt_aom_filter_block1d8_##dir##4_##avg##opt(                                       \
-                    src_start, src_stride, dst, dst_stride, h, filter);                            \
-                src += 8;                                                                          \
-                dst += 8;                                                                          \
-                w -= 8;                                                                            \
-            }                                                                                      \
-            while (w >= 4) {                                                                       \
-                svt_aom_filter_block1d4_##dir##4_##avg##opt(                                       \
-                    src_start, src_stride, dst, dst_stride, h, filter);                            \
-                src += 4;                                                                          \
-                dst += 4;                                                                          \
-                w -= 4;                                                                            \
-            }                                                                                      \
-        } else if (filter[0] | filter[1] | filter[2]) {                                            \
-            while (w >= 16) {                                                                      \
-                svt_aom_filter_block1d16_##dir##8_##avg##opt(                                      \
-                    src_start, src_stride, dst, dst_stride, h, filter);                            \
-                src += 16;                                                                         \
-                dst += 16;                                                                         \
-                w -= 16;                                                                           \
-            }                                                                                      \
-            while (w >= 8) {                                                                       \
-                svt_aom_filter_block1d8_##dir##8_##avg##opt(                                       \
-                    src_start, src_stride, dst, dst_stride, h, filter);                            \
-                src += 8;                                                                          \
-                dst += 8;                                                                          \
-                w -= 8;                                                                            \
-            }                                                                                      \
-            while (w >= 4) {                                                                       \
-                svt_aom_filter_block1d4_##dir##8_##avg##opt(                                       \
-                    src_start, src_stride, dst, dst_stride, h, filter);                            \
-                src += 4;                                                                          \
-                dst += 4;                                                                          \
-                w -= 4;                                                                            \
-            }                                                                                      \
-        } else {                                                                                   \
-            while (w >= 16) {                                                                      \
-                svt_aom_filter_block1d16_##dir##2_##avg##opt(                                      \
-                    src, src_stride, dst, dst_stride, h, filter);                                  \
-                src += 16;                                                                         \
-                dst += 16;                                                                         \
-                w -= 16;                                                                           \
-            }                                                                                      \
-            while (w >= 8) {                                                                       \
-                svt_aom_filter_block1d8_##dir##2_##avg##opt(                                       \
-                    src, src_stride, dst, dst_stride, h, filter);                                  \
-                src += 8;                                                                          \
-                dst += 8;                                                                          \
-                w -= 8;                                                                            \
-            }                                                                                      \
-            while (w >= 4) {                                                                       \
-                svt_aom_filter_block1d4_##dir##2_##avg##opt(                                       \
-                    src, src_stride, dst, dst_stride, h, filter);                                  \
-                src += 4;                                                                          \
-                dst += 4;                                                                          \
-                w -= 4;                                                                            \
-            }                                                                                      \
-        }                                                                                          \
-        if (w) {                                                                                   \
-            svt_aom_convolve8_##name##_c(                                                          \
-                src, src_stride, dst, dst_stride, filter_x, x_step_q4, filter_y, y_step_q4, w, h); \
-        }                                                                                          \
+#define FUN_CONV_1D(name, step_q4, filter, dir, src_start, avg, opt)                                             \
+    void svt_aom_convolve8_##name##_##opt(const uint8_t *src,                                                    \
+                                          ptrdiff_t      src_stride,                                             \
+                                          uint8_t       *dst,                                                    \
+                                          ptrdiff_t      dst_stride,                                             \
+                                          const int16_t *filter_x,                                               \
+                                          int            x_step_q4,                                              \
+                                          const int16_t *filter_y,                                               \
+                                          int            y_step_q4,                                              \
+                                          int            w,                                                      \
+                                          int            h) {                                                               \
+        (void)filter_x;                                                                                          \
+        (void)x_step_q4;                                                                                         \
+        (void)filter_y;                                                                                          \
+        (void)y_step_q4;                                                                                         \
+        assert((-128 <= filter[3]) && (filter[3] <= 127));                                                       \
+        assert(step_q4 == 16);                                                                                   \
+        if (((filter[0] | filter[1] | filter[6] | filter[7]) == 0) && (filter[2] | filter[5])) {                 \
+            while (w >= 16) {                                                                                    \
+                svt_aom_filter_block1d16_##dir##4_##avg##opt(src_start, src_stride, dst, dst_stride, h, filter); \
+                src += 16;                                                                                       \
+                dst += 16;                                                                                       \
+                w -= 16;                                                                                         \
+            }                                                                                                    \
+            while (w >= 8) {                                                                                     \
+                svt_aom_filter_block1d8_##dir##4_##avg##opt(src_start, src_stride, dst, dst_stride, h, filter);  \
+                src += 8;                                                                                        \
+                dst += 8;                                                                                        \
+                w -= 8;                                                                                          \
+            }                                                                                                    \
+            while (w >= 4) {                                                                                     \
+                svt_aom_filter_block1d4_##dir##4_##avg##opt(src_start, src_stride, dst, dst_stride, h, filter);  \
+                src += 4;                                                                                        \
+                dst += 4;                                                                                        \
+                w -= 4;                                                                                          \
+            }                                                                                                    \
+        } else if (filter[0] | filter[1] | filter[2]) {                                                          \
+            while (w >= 16) {                                                                                    \
+                svt_aom_filter_block1d16_##dir##8_##avg##opt(src_start, src_stride, dst, dst_stride, h, filter); \
+                src += 16;                                                                                       \
+                dst += 16;                                                                                       \
+                w -= 16;                                                                                         \
+            }                                                                                                    \
+            while (w >= 8) {                                                                                     \
+                svt_aom_filter_block1d8_##dir##8_##avg##opt(src_start, src_stride, dst, dst_stride, h, filter);  \
+                src += 8;                                                                                        \
+                dst += 8;                                                                                        \
+                w -= 8;                                                                                          \
+            }                                                                                                    \
+            while (w >= 4) {                                                                                     \
+                svt_aom_filter_block1d4_##dir##8_##avg##opt(src_start, src_stride, dst, dst_stride, h, filter);  \
+                src += 4;                                                                                        \
+                dst += 4;                                                                                        \
+                w -= 4;                                                                                          \
+            }                                                                                                    \
+        } else {                                                                                                 \
+            while (w >= 16) {                                                                                    \
+                svt_aom_filter_block1d16_##dir##2_##avg##opt(src, src_stride, dst, dst_stride, h, filter);       \
+                src += 16;                                                                                       \
+                dst += 16;                                                                                       \
+                w -= 16;                                                                                         \
+            }                                                                                                    \
+            while (w >= 8) {                                                                                     \
+                svt_aom_filter_block1d8_##dir##2_##avg##opt(src, src_stride, dst, dst_stride, h, filter);        \
+                src += 8;                                                                                        \
+                dst += 8;                                                                                        \
+                w -= 8;                                                                                          \
+            }                                                                                                    \
+            while (w >= 4) {                                                                                     \
+                svt_aom_filter_block1d4_##dir##2_##avg##opt(src, src_stride, dst, dst_stride, h, filter);        \
+                src += 4;                                                                                        \
+                dst += 4;                                                                                        \
+                w -= 4;                                                                                          \
+            }                                                                                                    \
+        }                                                                                                        \
+        if (w) {                                                                                                 \
+            svt_aom_convolve8_##name##_c(                                                                        \
+                src, src_stride, dst, dst_stride, filter_x, x_step_q4, filter_y, y_step_q4, w, h);               \
+        }                                                                                                        \
     }
 
-static void svt_aom_filter_block1d4_h4_ssse3(const uint8_t *src_ptr, ptrdiff_t src_pixels_per_line,
-                                             uint8_t *output_ptr, ptrdiff_t output_pitch,
-                                             uint32_t output_height, const int16_t *filter) {
+static void svt_aom_filter_block1d4_h4_ssse3(const uint8_t *src_ptr, ptrdiff_t src_pixels_per_line, uint8_t *output_ptr,
+                                             ptrdiff_t output_pitch, uint32_t output_height, const int16_t *filter) {
     __m128i      filtersReg;
     __m128i      addFilterReg32, filt1Reg, firstFilters, srcReg32b1, srcRegFilt32b1_1;
     unsigned int i;
@@ -179,16 +167,15 @@ static void svt_aom_filter_block1d4_h4_ssse3(const uint8_t *src_ptr, ptrdiff_t s
     }
 }
 
-static void svt_aom_filter_block1d4_v4_ssse3(const uint8_t *src_ptr, ptrdiff_t src_pitch,
-                                             uint8_t *output_ptr, ptrdiff_t out_pitch,
-                                             uint32_t output_height, const int16_t *filter) {
-    __m128i filtersReg;
-    __m128i addFilterReg32;
-    __m128i srcReg2, srcReg3, srcReg23, srcReg4, srcReg34, srcReg5, srcReg45, srcReg6, srcReg56;
-    __m128i srcReg23_34_lo, srcReg45_56_lo;
-    __m128i srcReg2345_3456_lo, srcReg2345_3456_hi;
-    __m128i resReglo, resReghi;
-    __m128i firstFilters;
+static void svt_aom_filter_block1d4_v4_ssse3(const uint8_t *src_ptr, ptrdiff_t src_pitch, uint8_t *output_ptr,
+                                             ptrdiff_t out_pitch, uint32_t output_height, const int16_t *filter) {
+    __m128i      filtersReg;
+    __m128i      addFilterReg32;
+    __m128i      srcReg2, srcReg3, srcReg23, srcReg4, srcReg34, srcReg5, srcReg45, srcReg6, srcReg56;
+    __m128i      srcReg23_34_lo, srcReg45_56_lo;
+    __m128i      srcReg2345_3456_lo, srcReg2345_3456_hi;
+    __m128i      resReglo, resReghi;
+    __m128i      firstFilters;
     unsigned int i;
     ptrdiff_t    src_stride, dst_stride;
 
@@ -261,9 +248,8 @@ static void svt_aom_filter_block1d4_v4_ssse3(const uint8_t *src_ptr, ptrdiff_t s
     }
 }
 
-static void svt_aom_filter_block1d8_h4_ssse3(const uint8_t *src_ptr, ptrdiff_t src_pixels_per_line,
-                                             uint8_t *output_ptr, ptrdiff_t output_pitch,
-                                             uint32_t output_height, const int16_t *filter) {
+static void svt_aom_filter_block1d8_h4_ssse3(const uint8_t *src_ptr, ptrdiff_t src_pixels_per_line, uint8_t *output_ptr,
+                                             ptrdiff_t output_pitch, uint32_t output_height, const int16_t *filter) {
     __m128i      filtersReg;
     __m128i      addFilterReg32, filt2Reg, filt3Reg;
     __m128i      secondFilters, thirdFilters;
@@ -316,9 +302,8 @@ static void svt_aom_filter_block1d8_h4_ssse3(const uint8_t *src_ptr, ptrdiff_t s
     }
 }
 
-static void svt_aom_filter_block1d8_v4_ssse3(const uint8_t *src_ptr, ptrdiff_t src_pitch,
-                                             uint8_t *output_ptr, ptrdiff_t out_pitch,
-                                             uint32_t output_height, const int16_t *filter) {
+static void svt_aom_filter_block1d8_v4_ssse3(const uint8_t *src_ptr, ptrdiff_t src_pitch, uint8_t *output_ptr,
+                                             ptrdiff_t out_pitch, uint32_t output_height, const int16_t *filter) {
     __m128i      filtersReg;
     __m128i      srcReg2, srcReg3, srcReg4, srcReg5, srcReg6;
     __m128i      srcReg23, srcReg34, srcReg45, srcReg56;
@@ -401,8 +386,8 @@ static void svt_aom_filter_block1d8_v4_ssse3(const uint8_t *src_ptr, ptrdiff_t s
 }
 
 static void svt_aom_filter_block1d16_h4_ssse3(const uint8_t *src_ptr, ptrdiff_t src_pixels_per_line,
-                                              uint8_t *output_ptr, ptrdiff_t output_pitch,
-                                              uint32_t output_height, const int16_t *filter) {
+                                              uint8_t *output_ptr, ptrdiff_t output_pitch, uint32_t output_height,
+                                              const int16_t *filter) {
     __m128i      filtersReg;
     __m128i      addFilterReg32, filt2Reg, filt3Reg;
     __m128i      secondFilters, thirdFilters;
@@ -473,9 +458,8 @@ static void svt_aom_filter_block1d16_h4_ssse3(const uint8_t *src_ptr, ptrdiff_t 
     }
 }
 
-static void svt_aom_filter_block1d16_v4_ssse3(const uint8_t *src_ptr, ptrdiff_t src_pitch,
-                                              uint8_t *output_ptr, ptrdiff_t out_pitch,
-                                              uint32_t output_height, const int16_t *filter) {
+static void svt_aom_filter_block1d16_v4_ssse3(const uint8_t *src_ptr, ptrdiff_t src_pitch, uint8_t *output_ptr,
+                                              ptrdiff_t out_pitch, uint32_t output_height, const int16_t *filter) {
     __m128i      filtersReg;
     __m128i      srcReg2, srcReg3, srcReg4, srcReg5, srcReg6;
     __m128i      srcReg23_lo, srcReg23_hi, srcReg34_lo, srcReg34_hi;

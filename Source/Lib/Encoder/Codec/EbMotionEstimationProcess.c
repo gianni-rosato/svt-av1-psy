@@ -285,24 +285,12 @@ void *svt_aom_motion_estimation_kernel(void *input_ptr) {
                                 pcs->me_processed_b64_count++;
                                 // We need to finish ME for all SBs to do GM
                                 if (pcs->me_processed_b64_count == pcs->b64_total_count) {
-#if GM_REFINFO
-#if GM_PP
                                     if (pcs->gm_ctrls.enabled && !pcs->gm_ctrls.use_ref_info && pcs->gm_pp_detected) {
-#else
-                                    if (pcs->gm_ctrls.enabled && !pcs->gm_ctrls.use_ref_info) {
-#endif
                                         svt_aom_global_motion_estimation(pcs, input_pic);
                                     } else {
                                         // Initilize global motion to be OFF when GM is OFF
                                         memset(pcs->is_global_motion, FALSE, MAX_NUM_OF_REF_PIC_LIST * REF_LIST_MAX_DEPTH);
                                     }
-#else
-                                    if (pcs->gm_ctrls.enabled)
-                                        svt_aom_global_motion_estimation(pcs, input_pic);
-                                    else
-                                        // Initilize global motion to be OFF when GM is OFF
-                                        memset(pcs->is_global_motion, FALSE, MAX_NUM_OF_REF_PIC_LIST * REF_LIST_MAX_DEPTH);
-#endif
                                 }
 
                                 svt_release_mutex(pcs->me_processed_b64_mutex);
@@ -333,13 +321,11 @@ void *svt_aom_motion_estimation_kernel(void *input_ptr) {
             // Post the Full Results Object
             svt_post_full_object(out_results_wrapper);
         } else if (in_results_ptr->task_type == TASK_TFME) {
-#if GM_PP
             //gm pre-processing for only base B
             if (pcs->gm_ctrls.pp_enabled && pcs->gm_pp_enabled && in_results_ptr->segment_index==0)
                 svt_aom_gm_pre_processor(
                     pcs,
                     pcs->temp_filt_pcs_list);
-#endif
             // temporal filtering start
             me_context_ptr->me_ctx->me_type = ME_MCTF;
             svt_av1_init_temporal_filtering(

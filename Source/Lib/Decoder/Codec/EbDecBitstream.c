@@ -109,8 +109,7 @@ uint32_t svt_aom_get_position(Bitstrm *bs) {
 
 uint8_t *svt_aom_get_bitsteam_buf(Bitstrm *bs) {
     uint8_t *bitsteam_buf = (uint8_t *)bs->buf;
-    bitsteam_buf -= ((WORD_SIZE /*nxt_word*/ >> 3) +
-                     ((WORD_SIZE - bs->bit_ofst) /*cur_word*/ >> 3));
+    bitsteam_buf -= ((WORD_SIZE /*nxt_word*/ >> 3) + ((WORD_SIZE - bs->bit_ofst) /*cur_word*/ >> 3));
 
     assert(bitsteam_buf == (bs->buf_base + (svt_aom_get_position(bs) >> 3)));
 

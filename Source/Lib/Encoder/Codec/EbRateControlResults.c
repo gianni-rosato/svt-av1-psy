@@ -13,16 +13,14 @@
 
 #include "EbRateControlResults.h"
 
-static EbErrorType rate_control_results_ctor(RateControlResults *context_ptr,
-                                             EbPtr               object_init_data_ptr) {
+static EbErrorType rate_control_results_ctor(RateControlResults *context_ptr, EbPtr object_init_data_ptr) {
     (void)context_ptr;
     (void)object_init_data_ptr;
 
     return EB_ErrorNone;
 }
 
-EbErrorType svt_aom_rate_control_results_creator(EbPtr *object_dbl_ptr,
-                                                 EbPtr  object_init_data_ptr) {
+EbErrorType svt_aom_rate_control_results_creator(EbPtr *object_dbl_ptr, EbPtr object_init_data_ptr) {
     RateControlResults *obj;
 
     *object_dbl_ptr = NULL;

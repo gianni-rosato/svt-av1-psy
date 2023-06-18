@@ -15,7 +15,6 @@
 #include "EbSvtAv1.h"
 #include "EbSvtAv1Metadata.h"
 
-EbErrorType svt_aom_copy_metadata_buffer(EbBufferHeaderType                  *dst,
-                                         const struct SvtMetadataArray *const src);
+EbErrorType svt_aom_copy_metadata_buffer(EbBufferHeaderType *dst, const struct SvtMetadataArray *const src);
 
 #endif

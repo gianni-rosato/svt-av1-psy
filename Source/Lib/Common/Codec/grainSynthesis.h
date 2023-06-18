@@ -97,9 +97,8 @@ int32_t svt_aom_film_grain_params_equal(AomFilmGrain *pars_a, AomFilmGrain *pars
      * \param[in]    luma_stride      luma plane stride
      * \param[in]    chroma_stride    chroma plane stride
      */
-void svt_av1_add_film_grain_run(AomFilmGrain *grain_params, uint8_t *luma, uint8_t *cb, uint8_t *cr,
-                                int32_t height, int32_t width, int32_t luma_stride,
-                                int32_t chroma_stride, int32_t use_high_bit_depth,
+void svt_av1_add_film_grain_run(AomFilmGrain *grain_params, uint8_t *luma, uint8_t *cb, uint8_t *cr, int32_t height,
+                                int32_t width, int32_t luma_stride, int32_t chroma_stride, int32_t use_high_bit_depth,
                                 int32_t chroma_subsamp_y, int32_t chroma_subsamp_x);
 
 /*!\brief Add film grain
@@ -121,8 +120,8 @@ void svt_av1_add_film_grain_run(AomFilmGrain *grain_params, uint8_t *luma, uint8
 //                                 int32_t monochrome, struct aom_read_bit_buffer *wb,
 //                                 struct aom_internal_error_info *error);
 
-void svt_aom_fgn_copy_rect(uint8_t *src, int32_t src_stride, uint8_t *dst, int32_t dst_stride,
-                           int32_t width, int32_t height, int32_t use_high_bit_depth);
+void svt_aom_fgn_copy_rect(uint8_t *src, int32_t src_stride, uint8_t *dst, int32_t dst_stride, int32_t width,
+                           int32_t height, int32_t use_high_bit_depth);
 
 #ifdef __cplusplus
 } // extern "C"

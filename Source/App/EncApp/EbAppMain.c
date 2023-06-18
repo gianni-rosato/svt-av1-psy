@@ -147,8 +147,8 @@ static int compar_uint64(const void* a, const void* b) {
     return (x < y) ? -1 : (x > y) ? 1 : 0;
 }
 
-static EbErrorType enc_context_ctor(EncApp* enc_app, EncContext* enc_context, int32_t argc,
-                                    char* argv[], EncPass enc_pass, int32_t passes) {
+static EbErrorType enc_context_ctor(EncApp* enc_app, EncContext* enc_context, int32_t argc, char* argv[],
+                                    EncPass enc_pass, int32_t passes) {
 #if LOG_ENC_DONE
     tot_frames_done = 0;
 #endif
@@ -230,8 +230,7 @@ static EbErrorType enc_context_ctor(EncApp* enc_app, EncContext* enc_context, in
             app_cfg->config.pass = passes == 1 ? app_cfg->config.pass // Single-Pass
                                                : (int)enc_pass; // Multi-Pass
 
-            c->return_error = handle_stats_file(
-                app_cfg, enc_pass, &enc_app->rc_twopasses_stats, num_channels);
+            c->return_error = handle_stats_file(app_cfg, enc_pass, &enc_app->rc_twopasses_stats, num_channels);
             if (c->return_error == EB_ErrorNone) {
                 c->return_error = init_encoder(app_cfg, inst_cnt);
             }
@@ -250,8 +249,7 @@ static void enc_context_dctor(EncContext* enc_context) {
         enc_channel_dctor(c, inst_cnt);
     }
 
-    for (uint32_t warning_id = 0; warning_id < MAX_NUM_TOKENS; warning_id++)
-        free(enc_context->warning[warning_id]);
+    for (uint32_t warning_id = 0; warning_id < MAX_NUM_TOKENS; warning_id++) free(enc_context->warning[warning_id]);
 }
 
 double      get_psnr(double sse, double max);
@@ -261,8 +259,7 @@ static void print_summary(const EncContext* const enc_context) {
         const EbConfig*         app_cfg = c->app_cfg;
         if (c->exit_cond == APP_ExitConditionFinished && c->return_error == EB_ErrorNone &&
             (app_cfg->config.pass == 0 ||
-             (app_cfg->config.pass == 2 &&
-              app_cfg->config.rate_control_mode == SVT_AV1_RC_MODE_CQP_OR_CRF) ||
+             (app_cfg->config.pass == 2 && app_cfg->config.rate_control_mode == SVT_AV1_RC_MODE_CQP_OR_CRF) ||
              app_cfg->config.pass == 3)) {
 #if LOG_ENC_DONE
             tot_frames_done = (int)app_cfg->performance_context.frame_count;
@@ -301,12 +298,9 @@ static void print_summary(const EncContext* const enc_context) {
                         (float)app_cfg->performance_context.sum_luma_psnr / frame_count,
                         (float)app_cfg->performance_context.sum_cb_psnr / frame_count,
                         (float)app_cfg->performance_context.sum_cr_psnr / frame_count,
-                        (float)(get_psnr((app_cfg->performance_context.sum_luma_sse / frame_count),
-                                         max_luma_sse)),
-                        (float)(get_psnr((app_cfg->performance_context.sum_cb_sse / frame_count),
-                                         max_chroma_sse)),
-                        (float)(get_psnr((app_cfg->performance_context.sum_cr_sse / frame_count),
-                                         max_chroma_sse)),
+                        (float)(get_psnr((app_cfg->performance_context.sum_luma_sse / frame_count), max_luma_sse)),
+                        (float)(get_psnr((app_cfg->performance_context.sum_cb_sse / frame_count), max_chroma_sse)),
+                        (float)(get_psnr((app_cfg->performance_context.sum_cr_sse / frame_count), max_chroma_sse)),
                         (float)app_cfg->performance_context.sum_luma_ssim / frame_count,
                         (float)app_cfg->performance_context.sum_cb_ssim / frame_count,
                         (float)app_cfg->performance_context.sum_cr_ssim / frame_count,
@@ -343,12 +337,9 @@ static void print_summary(const EncContext* const enc_context) {
                         (float)app_cfg->performance_context.sum_luma_psnr / frame_count,
                         (float)app_cfg->performance_context.sum_cb_psnr / frame_count,
                         (float)app_cfg->performance_context.sum_cr_psnr / frame_count,
-                        (float)(get_psnr((app_cfg->performance_context.sum_luma_sse / frame_count),
-                                         max_luma_sse)),
-                        (float)(get_psnr((app_cfg->performance_context.sum_cb_sse / frame_count),
-                                         max_chroma_sse)),
-                        (float)(get_psnr((app_cfg->performance_context.sum_cr_sse / frame_count),
-                                         max_chroma_sse)),
+                        (float)(get_psnr((app_cfg->performance_context.sum_luma_sse / frame_count), max_luma_sse)),
+                        (float)(get_psnr((app_cfg->performance_context.sum_cb_sse / frame_count), max_chroma_sse)),
+                        (float)(get_psnr((app_cfg->performance_context.sum_cr_sse / frame_count), max_chroma_sse)),
                         (float)app_cfg->performance_context.sum_luma_ssim / frame_count,
                         (float)app_cfg->performance_context.sum_cb_ssim / frame_count,
                         (float)app_cfg->performance_context.sum_cr_ssim / frame_count);
@@ -368,8 +359,7 @@ static void print_performance(const EncContext* const enc_context) {
             EbConfig* app_cfg = c->app_cfg;
             if (app_cfg->stop_encoder == FALSE) {
                 if ((app_cfg->config.pass == 0 ||
-                     (app_cfg->config.pass == 2 &&
-                      app_cfg->config.rate_control_mode == SVT_AV1_RC_MODE_CQP_OR_CRF) ||
+                     (app_cfg->config.pass == 2 && app_cfg->config.rate_control_mode == SVT_AV1_RC_MODE_CQP_OR_CRF) ||
                      app_cfg->config.pass == 3))
                     fprintf(stderr,
                             "\nChannel %u\nAverage Speed:\t\t%.3f fps\nTotal Encoding Time:\t%.0f "
@@ -435,15 +425,12 @@ static void enc_channel_step(EncChannel* c, EncApp* enc_app, EncContext* enc_con
     process_output_stream_buffer(c, enc_app, &enc_context->total_frames);
 
     if (((c->exit_cond_recon == APP_ExitConditionFinished || !app_cfg->recon_file) &&
-         c->exit_cond_output == APP_ExitConditionFinished &&
-         c->exit_cond_input == APP_ExitConditionFinished) ||
+         c->exit_cond_output == APP_ExitConditionFinished && c->exit_cond_input == APP_ExitConditionFinished) ||
         ((c->exit_cond_recon == APP_ExitConditionError && app_cfg->recon_file) ||
-         c->exit_cond_output == APP_ExitConditionError ||
-         c->exit_cond_input == APP_ExitConditionError)) {
+         c->exit_cond_output == APP_ExitConditionError || c->exit_cond_input == APP_ExitConditionError)) {
         c->active = FALSE;
         if (app_cfg->recon_file)
-            c->exit_cond = (AppExitConditionType)(c->exit_cond_recon | c->exit_cond_output |
-                                                  c->exit_cond_input);
+            c->exit_cond = (AppExitConditionType)(c->exit_cond_recon | c->exit_cond_output | c->exit_cond_input);
         else
             c->exit_cond = (AppExitConditionType)(c->exit_cond_output | c->exit_cond_input);
     }
@@ -534,8 +521,7 @@ int32_t main(int32_t argc, char* argv[]) {
     enc_app_ctor(&enc_app);
     passes = get_passes(argc, argv, enc_pass);
     for (uint8_t pass_idx = 0; pass_idx < passes; pass_idx++) {
-        return_error = enc_context_ctor(
-            &enc_app, &enc_context, argc, argv, enc_pass[pass_idx], passes);
+        return_error = enc_context_ctor(&enc_app, &enc_context, argc, argv, enc_pass[pass_idx], passes);
 
         if (return_error == EB_ErrorNone)
             return_error = encode(&enc_app, &enc_context);

@@ -85,8 +85,7 @@ int uleb_decode(const uint8_t *buffer, size_t available, uint64_t *value, size_t
 // Reads unsigned LEB128 integer and returns 0 upon successful read and decode.
 // Stores raw bytes in 'value_buffer', length of the number in 'value_length',
 // and decoded value in 'value'.
-static int obudec_read_leb128(FILE *f, uint8_t *value_buffer, size_t *value_length,
-                              uint64_t *value) {
+static int obudec_read_leb128(FILE *f, uint8_t *value_buffer, size_t *value_length, uint64_t *value) {
     if (!f || !value_buffer || !value_length || !value)
         return -1;
     size_t len;
@@ -215,10 +214,9 @@ int svt_read_obu_header(uint8_t *buffer, size_t buffer_length, size_t *consumed,
 // and total bytes read from file are written to 'bytes_read'. Returns 0 for
 // success, and non-zero on failure. When end of file is reached, the return
 // value is 0 and the 'bytes_read' value is set to 0.
-static int obudec_read_obu_header(FILE *f, size_t buffer_capacity, uint32_t is_annexb,
-                                  uint8_t *obu_data, ObuHeader *obu_header, size_t *bytes_read) {
-    if (!f || buffer_capacity < (OBU_HEADER_SIZE + OBU_EXTENSION_SIZE) || !obu_data ||
-        !obu_header || !bytes_read) {
+static int obudec_read_obu_header(FILE *f, size_t buffer_capacity, uint32_t is_annexb, uint8_t *obu_data,
+                                  ObuHeader *obu_header, size_t *bytes_read) {
+    if (!f || buffer_capacity < (OBU_HEADER_SIZE + OBU_EXTENSION_SIZE) || !obu_data || !obu_header || !bytes_read) {
         return -1;
     }
     *bytes_read = fread(obu_data, 1, 1, f);
@@ -245,12 +243,10 @@ static int obudec_read_obu_header(FILE *f, size_t buffer_capacity, uint32_t is_a
     return 0;
 }
 
-static int obudec_read_obu_header_and_size(FILE *f, size_t buffer_capacity, uint32_t is_annexb,
-                                           uint8_t *buffer, size_t *bytes_read,
-                                           size_t *payload_length, ObuHeader *obu_header) {
+static int obudec_read_obu_header_and_size(FILE *f, size_t buffer_capacity, uint32_t is_annexb, uint8_t *buffer,
+                                           size_t *bytes_read, size_t *payload_length, ObuHeader *obu_header) {
     const size_t k_minimum_buffer_size = OBU_MAX_HEADER_SIZE;
-    if (!f || !buffer || !bytes_read || !payload_length || !obu_header ||
-        buffer_capacity < k_minimum_buffer_size) {
+    if (!f || !buffer || !bytes_read || !payload_length || !obu_header || buffer_capacity < k_minimum_buffer_size) {
         return -1;
     }
 
@@ -272,12 +268,9 @@ static int obudec_read_obu_header_and_size(FILE *f, size_t buffer_capacity, uint
     }
 
     size_t header_size = 0;
-    if (obudec_read_obu_header(f,
-                               buffer_capacity - leb128_length_obu,
-                               is_annexb,
-                               buffer + leb128_length_obu,
-                               obu_header,
-                               &header_size) != 0) {
+    if (obudec_read_obu_header(
+            f, buffer_capacity - leb128_length_obu, is_annexb, buffer + leb128_length_obu, obu_header, &header_size) !=
+        0) {
         return -1;
     } else if (header_size == 0) {
         *payload_length = 0;
@@ -293,10 +286,8 @@ static int obudec_read_obu_header_and_size(FILE *f, size_t buffer_capacity, uint
         *payload_length = (size_t)obu_size - header_size;
     } else {
         uint64_t u64_payload_length = 0;
-        if (obudec_read_leb128(f,
-                               &buffer[leb128_length_obu + header_size],
-                               &leb128_length_payload,
-                               &u64_payload_length) != 0) {
+        if (obudec_read_leb128(
+                f, &buffer[leb128_length_obu + header_size], &leb128_length_payload, &u64_payload_length) != 0) {
             fprintf(stderr, "obudec: Failure reading OBU payload length.\n");
             return -1;
         }
@@ -315,8 +306,7 @@ static int obudec_read_obu_header_and_size(FILE *f, size_t buffer_capacity, uint
 // Reads OBU payload from 'f' and returns 0 for success when all payload bytes
 // are read from the file. Payload data is written to 'obu_data', and actual
 // bytes read added to 'bytes_read'.
-static int obudec_read_obu_payload(FILE *f, size_t payload_length, uint8_t *obu_data,
-                                   size_t *bytes_read) {
+static int obudec_read_obu_payload(FILE *f, size_t payload_length, uint8_t *obu_data, size_t *bytes_read) {
     if (!f || payload_length == 0 || !obu_data || !bytes_read)
         return -1;
 
@@ -351,8 +341,7 @@ int file_is_obu(CliInput *cli, ObuDecInputContext *obu_ctx) {
         }
 
         // read the size of first frame unit
-        if (obudec_read_leb128(
-                f, &detect_buf[length_of_unit_size], &annexb_header_length, &unit_size) != 0) {
+        if (obudec_read_leb128(f, &detect_buf[length_of_unit_size], &annexb_header_length, &unit_size) != 0) {
             fprintf(stderr, "obudec: Failure reading frame unit header\n");
             return 0;
         }
@@ -413,8 +402,7 @@ int file_is_obu(CliInput *cli, ObuDecInputContext *obu_ctx) {
         }
 
         size_t    payload_bytes = 0;
-        const int status        = obudec_read_obu_payload(
-            f, payload_length, &obu_ctx->buffer[bytes_read], &payload_bytes);
+        const int status = obudec_read_obu_payload(f, payload_length, &obu_ctx->buffer[bytes_read], &payload_bytes);
         if (status < 0) {
             rewind(f);
             return 0;
@@ -431,8 +419,7 @@ int file_is_obu(CliInput *cli, ObuDecInputContext *obu_ctx) {
     return 1;
 }
 
-static int obudec_grow_buffer(size_t growth_amount, uint8_t **obu_buffer,
-                              size_t *obu_buffer_capacity) {
+static int obudec_grow_buffer(size_t growth_amount, uint8_t **obu_buffer, size_t *obu_buffer_capacity) {
     if (!*obu_buffer || !obu_buffer_capacity || growth_amount == 0) {
         return -1;
     }
@@ -456,9 +443,8 @@ static int obudec_grow_buffer(size_t growth_amount, uint8_t **obu_buffer,
     return 0;
 }
 
-static int obudec_read_one_obu(FILE *f, uint8_t **obu_buffer, size_t obu_bytes_buffered,
-                               size_t *obu_buffer_capacity, size_t *obu_length,
-                               ObuHeader *obu_header, uint32_t is_annexb) {
+static int obudec_read_one_obu(FILE *f, uint8_t **obu_buffer, size_t obu_bytes_buffered, size_t *obu_buffer_capacity,
+                               size_t *obu_length, ObuHeader *obu_header, uint32_t is_annexb) {
     if (!f || !(*obu_buffer) || !obu_buffer_capacity || !obu_length || !obu_header) {
         return -1;
     }
@@ -468,9 +454,8 @@ static int obudec_read_one_obu(FILE *f, uint8_t **obu_buffer, size_t obu_bytes_b
     size_t available_buffer_capacity = *obu_buffer_capacity - obu_bytes_buffered;
 
     if (available_buffer_capacity < OBU_MAX_HEADER_SIZE) {
-        if (obudec_grow_buffer(DECAPP_MAX(*obu_buffer_capacity, OBU_MAX_HEADER_SIZE),
-                               obu_buffer,
-                               obu_buffer_capacity) != 0) {
+        if (obudec_grow_buffer(
+                DECAPP_MAX(*obu_buffer_capacity, OBU_MAX_HEADER_SIZE), obu_buffer, obu_buffer_capacity) != 0) {
             *obu_length = bytes_read;
             return -1;
         }
@@ -497,16 +482,14 @@ static int obudec_read_one_obu(FILE *f, uint8_t **obu_buffer, size_t obu_bytes_b
     }
 
     if (bytes_read + obu_payload_length > available_buffer_capacity &&
-        obudec_grow_buffer(DECAPP_MAX(*obu_buffer_capacity, obu_payload_length),
-                           obu_buffer,
-                           obu_buffer_capacity) != 0) {
+        obudec_grow_buffer(DECAPP_MAX(*obu_buffer_capacity, obu_payload_length), obu_buffer, obu_buffer_capacity) !=
+            0) {
         *obu_length = bytes_read + obu_payload_length;
         return -1;
     }
 
     if (obu_payload_length > 0 &&
-        obudec_read_obu_payload(
-            f, obu_payload_length, *obu_buffer + obu_bytes_buffered + bytes_read, &bytes_read) !=
+        obudec_read_obu_payload(f, obu_payload_length, *obu_buffer + obu_bytes_buffered + bytes_read, &bytes_read) !=
             0) {
         return -1;
     }
@@ -515,8 +498,7 @@ static int obudec_read_one_obu(FILE *f, uint8_t **obu_buffer, size_t obu_bytes_b
     return 0;
 }
 
-int obudec_read_temporal_unit(DecInputContext *input, uint8_t **buffer, size_t *bytes_read,
-                              size_t *buffer_size) {
+int obudec_read_temporal_unit(DecInputContext *input, uint8_t **buffer, size_t *bytes_read, size_t *buffer_size) {
     CliInput           *cli     = input->cli_ctx;
     FILE               *f       = cli->in_file;
     ObuDecInputContext *obu_ctx = input->obu_ctx;
@@ -653,8 +635,7 @@ int file_is_ivf(CliInput *cli) {
     return is_ivf;
 }
 
-int read_ivf_frame(FILE *infile, uint8_t **buffer, size_t *bytes_read, size_t *buffer_size,
-                   int64_t *pts) {
+int read_ivf_frame(FILE *infile, uint8_t **buffer, size_t *bytes_read, size_t *buffer_size, int64_t *pts) {
     char   raw_header[IVF_FRAME_HDR_SZ] = {0};
     size_t frame_size                   = 0;
 

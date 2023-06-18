@@ -30,14 +30,10 @@ extern "C" {
 
 #define svt_read(r, prob, ACCT_STR_NAME) aom_read_(r, prob ACCT_STR_ARG(ACCT_STR_NAME))
 #define svt_read_bit(r, ACCT_STR_NAME) aom_read_bit_(r ACCT_STR_ARG(ACCT_STR_NAME))
-#define svt_read_literal(r, bits, ACCT_STR_NAME) \
-    aom_read_literal_(r, bits ACCT_STR_ARG(ACCT_STR_NAME))
-#define svt_read_cdf(r, cdf, nsymbs, ACCT_STR_NAME) \
-    aom_read_cdf_(r, cdf, nsymbs ACCT_STR_ARG(ACCT_STR_NAME))
-#define svt_read_symbol(r, cdf, nsymbs, ACCT_STR_NAME) \
-    aom_read_symbol_(r, cdf, nsymbs ACCT_STR_ARG(ACCT_STR_NAME))
-#define svt_read_ns_ae(r, nsymbs, ACCT_STR_NAME) \
-    aom_read_ns_ae_(r, nsymbs ACCT_STR_ARG(ACCT_STR_NAME))
+#define svt_read_literal(r, bits, ACCT_STR_NAME) aom_read_literal_(r, bits ACCT_STR_ARG(ACCT_STR_NAME))
+#define svt_read_cdf(r, cdf, nsymbs, ACCT_STR_NAME) aom_read_cdf_(r, cdf, nsymbs ACCT_STR_ARG(ACCT_STR_NAME))
+#define svt_read_symbol(r, cdf, nsymbs, ACCT_STR_NAME) aom_read_symbol_(r, cdf, nsymbs ACCT_STR_ARG(ACCT_STR_NAME))
+#define svt_read_ns_ae(r, nsymbs, ACCT_STR_NAME) aom_read_ns_ae_(r, nsymbs ACCT_STR_ARG(ACCT_STR_NAME))
 
 typedef DaalaReader_t SvtReader;
 
@@ -45,13 +41,9 @@ static INLINE int svt_reader_init(SvtReader *r, const uint8_t *buffer, size_t si
     return svt_aom_daala_reader_init(r, buffer, (int)size);
 }
 
-static INLINE const uint8_t *aom_reader_find_begin(SvtReader *r) {
-    return svt_aom_daala_reader_find_begin(r);
-}
+static INLINE const uint8_t *aom_reader_find_begin(SvtReader *r) { return svt_aom_daala_reader_find_begin(r); }
 
-static INLINE const uint8_t *aom_reader_find_end(SvtReader *r) {
-    return svt_aom_daala_reader_find_end(r);
-}
+static INLINE const uint8_t *aom_reader_find_end(SvtReader *r) { return svt_aom_daala_reader_find_end(r); }
 
 static INLINE int aom_read_(SvtReader *r, int prob ACCT_STR_PARAM) {
     int ret;

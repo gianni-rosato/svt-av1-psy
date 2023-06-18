@@ -21,8 +21,7 @@ static INLINE unsigned int lcg_rand16(unsigned int *state) {
 
 /* That same calculation as: av1_calc_indices_dist_dim1_avx2(),
    but not calculate sum at the end. */
-void svt_av1_calc_indices_dim1_avx2(const int *data, const int *centroids, uint8_t *indices, int n,
-                                    int k) {
+void svt_av1_calc_indices_dim1_avx2(const int *data, const int *centroids, uint8_t *indices, int n, int k) {
     int i = 0;
     int results[MAX_SB_SQUARE];
     memset(indices, 0, n * sizeof(uint8_t));
@@ -73,8 +72,8 @@ void svt_av1_calc_indices_dim1_avx2(const int *data, const int *centroids, uint8
     }
 }
 
-static INLINE int64_t av1_calc_indices_dist_dim1_avx2(const int *data, const int *centroids,
-                                                      uint8_t *indices, unsigned n, int k) {
+static INLINE int64_t av1_calc_indices_dist_dim1_avx2(const int *data, const int *centroids, uint8_t *indices,
+                                                      unsigned n, int k) {
     __m256i sum64 = _mm256_setzero_si256();
     int     results[MAX_SB_SQUARE];
     memset(indices, 0, n * sizeof(uint8_t));
@@ -135,8 +134,7 @@ static INLINE int64_t av1_calc_indices_dist_dim1_avx2(const int *data, const int
     return _mm_extract_epi64(s, 0) + _mm_extract_epi64(s, 1);
 }
 
-static INLINE void calc_centroids_1_avx2(const int *data, int *centroids, const uint8_t *indices,
-                                         int n, int k) {
+static INLINE void calc_centroids_1_avx2(const int *data, int *centroids, const uint8_t *indices, int n, int k) {
     int          i;
     int          count[PALETTE_MAX_SIZE] = {0};
     unsigned int rand_state              = (unsigned int)data[0];
@@ -159,8 +157,7 @@ static INLINE void calc_centroids_1_avx2(const int *data, int *centroids, const 
     }
 }
 
-void svt_av1_k_means_dim1_avx2(const int *data, int *centroids, uint8_t *indices, int n, int k,
-                               int max_itr) {
+void svt_av1_k_means_dim1_avx2(const int *data, int *centroids, uint8_t *indices, int n, int k, int max_itr) {
     int     pre_centroids[2 * PALETTE_MAX_SIZE];
     uint8_t pre_indices[MAX_SB_SQUARE];
     assert((n & 15) == 0);
@@ -187,8 +184,7 @@ void svt_av1_k_means_dim1_avx2(const int *data, int *centroids, uint8_t *indices
 
 /* That same calculation as: av1_calc_indices_dist_dim2_avx2(),
    but not calculate sum at the end. */
-void svt_av1_calc_indices_dim2_avx2(const int *data, const int *centroids, uint8_t *indices, int n,
-                                    int k) {
+void svt_av1_calc_indices_dim2_avx2(const int *data, const int *centroids, uint8_t *indices, int n, int k) {
     int results[MAX_SB_SQUARE];
     memset(indices, 0, n * sizeof(uint8_t));
 
@@ -259,8 +255,8 @@ void svt_av1_calc_indices_dim2_avx2(const int *data, const int *centroids, uint8
     }
 }
 
-static INLINE int64_t av1_calc_indices_dist_dim2_avx2(const int *data, const int *centroids,
-                                                      uint8_t *indices, unsigned n, int k) {
+static INLINE int64_t av1_calc_indices_dist_dim2_avx2(const int *data, const int *centroids, uint8_t *indices,
+                                                      unsigned n, int k) {
     int results[MAX_SB_SQUARE];
     memset(indices, 0, n * sizeof(uint8_t));
 
@@ -344,8 +340,7 @@ static INLINE int64_t av1_calc_indices_dist_dim2_avx2(const int *data, const int
     return dist;
 }
 
-static INLINE void calc_centroids_2_avx2(const int *data, int *centroids, const uint8_t *indices,
-                                         int n, int k) {
+static INLINE void calc_centroids_2_avx2(const int *data, int *centroids, const uint8_t *indices, int n, int k) {
     int          i;
     int          count[PALETTE_MAX_SIZE] = {0};
     unsigned int rand_state              = (unsigned int)data[0];
@@ -362,9 +357,8 @@ static INLINE void calc_centroids_2_avx2(const int *data, int *centroids, const 
 
     for (i = 0; i < k; ++i) {
         if (count[i] == 0) {
-            svt_memcpy_intrin_sse(centroids + i * 2,
-                                  (void *)(data + (lcg_rand16(&rand_state) % n) * 2),
-                                  sizeof(centroids[0]) * 2);
+            svt_memcpy_intrin_sse(
+                centroids + i * 2, (void *)(data + (lcg_rand16(&rand_state) % n) * 2), sizeof(centroids[0]) * 2);
         } else {
             centroids[i * 2]     = DIVIDE_AND_ROUND(centroids[i * 2], count[i]);
             centroids[i * 2 + 1] = DIVIDE_AND_ROUND(centroids[i * 2 + 1], count[i]);
@@ -372,8 +366,7 @@ static INLINE void calc_centroids_2_avx2(const int *data, int *centroids, const 
     }
 }
 
-void svt_av1_k_means_dim2_avx2(const int *data, int *centroids, uint8_t *indices, int n, int k,
-                               int max_itr) {
+void svt_av1_k_means_dim2_avx2(const int *data, int *centroids, uint8_t *indices, int n, int k, int max_itr) {
     int     pre_centroids[2 * PALETTE_MAX_SIZE];
     uint8_t pre_indices[MAX_SB_SQUARE];
 

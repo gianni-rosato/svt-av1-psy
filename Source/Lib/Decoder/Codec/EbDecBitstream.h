@@ -21,8 +21,7 @@
 #define SHL(x, y) (((y) < 32) ? ((x) << (y)) : 0)
 #define SHR(x, y) (((y) < 32) ? ((x) >> (y)) : 0)
 
-#define TO_BIG_ENDIAN(x) \
-    ((x << 24)) | ((x & 0x0000ff00) << 8) | ((x & 0x00ff0000) >> 8) | ((uint32_t)x >> 24);
+#define TO_BIG_ENDIAN(x) ((x << 24)) | ((x & 0x0000ff00) << 8) | ((x & 0x00ff0000) >> 8) | ((uint32_t)x >> 24);
 
 static const uint8_t k_leb_128byte_mask = 0x7f; // Binary: 01111111
 

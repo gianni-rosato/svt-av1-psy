@@ -113,8 +113,8 @@ EB_API void svt_metadata_array_free(void *arr);
  * \return Returns 0 on success. If buffer or data is NULL, sz is 0, or memory
  * allocation fails, it returns -1.
  */
-EB_API int svt_add_metadata(struct EbBufferHeaderType *buffer, const uint32_t type,
-                            const uint8_t *data, const size_t sz);
+EB_API int svt_add_metadata(struct EbBufferHeaderType *buffer, const uint32_t type, const uint8_t *data,
+                            const size_t sz);
 
 /*!\brief Return metadata size.
  *
@@ -135,8 +135,7 @@ EB_API size_t svt_metadata_size(SvtMetadataArrayT *metadata, const EbAv1Metadata
  *
  * \return Returns 1 on success. 0 on failure.
  */
-EB_API int svt_aom_parse_mastering_display(struct EbSvtAv1MasteringDisplayInfo *mdi,
-                                           const char                          *md_str);
+EB_API int svt_aom_parse_mastering_display(struct EbSvtAv1MasteringDisplayInfo *mdi, const char *md_str);
 
 /*!\brief Parse string into EbContentLightLevel struct.
  *

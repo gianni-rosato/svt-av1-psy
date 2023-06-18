@@ -13,8 +13,7 @@
 
 #include "EbRateControlTasks.h"
 
-static EbErrorType rate_control_tasks_ctor(RateControlTasks *context_ptr,
-                                           EbPtr             object_init_data_ptr) {
+static EbErrorType rate_control_tasks_ctor(RateControlTasks *context_ptr, EbPtr object_init_data_ptr) {
     (void)context_ptr;
     (void)object_init_data_ptr;
 

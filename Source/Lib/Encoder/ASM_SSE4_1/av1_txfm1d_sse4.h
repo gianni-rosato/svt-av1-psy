@@ -97,8 +97,8 @@ static INLINE __m128i mm_reverse_epi16(const __m128i x) {
     return _mm_shuffle_epi32(b, 0x4e);
 }
 
-static INLINE __m128i half_btf_sse4_1(const __m128i *w0, const __m128i *n0, const __m128i *w1,
-                                      const __m128i *n1, const __m128i *rounding, int bit) {
+static INLINE __m128i half_btf_sse4_1(const __m128i *w0, const __m128i *n0, const __m128i *w1, const __m128i *n1,
+                                      const __m128i *rounding, int bit) {
     __m128i x, y;
 
     x = _mm_mullo_epi32(*w0, *n0);

@@ -284,16 +284,10 @@ typedef struct MeHmeRefPruneCtrls {
     // TH used to prune references based on me sad deviation
     uint16_t prune_ref_if_me_sad_dev_bigger_than_th;
     Bool     protect_closest_refs; // if true, do not prune closest ref frames
-#if OPT_ZZ_REF_PRUNE
-    uint32_t
-        zz_sad_th; // enable zz based ref pruning if zz sad < this threshold. set to zero to disable.
+    uint32_t zz_sad_th; // enable zz based ref pruning if zz sad < this threshold. set to zero to disable.
     uint16_t zz_sad_pct; // prune the ref that has sad-deviation-to-best > th_percentage
-#endif
-#if OPT_PHME_PRUNE
-    uint32_t
-        phme_sad_th; // enable preHme based ref pruning if prehme sad < this threshold. set to zero to disable.
+    uint32_t phme_sad_th; // enable preHme based ref pruning if prehme sad < this threshold. set to zero to disable.
     uint16_t phme_sad_pct; // prune the ref that has sad-deviation-to-best > th_percentage
-#endif
 } MeHmeRefPruneCtrls;
 
 typedef struct MeSrCtrls {
@@ -310,7 +304,6 @@ typedef struct MeSrCtrls {
     uint16_t me_sr_divisor_for_low_hme_sad;
     uint8_t  distance_based_hme_resizing; // scale down the HME search area for high ref-indices
 } MeSrCtrls;
-#if FTR_ME_COST_VAR
 /* Me8x8VarCtrls will adjust the ME search area based on the 8x8 SAD variance of the search centre. The minimum
 * search dimensions will be limited to height=8, width=3 when the algorithm is used.  Consequently, this
 * algorithm will be bypassed if height * width <= 24.
@@ -323,7 +316,6 @@ typedef struct Me8x8VarCtrls {
     // If ME 8x8 SAD variance is below me_sr_div2_th, divide the search area width/height by 2
     uint32_t me_sr_div2_th;
 } Me8x8VarCtrls;
-#endif
 #define SEARCH_REGION_COUNT 2
 typedef struct SearchArea {
     uint16_t width; // search area width
@@ -337,9 +329,7 @@ typedef struct SearchInfo {
     SearchArea sa; // search area sizes
     IntMv      best_mv; // best mv
     uint64_t   sad; // best sad
-#if CLN_PHME_DATA
-    uint8_t valid; //1 if the mv+sad are valid; invalid for some pruned references.
-#endif
+    uint8_t    valid; //1 if the mv+sad are valid; invalid for some pruned references.
 } SearchInfo;
 
 typedef struct PreHmeCtrls {
@@ -411,10 +401,8 @@ typedef struct MeContext {
     Bool               enable_hme_level2_flag;
     MeHmeRefPruneCtrls me_hme_prune_ctrls;
     MeSrCtrls          me_sr_adjustment_ctrls;
-#if FTR_ME_COST_VAR
-    Me8x8VarCtrls me_8x8_var_ctrls;
-#endif
-    uint8_t max_hme_sr_area_multipler;
+    Me8x8VarCtrls      me_8x8_var_ctrls;
+    uint8_t            max_hme_sr_area_multipler;
     // ME
     uint8_t          best_list_idx;
     uint8_t          best_ref_idx;
@@ -431,38 +419,28 @@ typedef struct MeContext {
 
     SearchInfo  prehme_data[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX][SEARCH_REGION_COUNT];
     PreHmeCtrls prehme_ctrl;
-    int16_t     x_hme_level0_search_center[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX]
-                                      [EB_HME_SEARCH_AREA_COLUMN_MAX_COUNT]
+    int16_t     x_hme_level0_search_center[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX][EB_HME_SEARCH_AREA_COLUMN_MAX_COUNT]
                                       [EB_HME_SEARCH_AREA_ROW_MAX_COUNT];
-    int16_t y_hme_level0_search_center[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX]
-                                      [EB_HME_SEARCH_AREA_COLUMN_MAX_COUNT]
+    int16_t y_hme_level0_search_center[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX][EB_HME_SEARCH_AREA_COLUMN_MAX_COUNT]
                                       [EB_HME_SEARCH_AREA_ROW_MAX_COUNT];
-    uint64_t hme_level0_sad[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX]
-                           [EB_HME_SEARCH_AREA_COLUMN_MAX_COUNT][EB_HME_SEARCH_AREA_ROW_MAX_COUNT];
-    int16_t x_hme_level1_search_center[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX]
-                                      [EB_HME_SEARCH_AREA_COLUMN_MAX_COUNT]
+    uint64_t hme_level0_sad[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX][EB_HME_SEARCH_AREA_COLUMN_MAX_COUNT]
+                           [EB_HME_SEARCH_AREA_ROW_MAX_COUNT];
+    int16_t x_hme_level1_search_center[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX][EB_HME_SEARCH_AREA_COLUMN_MAX_COUNT]
                                       [EB_HME_SEARCH_AREA_ROW_MAX_COUNT];
-    int16_t y_hme_level1_search_center[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX]
-                                      [EB_HME_SEARCH_AREA_COLUMN_MAX_COUNT]
+    int16_t y_hme_level1_search_center[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX][EB_HME_SEARCH_AREA_COLUMN_MAX_COUNT]
                                       [EB_HME_SEARCH_AREA_ROW_MAX_COUNT];
-    uint64_t hme_level1_sad[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX]
-                           [EB_HME_SEARCH_AREA_COLUMN_MAX_COUNT][EB_HME_SEARCH_AREA_ROW_MAX_COUNT];
-    int16_t x_hme_level2_search_center[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX]
-                                      [EB_HME_SEARCH_AREA_COLUMN_MAX_COUNT]
+    uint64_t hme_level1_sad[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX][EB_HME_SEARCH_AREA_COLUMN_MAX_COUNT]
+                           [EB_HME_SEARCH_AREA_ROW_MAX_COUNT];
+    int16_t x_hme_level2_search_center[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX][EB_HME_SEARCH_AREA_COLUMN_MAX_COUNT]
                                       [EB_HME_SEARCH_AREA_ROW_MAX_COUNT];
-    int16_t y_hme_level2_search_center[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX]
-                                      [EB_HME_SEARCH_AREA_COLUMN_MAX_COUNT]
+    int16_t y_hme_level2_search_center[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX][EB_HME_SEARCH_AREA_COLUMN_MAX_COUNT]
                                       [EB_HME_SEARCH_AREA_ROW_MAX_COUNT];
-    uint64_t hme_level2_sad[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX]
-                           [EB_HME_SEARCH_AREA_COLUMN_MAX_COUNT][EB_HME_SEARCH_AREA_ROW_MAX_COUNT];
+    uint64_t hme_level2_sad[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX][EB_HME_SEARCH_AREA_COLUMN_MAX_COUNT]
+                           [EB_HME_SEARCH_AREA_ROW_MAX_COUNT];
     int16_t adjust_hme_l1_factor[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
     int16_t adjust_hme_l2_factor[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
     int16_t hme_factor;
     // ------- Context for Alt-Ref ME ------
-#if !FTR_ME_COST_VAR
-    uint16_t adj_search_area_width;
-    uint16_t adj_search_area_height;
-#endif
     void *alt_ref_reference_ptr;
     // Open Loop ME
     EbMeType                    me_type;
@@ -512,8 +490,8 @@ typedef struct MeContext {
     uint32_t     prev_me_stage_based_exit_th;
 } MeContext;
 
-typedef uint64_t (*EB_ME_DISTORTION_FUNC)(uint8_t *src, uint32_t src_stride, uint8_t *ref,
-                                          uint32_t ref_stride, uint32_t width, uint32_t height);
+typedef uint64_t (*EB_ME_DISTORTION_FUNC)(uint8_t *src, uint32_t src_stride, uint8_t *ref, uint32_t ref_stride,
+                                          uint32_t width, uint32_t height);
 extern EbErrorType svt_aom_me_context_ctor(MeContext *object_ptr);
 
 #ifdef __cplusplus

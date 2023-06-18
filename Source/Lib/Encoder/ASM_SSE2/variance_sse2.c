@@ -26,8 +26,7 @@ extern "C" {
 // Can handle 128 pixels' diff sum (such as 8x16 or 16x8)
 // Slightly faster than variance_final_256_pel_sse2()
 // diff sum of 128 pixels can still fit in 16bit integer
-static INLINE void variance_final_128_pel_sse2(__m128i vsse, __m128i vsum, unsigned int *const sse,
-                                               int *const sum) {
+static INLINE void variance_final_128_pel_sse2(__m128i vsse, __m128i vsum, unsigned int *const sse, int *const sum) {
     *sse = add32x4_sse2(vsse);
 
     vsum = _mm_add_epi16(vsum, _mm_srli_si128(vsum, 8));
@@ -37,8 +36,7 @@ static INLINE void variance_final_128_pel_sse2(__m128i vsse, __m128i vsum, unsig
 }
 
 // Can handle 256 pixels' diff sum (such as 16x16)
-static INLINE void variance_final_256_pel_sse2(__m128i vsse, __m128i vsum, unsigned int *const sse,
-                                               int *const sum) {
+static INLINE void variance_final_256_pel_sse2(__m128i vsse, __m128i vsum, unsigned int *const sse, int *const sum) {
     *sse = add32x4_sse2(vsse);
 
     vsum = _mm_add_epi16(vsum, _mm_srli_si128(vsum, 8));
@@ -47,16 +45,14 @@ static INLINE void variance_final_256_pel_sse2(__m128i vsse, __m128i vsum, unsig
     *sum += (int16_t)_mm_extract_epi16(vsum, 1);
 }
 
-static INLINE void variance_kernel_sse2(const __m128i src, const __m128i ref, __m128i *const sse,
-                                        __m128i *const sum) {
+static INLINE void variance_kernel_sse2(const __m128i src, const __m128i ref, __m128i *const sse, __m128i *const sum) {
     const __m128i diff = _mm_sub_epi16(src, ref);
     *sse               = _mm_add_epi32(*sse, _mm_madd_epi16(diff, diff));
     *sum               = _mm_add_epi16(*sum, diff);
 }
 
-static INLINE void variance4_sse2(const uint8_t *src, const int src_stride, const uint8_t *ref,
-                                  const int ref_stride, const int h, __m128i *const sse,
-                                  __m128i *const sum) {
+static INLINE void variance4_sse2(const uint8_t *src, const int src_stride, const uint8_t *ref, const int ref_stride,
+                                  const int h, __m128i *const sse, __m128i *const sum) {
     assert(h <= 256); // May overflow for larger height.
     *sum = _mm_setzero_si128();
 
@@ -70,9 +66,8 @@ static INLINE void variance4_sse2(const uint8_t *src, const int src_stride, cons
     }
 }
 
-static INLINE void variance8_sse2(const uint8_t *src, const int src_stride, const uint8_t *ref,
-                                  const int ref_stride, const int h, __m128i *const sse,
-                                  __m128i *const sum) {
+static INLINE void variance8_sse2(const uint8_t *src, const int src_stride, const uint8_t *ref, const int ref_stride,
+                                  const int h, __m128i *const sse, __m128i *const sum) {
     assert(h <= 128); // May overflow for larger height.
     *sum = _mm_setzero_si128();
     for (int i = 0; i < h; i++) {
@@ -85,8 +80,8 @@ static INLINE void variance8_sse2(const uint8_t *src, const int src_stride, cons
     }
 }
 
-static INLINE void variance16_kernel_sse2(const uint8_t *const src, const uint8_t *const ref,
-                                          __m128i *const sse, __m128i *const sum) {
+static INLINE void variance16_kernel_sse2(const uint8_t *const src, const uint8_t *const ref, __m128i *const sse,
+                                          __m128i *const sum) {
     const __m128i zero = _mm_setzero_si128();
     const __m128i s    = _mm_loadu_si128((const __m128i *)src);
     const __m128i r    = _mm_loadu_si128((const __m128i *)ref);
@@ -99,9 +94,8 @@ static INLINE void variance16_kernel_sse2(const uint8_t *const src, const uint8_
     variance_kernel_sse2(src1, ref1, sse, sum);
 }
 
-static INLINE void variance16_sse2(const uint8_t *src, const int src_stride, const uint8_t *ref,
-                                   const int ref_stride, const int h, __m128i *const sse,
-                                   __m128i *const sum) {
+static INLINE void variance16_sse2(const uint8_t *src, const int src_stride, const uint8_t *ref, const int ref_stride,
+                                   const int h, __m128i *const sse, __m128i *const sum) {
     assert(h <= 64); // May overflow for larger height.
     *sum = _mm_setzero_si128();
 
@@ -112,9 +106,8 @@ static INLINE void variance16_sse2(const uint8_t *src, const int src_stride, con
     }
 }
 
-static INLINE void variance32_sse2(const uint8_t *src, const int src_stride, const uint8_t *ref,
-                                   const int ref_stride, const int h, __m128i *const sse,
-                                   __m128i *const sum) {
+static INLINE void variance32_sse2(const uint8_t *src, const int src_stride, const uint8_t *ref, const int ref_stride,
+                                   const int h, __m128i *const sse, __m128i *const sum) {
     assert(h <= 32); // May overflow for larger height.
     // Don't initialize sse here since it's an accumulation.
     *sum = _mm_setzero_si128();
@@ -127,9 +120,8 @@ static INLINE void variance32_sse2(const uint8_t *src, const int src_stride, con
     }
 }
 
-static INLINE void variance64_sse2(const uint8_t *src, const int src_stride, const uint8_t *ref,
-                                   const int ref_stride, const int h, __m128i *const sse,
-                                   __m128i *const sum) {
+static INLINE void variance64_sse2(const uint8_t *src, const int src_stride, const uint8_t *ref, const int ref_stride,
+                                   const int h, __m128i *const sse, __m128i *const sum) {
     assert(h <= 16); // May overflow for larger height.
     *sum = _mm_setzero_si128();
 
@@ -143,9 +135,8 @@ static INLINE void variance64_sse2(const uint8_t *src, const int src_stride, con
     }
 }
 
-static INLINE void variance128_sse2(const uint8_t *src, const int src_stride, const uint8_t *ref,
-                                    const int ref_stride, const int h, __m128i *const sse,
-                                    __m128i *const sum) {
+static INLINE void variance128_sse2(const uint8_t *src, const int src_stride, const uint8_t *ref, const int ref_stride,
+                                    const int h, __m128i *const sse, __m128i *const sum) {
     assert(h <= 8); // May overflow for larger height.
     *sum = _mm_setzero_si128();
 
@@ -162,8 +153,7 @@ static INLINE void variance128_sse2(const uint8_t *src, const int src_stride, co
 }
 
 // Can handle 512 pixels' diff sum (such as 16x32 or 32x16)
-static INLINE void variance_final_512_pel_sse2(__m128i vsse, __m128i vsum, unsigned int *const sse,
-                                               int *const sum) {
+static INLINE void variance_final_512_pel_sse2(__m128i vsse, __m128i vsum, unsigned int *const sse, int *const sum) {
     *sse = add32x4_sse2(vsse);
 
     vsum = _mm_add_epi16(vsum, _mm_srli_si128(vsum, 8));
@@ -179,28 +169,24 @@ static INLINE __m128i sum_to_32bit_sse2(const __m128i sum) {
 }
 
 // Can handle 1024 pixels' diff sum (such as 32x32)
-static INLINE void variance_final_1024_pel_sse2(__m128i vsse, __m128i vsum, unsigned int *const sse,
-                                                int *const sum) {
+static INLINE void variance_final_1024_pel_sse2(__m128i vsse, __m128i vsum, unsigned int *const sse, int *const sum) {
     *sse = add32x4_sse2(vsse);
 
     vsum = sum_to_32bit_sse2(vsum);
     *sum = add32x4_sse2(vsum);
 }
 
-#define AOM_VAR_NO_LOOP_SSE2(bw, bh, bits, max_pixels)                           \
-    unsigned int svt_aom_variance##bw##x##bh##_sse2(const uint8_t *src,          \
-                                                    int            src_stride,   \
-                                                    const uint8_t *ref,          \
-                                                    int            ref_stride,   \
-                                                    unsigned int  *sse) {         \
-        __m128i vsse = _mm_setzero_si128();                                      \
-        __m128i vsum;                                                            \
-        int     sum = 0;                                                         \
-        variance##bw##_sse2(src, src_stride, ref, ref_stride, bh, &vsse, &vsum); \
-        variance_final_##max_pixels##_pel_sse2(vsse, vsum, sse, &sum);           \
-        assert(sum <= 255 * bw * bh);                                            \
-        assert(sum >= -255 * bw * bh);                                           \
-        return *sse - (uint32_t)(((int64_t)sum * sum) >> bits);                  \
+#define AOM_VAR_NO_LOOP_SSE2(bw, bh, bits, max_pixels)                                               \
+    unsigned int svt_aom_variance##bw##x##bh##_sse2(                                                 \
+        const uint8_t *src, int src_stride, const uint8_t *ref, int ref_stride, unsigned int *sse) { \
+        __m128i vsse = _mm_setzero_si128();                                                          \
+        __m128i vsum;                                                                                \
+        int     sum = 0;                                                                             \
+        variance##bw##_sse2(src, src_stride, ref, ref_stride, bh, &vsse, &vsum);                     \
+        variance_final_##max_pixels##_pel_sse2(vsse, vsum, sse, &sum);                               \
+        assert(sum <= 255 * bw * bh);                                                                \
+        assert(sum >= -255 * bw * bh);                                                               \
+        return *sse - (uint32_t)(((int64_t)sum * sum) >> bits);                                      \
     }
 
 AOM_VAR_NO_LOOP_SSE2(4, 4, 4, 128);
@@ -222,26 +208,23 @@ AOM_VAR_NO_LOOP_SSE2(32, 8, 8, 256);
 AOM_VAR_NO_LOOP_SSE2(32, 16, 9, 512);
 AOM_VAR_NO_LOOP_SSE2(32, 32, 10, 1024);
 
-#define AOM_VAR_LOOP_SSE2(bw, bh, bits, uh)                                            \
-    unsigned int svt_aom_variance##bw##x##bh##_sse2(const uint8_t *src,                \
-                                                    int            src_stride,         \
-                                                    const uint8_t *ref,                \
-                                                    int            ref_stride,         \
-                                                    unsigned int  *sse) {               \
-        __m128i vsse = _mm_setzero_si128();                                            \
-        __m128i vsum = _mm_setzero_si128();                                            \
-        for (int i = 0; i < (bh / uh); ++i) {                                          \
-            __m128i vsum16;                                                            \
-            variance##bw##_sse2(src, src_stride, ref, ref_stride, uh, &vsse, &vsum16); \
-            vsum = _mm_add_epi32(vsum, sum_to_32bit_sse2(vsum16));                     \
-            src += (src_stride * uh);                                                  \
-            ref += (ref_stride * uh);                                                  \
-        }                                                                              \
-        *sse    = add32x4_sse2(vsse);                                                  \
-        int sum = add32x4_sse2(vsum);                                                  \
-        assert(sum <= 255 * bw * bh);                                                  \
-        assert(sum >= -255 * bw * bh);                                                 \
-        return *sse - (uint32_t)(((int64_t)sum * sum) >> bits);                        \
+#define AOM_VAR_LOOP_SSE2(bw, bh, bits, uh)                                                          \
+    unsigned int svt_aom_variance##bw##x##bh##_sse2(                                                 \
+        const uint8_t *src, int src_stride, const uint8_t *ref, int ref_stride, unsigned int *sse) { \
+        __m128i vsse = _mm_setzero_si128();                                                          \
+        __m128i vsum = _mm_setzero_si128();                                                          \
+        for (int i = 0; i < (bh / uh); ++i) {                                                        \
+            __m128i vsum16;                                                                          \
+            variance##bw##_sse2(src, src_stride, ref, ref_stride, uh, &vsse, &vsum16);               \
+            vsum = _mm_add_epi32(vsum, sum_to_32bit_sse2(vsum16));                                   \
+            src += (src_stride * uh);                                                                \
+            ref += (ref_stride * uh);                                                                \
+        }                                                                                            \
+        *sse    = add32x4_sse2(vsse);                                                                \
+        int sum = add32x4_sse2(vsum);                                                                \
+        assert(sum <= 255 * bw * bh);                                                                \
+        assert(sum >= -255 * bw * bh);                                                               \
+        return *sse - (uint32_t)(((int64_t)sum * sum) >> bits);                                      \
     }
 
 AOM_VAR_LOOP_SSE2(32, 64, 11, 32); // 32x32 * ( 64/32 )
@@ -274,44 +257,36 @@ DECL(16);
 
 #undef DECL
 
-#define FN(w, h, wf, wlog2, hlog2, cast_prod, cast)                                    \
-    unsigned int svt_aom_sub_pixel_variance##w##x##h##_sse2(const uint8_t *src,        \
-                                                            int            src_stride, \
-                                                            int            x_offset,   \
-                                                            int            y_offset,   \
-                                                            const uint8_t *dst,        \
-                                                            int            dst_stride, \
-                                                            unsigned int  *sse_ptr) {   \
-        /*Avoid overflow in helper by capping height.*/                                \
-        const int    hf  = AOMMIN(h, 64);                                              \
-        const int    wf2 = AOMMIN(wf, 128);                                            \
-        unsigned int sse = 0;                                                          \
-        int          se  = 0;                                                          \
-        for (int i = 0; i < (w / wf2); ++i) {                                          \
-            const uint8_t *src_ptr = src;                                              \
-            const uint8_t *dst_ptr = dst;                                              \
-            for (int j = 0; j < (h / hf); ++j) {                                       \
-                unsigned int sse2;                                                     \
-                const int    se2 = svt_aom_sub_pixel_variance##wf##xh_sse2(src_ptr,    \
-                                                                        src_stride, \
-                                                                        x_offset,   \
-                                                                        y_offset,   \
-                                                                        dst_ptr,    \
-                                                                        dst_stride, \
-                                                                        hf,         \
-                                                                        &sse2,      \
-                                                                        NULL,       \
-                                                                        NULL);      \
-                dst_ptr += hf * dst_stride;                                            \
-                src_ptr += hf * src_stride;                                            \
-                se += se2;                                                             \
-                sse += sse2;                                                           \
-            }                                                                          \
-            src += wf;                                                                 \
-            dst += wf;                                                                 \
-        }                                                                              \
-        *sse_ptr = sse;                                                                \
-        return sse - (unsigned int)(cast_prod(cast se * se) >> (wlog2 + hlog2));       \
+#define FN(w, h, wf, wlog2, hlog2, cast_prod, cast)                                                          \
+    unsigned int svt_aom_sub_pixel_variance##w##x##h##_sse2(const uint8_t *src,                              \
+                                                            int            src_stride,                       \
+                                                            int            x_offset,                         \
+                                                            int            y_offset,                         \
+                                                            const uint8_t *dst,                              \
+                                                            int            dst_stride,                       \
+                                                            unsigned int  *sse_ptr) {                         \
+        /*Avoid overflow in helper by capping height.*/                                                      \
+        const int    hf  = AOMMIN(h, 64);                                                                    \
+        const int    wf2 = AOMMIN(wf, 128);                                                                  \
+        unsigned int sse = 0;                                                                                \
+        int          se  = 0;                                                                                \
+        for (int i = 0; i < (w / wf2); ++i) {                                                                \
+            const uint8_t *src_ptr = src;                                                                    \
+            const uint8_t *dst_ptr = dst;                                                                    \
+            for (int j = 0; j < (h / hf); ++j) {                                                             \
+                unsigned int sse2;                                                                           \
+                const int    se2 = svt_aom_sub_pixel_variance##wf##xh_sse2(                                  \
+                    src_ptr, src_stride, x_offset, y_offset, dst_ptr, dst_stride, hf, &sse2, NULL, NULL); \
+                dst_ptr += hf * dst_stride;                                                                  \
+                src_ptr += hf * src_stride;                                                                  \
+                se += se2;                                                                                   \
+                sse += sse2;                                                                                 \
+            }                                                                                                \
+            src += wf;                                                                                       \
+            dst += wf;                                                                                       \
+        }                                                                                                    \
+        *sse_ptr = sse;                                                                                      \
+        return sse - (unsigned int)(cast_prod(cast se * se) >> (wlog2 + hlog2));                             \
     }
 
 FN(128, 128, 16, 7, 7, (int64_t), (int64_t));
@@ -339,27 +314,26 @@ FN(64, 16, 16, 6, 4, (int64_t), (int64_t))
 
 #undef FN
 
-static INLINE const int16_t *av1_get_interp_filter_subpel_kernel(
-    const InterpFilterParams filter_params, const int32_t subpel) {
+static INLINE const int16_t *av1_get_interp_filter_subpel_kernel(const InterpFilterParams filter_params,
+                                                                 const int32_t            subpel) {
     return filter_params.filter_ptr + filter_params.taps * subpel;
 }
-DECLARE_ALIGNED(256, static const InterpKernel, av1_bilinear_filters[SUBPEL_SHIFTS]) = {
-    {0, 0, 0, 128, 0, 0, 0, 0},
-    {0, 0, 0, 120, 8, 0, 0, 0},
-    {0, 0, 0, 112, 16, 0, 0, 0},
-    {0, 0, 0, 104, 24, 0, 0, 0},
-    {0, 0, 0, 96, 32, 0, 0, 0},
-    {0, 0, 0, 88, 40, 0, 0, 0},
-    {0, 0, 0, 80, 48, 0, 0, 0},
-    {0, 0, 0, 72, 56, 0, 0, 0},
-    {0, 0, 0, 64, 64, 0, 0, 0},
-    {0, 0, 0, 56, 72, 0, 0, 0},
-    {0, 0, 0, 48, 80, 0, 0, 0},
-    {0, 0, 0, 40, 88, 0, 0, 0},
-    {0, 0, 0, 32, 96, 0, 0, 0},
-    {0, 0, 0, 24, 104, 0, 0, 0},
-    {0, 0, 0, 16, 112, 0, 0, 0},
-    {0, 0, 0, 8, 120, 0, 0, 0}};
+DECLARE_ALIGNED(256, static const InterpKernel, av1_bilinear_filters[SUBPEL_SHIFTS]) = {{0, 0, 0, 128, 0, 0, 0, 0},
+                                                                                        {0, 0, 0, 120, 8, 0, 0, 0},
+                                                                                        {0, 0, 0, 112, 16, 0, 0, 0},
+                                                                                        {0, 0, 0, 104, 24, 0, 0, 0},
+                                                                                        {0, 0, 0, 96, 32, 0, 0, 0},
+                                                                                        {0, 0, 0, 88, 40, 0, 0, 0},
+                                                                                        {0, 0, 0, 80, 48, 0, 0, 0},
+                                                                                        {0, 0, 0, 72, 56, 0, 0, 0},
+                                                                                        {0, 0, 0, 64, 64, 0, 0, 0},
+                                                                                        {0, 0, 0, 56, 72, 0, 0, 0},
+                                                                                        {0, 0, 0, 48, 80, 0, 0, 0},
+                                                                                        {0, 0, 0, 40, 88, 0, 0, 0},
+                                                                                        {0, 0, 0, 32, 96, 0, 0, 0},
+                                                                                        {0, 0, 0, 24, 104, 0, 0, 0},
+                                                                                        {0, 0, 0, 16, 112, 0, 0, 0},
+                                                                                        {0, 0, 0, 8, 120, 0, 0, 0}};
 
 DECLARE_ALIGNED(256, static const InterpKernel, av1_sub_pel_filters_4[SUBPEL_SHIFTS]) = {
     {0, 0, 0, 128, 0, 0, 0, 0},
@@ -460,8 +434,7 @@ static const InterpFilterParams av1_interp_filter_params_list[SWITCHABLE_FILTERS
     {(const int16_t *)av1_sub_pel_filters_8smooth, SUBPEL_TAPS, SUBPEL_SHIFTS, EIGHTTAP_SMOOTH},
     {(const int16_t *)av1_sub_pel_filters_8sharp, SUBPEL_TAPS, SUBPEL_SHIFTS, MULTITAP_SHARP},
     {(const int16_t *)av1_bilinear_filters, SUBPEL_TAPS, SUBPEL_SHIFTS, BILINEAR}};
-static INLINE const InterpFilterParams *get_4tap_interp_filter_params(
-    const InterpFilter interp_filter) {
+static INLINE const InterpFilterParams *get_4tap_interp_filter_params(const InterpFilter interp_filter) {
     return &av1_interp_4tap[interp_filter];
 }
 static INLINE const InterpFilterParams *av1_get_filter(int subpel_search) {
@@ -475,10 +448,9 @@ static INLINE const InterpFilterParams *av1_get_filter(int subpel_search) {
     }
 }
 
-void svt_aom_upsampled_pred_sse2(MacroBlockD *xd, const struct AV1Common *const cm, int mi_row,
-                                 int mi_col, const MV *const mv, uint8_t *comp_pred, int width,
-                                 int height, int subpel_x_q3, int subpel_y_q3, const uint8_t *ref,
-                                 int ref_stride, int subpel_search) {
+void svt_aom_upsampled_pred_sse2(MacroBlockD *xd, const struct AV1Common *const cm, int mi_row, int mi_col,
+                                 const MV *const mv, uint8_t *comp_pred, int width, int height, int subpel_x_q3,
+                                 int subpel_y_q3, const uint8_t *ref, int ref_stride, int subpel_search) {
     (void)xd;
     (void)cm;
     (void)mi_row;
@@ -524,53 +496,35 @@ void svt_aom_upsampled_pred_sse2(MacroBlockD *xd, const struct AV1Common *const 
                 const __m128i row1 = xx_loadl_64(ref + 1 * ref_stride);
                 const __m128i row2 = xx_loadl_64(ref + 2 * ref_stride);
                 const __m128i row3 = xx_loadl_64(ref + 3 * ref_stride);
-                const __m128i reg  = _mm_unpacklo_epi64(_mm_unpacklo_epi32(row0, row1),
-                                                       _mm_unpacklo_epi32(row2, row3));
+                const __m128i reg  = _mm_unpacklo_epi64(_mm_unpacklo_epi32(row0, row1), _mm_unpacklo_epi32(row2, row3));
                 xx_storeu_128(comp_pred, reg);
                 comp_pred += 16;
                 ref += 4 * ref_stride;
             }
         }
     } else if (!subpel_y_q3) {
-        const int16_t *const kernel = av1_get_interp_filter_subpel_kernel(*filter,
-                                                                          subpel_x_q3 << 1);
-        svt_aom_convolve8_horiz(
-            ref, ref_stride, comp_pred, width, kernel, 16, NULL, -1, width, height);
+        const int16_t *const kernel = av1_get_interp_filter_subpel_kernel(*filter, subpel_x_q3 << 1);
+        svt_aom_convolve8_horiz(ref, ref_stride, comp_pred, width, kernel, 16, NULL, -1, width, height);
     } else if (!subpel_x_q3) {
-        const int16_t *const kernel = av1_get_interp_filter_subpel_kernel(*filter,
-                                                                          subpel_y_q3 << 1);
-        svt_aom_convolve8_vert(
-            ref, ref_stride, comp_pred, width, NULL, -1, kernel, 16, width, height);
+        const int16_t *const kernel = av1_get_interp_filter_subpel_kernel(*filter, subpel_y_q3 << 1);
+        svt_aom_convolve8_vert(ref, ref_stride, comp_pred, width, NULL, -1, kernel, 16, width, height);
     } else {
         DECLARE_ALIGNED(16, uint8_t, temp[((MAX_SB_SIZE * 2 + 16) + 16) * MAX_SB_SIZE]);
-        const int16_t *const kernel_x         = av1_get_interp_filter_subpel_kernel(*filter,
-                                                                            subpel_x_q3 << 1);
-        const int16_t *const kernel_y         = av1_get_interp_filter_subpel_kernel(*filter,
-                                                                            subpel_y_q3 << 1);
-        const uint8_t       *ref_start        = ref - ref_stride * ((filter_taps >> 1) - 1);
-        uint8_t             *temp_start_horiz = (subpel_search <= USE_4_TAPS)
-                        ? temp + (filter_taps >> 1) * MAX_SB_SIZE
-                        : temp;
-        uint8_t             *temp_start_vert  = temp + MAX_SB_SIZE * ((filter->taps >> 1) - 1);
-        int intermediate_height = (((height - 1) * 8 + subpel_y_q3) >> 3) + filter_taps;
+        const int16_t *const kernel_x  = av1_get_interp_filter_subpel_kernel(*filter, subpel_x_q3 << 1);
+        const int16_t *const kernel_y  = av1_get_interp_filter_subpel_kernel(*filter, subpel_y_q3 << 1);
+        const uint8_t       *ref_start = ref - ref_stride * ((filter_taps >> 1) - 1);
+        uint8_t *temp_start_horiz      = (subpel_search <= USE_4_TAPS) ? temp + (filter_taps >> 1) * MAX_SB_SIZE : temp;
+        uint8_t *temp_start_vert       = temp + MAX_SB_SIZE * ((filter->taps >> 1) - 1);
+        int      intermediate_height   = (((height - 1) * 8 + subpel_y_q3) >> 3) + filter_taps;
         assert(intermediate_height <= (MAX_SB_SIZE * 2 + 16) + 16);
-        svt_aom_convolve8_horiz(ref_start,
-                                ref_stride,
-                                temp_start_horiz,
-                                MAX_SB_SIZE,
-                                kernel_x,
-                                16,
-                                NULL,
-                                -1,
-                                width,
-                                intermediate_height);
-        svt_aom_convolve8_vert(
-            temp_start_vert, MAX_SB_SIZE, comp_pred, width, NULL, -1, kernel_y, 16, width, height);
+        svt_aom_convolve8_horiz(
+            ref_start, ref_stride, temp_start_horiz, MAX_SB_SIZE, kernel_x, 16, NULL, -1, width, intermediate_height);
+        svt_aom_convolve8_vert(temp_start_vert, MAX_SB_SIZE, comp_pred, width, NULL, -1, kernel_y, 16, width, height);
     }
 }
 
-unsigned int svt_aom_mse16x16_sse2(const uint8_t *src, int32_t src_stride, const uint8_t *ref,
-                                   int32_t ref_stride, uint32_t *sse) {
+unsigned int svt_aom_mse16x16_sse2(const uint8_t *src, int32_t src_stride, const uint8_t *ref, int32_t ref_stride,
+                                   uint32_t *sse) {
     svt_aom_variance16x16_sse2(src, src_stride, ref, ref_stride, sse);
     return *sse;
 }

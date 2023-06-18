@@ -20,18 +20,15 @@
 #include "EbPictureOperators.h"
 #include "EbRestoration.h"
 #include "common_dsp_rtcd.h"
-void svt_aom_save_tile_row_boundary_lines(uint8_t *src, int32_t src_stride, int32_t src_width,
-                                          int32_t src_height, int32_t use_highbd, int32_t plane,
-                                          Av1Common *cm, int32_t after_cdef,
+void svt_aom_save_tile_row_boundary_lines(uint8_t *src, int32_t src_stride, int32_t src_width, int32_t src_height,
+                                          int32_t use_highbd, int32_t plane, Av1Common *cm, int32_t after_cdef,
                                           RestorationStripeBoundaries *boundaries);
 
 static void lr_generate_padding(
     EbByte   src_pic, //output paramter, pointer to the source picture(0,0).
     uint32_t src_stride, //input paramter, the stride of the source picture to be padded.
-    uint32_t
-        original_src_width, //input paramter, the width of the source picture which excludes the padding.
-    uint32_t
-        original_src_height) //input paramter, the heigth of the source picture which excludes the padding.
+    uint32_t original_src_width, //input paramter, the width of the source picture which excludes the padding.
+    uint32_t original_src_height) //input paramter, the heigth of the source picture which excludes the padding.
 {
     uint32_t vertical_idx;
     EbByte   temp_src_pic0;
@@ -43,9 +40,7 @@ static void lr_generate_padding(
     for (vertical_idx = original_src_height; vertical_idx > 0; --vertical_idx) {
         // horizontal padding
         EB_MEMSET(temp_src_pic0 - LR_PAD_SIDE, *temp_src_pic0, LR_PAD_SIDE);
-        EB_MEMSET(temp_src_pic0 + original_src_width,
-                  *(temp_src_pic0 + original_src_width - 1),
-                  LR_PAD_SIDE);
+        EB_MEMSET(temp_src_pic0 + original_src_width, *(temp_src_pic0 + original_src_width - 1), LR_PAD_SIDE);
         temp_src_pic0 += src_stride;
     }
 
@@ -58,12 +53,10 @@ static void lr_generate_padding(
     for (vertical_idx = LR_PAD_SIDE; vertical_idx > 0; --vertical_idx) {
         // top part data copy
         temp_src_pic2 -= src_stride;
-        svt_memcpy(
-            temp_src_pic2, temp_src_pic0, sizeof(uint8_t) * (original_src_width + LR_PAD_MAX));
+        svt_memcpy(temp_src_pic2, temp_src_pic0, sizeof(uint8_t) * (original_src_width + LR_PAD_MAX));
         // bottom part data copy
         temp_src_pic3 += src_stride;
-        svt_memcpy(
-            temp_src_pic3, temp_src_pic1, sizeof(uint8_t) * (original_src_width + LR_PAD_MAX));
+        svt_memcpy(temp_src_pic3, temp_src_pic1, sizeof(uint8_t) * (original_src_width + LR_PAD_MAX));
     }
     return;
 }
@@ -71,10 +64,8 @@ static void lr_generate_padding(
 static void lr_generate_padding16_bit(
     EbByte   src_pic, //output paramter, pointer to the source picture to be padded.
     uint32_t src_stride, //input paramter, the stride of the source picture to be padded.
-    uint32_t
-        original_src_width, //input paramter, the width of the source picture which excludes the padding.
-    uint32_t
-        original_src_height) //input paramter, the height of the source picture which excludes the padding.
+    uint32_t original_src_width, //input paramter, the width of the source picture which excludes the padding.
+    uint32_t original_src_height) //input paramter, the height of the source picture which excludes the padding.
 {
     uint32_t vertical_idx;
     EbByte   temp_src_pic0;
@@ -86,9 +77,8 @@ static void lr_generate_padding16_bit(
     temp_src_pic0 = src_pic;
     for (vertical_idx = original_src_height; vertical_idx > 0; --vertical_idx) {
         // horizontal padding
-        memset16bit((uint16_t *)(temp_src_pic0 - (LR_PAD_SIDE << use_highbd)),
-                    ((uint16_t *)(temp_src_pic0))[0],
-                    LR_PAD_SIDE);
+        memset16bit(
+            (uint16_t *)(temp_src_pic0 - (LR_PAD_SIDE << use_highbd)), ((uint16_t *)(temp_src_pic0))[0], LR_PAD_SIDE);
         memset16bit((uint16_t *)(temp_src_pic0 + original_src_width),
                     ((uint16_t *)(temp_src_pic0 + original_src_width - 2 /*1*/))[0],
                     LR_PAD_SIDE);
@@ -103,21 +93,16 @@ static void lr_generate_padding16_bit(
     for (vertical_idx = LR_PAD_SIDE; vertical_idx > 0; --vertical_idx) {
         // top part data copy
         temp_src_pic2 -= src_stride;
-        svt_memcpy(temp_src_pic2,
-                   temp_src_pic0,
-                   sizeof(uint8_t) * (original_src_width + (LR_PAD_MAX << use_highbd)));
+        svt_memcpy(temp_src_pic2, temp_src_pic0, sizeof(uint8_t) * (original_src_width + (LR_PAD_MAX << use_highbd)));
         // bottom part data copy
         temp_src_pic3 += src_stride;
-        svt_memcpy(temp_src_pic3,
-                   temp_src_pic1,
-                   sizeof(uint8_t) * (original_src_width + (LR_PAD_MAX << use_highbd)));
+        svt_memcpy(temp_src_pic3, temp_src_pic1, sizeof(uint8_t) * (original_src_width + (LR_PAD_MAX << use_highbd)));
     }
 
     return;
 }
 
-void lr_pad_pic(EbPictureBufferDesc *recon_picture_buf, FrameHeader *frame_hdr,
-                EbColorConfig *color_cfg) {
+void lr_pad_pic(EbPictureBufferDesc *recon_picture_buf, FrameHeader *frame_hdr, EbColorConfig *color_cfg) {
     FrameSize *frame_size = &frame_hdr->frame_size;
     uint8_t    sx         = color_cfg->subsampling_x;
     uint8_t    sy         = color_cfg->subsampling_y;
@@ -155,20 +140,18 @@ void lr_pad_pic(EbPictureBufferDesc *recon_picture_buf, FrameHeader *frame_hdr,
 
         if (recon_picture_buf->color_format != EB_YUV400) {
             // Cb samples
-            lr_generate_padding16_bit(
-                recon_picture_buf->buffer_cb + ((recon_picture_buf->org_x >> sx) << 1) +
-                    (recon_picture_buf->stride_cb << 1) * (recon_picture_buf->org_y >> sy),
-                recon_picture_buf->stride_cb << 1,
-                ((frame_size->superres_upscaled_width + sx) >> sx) << 1,
-                (frame_size->frame_height + sy) >> sy);
+            lr_generate_padding16_bit(recon_picture_buf->buffer_cb + ((recon_picture_buf->org_x >> sx) << 1) +
+                                          (recon_picture_buf->stride_cb << 1) * (recon_picture_buf->org_y >> sy),
+                                      recon_picture_buf->stride_cb << 1,
+                                      ((frame_size->superres_upscaled_width + sx) >> sx) << 1,
+                                      (frame_size->frame_height + sy) >> sy);
 
             // Cr samples
-            lr_generate_padding16_bit(
-                recon_picture_buf->buffer_cr + (recon_picture_buf->org_x >> sx << 1) +
-                    (recon_picture_buf->stride_cr << 1) * (recon_picture_buf->org_y >> sy),
-                recon_picture_buf->stride_cr << 1,
-                ((frame_size->superres_upscaled_width + sx) >> sx) << 1,
-                (frame_size->frame_height + sy) >> sy);
+            lr_generate_padding16_bit(recon_picture_buf->buffer_cr + (recon_picture_buf->org_x >> sx << 1) +
+                                          (recon_picture_buf->stride_cr << 1) * (recon_picture_buf->org_y >> sy),
+                                      recon_picture_buf->stride_cr << 1,
+                                      ((frame_size->superres_upscaled_width + sx) >> sx) << 1,
+                                      (frame_size->frame_height + sy) >> sy);
         }
     }
 }
@@ -178,12 +161,12 @@ extern const StripeFilterFun svt_aom_stripe_filters[NUM_STRIPE_FILTERS];
 // Filter one restoration unit
 // Duplicated to avoid frame level buffer copy ( frame to block level copy)
 // and unnecessary block copy based on LR_Type
-void svt_dec_av1_loop_restoration_filter_unit(
-    uint8_t need_bounadaries, const RestorationTileLimits *limits, const RestorationUnitInfo *rui,
-    const RestorationStripeBoundaries *rsb, RestorationLineBuffers *rlbs,
-    const Av1PixelRect *tile_rect, int32_t tile_stripe0, int32_t ss_x, int32_t ss_y, int32_t highbd,
-    int32_t bit_depth, uint8_t *data8, int32_t stride, uint8_t *dst8, int32_t dst_stride,
-    int32_t *tmpbuf, int32_t optimized_lr) {
+void svt_dec_av1_loop_restoration_filter_unit(uint8_t need_bounadaries, const RestorationTileLimits *limits,
+                                              const RestorationUnitInfo *rui, const RestorationStripeBoundaries *rsb,
+                                              RestorationLineBuffers *rlbs, const Av1PixelRect *tile_rect,
+                                              int32_t tile_stripe0, int32_t ss_x, int32_t ss_y, int32_t highbd,
+                                              int32_t bit_depth, uint8_t *data8, int32_t stride, uint8_t *dst8,
+                                              int32_t dst_stride, int32_t *tmpbuf, int32_t optimized_lr) {
     RestorationType unit_rtype = rui->restoration_type;
 
     int32_t  unit_h   = limits->v_end - limits->v_start;
@@ -207,16 +190,14 @@ void svt_dec_av1_loop_restoration_filter_unit(
         int32_t copy_above, copy_below;
         remaining_stripes.v_start = limits->v_start + i;
 
-        svt_aom_get_stripe_boundary_info(
-            &remaining_stripes, tile_rect, ss_y, &copy_above, &copy_below);
+        svt_aom_get_stripe_boundary_info(&remaining_stripes, tile_rect, ss_y, &copy_above, &copy_below);
 
         const int32_t full_stripe_height = RESTORATION_PROC_UNIT_SIZE >> ss_y;
         const int32_t runit_offset       = RESTORATION_UNIT_OFFSET >> ss_y;
 
         // Work out where this stripe's boundaries are within
         // rsb->stripe_boundary_{above,below}
-        const int32_t tile_stripe = (remaining_stripes.v_start - tile_rect->top + runit_offset) /
-            full_stripe_height;
+        const int32_t tile_stripe  = (remaining_stripes.v_start - tile_rect->top + runit_offset) / full_stripe_height;
         const int32_t frame_stripe = tile_stripe0 + tile_stripe;
         const int32_t rsb_row      = RESTORATION_CTX_VERT * frame_stripe;
 
@@ -224,25 +205,15 @@ void svt_dec_av1_loop_restoration_filter_unit(
            The topmost stripe in each tile is 8 luma pixels shorter
            than usual. We can't extend past the end of the current
            restoration unit */
-        const int32_t nominal_stripe_height = full_stripe_height -
-            ((tile_stripe == 0) ? runit_offset : 0);
+        const int32_t nominal_stripe_height = full_stripe_height - ((tile_stripe == 0) ? runit_offset : 0);
         /*In wiener filter leaf level function assumes always h to be multiple of 2.
           we can see assert related to h in this function->svt_av1_wiener_convolve_add_src_avx2*/
         const int32_t h = AOMMIN(nominal_stripe_height,
                                  ((remaining_stripes.v_end - remaining_stripes.v_start) + 1) & ~1);
 
         if (need_bounadaries)
-            svt_aom_setup_processing_stripe_boundary(&remaining_stripes,
-                                                     rsb,
-                                                     rsb_row,
-                                                     highbd,
-                                                     h,
-                                                     data8,
-                                                     stride,
-                                                     rlbs,
-                                                     copy_above,
-                                                     copy_below,
-                                                     optimized_lr);
+            svt_aom_setup_processing_stripe_boundary(
+                &remaining_stripes, rsb, rsb_row, highbd, h, data8, stride, rlbs, copy_above, copy_below, optimized_lr);
 
         stripe_filter(rui,
                       unit_w,
@@ -255,15 +226,8 @@ void svt_dec_av1_loop_restoration_filter_unit(
                       tmpbuf,
                       bit_depth);
         if (need_bounadaries)
-            svt_aom_restore_processing_stripe_boundary(&remaining_stripes,
-                                                       rlbs,
-                                                       highbd,
-                                                       h,
-                                                       data8,
-                                                       stride,
-                                                       copy_above,
-                                                       copy_below,
-                                                       optimized_lr);
+            svt_aom_restore_processing_stripe_boundary(
+                &remaining_stripes, rlbs, highbd, h, data8, stride, copy_above, copy_below, optimized_lr);
 
         i += h;
     }
@@ -271,9 +235,8 @@ void svt_dec_av1_loop_restoration_filter_unit(
     svt_aom_copy_tile(unit_w, unit_h, dst8_tl, dst_stride, data8_tl, stride, highbd);
 }
 
-void svt_aom_dec_av1_loop_restoration_filter_row(EbDecHandle *dec_handle, int32_t sb_row,
-                                                 uint8_t **rec_buff, int *rec_stride,
-                                                 Av1PixelRect *tile_rect, int optimized_lr,
+void svt_aom_dec_av1_loop_restoration_filter_row(EbDecHandle *dec_handle, int32_t sb_row, uint8_t **rec_buff,
+                                                 int *rec_stride, Av1PixelRect *tile_rect, int optimized_lr,
                                                  uint8_t *dst, int thread_cnt) {
     RestorationTileLimits tile_limit;
     RestorationUnitInfo  *lr_unit;
@@ -294,12 +257,10 @@ void svt_aom_dec_av1_loop_restoration_filter_row(EbDecHandle *dec_handle, int32_
     int32_t index      = lr_ctxt->is_thread_min ? thread_cnt : sb_row_idx;
 
     if (is_mt) {
-        DecMtFrameData *dec_mt_frame_data =
-            &dec_handle->main_frame_buf.cur_frame_bufs[0].dec_mt_frame_data;
+        DecMtFrameData *dec_mt_frame_data = &dec_handle->main_frame_buf.cur_frame_bufs[0].dec_mt_frame_data;
 
         if (sb_row) {
-            sb_lr_completed_in_prev_row =
-                (volatile int32_t *)&dec_mt_frame_data->sb_lr_completed_in_row[sb_row - 1];
+            sb_lr_completed_in_prev_row = (volatile int32_t *)&dec_mt_frame_data->sb_lr_completed_in_row[sb_row - 1];
         }
         sb_lr_completed_in_row = &dec_mt_frame_data->sb_lr_completed_in_row[sb_row];
     }
@@ -389,8 +350,8 @@ void svt_aom_dec_av1_loop_restoration_filter_row(EbDecHandle *dec_handle, int32_
             int stride = use_highbd ? src_stride << use_highbd : src_stride;
             proc_width = proc_width << use_highbd;
 
-            uint8_t *src_proc = src + tile_limit.v_start * stride +
-                (tile_limit.h_start << use_highbd) + proc_width - width;
+            uint8_t *src_proc = src + tile_limit.v_start * stride + (tile_limit.h_start << use_highbd) + proc_width -
+                width;
             uint8_t *src_ptr = src_proc;
 
             for (int proc = 0; proc < height; proc++) {
@@ -465,8 +426,7 @@ void svt_aom_dec_av1_loop_restoration_filter_row(EbDecHandle *dec_handle, int32_
     }
 }
 
-void svt_aom_dec_av1_loop_restoration_filter_frame(EbDecHandle *dec_handle, int optimized_lr,
-                                                   int enable_flag) {
+void svt_aom_dec_av1_loop_restoration_filter_frame(EbDecHandle *dec_handle, int optimized_lr, int enable_flag) {
     if (!enable_flag)
         return;
 
@@ -489,17 +449,10 @@ void svt_aom_dec_av1_loop_restoration_filter_frame(EbDecHandle *dec_handle, int 
         int32_t sub_y = (pli == 0) ? 0 : dec_handle->seq_header.color_config.subsampling_y;
 
         /*Deriveing  recon pict buffer ptr's*/
-        svt_aom_derive_blk_pointers(recon_pic,
-                                    pli,
-                                    0,
-                                    0,
-                                    (void *)&curr_blk_recon_buf[pli],
-                                    &curr_recon_stride[pli],
-                                    sub_x,
-                                    sub_y);
+        svt_aom_derive_blk_pointers(
+            recon_pic, pli, 0, 0, (void *)&curr_blk_recon_buf[pli], &curr_recon_stride[pli], sub_x, sub_y);
 
-        tile_rect[pli] = svt_aom_whole_frame_rect(
-            &dec_handle->frame_header.frame_size, sub_x, sub_y, pli > 0);
+        tile_rect[pli] = svt_aom_whole_frame_rect(&dec_handle->frame_header.frame_size, sub_x, sub_y, pli > 0);
     }
 
     int tile_h  = tile_rect[AOM_PLANE_Y].bottom - tile_rect[AOM_PLANE_Y].top;
@@ -537,18 +490,11 @@ void svt_aom_dec_av1_loop_restoration_save_boundary_lines(EbDecHandle *dec_handl
         int32_t              crop_height = frame_size->frame_height >> sy;
         EbPictureBufferDesc *cur_pic_buf = dec_handle->cur_pic_buf[0]->ps_pic_buf;
         svt_aom_derive_blk_pointers(cur_pic_buf, p, 0, 0, (void *)&src, &stride, sx, sy);
-        uint8_t *src_buf    = REAL_PTR(use_highbd, use_highbd ? CONVERT_TO_BYTEPTR(src) : src);
-        int32_t  src_stride = stride;
+        uint8_t                     *src_buf    = REAL_PTR(use_highbd, use_highbd ? CONVERT_TO_BYTEPTR(src) : src);
+        int32_t                      src_stride = stride;
         RestorationStripeBoundaries *boundaries = &lr_ctxt->boundaries[p];
 
-        svt_aom_save_tile_row_boundary_lines(src_buf,
-                                             src_stride,
-                                             crop_width,
-                                             crop_height,
-                                             use_highbd,
-                                             p,
-                                             &dec_handle->cm,
-                                             after_cdef,
-                                             boundaries);
+        svt_aom_save_tile_row_boundary_lines(
+            src_buf, src_stride, crop_width, crop_height, use_highbd, p, &dec_handle->cm, after_cdef, boundaries);
     }
 }

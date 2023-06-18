@@ -47,22 +47,19 @@ typedef struct SearchSiteConfig {
     int        searches_per_step;
 } SearchSiteConfig;
 
-typedef unsigned int (*AomObmcSadFn)(const uint8_t *pred, int pred_stride, const int32_t *wsrc,
-                                     const int32_t *msk);
-typedef unsigned int (*AomObmcVarianceFn)(const uint8_t *pred, int pred_stride, const int32_t *wsrc,
-                                          const int32_t *msk, unsigned int *sse);
-typedef unsigned int (*AomObmcSubpixvarianceFn)(const uint8_t *pred, int pred_stride, int xoffset,
-                                                int yoffset, const int32_t *wsrc,
-                                                const int32_t *msk, unsigned int *sse);
+typedef unsigned int (*AomObmcSadFn)(const uint8_t *pred, int pred_stride, const int32_t *wsrc, const int32_t *msk);
+typedef unsigned int (*AomObmcVarianceFn)(const uint8_t *pred, int pred_stride, const int32_t *wsrc, const int32_t *msk,
+                                          unsigned int *sse);
+typedef unsigned int (*AomObmcSubpixvarianceFn)(const uint8_t *pred, int pred_stride, int xoffset, int yoffset,
+                                                const int32_t *wsrc, const int32_t *msk, unsigned int *sse);
 typedef unsigned int (*AomSadFn)(const uint8_t *a, int a_stride, const uint8_t *b, int b_stride);
 
-typedef unsigned int (*AomVarianceFn)(const uint8_t *a, int a_stride, const uint8_t *b,
-                                      int b_stride, unsigned int *sse);
-typedef unsigned int (*AomSubpixVarianceFn)(const uint8_t *a, int a_stride, int xoffset,
-                                            int yoffset, const uint8_t *b, int b_stride,
-                                            unsigned int *sse);
-typedef void (*AomSadMultiDFn)(const uint8_t *a, int a_stride, const uint8_t *const b_array[],
-                               int b_stride, unsigned int *sad_array);
+typedef unsigned int (*AomVarianceFn)(const uint8_t *a, int a_stride, const uint8_t *b, int b_stride,
+                                      unsigned int *sse);
+typedef unsigned int (*AomSubpixVarianceFn)(const uint8_t *a, int a_stride, int xoffset, int yoffset, const uint8_t *b,
+                                            int b_stride, unsigned int *sse);
+typedef void (*AomSadMultiDFn)(const uint8_t *a, int a_stride, const uint8_t *const b_array[], int b_stride,
+                               unsigned int *sad_array);
 
 typedef struct aom_variance_vtable {
     AomSadFn                sdf;
@@ -84,13 +81,10 @@ void svt_av1_set_mv_search_range(MvLimits *mv_limits, const MV *mv);
 struct Av1Comp;
 struct SpeedFeatures;
 
-int svt_av1_full_pixel_search(struct PictureControlSet *pcs, IntraBcContext /*MACROBLOCK*/ *x,
-                              BlockSize bsize, MV *mvp_full, int step_param, int method,
-                              int run_mesh_search, int error_per_bit, int *cost_list,
-                              const MV *ref_mv, int var_max, int rd, int x_pos, int y_pos,
-                              int intra);
-int svt_aom_mv_err_cost(const MV *mv, const MV *ref, const int *mvjcost, int *mvcost[2],
-                        int error_per_bit);
+int svt_av1_full_pixel_search(struct PictureControlSet *pcs, IntraBcContext /*MACROBLOCK*/ *x, BlockSize bsize,
+                              MV *mvp_full, int step_param, int method, int run_mesh_search, int error_per_bit,
+                              int *cost_list, const MV *ref_mv, int var_max, int rd, int x_pos, int y_pos, int intra);
+int svt_aom_mv_err_cost(const MV *mv, const MV *ref, const int *mvjcost, int *mvcost[2], int error_per_bit);
 int svt_aom_mv_err_cost_light(const MV *mv, const MV *ref);
 #ifdef __cplusplus
 } // extern "C"

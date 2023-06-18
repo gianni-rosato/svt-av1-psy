@@ -187,16 +187,12 @@
 
 #define STARTUP_MG_SIZE_TOKEN "--startup-mg-size"
 
-#if FTR_ROI
 #define ROI_MAP_FILE_TOKEN "--roi-map-file"
-#endif
 
 static EbErrorType validate_error(EbErrorType err, const char *token, const char *value) {
     switch (err) {
     case EB_ErrorNone: return EB_ErrorNone;
-    default:
-        fprintf(stderr, "Error: Invalid parameter '%s' with value '%s'\n", token, value);
-        return err;
+    default: fprintf(stderr, "Error: Invalid parameter '%s' with value '%s'\n", token, value); return err;
     }
 }
 
@@ -382,11 +378,9 @@ static EbErrorType set_cfg_qp_file(EbConfig *cfg, const char *token, const char 
 static EbErrorType set_cfg_stat_file(EbConfig *cfg, const char *token, const char *value) {
     return open_file(&cfg->stat_file, token, value, "wb");
 }
-#if FTR_ROI
 static EbErrorType set_cfg_roi_map_file(EbConfig *cfg, const char *token, const char *value) {
     return open_file(&cfg->roi_map_file, token, value, "r");
 }
-#endif
 
 static EbErrorType set_two_pass_stats(EbConfig *cfg, const char *token, const char *value) {
     return str_to_str(value, (char **)&cfg->stats, token);
@@ -400,12 +394,10 @@ static EbErrorType set_passes(EbConfig *cfg, const char *token, const char *valu
     return EB_ErrorNone;
 }
 
-static EbErrorType set_cfg_frames_to_be_encoded(EbConfig *cfg, const char *token,
-                                                const char *value) {
+static EbErrorType set_cfg_frames_to_be_encoded(EbConfig *cfg, const char *token, const char *value) {
     return str_to_int64(token, value, &cfg->frames_to_be_encoded);
 }
-static EbErrorType set_cfg_frames_to_be_skipped(EbConfig *cfg, const char *token,
-                                                const char *value) {
+static EbErrorType set_cfg_frames_to_be_skipped(EbConfig *cfg, const char *token, const char *value) {
     EbErrorType ret = str_to_int64(token, value, &cfg->frames_to_be_skipped);
     if (cfg->frames_to_be_skipped > 0)
         cfg->need_to_skip = true;
@@ -448,8 +440,7 @@ static EbErrorType set_cfg_force_key_frames(EbConfig *cfg, const char *token, co
     fkf.frames = (uint64_t *)calloc(sizeof(*fkf.frames), fkf.count);
     if (!fkf.frames)
         goto err;
-    for (size_t i = 0; i < cfg->forced_keyframes.count; ++i)
-        free(cfg->forced_keyframes.specifiers[i]);
+    for (size_t i = 0; i < cfg->forced_keyframes.count; ++i) free(cfg->forced_keyframes.specifiers[i]);
     free(cfg->forced_keyframes.specifiers);
     free(cfg->forced_keyframes.frames);
     cfg->forced_keyframes = fkf;
@@ -541,8 +532,7 @@ static EbErrorType parse_svtav1_params(EbConfig *cfg, const char *token, const c
             continue;
         err = (EbErrorType)(err | svt_av1_enc_parse_parameter(&cfg->config, opt.key, opt.val));
         if (err != EB_ErrorNone) {
-            fprintf(
-                stderr, "Warning: failed to set parameter '%s' with key '%s'\n", opt.key, opt.val);
+            fprintf(stderr, "Warning: failed to set parameter '%s' with key '%s'\n", opt.key, opt.val);
         }
         free(opt.key);
         free(opt.val);
@@ -603,14 +593,8 @@ typedef struct config_entry_s {
  **********************************/
 ConfigEntry config_entry_options[] = {
     // File I/O
-    {SINGLE_INPUT,
-     HELP_TOKEN,
-     "Shows the command line options currently available",
-     set_cfg_input_file},
-    {SINGLE_INPUT,
-     VERSION_TOKEN,
-     "Shows the version of the library that's linked to the library",
-     set_cfg_input_file},
+    {SINGLE_INPUT, HELP_TOKEN, "Shows the command line options currently available", set_cfg_input_file},
+    {SINGLE_INPUT, VERSION_TOKEN, "Shows the version of the library that's linked to the library", set_cfg_input_file},
     {SINGLE_INPUT,
      INPUT_FILE_TOKEN,
      "Input raw video (y4m and yuv) file path, use `stdin` or `-` to read from pipe",
@@ -647,8 +631,7 @@ ConfigEntry config_entry_options[] = {
      set_progress},
     {SINGLE_INPUT,
      NO_PROGRESS_TOKEN,
-     "Do not print out progress, default is 0 [1: `" PROGRESS_TOKEN " 0`, 0: `" PROGRESS_TOKEN
-     " 1`]",
+     "Do not print out progress, default is 0 [1: `" PROGRESS_TOKEN " 0`, 0: `" PROGRESS_TOKEN " 1`]",
      set_no_progress},
 
     {SINGLE_INPUT,
@@ -797,10 +780,7 @@ ConfigEntry config_entry_rc[] = {
      "Rate control mode, default is 0 [0: CRF or CQP (if `--aq-mode` is 0), 1: VBR, 2: CBR]",
      set_cfg_generic_token},
     {SINGLE_INPUT, QP_TOKEN, "Initial QP level value, default is 35 [1-63]", set_cfg_generic_token},
-    {SINGLE_INPUT,
-     QP_LONG_TOKEN,
-     "Initial QP level value, default is 35 [1-63]",
-     set_cfg_generic_token},
+    {SINGLE_INPUT, QP_LONG_TOKEN, "Initial QP level value, default is 35 [1-63]", set_cfg_generic_token},
     {SINGLE_INPUT,
      CRF_LONG_TOKEN,
      "Constant Rate Factor value, setting this value is equal to `--rc 0 --aq-mode 2 --qp "
@@ -862,22 +842,10 @@ ConfigEntry config_entry_rc[] = {
      "the range of [-256-255], default is `0,0,..,0`",
      set_cfg_generic_token},
     {SINGLE_INPUT, LUMA_Y_DC_QINDEX_OFFSET_TOKEN, "Luma Y DC Qindex Offset", set_cfg_generic_token},
-    {SINGLE_INPUT,
-     CHROMA_U_DC_QINDEX_OFFSET_TOKEN,
-     "Chroma U DC Qindex Offset",
-     set_cfg_generic_token},
-    {SINGLE_INPUT,
-     CHROMA_U_AC_QINDEX_OFFSET_TOKEN,
-     "Chroma U AC Qindex Offset",
-     set_cfg_generic_token},
-    {SINGLE_INPUT,
-     CHROMA_V_DC_QINDEX_OFFSET_TOKEN,
-     "Chroma V DC Qindex Offset",
-     set_cfg_generic_token},
-    {SINGLE_INPUT,
-     CHROMA_V_AC_QINDEX_OFFSET_TOKEN,
-     "Chroma V AC Qindex Offset",
-     set_cfg_generic_token},
+    {SINGLE_INPUT, CHROMA_U_DC_QINDEX_OFFSET_TOKEN, "Chroma U DC Qindex Offset", set_cfg_generic_token},
+    {SINGLE_INPUT, CHROMA_U_AC_QINDEX_OFFSET_TOKEN, "Chroma U AC Qindex Offset", set_cfg_generic_token},
+    {SINGLE_INPUT, CHROMA_V_DC_QINDEX_OFFSET_TOKEN, "Chroma V DC Qindex Offset", set_cfg_generic_token},
+    {SINGLE_INPUT, CHROMA_V_AC_QINDEX_OFFSET_TOKEN, "Chroma V AC Qindex Offset", set_cfg_generic_token},
     {SINGLE_INPUT,
      LAMBDA_SCALE_FACTORS_TOKEN,
      "list of scale factor for lambda values used for different frame types defined by SvtAv1FrameUpdateType, separated by `,` \
@@ -933,24 +901,13 @@ ConfigEntry config_entry_rc[] = {
      VBR_MAX_SECTION_PCT_TOKEN,
      "GOP max bitrate (expressed as a percentage of the target rate), default is 2000 [0-10000]",
      set_cfg_generic_token},
-    {SINGLE_INPUT,
-     ENABLE_QM_TOKEN,
-     "Enable quantisation matrices, default is 0 [0-1]",
-     set_cfg_generic_token},
-    {SINGLE_INPUT,
-     MIN_QM_LEVEL_TOKEN,
-     "Min quant matrix flatness, default is 8 [0-15]",
-     set_cfg_generic_token},
-    {SINGLE_INPUT,
-     MAX_QM_LEVEL_TOKEN,
-     "Max quant matrix flatness, default is 15 [0-15]",
-     set_cfg_generic_token},
-#if FTR_ROI
+    {SINGLE_INPUT, ENABLE_QM_TOKEN, "Enable quantisation matrices, default is 0 [0-1]", set_cfg_generic_token},
+    {SINGLE_INPUT, MIN_QM_LEVEL_TOKEN, "Min quant matrix flatness, default is 8 [0-15]", set_cfg_generic_token},
+    {SINGLE_INPUT, MAX_QM_LEVEL_TOKEN, "Max quant matrix flatness, default is 15 [0-15]", set_cfg_generic_token},
     {SINGLE_INPUT,
      ROI_MAP_FILE_TOKEN,
      "Enable Region Of Interest and specify a picture based QP Offset map file, default is off",
      set_cfg_roi_map_file},
-#endif
     // Termination
     {SINGLE_INPUT, NULL, NULL, NULL}};
 
@@ -1031,10 +988,7 @@ ConfigEntry config_entry_specific[] = {
      set_cfg_generic_token},
 
     // DLF
-    {SINGLE_INPUT,
-     LOOP_FILTER_ENABLE,
-     "Deblocking loop filter control, default is 1 [0-1]",
-     set_cfg_generic_token},
+    {SINGLE_INPUT, LOOP_FILTER_ENABLE, "Deblocking loop filter control, default is 1 [0-1]", set_cfg_generic_token},
     // CDEF
     {SINGLE_INPUT,
      CDEF_ENABLE_TOKEN,
@@ -1054,14 +1008,8 @@ ConfigEntry config_entry_specific[] = {
      MFMV_ENABLE_NEW_TOKEN,
      "Motion Field Motion Vector control, default is -1 [-1: auto, 0-1]",
      set_cfg_generic_token},
-    {SINGLE_INPUT,
-     DG_ENABLE_NEW_TOKEN,
-     "Dynamic GoP control, default is 1 [0-1]",
-     set_cfg_generic_token},
-    {SINGLE_INPUT,
-     FAST_DECODE_TOKEN,
-     "Fast Decoder levels, default is 0 [0-1]",
-     set_cfg_generic_token},
+    {SINGLE_INPUT, DG_ENABLE_NEW_TOKEN, "Dynamic GoP control, default is 1 [0-1]", set_cfg_generic_token},
+    {SINGLE_INPUT, FAST_DECODE_TOKEN, "Fast Decoder levels, default is 0 [0-1]", set_cfg_generic_token},
     // --- start: ALTREF_FILTERING_SUPPORT
     {SINGLE_INPUT,
      ENABLE_TF_TOKEN,
@@ -1131,10 +1079,7 @@ ConfigEntry config_entry_specific[] = {
     // --- end: SUPER-RESOLUTION SUPPORT
 
     // --- start: SWITCH_FRAME SUPPORT
-    {SINGLE_INPUT,
-     SFRAME_DIST_TOKEN,
-     "S-Frame interval (frames) (0: OFF[default], > 0: ON)",
-     set_cfg_generic_token},
+    {SINGLE_INPUT, SFRAME_DIST_TOKEN, "S-Frame interval (frames) (0: OFF[default], > 0: ON)", set_cfg_generic_token},
     {SINGLE_INPUT,
      SFRAME_MODE_TOKEN,
      "S-Frame insertion mode ([1-2], 1: the considered frame will be made into an S-Frame only if "
@@ -1148,10 +1093,7 @@ ConfigEntry config_entry_specific[] = {
      "Enable resize mode [0: none, 1: fixed scale, 2: random scale, 3: dynamic scale, 4: random "
      "access]",
      set_cfg_generic_token},
-    {SINGLE_INPUT,
-     RESIZE_DENOM,
-     "Resize denominator, only applicable for mode == 1 [8-16]",
-     set_cfg_generic_token},
+    {SINGLE_INPUT, RESIZE_DENOM, "Resize denominator, only applicable for mode == 1 [8-16]", set_cfg_generic_token},
     {SINGLE_INPUT,
      RESIZE_KF_DENOM,
      "Resize denominator for key frames, only applicable for mode == 1 [8-16]",
@@ -1189,10 +1131,7 @@ ConfigEntry config_entry_color_description[] = {
      MATRIX_COEFFICIENTS_NEW_TOKEN,
      "Matrix coefficients, refer to Appendix A.2 of the user guide, default is 2 [0-14]",
      set_cfg_generic_token},
-    {SINGLE_INPUT,
-     COLOR_RANGE_NEW_TOKEN,
-     "Color range, default is 0 [0: Studio, 1: Full]",
-     set_cfg_generic_token},
+    {SINGLE_INPUT, COLOR_RANGE_NEW_TOKEN, "Color range, default is 0 [0: Studio, 1: Full]", set_cfg_generic_token},
     {SINGLE_INPUT,
      CHROMA_SAMPLE_POSITION_TOKEN,
      "Chroma sample position, default is 'unknown' ['unknown', 'vertical'/'left', "
@@ -1235,10 +1174,7 @@ ConfigEntry config_entry[] = {
     {SINGLE_INPUT, HEIGHT_TOKEN, "SourceHeight", set_cfg_generic_token},
     {SINGLE_INPUT, HEIGHT_LONG_TOKEN, "SourceHeight", set_cfg_generic_token},
     {SINGLE_INPUT, FORCED_MAX_FRAME_WIDTH_TOKEN, "ForcedMaximumFrameWidth", set_cfg_generic_token},
-    {SINGLE_INPUT,
-     FORCED_MAX_FRAME_HEIGHT_TOKEN,
-     "ForcedMaximumFrameHeight",
-     set_cfg_generic_token},
+    {SINGLE_INPUT, FORCED_MAX_FRAME_HEIGHT_TOKEN, "ForcedMaximumFrameHeight", set_cfg_generic_token},
     // Prediction Structure
     {SINGLE_INPUT, NUMBER_OF_PICTURES_TOKEN, "FrameToBeEncoded", set_cfg_frames_to_be_encoded},
     {SINGLE_INPUT, NUMBER_OF_PICTURES_LONG_TOKEN, "FrameToBeEncoded", set_cfg_frames_to_be_encoded},
@@ -1294,10 +1230,7 @@ ConfigEntry config_entry[] = {
     //   qindex offsets
     {SINGLE_INPUT, USE_FIXED_QINDEX_OFFSETS_TOKEN, "UseFixedQIndexOffsets", set_cfg_generic_token},
     {SINGLE_INPUT, KEY_FRAME_QINDEX_OFFSET_TOKEN, "KeyFrameQIndexOffset", set_cfg_generic_token},
-    {SINGLE_INPUT,
-     KEY_FRAME_CHROMA_QINDEX_OFFSET_TOKEN,
-     "KeyFrameChromaQIndexOffset",
-     set_cfg_generic_token},
+    {SINGLE_INPUT, KEY_FRAME_CHROMA_QINDEX_OFFSET_TOKEN, "KeyFrameChromaQIndexOffset", set_cfg_generic_token},
     {SINGLE_INPUT, QINDEX_OFFSETS_TOKEN, "QIndexOffsets", set_cfg_generic_token},
     {SINGLE_INPUT, CHROMA_QINDEX_OFFSETS_TOKEN, "ChromaQIndexOffsets", set_cfg_generic_token},
     {SINGLE_INPUT, LUMA_Y_DC_QINDEX_OFFSET_TOKEN, "LumaYDCQindexOffset", set_cfg_generic_token},
@@ -1374,10 +1307,7 @@ ConfigEntry config_entry[] = {
 
     // Color Description Options
     {SINGLE_INPUT, COLOR_PRIMARIES_NEW_TOKEN, "ColorPrimaries", set_cfg_generic_token},
-    {SINGLE_INPUT,
-     TRANSFER_CHARACTERISTICS_NEW_TOKEN,
-     "TransferCharacteristics",
-     set_cfg_generic_token},
+    {SINGLE_INPUT, TRANSFER_CHARACTERISTICS_NEW_TOKEN, "TransferCharacteristics", set_cfg_generic_token},
     {SINGLE_INPUT, MATRIX_COEFFICIENTS_NEW_TOKEN, "MatrixCoefficients", set_cfg_generic_token},
     {SINGLE_INPUT, COLOR_RANGE_NEW_TOKEN, "ColorRange", set_cfg_generic_token},
     {SINGLE_INPUT, CHROMA_SAMPLE_POSITION_TOKEN, "ChromaSamplePosition", set_cfg_generic_token},
@@ -1389,10 +1319,8 @@ ConfigEntry config_entry[] = {
     {SINGLE_INPUT, MIN_QM_LEVEL_TOKEN, "MinQmLevel", set_cfg_generic_token},
     {SINGLE_INPUT, MAX_QM_LEVEL_TOKEN, "MaxQmLevel", set_cfg_generic_token},
 
-#if FTR_ROI
     // ROI
     {SINGLE_INPUT, ROI_MAP_FILE_TOKEN, "RoiMapFile", set_cfg_roi_map_file},
-#endif
 
     // Termination
     {SINGLE_INPUT, NULL, NULL, NULL}};
@@ -1408,9 +1336,7 @@ EbConfig *svt_config_ctor() {
     app_cfg->buffered_input      = -1;
     app_cfg->progress            = 1;
     app_cfg->injector_frame_rate = 60;
-#if FTR_ROI
-    app_cfg->roi_map_file = NULL;
-#endif
+    app_cfg->roi_map_file        = NULL;
     return app_cfg;
 }
 
@@ -1459,15 +1385,12 @@ void svt_config_dtor(EbConfig *app_cfg) {
         app_cfg->output_stat_file = (FILE *)NULL;
     }
 
-#if FTR_ROI
     if (app_cfg->roi_map_file) {
         fclose(app_cfg->roi_map_file);
         app_cfg->roi_map_file = (FILE *)NULL;
     }
-#endif
 
-    for (size_t i = 0; i < app_cfg->forced_keyframes.count; ++i)
-        free(app_cfg->forced_keyframes.specifiers[i]);
+    for (size_t i = 0; i < app_cfg->forced_keyframes.count; ++i) free(app_cfg->forced_keyframes.specifiers[i]);
     free(app_cfg->forced_keyframes.specifiers);
     free(app_cfg->forced_keyframes.frames);
 
@@ -1485,8 +1408,7 @@ EbErrorType enc_channel_ctor(EncChannel *c) {
     c->exit_cond_recon  = APP_ExitConditionError;
     c->exit_cond_input  = APP_ExitConditionError;
     c->active           = FALSE;
-    return svt_av1_enc_init_handle(
-        &c->app_cfg->svt_encoder_handle, c->app_cfg, &c->app_cfg->config);
+    return svt_av1_enc_init_handle(&c->app_cfg->svt_encoder_handle, c->app_cfg, &c->app_cfg->config);
 }
 
 void enc_channel_dctor(EncChannel *c, uint32_t inst_cnt) {
@@ -1591,14 +1513,10 @@ static char *read_word(FILE *fp) {
     return word;
 }
 
-static EbErrorType set_config_value(EbConfig *app_cfg, const char *word, const char *value,
-                                    unsigned instance_idx) {
+static EbErrorType set_config_value(EbConfig *app_cfg, const char *word, const char *value, unsigned instance_idx) {
     const ConfigEntry *entry = find_entry(word);
     if (!entry) {
-        fprintf(stderr,
-                "Error channel %u: Config File contains unknown token %s\n",
-                instance_idx + 1,
-                word);
+        fprintf(stderr, "Error channel %u: Config File contains unknown token %s\n", instance_idx + 1, word);
         return EB_ErrorBadParameter;
     }
     const EbErrorType err = entry->scf(app_cfg, entry->token, value);
@@ -1616,17 +1534,13 @@ static EbErrorType set_config_value(EbConfig *app_cfg, const char *word, const c
 /**********************************
 * Read Config File
 **********************************/
-static EbErrorType read_config_file(EbConfig *app_cfg, const char *config_path,
-                                    uint32_t instance_idx) {
+static EbErrorType read_config_file(EbConfig *app_cfg, const char *config_path, uint32_t instance_idx) {
     FILE *config_file;
 
     // Open the config file
     FOPEN(config_file, config_path, "rb");
     if (!config_file) {
-        fprintf(stderr,
-                "Error channel %u: Couldn't open Config File: %s\n",
-                instance_idx + 1,
-                config_path);
+        fprintf(stderr, "Error channel %u: Couldn't open Config File: %s\n", instance_idx + 1, config_path);
         return EB_ErrorBadParameter;
     }
 
@@ -1684,8 +1598,8 @@ Bool load_twopass_stats_in(EbConfig *cfg) {
     }
     return config->rc_stats_buffer.buf != NULL;
 }
-EbErrorType handle_stats_file(EbConfig *app_cfg, EncPass enc_pass,
-                              const SvtAv1FixedBuf *rc_stats_buffer, uint32_t channel_number) {
+EbErrorType handle_stats_file(EbConfig *app_cfg, EncPass enc_pass, const SvtAv1FixedBuf *rc_stats_buffer,
+                              uint32_t channel_number) {
     switch (enc_pass) {
     case ENC_SINGLE_PASS: {
         const char *stats = app_cfg->stats ? app_cfg->stats : "svtav1_2pass.log";
@@ -1702,8 +1616,7 @@ EbErrorType handle_stats_file(EbConfig *app_cfg, EncPass enc_pass,
         // Multi pass VBR has 3 passes, and pass = 2 is the middle pass
         // In this pass, data is read from the file, copied to memory, updated and
         // written back to the same file
-        else if (app_cfg->config.pass == 2 &&
-                 app_cfg->config.rate_control_mode == SVT_AV1_RC_MODE_VBR) {
+        else if (app_cfg->config.pass == 2 && app_cfg->config.rate_control_mode == SVT_AV1_RC_MODE_VBR) {
             if (!fopen_and_lock(&app_cfg->input_stat_file, stats, FALSE)) {
                 fprintf(app_cfg->error_log_file,
                         "Error instance %u: can't read stats file %s for read\n",
@@ -1713,10 +1626,7 @@ EbErrorType handle_stats_file(EbConfig *app_cfg, EncPass enc_pass,
             }
             // Copy from file to memory
             if (!load_twopass_stats_in(app_cfg)) {
-                fprintf(app_cfg->error_log_file,
-                        "Error instance %u: can't load file %s\n",
-                        channel_number + 1,
-                        stats);
+                fprintf(app_cfg->error_log_file, "Error instance %u: can't load file %s\n", channel_number + 1, stats);
                 return EB_ErrorBadParameter;
             }
             // Close the input stat file
@@ -1734,10 +1644,8 @@ EbErrorType handle_stats_file(EbConfig *app_cfg, EncPass enc_pass,
             }
         }
         // Final pass: pass = 2 for CRF and pass = 3 for VBR
-        else if ((app_cfg->config.pass == 2 &&
-                  app_cfg->config.rate_control_mode == SVT_AV1_RC_MODE_CQP_OR_CRF) ||
-                 (app_cfg->config.pass == 3 &&
-                  app_cfg->config.rate_control_mode == SVT_AV1_RC_MODE_VBR)) {
+        else if ((app_cfg->config.pass == 2 && app_cfg->config.rate_control_mode == SVT_AV1_RC_MODE_CQP_OR_CRF) ||
+                 (app_cfg->config.pass == 3 && app_cfg->config.rate_control_mode == SVT_AV1_RC_MODE_VBR)) {
             if (!fopen_and_lock(&app_cfg->input_stat_file, stats, FALSE)) {
                 fprintf(app_cfg->error_log_file,
                         "Error instance %u: can't read stats file %s for read\n",
@@ -1746,10 +1654,7 @@ EbErrorType handle_stats_file(EbConfig *app_cfg, EncPass enc_pass,
                 return EB_ErrorBadParameter;
             }
             if (!load_twopass_stats_in(app_cfg)) {
-                fprintf(app_cfg->error_log_file,
-                        "Error instance %u: can't load file %s\n",
-                        channel_number + 1,
-                        stats);
+                fprintf(app_cfg->error_log_file, "Error instance %u: can't load file %s\n", channel_number + 1, stats);
                 return EB_ErrorBadParameter;
             }
         }
@@ -1808,8 +1713,7 @@ static EbErrorType app_verify_config(EbConfig *app_cfg, uint32_t channel_number)
 
     // Check Input File
     if (app_cfg->input_file == (FILE *)NULL) {
-        fprintf(
-            app_cfg->error_log_file, "Error instance %u: Invalid Input File\n", channel_number + 1);
+        fprintf(app_cfg->error_log_file, "Error instance %u: Invalid Input File\n", channel_number + 1);
         return_error = EB_ErrorBadParameter;
     }
 
@@ -1821,9 +1725,7 @@ static EbErrorType app_verify_config(EbConfig *app_cfg, uint32_t channel_number)
     }
 
     if (app_cfg->buffered_input == 0) {
-        fprintf(app_cfg->error_log_file,
-                "Error instance %u: Buffered Input cannot be 0\n",
-                channel_number + 1);
+        fprintf(app_cfg->error_log_file, "Error instance %u: Buffered Input cannot be 0\n", channel_number + 1);
         return_error = EB_ErrorBadParameter;
     }
 
@@ -1858,9 +1760,7 @@ static EbErrorType app_verify_config(EbConfig *app_cfg, uint32_t channel_number)
     }
 
     if (app_cfg->injector > 1) {
-        fprintf(app_cfg->error_log_file,
-                "Error Instance %u: Invalid injector [0 - 1]\n",
-                channel_number + 1);
+        fprintf(app_cfg->error_log_file, "Error Instance %u: Invalid injector [0 - 1]\n", channel_number + 1);
         return_error = EB_ErrorBadParameter;
     }
 
@@ -1883,8 +1783,7 @@ static EbErrorType app_verify_config(EbConfig *app_cfg, uint32_t channel_number)
                 "greater than 0\n",
                 channel_number + 1);
         return_error = EB_ErrorBadParameter;
-    } else if (app_cfg->config.frame_rate_numerator / app_cfg->config.frame_rate_denominator >
-               240) {
+    } else if (app_cfg->config.frame_rate_numerator / app_cfg->config.frame_rate_denominator > 240) {
         fprintf(app_cfg->error_log_file,
                 "Error Instance %u: The maximum allowed frame_rate is 240 fps\n",
                 channel_number + 1);
@@ -1910,9 +1809,8 @@ static const char *TOKEN_ERROR_MARKER = "THIS_TOKEN_HAS_ERROR";
  * @return true token was found and configStr was populated
  * @return false token was not found and configStr was not populated
  */
-static bool find_token_multiple_inputs(unsigned nch, int argc, char *const argv[],
-                                       const char *token, char *configStr[MAX_CHANNEL_NUMBER],
-                                       const char *cmd_copy[MAX_NUM_TOKENS],
+static bool find_token_multiple_inputs(unsigned nch, int argc, char *const argv[], const char *token,
+                                       char *configStr[MAX_CHANNEL_NUMBER], const char *cmd_copy[MAX_NUM_TOKENS],
                                        const char *arg_copy[MAX_NUM_TOKENS]) {
     bool return_error   = false;
     bool has_duplicates = false;
@@ -1994,8 +1892,7 @@ uint32_t get_help(int32_t argc, char *const argv[]) {
         "    SvtAv1EncApp --passes 1 --rc 1 --tbr 1000 -b dst_filename -i src_filename\n"
         "\n"
         "Options:\n");
-    for (ConfigEntry *options_token_index = config_entry_options; options_token_index->token;
-         ++options_token_index) {
+    for (ConfigEntry *options_token_index = config_entry_options; options_token_index->token; ++options_token_index) {
         // this only works if short and long token are one after another
         switch (check_long(*options_token_index, options_token_index[1])) {
         case 1:
@@ -2006,15 +1903,13 @@ uint32_t get_help(int32_t argc, char *const argv[]) {
             ++options_token_index;
             break;
         default:
-            printf(options_token_index->token[1] == '-' ? "      %-25s    %-25s\n"
-                                                        : "      -%-25s   %-25s\n",
+            printf(options_token_index->token[1] == '-' ? "      %-25s    %-25s\n" : "      -%-25s   %-25s\n",
                    options_token_index->token,
                    options_token_index->name);
         }
     }
     printf("\nEncoder Global Options:\n");
-    for (ConfigEntry *global_options_token_index = config_entry_global_options;
-         global_options_token_index->token;
+    for (ConfigEntry *global_options_token_index = config_entry_global_options; global_options_token_index->token;
          ++global_options_token_index) {
         switch (check_long(*global_options_token_index, global_options_token_index[1])) {
         case 1:
@@ -2025,8 +1920,7 @@ uint32_t get_help(int32_t argc, char *const argv[]) {
             ++global_options_token_index;
             break;
         default:
-            printf(global_options_token_index->token[1] == '-' ? "      %-25s    %-25s\n"
-                                                               : "      -%-25s   %-25s\n",
+            printf(global_options_token_index->token[1] == '-' ? "      %-25s    %-25s\n" : "      -%-25s   %-25s\n",
                    global_options_token_index->token,
                    global_options_token_index->name);
         }
@@ -2035,22 +1929,17 @@ uint32_t get_help(int32_t argc, char *const argv[]) {
     for (ConfigEntry *rc_token_index = config_entry_rc; rc_token_index->token; ++rc_token_index) {
         switch (check_long(*rc_token_index, rc_token_index[1])) {
         case 1:
-            printf("  %s, %-25s    %-25s\n",
-                   rc_token_index->token,
-                   rc_token_index[1].token,
-                   rc_token_index->name);
+            printf("  %s, %-25s    %-25s\n", rc_token_index->token, rc_token_index[1].token, rc_token_index->name);
             ++rc_token_index;
             break;
         default:
-            printf(rc_token_index->token[1] == '-' ? "      %-25s    %-25s\n"
-                                                   : "      -%-25s   %-25s\n",
+            printf(rc_token_index->token[1] == '-' ? "      %-25s    %-25s\n" : "      -%-25s   %-25s\n",
                    rc_token_index->token,
                    rc_token_index->name);
         }
     }
     printf("\nMulti-pass Options:\n");
-    for (ConfigEntry *two_p_token_index = config_entry_2p; two_p_token_index->token;
-         ++two_p_token_index) {
+    for (ConfigEntry *two_p_token_index = config_entry_2p; two_p_token_index->token; ++two_p_token_index) {
         switch (check_long(*two_p_token_index, two_p_token_index[1])) {
         case 1:
             printf("  %s, %-25s    %-25s\n",
@@ -2060,62 +1949,46 @@ uint32_t get_help(int32_t argc, char *const argv[]) {
             ++two_p_token_index;
             break;
         default:
-            printf(two_p_token_index->token[1] == '-' ? "      %-25s    %-25s\n"
-                                                      : "      -%-25s   %-25s\n",
+            printf(two_p_token_index->token[1] == '-' ? "      %-25s    %-25s\n" : "      -%-25s   %-25s\n",
                    two_p_token_index->token,
                    two_p_token_index->name);
         }
     }
     printf("\nGOP size and type Options:\n");
-    for (ConfigEntry *kf_token_index = config_entry_intra_refresh; kf_token_index->token;
-         ++kf_token_index) {
+    for (ConfigEntry *kf_token_index = config_entry_intra_refresh; kf_token_index->token; ++kf_token_index) {
         switch (check_long(*kf_token_index, kf_token_index[1])) {
         case 1:
-            printf("  %s, %-25s    %-25s\n",
-                   kf_token_index->token,
-                   kf_token_index[1].token,
-                   kf_token_index->name);
+            printf("  %s, %-25s    %-25s\n", kf_token_index->token, kf_token_index[1].token, kf_token_index->name);
             ++kf_token_index;
             break;
         default:
-            printf(kf_token_index->token[1] == '-' ? "      %-25s    %-25s\n"
-                                                   : "      -%-25s   %-25s\n",
+            printf(kf_token_index->token[1] == '-' ? "      %-25s    %-25s\n" : "      -%-25s   %-25s\n",
                    kf_token_index->token,
                    kf_token_index->name);
         }
     }
     printf("\nAV1 Specific Options:\n");
-    for (ConfigEntry *sp_token_index = config_entry_specific; sp_token_index->token;
-         ++sp_token_index) {
+    for (ConfigEntry *sp_token_index = config_entry_specific; sp_token_index->token; ++sp_token_index) {
         switch (check_long(*sp_token_index, sp_token_index[1])) {
         case 1:
-            printf("  %s, %-25s    %-25s\n",
-                   sp_token_index->token,
-                   sp_token_index[1].token,
-                   sp_token_index->name);
+            printf("  %s, %-25s    %-25s\n", sp_token_index->token, sp_token_index[1].token, sp_token_index->name);
             ++sp_token_index;
             break;
         default:
-            printf(sp_token_index->token[1] == '-' ? "      %-25s    %-25s\n"
-                                                   : "      -%-25s   %-25s\n",
+            printf(sp_token_index->token[1] == '-' ? "      %-25s    %-25s\n" : "      -%-25s   %-25s\n",
                    sp_token_index->token,
                    sp_token_index->name);
         }
     }
     printf("\nColor Description Options:\n");
-    for (ConfigEntry *cd_token_index = config_entry_color_description; cd_token_index->token;
-         ++cd_token_index) {
+    for (ConfigEntry *cd_token_index = config_entry_color_description; cd_token_index->token; ++cd_token_index) {
         switch (check_long(*cd_token_index, cd_token_index[1])) {
         case 1:
-            printf("  %s, %-25s    %-25s\n",
-                   cd_token_index->token,
-                   cd_token_index[1].token,
-                   cd_token_index->name);
+            printf("  %s, %-25s    %-25s\n", cd_token_index->token, cd_token_index[1].token, cd_token_index->name);
             ++cd_token_index;
             break;
         default:
-            printf(cd_token_index->token[1] == '-' ? "      %-25s    %-25s\n"
-                                                   : "      -%-25s   %-25s\n",
+            printf(cd_token_index->token[1] == '-' ? "      %-25s    %-25s\n" : "      -%-25s   %-25s\n",
                    cd_token_index->token,
                    cd_token_index->name);
         }
@@ -2132,9 +2005,8 @@ uint32_t get_number_of_channels(int32_t argc, char *const argv[]) {
         // Set the input file
         uint32_t channel_number = strtol(config_string, NULL, 0);
         if ((channel_number > MAX_CHANNEL_NUMBER) || channel_number == 0) {
-            fprintf(stderr,
-                    "[SVT-Error]: The number of channels has to be within the range [1,%u]\n",
-                    MAX_CHANNEL_NUMBER);
+            fprintf(
+                stderr, "[SVT-Error]: The number of channels has to be within the range [1,%u]\n", MAX_CHANNEL_NUMBER);
             return 0;
         }
         return channel_number;
@@ -2152,8 +2024,7 @@ static Bool check_two_pass_conflicts(int32_t argc, char *const argv[]) {
     const char *token;
     while ((token = conflicts[i])) {
         if (find_token(argc, argv, token, config_string) == 0) {
-            fprintf(
-                stderr, "[SVT-Error]: --passes is not accepted in combination with %s\n", token);
+            fprintf(stderr, "[SVT-Error]: --passes is not accepted in combination with %s\n", token);
             return TRUE;
         }
         i++;
@@ -2206,8 +2077,7 @@ uint32_t get_passes(int32_t argc, char *const argv[], EncPass enc_pass[MAX_ENC_P
             using_fifo = 1;
         } else {
 #ifdef _WIN32
-            HANDLE in_file = CreateFile(
-                config_string, 0, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
+            HANDLE in_file = CreateFile(config_string, 0, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
             if (in_file != INVALID_HANDLE_VALUE) {
                 using_fifo = GetFileType(in_file) == FILE_TYPE_PIPE;
                 CloseHandle(in_file);
@@ -2226,8 +2096,7 @@ uint32_t get_passes(int32_t argc, char *const argv[], EncPass enc_pass[MAX_ENC_P
         }
     }
 
-    if (!find_token(argc, argv, INTRA_PERIOD_TOKEN, NULL) &&
-        !find_token(argc, argv, KEYINT_TOKEN, NULL)) {
+    if (!find_token(argc, argv, INTRA_PERIOD_TOKEN, NULL) && !find_token(argc, argv, KEYINT_TOKEN, NULL)) {
         fprintf(stderr,
                 "[SVT-Warning]: --keyint and --intra-period specified, --keyint will take "
                 "precedence!\n");
@@ -2252,9 +2121,7 @@ uint32_t get_passes(int32_t argc, char *const argv[], EncPass enc_pass[MAX_ENC_P
             return 0;
         }
         if ((ip < 0) && rc_mode == 1) {
-            fprintf(stderr,
-                    "[SVT-Error]: The intra period must be > 0 for RateControlMode %d \n",
-                    rc_mode);
+            fprintf(stderr, "[SVT-Error]: The intra period must be > 0 for RateControlMode %d \n", rc_mode);
             return 0;
         }
     }
@@ -2277,9 +2144,7 @@ uint32_t get_passes(int32_t argc, char *const argv[], EncPass enc_pass[MAX_ENC_P
     passes = (passes == -1) ? 1 : passes;
 
     if (using_fifo && passes > 1) {
-        fprintf(
-            stderr,
-            "[SVT-Warning]: The number of passes has to be 1 when using a fifo, using 1-pass\n");
+        fprintf(stderr, "[SVT-Warning]: The number of passes has to be 1 when using a fifo, using 1-pass\n");
         multi_pass_mode = SINGLE_PASS;
         passes          = 1;
     }
@@ -2312,9 +2177,7 @@ uint32_t get_passes(int32_t argc, char *const argv[], EncPass enc_pass[MAX_ENC_P
         }
     } else {
         if (passes > 1) {
-            fprintf(
-                stderr,
-                "[SVT-Warning]: Multipass CBR is not supported. Switching to 1-pass encoding\n\n");
+            fprintf(stderr, "[SVT-Warning]: Multipass CBR is not supported. Switching to 1-pass encoding\n\n");
             passes = 1;
         }
         multi_pass_mode = SINGLE_PASS;
@@ -2394,10 +2257,7 @@ static Bool warn_legacy_token(const char *const token) {
     for (struct warn_set *tok = warning_set; tok->old_token; ++tok) {
         if (strcmp(token, tok->old_token))
             continue;
-        fprintf(stderr,
-                "[SVT-Error]: %s has been removed, use %s instead\n",
-                tok->old_token,
-                tok->new_token);
+        fprintf(stderr, "[SVT-Error]: %s has been removed, use %s instead\n", tok->old_token, tok->new_token);
         return TRUE;
     }
     return FALSE;
@@ -2410,8 +2270,7 @@ static void free_config_strings(unsigned nch, char *config_strings[MAX_CHANNEL_N
 /******************************************
 * Read Command Line
 ******************************************/
-EbErrorType read_command_line(int32_t argc, char *const argv[], EncChannel *channels,
-                              uint32_t num_channels) {
+EbErrorType read_command_line(int32_t argc, char *const argv[], EncChannel *channels, uint32_t num_channels) {
     EbErrorType return_error = EB_ErrorNone;
     char        config_string[COMMAND_LINE_MAX_SIZE]; // for one input options
     char       *config_strings[MAX_CHANNEL_NUMBER]; // for multiple input options
@@ -2438,36 +2297,27 @@ EbErrorType read_command_line(int32_t argc, char *const argv[], EncChannel *chan
     }
 
     // First handle --nch and --passes as a single argument options
-    find_token_multiple_inputs(
-        1, argc, argv, CHANNEL_NUMBER_TOKEN, config_strings, cmd_copy, arg_copy);
+    find_token_multiple_inputs(1, argc, argv, CHANNEL_NUMBER_TOKEN, config_strings, cmd_copy, arg_copy);
     find_token_multiple_inputs(1, argc, argv, PASSES_TOKEN, config_strings, cmd_copy, arg_copy);
 
     /***************************************************************************************************/
     /****************  Find configuration files tokens and call respective functions  ******************/
     /***************************************************************************************************/
     // Find the Config File Path in the command line
-    if (find_token_multiple_inputs(
-            num_channels, argc, argv, CONFIG_FILE_TOKEN, config_strings, cmd_copy, arg_copy)) {
+    if (find_token_multiple_inputs(num_channels, argc, argv, CONFIG_FILE_TOKEN, config_strings, cmd_copy, arg_copy)) {
         // Parse the config file
         for (index = 0; index < num_channels; ++index) {
             EncChannel *c   = channels + index;
-            c->return_error = (EbErrorType)read_config_file(
-                c->app_cfg, config_strings[index], index);
-            return_error = (EbErrorType)(return_error & c->return_error);
+            c->return_error = (EbErrorType)read_config_file(c->app_cfg, config_strings[index], index);
+            return_error    = (EbErrorType)(return_error & c->return_error);
         }
-    } else if (find_token_multiple_inputs(num_channels,
-                                          argc,
-                                          argv,
-                                          CONFIG_FILE_LONG_TOKEN,
-                                          config_strings,
-                                          cmd_copy,
-                                          arg_copy)) {
+    } else if (find_token_multiple_inputs(
+                   num_channels, argc, argv, CONFIG_FILE_LONG_TOKEN, config_strings, cmd_copy, arg_copy)) {
         // Parse the config file
         for (index = 0; index < num_channels; ++index) {
             EncChannel *c   = channels + index;
-            c->return_error = (EbErrorType)read_config_file(
-                c->app_cfg, config_strings[index], index);
-            return_error = (EbErrorType)(return_error & c->return_error);
+            c->return_error = (EbErrorType)read_config_file(c->app_cfg, config_strings[index], index);
+            return_error    = (EbErrorType)(return_error & c->return_error);
         }
     } else {
         if (find_token(argc, argv, CONFIG_FILE_TOKEN, config_string) == 0) {
@@ -2514,8 +2364,7 @@ EbErrorType read_command_line(int32_t argc, char *const argv[], EncChannel *chan
     for (ConfigEntry *entry = config_entry; entry->token; ++entry) {
         if (entry->type != SINGLE_INPUT)
             continue;
-        if (!find_token_multiple_inputs(
-                num_channels, argc, argv, entry->token, config_strings, cmd_copy, arg_copy))
+        if (!find_token_multiple_inputs(num_channels, argc, argv, entry->token, config_strings, cmd_copy, arg_copy))
             continue;
         if (!strcmp(TOKEN_ERROR_MARKER, config_strings[0])) {
             free_config_strings(num_channels, config_strings);
@@ -2527,8 +2376,7 @@ EbErrorType read_command_line(int32_t argc, char *const argv[], EncChannel *chan
             if (!strcmp(config_strings[chan], " "))
                 break;
             // Mark the value as found in the temp argument buffer
-            EbErrorType err = (entry->scf)(
-                channels[chan].app_cfg, entry->token, config_strings[chan]);
+            EbErrorType err             = (entry->scf)(channels[chan].app_cfg, entry->token, config_strings[chan]);
             channels[chan].return_error = (EbErrorType)(channels[chan].return_error | err);
             return_error                = (EbErrorType)(return_error & channels[chan].return_error);
         }
@@ -2576,8 +2424,7 @@ EbErrorType read_command_line(int32_t argc, char *const argv[], EncChannel *chan
 
                 // Assuming no errors, set the frames to be encoded to the number of frames in the input yuv
                 if (c->return_error == EB_ErrorNone && !n_specified)
-                    app_cfg->frames_to_be_encoded = input_frame_count -
-                        app_cfg->frames_to_be_skipped;
+                    app_cfg->frames_to_be_encoded = input_frame_count - app_cfg->frames_to_be_skipped;
 
                 // For pipe input it is fine if we have -1 here (we will update on end of stream)
                 if (app_cfg->frames_to_be_encoded == -1 && app_cfg->input_file != stdin &&

@@ -63,9 +63,7 @@ EbErrorType read_y4m_header(EbConfig *cfg) {
             case 't': scan_type = 't'; break;
             case 'b': scan_type = 'b'; break;
             case '?':
-            default:
-                fprintf(cfg->error_log_file, "interlace type not supported\n");
-                return EB_ErrorBadParameter;
+            default: fprintf(cfg->error_log_file, "interlace type not supported\n"); return EB_ErrorBadParameter;
             }
             if (PRINT_HEADER)
                 fprintf(stderr, "scan_type = %c\n", scan_type);

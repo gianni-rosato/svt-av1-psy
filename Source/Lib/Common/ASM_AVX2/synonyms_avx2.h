@@ -32,13 +32,9 @@ static INLINE __m256i yy_load_256(const void *const a) {
     return _mm256_loadu_si256((const __m256i *)a);
 }
 
-static INLINE __m256i yy_loadu_256(const void *const a) {
-    return _mm256_loadu_si256((const __m256i *)a);
-}
+static INLINE __m256i yy_loadu_256(const void *const a) { return _mm256_loadu_si256((const __m256i *)a); }
 
-static INLINE void yy_storeu_256(void *const a, const __m256i v) {
-    _mm256_storeu_si256((__m256i *)a, v);
-}
+static INLINE void yy_storeu_256(void *const a, const __m256i v) { _mm256_storeu_si256((__m256i *)a, v); }
 
 // The _mm256_set1_epi64x() intrinsic is undefined for some Visual Studio
 // compilers. The following function is equivalent to _mm256_set1_epi64x()

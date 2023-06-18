@@ -28,7 +28,7 @@ typedef struct ObmcCtx {
 
 static const int max_neighbor_obmc[6] = {0, 1, 2, 3, 4, 4};
 
-void svt_aom_dec_build_obmc_inter_predictors_sb(void *pv_dec_mod_ctx, EbDecHandle *dec_handle,
-                                                PartitionInfo *pi, int mi_row, int mi_col);
+void svt_aom_dec_build_obmc_inter_predictors_sb(void *pv_dec_mod_ctx, EbDecHandle *dec_handle, PartitionInfo *pi,
+                                                int mi_row, int mi_col);
 
 #endif // EbDecObmc_h

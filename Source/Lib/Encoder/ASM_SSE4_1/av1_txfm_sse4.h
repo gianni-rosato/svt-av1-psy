@@ -26,21 +26,19 @@ static INLINE __m128i av1_round_shift_32_sse4_1(__m128i vec, int32_t bit) {
     return _mm_srai_epi32(tmp, bit);
 }
 
-static INLINE void av1_round_shift_array_32_sse4_1(__m128i *input, __m128i *output,
-                                                   const int32_t size, const int32_t bit) {
+static INLINE void av1_round_shift_array_32_sse4_1(__m128i *input, __m128i *output, const int32_t size,
+                                                   const int32_t bit) {
     int32_t i;
     if (bit > 0) {
         const __m128i round = _mm_set1_epi32(1 << (bit - 1));
-        for (i = 0; i < size; i++) {
-            output[i] = _mm_srai_epi32(_mm_add_epi32(input[i], round), bit);
-        }
+        for (i = 0; i < size; i++) { output[i] = _mm_srai_epi32(_mm_add_epi32(input[i], round), bit); }
     } else {
         for (i = 0; i < size; i++) { output[i] = _mm_slli_epi32(input[i], -bit); }
     }
 }
 
-static INLINE void av1_round_shift_rect_array_32_sse4_1(__m128i *input, __m128i *output,
-                                                        const int32_t size, const int32_t bit) {
+static INLINE void av1_round_shift_rect_array_32_sse4_1(__m128i *input, __m128i *output, const int32_t size,
+                                                        const int32_t bit) {
     const __m128i sqrt2  = _mm_set1_epi32(new_sqrt2);
     const __m128i round2 = _mm_set1_epi32(1 << (new_sqrt2_bits - 1));
     int32_t       i;
@@ -78,8 +76,7 @@ static INLINE void av1_round_shift_rect_array_32_sse4_1(__m128i *input, __m128i 
         y3 = _mm_unpackhi_epi64(u1, u3);              \
     } while (0)
 
-static INLINE void transpose_8nx8n(const __m128i *input, __m128i *output, const int width,
-                                   const int height) {
+static INLINE void transpose_8nx8n(const __m128i *input, __m128i *output, const int width, const int height) {
     const int numcol = height >> 2;
     const int numrow = width >> 2;
     for (int j = 0; j < numrow; j++) {

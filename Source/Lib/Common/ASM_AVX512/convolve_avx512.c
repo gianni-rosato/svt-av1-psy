@@ -28,8 +28,7 @@ static INLINE __m512i sr_x_round_avx512(const __m512i src) {
     return _mm512_srai_epi16(dst, 6);
 }
 
-static INLINE void sr_x_round_store_32x2_avx512(const __m512i res[2], uint8_t *const dst,
-                                                const int32_t dst_stride) {
+static INLINE void sr_x_round_store_32x2_avx512(const __m512i res[2], uint8_t *const dst, const int32_t dst_stride) {
     __m512i r[2];
 
     r[0] = sr_x_round_avx512(res[0]);
@@ -53,14 +52,12 @@ static INLINE void sr_y_round_store_64_avx512(const __m512i res[2], uint8_t *con
     convolve_store_64_avx512(r[0], r[1], dst);
 }
 
-static INLINE void sr_y_round_store_64x2_avx512(const __m512i res[4], uint8_t *const dst,
-                                                const int32_t dst_stride) {
+static INLINE void sr_y_round_store_64x2_avx512(const __m512i res[4], uint8_t *const dst, const int32_t dst_stride) {
     sr_y_round_store_64_avx512(res, dst);
     sr_y_round_store_64_avx512(res + 2, dst + dst_stride);
 }
 
-static INLINE void sr_y_round_store_32x2_avx512(const __m512i res[2], uint8_t *const dst,
-                                                const int32_t dst_stride) {
+static INLINE void sr_y_round_store_32x2_avx512(const __m512i res[2], uint8_t *const dst, const int32_t dst_stride) {
     __m512i r[2];
 
     r[0] = sr_y_round_avx512(res[0]);
@@ -68,33 +65,30 @@ static INLINE void sr_y_round_store_32x2_avx512(const __m512i res[2], uint8_t *c
     convolve_store_32x2_avx512(r[0], r[1], dst, dst_stride);
 }
 
-static INLINE void sr_y_2tap_32x2_avx512(const uint8_t *const src, const int32_t src_stride,
-                                         const __m512i coeffs[1], __m256i *const s,
-                                         uint8_t *const dst, const int32_t dst_stride) {
+static INLINE void sr_y_2tap_32x2_avx512(const uint8_t *const src, const int32_t src_stride, const __m512i coeffs[1],
+                                         __m256i *const s, uint8_t *const dst, const int32_t dst_stride) {
     __m512i r[2];
     y_convolve_2tap_32x2_avx512(src, src_stride, coeffs, s, r);
     sr_y_round_store_32x2_avx512(r, dst, dst_stride);
 }
 
-static INLINE void sr_y_2tap_64_avx512(const uint8_t *const src, const __m512i coeffs[1],
-                                       const __m512i s0, __m512i *const s1, uint8_t *const dst) {
+static INLINE void sr_y_2tap_64_avx512(const uint8_t *const src, const __m512i coeffs[1], const __m512i s0,
+                                       __m512i *const s1, uint8_t *const dst) {
     __m512i r[2];
     y_convolve_2tap_64_avx512(src, coeffs, s0, s1, r);
     sr_y_round_store_64_avx512(r, dst);
 }
 
-static INLINE void sr_y_2tap_64_avg_avx512(const uint8_t *const src, const __m512i s0,
-                                           __m512i *const s1, uint8_t *const dst) {
+static INLINE void sr_y_2tap_64_avg_avx512(const uint8_t *const src, const __m512i s0, __m512i *const s1,
+                                           uint8_t *const dst) {
     *s1             = _mm512_loadu_si512((__m512i *)src);
     const __m512i d = _mm512_avg_epu8(s0, *s1);
     _mm512_storeu_si512((__m512i *)dst, d);
 }
 
-void svt_av1_convolve_y_sr_avx512(const uint8_t *src, int32_t src_stride, uint8_t *dst,
-                                  int32_t dst_stride, int32_t w, int32_t h,
-                                  InterpFilterParams *filter_params_x,
-                                  InterpFilterParams *filter_params_y, const int32_t subpel_x_q4,
-                                  const int32_t subpel_y_q4, ConvolveParams *conv_params) {
+void svt_av1_convolve_y_sr_avx512(const uint8_t *src, int32_t src_stride, uint8_t *dst, int32_t dst_stride, int32_t w,
+                                  int32_t h, InterpFilterParams *filter_params_x, InterpFilterParams *filter_params_y,
+                                  const int32_t subpel_x_q4, const int32_t subpel_y_q4, ConvolveParams *conv_params) {
     int32_t x, y;
     __m128i coeffs_128[4];
     __m256i coeffs_256[4];
@@ -120,9 +114,8 @@ void svt_av1_convolve_y_sr_avx512(const uint8_t *src, int32_t src_stride, uint8_
                     s_16[0] = _mm_cvtsi32_si128(*(int16_t *)src_ptr);
 
                     do {
-                        const __m128i res = y_convolve_2tap_2x2_ssse3(
-                            src_ptr, src_stride, coeffs_128, s_16);
-                        const __m128i r = sr_y_round_sse2(res);
+                        const __m128i res = y_convolve_2tap_2x2_ssse3(src_ptr, src_stride, coeffs_128, s_16);
+                        const __m128i r   = sr_y_round_sse2(res);
                         pack_store_2x2_sse2(r, dst, dst_stride);
                         src_ptr += 2 * src_stride;
                         dst += 2 * dst_stride;
@@ -134,9 +127,8 @@ void svt_av1_convolve_y_sr_avx512(const uint8_t *src, int32_t src_stride, uint8_
                     s_32[0] = _mm_cvtsi32_si128(*(int32_t *)src_ptr);
 
                     do {
-                        const __m128i res = y_convolve_2tap_4x2_ssse3(
-                            src_ptr, src_stride, coeffs_128, s_32);
-                        const __m128i r = sr_y_round_sse2(res);
+                        const __m128i res = y_convolve_2tap_4x2_ssse3(src_ptr, src_stride, coeffs_128, s_32);
+                        const __m128i r   = sr_y_round_sse2(res);
                         pack_store_4x2_sse2(r, dst, dst_stride);
                         src_ptr += 2 * src_stride;
                         dst += 2 * dst_stride;
@@ -192,8 +184,7 @@ void svt_av1_convolve_y_sr_avx512(const uint8_t *src, int32_t src_stride, uint8_
                     __m256i s_256 = _mm256_loadu_si256((__m256i *)src_ptr);
 
                     do {
-                        sr_y_2tap_32x2_avx512(
-                            src_ptr + src_stride, src_stride, coeffs_512, &s_256, dst, dst_stride);
+                        sr_y_2tap_32x2_avx512(src_ptr + src_stride, src_stride, coeffs_512, &s_256, dst, dst_stride);
                         src_ptr += 2 * src_stride;
                         dst += 2 * dst_stride;
                         y -= 2;
@@ -204,13 +195,9 @@ void svt_av1_convolve_y_sr_avx512(const uint8_t *src, int32_t src_stride, uint8_
                     s_512[0] = _mm512_loadu_si512((__m512i *)src_ptr);
 
                     do {
+                        sr_y_2tap_64_avx512(src_ptr + src_stride, coeffs_512, s_512[0], &s_512[1], dst);
                         sr_y_2tap_64_avx512(
-                            src_ptr + src_stride, coeffs_512, s_512[0], &s_512[1], dst);
-                        sr_y_2tap_64_avx512(src_ptr + 2 * src_stride,
-                                            coeffs_512,
-                                            s_512[1],
-                                            &s_512[0],
-                                            dst + dst_stride);
+                            src_ptr + 2 * src_stride, coeffs_512, s_512[1], &s_512[0], dst + dst_stride);
                         src_ptr += 2 * src_stride;
                         dst += 2 * dst_stride;
                         y -= 2;
@@ -224,22 +211,13 @@ void svt_av1_convolve_y_sr_avx512(const uint8_t *src, int32_t src_stride, uint8_
                     s_512[0][1] = _mm512_loadu_si512((__m512i *)(src_ptr + 1 * 64));
 
                     do {
-                        sr_y_2tap_64_avx512(src_ptr + 1 * src_stride + 0 * 64,
-                                            coeffs_512,
-                                            s_512[0][0],
-                                            &s_512[1][0],
-                                            dst);
-                        sr_y_2tap_64_avx512(src_ptr + 1 * src_stride + 1 * 64,
-                                            coeffs_512,
-                                            s_512[0][1],
-                                            &s_512[1][1],
-                                            dst + 2 * 32);
+                        sr_y_2tap_64_avx512(
+                            src_ptr + 1 * src_stride + 0 * 64, coeffs_512, s_512[0][0], &s_512[1][0], dst);
+                        sr_y_2tap_64_avx512(
+                            src_ptr + 1 * src_stride + 1 * 64, coeffs_512, s_512[0][1], &s_512[1][1], dst + 2 * 32);
 
-                        sr_y_2tap_64_avx512(src_ptr + 2 * src_stride + 0 * 64,
-                                            coeffs_512,
-                                            s_512[1][0],
-                                            &s_512[0][0],
-                                            dst + dst_stride);
+                        sr_y_2tap_64_avx512(
+                            src_ptr + 2 * src_stride + 0 * 64, coeffs_512, s_512[1][0], &s_512[0][0], dst + dst_stride);
                         sr_y_2tap_64_avx512(src_ptr + 2 * src_stride + 1 * 64,
                                             coeffs_512,
                                             s_512[1][1],
@@ -261,10 +239,10 @@ void svt_av1_convolve_y_sr_avx512(const uint8_t *src, int32_t src_stride, uint8_
                     s_16[0] = _mm_cvtsi32_si128(*(int16_t *)src_ptr);
 
                     do {
-                        s_16[1]          = _mm_cvtsi32_si128(*(int16_t *)(src_ptr + src_stride));
-                        const __m128i d0 = _mm_avg_epu8(s_16[0], s_16[1]);
-                        *(int16_t *)dst  = (int16_t)_mm_cvtsi128_si32(d0);
-                        s_16[0] = _mm_cvtsi32_si128(*(int16_t *)(src_ptr + 2 * src_stride));
+                        s_16[1]                        = _mm_cvtsi32_si128(*(int16_t *)(src_ptr + src_stride));
+                        const __m128i d0               = _mm_avg_epu8(s_16[0], s_16[1]);
+                        *(int16_t *)dst                = (int16_t)_mm_cvtsi128_si32(d0);
+                        s_16[0]                        = _mm_cvtsi32_si128(*(int16_t *)(src_ptr + 2 * src_stride));
                         const __m128i d1               = _mm_avg_epu8(s_16[1], s_16[0]);
                         *(int16_t *)(dst + dst_stride) = (int16_t)_mm_cvtsi128_si32(d1);
                         src_ptr += 2 * src_stride;
@@ -280,7 +258,7 @@ void svt_av1_convolve_y_sr_avx512(const uint8_t *src, int32_t src_stride, uint8_
                         s_32[1]          = _mm_cvtsi32_si128(*(int32_t *)(src_ptr + src_stride));
                         const __m128i d0 = _mm_avg_epu8(s_32[0], s_32[1]);
                         xx_storel_32(dst, d0);
-                        s_32[0] = _mm_cvtsi32_si128(*(int32_t *)(src_ptr + 2 * src_stride));
+                        s_32[0]          = _mm_cvtsi32_si128(*(int32_t *)(src_ptr + 2 * src_stride));
                         const __m128i d1 = _mm_avg_epu8(s_32[1], s_32[0]);
                         xx_storel_32(dst + dst_stride, d1);
                         src_ptr += 2 * src_stride;
@@ -330,8 +308,7 @@ void svt_av1_convolve_y_sr_avx512(const uint8_t *src, int32_t src_stride, uint8_
 
                 do {
                     sr_y_2tap_32_avg_avx2(src_ptr + src_stride, s_256[0], &s_256[1], dst);
-                    sr_y_2tap_32_avg_avx2(
-                        src_ptr + 2 * src_stride, s_256[1], &s_256[0], dst + dst_stride);
+                    sr_y_2tap_32_avg_avx2(src_ptr + 2 * src_stride, s_256[1], &s_256[0], dst + dst_stride);
                     src_ptr += 2 * src_stride;
                     dst += 2 * dst_stride;
                     y -= 2;
@@ -343,8 +320,7 @@ void svt_av1_convolve_y_sr_avx512(const uint8_t *src, int32_t src_stride, uint8_
 
                 do {
                     sr_y_2tap_64_avg_avx512(src_ptr + src_stride, s_512[0], &s_512[1], dst);
-                    sr_y_2tap_64_avg_avx512(
-                        src_ptr + 2 * src_stride, s_512[1], &s_512[0], dst + dst_stride);
+                    sr_y_2tap_64_avg_avx512(src_ptr + 2 * src_stride, s_512[1], &s_512[0], dst + dst_stride);
                     src_ptr += 2 * src_stride;
                     dst += 2 * dst_stride;
                     y -= 2;
@@ -358,19 +334,13 @@ void svt_av1_convolve_y_sr_avx512(const uint8_t *src, int32_t src_stride, uint8_
                 s_512[0][1] = _mm512_loadu_si512((__m512i *)(src_ptr + 1 * 64));
 
                 do {
-                    sr_y_2tap_64_avg_avx512(
-                        src_ptr + src_stride + 0 * 6, s_512[0][0], &s_512[1][0], dst + 0 * 6);
-                    sr_y_2tap_64_avg_avx512(
-                        src_ptr + src_stride + 1 * 64, s_512[0][1], &s_512[1][1], dst + 1 * 64);
+                    sr_y_2tap_64_avg_avx512(src_ptr + src_stride + 0 * 6, s_512[0][0], &s_512[1][0], dst + 0 * 6);
+                    sr_y_2tap_64_avg_avx512(src_ptr + src_stride + 1 * 64, s_512[0][1], &s_512[1][1], dst + 1 * 64);
 
-                    sr_y_2tap_64_avg_avx512(src_ptr + 2 * src_stride + 0 * 6,
-                                            s_512[1][0],
-                                            &s_512[0][0],
-                                            dst + dst_stride + 0 * 6);
-                    sr_y_2tap_64_avg_avx512(src_ptr + 2 * src_stride + 1 * 64,
-                                            s_512[1][1],
-                                            &s_512[0][1],
-                                            dst + dst_stride + 1 * 64);
+                    sr_y_2tap_64_avg_avx512(
+                        src_ptr + 2 * src_stride + 0 * 6, s_512[1][0], &s_512[0][0], dst + dst_stride + 0 * 6);
+                    sr_y_2tap_64_avg_avx512(
+                        src_ptr + 2 * src_stride + 1 * 64, s_512[1][1], &s_512[0][1], dst + dst_stride + 1 * 64);
 
                     src_ptr += 2 * src_stride;
                     dst += 2 * dst_stride;
@@ -401,9 +371,8 @@ void svt_av1_convolve_y_sr_avx512(const uint8_t *src, int32_t src_stride, uint8_
 
                 do {
                     src_ptr += 2 * src_stride;
-                    const __m128i res = y_convolve_4tap_2x2_ssse3(
-                        src_ptr, src_stride, coeffs_128, s_16, ss_128);
-                    const __m128i r = sr_y_round_sse2(res);
+                    const __m128i res = y_convolve_4tap_2x2_ssse3(src_ptr, src_stride, coeffs_128, s_16, ss_128);
+                    const __m128i r   = sr_y_round_sse2(res);
                     pack_store_2x2_sse2(r, dst, dst_stride);
 
                     ss_128[0] = ss_128[1];
@@ -426,9 +395,8 @@ void svt_av1_convolve_y_sr_avx512(const uint8_t *src, int32_t src_stride, uint8_
 
                 do {
                     src_ptr += 2 * src_stride;
-                    const __m128i res = y_convolve_4tap_4x2_ssse3(
-                        src_ptr, src_stride, coeffs_128, s_32, ss_128);
-                    const __m128i r = sr_y_round_sse2(res);
+                    const __m128i res = y_convolve_4tap_4x2_ssse3(src_ptr, src_stride, coeffs_128, s_32, ss_128);
+                    const __m128i r   = sr_y_round_sse2(res);
                     pack_store_4x2_sse2(r, dst, dst_stride);
 
                     ss_128[0] = ss_128[1];
@@ -455,8 +423,7 @@ void svt_av1_convolve_y_sr_avx512(const uint8_t *src, int32_t src_stride, uint8_
 
                 do {
                     src_ptr += 2 * src_stride;
-                    const __m256i res = y_convolve_4tap_8x2_avx2(
-                        src_ptr, src_stride, coeffs_256, s_64, ss_256);
+                    const __m256i res = y_convolve_4tap_8x2_avx2(src_ptr, src_stride, coeffs_256, s_64, ss_256);
                     sr_y_round_store_8x2_avx2(res, dst, dst_stride);
 
                     ss_256[0] = ss_256[1];
@@ -552,9 +519,8 @@ void svt_av1_convolve_y_sr_avx512(const uint8_t *src, int32_t src_stride, uint8_
 
                 do {
                     src_ptr += 2 * src_stride;
-                    const __m128i res = y_convolve_6tap_2x2_ssse3(
-                        src_ptr, src_stride, coeffs_128, s_16, ss_128);
-                    const __m128i r = sr_y_round_sse2(res);
+                    const __m128i res = y_convolve_6tap_2x2_ssse3(src_ptr, src_stride, coeffs_128, s_16, ss_128);
+                    const __m128i r   = sr_y_round_sse2(res);
                     pack_store_2x2_sse2(r, dst, dst_stride);
 
                     ss_128[0] = ss_128[1];
@@ -583,9 +549,8 @@ void svt_av1_convolve_y_sr_avx512(const uint8_t *src, int32_t src_stride, uint8_
 
                 do {
                     src_ptr += 2 * src_stride;
-                    const __m128i res = y_convolve_6tap_4x2_ssse3(
-                        src_ptr, src_stride, coeffs_128, s_32, ss_128);
-                    const __m128i r = sr_y_round_sse2(res);
+                    const __m128i res = y_convolve_6tap_4x2_ssse3(src_ptr, src_stride, coeffs_128, s_32, ss_128);
+                    const __m128i r   = sr_y_round_sse2(res);
                     pack_store_4x2_sse2(r, dst, dst_stride);
 
                     ss_128[0] = ss_128[1];
@@ -619,8 +584,7 @@ void svt_av1_convolve_y_sr_avx512(const uint8_t *src, int32_t src_stride, uint8_
                 y = h;
                 do {
                     src_ptr += 2 * src_stride;
-                    const __m256i res = y_convolve_6tap_8x2_avx2(
-                        src_ptr, src_stride, coeffs_256, s_64, ss_256);
+                    const __m256i res = y_convolve_6tap_8x2_avx2(src_ptr, src_stride, coeffs_256, s_64, ss_256);
                     sr_y_round_store_8x2_avx2(res, dst, dst_stride);
 
                     ss_256[0] = ss_256[1];
@@ -732,8 +696,7 @@ void svt_av1_convolve_y_sr_avx512(const uint8_t *src, int32_t src_stride, uint8_
                     y = h;
                     do {
                         s += 2 * src_stride;
-                        y_convolve_6tap_64x2_avx512(
-                            s, src_stride, coeffs_512, s_512, ss_512, tt_512, r);
+                        y_convolve_6tap_64x2_avx512(s, src_stride, coeffs_512, s_512, ss_512, tt_512, r);
                         sr_y_round_store_64x2_avx512(r, d, dst_stride);
 
                         ss_512[0] = ss_512[1];
@@ -785,9 +748,8 @@ void svt_av1_convolve_y_sr_avx512(const uint8_t *src, int32_t src_stride, uint8_
                 ss_128[2] = _mm_unpacklo_epi8(src45, src56);
 
                 do {
-                    const __m128i res = y_convolve_8tap_2x2_ssse3(
-                        src_ptr, src_stride, coeffs_128, s_16, ss_128);
-                    const __m128i r = sr_y_round_sse2(res);
+                    const __m128i res = y_convolve_8tap_2x2_ssse3(src_ptr, src_stride, coeffs_128, s_16, ss_128);
+                    const __m128i r   = sr_y_round_sse2(res);
                     pack_store_2x2_sse2(r, dst, dst_stride);
                     ss_128[0] = ss_128[1];
                     ss_128[1] = ss_128[2];
@@ -821,9 +783,8 @@ void svt_av1_convolve_y_sr_avx512(const uint8_t *src, int32_t src_stride, uint8_
                 ss_128[2] = _mm_unpacklo_epi8(src45, src56);
 
                 do {
-                    const __m128i res = y_convolve_8tap_4x2_ssse3(
-                        src_ptr, src_stride, coeffs_128, s_32, ss_128);
-                    const __m128i r = sr_y_round_sse2(res);
+                    const __m128i res = y_convolve_8tap_4x2_ssse3(src_ptr, src_stride, coeffs_128, s_32, ss_128);
+                    const __m128i r   = sr_y_round_sse2(res);
                     pack_store_4x2_sse2(r, dst, dst_stride);
                     ss_128[0] = ss_128[1];
                     ss_128[1] = ss_128[2];
@@ -862,8 +823,7 @@ void svt_av1_convolve_y_sr_avx512(const uint8_t *src, int32_t src_stride, uint8_
 
                 y = h;
                 do {
-                    const __m256i res = y_convolve_8tap_8x2_avx2(
-                        src_ptr, src_stride, coeffs_256, s_64, ss_256);
+                    const __m256i res = y_convolve_8tap_8x2_avx2(src_ptr, src_stride, coeffs_256, s_64, ss_256);
                     sr_y_round_store_8x2_avx2(res, dst, dst_stride);
                     ss_256[0] = ss_256[1];
                     ss_256[1] = ss_256[2];
@@ -997,8 +957,7 @@ void svt_av1_convolve_y_sr_avx512(const uint8_t *src, int32_t src_stride, uint8_
 
                     y = h;
                     do {
-                        y_convolve_8tap_64x2_avx512(
-                            s, src_stride, coeffs_512, s_512, ss_512, tt_512, r);
+                        y_convolve_8tap_64x2_avx512(s, src_stride, coeffs_512, s_512, ss_512, tt_512, r);
                         sr_y_round_store_64x2_avx512(r, d, dst_stride);
 
                         ss_512[0] = ss_512[1];
@@ -1026,17 +985,15 @@ void svt_av1_convolve_y_sr_avx512(const uint8_t *src, int32_t src_stride, uint8_
     }
 }
 
-static INLINE void sr_x_2tap_32x2_avx512(const uint8_t *const src, const int32_t src_stride,
-                                         const __m512i coeffs[1], uint8_t *const dst,
-                                         const int32_t dst_stride) {
+static INLINE void sr_x_2tap_32x2_avx512(const uint8_t *const src, const int32_t src_stride, const __m512i coeffs[1],
+                                         uint8_t *const dst, const int32_t dst_stride) {
     __m512i r[2];
 
     x_convolve_2tap_32x2_avx512(src, src_stride, coeffs, r);
     sr_x_round_store_32x2_avx512(r, dst, dst_stride);
 }
 
-static INLINE void sr_x_2tap_64_avx512(const uint8_t *const src, const __m512i coeffs[1],
-                                       uint8_t *const dst) {
+static INLINE void sr_x_2tap_64_avx512(const uint8_t *const src, const __m512i coeffs[1], uint8_t *const dst) {
     __m512i r[2];
 
     x_convolve_2tap_64_avx512(src, coeffs, r);
@@ -1050,45 +1007,41 @@ static INLINE void sr_x_2tap_64_avg_avx512(const uint8_t *const src, uint8_t *co
     _mm512_storeu_si512((__m512i *)dst, d);
 }
 
-static INLINE void sr_x_6tap_32x2_avx512(const uint8_t *const src, const int32_t src_stride,
-                                         const __m512i coeffs[3], const __m512i filt[3],
-                                         uint8_t *const dst, const int32_t dst_stride) {
+static INLINE void sr_x_6tap_32x2_avx512(const uint8_t *const src, const int32_t src_stride, const __m512i coeffs[3],
+                                         const __m512i filt[3], uint8_t *const dst, const int32_t dst_stride) {
     __m512i r[2];
 
     x_convolve_6tap_32x2_avx512(src, src_stride, coeffs, filt, r);
     sr_x_round_store_32x2_avx512(r, dst, dst_stride);
 }
 
-static INLINE void sr_x_6tap_64_avx512(const uint8_t *const src, const __m512i coeffs[3],
-                                       const __m512i filt[3], uint8_t *const dst) {
+static INLINE void sr_x_6tap_64_avx512(const uint8_t *const src, const __m512i coeffs[3], const __m512i filt[3],
+                                       uint8_t *const dst) {
     __m512i r[2];
 
     x_convolve_6tap_64_avx512(src, coeffs, filt, r);
     sr_x_round_store_64_avx512(r, dst);
 }
 
-SIMD_INLINE void sr_x_8tap_32x2_avx512(const uint8_t *const src, const int32_t src_stride,
-                                       const __m512i coeffs[4], const __m512i filt[4],
-                                       uint8_t *const dst, const int32_t dst_stride) {
+SIMD_INLINE void sr_x_8tap_32x2_avx512(const uint8_t *const src, const int32_t src_stride, const __m512i coeffs[4],
+                                       const __m512i filt[4], uint8_t *const dst, const int32_t dst_stride) {
     __m512i r[2];
 
     x_convolve_8tap_32x2_avx512(src, src_stride, coeffs, filt, r);
     sr_x_round_store_32x2_avx512(r, dst, dst_stride);
 }
 
-SIMD_INLINE void sr_x_8tap_64_avx512(const uint8_t *const src, const __m512i coeffs[4],
-                                     const __m512i filt[4], uint8_t *const dst) {
+SIMD_INLINE void sr_x_8tap_64_avx512(const uint8_t *const src, const __m512i coeffs[4], const __m512i filt[4],
+                                     uint8_t *const dst) {
     __m512i r[2];
 
     x_convolve_8tap_64_avx512(src, coeffs, filt, r);
     sr_x_round_store_64_avx512(r, dst);
 }
 
-void svt_av1_convolve_x_sr_avx512(const uint8_t *src, int32_t src_stride, uint8_t *dst,
-                                  int32_t dst_stride, int32_t w, int32_t h,
-                                  InterpFilterParams *filter_params_x,
-                                  InterpFilterParams *filter_params_y, const int32_t subpel_x_q4,
-                                  const int32_t subpel_y_q4, ConvolveParams *conv_params) {
+void svt_av1_convolve_x_sr_avx512(const uint8_t *src, int32_t src_stride, uint8_t *dst, int32_t dst_stride, int32_t w,
+                                  int32_t h, InterpFilterParams *filter_params_x, InterpFilterParams *filter_params_y,
+                                  const int32_t subpel_x_q4, const int32_t subpel_y_q4, ConvolveParams *conv_params) {
     int32_t y = h;
     __m128i coeffs_128[4];
     __m256i coeffs_256[4];
@@ -1112,9 +1065,8 @@ void svt_av1_convolve_x_sr_avx512(const uint8_t *src, int32_t src_stride, uint8_
 
                 if (w == 2) {
                     do {
-                        const __m128i res = x_convolve_2tap_2x2_sse4_1(
-                            src_ptr, src_stride, coeffs_128);
-                        const __m128i r = sr_x_round_sse2(res);
+                        const __m128i res = x_convolve_2tap_2x2_sse4_1(src_ptr, src_stride, coeffs_128);
+                        const __m128i r   = sr_x_round_sse2(res);
                         pack_store_2x2_sse2(r, dst, dst_stride);
                         src_ptr += 2 * src_stride;
                         dst += 2 * dst_stride;
@@ -1122,9 +1074,8 @@ void svt_av1_convolve_x_sr_avx512(const uint8_t *src, int32_t src_stride, uint8_
                     } while (y);
                 } else if (w == 4) {
                     do {
-                        const __m128i res = x_convolve_2tap_4x2_ssse3(
-                            src_ptr, src_stride, coeffs_128);
-                        const __m128i r = sr_x_round_sse2(res);
+                        const __m128i res = x_convolve_2tap_4x2_ssse3(src_ptr, src_stride, coeffs_128);
+                        const __m128i r   = sr_x_round_sse2(res);
                         pack_store_4x2_sse2(r, dst, dst_stride);
                         src_ptr += 2 * src_stride;
                         dst += 2 * dst_stride;
@@ -1314,8 +1265,7 @@ void svt_av1_convolve_x_sr_avx512(const uint8_t *src, int32_t src_stride, uint8_
 
                 if (w == 8) {
                     do {
-                        const __m256i res = x_convolve_6tap_8x2_avx2(
-                            src_ptr, src_stride, coeffs_256, filt_256);
+                        const __m256i res = x_convolve_6tap_8x2_avx2(src_ptr, src_stride, coeffs_256, filt_256);
                         sr_x_round_store_8x2_avx2(res, dst, dst_stride);
                         src_ptr += 2 * src_stride;
                         dst += 2 * dst_stride;
@@ -1345,8 +1295,7 @@ void svt_av1_convolve_x_sr_avx512(const uint8_t *src, int32_t src_stride, uint8_
 
                 if (w == 32) {
                     do {
-                        sr_x_6tap_32x2_avx512(
-                            src_ptr, src_stride, coeffs_512, filt_512, dst, dst_stride);
+                        sr_x_6tap_32x2_avx512(src_ptr, src_stride, coeffs_512, filt_512, dst, dst_stride);
                         src_ptr += 2 * src_stride;
                         dst += 2 * dst_stride;
                         y -= 2;
@@ -1384,8 +1333,7 @@ void svt_av1_convolve_x_sr_avx512(const uint8_t *src, int32_t src_stride, uint8_
 
                 if (w == 8) {
                     do {
-                        const __m256i res = x_convolve_8tap_8x2_avx2(
-                            src_ptr, src_stride, coeffs_256, filt_256);
+                        const __m256i res = x_convolve_8tap_8x2_avx2(src_ptr, src_stride, coeffs_256, filt_256);
                         sr_x_round_store_8x2_avx2(res, dst, dst_stride);
                         src_ptr += 2 * src_stride;
                         dst += 2 * dst_stride;
@@ -1416,8 +1364,7 @@ void svt_av1_convolve_x_sr_avx512(const uint8_t *src, int32_t src_stride, uint8_
 
                 if (w == 32) {
                     do {
-                        sr_x_8tap_32x2_avx512(
-                            src_ptr, src_stride, coeffs_512, filt_512, dst, dst_stride);
+                        sr_x_8tap_32x2_avx512(src_ptr, src_stride, coeffs_512, filt_512, dst, dst_stride);
                         src_ptr += 2 * src_stride;
                         dst += 2 * dst_stride;
                         y -= 2;

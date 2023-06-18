@@ -58,11 +58,9 @@ static INLINE __m256i load_u8_8x2_avx2(const uint8_t *const src, const ptrdiff_t
 static INLINE __m256i load_u8_8x4_avx2(const uint8_t *const src, const ptrdiff_t stride) {
     __m128i src01, src23;
     src01 = _mm_loadl_epi64((__m128i *)(src + 0 * stride));
-    src01 = _mm_castpd_si128(
-        _mm_loadh_pd(_mm_castsi128_pd(src01), (double *)(void *)(src + 1 * stride)));
+    src01 = _mm_castpd_si128(_mm_loadh_pd(_mm_castsi128_pd(src01), (double *)(void *)(src + 1 * stride)));
     src23 = _mm_loadl_epi64((__m128i *)(src + 2 * stride));
-    src23 = _mm_castpd_si128(
-        _mm_loadh_pd(_mm_castsi128_pd(src23), (double *)(void *)(src + 3 * stride)));
+    src23 = _mm_castpd_si128(_mm_loadh_pd(_mm_castsi128_pd(src23), (double *)(void *)(src + 3 * stride)));
     return _mm256_setr_m128i(src01, src23);
 }
 
@@ -80,26 +78,22 @@ static INLINE __m256i loadu_u16_8x2_avx2(const uint16_t *const src, const ptrdif
     return loadu_8bit_16x2_avx2(src, sizeof(*src) * stride);
 }
 
-static INLINE void storeu_8bit_16x2_avx2(const __m256i src, void *const dst,
-                                         const ptrdiff_t strideInByte) {
+static INLINE void storeu_8bit_16x2_avx2(const __m256i src, void *const dst, const ptrdiff_t strideInByte) {
     const __m128i d0 = _mm256_castsi256_si128(src);
     const __m128i d1 = _mm256_extracti128_si256(src, 1);
     _mm_storeu_si128((__m128i *)dst, d0);
     _mm_storeu_si128((__m128i *)((uint8_t *)dst + strideInByte), d1);
 }
 
-static INLINE void storeu_u8_16x2_avx2(const __m256i src, uint8_t *const dst,
-                                       const ptrdiff_t stride) {
+static INLINE void storeu_u8_16x2_avx2(const __m256i src, uint8_t *const dst, const ptrdiff_t stride) {
     storeu_8bit_16x2_avx2(src, dst, sizeof(*dst) * stride);
 }
 
-static INLINE void storeu_s16_8x2_avx2(const __m256i src, int16_t *const dst,
-                                       const ptrdiff_t stride) {
+static INLINE void storeu_s16_8x2_avx2(const __m256i src, int16_t *const dst, const ptrdiff_t stride) {
     storeu_8bit_16x2_avx2(src, dst, sizeof(*dst) * stride);
 }
 
-static INLINE void storeu_u16_8x2_avx2(const __m256i src, uint16_t *const dst,
-                                       const ptrdiff_t stride) {
+static INLINE void storeu_u16_8x2_avx2(const __m256i src, uint16_t *const dst, const ptrdiff_t stride) {
     storeu_8bit_16x2_avx2(src, dst, sizeof(*dst) * stride);
 }
 

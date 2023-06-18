@@ -18,9 +18,7 @@
 #include "EbLog.h"
 #include <inttypes.h>
 #endif
-#if FTR_ROI
 #include "EbDeblockingFilter.h"
-#endif
 
 static uint16_t get_variance_for_cu(const BlockGeom *blk_geom, uint16_t *variance_ptr) {
     int index0, index1;
@@ -29,9 +27,7 @@ static uint16_t get_variance_for_cu(const BlockGeom *blk_geom, uint16_t *varianc
     case BLOCK_4X4:
     case BLOCK_4X8:
     case BLOCK_8X4:
-    case BLOCK_8X8:
-        index0 = index1 = ME_TIER_ZERO_PU_8x8_0 + ((blk_geom->org_x >> 3) + blk_geom->org_y);
-        break;
+    case BLOCK_8X8: index0 = index1 = ME_TIER_ZERO_PU_8x8_0 + ((blk_geom->org_x >> 3) + blk_geom->org_y); break;
 
     case BLOCK_8X16:
         index0 = ME_TIER_ZERO_PU_8x8_0 + ((blk_geom->org_x >> 3) + blk_geom->org_y);
@@ -46,8 +42,7 @@ static uint16_t get_variance_for_cu(const BlockGeom *blk_geom, uint16_t *varianc
     case BLOCK_4X16:
     case BLOCK_16X4:
     case BLOCK_16X16:
-        index0 = index1 = ME_TIER_ZERO_PU_16x16_0 +
-            ((blk_geom->org_x >> 4) + (blk_geom->org_y >> 2));
+        index0 = index1 = ME_TIER_ZERO_PU_16x16_0 + ((blk_geom->org_x >> 4) + (blk_geom->org_y >> 2));
         break;
 
     case BLOCK_16X32:
@@ -63,8 +58,7 @@ static uint16_t get_variance_for_cu(const BlockGeom *blk_geom, uint16_t *varianc
     case BLOCK_8X32:
     case BLOCK_32X8:
     case BLOCK_32X32:
-        index0 = index1 = ME_TIER_ZERO_PU_32x32_0 +
-            ((blk_geom->org_x >> 5) + (blk_geom->org_y >> 4));
+        index0 = index1 = ME_TIER_ZERO_PU_32x32_0 + ((blk_geom->org_x >> 5) + (blk_geom->org_y >> 4));
         break;
 
     case BLOCK_32X64:
@@ -85,9 +79,7 @@ static uint16_t get_variance_for_cu(const BlockGeom *blk_geom, uint16_t *varianc
     return (variance_ptr[index0] + variance_ptr[index1]) >> 1;
 }
 
-#if FTR_ROI
-static void roi_map_apply_segmentation_based_quantization(const BlockGeom   *blk_geom,
-                                                          PictureControlSet *pcs,
+static void roi_map_apply_segmentation_based_quantization(const BlockGeom *blk_geom, PictureControlSet *pcs,
                                                           SuperBlock *sb_ptr, BlkStruct *blk_ptr) {
     SequenceControlSet    *scs                 = pcs->ppcs->scs;
     const SvtAv1RoiMapEvt *roi_map             = pcs->ppcs->roi_map_evt;
@@ -101,21 +93,16 @@ static void roi_map_apply_segmentation_based_quantization(const BlockGeom   *blk
     } else { // sb128
         segment_id = MAX_SEGMENTS;
         // 4 b64 blocks to check intersection
-        int b64_seg_columns[4] = {
-            sb_ptr->org_x, sb_ptr->org_x + 64, sb_ptr->org_x, sb_ptr->org_x + 64};
-        int b64_seg_rows[4] = {
-            sb_ptr->org_y, sb_ptr->org_y, sb_ptr->org_y + 64, sb_ptr->org_y + 64};
-        int blk_org_x = sb_ptr->org_x + blk_geom->org_x;
-        int blk_org_y = sb_ptr->org_y + blk_geom->org_y;
+        int b64_seg_columns[4] = {sb_ptr->org_x, sb_ptr->org_x + 64, sb_ptr->org_x, sb_ptr->org_x + 64};
+        int b64_seg_rows[4]    = {sb_ptr->org_y, sb_ptr->org_y, sb_ptr->org_y + 64, sb_ptr->org_y + 64};
+        int blk_org_x          = sb_ptr->org_x + blk_geom->org_x;
+        int blk_org_y          = sb_ptr->org_y + blk_geom->org_y;
         for (int i = 0; i < 4; ++i) {
-            if (blk_org_x < b64_seg_columns[i] + 64 &&
-                blk_org_x + blk_geom->bwidth > b64_seg_columns[i] &&
-                blk_org_y < b64_seg_rows[i] + 64 &&
-                blk_org_y + blk_geom->bheight > b64_seg_rows[i]) {
+            if (blk_org_x < b64_seg_columns[i] + 64 && blk_org_x + blk_geom->bwidth > b64_seg_columns[i] &&
+                blk_org_y < b64_seg_rows[i] + 64 && blk_org_y + blk_geom->bheight > b64_seg_rows[i]) {
                 const int column_b64 = b64_seg_columns[i] >> 6;
                 const int row_b64    = b64_seg_rows[i] >> 6;
-                segment_id           = MIN(segment_id,
-                                 roi_map->b64_seg_map[row_b64 * stride_b64 + column_b64]);
+                segment_id           = MIN(segment_id, roi_map->b64_seg_map[row_b64 * stride_b64 + column_b64]);
             }
         }
     }
@@ -133,17 +120,13 @@ static void roi_map_apply_segmentation_based_quantization(const BlockGeom   *blk
                segmentation_params->feature_data[blk_ptr->segment_id][SEG_LVL_ALT_Q] >
            0);
 }
-#endif
 
-void svt_aom_apply_segmentation_based_quantization(const BlockGeom   *blk_geom,
-                                                   PictureControlSet *pcs, SuperBlock *sb_ptr,
-                                                   BlkStruct *blk_ptr) {
-#if FTR_ROI
+void svt_aom_apply_segmentation_based_quantization(const BlockGeom *blk_geom, PictureControlSet *pcs,
+                                                   SuperBlock *sb_ptr, BlkStruct *blk_ptr) {
     if (pcs->ppcs->roi_map_evt != NULL) {
         roi_map_apply_segmentation_based_quantization(blk_geom, pcs, sb_ptr, blk_ptr);
         return;
     }
-#endif
     uint16_t           *variance_ptr        = pcs->ppcs->variance[sb_ptr->index];
     SegmentationParams *segmentation_params = &pcs->ppcs->frm_hdr.segmentation_params;
     uint16_t            variance            = get_variance_for_cu(blk_geom, variance_ptr);
@@ -162,7 +145,6 @@ void svt_aom_apply_segmentation_based_quantization(const BlockGeom   *blk_geom,
     }
 }
 
-#if FTR_ROI
 static void roi_map_setup_segmentation(PictureControlSet *pcs, SequenceControlSet *scs) {
     UNUSED(scs);
     SvtAv1RoiMapEvt    *roi_map                       = pcs->ppcs->roi_map_evt;
@@ -186,25 +168,20 @@ static void roi_map_setup_segmentation(PictureControlSet *pcs, SequenceControlSe
     uint8_t qindex = pcs->ppcs->frm_hdr.quantization_params.base_q_idx;
     svt_av1_pick_filter_level_by_q(pcs, qindex, filter_level);
     for (int i = 0; i <= roi_map->max_seg_id; i++) {
-        uint8_t qindex_seg = CLIP3(
-            0, 255, qindex + segmentation_params->feature_data[i][SEG_LVL_ALT_Q]);
+        uint8_t qindex_seg = CLIP3(0, 255, qindex + segmentation_params->feature_data[i][SEG_LVL_ALT_Q]);
         int32_t filter_level_seg[4];
         svt_av1_pick_filter_level_by_q(pcs, qindex_seg, filter_level_seg);
         if (segmentation_params->feature_enabled[i][SEG_LVL_ALT_LF_Y_V]) {
-            segmentation_params->feature_data[i][SEG_LVL_ALT_LF_Y_V] = filter_level_seg[0] -
-                filter_level[0];
+            segmentation_params->feature_data[i][SEG_LVL_ALT_LF_Y_V] = filter_level_seg[0] - filter_level[0];
         }
         if (segmentation_params->feature_enabled[i][SEG_LVL_ALT_LF_Y_H]) {
-            segmentation_params->feature_data[i][SEG_LVL_ALT_LF_Y_H] = filter_level_seg[1] -
-                filter_level[1];
+            segmentation_params->feature_data[i][SEG_LVL_ALT_LF_Y_H] = filter_level_seg[1] - filter_level[1];
         }
         if (segmentation_params->feature_enabled[i][SEG_LVL_ALT_LF_U]) {
-            segmentation_params->feature_data[i][SEG_LVL_ALT_LF_U] = filter_level_seg[2] -
-                filter_level[2];
+            segmentation_params->feature_data[i][SEG_LVL_ALT_LF_U] = filter_level_seg[2] - filter_level[2];
         }
         if (segmentation_params->feature_enabled[i][SEG_LVL_ALT_LF_V]) {
-            segmentation_params->feature_data[i][SEG_LVL_ALT_LF_V] = filter_level_seg[3] -
-                filter_level[3];
+            segmentation_params->feature_data[i][SEG_LVL_ALT_LF_V] = filter_level_seg[3] - filter_level[3];
         }
     }
 #if DEBUG_ROI
@@ -235,18 +212,14 @@ static void roi_map_setup_segmentation(PictureControlSet *pcs, SequenceControlSe
 #endif
     calculate_segmentation_data(segmentation_params);
 }
-#endif
 
 void svt_aom_setup_segmentation(PictureControlSet *pcs, SequenceControlSet *scs) {
-#if FTR_ROI
     if (pcs->ppcs->roi_map_evt != NULL) {
         roi_map_setup_segmentation(pcs, scs);
         return;
     }
-#endif
-    SegmentationParams *segmentation_params = &pcs->ppcs->frm_hdr.segmentation_params;
-    segmentation_params->segmentation_enabled =
-        (Bool)(scs->static_config.enable_adaptive_quantization == 1);
+    SegmentationParams *segmentation_params   = &pcs->ppcs->frm_hdr.segmentation_params;
+    segmentation_params->segmentation_enabled = (Bool)(scs->static_config.enable_adaptive_quantization == 1);
     if (segmentation_params->segmentation_enabled) {
         segmentation_params->segmentation_update_data =
             1; //always updating for now. Need to set this based on actual deltas
@@ -254,8 +227,7 @@ void svt_aom_setup_segmentation(PictureControlSet *pcs, SequenceControlSet *scs)
         segmentation_params->segmentation_temporal_update =
             FALSE; //!(pcs->ppcs->av1FrameType == KEY_FRAME || pcs->ppcs->av1FrameType == INTRA_ONLY_FRAME);
         find_segment_qps(segmentation_params, pcs);
-        for (int i = 0; i < MAX_SEGMENTS; i++)
-            segmentation_params->feature_enabled[i][SEG_LVL_ALT_Q] = 1;
+        for (int i = 0; i < MAX_SEGMENTS; i++) segmentation_params->feature_enabled[i][SEG_LVL_ALT_Q] = 1;
 
         calculate_segmentation_data(segmentation_params);
     }

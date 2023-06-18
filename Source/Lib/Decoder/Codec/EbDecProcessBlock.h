@@ -17,9 +17,8 @@ extern "C" {
 #endif
 
 // void svt_aom_decode_block();
-void svt_aom_decode_block(DecModCtxt *dec_mod_ctxt, BlockModeInfo *mode_info, int32_t mi_row,
-                          int32_t mi_col, BlockSize bsize, TileInfo *tile,
-                          SBInfo *sb_info /*, uint32_t *recon*/);
+void svt_aom_decode_block(DecModCtxt *dec_mod_ctxt, BlockModeInfo *mode_info, int32_t mi_row, int32_t mi_col,
+                          BlockSize bsize, TileInfo *tile, SBInfo *sb_info /*, uint32_t *recon*/);
 
 #ifdef __cplusplus
 }

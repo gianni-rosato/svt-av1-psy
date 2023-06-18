@@ -66,9 +66,7 @@ EB_API void svt_metadata_array_free(void *arr) {
     SvtMetadataArrayT **metadata = (SvtMetadataArrayT **)arr;
     if (*metadata) {
         if ((*metadata)->metadata_array) {
-            for (size_t i = 0; i < (*metadata)->sz; i++) {
-                svt_metadata_free(&((*metadata)->metadata_array[i]));
-            }
+            for (size_t i = 0; i < (*metadata)->sz; i++) { svt_metadata_free(&((*metadata)->metadata_array[i])); }
             free((*metadata)->metadata_array);
         }
         free(*metadata);
@@ -76,8 +74,7 @@ EB_API void svt_metadata_array_free(void *arr) {
     *metadata = NULL;
 }
 
-EB_API int svt_add_metadata(EbBufferHeaderType *buffer, const uint32_t type, const uint8_t *data,
-                            const size_t sz) {
+EB_API int svt_add_metadata(EbBufferHeaderType *buffer, const uint32_t type, const uint8_t *data, const size_t sz) {
     if (!buffer)
         return -1;
     if (!buffer->metadata) {
@@ -88,8 +85,8 @@ EB_API int svt_add_metadata(EbBufferHeaderType *buffer, const uint32_t type, con
     SvtMetadataT *metadata = svt_metadata_alloc(type, data, sz);
     if (!metadata)
         return -1;
-    SvtMetadataT **metadata_array = (SvtMetadataT **)realloc(
-        buffer->metadata->metadata_array, (buffer->metadata->sz + 1) * sizeof(metadata));
+    SvtMetadataT **metadata_array = (SvtMetadataT **)realloc(buffer->metadata->metadata_array,
+                                                             (buffer->metadata->sz + 1) * sizeof(metadata));
     if (!metadata_array) {
         svt_metadata_free(&metadata);
         return -1;
@@ -100,8 +97,7 @@ EB_API int svt_add_metadata(EbBufferHeaderType *buffer, const uint32_t type, con
     return 0;
 }
 
-EbErrorType svt_aom_copy_metadata_buffer(EbBufferHeaderType                  *dst,
-                                         const struct SvtMetadataArray *const src) {
+EbErrorType svt_aom_copy_metadata_buffer(EbBufferHeaderType *dst, const struct SvtMetadataArray *const src) {
     if (!dst || !src)
         return EB_ErrorBadParameter;
     EbErrorType return_error = EB_ErrorNone;
@@ -138,9 +134,7 @@ EB_API size_t svt_metadata_size(SvtMetadataArrayT *metadata, const EbAv1Metadata
 }
 
 static inline uint16_t intswap16(uint16_t x) { return x << 8 | x >> 8; }
-static inline uint32_t intswap32(uint32_t x) {
-    return x >> 24 | (x >> 8 & 0xff00) | (x << 8 & 0xff0000) | x << 24;
-}
+static inline uint32_t intswap32(uint32_t x) { return x >> 24 | (x >> 8 & 0xff00) | (x << 8 & 0xff0000) | x << 24; }
 static inline uint16_t clip16be(double x) { return intswap16(x > 65535 ? 65535 : (uint16_t)x); }
 
 // Parses "(d1,d2)" into two double values and returns the pointer to after the closing parenthesis.
@@ -156,12 +150,10 @@ static inline char *parse_double(const char *p, double *d1, double *d2) {
     return *endptr == ')' ? endptr + 1 : NULL;
 }
 
-EB_API int svt_aom_parse_mastering_display(struct EbSvtAv1MasteringDisplayInfo *mdi,
-                                           const char                          *md_str) {
+EB_API int svt_aom_parse_mastering_display(struct EbSvtAv1MasteringDisplayInfo *mdi, const char *md_str) {
     if (!mdi || !md_str)
         return 0;
-    double gx = 0, gy = 0, bx = 0, by = 0, rx = 0, ry = 0, wx = 0, wy = 0, max_luma = 0,
-           min_luma = 0;
+    double gx = 0, gy = 0, bx = 0, by = 0, rx = 0, ry = 0, wx = 0, wy = 0, max_luma = 0, min_luma = 0;
     while (md_str && *md_str) {
         switch (*md_str) {
         case 'G':
@@ -178,8 +170,8 @@ EB_API int svt_aom_parse_mastering_display(struct EbSvtAv1MasteringDisplayInfo *
         }
     }
 #define between1(x) (x >= 0.0 && x <= 1.0)
-    if (!between1(gx) || !between1(gy) || !between1(bx) || !between1(by) || !between1(rx) ||
-        !between1(ry) || !between1(wx) || !between1(wy))
+    if (!between1(gx) || !between1(gy) || !between1(bx) || !between1(by) || !between1(rx) || !between1(ry) ||
+        !between1(wx) || !between1(wy))
         SVT_WARN("Invalid mastering display info will be clipped to 0.0 to 1.0\n");
 #undef between1
     memset(mdi, 0, sizeof(*mdi));

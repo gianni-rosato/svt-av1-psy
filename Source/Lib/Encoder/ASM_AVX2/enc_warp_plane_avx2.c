@@ -13,9 +13,8 @@
 #include "aom_dsp_rtcd.h"
 #include "EbEncWarpedMotion.h"
 
-int64_t svt_av1_calc_frame_error_avx2(const uint8_t *const ref, int ref_stride,
-                                      const uint8_t *const dst, int p_width, int p_height,
-                                      int dst_stride) {
+int64_t svt_av1_calc_frame_error_avx2(const uint8_t *const ref, int ref_stride, const uint8_t *const dst, int p_width,
+                                      int p_height, int dst_stride) {
     int64_t sum_error = 0;
     int     i, j;
     __m256i row_error, col_error;
@@ -29,22 +28,14 @@ int64_t svt_av1_calc_frame_error_avx2(const uint8_t *const ref, int ref_stride,
         const uint8_t *ref_ptr = ref + i * 4 * ref_stride;
         const uint8_t *dst_ptr = dst + i * 4 * dst_stride;
         for (j = 0; j < (p_width / 16); j++) {
-            __m256i ref_1_16 = _mm256_cvtepu8_epi16(
-                _mm_loadu_si128((__m128i *)(ref_ptr + 0 * ref_stride)));
-            __m256i dst_1_16 = _mm256_cvtepu8_epi16(
-                _mm_loadu_si128((__m128i *)(dst_ptr + 0 * dst_stride)));
-            __m256i ref_2_16 = _mm256_cvtepu8_epi16(
-                _mm_loadu_si128((__m128i *)(ref_ptr + 1 * ref_stride)));
-            __m256i dst_2_16 = _mm256_cvtepu8_epi16(
-                _mm_loadu_si128((__m128i *)(dst_ptr + 1 * dst_stride)));
-            __m256i ref_3_16 = _mm256_cvtepu8_epi16(
-                _mm_loadu_si128((__m128i *)(ref_ptr + 2 * ref_stride)));
-            __m256i dst_3_16 = _mm256_cvtepu8_epi16(
-                _mm_loadu_si128((__m128i *)(dst_ptr + 2 * dst_stride)));
-            __m256i ref_4_16 = _mm256_cvtepu8_epi16(
-                _mm_loadu_si128((__m128i *)(ref_ptr + 3 * ref_stride)));
-            __m256i dst_4_16 = _mm256_cvtepu8_epi16(
-                _mm_loadu_si128((__m128i *)(dst_ptr + 3 * dst_stride)));
+            __m256i ref_1_16 = _mm256_cvtepu8_epi16(_mm_loadu_si128((__m128i *)(ref_ptr + 0 * ref_stride)));
+            __m256i dst_1_16 = _mm256_cvtepu8_epi16(_mm_loadu_si128((__m128i *)(dst_ptr + 0 * dst_stride)));
+            __m256i ref_2_16 = _mm256_cvtepu8_epi16(_mm_loadu_si128((__m128i *)(ref_ptr + 1 * ref_stride)));
+            __m256i dst_2_16 = _mm256_cvtepu8_epi16(_mm_loadu_si128((__m128i *)(dst_ptr + 1 * dst_stride)));
+            __m256i ref_3_16 = _mm256_cvtepu8_epi16(_mm_loadu_si128((__m128i *)(ref_ptr + 2 * ref_stride)));
+            __m256i dst_3_16 = _mm256_cvtepu8_epi16(_mm_loadu_si128((__m128i *)(dst_ptr + 2 * dst_stride)));
+            __m256i ref_4_16 = _mm256_cvtepu8_epi16(_mm_loadu_si128((__m128i *)(ref_ptr + 3 * ref_stride)));
+            __m256i dst_4_16 = _mm256_cvtepu8_epi16(_mm_loadu_si128((__m128i *)(dst_ptr + 3 * dst_stride)));
 
             __m256i diff_1 = _mm256_add_epi16(_mm256_sub_epi16(dst_1_16, ref_1_16), dup_255);
             __m256i diff_2 = _mm256_add_epi16(_mm256_sub_epi16(dst_2_16, ref_2_16), dup_255);
@@ -90,8 +81,7 @@ int64_t svt_av1_calc_frame_error_avx2(const uint8_t *const ref, int ref_stride,
         if (p_width & 0xf) {
             for (int k = 0; k < 4; ++k) {
                 for (uint32_t cnt = 0; cnt < leftover; ++cnt)
-                    sum_error += (int64_t)error_measure(dst_ptr[cnt + k * dst_stride] -
-                                                        ref_ptr[cnt + k * ref_stride]);
+                    sum_error += (int64_t)error_measure(dst_ptr[cnt + k * dst_stride] - ref_ptr[cnt + k * ref_stride]);
             }
         }
     }
@@ -106,8 +96,7 @@ int64_t svt_av1_calc_frame_error_avx2(const uint8_t *const ref, int ref_stride,
     if (p_height & 0x3) {
         for (int k = i * 4; k < p_height; ++k) {
             for (int l = 0; l < p_width; ++l)
-                sum_error += (int64_t)error_measure(dst[l + k * dst_stride] -
-                                                    ref[l + k * ref_stride]);
+                sum_error += (int64_t)error_measure(dst[l + k * dst_stride] - ref[l + k * ref_stride]);
         }
     }
     return sum_error;

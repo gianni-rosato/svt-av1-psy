@@ -189,8 +189,7 @@ EbErrorType svt_destroy_thread(EbHandle thread_handle) {
     WaitForSingleObject(thread_handle, INFINITE);
     error_return = CloseHandle(thread_handle) ? EB_ErrorNone : EB_ErrorDestroyThreadFailed;
 #else
-    error_return  = pthread_join(*((pthread_t *)thread_handle), NULL) ? EB_ErrorDestroyThreadFailed
-                                                                      : EB_ErrorNone;
+    error_return  = pthread_join(*((pthread_t *)thread_handle), NULL) ? EB_ErrorDestroyThreadFailed : EB_ErrorNone;
     free(thread_handle);
 #endif // _WIN32
 
@@ -240,8 +239,7 @@ EbErrorType svt_post_semaphore(EbHandle semaphore_handle) {
     dispatch_semaphore_signal((dispatch_semaphore_t)semaphore_handle);
     return_error = EB_ErrorNone;
 #else
-    return_error = sem_post((sem_t *)semaphore_handle) ? EB_ErrorSemaphoreUnresponsive
-                                                       : EB_ErrorNone;
+    return_error = sem_post((sem_t *)semaphore_handle) ? EB_ErrorSemaphoreUnresponsive : EB_ErrorNone;
 #endif
 
     return return_error;
@@ -254,12 +252,10 @@ EbErrorType svt_block_on_semaphore(EbHandle semaphore_handle) {
     EbErrorType return_error;
 
 #ifdef _WIN32
-    return_error = WaitForSingleObject((HANDLE)semaphore_handle, INFINITE)
-        ? EB_ErrorSemaphoreUnresponsive
-        : EB_ErrorNone;
+    return_error = WaitForSingleObject((HANDLE)semaphore_handle, INFINITE) ? EB_ErrorSemaphoreUnresponsive
+                                                                           : EB_ErrorNone;
 #elif defined(__APPLE__)
-    return_error = dispatch_semaphore_wait((dispatch_semaphore_t)semaphore_handle,
-                                           DISPATCH_TIME_FOREVER)
+    return_error = dispatch_semaphore_wait((dispatch_semaphore_t)semaphore_handle, DISPATCH_TIME_FOREVER)
         ? EB_ErrorSemaphoreUnresponsive
         : EB_ErrorNone;
 #else
@@ -278,14 +274,12 @@ EbErrorType svt_destroy_semaphore(EbHandle semaphore_handle) {
     EbErrorType return_error;
 
 #ifdef _WIN32
-    return_error = !CloseHandle((HANDLE)semaphore_handle) ? EB_ErrorDestroySemaphoreFailed
-                                                          : EB_ErrorNone;
+    return_error = !CloseHandle((HANDLE)semaphore_handle) ? EB_ErrorDestroySemaphoreFailed : EB_ErrorNone;
 #elif defined(__APPLE__)
     dispatch_release((dispatch_semaphore_t)semaphore_handle);
     return_error = EB_ErrorNone;
 #else
-    return_error = sem_destroy((sem_t *)semaphore_handle) ? EB_ErrorDestroySemaphoreFailed
-                                                          : EB_ErrorNone;
+    return_error = sem_destroy((sem_t *)semaphore_handle) ? EB_ErrorDestroySemaphoreFailed : EB_ErrorNone;
     free(semaphore_handle);
 #endif
 
@@ -324,8 +318,7 @@ EbErrorType svt_release_mutex(EbHandle mutex_handle) {
 #ifdef _WIN32
     return_error = !ReleaseMutex((HANDLE)mutex_handle) ? EB_ErrorMutexUnresponsive : EB_ErrorNone;
 #else
-    return_error = pthread_mutex_unlock((pthread_mutex_t *)mutex_handle) ? EB_ErrorMutexUnresponsive
-                                                                         : EB_ErrorNone;
+    return_error = pthread_mutex_unlock((pthread_mutex_t *)mutex_handle) ? EB_ErrorMutexUnresponsive : EB_ErrorNone;
 #endif
 
     return return_error;
@@ -338,11 +331,9 @@ EbErrorType svt_block_on_mutex(EbHandle mutex_handle) {
     EbErrorType return_error;
 
 #ifdef _WIN32
-    return_error = WaitForSingleObject((HANDLE)mutex_handle, INFINITE) ? EB_ErrorMutexUnresponsive
-                                                                       : EB_ErrorNone;
+    return_error = WaitForSingleObject((HANDLE)mutex_handle, INFINITE) ? EB_ErrorMutexUnresponsive : EB_ErrorNone;
 #else
-    return_error = pthread_mutex_lock((pthread_mutex_t *)mutex_handle) ? EB_ErrorMutexUnresponsive
-                                                                       : EB_ErrorNone;
+    return_error = pthread_mutex_lock((pthread_mutex_t *)mutex_handle) ? EB_ErrorMutexUnresponsive : EB_ErrorNone;
 #endif
 
     return return_error;
@@ -357,9 +348,7 @@ EbErrorType svt_destroy_mutex(EbHandle mutex_handle) {
 #ifdef _WIN32
     return_error = CloseHandle((HANDLE)mutex_handle) ? EB_ErrorDestroyMutexFailed : EB_ErrorNone;
 #else
-    return_error = pthread_mutex_destroy((pthread_mutex_t *)mutex_handle)
-        ? EB_ErrorDestroyMutexFailed
-        : EB_ErrorNone;
+    return_error = pthread_mutex_destroy((pthread_mutex_t *)mutex_handle) ? EB_ErrorDestroyMutexFailed : EB_ErrorNone;
     free(mutex_handle);
 #endif
 
@@ -432,8 +421,7 @@ EbErrorType svt_wait_cond_var(CondVar *cond_var, int32_t input) {
     return_error = EB_ErrorNone;
 #else
     return_error = pthread_mutex_lock(&cond_var->m_mutex);
-    while (cond_var->val == input)
-        return_error = pthread_cond_wait(&cond_var->m_cond, &cond_var->m_mutex);
+    while (cond_var->val == input) return_error = pthread_cond_wait(&cond_var->m_cond, &cond_var->m_mutex);
     return_error = pthread_mutex_unlock(&cond_var->m_mutex);
 #endif
     return return_error;

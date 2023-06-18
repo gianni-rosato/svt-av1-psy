@@ -18,15 +18,14 @@ extern void svt_aom_transpose_float_sse2(const float *A, float *b, int32_t n);
 extern void svt_aom_fft_unpack_2d_output_sse2(const float *col_fft, float *output, int32_t n);
 
 // Generate the 1d forward transforms for float using _mm256
-GEN_FFT_8(static INLINE void, avx2, float, __m256, _mm256_loadu_ps, _mm256_storeu_ps,
-          _mm256_set1_ps, _mm256_add_ps, _mm256_sub_ps, _mm256_mul_ps);
-GEN_FFT_16(static INLINE void, avx2, float, __m256, _mm256_loadu_ps, _mm256_storeu_ps,
-           _mm256_set1_ps, _mm256_add_ps, _mm256_sub_ps, _mm256_mul_ps);
-GEN_FFT_32(static INLINE void, avx2, float, __m256, _mm256_loadu_ps, _mm256_storeu_ps,
-           _mm256_set1_ps, _mm256_add_ps, _mm256_sub_ps, _mm256_mul_ps);
+GEN_FFT_8(static INLINE void, avx2, float, __m256, _mm256_loadu_ps, _mm256_storeu_ps, _mm256_set1_ps, _mm256_add_ps,
+          _mm256_sub_ps, _mm256_mul_ps);
+GEN_FFT_16(static INLINE void, avx2, float, __m256, _mm256_loadu_ps, _mm256_storeu_ps, _mm256_set1_ps, _mm256_add_ps,
+           _mm256_sub_ps, _mm256_mul_ps);
+GEN_FFT_32(static INLINE void, avx2, float, __m256, _mm256_loadu_ps, _mm256_storeu_ps, _mm256_set1_ps, _mm256_add_ps,
+           _mm256_sub_ps, _mm256_mul_ps);
 
-static INLINE void transpose8x8_float(const float *A, float *b, const int32_t lda,
-                                      const int32_t ldb) {
+static INLINE void transpose8x8_float(const float *A, float *b, const int32_t lda, const int32_t ldb) {
     __m256 in0 = _mm256_loadu_ps(&A[0 * lda]);
     __m256 in1 = _mm256_loadu_ps(&A[1 * lda]);
     __m256 in2 = _mm256_loadu_ps(&A[2 * lda]);
@@ -113,12 +112,12 @@ void svt_aom_fft32x32_float_avx2(const float *input, float *temp, float *output)
 }
 
 // Generate the 1d inverse transforms for float using _mm256
-GEN_IFFT_8(static INLINE void, avx2, float, __m256, _mm256_loadu_ps, _mm256_storeu_ps,
-           _mm256_set1_ps, _mm256_add_ps, _mm256_sub_ps, _mm256_mul_ps);
-GEN_IFFT_16(static INLINE void, avx2, float, __m256, _mm256_loadu_ps, _mm256_storeu_ps,
-            _mm256_set1_ps, _mm256_add_ps, _mm256_sub_ps, _mm256_mul_ps);
-GEN_IFFT_32(static INLINE void, avx2, float, __m256, _mm256_loadu_ps, _mm256_storeu_ps,
-            _mm256_set1_ps, _mm256_add_ps, _mm256_sub_ps, _mm256_mul_ps);
+GEN_IFFT_8(static INLINE void, avx2, float, __m256, _mm256_loadu_ps, _mm256_storeu_ps, _mm256_set1_ps, _mm256_add_ps,
+           _mm256_sub_ps, _mm256_mul_ps);
+GEN_IFFT_16(static INLINE void, avx2, float, __m256, _mm256_loadu_ps, _mm256_storeu_ps, _mm256_set1_ps, _mm256_add_ps,
+            _mm256_sub_ps, _mm256_mul_ps);
+GEN_IFFT_32(static INLINE void, avx2, float, __m256, _mm256_loadu_ps, _mm256_storeu_ps, _mm256_set1_ps, _mm256_add_ps,
+            _mm256_sub_ps, _mm256_mul_ps);
 
 void svt_aom_ifft8x8_float_avx2(const float *input, float *temp, float *output) {
     svt_aom_ifft_2d_gen(input,

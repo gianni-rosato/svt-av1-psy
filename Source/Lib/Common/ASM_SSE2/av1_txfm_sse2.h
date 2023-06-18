@@ -68,13 +68,11 @@ static INLINE __m128i load_32bit_to_16bit_w4(const int32_t *a) {
     return _mm_packs_epi32(a_low, a_low);
 }
 
-static INLINE void load_buffer_32bit_to_16bit(const int32_t *in, int32_t stride, __m128i *out,
-                                              int32_t out_size) {
+static INLINE void load_buffer_32bit_to_16bit(const int32_t *in, int32_t stride, __m128i *out, int32_t out_size) {
     for (int32_t i = 0; i < out_size; ++i) out[i] = load_32bit_to_16bit(in + i * stride);
 }
 
-static INLINE void load_buffer_32bit_to_16bit_w4(const int32_t *in, int32_t stride, __m128i *out,
-                                                 int32_t out_size) {
+static INLINE void load_buffer_32bit_to_16bit_w4(const int32_t *in, int32_t stride, __m128i *out, int32_t out_size) {
     for (int32_t i = 0; i < out_size; ++i) out[i] = load_32bit_to_16bit_w4(in + i * stride);
 }
 

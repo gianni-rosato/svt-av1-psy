@@ -32,8 +32,7 @@ typedef enum ATTRIBUTE_PACKED {
     BOTTOM_RIGHT = 128
 } PadDir;
 
-static INLINE int get_relative_dist(OrderHintInfo *ps_order_hint_info, int ref_hint,
-                                    int order_hint) {
+static INLINE int get_relative_dist(OrderHintInfo *ps_order_hint_info, int ref_hint, int order_hint) {
     int diff, m;
     if (!ps_order_hint_info->enable_order_hint)
         return 0;
@@ -45,17 +44,17 @@ static INLINE int get_relative_dist(OrderHintInfo *ps_order_hint_info, int ref_h
 
 EbErrorType svt_aom_check_add_tplmv_buf(EbDecHandle *dec_handle_ptr);
 
-void svt_aom_derive_blk_pointers(EbPictureBufferDesc *recon_picture_buf, int32_t plane,
-                                 int32_t blk_col_px, int32_t blk_row_px, void **pp_blk_recon_buf,
-                                 int32_t *recon_stride, int32_t sub_x, int32_t sub_y);
+void svt_aom_derive_blk_pointers(EbPictureBufferDesc *recon_picture_buf, int32_t plane, int32_t blk_col_px,
+                                 int32_t blk_row_px, void **pp_blk_recon_buf, int32_t *recon_stride, int32_t sub_x,
+                                 int32_t sub_y);
 
 void svt_aom_pad_pic(EbDecHandle *dec_handle_ptr);
 
 PadDir svt_aom_get_neighbour_flags(int32_t row, int32_t col, int32_t num_rows, int32_t num_cols);
 
-void svt_aom_pad_row(EbPictureBufferDesc *recon_picture_buf, EbByte buf_y, EbByte buf_cb,
-                     EbByte buf_cr, uint32_t row_width, uint32_t row_height, uint32_t pad_width,
-                     uint32_t pad_height, uint32_t sx, uint32_t sy, PadDir flags);
+void svt_aom_pad_row(EbPictureBufferDesc *recon_picture_buf, EbByte buf_y, EbByte buf_cb, EbByte buf_cr,
+                     uint32_t row_width, uint32_t row_height, uint32_t pad_width, uint32_t pad_height, uint32_t sx,
+                     uint32_t sy, PadDir flags);
 
 int svt_aom_inverse_recenter(int r, int v);
 
@@ -75,19 +74,15 @@ static INLINE int svt_aom_is_interintra_allowed_ref(const MvReferenceFrame rf[2]
 }
 
 static INLINE int svt_aom_is_interintra_allowed(const BlockModeInfo *mbmi) {
-    return svt_aom_is_interintra_allowed_bsize(mbmi->bsize) &&
-        svt_aom_is_interintra_allowed_mode(mbmi->mode) &&
+    return svt_aom_is_interintra_allowed_bsize(mbmi->bsize) && svt_aom_is_interintra_allowed_mode(mbmi->mode) &&
         svt_aom_is_interintra_allowed_ref(mbmi->ref_frame);
 }
 
 static INLINE int is_interintra_pred(const BlockModeInfo *mbmi) {
-    return mbmi->ref_frame[0] > INTRA_FRAME && mbmi->ref_frame[1] == INTRA_FRAME &&
-        svt_aom_is_interintra_allowed(mbmi);
+    return mbmi->ref_frame[0] > INTRA_FRAME && mbmi->ref_frame[1] == INTRA_FRAME && svt_aom_is_interintra_allowed(mbmi);
 }
 
-static INLINE int svt_aom_has_second_ref(const BlockModeInfo *mbmi) {
-    return mbmi->ref_frame[1] > INTRA_FRAME;
-}
+static INLINE int svt_aom_has_second_ref(const BlockModeInfo *mbmi) { return mbmi->ref_frame[1] > INTRA_FRAME; }
 
 #ifdef __cplusplus
 }

@@ -108,11 +108,9 @@ typedef struct {
 } ObuHeader;
 
 int file_is_obu(CliInput *cli, ObuDecInputContext *obu_ctx);
-int obudec_read_temporal_unit(DecInputContext *input, uint8_t **buffer, size_t *bytes_read,
-                              size_t *buffer_size);
+int obudec_read_temporal_unit(DecInputContext *input, uint8_t **buffer, size_t *bytes_read, size_t *buffer_size);
 
 int file_is_ivf(CliInput *cli);
-int read_ivf_frame(FILE *infile, uint8_t **buffer, size_t *bytes_read, size_t *buffer_size,
-                   int64_t *pts);
+int read_ivf_frame(FILE *infile, uint8_t **buffer, size_t *bytes_read, size_t *buffer_size, int64_t *pts);
 
 #endif

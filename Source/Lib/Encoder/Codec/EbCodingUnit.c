@@ -32,9 +32,8 @@ Tasks & Questions
     -Need a ReconPicture for each candidate.
     -I don't see a way around doing the copies in temp memory and then copying it in...
 */
-EbErrorType svt_aom_largest_coding_unit_ctor(SuperBlock *larget_coding_unit_ptr,
-                                             uint8_t sb_size_pix, uint16_t sb_origin_x,
-                                             uint16_t sb_origin_y, uint16_t sb_index,
+EbErrorType svt_aom_largest_coding_unit_ctor(SuperBlock *larget_coding_unit_ptr, uint8_t sb_size_pix,
+                                             uint16_t sb_origin_x, uint16_t sb_origin_y, uint16_t sb_index,
                                              EncMode enc_mode, uint16_t max_block_cnt,
                                              PictureControlSet *picture_control_set)
 
@@ -55,9 +54,8 @@ EbErrorType svt_aom_largest_coding_unit_ctor(SuperBlock *larget_coding_unit_ptr,
     for (uint8_t is_base = 0; is_base <= 1; is_base++)
         for (uint8_t is_islice = 0; is_islice <= 1; is_islice++)
             for (uint8_t coeff_lvl = 0; coeff_lvl <= HIGH_LVL + 1; coeff_lvl++)
-                disallow_nsq = MIN(
-                    disallow_nsq,
-                    (svt_aom_get_nsq_level(enc_mode, is_islice, is_base, coeff_lvl) == 0 ? 1 : 0));
+                disallow_nsq = MIN(disallow_nsq,
+                                   (svt_aom_get_nsq_level(enc_mode, is_islice, is_base, coeff_lvl) == 0 ? 1 : 0));
     bool disallow_4x4 = true;
     for (SliceType slice_type = 0; slice_type < IDR_SLICE + 1; slice_type++)
         disallow_4x4 = MIN(disallow_4x4, svt_aom_get_disallow_4x4(enc_mode, slice_type));

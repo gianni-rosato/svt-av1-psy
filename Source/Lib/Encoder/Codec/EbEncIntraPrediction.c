@@ -730,18 +730,6 @@ EbErrorType svt_av1_intra_prediction_cl(
 {
     (void) hbd_md;
     EbErrorType return_error = EB_ErrorNone;
-#if !CLN_REMOVE_NEIGH_ARRAYS_2
-    if (!ctx->shut_fast_rate) {
-
-         MacroBlockD *xd = ctx->blk_ptr->av1xd;
-        ctx->intra_luma_left_mode = DC_PRED;
-        ctx->intra_luma_top_mode  = DC_PRED;
-        if (xd->left_available)
-            ctx->intra_luma_left_mode =  xd->mi[-1]->mbmi.block_mi.mode >= NEARESTMV ? DC_PRED : xd->mi[-1]->mbmi.block_mi.mode;
-        if (xd->up_available)
-            ctx->intra_luma_top_mode = xd->mi[-xd->mi_stride]->mbmi.block_mi.mode >= NEARESTMV ? DC_PRED : xd->mi[-xd->mi_stride]->mbmi.block_mi.mode;
-    }
-#endif
     TxSize  tx_size = ctx->blk_geom->txsize[cand_bf->cand->tx_depth]; // Nader - Intra 128x128 not supported
     TxSize  tx_size_chroma = ctx->blk_geom->txsize_uv[cand_bf->cand->tx_depth]; //Nader - Intra 128x128 not supported
     uint32_t sb_size_luma   = pcs->ppcs->scs->sb_size;
@@ -1021,11 +1009,7 @@ EbErrorType svt_av1_intra_prediction_cl(
     return return_error;
 }
 
-#if CLN_FUNC_DECL
 static EbErrorType intra_luma_prediction_for_interintra(
-#else
-EbErrorType  intra_luma_prediction_for_interintra(
-#endif
         ModeDecisionContext         *ctx,
         PictureControlSet           *pcs,
         InterIntraMode              interintra_mode,
@@ -1033,18 +1017,6 @@ EbErrorType  intra_luma_prediction_for_interintra(
 {
     EbErrorType return_error = EB_ErrorNone;
     uint8_t is_inter = 0; // set to 0 b/c this is an intra path
-#if !CLN_REMOVE_NEIGH_ARRAYS_2
-    if (!ctx->shut_fast_rate) {
-
-        MacroBlockD *xd = ctx->blk_ptr->av1xd;
-        ctx->intra_luma_left_mode = DC_PRED;
-        ctx->intra_luma_top_mode = DC_PRED;
-        if (xd->left_available)
-            ctx->intra_luma_left_mode = xd->mi[-1]->mbmi.block_mi.mode >= NEARESTMV ? DC_PRED : xd->mi[-1]->mbmi.block_mi.mode;
-        if (xd->up_available)
-            ctx->intra_luma_top_mode = xd->mi[-xd->mi_stride]->mbmi.block_mi.mode >= NEARESTMV ? DC_PRED : xd->mi[-xd->mi_stride]->mbmi.block_mi.mode;
-    }
-#endif
     TxSize  tx_size = ctx->blk_geom->txsize[0];  //CHKN  TOcheck
     PredictionMode mode = interintra_to_intra_mode[interintra_mode];
     uint32_t        sb_size_luma   = pcs->ppcs->scs->sb_size;
@@ -1138,7 +1110,6 @@ EbErrorType  intra_luma_prediction_for_interintra(
     return return_error;
 }
 
-#if CLN_FUNC_DECL
 // For every block, perform DC/V/H/S intra prediction to be used later in inter-intra search
 void svt_aom_precompute_intra_pred_for_inter_intra(PictureControlSet* pcs, ModeDecisionContext* ctx) {
     uint32_t            j;
@@ -1152,7 +1123,6 @@ void svt_aom_precompute_intra_pred_for_inter_intra(PictureControlSet* pcs, ModeD
         intra_luma_prediction_for_interintra(ctx, pcs, interintra_mode, &pred_desc);
     }
 }
-#endif
 
 EbErrorType svt_aom_update_neighbor_samples_array_open_loop_mb(
         uint8_t                            use_top_righ_bottom_left,

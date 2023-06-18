@@ -23,8 +23,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif // __cplusplus
-EB_API EbErrorType svt_get_sequence_info(const uint8_t *obu_data, size_t size,
-                                         SeqHeader *sequence_info);
+EB_API EbErrorType svt_get_sequence_info(const uint8_t *obu_data, size_t size, SeqHeader *sequence_info);
 #ifdef __cplusplus
 }
 #endif // __cplusplus

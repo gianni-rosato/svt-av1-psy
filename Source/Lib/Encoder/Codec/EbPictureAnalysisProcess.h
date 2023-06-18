@@ -20,15 +20,14 @@
 /***************************************
  * Extern Function Declaration
  ***************************************/
-EbErrorType svt_aom_picture_analysis_context_ctor(EbThreadContext   *thread_ctx,
-                                                  const EbEncHandle *enc_handle_ptr, int index);
+EbErrorType svt_aom_picture_analysis_context_ctor(EbThreadContext *thread_ctx, const EbEncHandle *enc_handle_ptr,
+                                                  int index);
 
 extern void *svt_aom_picture_analysis_kernel(void *input_ptr);
 
-void svt_aom_downsample_filtering_input_picture(PictureParentControlSet *pcs,
-                                                EbPictureBufferDesc     *input_padded_pic,
-                                                EbPictureBufferDesc     *quarter_picture_ptr,
-                                                EbPictureBufferDesc     *sixteenth_picture_ptr);
+void svt_aom_downsample_filtering_input_picture(PictureParentControlSet *pcs, EbPictureBufferDesc *input_padded_pic,
+                                                EbPictureBufferDesc *quarter_picture_ptr,
+                                                EbPictureBufferDesc *sixteenth_picture_ptr);
 
 void svt_aom_pad_input_pictures(SequenceControlSet *scs, EbPictureBufferDesc *input_pic);
 

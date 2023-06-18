@@ -238,12 +238,7 @@ void svt_aom_downsample_2d_avx2(uint8_t *input_samples, // input parameter, inpu
             out_ptr += decim_stride;
         }
     } else {
-        svt_aom_downsample_2d_c(input_samples,
-                                input_stride,
-                                input_area_width,
-                                input_area_height,
-                                decim_samples,
-                                decim_stride,
-                                decim_step);
+        svt_aom_downsample_2d_c(
+            input_samples, input_stride, input_area_width, input_area_height, decim_samples, decim_stride, decim_step);
     }
 }

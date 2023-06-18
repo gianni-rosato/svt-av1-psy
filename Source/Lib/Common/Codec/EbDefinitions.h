@@ -62,10 +62,8 @@ void svt_aom_assert_err(uint32_t condition, char *err_msg);
 #define HIGH_PRECISION_MV_QTHRESH 128
 // Actions in the second pass: Frame and SB QP assignment and temporal filtering strenght change
 #define AOM_INTERP_EXTEND 4
-#define AOM_LEFT_TOP_MARGIN_PX(subsampling) \
-    ((AOM_BORDER_IN_PIXELS >> subsampling) - AOM_INTERP_EXTEND)
-#define AOM_LEFT_TOP_MARGIN_SCALED(subsampling) \
-    (AOM_LEFT_TOP_MARGIN_PX(subsampling) << SCALE_SUBPEL_BITS)
+#define AOM_LEFT_TOP_MARGIN_PX(subsampling) ((AOM_BORDER_IN_PIXELS >> subsampling) - AOM_INTERP_EXTEND)
+#define AOM_LEFT_TOP_MARGIN_SCALED(subsampling) (AOM_LEFT_TOP_MARGIN_PX(subsampling) << SCALE_SUBPEL_BITS)
 
 #define DS_SC_FACT 23
 
@@ -132,50 +130,19 @@ typedef struct MrpCtrls {
 typedef struct TfControls {
     // Filtering set
     uint8_t enabled; // Specifies whether the current input will be filtered or not (0: OFF, 1: ON)
-#if OPT_LD_TF
     // Specifies whether the U& V planes will be filered or not (0: OFF (filter plane Y only)
     // 1: ON (filter all planes) 2: filter Y and decide to filter U and V based on the noise level)
     uint8_t chroma_lvl;
-#else
-    // Specifies whether the U& V planes will be filered or not (0: filter all planes, 1 : filter Y
-    // plane only)
-    uint8_t do_chroma;
-#endif
-#if !CLN_TF
-    // Specifies whether the weights generation will use approximations or not (0: do not use
-    // approximations, 1: per-block weights derivation, use an approximated exponential & log, use
-    // an approximated noise level)
-    uint8_t use_medium_filter;
-#endif
-#if OPT_LD_TF
     // Specifies whether the motion esimation is used or (0, 0) MVs are used (0: use motion estimation
     // 1: skip motion estimation search and use (0, 0) MVs
     uint8_t use_zz_based_filter;
-#endif
-#if !CLN_TF
-    // Specifies whether the weights derivation will use the distance factor(MV - based correction)
-    // and the 5x5 window error or not (0: OFF, 1 : ON)
-    uint8_t use_fast_filter;
-    // Specifies noise-level-estimation and filtering precision (0: use float/double precision, 1:
-    // use fixed point precision)
-    uint8_t use_fixed_point;
-#endif
     // Number of reference frame(s) set
     uint8_t num_past_pics; // Specifies the default number of frame(s) from past
     uint8_t num_future_pics; // Specifies the default number of frame(s) from future
-#if OPT_TF_REF_PICS
     // Specifies whether the number of reference frame(s) will be modified or not
     // For INTRA, the modulation uses the noise level
     // For BASE and L1, the modulation uses the filt_INTRA-to-unfilterd_INTRA distortion range
     uint8_t modulate_pics;
-#else
-    // Specifies whether num_past_pics will be incremented or not based on the noise level of the
-    // central frame(0: OFF or 1 : ON)
-    uint8_t noise_adjust_past_pics;
-    // Specifies whether num_future_pics will be incremented or not based on the noise level of the
-    // central frame(0: OFF or 1 : ON)
-    uint8_t noise_adjust_future_pics;
-#endif
     // Specifies whether to use the key- rame noise level for all inputs or to re - compute the
     // noise level for each input
     uint8_t use_intra_for_noise_est;
@@ -217,7 +184,6 @@ typedef struct TfControls {
     // block(s) is bypassed
     uint64_t pred_error_32x32_th;
 
-#if CLN_TF
     // Specifies whether to exit ME after HME or not (0: perform both HME and Full-Pel search, else
     // if the HME distortion is less than me_exit_th then exit after HME(i.e. do not perform the
     // Full-Pel search)
@@ -227,24 +193,10 @@ typedef struct TfControls {
     // deviation between the 64x64 ME distortion and the sum of the 4 32x32 ME distortions is less
     // than use_pred_64x64_only_th then perform Sub - Pel search for only the 64x64 block
     uint8_t use_pred_64x64_only_th;
-#else
-    // Specifies whether to exit ME after HME or not (0: perform both HME and Full-Pel search, else
-    // if the HME distortion is less than me_exit_th then exit after HME(i.e. do not perform the
-    // Full-Pel search), NA if use_fast_filter is set 0)
-    uint32_t me_exit_th;
-    // Specifies whether to perform Sub-Pel search for only the 64x64 block or to use default
-    // size(s) (32x32 or/ and 16x16) (∞: perform Sub-Pel search for default size(s), else if the
-    // deviation between the 64x64 ME distortion and the sum of the 4 32x32 ME distortions is less
-    // than use_pred_64x64_only_th then perform Sub - Pel search for only the 64x64 block, NA if
-    // use_fast_filter is set 0)
-    uint8_t use_pred_64x64_only_th;
-#endif
     // Specifies whether to early exit the Sub-Pel search based on a pred-error-th or not
     uint8_t subpel_early_exit;
-#if ENHANCE_KEY_FRAME
     // Specifies whether to skip reference frame e.g. 1 = use all frames, 2 = use every other frame, 4 = use 1/4 frames, etc.
     uint8_t ref_frame_factor;
-#endif
 } TfControls;
 typedef enum GM_LEVEL {
     GM_FULL   = 0, // Exhaustive search mode.
@@ -290,8 +242,7 @@ typedef struct {
 } CdefList;
 #define FB_NUM 3 // number of freqiency bands
 #define SSEG_NUM 2 // number of sse_gradient bands
-#define DEPTH_DELTA_NUM \
-    5 // number of depth refinement 0: Pred-2, 1:  Pred-1, 2:  Pred, 3:  Pred+1, 4:  Pred+2,
+#define DEPTH_DELTA_NUM 5 // number of depth refinement 0: Pred-2, 1:  Pred-1, 2:  Pred, 3:  Pred+1, 4:  Pred+2,
 #define TXT_DEPTH_DELTA_NUM 3 // negative, pred, positive
 #define UNUSED_HIGH_FREQ_BAND_TH 200
 #define UNUSED_LOW_FREQ_BAND_TH 0
@@ -340,22 +291,11 @@ enum {
 #define NSQ_TAB_SIZE 8
 #define NUMBER_OF_DEPTH 6
 #define NUMBER_OF_SHAPES 10
-#if OPT_TF_REF_PICS
-#if INCREASE_REF_PICS
 #define TF_MAX_EXTENSION 7 // Max additional tf pics after modulation per side
 #define TF_MAX_BASE_REF_PICS_6L 8 // Max additional tf pics at each side for BASE for 6L hierarchy
-#define TF_MAX_BASE_REF_PICS_SUB_6L \
-    8 // Max additional tf pics at each side for BASE for sub-6L hierarchy
-#else
-#define TF_MAX_EXTENSION 5 // Max additional tf pics after modulation per side
-#define TF_MAX_BASE_REF_PICS_6L 6 // Max additional tf pics at each side for BASE for 6L hierarchy
-#define TF_MAX_BASE_REF_PICS_SUB_6L \
-    6 // Max additional tf pics at each side for BASE for sub-6L hierarchy
-#endif
+#define TF_MAX_BASE_REF_PICS_SUB_6L 8 // Max additional tf pics at each side for BASE for sub-6L hierarchy
 #define TF_MAX_L1_REF_PICS_6L 2 // Max additional tf pics at each side for L1 for 6L hierarchy
-#define TF_MAX_L1_REF_PICS_SUB_6L \
-    1 // Max additional tf pics at each side for L1 for sub-6L hierarchy
-#endif
+#define TF_MAX_L1_REF_PICS_SUB_6L 1 // Max additional tf pics at each side for L1 for sub-6L hierarchy
 //  Delta QP support
 #define ADD_DELTA_QP_SUPPORT 1 // Add delta QP support
 #define BLOCK_MAX_COUNT_SB_128 4421
@@ -391,8 +331,7 @@ enum {
 
 #define INTERPOLATION_OFFSET 8
 #define STRIDE_PACK (MAX_SB_SIZE + (INTERPOLATION_OFFSET << 1))
-#define PACKED_BUFFER_SIZE \
-    ((MAX_SB_SIZE + (INTERPOLATION_OFFSET << 1)) * (MAX_SB_SIZE + (INTERPOLATION_OFFSET << 1)))
+#define PACKED_BUFFER_SIZE ((MAX_SB_SIZE + (INTERPOLATION_OFFSET << 1)) * (MAX_SB_SIZE + (INTERPOLATION_OFFSET << 1)))
 
 // Min superblock size
 #define MIN_SB_SIZE 64
@@ -655,9 +594,7 @@ static INLINE int64_t clamp64(int64_t value, int64_t low, int64_t high) {
 static INLINE double fclamp(double value, double low, double high) {
     return value < low ? low : (value > high ? high : value);
 }
-static INLINE uint8_t clip_pixel(int32_t val) {
-    return (uint8_t)((val > 255) ? 255 : (val < 0) ? 0 : val);
-}
+static INLINE uint8_t clip_pixel(int32_t val) { return (uint8_t)((val > 255) ? 255 : (val < 0) ? 0 : val); }
 
 static INLINE uint16_t clip_pixel_highbd(int32_t val, int32_t bd) {
     switch (bd) {
@@ -670,9 +607,7 @@ static INLINE uint16_t clip_pixel_highbd(int32_t val, int32_t bd) {
 
 static INLINE unsigned int negative_to_zero(int value) { return (value < 0) ? 0 : value; }
 
-static INLINE int av1_num_planes(EbColorConfig *color_info) {
-    return color_info->mono_chrome ? 1 : MAX_MB_PLANE;
-}
+static INLINE int av1_num_planes(EbColorConfig *color_info) { return color_info->mono_chrome ? 1 : MAX_MB_PLANE; }
 
 typedef struct IntraSize {
     uint8_t top;
@@ -694,16 +629,12 @@ typedef enum PdPass {
 typedef enum ATTRIBUTE_PACKED {
     REGULAR_PD0 =
         -1, // The regular PD0 path; negative so that LPD1 can start at 0 (easy for indexing arrays in lpd0_ctrls)
-    LPD0_LVL_0 = 0,
-    LPD0_LVL_1 = 1,
-    LPD0_LVL_2 = 2,
-    LPD0_LVL_3 = 3,
-#if OPT_DEPTH_REFIN
+    LPD0_LVL_0     = 0,
+    LPD0_LVL_1     = 1,
+    LPD0_LVL_2     = 2,
+    LPD0_LVL_3     = 3,
     LPD0_LVL_4     = 4,
     VERY_LIGHT_PD0 = 5, // Lightest PD0 path, doesn't perform TX
-#else
-    VERY_LIGHT_PD0 = 4, // Lightest PD0 path, doesn't perform TX
-#endif
     LPD0_LEVELS // Number of light-PD0 paths (regular PD0 isn't a light-PD0 path)
 } Pd0Level;
 
@@ -719,21 +650,8 @@ typedef enum ATTRIBUTE_PACKED {
     LPD1_LEVELS // Number of light-PD1 paths (regular PD1 isn't a light-PD1 path)
 } Pd1Level;
 // If adding/removing a class, must also update is_intra_class func and MD_STAGE_NICS array
-typedef enum CandClass {
-    CAND_CLASS_0,
-    CAND_CLASS_1,
-    CAND_CLASS_2,
-    CAND_CLASS_3,
-    CAND_CLASS_TOTAL
-} CandClass;
-typedef enum MdStage {
-    MD_STAGE_0,
-    MD_STAGE_1,
-    MD_STAGE_2,
-    MD_STAGE_3,
-    MD_STAGE_TOTAL,
-    INVALID_MD_STAGE
-} MdStage;
+typedef enum CandClass { CAND_CLASS_0, CAND_CLASS_1, CAND_CLASS_2, CAND_CLASS_3, CAND_CLASS_TOTAL } CandClass;
+typedef enum MdStage { MD_STAGE_0, MD_STAGE_1, MD_STAGE_2, MD_STAGE_3, MD_STAGE_TOTAL, INVALID_MD_STAGE } MdStage;
 typedef enum MdStagingMode {
     MD_STAGING_MODE_0,
     MD_STAGING_MODE_1,
@@ -791,12 +709,10 @@ typedef enum {
 } InterpFilter;
 
 #define AV1_COMMON Av1Common
-#if OPT_SPEL
 enum {
     SPEL_ME, //ME
     SPEL_PME, //PME
 } UENUM1BYTE(SUBPEL_STAGE);
-#endif
 enum {
     USE_2_TAPS_ORIG = 0, // This is used in temporal filtering.
     USE_2_TAPS,
@@ -971,12 +887,11 @@ static const TxSize tx_depth_to_tx_size[3][BlockSizeS_ALL] = {
      TX_64X64, //TX_128X128,
      TX_4X8,   TX_8X4,   TX_8X16,  TX_16X8,  TX_16X32, TX_32X16},
     // tx_depth 2
-    {TX_4X4,   TX_4X8, TX_8X4, TX_8X8,   TX_4X4,   TX_4X4,   TX_4X4,
-     TX_8X8,   TX_8X8, TX_8X8, TX_16X16, TX_16X16, TX_16X16,
+    {TX_4X4,   TX_4X8, TX_8X4, TX_8X8, TX_4X4,   TX_4X4,  TX_4X4, TX_8X8, TX_8X8, TX_8X8, TX_16X16, TX_16X16, TX_16X16,
      TX_64X64, //TX_64X128,
      TX_64X64, //TX_128X64,
      TX_64X64, //TX_128X128,
-     TX_4X4,   TX_4X4, TX_8X8, TX_8X8,   TX_16X16, TX_16X16}};
+     TX_4X4,   TX_4X4, TX_8X8, TX_8X8, TX_16X16, TX_16X16}};
 static const int32_t tx_size_wide[TX_SIZES_ALL] = {
     4, 8, 16, 32, 64, 4, 8, 8, 16, 16, 32, 32, 64, 4, 16, 8, 32, 16, 64,
 };
@@ -1066,36 +981,34 @@ typedef enum ATTRIBUTE_PACKED {
 } TxType;
 
 #define MAX_TX_TYPE_GROUP 6
-static const TxType tx_type_group[MAX_TX_TYPE_GROUP][TX_TYPES] = {
-    {DCT_DCT, INVALID_TX_TYPE},
-    {V_DCT, H_DCT, INVALID_TX_TYPE},
-    {ADST_ADST, INVALID_TX_TYPE},
-    {ADST_DCT, DCT_ADST, INVALID_TX_TYPE},
-    {FLIPADST_FLIPADST, IDTX, INVALID_TX_TYPE},
-    {FLIPADST_DCT,
-     DCT_FLIPADST,
-     ADST_FLIPADST,
-     FLIPADST_ADST,
-     V_ADST,
-     H_ADST,
-     V_FLIPADST,
-     H_FLIPADST,
-     INVALID_TX_TYPE}};
-static const TxType tx_type_group_sc[MAX_TX_TYPE_GROUP][TX_TYPES] = {
-    {DCT_DCT, IDTX, INVALID_TX_TYPE},
-    {V_DCT, H_DCT, INVALID_TX_TYPE},
-    {ADST_ADST, INVALID_TX_TYPE},
-    {ADST_DCT, DCT_ADST, INVALID_TX_TYPE},
-    {FLIPADST_FLIPADST, INVALID_TX_TYPE},
-    {FLIPADST_DCT,
-     DCT_FLIPADST,
-     ADST_FLIPADST,
-     FLIPADST_ADST,
-     V_ADST,
-     H_ADST,
-     V_FLIPADST,
-     H_FLIPADST,
-     INVALID_TX_TYPE}};
+static const TxType tx_type_group[MAX_TX_TYPE_GROUP][TX_TYPES]    = {{DCT_DCT, INVALID_TX_TYPE},
+                                                                     {V_DCT, H_DCT, INVALID_TX_TYPE},
+                                                                     {ADST_ADST, INVALID_TX_TYPE},
+                                                                     {ADST_DCT, DCT_ADST, INVALID_TX_TYPE},
+                                                                     {FLIPADST_FLIPADST, IDTX, INVALID_TX_TYPE},
+                                                                     {FLIPADST_DCT,
+                                                                      DCT_FLIPADST,
+                                                                      ADST_FLIPADST,
+                                                                      FLIPADST_ADST,
+                                                                      V_ADST,
+                                                                      H_ADST,
+                                                                      V_FLIPADST,
+                                                                      H_FLIPADST,
+                                                                      INVALID_TX_TYPE}};
+static const TxType tx_type_group_sc[MAX_TX_TYPE_GROUP][TX_TYPES] = {{DCT_DCT, IDTX, INVALID_TX_TYPE},
+                                                                     {V_DCT, H_DCT, INVALID_TX_TYPE},
+                                                                     {ADST_ADST, INVALID_TX_TYPE},
+                                                                     {ADST_DCT, DCT_ADST, INVALID_TX_TYPE},
+                                                                     {FLIPADST_FLIPADST, INVALID_TX_TYPE},
+                                                                     {FLIPADST_DCT,
+                                                                      DCT_FLIPADST,
+                                                                      ADST_FLIPADST,
+                                                                      FLIPADST_ADST,
+                                                                      V_ADST,
+                                                                      H_ADST,
+                                                                      V_FLIPADST,
+                                                                      H_FLIPADST,
+                                                                      INVALID_TX_TYPE}};
 typedef enum ATTRIBUTE_PACKED {
     // DCT only
     EXT_TX_SET_DCTONLY,
@@ -1234,9 +1147,6 @@ typedef enum ATTRIBUTE_PACKED {
     COMP_INTER_MODE_NUM     = COMP_INTER_MODE_END - COMP_INTER_MODE_START,
     INTRA_MODES             = PAETH_PRED + 1, // PAETH_PRED has to be the last intra mode.
     INTRA_INVALID           = MB_MODE_COUNT, // For uv_mode in inter blocks
-#if !CLN_MISC_CLEANUPS
-    INTRA_MODE_4x4
-#endif
 } PredictionMode;
 
 #define MAX_UPSAMPLE_SZ 16
@@ -1267,13 +1177,7 @@ typedef enum ATTRIBUTE_PACKED {
     MOTION_MODES
 } MotionMode;
 
-typedef enum ATTRIBUTE_PACKED {
-    II_DC_PRED,
-    II_V_PRED,
-    II_H_PRED,
-    II_SMOOTH_PRED,
-    INTERINTRA_MODES
-} InterIntraMode;
+typedef enum ATTRIBUTE_PACKED { II_DC_PRED, II_V_PRED, II_H_PRED, II_SMOOTH_PRED, INTERINTRA_MODES } InterIntraMode;
 
 typedef enum ATTRIBUTE_PACKED {
     COMPOUND_AVERAGE,
@@ -1288,9 +1192,8 @@ typedef enum ATTRIBUTE_PACKED {
 #define AOM_BLEND_A64_ROUND_BITS 6
 #define AOM_BLEND_A64_MAX_ALPHA (1 << AOM_BLEND_A64_ROUND_BITS) // 64
 
-#define AOM_BLEND_A64(a, v0, v1)                                            \
-    ROUND_POWER_OF_TWO((a) * (v0) + (AOM_BLEND_A64_MAX_ALPHA - (a)) * (v1), \
-                       AOM_BLEND_A64_ROUND_BITS)
+#define AOM_BLEND_A64(a, v0, v1) \
+    ROUND_POWER_OF_TWO((a) * (v0) + (AOM_BLEND_A64_MAX_ALPHA - (a)) * (v1), AOM_BLEND_A64_ROUND_BITS)
 #define DIFF_FACTOR_LOG2 4
 #define DIFF_FACTOR (1 << DIFF_FACTOR_LOG2)
 #define AOM_BLEND_AVG(v0, v1) ROUND_POWER_OF_TWO((v0) + (v1), 1)
@@ -1346,7 +1249,6 @@ typedef enum ATTRIBUTE_PACKED {
     FILTER_PAETH_PRED,
     FILTER_INTRA_MODES,
 } FilterIntraMode;
-#if OPT_CHILD_PCS
 typedef struct {
     /*!< Specifies how the two predictions should be blended together. */
     CompoundType type;
@@ -1359,14 +1261,8 @@ typedef struct {
 
     /*!< Specifies the type of mask to be used during blending. */
     DIFFWTD_MASK_TYPE mask_type;
-#if !SHUT_SEG_MASK
-    // Temp buffer used for inter prediction
-    uint8_t *seg_mask;
-#endif
 } EcInterInterCompoundData;
-#endif
-static const PredictionMode fimode_to_intramode[FILTER_INTRA_MODES] = {
-    DC_PRED, V_PRED, H_PRED, D157_PRED, PAETH_PRED};
+static const PredictionMode fimode_to_intramode[FILTER_INTRA_MODES] = {DC_PRED, V_PRED, H_PRED, D157_PRED, PAETH_PRED};
 #define DIRECTIONAL_MODES 8
 #define MAX_ANGLE_DELTA 3
 #define ANGLE_STEP 3
@@ -1496,8 +1392,7 @@ typedef enum ATTRIBUTE_PACKED {
 #define SUPERRES_SCALE_BITS 3
 #define SUPERRES_SCALE_DENOMINATOR_MIN (SCALE_NUMERATOR + 1)
 #define NUM_SR_SCALES 8 // number of super-res scales
-#define NUM_RESIZE_SCALES \
-    9 // number of resize scales, index 0~8 means 8/8~8/16 and index 9 means 3/4 for dynamic mode
+#define NUM_RESIZE_SCALES 9 // number of resize scales, index 0~8 means 8/8~8/16 and index 9 means 3/4 for dynamic mode
 #define SCALE_DENOMINATOR_MAX 16 // maximum scaling denominator is 16
 #define SCALE_THREE_QUATER 17 // 3/4 of resize dynamic mode is defined as 17
 
@@ -1607,15 +1502,9 @@ typedef enum AomCodecErr
 
 //**********************************************************************************************************************//
 // Common_data.h
-#if CLN_REMOVE_NEIGH_ARRAYS_2
 static const uint8_t intra_mode_context[INTRA_MODES] = {
     0, 1, 2, 3, 4, 4, 4, 4, 3, 0, 1, 2, 0,
 };
-#else
-static const int32_t intra_mode_context[INTRA_MODES] = {
-    0, 1, 2, 3, 4, 4, 4, 4, 3, 0, 1, 2, 0,
-};
-#endif
 
 static const TxSize txsize_sqr_map[TX_SIZES_ALL] = {
     TX_4X4,    // TX_4X4
@@ -1701,19 +1590,19 @@ static const struct
 /* clang-format on */
 
 // Width/height lookup tables in units of various block sizes
-static const uint8_t block_size_wide[BlockSizeS_ALL] = {
-    4, 4, 8, 8, 8, 16, 16, 16, 32, 32, 32, 64, 64, 64, 128, 128, 4, 16, 8, 32, 16, 64};
+static const uint8_t block_size_wide[BlockSizeS_ALL] = {4,  4,  8,  8,   8,   16, 16, 16, 32, 32, 32,
+                                                        64, 64, 64, 128, 128, 4,  16, 8,  32, 16, 64};
 
-static const uint8_t block_size_high[BlockSizeS_ALL] = {
-    4, 8, 4, 8, 16, 8, 16, 32, 16, 32, 64, 32, 64, 128, 64, 128, 16, 4, 32, 8, 64, 16};
+static const uint8_t block_size_high[BlockSizeS_ALL] = {4,  8,  4,   8,  16,  8,  16, 32, 16, 32, 64,
+                                                        32, 64, 128, 64, 128, 16, 4,  32, 8,  64, 16};
 
 // AOMMIN(3, AOMMIN(b_width_log2(bsize), b_height_log2(bsize)))
 static const uint8_t size_group_lookup[BlockSizeS_ALL] = {0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3,
                                                           3, 3, 3, 3, 3, 0, 0, 1, 1, 2, 2};
 
-static const uint8_t num_pels_log2_lookup[BlockSizeS_ALL] = {
-    4, 5, 5, 6, 7, 7, 8, 9, 9, 10, 11, 11, 12, 13, 13, 14, 6, 6, 8, 8, 10, 10};
-static const TxSize max_txsize_lookup[BlockSizeS_ALL] = {
+static const uint8_t num_pels_log2_lookup[BlockSizeS_ALL] = {4,  5,  5,  6,  7,  7, 8, 9, 9, 10, 11,
+                                                             11, 12, 13, 13, 14, 6, 6, 8, 8, 10, 10};
+static const TxSize  max_txsize_lookup[BlockSizeS_ALL]    = {
     //                   4X4
     TX_4X4,
     // 4X8,    8X4,      8X8
@@ -1895,8 +1784,7 @@ static const int32_t av1_ext_tx_used[EXT_TX_SET_TYPES][TX_TYPES] = {
     {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
 };
 
-static INLINE TxSetType get_ext_tx_set_type(TxSize tx_size, int32_t is_inter,
-                                            int32_t use_reduced_set) {
+static INLINE TxSetType get_ext_tx_set_type(TxSize tx_size, int32_t is_inter, int32_t use_reduced_set) {
     const TxSize tx_size_sqr_up = txsize_sqr_up_map[tx_size];
 
     if (tx_size_sqr_up > TX_32X32)
@@ -1939,8 +1827,7 @@ static INLINE int32_t get_ext_tx_set(TxSize tx_size, int32_t is_inter, int32_t u
     return ext_tx_set_index[is_inter][set_type];
 }
 static INLINE Bool is_intra_mode(PredictionMode mode) {
-    return mode <
-        INTRA_MODE_END; // && mode >= INTRA_MODE_START; // mode is always greater than INTRA_MODE_START
+    return mode < INTRA_MODE_END; // && mode >= INTRA_MODE_START; // mode is always greater than INTRA_MODE_START
 }
 static INLINE Bool is_inter_mode(PredictionMode mode) {
     return mode >= SINGLE_INTER_MODE_START && mode < COMP_INTER_MODE_END;
@@ -2284,12 +2171,10 @@ typedef struct {
     PaletteModeInfo pmi;
     uint8_t  *color_idx_map;
 } PaletteInfo;
-#if OPT_CHILD_PCS
 typedef struct {
     PaletteModeInfo pmi;
     uint8_t* color_idx_map;
 } EcPaletteInfo;
-#endif
 /** The EbHandle type is used to define OS object handles for threads,
 semaphores, mutexs, etc.
 */

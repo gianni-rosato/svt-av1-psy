@@ -16,8 +16,7 @@
 #include "EbLog.h"
 
 /* Pad padding_width pixels on left for a block of height row_height */
-void generate_padding_l(EbByte src_pic, uint32_t src_stride, uint32_t row_height,
-                        uint32_t padding_width) {
+void generate_padding_l(EbByte src_pic, uint32_t src_stride, uint32_t row_height, uint32_t padding_width) {
     uint32_t vertical_idx = row_height;
     while (vertical_idx) {
         // left padding
@@ -28,8 +27,8 @@ void generate_padding_l(EbByte src_pic, uint32_t src_stride, uint32_t row_height
 }
 
 /* Pad padding_width pixels on right for a block of height row_height */
-void generate_padding_r(EbByte src_pic, uint32_t src_stride, uint32_t row_width,
-                        uint32_t row_height, uint32_t padding_width) {
+void generate_padding_r(EbByte src_pic, uint32_t src_stride, uint32_t row_width, uint32_t row_height,
+                        uint32_t padding_width) {
     uint32_t vertical_idx = row_height;
     while (vertical_idx) {
         // right padding
@@ -40,8 +39,7 @@ void generate_padding_r(EbByte src_pic, uint32_t src_stride, uint32_t row_width,
 }
 
 /* Pad padding_height pixels on top for a block of width row_width */
-void generate_padding_t(EbByte src_pic, uint32_t src_stride, uint32_t row_width,
-                        uint32_t padding_height) {
+void generate_padding_t(EbByte src_pic, uint32_t src_stride, uint32_t row_width, uint32_t padding_height) {
     uint32_t vertical_idx = padding_height;
     EbByte   temp_src_pic;
 
@@ -55,8 +53,8 @@ void generate_padding_t(EbByte src_pic, uint32_t src_stride, uint32_t row_width,
 }
 
 /* Pad padding_height pixels in the bottom for a block of width row_width */
-void generate_padding_b(EbByte src_pic, uint32_t src_stride, uint32_t row_width,
-                        uint32_t row_height, uint32_t padding_height) {
+void generate_padding_b(EbByte src_pic, uint32_t src_stride, uint32_t row_width, uint32_t row_height,
+                        uint32_t padding_height) {
     uint32_t vertical_idx = padding_height;
     EbByte   temp_src_pic, temp_src_pic_1;
     temp_src_pic = temp_src_pic_1 = src_pic + (src_stride * (row_height - 1));
@@ -69,27 +67,23 @@ void generate_padding_b(EbByte src_pic, uint32_t src_stride, uint32_t row_width,
 }
 
 /* left padding for high bit depth */
-void generate_padding_l_hbd(EbByte src_pic, uint32_t src_stride, uint32_t row_height,
-                            uint32_t padding_width) {
+void generate_padding_l_hbd(EbByte src_pic, uint32_t src_stride, uint32_t row_height, uint32_t padding_width) {
     uint32_t vertical_idx = row_height;
     while (vertical_idx) {
         // left padding
-        memset16bit(
-            (uint16_t*)(src_pic - padding_width), ((uint16_t*)(src_pic))[0], padding_width >> 1);
+        memset16bit((uint16_t*)(src_pic - padding_width), ((uint16_t*)(src_pic))[0], padding_width >> 1);
         src_pic += src_stride;
         --vertical_idx;
     }
 }
 
 /* right padding for high bit depth */
-void generate_padding_r_hbd(EbByte src_pic, uint32_t src_stride, uint32_t row_width,
-                            uint32_t row_height, uint32_t padding_width) {
+void generate_padding_r_hbd(EbByte src_pic, uint32_t src_stride, uint32_t row_width, uint32_t row_height,
+                            uint32_t padding_width) {
     uint32_t vertical_idx = row_height;
     while (vertical_idx) {
         // right padding
-        memset16bit((uint16_t*)(src_pic + row_width),
-                    ((uint16_t*)(src_pic + row_width - 2))[0],
-                    padding_width >> 1);
+        memset16bit((uint16_t*)(src_pic + row_width), ((uint16_t*)(src_pic + row_width - 2))[0], padding_width >> 1);
         src_pic += src_stride;
         --vertical_idx;
     }
@@ -101,10 +95,8 @@ void generate_padding_r_hbd(EbByte src_pic, uint32_t src_stride, uint32_t row_wi
 void svt_aom_generate_padding(
     EbByte   src_pic, //output paramter, pointer to the source picture to be padded.
     uint32_t src_stride, //input paramter, the stride of the source picture to be padded.
-    uint32_t
-        original_src_width, //input paramter, the width of the source picture which excludes the padding.
-    uint32_t
-        original_src_height, //input paramter, the height of the source picture which excludes the padding.
+    uint32_t original_src_width, //input paramter, the width of the source picture which excludes the padding.
+    uint32_t original_src_height, //input paramter, the height of the source picture which excludes the padding.
     uint32_t padding_width, //input paramter, the padding width.
     uint32_t padding_height) //input paramter, the padding height.
 {
@@ -123,9 +115,7 @@ void svt_aom_generate_padding(
     while (vertical_idx) {
         // horizontal padding
         EB_MEMSET(temp_src_pic0 - padding_width, *temp_src_pic0, padding_width);
-        EB_MEMSET(temp_src_pic0 + original_src_width,
-                  *(temp_src_pic0 + original_src_width - 1),
-                  padding_width);
+        EB_MEMSET(temp_src_pic0 + original_src_width, *(temp_src_pic0 + original_src_width - 1), padding_width);
 
         temp_src_pic0 += src_stride;
         --vertical_idx;
@@ -140,12 +130,10 @@ void svt_aom_generate_padding(
     while (vertical_idx) {
         // top part data copy
         temp_src_pic2 -= src_stride;
-        svt_memcpy(
-            temp_src_pic2, temp_src_pic0, sizeof(uint8_t) * src_stride); // uint8_t to be modified
+        svt_memcpy(temp_src_pic2, temp_src_pic0, sizeof(uint8_t) * src_stride); // uint8_t to be modified
         // bottom part data copy
         temp_src_pic3 += src_stride;
-        svt_memcpy(
-            temp_src_pic3, temp_src_pic1, sizeof(uint8_t) * src_stride); // uint8_t to be modified
+        svt_memcpy(temp_src_pic3, temp_src_pic1, sizeof(uint8_t) * src_stride); // uint8_t to be modified
         --vertical_idx;
     }
 
@@ -154,10 +142,8 @@ void svt_aom_generate_padding(
 void svt_aom_generate_padding_compressed_10bit(
     EbByte   src_pic, //output paramter, pointer to the source picture to be padded.
     uint32_t src_stride, //input paramter, the stride of the source picture to be padded.
-    uint32_t
-        original_src_width, //input paramter, the width of the source picture which excludes the padding.
-    uint32_t
-        original_src_height, //input paramter, the height of the source picture which excludes the padding.
+    uint32_t original_src_width, //input paramter, the width of the source picture which excludes the padding.
+    uint32_t original_src_height, //input paramter, the height of the source picture which excludes the padding.
     uint32_t padding_width, //input paramter, the padding width.
     uint32_t padding_height) //input paramter, the padding height.
 {
@@ -178,10 +164,10 @@ void svt_aom_generate_padding_compressed_10bit(
         left_pixel  = (temp_src_pic0[0] >> 6) & 0x03;
         right_pixel = temp_src_pic0[original_src_width / 4 - 1] & 0x03;
 
-        new_left_byte = ((left_pixel << 6) & 0xC0) | ((left_pixel << 4) & 0x30) |
-            ((left_pixel << 2) & 0x0C) | left_pixel;
-        new_right_byte = ((right_pixel << 6) & 0xC0) | ((right_pixel << 4) & 0x30) |
-            ((right_pixel << 2) & 0x0C) | right_pixel;
+        new_left_byte = ((left_pixel << 6) & 0xC0) | ((left_pixel << 4) & 0x30) | ((left_pixel << 2) & 0x0C) |
+            left_pixel;
+        new_right_byte = ((right_pixel << 6) & 0xC0) | ((right_pixel << 4) & 0x30) | ((right_pixel << 2) & 0x0C) |
+            right_pixel;
 
         EB_MEMSET(temp_src_pic0 - padding_width / 4, new_left_byte, padding_width / 4);
 
@@ -199,12 +185,10 @@ void svt_aom_generate_padding_compressed_10bit(
     while (vertical_idx) {
         // top part data copy
         temp_src_pic2 -= src_stride;
-        svt_memcpy(
-            temp_src_pic2, temp_src_pic0, sizeof(uint8_t) * src_stride); // uint8_t to be modified
+        svt_memcpy(temp_src_pic2, temp_src_pic0, sizeof(uint8_t) * src_stride); // uint8_t to be modified
         // bottom part data copy
         temp_src_pic3 += src_stride;
-        svt_memcpy(
-            temp_src_pic3, temp_src_pic1, sizeof(uint8_t) * src_stride); // uint8_t to be modified
+        svt_memcpy(temp_src_pic3, temp_src_pic1, sizeof(uint8_t) * src_stride); // uint8_t to be modified
         --vertical_idx;
     }
 
@@ -217,12 +201,10 @@ is used to pad the target picture. The horizontal padding happens first and then
 void svt_aom_generate_padding16_bit(
     uint16_t* src_pic, //output paramter, pointer to the source picture to be padded.
     uint32_t  src_stride, //input paramter, the stride of the source picture to be padded.
-    uint32_t
-        original_src_width, //input paramter, the width of the source picture which excludes the padding.
-    uint32_t
-        original_src_height, //input paramter, the height of the source picture which excludes the padding.
-    uint32_t padding_width, //input paramter, the padding width.
-    uint32_t padding_height) //input paramter, the padding height.
+    uint32_t  original_src_width, //input paramter, the width of the source picture which excludes the padding.
+    uint32_t  original_src_height, //input paramter, the height of the source picture which excludes the padding.
+    uint32_t  padding_width, //input paramter, the padding width.
+    uint32_t  padding_height) //input paramter, the padding height.
 {
     uint32_t  vertical_idx = original_src_height;
     uint16_t* temp_src_pic0;
@@ -235,9 +217,7 @@ void svt_aom_generate_padding16_bit(
         // horizontal padding
         //EB_MEMSET(temp_src_pic0 - padding_width, temp_src_pic0, padding_width);
         memset16bit(temp_src_pic0 - padding_width, temp_src_pic0[0], padding_width);
-        memset16bit(temp_src_pic0 + original_src_width,
-                    (temp_src_pic0 + original_src_width - 1)[0],
-                    padding_width);
+        memset16bit(temp_src_pic0 + original_src_width, (temp_src_pic0 + original_src_width - 1)[0], padding_width);
 
         temp_src_pic0 += src_stride;
         --vertical_idx;
@@ -268,10 +248,8 @@ is used to pad the input picture in order to get . The horizontal padding happen
 void pad_input_picture(
     EbByte   src_pic, //output paramter, pointer to the source picture to be padded.
     uint32_t src_stride, //input paramter, the stride of the source picture to be padded.
-    uint32_t
-        original_src_width, //input paramter, the width of the source picture which excludes the padding.
-    uint32_t
-        original_src_height, //input paramter, the height of the source picture which excludes the padding.
+    uint32_t original_src_width, //input paramter, the width of the source picture which excludes the padding.
+    uint32_t original_src_height, //input paramter, the height of the source picture which excludes the padding.
     uint32_t pad_right, //input paramter, the padding right.
     uint32_t pad_bottom) //input paramter, the padding bottom.
 {
@@ -289,9 +267,7 @@ void pad_input_picture(
         temp_src_pic0 = src_pic;
 
         while (vertical_idx) {
-            EB_MEMSET(temp_src_pic0 + original_src_width,
-                      *(temp_src_pic0 + original_src_width - 1),
-                      pad_right);
+            EB_MEMSET(temp_src_pic0 + original_src_width, *(temp_src_pic0 + original_src_width - 1), pad_right);
             temp_src_pic0 += src_stride;
             --vertical_idx;
         }
@@ -306,8 +282,7 @@ void pad_input_picture(
 
         while (vertical_idx) {
             temp_src_pic1 += src_stride;
-            svt_memcpy(
-                temp_src_pic1, temp_src_pic0, sizeof(uint8_t) * (original_src_width + pad_right));
+            svt_memcpy(temp_src_pic1, temp_src_pic0, sizeof(uint8_t) * (original_src_width + pad_right));
             --vertical_idx;
         }
     }
@@ -321,12 +296,10 @@ is used to pad the input picture in order to get . The horizontal padding happen
 void svt_aom_pad_input_picture_16bit(
     uint16_t* src_pic, //output paramter, pointer to the source picture to be padded.
     uint32_t  src_stride, //input paramter, the stride of the source picture to be padded.
-    uint32_t
-        original_src_width, //input paramter, the width of the source picture which excludes the padding.
-    uint32_t
-        original_src_height, //input paramter, the height of the source picture which excludes the padding.
-    uint32_t pad_right, //input paramter, the padding right.
-    uint32_t pad_bottom) //input paramter, the padding bottom.
+    uint32_t  original_src_width, //input paramter, the width of the source picture which excludes the padding.
+    uint32_t  original_src_height, //input paramter, the height of the source picture which excludes the padding.
+    uint32_t  pad_right, //input paramter, the padding right.
+    uint32_t  pad_bottom) //input paramter, the padding bottom.
 {
     uint32_t  vertical_idx;
     uint16_t* temp_src_pic0;
@@ -337,9 +310,7 @@ void svt_aom_pad_input_picture_16bit(
         temp_src_pic0 = src_pic;
 
         while (vertical_idx) {
-            memset16bit(temp_src_pic0 + original_src_width,
-                        *(temp_src_pic0 + original_src_width - 1),
-                        pad_right);
+            memset16bit(temp_src_pic0 + original_src_width, *(temp_src_pic0 + original_src_width - 1), pad_right);
             temp_src_pic0 += src_stride;
             --vertical_idx;
         }
@@ -354,8 +325,7 @@ void svt_aom_pad_input_picture_16bit(
 
         while (vertical_idx) {
             temp_src_pic1 += src_stride;
-            svt_memcpy(
-                temp_src_pic1, temp_src_pic0, sizeof(uint16_t) * (original_src_width + pad_right));
+            svt_memcpy(temp_src_pic1, temp_src_pic0, sizeof(uint16_t) * (original_src_width + pad_right));
             --vertical_idx;
         }
     }

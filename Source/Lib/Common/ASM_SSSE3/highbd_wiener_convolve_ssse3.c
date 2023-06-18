@@ -17,10 +17,11 @@
 //    const ptrdiff_t dst_stride, const int16_t *const filter_x, const int16_t *const filter_y,
 //    const int32_t w, const int32_t h, const ConvolveParams *const conv_params, const int32_t bd);
 
-void svt_av1_highbd_wiener_convolve_add_src_ssse3(
-    const uint8_t *const src8, const ptrdiff_t src_stride, uint8_t *const dst8,
-    const ptrdiff_t dst_stride, const int16_t *const filter_x, const int16_t *const filter_y,
-    const int32_t w, const int32_t h, const ConvolveParams *const conv_params, const int32_t bd) {
+void svt_av1_highbd_wiener_convolve_add_src_ssse3(const uint8_t *const src8, const ptrdiff_t src_stride,
+                                                  uint8_t *const dst8, const ptrdiff_t dst_stride,
+                                                  const int16_t *const filter_x, const int16_t *const filter_y,
+                                                  const int32_t w, const int32_t h,
+                                                  const ConvolveParams *const conv_params, const int32_t bd) {
     assert(!(w & 7));
     assert(bd + FILTER_BITS - conv_params->round_0 + 2 <= 16);
 
@@ -55,8 +56,7 @@ void svt_av1_highbd_wiener_convolve_add_src_ssse3(
         // coeffs 6 7 6 7 6 7 6 7
         const __m128i coeff_67 = _mm_unpackhi_epi64(tmp_1, tmp_1);
 
-        const __m128i round_const = _mm_set1_epi32((1 << (conv_params->round_0 - 1)) +
-                                                   (1 << (bd + FILTER_BITS - 1)));
+        const __m128i round_const = _mm_set1_epi32((1 << (conv_params->round_0 - 1)) + (1 << (bd + FILTER_BITS - 1)));
 
         for (i = 0; i < intermediate_height; ++i) {
             for (j = 0; j < w; j += 8) {
@@ -69,10 +69,8 @@ void svt_av1_highbd_wiener_convolve_add_src_ssse3(
                 const __m128i res_4 = _mm_madd_epi16(_mm_alignr_epi8(data2, data, 8), coeff_45);
                 const __m128i res_6 = _mm_madd_epi16(_mm_alignr_epi8(data2, data, 12), coeff_67);
 
-                __m128i res_even = _mm_add_epi32(_mm_add_epi32(res_0, res_4),
-                                                 _mm_add_epi32(res_2, res_6));
-                res_even         = _mm_srai_epi32(_mm_add_epi32(res_even, round_const),
-                                          conv_params->round_0);
+                __m128i res_even = _mm_add_epi32(_mm_add_epi32(res_0, res_4), _mm_add_epi32(res_2, res_6));
+                res_even         = _mm_srai_epi32(_mm_add_epi32(res_even, round_const), conv_params->round_0);
 
                 // Filter odd-index pixels
                 const __m128i res_1 = _mm_madd_epi16(_mm_alignr_epi8(data2, data, 2), coeff_01);
@@ -80,15 +78,13 @@ void svt_av1_highbd_wiener_convolve_add_src_ssse3(
                 const __m128i res_5 = _mm_madd_epi16(_mm_alignr_epi8(data2, data, 10), coeff_45);
                 const __m128i res_7 = _mm_madd_epi16(_mm_alignr_epi8(data2, data, 14), coeff_67);
 
-                __m128i res_odd = _mm_add_epi32(_mm_add_epi32(res_1, res_5),
-                                                _mm_add_epi32(res_3, res_7));
-                res_odd = _mm_srai_epi32(_mm_add_epi32(res_odd, round_const), conv_params->round_0);
+                __m128i res_odd = _mm_add_epi32(_mm_add_epi32(res_1, res_5), _mm_add_epi32(res_3, res_7));
+                res_odd         = _mm_srai_epi32(_mm_add_epi32(res_odd, round_const), conv_params->round_0);
 
                 // Pack in the column order 0, 2, 4, 6, 1, 3, 5, 7
-                const __m128i maxval = _mm_set1_epi16(
-                    (WIENER_CLAMP_LIMIT(conv_params->round_0, bd)) - 1);
-                __m128i res = _mm_packs_epi32(res_even, res_odd);
-                res         = _mm_min_epi16(_mm_max_epi16(res, zero), maxval);
+                const __m128i maxval = _mm_set1_epi16((WIENER_CLAMP_LIMIT(conv_params->round_0, bd)) - 1);
+                __m128i       res    = _mm_packs_epi32(res_even, res_odd);
+                res                  = _mm_min_epi16(_mm_max_epi16(res, zero), maxval);
                 _mm_storeu_si128((__m128i *)&temp[i * MAX_SB_SIZE + j], res);
             }
         }
@@ -133,8 +129,7 @@ void svt_av1_highbd_wiener_convolve_add_src_ssse3(
                 const __m128i res_4 = _mm_madd_epi16(src_4, coeff_45);
                 const __m128i res_6 = _mm_madd_epi16(src_6, coeff_67);
 
-                const __m128i res_even = _mm_add_epi32(_mm_add_epi32(res_0, res_2),
-                                                       _mm_add_epi32(res_4, res_6));
+                const __m128i res_even = _mm_add_epi32(_mm_add_epi32(res_0, res_2), _mm_add_epi32(res_4, res_6));
 
                 // Filter odd-index pixels
                 const __m128i src_1 = _mm_unpackhi_epi16(*(__m128i *)(data + 0 * MAX_SB_SIZE),
@@ -151,17 +146,14 @@ void svt_av1_highbd_wiener_convolve_add_src_ssse3(
                 const __m128i res_5 = _mm_madd_epi16(src_5, coeff_45);
                 const __m128i res_7 = _mm_madd_epi16(src_7, coeff_67);
 
-                const __m128i res_odd = _mm_add_epi32(_mm_add_epi32(res_1, res_3),
-                                                      _mm_add_epi32(res_5, res_7));
+                const __m128i res_odd = _mm_add_epi32(_mm_add_epi32(res_1, res_3), _mm_add_epi32(res_5, res_7));
 
                 // Rearrange pixels back into the order 0 ... 7
                 const __m128i res_lo = _mm_unpacklo_epi32(res_even, res_odd);
                 const __m128i res_hi = _mm_unpackhi_epi32(res_even, res_odd);
 
-                const __m128i res_lo_round = _mm_srai_epi32(_mm_add_epi32(res_lo, round_const),
-                                                            conv_params->round_1);
-                const __m128i res_hi_round = _mm_srai_epi32(_mm_add_epi32(res_hi, round_const),
-                                                            conv_params->round_1);
+                const __m128i res_lo_round = _mm_srai_epi32(_mm_add_epi32(res_lo, round_const), conv_params->round_1);
+                const __m128i res_hi_round = _mm_srai_epi32(_mm_add_epi32(res_hi, round_const), conv_params->round_1);
 
                 const __m128i maxval    = _mm_set1_epi16((1 << bd) - 1);
                 __m128i       res_16bit = _mm_packs_epi32(res_lo_round, res_hi_round);

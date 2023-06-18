@@ -67,24 +67,19 @@ static void analysis_53_col(int length, tran_low_t *x, tran_low_t *lowpass, tran
     }
 }
 
-static void dyadic_analyze_53_uint8_input(int levels, int width, int height, uint8_t *x,
-                                          int pitch_x, tran_low_t *c, int pitch_c,
-                                          int dwt_scale_bits, int hbd) {
+static void dyadic_analyze_53_uint8_input(int levels, int width, int height, uint8_t *x, int pitch_x, tran_low_t *c,
+                                          int pitch_c, int dwt_scale_bits, int hbd) {
     int        lv, i, j, hh = height, hw = width;
     tran_low_t buffer[2 * DWT_MAX_LENGTH];
 
     if (hbd) {
         uint16_t *x16 = CONVERT_TO_SHORTPTR(x);
         for (i = 0; i < height; i++) {
-            for (j = 0; j < width; j++) {
-                c[i * pitch_c + j] = x16[i * pitch_x + j] << dwt_scale_bits;
-            }
+            for (j = 0; j < width; j++) { c[i * pitch_c + j] = x16[i * pitch_x + j] << dwt_scale_bits; }
         }
     } else {
         for (i = 0; i < height; i++) {
-            for (j = 0; j < width; j++) {
-                c[i * pitch_c + j] = x[i * pitch_x + j] << dwt_scale_bits;
-            }
+            for (j = 0; j < width; j++) { c[i * pitch_c + j] = x[i * pitch_x + j] << dwt_scale_bits; }
         }
     }
 

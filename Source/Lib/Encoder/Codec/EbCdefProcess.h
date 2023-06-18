@@ -18,8 +18,7 @@
 /**************************************
  * Extern Function Declarations
  **************************************/
-extern EbErrorType svt_aom_cdef_context_ctor(EbThreadContext   *thread_ctx,
-                                             const EbEncHandle *enc_handle_ptr, int index);
+extern EbErrorType svt_aom_cdef_context_ctor(EbThreadContext *thread_ctx, const EbEncHandle *enc_handle_ptr, int index);
 
 extern void *svt_aom_cdef_kernel(void *input_ptr);
 

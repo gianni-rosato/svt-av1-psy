@@ -137,25 +137,25 @@ typedef struct SequenceControlSet {
     uint8_t compound_mode;
 
     /*!< Sequence resolution parameters */
-    uint32_t chroma_format_idc;
-    uint16_t subsampling_x; // add chroma subsampling parameters
-    uint16_t subsampling_y;
-    uint16_t max_input_luma_width; // input luma width aligned to 8, this is used during encoding
-    uint16_t max_input_luma_height; // input luma height aligned to 8, this is used during encoding
-    uint16_t max_input_chroma_width;
-    uint16_t max_input_chroma_height;
-    uint16_t max_input_pad_bottom;
-    uint16_t max_input_pad_right;
-    uint32_t chroma_width;
-    uint32_t chroma_height;
-    uint32_t pad_right;
-    uint32_t pad_bottom;
-    uint16_t left_padding;
-    uint16_t top_padding;
-    uint16_t right_padding;
-    uint16_t bot_padding;
-    uint32_t frame_rate; //stored in Q16
-    uint32_t encoder_bit_depth;
+    uint32_t          chroma_format_idc;
+    uint16_t          subsampling_x; // add chroma subsampling parameters
+    uint16_t          subsampling_y;
+    uint16_t          max_input_luma_width; // input luma width aligned to 8, this is used during encoding
+    uint16_t          max_input_luma_height; // input luma height aligned to 8, this is used during encoding
+    uint16_t          max_input_chroma_width;
+    uint16_t          max_input_chroma_height;
+    uint16_t          max_input_pad_bottom;
+    uint16_t          max_input_pad_right;
+    uint32_t          chroma_width;
+    uint32_t          chroma_height;
+    uint32_t          pad_right;
+    uint32_t          pad_bottom;
+    uint16_t          left_padding;
+    uint16_t          top_padding;
+    uint16_t          right_padding;
+    uint16_t          bot_padding;
+    uint32_t          frame_rate; //stored in Q16
+    uint32_t          encoder_bit_depth;
     EbInputResolution input_resolution;
 
     /*!< Super block parameters set for the stream */
@@ -292,12 +292,6 @@ typedef struct SequenceControlSet {
     *
     * Default is 1. */
     Bool enable_global_motion;
-#if !CLN_MISC_CLEANUPS
-    /* inter intra compound
-    *
-    * Default is -1. */
-    int inter_intra_compound;
-#endif
     /* enable paeth
     *
     * Default is -1. */
@@ -339,27 +333,6 @@ typedef struct SequenceControlSet {
     *
     * Default is -1. */
     int compound_level;
-#if !CLN_IND_UV_SEARCH
-    /* Disable chroma from luma (CFL)
-    *
-    * Default is -1 (auto) */
-    int disable_cfl_flag;
-#endif
-#if !CLN_MISC_CLEANUPS
-    /* obmc_level specifies the level of the OBMC feature that would be
-    * considered when the level is specified in the command line instruction (CLI).
-    * The meaning of the feature level in the CLI is different from that for
-    * the default settings. See description of pic_obmc_level for the full details.
-    *
-    * The table below specifies the meaning of obmc_level when specified in the CLI.
-    *     obmc_level   | Command Line Settings
-    *        -1        | Default settings (auto)
-    *         0        | OFF everywhere in encoder
-    *         1        | ON
-    *
-    * Default is -1 (auto). */
-    int8_t obmc_level;
-#endif
     /* RDOQ
     *
     * -1: Default, 0: OFF, 1: ON. */
@@ -443,8 +416,7 @@ extern EbErrorType svt_sequence_control_set_instance_ctor(EbSequenceControlSetIn
 
 extern EbErrorType svt_aom_b64_geom_init(SequenceControlSet *scs);
 
-extern EbErrorType svt_aom_derive_input_resolution(EbInputResolution *input_resolution,
-                                                   uint32_t           input_size);
+extern EbErrorType svt_aom_derive_input_resolution(EbInputResolution *input_resolution, uint32_t input_size);
 
 EbErrorType svt_aom_sb_geom_init(SequenceControlSet *scs);
 

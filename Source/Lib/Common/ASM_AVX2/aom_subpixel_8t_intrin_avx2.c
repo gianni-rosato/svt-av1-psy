@@ -18,11 +18,9 @@
 // #include "aom_ports/mem.h"
 
 #if defined(__clang__)
-#if (__clang_major__ > 0 && __clang_major__ < 3) ||            \
-    (__clang_major__ == 3 && __clang_minor__ <= 3) ||          \
-    (defined(__APPLE__) && defined(__apple_build_version__) && \
-     ((__clang_major__ == 4 && __clang_minor__ <= 2) ||        \
-      (__clang_major__ == 5 && __clang_minor__ == 0)))
+#if (__clang_major__ > 0 && __clang_major__ < 3) || (__clang_major__ == 3 && __clang_minor__ <= 3) || \
+    (defined(__APPLE__) && defined(__apple_build_version__) &&                                        \
+     ((__clang_major__ == 4 && __clang_minor__ <= 2) || (__clang_major__ == 5 && __clang_minor__ == 0)))
 #define MM256_BROADCASTSI128_SI256(x) _mm_broadcastsi128_si256((__m128i const *)&(x))
 #else // clang > 3.3, and not 5.0 on macosx.
 #define MM256_BROADCASTSI128_SI256(x) _mm256_broadcastsi128_si256(x)
@@ -39,29 +37,22 @@
 #define MM256_BROADCASTSI128_SI256(x) _mm256_broadcastsi128_si256(x)
 #endif // __clang__
 
-typedef void Filter81dFunction(const uint8_t *src_ptr, ptrdiff_t src_pitch, uint8_t *output_ptr,
-                               ptrdiff_t out_pitch, uint32_t output_height, const int16_t *filter);
-void         svt_aom_filter_block1d4_v8_sse2(const uint8_t *src_ptr, ptrdiff_t src_pitch,
-                                             uint8_t *output_ptr, ptrdiff_t out_pitch,
-                                             uint32_t output_height, const int16_t *filter);
-void         svt_aom_filter_block1d16_v2_ssse3(const uint8_t *src_ptr, ptrdiff_t src_pitch,
-                                               uint8_t *output_ptr, ptrdiff_t out_pitch,
-                                               uint32_t output_height, const int16_t *filter);
-void         svt_aom_filter_block1d16_h2_ssse3(const uint8_t *src_ptr, ptrdiff_t src_pitch,
-                                               uint8_t *output_ptr, ptrdiff_t out_pitch,
-                                               uint32_t output_height, const int16_t *filter);
-void         svt_aom_filter_block1d8_v2_ssse3(const uint8_t *src_ptr, ptrdiff_t src_pitch,
-                                              uint8_t *output_ptr, ptrdiff_t out_pitch,
-                                              uint32_t output_height, const int16_t *filter);
-void         svt_aom_filter_block1d8_h2_ssse3(const uint8_t *src_ptr, ptrdiff_t src_pitch,
-                                              uint8_t *output_ptr, ptrdiff_t out_pitch,
-                                              uint32_t output_height, const int16_t *filter);
-void         svt_aom_filter_block1d4_v2_ssse3(const uint8_t *src_ptr, ptrdiff_t src_pitch,
-                                              uint8_t *output_ptr, ptrdiff_t out_pitch,
-                                              uint32_t output_height, const int16_t *filter);
-void         svt_aom_filter_block1d4_h2_ssse3(const uint8_t *src_ptr, ptrdiff_t src_pitch,
-                                              uint8_t *output_ptr, ptrdiff_t out_pitch,
-                                              uint32_t output_height, const int16_t *filter);
+typedef void Filter81dFunction(const uint8_t *src_ptr, ptrdiff_t src_pitch, uint8_t *output_ptr, ptrdiff_t out_pitch,
+                               uint32_t output_height, const int16_t *filter);
+void         svt_aom_filter_block1d4_v8_sse2(const uint8_t *src_ptr, ptrdiff_t src_pitch, uint8_t *output_ptr,
+                                             ptrdiff_t out_pitch, uint32_t output_height, const int16_t *filter);
+void         svt_aom_filter_block1d16_v2_ssse3(const uint8_t *src_ptr, ptrdiff_t src_pitch, uint8_t *output_ptr,
+                                               ptrdiff_t out_pitch, uint32_t output_height, const int16_t *filter);
+void         svt_aom_filter_block1d16_h2_ssse3(const uint8_t *src_ptr, ptrdiff_t src_pitch, uint8_t *output_ptr,
+                                               ptrdiff_t out_pitch, uint32_t output_height, const int16_t *filter);
+void         svt_aom_filter_block1d8_v2_ssse3(const uint8_t *src_ptr, ptrdiff_t src_pitch, uint8_t *output_ptr,
+                                              ptrdiff_t out_pitch, uint32_t output_height, const int16_t *filter);
+void         svt_aom_filter_block1d8_h2_ssse3(const uint8_t *src_ptr, ptrdiff_t src_pitch, uint8_t *output_ptr,
+                                              ptrdiff_t out_pitch, uint32_t output_height, const int16_t *filter);
+void         svt_aom_filter_block1d4_v2_ssse3(const uint8_t *src_ptr, ptrdiff_t src_pitch, uint8_t *output_ptr,
+                                              ptrdiff_t out_pitch, uint32_t output_height, const int16_t *filter);
+void         svt_aom_filter_block1d4_h2_ssse3(const uint8_t *src_ptr, ptrdiff_t src_pitch, uint8_t *output_ptr,
+                                              ptrdiff_t out_pitch, uint32_t output_height, const int16_t *filter);
 
 Filter81dFunction svt_aom_filter_block1d4_v8_ssse3;
 Filter81dFunction svt_aom_filter_block1d16_v2_ssse3;
@@ -78,117 +69,104 @@ Filter81dFunction svt_aom_filter_block1d4_h2_ssse3;
 #define svt_aom_filter_block1d4_v2_avx2 svt_aom_filter_block1d4_v2_ssse3
 #define svt_aom_filter_block1d4_h2_avx2 svt_aom_filter_block1d4_h2_ssse3
 
-#define FUN_CONV_1D(name, step_q4, filter, dir, src_start, avg, opt)                               \
-    void svt_aom_convolve8_##name##_##opt(const uint8_t *src,                                      \
-                                          ptrdiff_t      src_stride,                               \
-                                          uint8_t       *dst,                                      \
-                                          ptrdiff_t      dst_stride,                               \
-                                          const int16_t *filter_x,                                 \
-                                          int            x_step_q4,                                \
-                                          const int16_t *filter_y,                                 \
-                                          int            y_step_q4,                                \
-                                          int            w,                                        \
-                                          int            h) {                                                 \
-        (void)filter_x;                                                                            \
-        (void)x_step_q4;                                                                           \
-        (void)filter_y;                                                                            \
-        (void)y_step_q4;                                                                           \
-        assert((-128 <= filter[3]) && (filter[3] <= 127));                                         \
-        assert(step_q4 == 16);                                                                     \
-        if (((filter[0] | filter[1] | filter[6] | filter[7]) == 0) && (filter[2] | filter[5])) {   \
-            while (w >= 16) {                                                                      \
-                svt_aom_filter_block1d16_##dir##4_##avg##opt(                                      \
-                    src_start, src_stride, dst, dst_stride, h, filter);                            \
-                src += 16;                                                                         \
-                dst += 16;                                                                         \
-                w -= 16;                                                                           \
-            }                                                                                      \
-            while (w >= 8) {                                                                       \
-                svt_aom_filter_block1d8_##dir##4_##avg##opt(                                       \
-                    src_start, src_stride, dst, dst_stride, h, filter);                            \
-                src += 8;                                                                          \
-                dst += 8;                                                                          \
-                w -= 8;                                                                            \
-            }                                                                                      \
-            while (w >= 4) {                                                                       \
-                svt_aom_filter_block1d4_##dir##4_##avg##opt(                                       \
-                    src_start, src_stride, dst, dst_stride, h, filter);                            \
-                src += 4;                                                                          \
-                dst += 4;                                                                          \
-                w -= 4;                                                                            \
-            }                                                                                      \
-        } else if (filter[0] | filter[1] | filter[2]) {                                            \
-            while (w >= 16) {                                                                      \
-                svt_aom_filter_block1d16_##dir##8_##avg##opt(                                      \
-                    src_start, src_stride, dst, dst_stride, h, filter);                            \
-                src += 16;                                                                         \
-                dst += 16;                                                                         \
-                w -= 16;                                                                           \
-            }                                                                                      \
-            while (w >= 8) {                                                                       \
-                svt_aom_filter_block1d8_##dir##8_##avg##opt(                                       \
-                    src_start, src_stride, dst, dst_stride, h, filter);                            \
-                src += 8;                                                                          \
-                dst += 8;                                                                          \
-                w -= 8;                                                                            \
-            }                                                                                      \
-            while (w >= 4) {                                                                       \
-                svt_aom_filter_block1d4_##dir##8_##avg##opt(                                       \
-                    src_start, src_stride, dst, dst_stride, h, filter);                            \
-                src += 4;                                                                          \
-                dst += 4;                                                                          \
-                w -= 4;                                                                            \
-            }                                                                                      \
-        } else {                                                                                   \
-            while (w >= 16) {                                                                      \
-                svt_aom_filter_block1d16_##dir##2_##avg##opt(                                      \
-                    src, src_stride, dst, dst_stride, h, filter);                                  \
-                src += 16;                                                                         \
-                dst += 16;                                                                         \
-                w -= 16;                                                                           \
-            }                                                                                      \
-            while (w >= 8) {                                                                       \
-                svt_aom_filter_block1d8_##dir##2_##avg##opt(                                       \
-                    src, src_stride, dst, dst_stride, h, filter);                                  \
-                src += 8;                                                                          \
-                dst += 8;                                                                          \
-                w -= 8;                                                                            \
-            }                                                                                      \
-            while (w >= 4) {                                                                       \
-                svt_aom_filter_block1d4_##dir##2_##avg##opt(                                       \
-                    src, src_stride, dst, dst_stride, h, filter);                                  \
-                src += 4;                                                                          \
-                dst += 4;                                                                          \
-                w -= 4;                                                                            \
-            }                                                                                      \
-        }                                                                                          \
-        if (w) {                                                                                   \
-            svt_aom_convolve8_##name##_c(                                                          \
-                src, src_stride, dst, dst_stride, filter_x, x_step_q4, filter_y, y_step_q4, w, h); \
-        }                                                                                          \
+#define FUN_CONV_1D(name, step_q4, filter, dir, src_start, avg, opt)                                             \
+    void svt_aom_convolve8_##name##_##opt(const uint8_t *src,                                                    \
+                                          ptrdiff_t      src_stride,                                             \
+                                          uint8_t       *dst,                                                    \
+                                          ptrdiff_t      dst_stride,                                             \
+                                          const int16_t *filter_x,                                               \
+                                          int            x_step_q4,                                              \
+                                          const int16_t *filter_y,                                               \
+                                          int            y_step_q4,                                              \
+                                          int            w,                                                      \
+                                          int            h) {                                                               \
+        (void)filter_x;                                                                                          \
+        (void)x_step_q4;                                                                                         \
+        (void)filter_y;                                                                                          \
+        (void)y_step_q4;                                                                                         \
+        assert((-128 <= filter[3]) && (filter[3] <= 127));                                                       \
+        assert(step_q4 == 16);                                                                                   \
+        if (((filter[0] | filter[1] | filter[6] | filter[7]) == 0) && (filter[2] | filter[5])) {                 \
+            while (w >= 16) {                                                                                    \
+                svt_aom_filter_block1d16_##dir##4_##avg##opt(src_start, src_stride, dst, dst_stride, h, filter); \
+                src += 16;                                                                                       \
+                dst += 16;                                                                                       \
+                w -= 16;                                                                                         \
+            }                                                                                                    \
+            while (w >= 8) {                                                                                     \
+                svt_aom_filter_block1d8_##dir##4_##avg##opt(src_start, src_stride, dst, dst_stride, h, filter);  \
+                src += 8;                                                                                        \
+                dst += 8;                                                                                        \
+                w -= 8;                                                                                          \
+            }                                                                                                    \
+            while (w >= 4) {                                                                                     \
+                svt_aom_filter_block1d4_##dir##4_##avg##opt(src_start, src_stride, dst, dst_stride, h, filter);  \
+                src += 4;                                                                                        \
+                dst += 4;                                                                                        \
+                w -= 4;                                                                                          \
+            }                                                                                                    \
+        } else if (filter[0] | filter[1] | filter[2]) {                                                          \
+            while (w >= 16) {                                                                                    \
+                svt_aom_filter_block1d16_##dir##8_##avg##opt(src_start, src_stride, dst, dst_stride, h, filter); \
+                src += 16;                                                                                       \
+                dst += 16;                                                                                       \
+                w -= 16;                                                                                         \
+            }                                                                                                    \
+            while (w >= 8) {                                                                                     \
+                svt_aom_filter_block1d8_##dir##8_##avg##opt(src_start, src_stride, dst, dst_stride, h, filter);  \
+                src += 8;                                                                                        \
+                dst += 8;                                                                                        \
+                w -= 8;                                                                                          \
+            }                                                                                                    \
+            while (w >= 4) {                                                                                     \
+                svt_aom_filter_block1d4_##dir##8_##avg##opt(src_start, src_stride, dst, dst_stride, h, filter);  \
+                src += 4;                                                                                        \
+                dst += 4;                                                                                        \
+                w -= 4;                                                                                          \
+            }                                                                                                    \
+        } else {                                                                                                 \
+            while (w >= 16) {                                                                                    \
+                svt_aom_filter_block1d16_##dir##2_##avg##opt(src, src_stride, dst, dst_stride, h, filter);       \
+                src += 16;                                                                                       \
+                dst += 16;                                                                                       \
+                w -= 16;                                                                                         \
+            }                                                                                                    \
+            while (w >= 8) {                                                                                     \
+                svt_aom_filter_block1d8_##dir##2_##avg##opt(src, src_stride, dst, dst_stride, h, filter);        \
+                src += 8;                                                                                        \
+                dst += 8;                                                                                        \
+                w -= 8;                                                                                          \
+            }                                                                                                    \
+            while (w >= 4) {                                                                                     \
+                svt_aom_filter_block1d4_##dir##2_##avg##opt(src, src_stride, dst, dst_stride, h, filter);        \
+                src += 4;                                                                                        \
+                dst += 4;                                                                                        \
+                w -= 4;                                                                                          \
+            }                                                                                                    \
+        }                                                                                                        \
+        if (w) {                                                                                                 \
+            svt_aom_convolve8_##name##_c(                                                                        \
+                src, src_stride, dst, dst_stride, filter_x, x_step_q4, filter_y, y_step_q4, w, h);               \
+        }                                                                                                        \
     }
 
 // filters for 16
 DECLARE_ALIGNED(32, static const uint8_t, filt_global_avx2[]) = {
-    0,  1,  1, 2,  2,  3,  3,  4,  4, 5,  5,  6,  6,  7,  7,  8,  0,  1,  1,  2,  2,  3,
-    3,  4,  4, 5,  5,  6,  6,  7,  7, 8,  2,  3,  3,  4,  4,  5,  5,  6,  6,  7,  7,  8,
-    8,  9,  9, 10, 2,  3,  3,  4,  4, 5,  5,  6,  6,  7,  7,  8,  8,  9,  9,  10, 4,  5,
-    5,  6,  6, 7,  7,  8,  8,  9,  9, 10, 10, 11, 11, 12, 4,  5,  5,  6,  6,  7,  7,  8,
-    8,  9,  9, 10, 10, 11, 11, 12, 6, 7,  7,  8,  8,  9,  9,  10, 10, 11, 11, 12, 12, 13,
-    13, 14, 6, 7,  7,  8,  8,  9,  9, 10, 10, 11, 11, 12, 12, 13, 13, 14};
+    0, 1, 1, 2, 2, 3, 3, 4,  4,  5,  5,  6,  6,  7,  7,  8,  0, 1, 1, 2, 2, 3, 3, 4,  4,  5,  5,  6,  6,  7,  7,  8,
+    2, 3, 3, 4, 4, 5, 5, 6,  6,  7,  7,  8,  8,  9,  9,  10, 2, 3, 3, 4, 4, 5, 5, 6,  6,  7,  7,  8,  8,  9,  9,  10,
+    4, 5, 5, 6, 6, 7, 7, 8,  8,  9,  9,  10, 10, 11, 11, 12, 4, 5, 5, 6, 6, 7, 7, 8,  8,  9,  9,  10, 10, 11, 11, 12,
+    6, 7, 7, 8, 8, 9, 9, 10, 10, 11, 11, 12, 12, 13, 13, 14, 6, 7, 7, 8, 8, 9, 9, 10, 10, 11, 11, 12, 12, 13, 13, 14};
 
 DECLARE_ALIGNED(32, static const uint8_t, filt_d4_global_avx2[]) = {
-    0, 1, 2, 3,  1, 2, 3, 4, 2, 3, 4, 5, 3, 4, 5, 6, 0, 1, 2, 3,  1, 2,
-    3, 4, 2, 3,  4, 5, 3, 4, 5, 6, 4, 5, 6, 7, 5, 6, 7, 8, 6, 7,  8, 9,
-    7, 8, 9, 10, 4, 5, 6, 7, 5, 6, 7, 8, 6, 7, 8, 9, 7, 8, 9, 10,
+    0, 1, 2, 3, 1, 2, 3, 4, 2, 3, 4, 5, 3, 4, 5, 6,  0, 1, 2, 3, 1, 2, 3, 4, 2, 3, 4, 5, 3, 4, 5, 6,
+    4, 5, 6, 7, 5, 6, 7, 8, 6, 7, 8, 9, 7, 8, 9, 10, 4, 5, 6, 7, 5, 6, 7, 8, 6, 7, 8, 9, 7, 8, 9, 10,
 };
 
 DECLARE_ALIGNED(32, static const uint8_t, filt4_d4_global_avx2[]) = {
     2, 3, 4, 5, 3, 4, 5, 6, 4, 5, 6, 7, 5, 6, 7, 8, 2, 3, 4, 5, 3, 4, 5, 6, 4, 5, 6, 7, 5, 6, 7, 8,
 };
 
-static INLINE void xx_storeu2_epi32(const uint8_t *output_ptr, const ptrdiff_t stride,
-                                    const __m256i *a) {
+static INLINE void xx_storeu2_epi32(const uint8_t *output_ptr, const ptrdiff_t stride, const __m256i *a) {
     *((uint32_t *)(output_ptr))          = _mm_cvtsi128_si32(_mm256_castsi256_si128(*a));
     *((uint32_t *)(output_ptr + stride)) = _mm_cvtsi128_si32(_mm256_extracti128_si256(*a, 1));
 }
@@ -199,8 +177,7 @@ static INLINE __m256i xx_loadu2_epi64(const void *hi, const void *lo) {
     return a;
 }
 
-static INLINE void xx_storeu2_epi64(const uint8_t *output_ptr, const ptrdiff_t stride,
-                                    const __m256i *a) {
+static INLINE void xx_storeu2_epi64(const uint8_t *output_ptr, const ptrdiff_t stride, const __m256i *a) {
     _mm_storel_epi64((__m128i *)output_ptr, _mm256_castsi256_si128(*a));
     _mm_storel_epi64((__m128i *)(output_ptr + stride), _mm256_extractf128_si256(*a, 1));
 }
@@ -211,15 +188,13 @@ static INLINE __m256i xx_loadu2_mi128(const void *hi, const void *lo) {
     return a;
 }
 
-static INLINE void xx_store2_mi128(const uint8_t *output_ptr, const ptrdiff_t stride,
-                                   const __m256i *a) {
+static INLINE void xx_store2_mi128(const uint8_t *output_ptr, const ptrdiff_t stride, const __m256i *a) {
     _mm_storeu_si128((__m128i *)output_ptr, _mm256_castsi256_si128(*a));
     _mm_storeu_si128((__m128i *)(output_ptr + stride), _mm256_extractf128_si256(*a, 1));
 }
 
-static void svt_aom_filter_block1d4_h4_avx2(const uint8_t *src_ptr, ptrdiff_t src_pixels_per_line,
-                                            uint8_t *output_ptr, ptrdiff_t output_pitch,
-                                            uint32_t output_height, const int16_t *filter) {
+static void svt_aom_filter_block1d4_h4_avx2(const uint8_t *src_ptr, ptrdiff_t src_pixels_per_line, uint8_t *output_ptr,
+                                            ptrdiff_t output_pitch, uint32_t output_height, const int16_t *filter) {
     __m128i      filters_reg;
     __m256i      add_filter_reg32, filt1_reg, first_filters, src_reg32b1, src_reg_filt32b1_1;
     unsigned int i;
@@ -293,9 +268,8 @@ static void svt_aom_filter_block1d4_h4_avx2(const uint8_t *src_ptr, ptrdiff_t sr
     }
 }
 
-static void svt_aom_filter_block1d4_h8_avx2(const uint8_t *src_ptr, ptrdiff_t src_pixels_per_line,
-                                            uint8_t *output_ptr, ptrdiff_t output_pitch,
-                                            uint32_t output_height, const int16_t *filter) {
+static void svt_aom_filter_block1d4_h8_avx2(const uint8_t *src_ptr, ptrdiff_t src_pixels_per_line, uint8_t *output_ptr,
+                                            ptrdiff_t output_pitch, uint32_t output_height, const int16_t *filter) {
     __m128i      filters_reg;
     __m256i      add_filter_reg32, filt1_reg, filt2_reg;
     __m256i      first_filters, second_filters;
@@ -393,9 +367,8 @@ static void svt_aom_filter_block1d4_h8_avx2(const uint8_t *src_ptr, ptrdiff_t sr
     }
 }
 
-static void svt_aom_filter_block1d8_h4_avx2(const uint8_t *src_ptr, ptrdiff_t src_pixels_per_line,
-                                            uint8_t *output_ptr, ptrdiff_t output_pitch,
-                                            uint32_t output_height, const int16_t *filter) {
+static void svt_aom_filter_block1d8_h4_avx2(const uint8_t *src_ptr, ptrdiff_t src_pixels_per_line, uint8_t *output_ptr,
+                                            ptrdiff_t output_pitch, uint32_t output_height, const int16_t *filter) {
     __m128i      filters_reg;
     __m256i      add_filter_reg32, filt2_reg, filt3_reg;
     __m256i      second_filters, third_filters;
@@ -484,9 +457,8 @@ static void svt_aom_filter_block1d8_h4_avx2(const uint8_t *src_ptr, ptrdiff_t sr
     }
 }
 
-static void svt_aom_filter_block1d8_h8_avx2(const uint8_t *src_ptr, ptrdiff_t src_pixels_per_line,
-                                            uint8_t *output_ptr, ptrdiff_t output_pitch,
-                                            uint32_t output_height, const int16_t *filter) {
+static void svt_aom_filter_block1d8_h8_avx2(const uint8_t *src_ptr, ptrdiff_t src_pixels_per_line, uint8_t *output_ptr,
+                                            ptrdiff_t output_pitch, uint32_t output_height, const int16_t *filter) {
     __m128i      filters_reg;
     __m256i      add_filter_reg32, filt1_reg, filt2_reg, filt3_reg, filt4_reg;
     __m256i      first_filters, second_filters, third_filters, forth_filters;
@@ -593,8 +565,7 @@ static void svt_aom_filter_block1d8_h8_avx2(const uint8_t *src_ptr, ptrdiff_t sr
         src_reg_filt2 = _mm_maddubs_epi16(src_reg_filt2, _mm256_castsi256_si128(third_filters));
 
         // add and saturate the results together
-        src_reg_filt1_1 = _mm_adds_epi16(src_reg_filt1_1,
-                                         _mm_adds_epi16(src_reg_filt3, src_reg_filt2));
+        src_reg_filt1_1 = _mm_adds_epi16(src_reg_filt1_1, _mm_adds_epi16(src_reg_filt3, src_reg_filt2));
 
         // shift by 6 bit each 16 bit
         src_reg_filt1_1 = _mm_adds_epi16(src_reg_filt1_1, _mm256_castsi256_si128(add_filter_reg32));
@@ -610,9 +581,8 @@ static void svt_aom_filter_block1d8_h8_avx2(const uint8_t *src_ptr, ptrdiff_t sr
     }
 }
 
-static void svt_aom_filter_block1d16_h4_avx2(const uint8_t *src_ptr, ptrdiff_t src_pixels_per_line,
-                                             uint8_t *output_ptr, ptrdiff_t output_pitch,
-                                             uint32_t output_height, const int16_t *filter) {
+static void svt_aom_filter_block1d16_h4_avx2(const uint8_t *src_ptr, ptrdiff_t src_pixels_per_line, uint8_t *output_ptr,
+                                             ptrdiff_t output_pitch, uint32_t output_height, const int16_t *filter) {
     __m128i      filters_reg;
     __m256i      add_filter_reg32, filt2_reg, filt3_reg;
     __m256i      second_filters, third_filters;
@@ -723,9 +693,8 @@ static void svt_aom_filter_block1d16_h4_avx2(const uint8_t *src_ptr, ptrdiff_t s
     }
 }
 
-static void svt_aom_filter_block1d16_h8_avx2(const uint8_t *src_ptr, ptrdiff_t src_pixels_per_line,
-                                             uint8_t *output_ptr, ptrdiff_t output_pitch,
-                                             uint32_t output_height, const int16_t *filter) {
+static void svt_aom_filter_block1d16_h8_avx2(const uint8_t *src_ptr, ptrdiff_t src_pixels_per_line, uint8_t *output_ptr,
+                                             ptrdiff_t output_pitch, uint32_t output_height, const int16_t *filter) {
     __m128i      filters_reg;
     __m256i      add_filter_reg32, filt1_reg, filt2_reg, filt3_reg, filt4_reg;
     __m256i      first_filters, second_filters, third_filters, forth_filters;
@@ -814,8 +783,8 @@ static void svt_aom_filter_block1d16_h8_avx2(const uint8_t *src_ptr, ptrdiff_t s
         src_reg_Filt32b2 = _mm256_maddubs_epi16(src_reg_Filt32b2, third_filters);
 
         // add and saturate the results together
-        src_reg_Filt32b2_1 = _mm256_adds_epi16(
-            src_reg_Filt32b2_1, _mm256_adds_epi16(src_reg_Filt32b3, src_reg_Filt32b2));
+        src_reg_Filt32b2_1 = _mm256_adds_epi16(src_reg_Filt32b2_1,
+                                               _mm256_adds_epi16(src_reg_Filt32b3, src_reg_Filt32b2));
 
         // shift by 6 bit each 16 bit
         src_reg_filt32b1_1 = _mm256_adds_epi16(src_reg_filt32b1_1, add_filter_reg32);
@@ -861,8 +830,7 @@ static void svt_aom_filter_block1d16_h8_avx2(const uint8_t *src_ptr, ptrdiff_t s
         src_reg_filt2 = _mm_maddubs_epi16(src_reg_filt2, _mm256_castsi256_si128(third_filters));
 
         // add and saturate the results together
-        src_reg_filt1_1 = _mm_adds_epi16(src_reg_filt1_1,
-                                         _mm_adds_epi16(src_reg_filt3, src_reg_filt2));
+        src_reg_filt1_1 = _mm_adds_epi16(src_reg_filt1_1, _mm_adds_epi16(src_reg_filt3, src_reg_filt2));
 
         // reading the next 16 bytes
         // (part of it was being read by earlier read)
@@ -888,8 +856,7 @@ static void svt_aom_filter_block1d16_h8_avx2(const uint8_t *src_ptr, ptrdiff_t s
         src_reg_filt2 = _mm_maddubs_epi16(src_reg_filt2, _mm256_castsi256_si128(third_filters));
 
         // add and saturate the results together
-        src_reg_filt2_1 = _mm_adds_epi16(src_reg_filt2_1,
-                                         _mm_adds_epi16(src_reg_filt3, src_reg_filt2));
+        src_reg_filt2_1 = _mm_adds_epi16(src_reg_filt2_1, _mm_adds_epi16(src_reg_filt3, src_reg_filt2));
 
         // shift by 6 bit each 16 bit
         src_reg_filt1_1 = _mm_adds_epi16(src_reg_filt1_1, _mm256_castsi256_si128(add_filter_reg32));
@@ -908,9 +875,8 @@ static void svt_aom_filter_block1d16_h8_avx2(const uint8_t *src_ptr, ptrdiff_t s
     }
 }
 
-static void svt_aom_filter_block1d8_v4_avx2(const uint8_t *src_ptr, ptrdiff_t src_pitch,
-                                            uint8_t *output_ptr, ptrdiff_t out_pitch,
-                                            uint32_t output_height, const int16_t *filter) {
+static void svt_aom_filter_block1d8_v4_avx2(const uint8_t *src_ptr, ptrdiff_t src_pitch, uint8_t *output_ptr,
+                                            ptrdiff_t out_pitch, uint32_t output_height, const int16_t *filter) {
     __m128i      filters_reg;
     __m256i      filters_reg32, add_filter_reg32;
     __m256i      src_reg23, src_reg_4x, src_reg_34, src_reg_5x, src_reg_45, src_reg_6x, src_reg_56;
@@ -942,8 +908,7 @@ static void svt_aom_filter_block1d8_v4_avx2(const uint8_t *src_ptr, ptrdiff_t sr
     dst_stride = out_pitch << 1;
 
     src_reg23  = xx_loadu2_epi64(src_ptr + src_pitch * 3, src_ptr + src_pitch * 2);
-    src_reg_4x = _mm256_castsi128_si256(
-        _mm_loadl_epi64((const __m128i *)(src_ptr + src_pitch * 4)));
+    src_reg_4x = _mm256_castsi128_si256(_mm_loadl_epi64((const __m128i *)(src_ptr + src_pitch * 4)));
 
     // have consecutive loads on the same 256 register
     src_reg_34 = _mm256_permute2x128_si256(src_reg23, src_reg_4x, 0x21);
@@ -953,12 +918,10 @@ static void svt_aom_filter_block1d8_v4_avx2(const uint8_t *src_ptr, ptrdiff_t sr
     for (i = output_height; i > 1; i -= 2) {
         // load the last 2 loads of 16 bytes and have every two
         // consecutive loads in the same 256 bit register
-        src_reg_5x = _mm256_castsi128_si256(
-            _mm_loadl_epi64((const __m128i *)(src_ptr + src_pitch * 5)));
+        src_reg_5x = _mm256_castsi128_si256(_mm_loadl_epi64((const __m128i *)(src_ptr + src_pitch * 5)));
         src_reg_45 = _mm256_inserti128_si256(src_reg_4x, _mm256_castsi256_si128(src_reg_5x), 1);
 
-        src_reg_6x = _mm256_castsi128_si256(
-            _mm_loadl_epi64((const __m128i *)(src_ptr + src_pitch * 6)));
+        src_reg_6x = _mm256_castsi128_si256(_mm_loadl_epi64((const __m128i *)(src_ptr + src_pitch * 6)));
         src_reg_56 = _mm256_inserti128_si256(src_reg_5x, _mm256_castsi256_si128(src_reg_6x), 1);
 
         // merge every two consecutive registers
@@ -992,9 +955,8 @@ static void svt_aom_filter_block1d8_v4_avx2(const uint8_t *src_ptr, ptrdiff_t sr
     }
 }
 
-static void svt_aom_filter_block1d8_v8_avx2(const uint8_t *src_ptr, ptrdiff_t src_pitch,
-                                            uint8_t *output_ptr, ptrdiff_t out_pitch,
-                                            uint32_t output_height, const int16_t *filter) {
+static void svt_aom_filter_block1d8_v8_avx2(const uint8_t *src_ptr, ptrdiff_t src_pitch, uint8_t *output_ptr,
+                                            ptrdiff_t out_pitch, uint32_t output_height, const int16_t *filter) {
     __m128i      filters_reg;
     __m256i      add_filter_reg32;
     __m256i      src_reg32b1, src_reg_32b2, src_reg_32b3, src_reg_32b4, src_reg_32b5;
@@ -1034,8 +996,7 @@ static void svt_aom_filter_block1d8_v8_avx2(const uint8_t *src_ptr, ptrdiff_t sr
     src_reg32b1  = xx_loadu2_epi64(src_ptr + src_pitch, src_ptr);
     src_reg_32b3 = xx_loadu2_epi64(src_ptr + src_pitch * 3, src_ptr + src_pitch * 2);
     src_reg_32b5 = xx_loadu2_epi64(src_ptr + src_pitch * 5, src_ptr + src_pitch * 4);
-    src_reg_32b7 = _mm256_castsi128_si256(
-        _mm_loadl_epi64((const __m128i *)(src_ptr + src_pitch * 6)));
+    src_reg_32b7 = _mm256_castsi128_si256(_mm_loadl_epi64((const __m128i *)(src_ptr + src_pitch * 6)));
 
     // have each consecutive loads on the same 256 register
     src_reg_32b2 = _mm256_permute2x128_si256(src_reg32b1, src_reg_32b3, 0x21);
@@ -1049,14 +1010,10 @@ static void svt_aom_filter_block1d8_v8_avx2(const uint8_t *src_ptr, ptrdiff_t sr
     for (i = output_height; i > 1; i -= 2) {
         // load the last 2 loads of 16 bytes and have every two
         // consecutive loads in the same 256 bit register
-        src_reg_32b8 = _mm256_castsi128_si256(
-            _mm_loadl_epi64((const __m128i *)(src_ptr + src_pitch * 7)));
-        src_reg_32b7 = _mm256_inserti128_si256(
-            src_reg_32b7, _mm256_castsi256_si128(src_reg_32b8), 1);
-        src_reg_32b9 = _mm256_castsi128_si256(
-            _mm_loadl_epi64((const __m128i *)(src_ptr + src_pitch * 8)));
-        src_reg_32b8 = _mm256_inserti128_si256(
-            src_reg_32b8, _mm256_castsi256_si128(src_reg_32b9), 1);
+        src_reg_32b8 = _mm256_castsi128_si256(_mm_loadl_epi64((const __m128i *)(src_ptr + src_pitch * 7)));
+        src_reg_32b7 = _mm256_inserti128_si256(src_reg_32b7, _mm256_castsi256_si128(src_reg_32b8), 1);
+        src_reg_32b9 = _mm256_castsi128_si256(_mm_loadl_epi64((const __m128i *)(src_ptr + src_pitch * 8)));
+        src_reg_32b8 = _mm256_inserti128_si256(src_reg_32b8, _mm256_castsi256_si128(src_reg_32b9), 1);
 
         // merge every two consecutive registers
         // save
@@ -1074,8 +1031,7 @@ static void svt_aom_filter_block1d8_v8_avx2(const uint8_t *src_ptr, ptrdiff_t sr
         src_reg_32b12 = _mm256_maddubs_epi16(src_reg_32b2, third_filters);
 
         // add and saturate the results together
-        src_reg_32b10 = _mm256_adds_epi16(src_reg_32b10,
-                                          _mm256_adds_epi16(src_reg_32b8, src_reg_32b12));
+        src_reg_32b10 = _mm256_adds_epi16(src_reg_32b10, _mm256_adds_epi16(src_reg_32b8, src_reg_32b12));
 
         // shift by 6 bit each 16 bit
         src_reg_32b10 = _mm256_adds_epi16(src_reg_32b10, add_filter_reg32);
@@ -1107,8 +1063,7 @@ static void svt_aom_filter_block1d8_v8_avx2(const uint8_t *src_ptr, ptrdiff_t sr
         src_reg_filt4 = _mm_unpacklo_epi8(_mm256_castsi256_si128(src_reg_32b7), src_reg_filt8);
 
         // multiply 2 adjacent elements with the filter and add the result
-        src_reg_filt1 = _mm_maddubs_epi16(_mm256_castsi256_si128(src_reg_32b10),
-                                          _mm256_castsi256_si128(first_filters));
+        src_reg_filt1 = _mm_maddubs_epi16(_mm256_castsi256_si128(src_reg_32b10), _mm256_castsi256_si128(first_filters));
         src_reg_filt4 = _mm_maddubs_epi16(src_reg_filt4, _mm256_castsi256_si128(forth_filters));
 
         // add and saturate the results together
@@ -1119,8 +1074,7 @@ static void svt_aom_filter_block1d8_v8_avx2(const uint8_t *src_ptr, ptrdiff_t sr
                                           _mm256_castsi256_si128(second_filters));
 
         // multiply 2 adjacent elements with the filter and add the result
-        src_reg_filt6 = _mm_maddubs_epi16(_mm256_castsi256_si128(src_reg_32b2),
-                                          _mm256_castsi256_si128(third_filters));
+        src_reg_filt6 = _mm_maddubs_epi16(_mm256_castsi256_si128(src_reg_32b2), _mm256_castsi256_si128(third_filters));
 
         // add and saturate the results together
         src_reg_filt1 = _mm_adds_epi16(src_reg_filt1, _mm_adds_epi16(src_reg_filt4, src_reg_filt6));
@@ -1138,9 +1092,8 @@ static void svt_aom_filter_block1d8_v8_avx2(const uint8_t *src_ptr, ptrdiff_t sr
     }
 }
 
-static void svt_aom_filter_block1d16_v4_avx2(const uint8_t *src_ptr, ptrdiff_t src_pitch,
-                                             uint8_t *output_ptr, ptrdiff_t out_pitch,
-                                             uint32_t output_height, const int16_t *filter) {
+static void svt_aom_filter_block1d16_v4_avx2(const uint8_t *src_ptr, ptrdiff_t src_pitch, uint8_t *output_ptr,
+                                             ptrdiff_t out_pitch, uint32_t output_height, const int16_t *filter) {
     __m128i      filters_reg;
     __m256i      filters_reg32, add_filter_reg32;
     __m256i      src_reg23, src_reg_4x, src_reg_34, src_reg_5x, src_reg_45, src_reg_6x, src_reg_56;
@@ -1172,8 +1125,7 @@ static void svt_aom_filter_block1d16_v4_avx2(const uint8_t *src_ptr, ptrdiff_t s
     dst_stride = out_pitch << 1;
 
     src_reg23  = xx_loadu2_mi128(src_ptr + src_pitch * 3, src_ptr + src_pitch * 2);
-    src_reg_4x = _mm256_castsi128_si256(
-        _mm_loadu_si128((const __m128i *)(src_ptr + src_pitch * 4)));
+    src_reg_4x = _mm256_castsi128_si256(_mm_loadu_si128((const __m128i *)(src_ptr + src_pitch * 4)));
 
     // have consecutive loads on the same 256 register
     src_reg_34 = _mm256_permute2x128_si256(src_reg23, src_reg_4x, 0x21);
@@ -1184,12 +1136,10 @@ static void svt_aom_filter_block1d16_v4_avx2(const uint8_t *src_ptr, ptrdiff_t s
     for (i = output_height; i > 1; i -= 2) {
         // load the last 2 loads of 16 bytes and have every two
         // consecutive loads in the same 256 bit register
-        src_reg_5x = _mm256_castsi128_si256(
-            _mm_loadu_si128((const __m128i *)(src_ptr + src_pitch * 5)));
+        src_reg_5x = _mm256_castsi128_si256(_mm_loadu_si128((const __m128i *)(src_ptr + src_pitch * 5)));
         src_reg_45 = _mm256_inserti128_si256(src_reg_4x, _mm256_castsi256_si128(src_reg_5x), 1);
 
-        src_reg_6x = _mm256_castsi128_si256(
-            _mm_loadu_si128((const __m128i *)(src_ptr + src_pitch * 6)));
+        src_reg_6x = _mm256_castsi128_si256(_mm_loadu_si128((const __m128i *)(src_ptr + src_pitch * 6)));
         src_reg_56 = _mm256_inserti128_si256(src_reg_5x, _mm256_castsi256_si128(src_reg_6x), 1);
 
         // merge every two consecutive registers
@@ -1234,9 +1184,8 @@ static void svt_aom_filter_block1d16_v4_avx2(const uint8_t *src_ptr, ptrdiff_t s
     }
 }
 
-static void svt_aom_filter_block1d16_v8_avx2(const uint8_t *src_ptr, ptrdiff_t src_pitch,
-                                             uint8_t *output_ptr, ptrdiff_t out_pitch,
-                                             uint32_t output_height, const int16_t *filter) {
+static void svt_aom_filter_block1d16_v8_avx2(const uint8_t *src_ptr, ptrdiff_t src_pitch, uint8_t *output_ptr,
+                                             ptrdiff_t out_pitch, uint32_t output_height, const int16_t *filter) {
     __m128i      filters_reg;
     __m256i      add_filter_reg32;
     __m256i      src_reg32b1, src_reg_32b2, src_reg_32b3, src_reg_32b4, src_reg_32b5;
@@ -1276,8 +1225,7 @@ static void svt_aom_filter_block1d16_v8_avx2(const uint8_t *src_ptr, ptrdiff_t s
     src_reg32b1  = xx_loadu2_mi128(src_ptr + src_pitch, src_ptr);
     src_reg_32b3 = xx_loadu2_mi128(src_ptr + src_pitch * 3, src_ptr + src_pitch * 2);
     src_reg_32b5 = xx_loadu2_mi128(src_ptr + src_pitch * 5, src_ptr + src_pitch * 4);
-    src_reg_32b7 = _mm256_castsi128_si256(
-        _mm_loadu_si128((const __m128i *)(src_ptr + src_pitch * 6)));
+    src_reg_32b7 = _mm256_castsi128_si256(_mm_loadu_si128((const __m128i *)(src_ptr + src_pitch * 6)));
 
     // have each consecutive loads on the same 256 register
     src_reg_32b2 = _mm256_permute2x128_si256(src_reg32b1, src_reg_32b3, 0x21);
@@ -1296,14 +1244,10 @@ static void svt_aom_filter_block1d16_v8_avx2(const uint8_t *src_ptr, ptrdiff_t s
     for (i = output_height; i > 1; i -= 2) {
         // load the last 2 loads of 16 bytes and have every two
         // consecutive loads in the same 256 bit register
-        src_reg_32b8 = _mm256_castsi128_si256(
-            _mm_loadu_si128((const __m128i *)(src_ptr + src_pitch * 7)));
-        src_reg_32b7 = _mm256_inserti128_si256(
-            src_reg_32b7, _mm256_castsi256_si128(src_reg_32b8), 1);
-        src_reg_32b9 = _mm256_castsi128_si256(
-            _mm_loadu_si128((const __m128i *)(src_ptr + src_pitch * 8)));
-        src_reg_32b8 = _mm256_inserti128_si256(
-            src_reg_32b8, _mm256_castsi256_si128(src_reg_32b9), 1);
+        src_reg_32b8 = _mm256_castsi128_si256(_mm_loadu_si128((const __m128i *)(src_ptr + src_pitch * 7)));
+        src_reg_32b7 = _mm256_inserti128_si256(src_reg_32b7, _mm256_castsi256_si128(src_reg_32b8), 1);
+        src_reg_32b9 = _mm256_castsi128_si256(_mm_loadu_si128((const __m128i *)(src_ptr + src_pitch * 8)));
+        src_reg_32b8 = _mm256_inserti128_si256(src_reg_32b8, _mm256_castsi256_si128(src_reg_32b9), 1);
 
         // merge every two consecutive registers
         // save
@@ -1322,8 +1266,7 @@ static void svt_aom_filter_block1d16_v8_avx2(const uint8_t *src_ptr, ptrdiff_t s
         src_reg_32b12 = _mm256_maddubs_epi16(src_reg_32b2, third_filters);
 
         // add and saturate the results together
-        src_reg_32b10 = _mm256_adds_epi16(src_reg_32b10,
-                                          _mm256_adds_epi16(src_reg_32b8, src_reg_32b12));
+        src_reg_32b10 = _mm256_adds_epi16(src_reg_32b10, _mm256_adds_epi16(src_reg_32b8, src_reg_32b12));
 
         // multiply 2 adjacent elements with the filter and add the result
         src_reg32b1  = _mm256_maddubs_epi16(src_reg32b1, first_filters);
@@ -1336,8 +1279,7 @@ static void svt_aom_filter_block1d16_v8_avx2(const uint8_t *src_ptr, ptrdiff_t s
         src_reg_32b12 = _mm256_maddubs_epi16(src_reg_32b5, third_filters);
 
         // add and saturate the results together
-        src_reg32b1 = _mm256_adds_epi16(src_reg32b1,
-                                        _mm256_adds_epi16(src_reg_32b8, src_reg_32b12));
+        src_reg32b1 = _mm256_adds_epi16(src_reg32b1, _mm256_adds_epi16(src_reg_32b8, src_reg_32b12));
 
         // shift by 6 bit each 16 bit
         src_reg_32b10 = _mm256_adds_epi16(src_reg_32b10, add_filter_reg32);
@@ -1376,11 +1318,9 @@ static void svt_aom_filter_block1d16_v8_avx2(const uint8_t *src_ptr, ptrdiff_t s
         src_reg_filt7 = _mm_unpackhi_epi8(_mm256_castsi256_si128(src_reg_32b7), src_reg_filt8);
 
         // multiply 2 adjacent elements with the filter and add the result
-        src_reg_filt1 = _mm_maddubs_epi16(_mm256_castsi256_si128(src_reg_32b10),
-                                          _mm256_castsi256_si128(first_filters));
+        src_reg_filt1 = _mm_maddubs_epi16(_mm256_castsi256_si128(src_reg_32b10), _mm256_castsi256_si128(first_filters));
         src_reg_filt4 = _mm_maddubs_epi16(src_reg_filt4, _mm256_castsi256_si128(forth_filters));
-        src_reg_filt3 = _mm_maddubs_epi16(_mm256_castsi256_si128(src_reg32b1),
-                                          _mm256_castsi256_si128(first_filters));
+        src_reg_filt3 = _mm_maddubs_epi16(_mm256_castsi256_si128(src_reg32b1), _mm256_castsi256_si128(first_filters));
         src_reg_filt7 = _mm_maddubs_epi16(src_reg_filt7, _mm256_castsi256_si128(forth_filters));
 
         // add and saturate the results together
@@ -1390,14 +1330,11 @@ static void svt_aom_filter_block1d16_v8_avx2(const uint8_t *src_ptr, ptrdiff_t s
         // multiply 2 adjacent elements with the filter and add the result
         src_reg_filt4 = _mm_maddubs_epi16(_mm256_castsi256_si128(src_reg_32b11),
                                           _mm256_castsi256_si128(second_filters));
-        src_reg_filt5 = _mm_maddubs_epi16(_mm256_castsi256_si128(src_reg_32b3),
-                                          _mm256_castsi256_si128(second_filters));
+        src_reg_filt5 = _mm_maddubs_epi16(_mm256_castsi256_si128(src_reg_32b3), _mm256_castsi256_si128(second_filters));
 
         // multiply 2 adjacent elements with the filter and add the result
-        src_reg_filt6 = _mm_maddubs_epi16(_mm256_castsi256_si128(src_reg_32b2),
-                                          _mm256_castsi256_si128(third_filters));
-        src_reg_filt7 = _mm_maddubs_epi16(_mm256_castsi256_si128(src_reg_32b5),
-                                          _mm256_castsi256_si128(third_filters));
+        src_reg_filt6 = _mm_maddubs_epi16(_mm256_castsi256_si128(src_reg_32b2), _mm256_castsi256_si128(third_filters));
+        src_reg_filt7 = _mm_maddubs_epi16(_mm256_castsi256_si128(src_reg_32b5), _mm256_castsi256_si128(third_filters));
 
         // add and saturate the results together
         src_reg_filt1 = _mm_adds_epi16(src_reg_filt1, _mm_adds_epi16(src_reg_filt4, src_reg_filt6));
@@ -1419,9 +1356,8 @@ static void svt_aom_filter_block1d16_v8_avx2(const uint8_t *src_ptr, ptrdiff_t s
     }
 }
 
-static void svt_aom_filter_block1d4_v4_avx2(const uint8_t *src_ptr, ptrdiff_t src_pitch,
-                                            uint8_t *output_ptr, ptrdiff_t out_pitch,
-                                            uint32_t output_height, const int16_t *filter) {
+static void svt_aom_filter_block1d4_v4_avx2(const uint8_t *src_ptr, ptrdiff_t src_pitch, uint8_t *output_ptr,
+                                            ptrdiff_t out_pitch, uint32_t output_height, const int16_t *filter) {
     __m128i      filters_reg;
     __m256i      filters_reg32, add_filter_reg32;
     __m256i      src_reg23, src_reg_4x, src_reg_34, src_reg_5x, src_reg_45, src_reg_6x, src_reg_56;
@@ -1448,8 +1384,7 @@ static void svt_aom_filter_block1d4_v4_avx2(const uint8_t *src_ptr, ptrdiff_t sr
     dst_stride = out_pitch << 1;
 
     src_reg23  = xx_loadu2_epi64(src_ptr + src_pitch * 3, src_ptr + src_pitch * 2);
-    src_reg_4x = _mm256_castsi128_si256(
-        _mm_loadl_epi64((const __m128i *)(src_ptr + src_pitch * 4)));
+    src_reg_4x = _mm256_castsi128_si256(_mm_loadl_epi64((const __m128i *)(src_ptr + src_pitch * 4)));
 
     // have consecutive loads on the same 256 register
     src_reg_34 = _mm256_permute2x128_si256(src_reg23, src_reg_4x, 0x21);
@@ -1459,12 +1394,10 @@ static void svt_aom_filter_block1d4_v4_avx2(const uint8_t *src_ptr, ptrdiff_t sr
     for (i = output_height; i > 1; i -= 2) {
         // load the last 2 loads of 16 bytes and have every two
         // consecutive loads in the same 256 bit register
-        src_reg_5x = _mm256_castsi128_si256(
-            _mm_loadl_epi64((const __m128i *)(src_ptr + src_pitch * 5)));
+        src_reg_5x = _mm256_castsi128_si256(_mm_loadl_epi64((const __m128i *)(src_ptr + src_pitch * 5)));
         src_reg_45 = _mm256_inserti128_si256(src_reg_4x, _mm256_castsi256_si128(src_reg_5x), 1);
 
-        src_reg_6x = _mm256_castsi128_si256(
-            _mm_loadl_epi64((const __m128i *)(src_ptr + src_pitch * 6)));
+        src_reg_6x = _mm256_castsi128_si256(_mm_loadl_epi64((const __m128i *)(src_ptr + src_pitch * 6)));
         src_reg_56 = _mm256_inserti128_si256(src_reg_5x, _mm256_castsi256_si128(src_reg_6x), 1);
 
         // merge every two consecutive registers

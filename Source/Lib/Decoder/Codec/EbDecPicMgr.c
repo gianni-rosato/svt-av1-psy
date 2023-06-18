@@ -110,9 +110,8 @@ EbDecPicBuf *svt_aom_dec_pic_mgr_get_cur_pic(EbDecHandle *dec_handle_ptr) {
     EbDecPicMgr  *ps_pic_mgr   = (EbDecPicMgr *)dec_handle_ptr->pv_pic_mgr;
     SeqHeader    *seq_header   = &dec_handle_ptr->seq_header;
     FrameHeader  *frame_info   = &dec_handle_ptr->frame_header;
-    EbColorFormat color_format = seq_header->color_config.mono_chrome
-        ? EB_YUV400
-        : dec_handle_ptr->dec_config.max_color_format;
+    EbColorFormat color_format = seq_header->color_config.mono_chrome ? EB_YUV400
+                                                                      : dec_handle_ptr->dec_config.max_color_format;
     int32_t       i;
     EbDecPicBuf  *pic_buf = NULL;
     /* TODO: Add lock and unlock for MT */
@@ -128,11 +127,11 @@ EbDecPicBuf *svt_aom_dec_pic_mgr_get_cur_pic(EbDecHandle *dec_handle_ptr) {
     uint16_t       frame_width  = frame_info->frame_size.frame_width;
     uint16_t       frame_height = frame_info->frame_size.frame_height;
     EbColorConfig *cc           = &seq_header->color_config;
-    size_t         y_size  = (frame_width + 2 * DEC_PAD_VALUE) * (frame_height + 2 * DEC_PAD_VALUE);
-    size_t         uv_size = cc->mono_chrome ? 0
-                                             : (((frame_width + 2 * DEC_PAD_VALUE) >> cc->subsampling_x) *
+    size_t         y_size       = (frame_width + 2 * DEC_PAD_VALUE) * (frame_height + 2 * DEC_PAD_VALUE);
+    size_t         uv_size      = cc->mono_chrome ? 0
+                                                  : (((frame_width + 2 * DEC_PAD_VALUE) >> cc->subsampling_x) *
                                         ((frame_height + 2 * DEC_PAD_VALUE) >> cc->subsampling_y));
-    size_t         frame_size = y_size + uv_size;
+    size_t         frame_size   = y_size + uv_size;
 
     if (ps_pic_mgr->as_dec_pic[i].size < frame_size) {
         /* allocate the buffer. TODO: Should add free and allocate logic */
@@ -143,10 +142,9 @@ EbDecPicBuf *svt_aom_dec_pic_mgr_get_cur_pic(EbDecHandle *dec_handle_ptr) {
         input_pic_buf_desc_init_data.max_height = seq_header->max_frame_height;
         input_pic_buf_desc_init_data.bit_depth  = (EbBitDepth)cc->bit_depth;
         assert(IMPLIES(cc->mono_chrome, color_format == EB_YUV400));
-        input_pic_buf_desc_init_data.color_format = cc->mono_chrome ? EB_YUV400 : color_format;
-        input_pic_buf_desc_init_data.buffer_enable_mask = cc->mono_chrome
-            ? PICTURE_BUFFER_DESC_LUMA_MASK
-            : PICTURE_BUFFER_DESC_FULL_MASK;
+        input_pic_buf_desc_init_data.color_format       = cc->mono_chrome ? EB_YUV400 : color_format;
+        input_pic_buf_desc_init_data.buffer_enable_mask = cc->mono_chrome ? PICTURE_BUFFER_DESC_LUMA_MASK
+                                                                          : PICTURE_BUFFER_DESC_FULL_MASK;
 
         input_pic_buf_desc_init_data.left_padding  = DEC_PAD_VALUE;
         input_pic_buf_desc_init_data.right_padding = DEC_PAD_VALUE;
@@ -217,16 +215,14 @@ void svt_aom_dec_pic_mgr_update_ref_pic(EbDecHandle *dec_handle_ptr, int32_t fra
     if (frame_decoded) {
         for (int32_t mask = refresh_frame_flags; mask; mask >>= 1) {
             dec_ref_count_and_rel(dec_handle_ptr->ref_frame_map[ref_index]);
-            dec_handle_ptr->ref_frame_map[ref_index] =
-                dec_handle_ptr->next_ref_frame_map[ref_index];
+            dec_handle_ptr->ref_frame_map[ref_index]      = dec_handle_ptr->next_ref_frame_map[ref_index];
             dec_handle_ptr->next_ref_frame_map[ref_index] = NULL;
             ++ref_index;
         }
 
         for (; ref_index < REF_FRAMES; ++ref_index) {
             dec_ref_count_and_rel(dec_handle_ptr->ref_frame_map[ref_index]);
-            dec_handle_ptr->ref_frame_map[ref_index] =
-                dec_handle_ptr->next_ref_frame_map[ref_index];
+            dec_handle_ptr->ref_frame_map[ref_index]      = dec_handle_ptr->next_ref_frame_map[ref_index];
             dec_handle_ptr->next_ref_frame_map[ref_index] = NULL;
         }
 
@@ -247,10 +243,8 @@ void svt_aom_dec_pic_mgr_update_ref_pic(EbDecHandle *dec_handle_ptr, int32_t fra
 
     for (int i = 0; i < NUM_REF_FRAMES; i++) {
         if ((dec_handle_ptr->frame_header.refresh_frame_flags >> i) & 1) {
-            dec_handle_ptr->frame_header.ref_order_hint[i] =
-                dec_handle_ptr->frame_header.order_hint;
-            dec_handle_ptr->frame_header.ref_frame_id[i] =
-                dec_handle_ptr->frame_header.current_frame_id;
+            dec_handle_ptr->frame_header.ref_order_hint[i] = dec_handle_ptr->frame_header.order_hint;
+            dec_handle_ptr->frame_header.ref_frame_id[i]   = dec_handle_ptr->frame_header.current_frame_id;
         }
     }
 }
@@ -267,8 +261,7 @@ void svt_aom_generate_next_ref_frame_map(EbDecHandle *dec_handle_ptr) {
         if (mask & 1)
             dec_handle_ptr->next_ref_frame_map[ref_index] = dec_handle_ptr->cur_pic_buf[0];
         else
-            dec_handle_ptr->next_ref_frame_map[ref_index] =
-                dec_handle_ptr->ref_frame_map[ref_index];
+            dec_handle_ptr->next_ref_frame_map[ref_index] = dec_handle_ptr->ref_frame_map[ref_index];
 
         if (dec_handle_ptr->next_ref_frame_map[ref_index] != NULL)
             ++dec_handle_ptr->next_ref_frame_map[ref_index]->ref_count;
@@ -285,21 +278,18 @@ void svt_aom_generate_next_ref_frame_map(EbDecHandle *dec_handle_ptr) {
 // These functions take a reference frame label between LAST_FRAME and
 // EXTREF_FRAME inclusive.  Note that this is different to the indexing
 // previously used by the frame_refs[] array.
-static INLINE int32_t get_ref_frame_map_with_idx(EbDecHandle           *dec_handle_ptr,
-                                                 const MvReferenceFrame ref_frame) {
+static INLINE int32_t get_ref_frame_map_with_idx(EbDecHandle *dec_handle_ptr, const MvReferenceFrame ref_frame) {
     return (ref_frame >= LAST_FRAME && ref_frame <= REF_FRAMES)
         ? dec_handle_ptr->remapped_ref_idx[ref_frame - LAST_FRAME]
         : INVALID_IDX;
 }
 
-EbDecPicBuf *svt_aom_get_ref_frame_buf(EbDecHandle           *dec_handle_ptr,
-                                       const MvReferenceFrame ref_frame) {
+EbDecPicBuf *svt_aom_get_ref_frame_buf(EbDecHandle *dec_handle_ptr, const MvReferenceFrame ref_frame) {
     const int32_t map_idx = get_ref_frame_map_with_idx(dec_handle_ptr, ref_frame);
     return (map_idx != INVALID_IDX) ? dec_handle_ptr->ref_frame_map[map_idx] : NULL;
 }
 
-ScaleFactors *svt_aom_get_ref_scale_factors(EbDecHandle           *dec_handle_ptr,
-                                            const MvReferenceFrame ref_frame) {
+ScaleFactors *svt_aom_get_ref_scale_factors(EbDecHandle *dec_handle_ptr, const MvReferenceFrame ref_frame) {
     const int map_idx = get_ref_frame_map_with_idx(dec_handle_ptr, ref_frame);
     return (map_idx != INVALID_IDX) ? &dec_handle_ptr->ref_scale_factors[map_idx] : NULL;
 }
@@ -337,8 +327,7 @@ void svt_set_frame_refs(EbDecHandle *dec_handle_ptr, int32_t lst_map_idx, int32_
     assert(dec_handle_ptr->seq_header.order_hint_info.enable_order_hint);
 
     const int32_t cur_order_hint     = (int32_t)dec_handle_ptr->frame_header.order_hint;
-    const int32_t cur_frame_sort_idx = 1
-        << (dec_handle_ptr->seq_header.order_hint_info.order_hint_bits - 1);
+    const int32_t cur_frame_sort_idx = 1 << (dec_handle_ptr->seq_header.order_hint_info.order_hint_bits - 1);
 
     RefFrameInfo ref_frame_info[REF_FRAMES];
     int32_t      ref_flag_list[INTER_REFS_PER_FRAME] = {0, 0, 0, 0, 0, 0, 0};
@@ -360,11 +349,9 @@ void svt_set_frame_refs(EbDecHandle *dec_handle_ptr, int32_t lst_map_idx, int32_
             continue;
 
         const int32_t offset       = (int32_t)buf->order_hint;
-        ref_frame_info[i].sort_idx = (offset == -1)
-            ? -1
-            : cur_frame_sort_idx +
-                get_relative_dist(
-                    &dec_handle_ptr->seq_header.order_hint_info, offset, cur_order_hint);
+        ref_frame_info[i].sort_idx = (offset == -1) ? -1
+                                                    : cur_frame_sort_idx +
+                get_relative_dist(&dec_handle_ptr->seq_header.order_hint_info, offset, cur_order_hint);
         assert(ref_frame_info[i].sort_idx >= -1);
 
         if (map_idx == lst_map_idx)
@@ -414,16 +401,14 @@ void svt_set_frame_refs(EbDecHandle *dec_handle_ptr, int32_t lst_map_idx, int32_
 
     // == BWDREF_FRAME ==
     if (bwd_start_idx <= bwd_end_idx) {
-        set_ref_frame_info(
-            dec_handle_ptr, BWDREF_FRAME - LAST_FRAME, &ref_frame_info[bwd_start_idx]);
+        set_ref_frame_info(dec_handle_ptr, BWDREF_FRAME - LAST_FRAME, &ref_frame_info[bwd_start_idx]);
         ref_flag_list[BWDREF_FRAME - LAST_FRAME] = 1;
         bwd_start_idx++;
     }
 
     // == ALTREF2_FRAME ==
     if (bwd_start_idx <= bwd_end_idx) {
-        set_ref_frame_info(
-            dec_handle_ptr, ALTREF2_FRAME - LAST_FRAME, &ref_frame_info[bwd_start_idx]);
+        set_ref_frame_info(dec_handle_ptr, ALTREF2_FRAME - LAST_FRAME, &ref_frame_info[bwd_start_idx]);
         ref_flag_list[ALTREF2_FRAME - LAST_FRAME] = 1;
     }
 
@@ -441,8 +426,7 @@ void svt_set_frame_refs(EbDecHandle *dec_handle_ptr, int32_t lst_map_idx, int32_
             ref_flag_list[GOLDEN_FRAME - LAST_FRAME] = 1;
         }
     }
-    assert(ref_flag_list[0 /*LAST_FRAME - LAST_FRAME*/] == 1 &&
-           ref_flag_list[GOLDEN_FRAME - LAST_FRAME] == 1);
+    assert(ref_flag_list[0 /*LAST_FRAME - LAST_FRAME*/] == 1 && ref_flag_list[GOLDEN_FRAME - LAST_FRAME] == 1);
     // == LAST2_FRAME ==
     // == LAST3_FRAME ==
     // == BWDREF_FRAME ==
@@ -502,7 +486,6 @@ void svt_setup_frame_buf_refs(EbDecHandle *dec_handle_ptr) {
     for (ref_frame = LAST_FRAME; ref_frame <= ALTREF_FRAME; ++ref_frame) {
         const EbDecPicBuf *const buf = svt_aom_get_ref_frame_buf(dec_handle_ptr, ref_frame);
         if (buf != NULL)
-            dec_handle_ptr->cur_pic_buf[0]->ref_order_hints[ref_frame - LAST_FRAME] =
-                buf->order_hint;
+            dec_handle_ptr->cur_pic_buf[0]->ref_order_hints[ref_frame - LAST_FRAME] = buf->order_hint;
     }
 }

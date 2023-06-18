@@ -364,8 +364,8 @@ void svt_av1_dr_prediction_z2_c(uint8_t *dst, ptrdiff_t stride, int32_t bw, int3
 * svt_cfl_luma_subsampling_420_lbd_c
 * Subsample luma samples to match chroma size. Low bit depth and C
 ************************************************************************************************/
-void svt_cfl_luma_subsampling_420_lbd_c(const uint8_t *input, int32_t input_stride,
-                                        int16_t *output_q3, int32_t width, int32_t height) {
+void svt_cfl_luma_subsampling_420_lbd_c(const uint8_t *input, int32_t input_stride, int16_t *output_q3, int32_t width,
+                                        int32_t height) {
     for (int32_t j = 0; j < height; j += 2) {
         for (int32_t i = 0; i < width; i += 2) {
             const int32_t bot = i + input_stride;
@@ -379,8 +379,8 @@ void svt_cfl_luma_subsampling_420_lbd_c(const uint8_t *input, int32_t input_stri
 * svt_cfl_luma_subsampling_420_hbd_c
 * Subsample luma samples to match chroma size. High bit depth and C
 ************************************************************************************************/
-void svt_cfl_luma_subsampling_420_hbd_c(const uint16_t *input, int32_t input_stride,
-                                        int16_t *output_q3, int32_t width, int32_t height) {
+void svt_cfl_luma_subsampling_420_hbd_c(const uint16_t *input, int32_t input_stride, int16_t *output_q3, int32_t width,
+                                        int32_t height) {
     for (int32_t j = 0; j < height; j += 2, input += input_stride << 1, output_q3 += CFL_BUF_LINE) {
         for (int32_t i = 0; i < width; i += 2) {
             const int32_t bot = i + input_stride;
@@ -392,8 +392,8 @@ void svt_cfl_luma_subsampling_420_hbd_c(const uint16_t *input, int32_t input_str
 * svt_subtract_average_c
 * Calculate the DC value by averaging over all sample. Subtract DC value to get AC values In C
 ************************************************************************************************/
-void svt_subtract_average_c(int16_t *pred_buf_q3, int32_t width, int32_t height,
-                            int32_t round_offset, int32_t num_pel_log2) {
+void svt_subtract_average_c(int16_t *pred_buf_q3, int32_t width, int32_t height, int32_t round_offset,
+                            int32_t num_pel_log2) {
     int32_t  sum_q3   = 0;
     int16_t *pred_buf = pred_buf_q3;
     for (int32_t j = 0; j < height; j++) {
@@ -439,24 +439,22 @@ const uint8_t extend_modes[INTRA_MODES] = {
 //       . . o .
 //       . . . .
 static uint8_t has_tr_4x4[128] = {
-    255, 255, 255, 255, 85,  85,  85,  85,  119, 119, 119, 119, 85,  85,  85,  85,  127, 127, 127,
-    127, 85,  85,  85,  85,  119, 119, 119, 119, 85,  85,  85,  85,  255, 127, 255, 127, 85,  85,
-    85,  85,  119, 119, 119, 119, 85,  85,  85,  85,  127, 127, 127, 127, 85,  85,  85,  85,  119,
-    119, 119, 119, 85,  85,  85,  85,  255, 255, 255, 127, 85,  85,  85,  85,  119, 119, 119, 119,
-    85,  85,  85,  85,  127, 127, 127, 127, 85,  85,  85,  85,  119, 119, 119, 119, 85,  85,  85,
-    85,  255, 127, 255, 127, 85,  85,  85,  85,  119, 119, 119, 119, 85,  85,  85,  85,  127, 127,
-    127, 127, 85,  85,  85,  85,  119, 119, 119, 119, 85,  85,  85,  85,
+    255, 255, 255, 255, 85,  85,  85,  85,  119, 119, 119, 119, 85,  85,  85,  85,  127, 127, 127, 127, 85,  85,
+    85,  85,  119, 119, 119, 119, 85,  85,  85,  85,  255, 127, 255, 127, 85,  85,  85,  85,  119, 119, 119, 119,
+    85,  85,  85,  85,  127, 127, 127, 127, 85,  85,  85,  85,  119, 119, 119, 119, 85,  85,  85,  85,  255, 255,
+    255, 127, 85,  85,  85,  85,  119, 119, 119, 119, 85,  85,  85,  85,  127, 127, 127, 127, 85,  85,  85,  85,
+    119, 119, 119, 119, 85,  85,  85,  85,  255, 127, 255, 127, 85,  85,  85,  85,  119, 119, 119, 119, 85,  85,
+    85,  85,  127, 127, 127, 127, 85,  85,  85,  85,  119, 119, 119, 119, 85,  85,  85,  85,
 };
 static uint8_t has_tr_4x8[64] = {
-    255, 255, 255, 255, 119, 119, 119, 119, 127, 127, 127, 127, 119, 119, 119, 119,
-    255, 127, 255, 127, 119, 119, 119, 119, 127, 127, 127, 127, 119, 119, 119, 119,
-    255, 255, 255, 127, 119, 119, 119, 119, 127, 127, 127, 127, 119, 119, 119, 119,
-    255, 127, 255, 127, 119, 119, 119, 119, 127, 127, 127, 127, 119, 119, 119, 119,
+    255, 255, 255, 255, 119, 119, 119, 119, 127, 127, 127, 127, 119, 119, 119, 119, 255, 127, 255, 127, 119, 119,
+    119, 119, 127, 127, 127, 127, 119, 119, 119, 119, 255, 255, 255, 127, 119, 119, 119, 119, 127, 127, 127, 127,
+    119, 119, 119, 119, 255, 127, 255, 127, 119, 119, 119, 119, 127, 127, 127, 127, 119, 119, 119, 119,
 };
 static uint8_t has_tr_8x4[64] = {
-    255, 255, 0, 0, 85, 85, 0, 0, 119, 119, 0, 0, 85, 85, 0, 0, 127, 127, 0, 0, 85, 85, 0, 0,
-    119, 119, 0, 0, 85, 85, 0, 0, 255, 127, 0, 0, 85, 85, 0, 0, 119, 119, 0, 0, 85, 85, 0, 0,
-    127, 127, 0, 0, 85, 85, 0, 0, 119, 119, 0, 0, 85, 85, 0, 0,
+    255, 255, 0,   0,   85,  85,  0,  0,  119, 119, 0,   0,   85,  85,  0,  0,  127, 127, 0,   0,   85, 85,
+    0,   0,   119, 119, 0,   0,   85, 85, 0,   0,   255, 127, 0,   0,   85, 85, 0,   0,   119, 119, 0,  0,
+    85,  85,  0,   0,   127, 127, 0,  0,  85,  85,  0,   0,   119, 119, 0,  0,  85,  85,  0,   0,
 };
 static uint8_t has_tr_8x8[32] = {
     255, 255, 85, 85, 119, 119, 85, 85, 127, 127, 85, 85, 119, 119, 85, 85,
@@ -522,8 +520,7 @@ static uint8_t has_tr_4x16[32]   = {
     255, 255, 255, 127, 127, 127, 127, 127, 255, 127, 255, 127, 127, 127, 127, 127,
 };
 static uint8_t has_tr_16x4[32] = {
-    255, 0, 0, 0, 85, 0, 0, 0, 119, 0, 0, 0, 85, 0, 0, 0,
-    127, 0, 0, 0, 85, 0, 0, 0, 119, 0, 0, 0, 85, 0, 0, 0,
+    255, 0, 0, 0, 85, 0, 0, 0, 119, 0, 0, 0, 85, 0, 0, 0, 127, 0, 0, 0, 85, 0, 0, 0, 119, 0, 0, 0, 85, 0, 0, 0,
 };
 static uint8_t has_tr_8x32[8] = {
     255,
@@ -642,10 +639,9 @@ static const uint8_t *get_has_tr_table(PartitionType partition, BlockSize bsize)
     return ret;
 }
 
-int32_t svt_aom_intra_has_top_right(BlockSize sb_size, BlockSize bsize, int32_t mi_row,
-                                    int32_t mi_col, int32_t top_available, int32_t right_available,
-                                    PartitionType partition, TxSize txsz, int32_t row_off,
-                                    int32_t col_off, int32_t ss_x, int32_t ss_y) {
+int32_t svt_aom_intra_has_top_right(BlockSize sb_size, BlockSize bsize, int32_t mi_row, int32_t mi_col,
+                                    int32_t top_available, int32_t right_available, PartitionType partition,
+                                    TxSize txsz, int32_t row_off, int32_t col_off, int32_t ss_x, int32_t ss_y) {
     if (!top_available || !right_available)
         return 0;
 
@@ -689,12 +685,10 @@ int32_t svt_aom_intra_has_top_right(BlockSize sb_size, BlockSize bsize, int32_t 
             return 0;
         // General case (neither top row nor rightmost column): check if the
         // top-right block is coded before the current block.
-        const int32_t this_blk_index = ((blk_row_in_sb + 0)
-                                        << (MAX_MIB_SIZE_LOG2 - bw_in_mi_log2)) +
-            blk_col_in_sb + 0;
-        const int32_t  idx1         = this_blk_index / 8;
-        const int32_t  idx2         = this_blk_index % 8;
-        const uint8_t *has_tr_table = get_has_tr_table(partition, bsize);
+        const int32_t this_blk_index = ((blk_row_in_sb + 0) << (MAX_MIB_SIZE_LOG2 - bw_in_mi_log2)) + blk_col_in_sb + 0;
+        const int32_t idx1           = this_blk_index / 8;
+        const int32_t idx2           = this_blk_index % 8;
+        const uint8_t *has_tr_table  = get_has_tr_table(partition, bsize);
         return (has_tr_table[idx1] >> idx2) & 1;
     }
 }
@@ -702,23 +696,20 @@ int32_t svt_aom_intra_has_top_right(BlockSize sb_size, BlockSize bsize, int32_t 
 // Similar to the has_tr_* tables, but store if the bottom-left reference
 // pixels are available.
 static uint8_t has_bl_4x4[128] = {
-    84, 85, 85, 85, 16, 17, 17, 17, 84, 85, 85, 85, 0,  1,  1,  1,  84, 85, 85, 85, 16, 17,
-    17, 17, 84, 85, 85, 85, 0,  0,  1,  0,  84, 85, 85, 85, 16, 17, 17, 17, 84, 85, 85, 85,
-    0,  1,  1,  1,  84, 85, 85, 85, 16, 17, 17, 17, 84, 85, 85, 85, 0,  0,  0,  0,  84, 85,
-    85, 85, 16, 17, 17, 17, 84, 85, 85, 85, 0,  1,  1,  1,  84, 85, 85, 85, 16, 17, 17, 17,
-    84, 85, 85, 85, 0,  0,  1,  0,  84, 85, 85, 85, 16, 17, 17, 17, 84, 85, 85, 85, 0,  1,
-    1,  1,  84, 85, 85, 85, 16, 17, 17, 17, 84, 85, 85, 85, 0,  0,  0,  0,
+    84, 85, 85, 85, 16, 17, 17, 17, 84, 85, 85, 85, 0,  1,  1,  1,  84, 85, 85, 85, 16, 17, 17, 17, 84, 85,
+    85, 85, 0,  0,  1,  0,  84, 85, 85, 85, 16, 17, 17, 17, 84, 85, 85, 85, 0,  1,  1,  1,  84, 85, 85, 85,
+    16, 17, 17, 17, 84, 85, 85, 85, 0,  0,  0,  0,  84, 85, 85, 85, 16, 17, 17, 17, 84, 85, 85, 85, 0,  1,
+    1,  1,  84, 85, 85, 85, 16, 17, 17, 17, 84, 85, 85, 85, 0,  0,  1,  0,  84, 85, 85, 85, 16, 17, 17, 17,
+    84, 85, 85, 85, 0,  1,  1,  1,  84, 85, 85, 85, 16, 17, 17, 17, 84, 85, 85, 85, 0,  0,  0,  0,
 };
 static uint8_t has_bl_4x8[64] = {
-    16, 17, 17, 17, 0,  1,  1,  1,  16, 17, 17, 17, 0,  0,  1,  0,  16, 17, 17, 17, 0,  1,
-    1,  1,  16, 17, 17, 17, 0,  0,  0,  0,  16, 17, 17, 17, 0,  1,  1,  1,  16, 17, 17, 17,
-    0,  0,  1,  0,  16, 17, 17, 17, 0,  1,  1,  1,  16, 17, 17, 17, 0,  0,  0,  0,
+    16, 17, 17, 17, 0, 1, 1, 1, 16, 17, 17, 17, 0, 0, 1, 0, 16, 17, 17, 17, 0, 1, 1, 1, 16, 17, 17, 17, 0, 0, 0, 0,
+    16, 17, 17, 17, 0, 1, 1, 1, 16, 17, 17, 17, 0, 0, 1, 0, 16, 17, 17, 17, 0, 1, 1, 1, 16, 17, 17, 17, 0, 0, 0, 0,
 };
 static uint8_t has_bl_8x4[64] = {
-    254, 255, 84, 85, 254, 255, 16, 17, 254, 255, 84, 85, 254, 255, 0, 1,
-    254, 255, 84, 85, 254, 255, 16, 17, 254, 255, 84, 85, 254, 255, 0, 0,
-    254, 255, 84, 85, 254, 255, 16, 17, 254, 255, 84, 85, 254, 255, 0, 1,
-    254, 255, 84, 85, 254, 255, 16, 17, 254, 255, 84, 85, 254, 255, 0, 0,
+    254, 255, 84,  85,  254, 255, 16,  17,  254, 255, 84,  85,  254, 255, 0,   1,   254, 255, 84,  85,  254, 255,
+    16,  17,  254, 255, 84,  85,  254, 255, 0,   0,   254, 255, 84,  85,  254, 255, 16,  17,  254, 255, 84,  85,
+    254, 255, 0,   1,   254, 255, 84,  85,  254, 255, 16,  17,  254, 255, 84,  85,  254, 255, 0,   0,
 };
 static uint8_t has_bl_8x8[32] = {
     84, 85, 16, 17, 84, 85, 0, 1, 84, 85, 16, 17, 84, 85, 0, 0,
@@ -903,11 +894,9 @@ static const uint8_t *get_has_bl_table(PartitionType partition, BlockSize bsize)
     return ret;
 }
 
-int32_t svt_aom_intra_has_bottom_left(BlockSize sb_size, BlockSize bsize, int32_t mi_row,
-                                      int32_t mi_col, int32_t bottom_available,
-                                      int32_t left_available, PartitionType partition, TxSize txsz,
-                                      int32_t row_off, int32_t col_off, int32_t ss_x,
-                                      int32_t ss_y) {
+int32_t svt_aom_intra_has_bottom_left(BlockSize sb_size, BlockSize bsize, int32_t mi_row, int32_t mi_col,
+                                      int32_t bottom_available, int32_t left_available, PartitionType partition,
+                                      TxSize txsz, int32_t row_off, int32_t col_off, int32_t ss_x, int32_t ss_y) {
     if (!bottom_available || !left_available)
         return 0;
 
@@ -950,8 +939,7 @@ int32_t svt_aom_intra_has_bottom_left(BlockSize sb_size, BlockSize bsize, int32_
         // and/or bottom-left superblocks. But only the left superblock is
         // available, so check if all required pixels fall in that superblock.
         if (blk_col_in_sb == 0) {
-            const int32_t blk_start_row_off = blk_row_in_sb
-                    << (bh_in_mi_log2 + MI_SIZE_LOG2 - tx_size_wide_log2[0]) >>
+            const int32_t blk_start_row_off = blk_row_in_sb << (bh_in_mi_log2 + MI_SIZE_LOG2 - tx_size_wide_log2[0]) >>
                 ss_y;
             const int32_t row_off_in_sb  = blk_start_row_off + row_off;
             const int32_t sb_height_unit = sb_mi_size >> ss_y;
@@ -965,12 +953,10 @@ int32_t svt_aom_intra_has_bottom_left(BlockSize sb_size, BlockSize bsize, int32_
 
         // General case (neither leftmost column nor bottom row): check if the
         // bottom-left block is coded before the current block.
-        const int32_t this_blk_index = ((blk_row_in_sb + 0)
-                                        << (MAX_MIB_SIZE_LOG2 - bw_in_mi_log2)) +
-            blk_col_in_sb + 0;
-        const int32_t  idx1         = this_blk_index / 8;
-        const int32_t  idx2         = this_blk_index % 8;
-        const uint8_t *has_bl_table = get_has_bl_table(partition, bsize);
+        const int32_t this_blk_index = ((blk_row_in_sb + 0) << (MAX_MIB_SIZE_LOG2 - bw_in_mi_log2)) + blk_col_in_sb + 0;
+        const int32_t idx1           = this_blk_index / 8;
+        const int32_t idx2           = this_blk_index % 8;
+        const uint8_t *has_bl_table  = get_has_bl_table(partition, bsize);
         return (has_bl_table[idx1] >> idx2) & 1;
     }
 }
@@ -981,8 +967,8 @@ IntraPredFn svt_aom_dc_pred[2][2][TX_SIZES_ALL];
 IntraHighPredFn svt_aom_pred_high[INTRA_MODES][TX_SIZES_ALL];
 IntraHighPredFn svt_aom_dc_pred_high[2][2][TX_SIZES_ALL];
 
-static INLINE void dc_128_predictor(uint8_t *dst, ptrdiff_t stride, int32_t bw, int32_t bh,
-                                    const uint8_t *above, const uint8_t *left) {
+static INLINE void dc_128_predictor(uint8_t *dst, ptrdiff_t stride, int32_t bw, int32_t bh, const uint8_t *above,
+                                    const uint8_t *left) {
     (void)above;
     (void)left;
 
@@ -992,8 +978,8 @@ static INLINE void dc_128_predictor(uint8_t *dst, ptrdiff_t stride, int32_t bw, 
     }
 }
 
-static INLINE void dc_left_predictor(uint8_t *dst, ptrdiff_t stride, int32_t bw, int32_t bh,
-                                     const uint8_t *above, const uint8_t *left) {
+static INLINE void dc_left_predictor(uint8_t *dst, ptrdiff_t stride, int32_t bw, int32_t bh, const uint8_t *above,
+                                     const uint8_t *left) {
     int32_t sum = 0;
     (void)above;
 
@@ -1005,8 +991,8 @@ static INLINE void dc_left_predictor(uint8_t *dst, ptrdiff_t stride, int32_t bw,
         dst += stride;
     }
 }
-static INLINE void dc_top_predictor(uint8_t *dst, ptrdiff_t stride, int32_t bw, int32_t bh,
-                                    const uint8_t *above, const uint8_t *left) {
+static INLINE void dc_top_predictor(uint8_t *dst, ptrdiff_t stride, int32_t bw, int32_t bh, const uint8_t *above,
+                                    const uint8_t *left) {
     int32_t sum = 0;
     (void)left;
 
@@ -1018,8 +1004,8 @@ static INLINE void dc_top_predictor(uint8_t *dst, ptrdiff_t stride, int32_t bw, 
         dst += stride;
     }
 }
-static INLINE void dc_predictor(uint8_t *dst, ptrdiff_t stride, int32_t bw, int32_t bh,
-                                const uint8_t *above, const uint8_t *left) {
+static INLINE void dc_predictor(uint8_t *dst, ptrdiff_t stride, int32_t bw, int32_t bh, const uint8_t *above,
+                                const uint8_t *left) {
     int32_t       sum   = 0;
     const int32_t count = bw + bh;
 
@@ -1032,8 +1018,8 @@ static INLINE void dc_predictor(uint8_t *dst, ptrdiff_t stride, int32_t bw, int3
         dst += stride;
     }
 }
-static INLINE void v_predictor(uint8_t *dst, ptrdiff_t stride, int32_t bw, int32_t bh,
-                               const uint8_t *above, const uint8_t *left) {
+static INLINE void v_predictor(uint8_t *dst, ptrdiff_t stride, int32_t bw, int32_t bh, const uint8_t *above,
+                               const uint8_t *left) {
     (void)left;
 
     for (int32_t r = 0; r < bh; r++) {
@@ -1042,8 +1028,8 @@ static INLINE void v_predictor(uint8_t *dst, ptrdiff_t stride, int32_t bw, int32
     }
 }
 
-static INLINE void h_predictor(uint8_t *dst, ptrdiff_t stride, int32_t bw, int32_t bh,
-                               const uint8_t *above, const uint8_t *left) {
+static INLINE void h_predictor(uint8_t *dst, ptrdiff_t stride, int32_t bw, int32_t bh, const uint8_t *above,
+                               const uint8_t *left) {
     (void)above;
 
     for (int32_t r = 0; r < bh; r++) {
@@ -1052,8 +1038,8 @@ static INLINE void h_predictor(uint8_t *dst, ptrdiff_t stride, int32_t bw, int32
     }
 }
 
-static INLINE void smooth_predictor(uint8_t *dst, ptrdiff_t stride, int32_t bw, int32_t bh,
-                                    const uint8_t *above, const uint8_t *left) {
+static INLINE void smooth_predictor(uint8_t *dst, ptrdiff_t stride, int32_t bw, int32_t bh, const uint8_t *above,
+                                    const uint8_t *left) {
     const uint8_t        below_pred   = left[bh - 1]; // estimated by bottom-left pixel
     const uint8_t        right_pred   = above[bw - 1]; // estimated by top-right pixel
     const uint8_t *const sm_weights_w = sm_weight_arrays + bw;
@@ -1077,8 +1063,8 @@ static INLINE void smooth_predictor(uint8_t *dst, ptrdiff_t stride, int32_t bw, 
     }
 }
 
-static INLINE void smooth_v_predictor(uint8_t *dst, ptrdiff_t stride, int32_t bw, int32_t bh,
-                                      const uint8_t *above, const uint8_t *left) {
+static INLINE void smooth_v_predictor(uint8_t *dst, ptrdiff_t stride, int32_t bw, int32_t bh, const uint8_t *above,
+                                      const uint8_t *left) {
     const uint8_t        below_pred = left[bh - 1]; // estimated by bottom-left pixel
     const uint8_t *const sm_weights = sm_weight_arrays + bh;
     // scale = 2^sm_weight_log2_scale
@@ -1098,8 +1084,8 @@ static INLINE void smooth_v_predictor(uint8_t *dst, ptrdiff_t stride, int32_t bw
     }
 }
 
-static INLINE void smooth_h_predictor(uint8_t *dst, ptrdiff_t stride, int32_t bw, int32_t bh,
-                                      const uint8_t *above, const uint8_t *left) {
+static INLINE void smooth_h_predictor(uint8_t *dst, ptrdiff_t stride, int32_t bw, int32_t bh, const uint8_t *above,
+                                      const uint8_t *left) {
     const uint8_t        right_pred = above[bw - 1]; // estimated by top-right pixel
     const uint8_t *const sm_weights = sm_weight_arrays + bw;
     // scale = 2^sm_weight_log2_scale
@@ -1121,8 +1107,8 @@ static INLINE void smooth_h_predictor(uint8_t *dst, ptrdiff_t stride, int32_t bw
 #undef DC_MULTIPLIER_1X2
 #undef DC_MULTIPLIER_1X4
 
-static INLINE void highbd_v_predictor(uint16_t *dst, ptrdiff_t stride, int32_t bw, int32_t bh,
-                                      const uint16_t *above, const uint16_t *left, int32_t bd) {
+static INLINE void highbd_v_predictor(uint16_t *dst, ptrdiff_t stride, int32_t bw, int32_t bh, const uint16_t *above,
+                                      const uint16_t *left, int32_t bd) {
     (void)left;
     (void)bd;
     for (int32_t r = 0; r < bh; r++) {
@@ -1131,8 +1117,8 @@ static INLINE void highbd_v_predictor(uint16_t *dst, ptrdiff_t stride, int32_t b
     }
 }
 
-static INLINE void highbd_h_predictor(uint16_t *dst, ptrdiff_t stride, int32_t bw, int32_t bh,
-                                      const uint16_t *above, const uint16_t *left, int32_t bd) {
+static INLINE void highbd_h_predictor(uint16_t *dst, ptrdiff_t stride, int32_t bw, int32_t bh, const uint16_t *above,
+                                      const uint16_t *left, int32_t bd) {
     (void)above;
     (void)bd;
     for (int32_t r = 0; r < bh; r++) {
@@ -1148,22 +1134,19 @@ static INLINE uint16_t paeth_predictor_single(uint16_t left, uint16_t top, uint1
     const int p_top_left = abs_diff(base, top_left);
 
     // Return nearest to base of left, top and top_left.
-    return (p_left <= p_top && p_left <= p_top_left) ? left
-        : (p_top <= p_top_left)                      ? top
-                                                     : top_left;
+    return (p_left <= p_top && p_left <= p_top_left) ? left : (p_top <= p_top_left) ? top : top_left;
 }
 
-static INLINE void paeth_predictor(uint8_t *dst, ptrdiff_t stride, int bw, int bh,
-                                   const uint8_t *above, const uint8_t *left) {
+static INLINE void paeth_predictor(uint8_t *dst, ptrdiff_t stride, int bw, int bh, const uint8_t *above,
+                                   const uint8_t *left) {
     const uint8_t ytop_left = above[-1];
 
     for (int r = 0; r < bh; ++r, dst += stride)
-        for (int c = 0; c < bw; ++c)
-            dst[c] = (uint8_t)paeth_predictor_single(left[r], above[c], ytop_left);
+        for (int c = 0; c < bw; ++c) dst[c] = (uint8_t)paeth_predictor_single(left[r], above[c], ytop_left);
 }
 
-static INLINE void highbd_paeth_predictor(uint16_t *dst, ptrdiff_t stride, int bw, int bh,
-                                          const uint16_t *above, const uint16_t *left, int bd) {
+static INLINE void highbd_paeth_predictor(uint16_t *dst, ptrdiff_t stride, int bw, int bh, const uint16_t *above,
+                                          const uint16_t *left, int bd) {
     const uint16_t ytop_left = above[-1];
     (void)bd;
 
@@ -1185,8 +1168,7 @@ static INLINE void highbd_paeth_predictor(uint16_t *dst, ptrdiff_t stride, int b
 //}
 
 static INLINE void highbd_smooth_predictor(uint16_t *dst, ptrdiff_t stride, int32_t bw, int32_t bh,
-                                           const uint16_t *above, const uint16_t *left,
-                                           int32_t bd) {
+                                           const uint16_t *above, const uint16_t *left, int32_t bd) {
     (void)bd;
     const uint16_t       below_pred   = left[bh - 1]; // estimated by bottom-left pixel
     const uint16_t       right_pred   = above[bw - 1]; // estimated by top-right pixel
@@ -1211,9 +1193,8 @@ static INLINE void highbd_smooth_predictor(uint16_t *dst, ptrdiff_t stride, int3
     }
 }
 
-static INLINE void highbd_smooth_v_predictor(uint16_t *dst, ptrdiff_t stride, int32_t bw,
-                                             int32_t bh, const uint16_t *above,
-                                             const uint16_t *left, int32_t bd) {
+static INLINE void highbd_smooth_v_predictor(uint16_t *dst, ptrdiff_t stride, int32_t bw, int32_t bh,
+                                             const uint16_t *above, const uint16_t *left, int32_t bd) {
     (void)bd;
     const uint16_t       below_pred = left[bh - 1]; // estimated by bottom-left pixel
     const uint8_t *const sm_weights = sm_weight_arrays + bh;
@@ -1234,9 +1215,8 @@ static INLINE void highbd_smooth_v_predictor(uint16_t *dst, ptrdiff_t stride, in
     }
 }
 
-static INLINE void highbd_smooth_h_predictor(uint16_t *dst, ptrdiff_t stride, int32_t bw,
-                                             int32_t bh, const uint16_t *above,
-                                             const uint16_t *left, int32_t bd) {
+static INLINE void highbd_smooth_h_predictor(uint16_t *dst, ptrdiff_t stride, int32_t bw, int32_t bh,
+                                             const uint16_t *above, const uint16_t *left, int32_t bd) {
     (void)bd;
     const uint16_t       right_pred = above[bw - 1]; // estimated by top-right pixel
     const uint8_t *const sm_weights = sm_weight_arrays + bw;
@@ -1258,8 +1238,7 @@ static INLINE void highbd_smooth_h_predictor(uint16_t *dst, ptrdiff_t stride, in
 }
 
 static INLINE void highbd_dc_128_predictor(uint16_t *dst, ptrdiff_t stride, int32_t bw, int32_t bh,
-                                           const uint16_t *above, const uint16_t *left,
-                                           int32_t bd) {
+                                           const uint16_t *above, const uint16_t *left, int32_t bd) {
     (void)above;
     (void)left;
 
@@ -1270,8 +1249,7 @@ static INLINE void highbd_dc_128_predictor(uint16_t *dst, ptrdiff_t stride, int3
 }
 
 static INLINE void highbd_dc_left_predictor(uint16_t *dst, ptrdiff_t stride, int32_t bw, int32_t bh,
-                                            const uint16_t *above, const uint16_t *left,
-                                            int32_t bd) {
+                                            const uint16_t *above, const uint16_t *left, int32_t bd) {
     int32_t sum = 0;
     (void)above;
     (void)bd;
@@ -1286,8 +1264,7 @@ static INLINE void highbd_dc_left_predictor(uint16_t *dst, ptrdiff_t stride, int
 }
 
 static INLINE void highbd_dc_top_predictor(uint16_t *dst, ptrdiff_t stride, int32_t bw, int32_t bh,
-                                           const uint16_t *above, const uint16_t *left,
-                                           int32_t bd) {
+                                           const uint16_t *above, const uint16_t *left, int32_t bd) {
     int32_t sum = 0;
     (void)left;
     (void)bd;
@@ -1301,8 +1278,8 @@ static INLINE void highbd_dc_top_predictor(uint16_t *dst, ptrdiff_t stride, int3
     }
 }
 
-static INLINE void highbd_dc_predictor(uint16_t *dst, ptrdiff_t stride, int32_t bw, int32_t bh,
-                                       const uint16_t *above, const uint16_t *left, int32_t bd) {
+static INLINE void highbd_dc_predictor(uint16_t *dst, ptrdiff_t stride, int32_t bw, int32_t bh, const uint16_t *above,
+                                       const uint16_t *left, int32_t bd) {
     int32_t       sum   = 0;
     const int32_t count = bw + bh;
     (void)bd;
@@ -1316,135 +1293,6 @@ static INLINE void highbd_dc_predictor(uint16_t *dst, ptrdiff_t stride, int32_t 
         dst += stride;
     }
 }
-#if !CLN_UNUSED_DEFNS
-//static INLINE void highbd_dc_predictor_rect(uint16_t *dst, ptrdiff_t stride,
-//    int32_t bw, int32_t bh,
-//    const uint16_t *above,
-//    const uint16_t *left, int32_t bd,
-//    int32_t shift1, uint32_t multiplier) {
-//    int32_t sum = 0;
-//    (void)bd;
-//
-//    for (int32_t i = 0; i < bw; i++) {
-//        sum += above[i];
-//    }
-//    for (int32_t i = 0; i < bh; i++) {
-//        sum += left[i];
-//    }
-//
-//    const int32_t expected_dc = divide_using_multiply_shift(
-//        sum + ((bw + bh) >> 1), shift1, multiplier, HIGHBD_DC_SHIFT2);
-//    assert(expected_dc < (1 << bd));
-//
-//    for (int32_t r = 0; r < bh; r++) {
-//        svt_aom_memset16(dst, expected_dc, bw);
-//        dst += stride;
-//    }
-//}
-
-//#undef HIGHBD_DC_SHIFT2
-//
-//void svt_aom_highbd_dc_predictor_4x8_c(uint16_t *dst, ptrdiff_t stride,
-//    const uint16_t *above, const uint16_t *left,
-//    int32_t bd) {
-//    highbd_dc_predictor_rect(dst, stride, 4, 8, above, left, bd, 2,
-//        HIGHBD_DC_MULTIPLIER_1X2);
-//}
-//
-//void svt_aom_highbd_dc_predictor_8x4_c(uint16_t *dst, ptrdiff_t stride,
-//    const uint16_t *above, const uint16_t *left,
-//    int32_t bd) {
-//    highbd_dc_predictor_rect(dst, stride, 8, 4, above, left, bd, 2,
-//        HIGHBD_DC_MULTIPLIER_1X2);
-//}
-//
-//void svt_aom_highbd_dc_predictor_4x16_c(uint16_t *dst, ptrdiff_t stride,
-//    const uint16_t *above, const uint16_t *left,
-//    int32_t bd) {
-//    highbd_dc_predictor_rect(dst, stride, 4, 16, above, left, bd, 2,
-//        HIGHBD_DC_MULTIPLIER_1X4);
-//}
-//
-//void svt_aom_highbd_dc_predictor_16x4_c(uint16_t *dst, ptrdiff_t stride,
-//    const uint16_t *above, const uint16_t *left,
-//    int32_t bd) {
-//    highbd_dc_predictor_rect(dst, stride, 16, 4, above, left, bd, 2,
-//        HIGHBD_DC_MULTIPLIER_1X4);
-//}
-//
-//void svt_aom_highbd_dc_predictor_8x16_c(uint16_t *dst, ptrdiff_t stride,
-//    const uint16_t *above, const uint16_t *left,
-//    int32_t bd) {
-//    highbd_dc_predictor_rect(dst, stride, 8, 16, above, left, bd, 3,
-//        HIGHBD_DC_MULTIPLIER_1X2);
-//}
-//
-//void svt_aom_highbd_dc_predictor_16x8_c(uint16_t *dst, ptrdiff_t stride,
-//    const uint16_t *above, const uint16_t *left,
-//    int32_t bd) {
-//    highbd_dc_predictor_rect(dst, stride, 16, 8, above, left, bd, 3,
-//        HIGHBD_DC_MULTIPLIER_1X2);
-//}
-//
-//void svt_aom_highbd_dc_predictor_8x32_c(uint16_t *dst, ptrdiff_t stride,
-//    const uint16_t *above, const uint16_t *left,
-//    int32_t bd) {
-//    highbd_dc_predictor_rect(dst, stride, 8, 32, above, left, bd, 3,
-//        HIGHBD_DC_MULTIPLIER_1X4);
-//}
-//
-//void svt_aom_highbd_dc_predictor_32x8_c(uint16_t *dst, ptrdiff_t stride,
-//    const uint16_t *above, const uint16_t *left,
-//    int32_t bd) {
-//    highbd_dc_predictor_rect(dst, stride, 32, 8, above, left, bd, 3,
-//        HIGHBD_DC_MULTIPLIER_1X4);
-//}
-//
-//void svt_aom_highbd_dc_predictor_16x32_c(uint16_t *dst, ptrdiff_t stride,
-//    const uint16_t *above,
-//    const uint16_t *left, int32_t bd) {
-//    highbd_dc_predictor_rect(dst, stride, 16, 32, above, left, bd, 4,
-//        HIGHBD_DC_MULTIPLIER_1X2);
-//}
-//
-//void svt_aom_highbd_dc_predictor_32x16_c(uint16_t *dst, ptrdiff_t stride,
-//    const uint16_t *above,
-//    const uint16_t *left, int32_t bd) {
-//    highbd_dc_predictor_rect(dst, stride, 32, 16, above, left, bd, 4,
-//        HIGHBD_DC_MULTIPLIER_1X2);
-//}
-//
-//void svt_aom_highbd_dc_predictor_16x64_c(uint16_t *dst, ptrdiff_t stride,
-//    const uint16_t *above,
-//    const uint16_t *left, int32_t bd) {
-//    highbd_dc_predictor_rect(dst, stride, 16, 64, above, left, bd, 4,
-//        HIGHBD_DC_MULTIPLIER_1X4);
-//}
-//
-//void svt_aom_highbd_dc_predictor_64x16_c(uint16_t *dst, ptrdiff_t stride,
-//    const uint16_t *above,
-//    const uint16_t *left, int32_t bd) {
-//    highbd_dc_predictor_rect(dst, stride, 64, 16, above, left, bd, 4,
-//        HIGHBD_DC_MULTIPLIER_1X4);
-//}
-//
-//void svt_aom_highbd_dc_predictor_32x64_c(uint16_t *dst, ptrdiff_t stride,
-//    const uint16_t *above,
-//    const uint16_t *left, int32_t bd) {
-//    highbd_dc_predictor_rect(dst, stride, 32, 64, above, left, bd, 5,
-//        HIGHBD_DC_MULTIPLIER_1X2);
-//}
-//
-//void svt_aom_highbd_dc_predictor_64x32_c(uint16_t *dst, ptrdiff_t stride,
-//    const uint16_t *above,
-//    const uint16_t *left, int32_t bd) {
-//    highbd_dc_predictor_rect(dst, stride, 64, 32, above, left, bd, 5,
-//        HIGHBD_DC_MULTIPLIER_1X2);
-//}
-//
-//#undef HIGHBD_DC_MULTIPLIER_1X2
-//#undef HIGHBD_DC_MULTIPLIER_1X4
-#endif
 
 #define intra_pred_sized(type, width, height)                                        \
     void svt_aom_##type##_predictor_##width##x##height##_c(                          \
@@ -1645,13 +1493,10 @@ intra_pred_sized(paeth, 32, 16);
 intra_pred_sized(paeth, 32, 64);
 intra_pred_sized(paeth, 64, 16);
 intra_pred_sized(paeth, 64, 32);
-#define intra_pred_highbd_sized(type, width, height)                                      \
-    void svt_aom_highbd_##type##_predictor_##width##x##height##_c(uint16_t       *dst,    \
-                                                                  ptrdiff_t       stride, \
-                                                                  const uint16_t *above,  \
-                                                                  const uint16_t *left,   \
-                                                                  int32_t         bd) {           \
-        highbd_##type##_predictor(dst, stride, width, height, above, left, bd);           \
+#define intra_pred_highbd_sized(type, width, height)                                                \
+    void svt_aom_highbd_##type##_predictor_##width##x##height##_c(                                  \
+        uint16_t *dst, ptrdiff_t stride, const uint16_t *above, const uint16_t *left, int32_t bd) { \
+        highbd_##type##_predictor(dst, stride, width, height, above, left, bd);                     \
     };
 
 intra_pred_highbd_sized(dc, 4, 4);
@@ -2372,9 +2217,8 @@ void                      svt_aom_init_intra_dc_predictors_c_internal(void) {
     svt_aom_dc_pred_high[1][1][TX_64X16] = svt_aom_highbd_dc_predictor_64x16;
     svt_aom_dc_pred_high[1][1][TX_64X32] = svt_aom_highbd_dc_predictor_64x32;
 }
-void svt_aom_dr_predictor(uint8_t *dst, ptrdiff_t stride, TxSize tx_size, const uint8_t *above,
-                          const uint8_t *left, int32_t upsample_above, int32_t upsample_left,
-                          int32_t angle) {
+void svt_aom_dr_predictor(uint8_t *dst, ptrdiff_t stride, TxSize tx_size, const uint8_t *above, const uint8_t *left,
+                          int32_t upsample_above, int32_t upsample_left, int32_t angle) {
     const int32_t dx = get_dx(angle);
     const int32_t dy = get_dy(angle);
     const int32_t bw = tx_size_wide[tx_size];
@@ -2384,8 +2228,7 @@ void svt_aom_dr_predictor(uint8_t *dst, ptrdiff_t stride, TxSize tx_size, const 
     if (angle > 0 && angle < 90) {
         svt_av1_dr_prediction_z1(dst, stride, bw, bh, above, left, upsample_above, dx, dy);
     } else if (angle > 90 && angle < 180) {
-        svt_av1_dr_prediction_z2(
-            dst, stride, bw, bh, above, left, upsample_above, upsample_left, dx, dy);
+        svt_av1_dr_prediction_z2(dst, stride, bw, bh, above, left, upsample_above, upsample_left, dx, dy);
     } else if (angle > 180 && angle < 270) {
         svt_av1_dr_prediction_z3(dst, stride, bw, bh, above, left, upsample_left, dx, dy);
     } else if (angle == 90)
@@ -2404,9 +2247,9 @@ void filter_intra_edge_corner(uint8_t *p_above, uint8_t *p_left) {
 }
 
 // Directional prediction, zone 1: 0 < angle < 90
-void svt_av1_highbd_dr_prediction_z1_c(uint16_t *dst, ptrdiff_t stride, int32_t bw, int32_t bh,
-                                       const uint16_t *above, const uint16_t *left,
-                                       int32_t upsample_above, int32_t dx, int32_t dy, int32_t bd) {
+void svt_av1_highbd_dr_prediction_z1_c(uint16_t *dst, ptrdiff_t stride, int32_t bw, int32_t bh, const uint16_t *above,
+                                       const uint16_t *left, int32_t upsample_above, int32_t dx, int32_t dy,
+                                       int32_t bd) {
     (void)left;
     (void)dy;
     (void)bd;
@@ -2440,9 +2283,8 @@ void svt_av1_highbd_dr_prediction_z1_c(uint16_t *dst, ptrdiff_t stride, int32_t 
 }
 
 // Directional prediction, zone 2: 90 < angle < 180
-void svt_av1_highbd_dr_prediction_z2_c(uint16_t *dst, ptrdiff_t stride, int32_t bw, int32_t bh,
-                                       const uint16_t *above, const uint16_t *left,
-                                       int32_t upsample_above, int32_t upsample_left, int32_t dx,
+void svt_av1_highbd_dr_prediction_z2_c(uint16_t *dst, ptrdiff_t stride, int32_t bw, int32_t bh, const uint16_t *above,
+                                       const uint16_t *left, int32_t upsample_above, int32_t upsample_left, int32_t dx,
                                        int32_t dy, int32_t bd) {
     (void)bd;
     assert(dx > 0);
@@ -2474,9 +2316,8 @@ void svt_av1_highbd_dr_prediction_z2_c(uint16_t *dst, ptrdiff_t stride, int32_t 
     }
 }
 
-void svt_aom_highbd_dr_predictor(uint16_t *dst, ptrdiff_t stride, TxSize tx_size,
-                                 const uint16_t *above, const uint16_t *left,
-                                 int32_t upsample_above, int32_t upsample_left, int32_t angle,
+void svt_aom_highbd_dr_predictor(uint16_t *dst, ptrdiff_t stride, TxSize tx_size, const uint16_t *above,
+                                 const uint16_t *left, int32_t upsample_above, int32_t upsample_left, int32_t angle,
                                  int32_t bd) {
     const int32_t dx = get_dx(angle);
     const int32_t dy = get_dy(angle);
@@ -2485,14 +2326,11 @@ void svt_aom_highbd_dr_predictor(uint16_t *dst, ptrdiff_t stride, TxSize tx_size
     assert(angle > 0 && angle < 270);
 
     if (angle > 0 && angle < 90) {
-        svt_av1_highbd_dr_prediction_z1(
-            dst, stride, bw, bh, above, left, upsample_above, dx, dy, bd);
+        svt_av1_highbd_dr_prediction_z1(dst, stride, bw, bh, above, left, upsample_above, dx, dy, bd);
     } else if (angle > 90 && angle < 180) {
-        svt_av1_highbd_dr_prediction_z2(
-            dst, stride, bw, bh, above, left, upsample_above, upsample_left, dx, dy, bd);
+        svt_av1_highbd_dr_prediction_z2(dst, stride, bw, bh, above, left, upsample_above, upsample_left, dx, dy, bd);
     } else if (angle > 180 && angle < 270) {
-        svt_av1_highbd_dr_prediction_z3(
-            dst, stride, bw, bh, above, left, upsample_left, dx, dy, bd);
+        svt_av1_highbd_dr_prediction_z3(dst, stride, bw, bh, above, left, upsample_left, dx, dy, bd);
     } else if (angle == 90)
         svt_aom_pred_high[V_PRED][tx_size](dst, stride, above, left, bd);
     else if (angle == 180)
@@ -2503,9 +2341,8 @@ void svt_av1_filter_intra_edge_high_c(uint16_t *p, int32_t sz, int32_t strength)
     if (!strength)
         return;
 
-    const int32_t kernel[INTRA_EDGE_FILT][INTRA_EDGE_TAPS] = {
-        {0, 4, 8, 4, 0}, {0, 5, 6, 5, 0}, {2, 4, 4, 4, 2}};
-    const int32_t filt = strength - 1;
+    const int32_t kernel[INTRA_EDGE_FILT][INTRA_EDGE_TAPS] = {{0, 4, 8, 4, 0}, {0, 5, 6, 5, 0}, {2, 4, 4, 4, 2}};
+    const int32_t filt                                     = strength - 1;
     uint16_t      edge[129];
 
     svt_memcpy_c(edge, p, sz * sizeof(*p));
@@ -2531,8 +2368,7 @@ void filter_intra_edge_corner_high(uint16_t *p_above, uint16_t *p_left) {
     p_left[-1]  = (uint16_t)s;
 }
 
-/*static INLINE*/ BlockSize svt_aom_scale_chroma_bsize(BlockSize bsize, int32_t subsampling_x,
-                                                       int32_t subsampling_y) {
+/*static INLINE*/ BlockSize svt_aom_scale_chroma_bsize(BlockSize bsize, int32_t subsampling_x, int32_t subsampling_y) {
     BlockSize bs = bsize;
     switch (bsize) {
     case BLOCK_4X4:
@@ -2582,9 +2418,8 @@ void filter_intra_edge_corner_high(uint16_t *p_above, uint16_t *p_left) {
 
 ////////////########...........Recurssive intra prediction starting...........#########
 
-void svt_aom_highbd_filter_intra_predictor(uint16_t *dst, ptrdiff_t stride, TxSize tx_size,
-                                           const uint16_t *above, const uint16_t *left, int mode,
-                                           int bd) {
+void svt_aom_highbd_filter_intra_predictor(uint16_t *dst, ptrdiff_t stride, TxSize tx_size, const uint16_t *above,
+                                           const uint16_t *left, int mode, int bd) {
     uint16_t  buffer[33][33];
     const int bw = tx_size_wide[tx_size];
     const int bh = tx_size_high[tx_size];
@@ -2610,14 +2445,12 @@ void svt_aom_highbd_filter_intra_predictor(uint16_t *dst, ptrdiff_t stride, TxSi
                 int r_offset                       = k >> 2;
                 int c_offset                       = k & 0x03;
                 buffer[r + r_offset][c + c_offset] = clip_pixel_highbd(
-                    ROUND_POWER_OF_TWO_SIGNED(eb_av1_filter_intra_taps[mode][k][0] * p0 +
-                                                  eb_av1_filter_intra_taps[mode][k][1] * p1 +
-                                                  eb_av1_filter_intra_taps[mode][k][2] * p2 +
-                                                  eb_av1_filter_intra_taps[mode][k][3] * p3 +
-                                                  eb_av1_filter_intra_taps[mode][k][4] * p4 +
-                                                  eb_av1_filter_intra_taps[mode][k][5] * p5 +
-                                                  eb_av1_filter_intra_taps[mode][k][6] * p6,
-                                              FILTER_INTRA_SCALE_BITS),
+                    ROUND_POWER_OF_TWO_SIGNED(
+                        eb_av1_filter_intra_taps[mode][k][0] * p0 + eb_av1_filter_intra_taps[mode][k][1] * p1 +
+                            eb_av1_filter_intra_taps[mode][k][2] * p2 + eb_av1_filter_intra_taps[mode][k][3] * p3 +
+                            eb_av1_filter_intra_taps[mode][k][4] * p4 + eb_av1_filter_intra_taps[mode][k][5] * p5 +
+                            eb_av1_filter_intra_taps[mode][k][6] * p6,
+                        FILTER_INTRA_SCALE_BITS),
                     bd);
             }
         }
@@ -2633,8 +2466,8 @@ void svt_aom_highbd_filter_intra_predictor(uint16_t *dst, ptrdiff_t stride, TxSi
 //}
 
 void filter_intra_edge(OisMbResults *ois_mb_results_ptr, uint8_t mode, uint16_t max_frame_width,
-                       uint16_t max_frame_height, int32_t p_angle, int32_t cu_origin_x,
-                       int32_t cu_origin_y, uint8_t *above_row, uint8_t *left_col) {
+                       uint16_t max_frame_height, int32_t p_angle, int32_t cu_origin_x, int32_t cu_origin_y,
+                       uint8_t *above_row, uint8_t *left_col) {
     (void)ois_mb_results_ptr;
     const int mb_stride       = (max_frame_width + 15) / 16;
     const int mb_height       = (max_frame_height + 15) / 16;
@@ -2649,8 +2482,8 @@ void filter_intra_edge(OisMbResults *ois_mb_results_ptr, uint8_t mode, uint16_t 
     // int ab_sm = 0; // (cu_origin_y > 0 && (ois_mb_results_ptr - mb_stride)) ? is_smooth_luma((ois_mb_results_ptr - mb_stride)->intra_mode) : 0;
     // int le_sm = 0; // (cu_origin_x > 0 && (ois_mb_results_ptr - 1)) ? is_smooth_luma((ois_mb_results_ptr - 1)->intra_mode) : 0;
     const int filt_type = 0; // (ab_sm || le_sm) ? 1 : 0
-    int n_top_px  = cu_origin_y > 0 ? AOMMIN(txwpx, (mb_stride * 16 - cu_origin_x + txwpx)) : 0;
-    int n_left_px = cu_origin_x > 0 ? AOMMIN(txhpx, (mb_height * 16 - cu_origin_y + txhpx)) : 0;
+    int       n_top_px  = cu_origin_y > 0 ? AOMMIN(txwpx, (mb_stride * 16 - cu_origin_x + txwpx)) : 0;
+    int       n_left_px = cu_origin_x > 0 ? AOMMIN(txhpx, (mb_height * 16 - cu_origin_y + txhpx)) : 0;
 
     if (av1_is_directional_mode((PredictionMode)mode)) {
         if (p_angle <= 90)
@@ -2667,15 +2500,13 @@ void filter_intra_edge(OisMbResults *ois_mb_results_ptr, uint8_t mode, uint16_t 
             filter_intra_edge_corner(above_row, left_col);
         }
         if (need_above && n_top_px > 0) {
-            const int strength = svt_aom_intra_edge_filter_strength(
-                txwpx, txhpx, p_angle - 90, filt_type);
-            const int n_px = n_top_px + ab_le + (need_right ? txhpx : 0);
+            const int strength = svt_aom_intra_edge_filter_strength(txwpx, txhpx, p_angle - 90, filt_type);
+            const int n_px     = n_top_px + ab_le + (need_right ? txhpx : 0);
             svt_av1_filter_intra_edge(above_row - ab_le, n_px, strength);
         }
         if (need_left && n_left_px > 0) {
-            const int strength = svt_aom_intra_edge_filter_strength(
-                txhpx, txwpx, p_angle - 180, filt_type);
-            const int n_px = n_left_px + ab_le + (need_bottom ? txwpx : 0);
+            const int strength = svt_aom_intra_edge_filter_strength(txhpx, txwpx, p_angle - 180, filt_type);
+            const int n_px     = n_left_px + ab_le + (need_bottom ? txwpx : 0);
             svt_av1_filter_intra_edge(left_col - ab_le, n_px, strength);
         }
     }
@@ -2692,11 +2523,9 @@ void filter_intra_edge(OisMbResults *ois_mb_results_ptr, uint8_t mode, uint16_t 
     return;
 }
 
-EbErrorType svt_aom_intra_prediction_open_loop_mb(int32_t p_angle, uint8_t ois_intra_mode,
-                                                  uint32_t src_origin_x, uint32_t src_origin_y,
-                                                  TxSize tx_size, uint8_t *above_row,
-                                                  uint8_t *left_col, uint8_t *dst,
-                                                  uint32_t dst_stride)
+EbErrorType svt_aom_intra_prediction_open_loop_mb(int32_t p_angle, uint8_t ois_intra_mode, uint32_t src_origin_x,
+                                                  uint32_t src_origin_y, TxSize tx_size, uint8_t *above_row,
+                                                  uint8_t *left_col, uint8_t *dst, uint32_t dst_stride)
 
 {
     EbErrorType    return_error = EB_ErrorNone;
@@ -2708,8 +2537,7 @@ EbErrorType svt_aom_intra_prediction_open_loop_mb(int32_t p_angle, uint8_t ois_i
     else {
         // predict
         if (mode == DC_PRED) {
-            svt_aom_dc_pred[src_origin_x > 0][src_origin_y > 0][tx_size](
-                dst, dst_stride, above_row, left_col);
+            svt_aom_dc_pred[src_origin_x > 0][src_origin_y > 0][tx_size](dst, dst_stride, above_row, left_col);
         } else
             svt_aom_eb_pred[mode][tx_size](dst, dst_stride, above_row, left_col);
     }

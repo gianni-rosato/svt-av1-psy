@@ -25,7 +25,7 @@ typedef struct InitialRateControlReorderEntry {
     EbObjectWrapper *ppcs_wrapper;
 } InitialRateControlReorderEntry;
 
-extern EbErrorType svt_aom_initial_rate_control_reorder_entry_ctor(
-    InitialRateControlReorderEntry *entry_ptr, uint32_t picture_number);
+extern EbErrorType svt_aom_initial_rate_control_reorder_entry_ctor(InitialRateControlReorderEntry *entry_ptr,
+                                                                   uint32_t                        picture_number);
 
 #endif //EbInitialRateControlReorderQueue_h

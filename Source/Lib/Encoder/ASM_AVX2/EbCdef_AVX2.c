@@ -26,8 +26,8 @@
 
 /* Search for the best luma+chroma strength to add as an option, knowing we
 already selected nb_strengths options. */
-uint64_t svt_search_one_dual_avx2(int *lev0, int *lev1, int nb_strengths, uint64_t **mse[2],
-                                  int sb_count, int start_gi, int end_gi) {
+uint64_t svt_search_one_dual_avx2(int *lev0, int *lev1, int nb_strengths, uint64_t **mse[2], int sb_count, int start_gi,
+                                  int end_gi) {
     DECLARE_ALIGNED(32, uint64_t, tot_mse[TOTAL_STRENGTHS][TOTAL_STRENGTHS]);
     uint64_t  best_tot_mse    = (uint64_t)1 << 62;
     int       best_id0        = 0;
@@ -54,9 +54,8 @@ uint64_t svt_search_one_dual_avx2(int *lev0, int *lev1, int nb_strengths, uint64
                 __m256i v_tot = _mm256_loadu_si256((const __m256i *)&tot_mse[j][k]);
                 __m256i curr  = _mm256_add_epi64(tmp, v_mse);
                 __m256i mask  = _mm256_cmpgt_epi64(best_mse_, curr);
-                v_tot         = _mm256_add_epi64(v_tot,
-                                         _mm256_or_si256(_mm256_andnot_si256(mask, best_mse_),
-                                                         _mm256_and_si256(mask, curr)));
+                v_tot         = _mm256_add_epi64(
+                    v_tot, _mm256_or_si256(_mm256_andnot_si256(mask, best_mse_), _mm256_and_si256(mask, curr)));
                 _mm256_storeu_si256((__m256i *)&tot_mse[j][k], v_tot);
             }
         }
@@ -76,8 +75,8 @@ uint64_t svt_search_one_dual_avx2(int *lev0, int *lev1, int nb_strengths, uint64
     return best_tot_mse;
 }
 
-static INLINE void mse_4x4_16bit_2x_subsampled_avx2(const uint16_t **src, const uint16_t *dst,
-                                                    const int32_t dstride, __m256i *sum) {
+static INLINE void mse_4x4_16bit_2x_subsampled_avx2(const uint16_t **src, const uint16_t *dst, const int32_t dstride,
+                                                    __m256i *sum) {
     const __m256i s = _mm256_loadu_si256((const __m256i *)*src);
 
     // set every line to src so distortion will be 0
@@ -93,8 +92,8 @@ static INLINE void mse_4x4_16bit_2x_subsampled_avx2(const uint16_t **src, const 
     *src += 16;
 }
 
-static INLINE void mse_4x4_8bit_2x_subsampled_avx2(const uint8_t **src, const uint8_t *dst,
-                                                   const int32_t dstride, __m256i *sum) {
+static INLINE void mse_4x4_8bit_2x_subsampled_avx2(const uint8_t **src, const uint8_t *dst, const int32_t dstride,
+                                                   __m256i *sum) {
     const __m128i s = _mm_loadu_si128((const __m128i *)*src);
 
     // set every line to src so distortion will be 0
@@ -113,22 +112,19 @@ static INLINE void mse_4x4_8bit_2x_subsampled_avx2(const uint8_t **src, const ui
     *src += 16;
 }
 
-static INLINE void mse_4xn_16bit_avx2(const uint16_t **src, const uint16_t *dst,
-                                      const int32_t dstride, __m256i *sum, uint8_t height,
-                                      uint8_t subsampling_factor) {
+static INLINE void mse_4xn_16bit_avx2(const uint16_t **src, const uint16_t *dst, const int32_t dstride, __m256i *sum,
+                                      uint8_t height, uint8_t subsampling_factor) {
     for (int32_t r = 0; r < height; r += 4 * subsampling_factor) {
         const __m256i s = _mm256_setr_epi64x(
             *(uint64_t *)(*src + 0 * 4),
             *(uint64_t *)(*src + (1 * subsampling_factor) * 4),
             *(uint64_t *)(*src + (2 * subsampling_factor) * 4),
             *(uint64_t *)(*src +
-                          (3 * subsampling_factor) *
-                              4)); // don't add r * dstride b/c add it at end of loop iterations
-        const __m256i d = _mm256_setr_epi64x(
-            *(uint64_t *)(dst + r * dstride),
-            *(uint64_t *)(dst + (r + (1 * subsampling_factor)) * dstride),
-            *(uint64_t *)(dst + (r + (2 * subsampling_factor)) * dstride),
-            *(uint64_t *)(dst + (r + (3 * subsampling_factor)) * dstride));
+                          (3 * subsampling_factor) * 4)); // don't add r * dstride b/c add it at end of loop iterations
+        const __m256i d = _mm256_setr_epi64x(*(uint64_t *)(dst + r * dstride),
+                                             *(uint64_t *)(dst + (r + (1 * subsampling_factor)) * dstride),
+                                             *(uint64_t *)(dst + (r + (2 * subsampling_factor)) * dstride),
+                                             *(uint64_t *)(dst + (r + (3 * subsampling_factor)) * dstride));
 
         const __m256i diff = _mm256_sub_epi16(d, s);
         const __m256i mse  = _mm256_madd_epi16(diff, diff);
@@ -138,21 +134,19 @@ static INLINE void mse_4xn_16bit_avx2(const uint16_t **src, const uint16_t *dst,
     }
 }
 
-static INLINE void mse_4xn_8bit_avx2(const uint8_t **src, const uint8_t *dst, const int32_t dstride,
-                                     __m256i *sum, uint8_t height, uint8_t subsampling_factor) {
+static INLINE void mse_4xn_8bit_avx2(const uint8_t **src, const uint8_t *dst, const int32_t dstride, __m256i *sum,
+                                     uint8_t height, uint8_t subsampling_factor) {
     for (int32_t r = 0; r < height; r += 4 * subsampling_factor) {
         const __m128i s = _mm_setr_epi32(
             *(uint32_t *)(*src + 0 * 4),
             *(uint32_t *)(*src + (1 * subsampling_factor) * 4),
             *(uint32_t *)(*src + (2 * subsampling_factor) * 4),
             *(uint32_t *)(*src +
-                          (3 * subsampling_factor) *
-                              4)); // don't add r * dstride b/c add it at end of loop iterations
-        const __m128i d = _mm_setr_epi32(
-            *(uint32_t *)(dst + r * dstride),
-            *(uint32_t *)(dst + (r + (1 * subsampling_factor)) * dstride),
-            *(uint32_t *)(dst + (r + (2 * subsampling_factor)) * dstride),
-            *(uint32_t *)(dst + (r + (3 * subsampling_factor)) * dstride));
+                          (3 * subsampling_factor) * 4)); // don't add r * dstride b/c add it at end of loop iterations
+        const __m128i d = _mm_setr_epi32(*(uint32_t *)(dst + r * dstride),
+                                         *(uint32_t *)(dst + (r + (1 * subsampling_factor)) * dstride),
+                                         *(uint32_t *)(dst + (r + (2 * subsampling_factor)) * dstride),
+                                         *(uint32_t *)(dst + (r + (3 * subsampling_factor)) * dstride));
 
         const __m256i s_16 = _mm256_cvtepu8_epi16(s);
         const __m256i d_16 = _mm256_cvtepu8_epi16(d);
@@ -165,19 +159,16 @@ static INLINE void mse_4xn_8bit_avx2(const uint8_t **src, const uint8_t *dst, co
     }
 }
 
-static INLINE void mse_8xn_16bit_avx2(const uint16_t **src, const uint16_t *dst,
-                                      const int32_t dstride, __m256i *sum, uint8_t height,
-                                      uint8_t subsampling_factor) {
+static INLINE void mse_8xn_16bit_avx2(const uint16_t **src, const uint16_t *dst, const int32_t dstride, __m256i *sum,
+                                      uint8_t height, uint8_t subsampling_factor) {
     for (int32_t r = 0; r < height; r += 2 * subsampling_factor) {
         const __m128i s0 = _mm_loadu_si128(
-            (const __m128i *)(*src +
-                              0 * 8)); // don't add r * dstride b/c add it at end of loop iterations
+            (const __m128i *)(*src + 0 * 8)); // don't add r * dstride b/c add it at end of loop iterations
         const __m128i s1 = _mm_loadu_si128((const __m128i *)(*src + subsampling_factor * 8));
         const __m256i s  = _mm256_setr_m128i(s0, s1);
         const __m128i d0 = _mm_loadu_si128((const __m128i *)(dst + r * dstride));
-        const __m128i d1 = _mm_loadu_si128(
-            (const __m128i *)(dst + (r + subsampling_factor) * dstride));
-        const __m256i d = _mm256_setr_m128i(d0, d1);
+        const __m128i d1 = _mm_loadu_si128((const __m128i *)(dst + (r + subsampling_factor) * dstride));
+        const __m256i d  = _mm256_setr_m128i(d0, d1);
 
         const __m256i diff = _mm256_sub_epi16(d, s);
         const __m256i mse  = _mm256_madd_epi16(diff, diff);
@@ -187,13 +178,12 @@ static INLINE void mse_8xn_16bit_avx2(const uint16_t **src, const uint16_t *dst,
     }
 }
 
-static INLINE void mse_8xn_8bit_avx2(const uint8_t **src, const uint8_t *dst, const int32_t dstride,
-                                     __m256i *sum, uint8_t height, uint8_t subsampling_factor) {
+static INLINE void mse_8xn_8bit_avx2(const uint8_t **src, const uint8_t *dst, const int32_t dstride, __m256i *sum,
+                                     uint8_t height, uint8_t subsampling_factor) {
     for (int32_t r = 0; r < height; r += 2 * subsampling_factor) {
         const __m128i s = _mm_set_epi64x(
             *(uint64_t *)(*src + subsampling_factor * 8),
-            *(uint64_t *)(*src +
-                          0 * 8)); // don't add r * dstride b/c add it at end of loop iterations
+            *(uint64_t *)(*src + 0 * 8)); // don't add r * dstride b/c add it at end of loop iterations
         const __m128i d = _mm_set_epi64x(*(uint64_t *)(dst + (r + subsampling_factor) * dstride),
                                          *(uint64_t *)(dst + r * dstride));
 
@@ -220,9 +210,8 @@ static INLINE uint32_t sum32(const __m256i src) {
     return (uint32_t)_mm_cvtsi128_si32(dst);
 }
 
-static INLINE uint64_t dist_8xn_16bit_avx2(const uint16_t **src, const uint16_t *dst,
-                                           const int32_t dstride, const int32_t coeff_shift,
-                                           uint8_t height, uint8_t subsampling_factor) {
+static INLINE uint64_t dist_8xn_16bit_avx2(const uint16_t **src, const uint16_t *dst, const int32_t dstride,
+                                           const int32_t coeff_shift, uint8_t height, uint8_t subsampling_factor) {
     __m256i ss = _mm256_setzero_si256();
     __m256i dd = _mm256_setzero_si256();
     __m256i s2 = _mm256_setzero_si256();
@@ -233,23 +222,20 @@ static INLINE uint64_t dist_8xn_16bit_avx2(const uint16_t **src, const uint16_t 
 
     for (int32_t r = 0; r < height; r += 2 * subsampling_factor) {
         const __m128i s0 = _mm_loadu_si128(
-            (const __m128i *)(*src +
-                              0 * 8)); // don't add r * dstride b/c add it at end of loop iterations
+            (const __m128i *)(*src + 0 * 8)); // don't add r * dstride b/c add it at end of loop iterations
         const __m128i s1 = _mm_loadu_si128(
             (const __m128i *)(*src +
-                              subsampling_factor *
-                                  8)); // don't add r * dstride b/c add it at end of loop iterations
+                              subsampling_factor * 8)); // don't add r * dstride b/c add it at end of loop iterations
         const __m256i s = _mm256_setr_m128i(s0, s1);
 
         const __m128i d0 = _mm_loadu_si128((const __m128i *)(dst + r * dstride));
-        const __m128i d1 = _mm_loadu_si128(
-            (const __m128i *)(dst + (r + subsampling_factor) * dstride));
-        const __m256i d = _mm256_setr_m128i(d0, d1);
-        ss              = _mm256_add_epi16(ss, s);
-        dd              = _mm256_add_epi16(dd, d);
-        s2              = _mm256_add_epi32(s2, _mm256_madd_epi16(s, s));
-        sd              = _mm256_add_epi32(sd, _mm256_madd_epi16(s, d));
-        d2              = _mm256_add_epi32(d2, _mm256_madd_epi16(d, d));
+        const __m128i d1 = _mm_loadu_si128((const __m128i *)(dst + (r + subsampling_factor) * dstride));
+        const __m256i d  = _mm256_setr_m128i(d0, d1);
+        ss               = _mm256_add_epi16(ss, s);
+        dd               = _mm256_add_epi16(dd, d);
+        s2               = _mm256_add_epi32(s2, _mm256_madd_epi16(s, s));
+        sd               = _mm256_add_epi32(sd, _mm256_madd_epi16(s, d));
+        d2               = _mm256_add_epi32(d2, _mm256_madd_epi16(d, d));
 
         *src += 8 * 2 * subsampling_factor;
     }
@@ -273,14 +259,12 @@ static INLINE uint64_t dist_8xn_16bit_avx2(const uint16_t **src, const uint16_t 
     uint64_t svar = sum_s2 - ((sum_s * sum_s + 32) >> 6);
     uint64_t dvar = sum_d2 - ((sum_d * sum_d + 32) >> 6);
     return (uint64_t)floor(.5 +
-                           (sum_d2 + sum_s2 - 2 * sum_sd) * .5 *
-                               (svar + dvar + (400 << 2 * coeff_shift)) /
+                           (sum_d2 + sum_s2 - 2 * sum_sd) * .5 * (svar + dvar + (400 << 2 * coeff_shift)) /
                                (sqrt((20000 << 4 * coeff_shift) + svar * (double)dvar)));
 }
 
-static INLINE uint64_t dist_8xn_8bit_avx2(const uint8_t **src, const uint8_t *dst,
-                                          const int32_t dstride, const int32_t coeff_shift,
-                                          uint8_t height, uint8_t subsampling_factor) {
+static INLINE uint64_t dist_8xn_8bit_avx2(const uint8_t **src, const uint8_t *dst, const int32_t dstride,
+                                          const int32_t coeff_shift, uint8_t height, uint8_t subsampling_factor) {
     __m256i ss = _mm256_setzero_si256();
     __m256i dd = _mm256_setzero_si256();
     __m256i s2 = _mm256_setzero_si256();
@@ -292,8 +276,7 @@ static INLINE uint64_t dist_8xn_8bit_avx2(const uint8_t **src, const uint8_t *ds
     for (int32_t r = 0; r < height; r += 2 * subsampling_factor) {
         const __m128i s = _mm_set_epi64x(
             *(uint64_t *)(*src + subsampling_factor * 8),
-            *(uint64_t *)(*src +
-                          0 * 8)); // don't add r * dstride b/c add it at end of loop iterations
+            *(uint64_t *)(*src + 0 * 8)); // don't add r * dstride b/c add it at end of loop iterations
         const __m128i d = _mm_set_epi64x(*(uint64_t *)(dst + (r + subsampling_factor) * dstride),
                                          *(uint64_t *)(dst + r * dstride));
 
@@ -328,8 +311,7 @@ static INLINE uint64_t dist_8xn_8bit_avx2(const uint8_t **src, const uint8_t *ds
     uint64_t svar = sum_s2 - ((sum_s * sum_s + 32) >> 6);
     uint64_t dvar = sum_d2 - ((sum_d * sum_d + 32) >> 6);
     return (uint64_t)floor(.5 +
-                           (sum_d2 + sum_s2 - 2 * sum_sd) * .5 *
-                               (svar + dvar + (400 << 2 * coeff_shift)) /
+                           (sum_d2 + sum_s2 - 2 * sum_sd) * .5 * (svar + dvar + (400 << 2 * coeff_shift)) /
                                (sqrt((20000 << 4 * coeff_shift) + svar * (double)dvar)));
 }
 
@@ -350,11 +332,9 @@ static INLINE uint64_t sum64(const __m256i src) {
 }
 
 /* Compute MSE only on the blocks we filtered. */
-uint64_t svt_aom_compute_cdef_dist_16bit_avx2(const uint16_t *dst, int32_t dstride,
-                                              const uint16_t *src, const CdefList *dlist,
-                                              int32_t cdef_count, BlockSize bsize,
-                                              int32_t coeff_shift, int32_t pli,
-                                              uint8_t subsampling_factor) {
+uint64_t svt_aom_compute_cdef_dist_16bit_avx2(const uint16_t *dst, int32_t dstride, const uint16_t *src,
+                                              const CdefList *dlist, int32_t cdef_count, BlockSize bsize,
+                                              int32_t coeff_shift, int32_t pli, uint8_t subsampling_factor) {
     uint64_t sum;
     int32_t  bi, bx, by;
 
@@ -374,12 +354,7 @@ uint64_t svt_aom_compute_cdef_dist_16bit_avx2(const uint16_t *dst, int32_t dstri
                 __m256i mse32 = _mm256_setzero_si256();
                 by            = dlist[bi].by;
                 bx            = dlist[bi].bx;
-                mse_8xn_16bit_avx2(&src,
-                                   dst + (8 * by + 0) * dstride + 8 * bx,
-                                   dstride,
-                                   &mse32,
-                                   8,
-                                   subsampling_factor);
+                mse_8xn_16bit_avx2(&src, dst + (8 * by + 0) * dstride + 8 * bx, dstride, &mse32, 8, subsampling_factor);
                 sum_32_to_64(mse32, &mse64);
             }
         } else if (bsize == BLOCK_4X8) {
@@ -387,12 +362,7 @@ uint64_t svt_aom_compute_cdef_dist_16bit_avx2(const uint16_t *dst, int32_t dstri
                 __m256i mse32 = _mm256_setzero_si256();
                 by            = dlist[bi].by;
                 bx            = dlist[bi].bx;
-                mse_4xn_16bit_avx2(&src,
-                                   dst + (8 * by + 0) * dstride + 4 * bx,
-                                   dstride,
-                                   &mse32,
-                                   8,
-                                   subsampling_factor);
+                mse_4xn_16bit_avx2(&src, dst + (8 * by + 0) * dstride + 4 * bx, dstride, &mse32, 8, subsampling_factor);
                 sum_32_to_64(mse32, &mse64);
             }
         } else if (bsize == BLOCK_8X4) {
@@ -400,8 +370,7 @@ uint64_t svt_aom_compute_cdef_dist_16bit_avx2(const uint16_t *dst, int32_t dstri
                 __m256i mse32 = _mm256_setzero_si256();
                 by            = dlist[bi].by;
                 bx            = dlist[bi].bx;
-                mse_8xn_16bit_avx2(
-                    &src, dst + 4 * by * dstride + 8 * bx, dstride, &mse32, 4, subsampling_factor);
+                mse_8xn_16bit_avx2(&src, dst + 4 * by * dstride + 8 * bx, dstride, &mse32, 4, subsampling_factor);
                 sum_32_to_64(mse32, &mse64);
             }
         } else {
@@ -414,14 +383,9 @@ uint64_t svt_aom_compute_cdef_dist_16bit_avx2(const uint16_t *dst, int32_t dstri
                 // to avoid accessing memory that doesn't belong to the current picture (since subsampling is implemented
                 // as a multiplier to the step size).
                 if (subsampling_factor == 2)
-                    mse_4x4_16bit_2x_subsampled_avx2(
-                        &src, dst + 4 * by * dstride + 4 * bx, dstride, &mse32);
+                    mse_4x4_16bit_2x_subsampled_avx2(&src, dst + 4 * by * dstride + 4 * bx, dstride, &mse32);
                 else
-                    mse_4xn_16bit_avx2(&src,
-                                       dst + 4 * by * dstride + 4 * bx,
-                                       dstride,
-                                       &mse32,
-                                       4,
+                    mse_4xn_16bit_avx2(&src, dst + 4 * by * dstride + 4 * bx, dstride, &mse32, 4,
                                        1); // no subsampling
                 sum_32_to_64(mse32, &mse64);
             }
@@ -433,11 +397,9 @@ uint64_t svt_aom_compute_cdef_dist_16bit_avx2(const uint16_t *dst, int32_t dstri
     return sum >> 2 * coeff_shift;
 }
 
-uint64_t svt_aom_compute_cdef_dist_8bit_avx2(const uint8_t *dst8, int32_t dstride,
-                                             const uint8_t *src8, const CdefList *dlist,
-                                             int32_t cdef_count, BlockSize bsize,
-                                             int32_t coeff_shift, int32_t pli,
-                                             uint8_t subsampling_factor) {
+uint64_t svt_aom_compute_cdef_dist_8bit_avx2(const uint8_t *dst8, int32_t dstride, const uint8_t *src8,
+                                             const CdefList *dlist, int32_t cdef_count, BlockSize bsize,
+                                             int32_t coeff_shift, int32_t pli, uint8_t subsampling_factor) {
     uint64_t sum;
     int32_t  bi, bx, by;
 
@@ -446,12 +408,8 @@ uint64_t svt_aom_compute_cdef_dist_8bit_avx2(const uint8_t *dst8, int32_t dstrid
         for (bi = 0; bi < cdef_count; bi++) {
             by = dlist[bi].by;
             bx = dlist[bi].bx;
-            sum += dist_8xn_8bit_avx2(&src8,
-                                      dst8 + 8 * by * dstride + 8 * bx,
-                                      dstride,
-                                      coeff_shift,
-                                      8,
-                                      subsampling_factor);
+            sum += dist_8xn_8bit_avx2(
+                &src8, dst8 + 8 * by * dstride + 8 * bx, dstride, coeff_shift, 8, subsampling_factor);
         }
     } else {
         __m256i mse64 = _mm256_setzero_si256();
@@ -461,12 +419,8 @@ uint64_t svt_aom_compute_cdef_dist_8bit_avx2(const uint8_t *dst8, int32_t dstrid
                 __m256i mse32 = _mm256_setzero_si256();
                 by            = dlist[bi].by;
                 bx            = dlist[bi].bx;
-                mse_8xn_8bit_avx2(&src8,
-                                  dst8 + (8 * by + 0) * dstride + 8 * bx,
-                                  dstride,
-                                  &mse32,
-                                  8,
-                                  subsampling_factor);
+                mse_8xn_8bit_avx2(
+                    &src8, dst8 + (8 * by + 0) * dstride + 8 * bx, dstride, &mse32, 8, subsampling_factor);
                 sum_32_to_64(mse32, &mse64);
             }
         } else if (bsize == BLOCK_4X8) {
@@ -474,12 +428,8 @@ uint64_t svt_aom_compute_cdef_dist_8bit_avx2(const uint8_t *dst8, int32_t dstrid
                 __m256i mse32 = _mm256_setzero_si256();
                 by            = dlist[bi].by;
                 bx            = dlist[bi].bx;
-                mse_4xn_8bit_avx2(&src8,
-                                  dst8 + (8 * by + 0) * dstride + 4 * bx,
-                                  dstride,
-                                  &mse32,
-                                  8,
-                                  subsampling_factor);
+                mse_4xn_8bit_avx2(
+                    &src8, dst8 + (8 * by + 0) * dstride + 4 * bx, dstride, &mse32, 8, subsampling_factor);
                 sum_32_to_64(mse32, &mse64);
             }
         } else if (bsize == BLOCK_8X4) {
@@ -487,12 +437,7 @@ uint64_t svt_aom_compute_cdef_dist_8bit_avx2(const uint8_t *dst8, int32_t dstrid
                 __m256i mse32 = _mm256_setzero_si256();
                 by            = dlist[bi].by;
                 bx            = dlist[bi].bx;
-                mse_8xn_8bit_avx2(&src8,
-                                  dst8 + 4 * by * dstride + 8 * bx,
-                                  dstride,
-                                  &mse32,
-                                  4,
-                                  subsampling_factor);
+                mse_8xn_8bit_avx2(&src8, dst8 + 4 * by * dstride + 8 * bx, dstride, &mse32, 4, subsampling_factor);
                 sum_32_to_64(mse32, &mse64);
             }
         } else {
@@ -505,14 +450,9 @@ uint64_t svt_aom_compute_cdef_dist_8bit_avx2(const uint8_t *dst8, int32_t dstrid
                 // to avoid accessing memory that doesn't belong to the current picture (since subsampling is implemented
                 // as a multiplier to the step size).
                 if (subsampling_factor == 2)
-                    mse_4x4_8bit_2x_subsampled_avx2(
-                        &src8, dst8 + 4 * by * dstride + 4 * bx, dstride, &mse32);
+                    mse_4x4_8bit_2x_subsampled_avx2(&src8, dst8 + 4 * by * dstride + 4 * bx, dstride, &mse32);
                 else
-                    mse_4xn_8bit_avx2(&src8,
-                                      dst8 + 4 * by * dstride + 4 * bx,
-                                      dstride,
-                                      &mse32,
-                                      4,
+                    mse_4xn_8bit_avx2(&src8, dst8 + 4 * by * dstride + 4 * bx, dstride, &mse32, 4,
                                       1); // no subsampling
                 sum_32_to_64(mse32, &mse64);
             }

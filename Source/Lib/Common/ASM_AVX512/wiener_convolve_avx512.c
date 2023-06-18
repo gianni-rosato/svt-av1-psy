@@ -24,8 +24,7 @@
 #include "wiener_convolve_avx2.h"
 
 SIMD_INLINE __m512i wiener_clip_avx512(const __m512i s, const __m512i r, const __m512i filt_center,
-                                       const __m512i round_h0, const __m512i round_h1,
-                                       const __m512i clamp_high) {
+                                       const __m512i round_h0, const __m512i round_h1, const __m512i clamp_high) {
     const int     round_0   = WIENER_ROUND0_BITS;
     const __m512i clamp_low = _mm512_setzero_si512();
     __m512i       res       = _mm512_srai_epi16(_mm512_add_epi16(r, round_h0), round_0);
@@ -37,159 +36,134 @@ SIMD_INLINE __m512i wiener_clip_avx512(const __m512i s, const __m512i r, const _
     return _mm512_min_epi16(res, clamp_high);
 }
 
-static INLINE __m512i wiener_convolve_tap3_avx512(const __m512i s, const __m512i coeffs[2],
-                                                  const __m512i filt[2], const __m512i filt_center,
-                                                  const __m512i round_h0, const __m512i round_h1,
-                                                  const __m512i clamp_high) {
+static INLINE __m512i wiener_convolve_tap3_avx512(const __m512i s, const __m512i coeffs[2], const __m512i filt[2],
+                                                  const __m512i filt_center, const __m512i round_h0,
+                                                  const __m512i round_h1, const __m512i clamp_high) {
     const __m512i res = x_convolve_4tap_avx512(s, coeffs, filt);
     return wiener_clip_avx512(s, res, filt_center, round_h0, round_h1, clamp_high);
 }
 
-SIMD_INLINE __m512i wiener_convolve_tap5_avx512(const __m512i s, const __m512i coeffs[3],
-                                                const __m512i filt[3], const __m512i filt_center,
-                                                const __m512i round_h0, const __m512i round_h1,
-                                                const __m512i clamp_high) {
+SIMD_INLINE __m512i wiener_convolve_tap5_avx512(const __m512i s, const __m512i coeffs[3], const __m512i filt[3],
+                                                const __m512i filt_center, const __m512i round_h0,
+                                                const __m512i round_h1, const __m512i clamp_high) {
     const __m512i res = x_convolve_6tap_avx512(s, coeffs, filt);
     return wiener_clip_avx512(s, res, filt_center, round_h0, round_h1, clamp_high);
 }
 
-static INLINE __m512i wiener_convolve_tap7_avx512(const __m512i s, const __m512i coeffs[4],
-                                                  const __m512i filt[4], const __m512i filt_center,
-                                                  const __m512i round_h0, const __m512i round_h1,
-                                                  const __m512i clamp_high) {
+static INLINE __m512i wiener_convolve_tap7_avx512(const __m512i s, const __m512i coeffs[4], const __m512i filt[4],
+                                                  const __m512i filt_center, const __m512i round_h0,
+                                                  const __m512i round_h1, const __m512i clamp_high) {
     const __m512i res = x_convolve_8tap_avx512(s, coeffs, filt);
     return wiener_clip_avx512(s, res, filt_center, round_h0, round_h1, clamp_high);
 }
 
-SIMD_INLINE __m512i wiener_convolve_h16x2_tap3_avx512(
-    const uint8_t* src, const ptrdiff_t stride, const __m512i coeffs[2], const __m512i filt[2],
-    const __m512i filt_center, const __m512i round_h0, const __m512i round_h1,
-    const __m512i clamp_high) {
+SIMD_INLINE __m512i wiener_convolve_h16x2_tap3_avx512(const uint8_t* src, const ptrdiff_t stride,
+                                                      const __m512i coeffs[2], const __m512i filt[2],
+                                                      const __m512i filt_center, const __m512i round_h0,
+                                                      const __m512i round_h1, const __m512i clamp_high) {
     const __m512i s = loadu_8bit_32x2_avx512(src, stride);
-    return wiener_convolve_tap3_avx512(
-        s, coeffs, filt, filt_center, round_h0, round_h1, clamp_high);
+    return wiener_convolve_tap3_avx512(s, coeffs, filt, filt_center, round_h0, round_h1, clamp_high);
 }
 
-SIMD_INLINE __m512i wiener_convolve_h16x2_tap5_avx512(
-    const uint8_t* src, const ptrdiff_t stride, const __m512i coeffs[3], const __m512i filt[3],
-    const __m512i filt_center, const __m512i round_h0, const __m512i round_h1,
-    const __m512i clamp_high) {
+SIMD_INLINE __m512i wiener_convolve_h16x2_tap5_avx512(const uint8_t* src, const ptrdiff_t stride,
+                                                      const __m512i coeffs[3], const __m512i filt[3],
+                                                      const __m512i filt_center, const __m512i round_h0,
+                                                      const __m512i round_h1, const __m512i clamp_high) {
     const __m512i s = loadu_8bit_32x2_avx512(src, stride);
-    return wiener_convolve_tap5_avx512(
-        s, coeffs, filt, filt_center, round_h0, round_h1, clamp_high);
+    return wiener_convolve_tap5_avx512(s, coeffs, filt, filt_center, round_h0, round_h1, clamp_high);
 }
 
-static INLINE __m512i wiener_convolve_h16x2_tap7_avx512(
-    const uint8_t* src, const ptrdiff_t stride, const __m512i coeffs[4], const __m512i filt[4],
-    const __m512i filt_center, const __m512i round_h0, const __m512i round_h1,
-    const __m512i clamp_high) {
+static INLINE __m512i wiener_convolve_h16x2_tap7_avx512(const uint8_t* src, const ptrdiff_t stride,
+                                                        const __m512i coeffs[4], const __m512i filt[4],
+                                                        const __m512i filt_center, const __m512i round_h0,
+                                                        const __m512i round_h1, const __m512i clamp_high) {
     const __m512i s = loadu_8bit_32x2_avx512(src, stride);
-    return wiener_convolve_tap7_avx512(
-        s, coeffs, filt, filt_center, round_h0, round_h1, clamp_high);
+    return wiener_convolve_tap7_avx512(s, coeffs, filt, filt_center, round_h0, round_h1, clamp_high);
 }
 
-SIMD_INLINE __m512i wiener_convolve_h32_tap3_avx512(const uint8_t* src, const __m512i coeffs[2],
-                                                    const __m512i filt[2],
-                                                    const __m512i filt_center,
-                                                    const __m512i round_h0, const __m512i round_h1,
-                                                    const __m512i clamp_high) {
+SIMD_INLINE __m512i wiener_convolve_h32_tap3_avx512(const uint8_t* src, const __m512i coeffs[2], const __m512i filt[2],
+                                                    const __m512i filt_center, const __m512i round_h0,
+                                                    const __m512i round_h1, const __m512i clamp_high) {
     const __m512i s = zz_loadu_512(src);
-    return wiener_convolve_tap3_avx512(
-        s, coeffs, filt, filt_center, round_h0, round_h1, clamp_high);
+    return wiener_convolve_tap3_avx512(s, coeffs, filt, filt_center, round_h0, round_h1, clamp_high);
 }
 
-static INLINE __m512i wiener_convolve_h32_tap5_avx512(
-    const uint8_t* src, const __m512i coeffs[3], const __m512i filt[3], const __m512i filt_center,
-    const __m512i round_h0, const __m512i round_h1, const __m512i clamp_high) {
+static INLINE __m512i wiener_convolve_h32_tap5_avx512(const uint8_t* src, const __m512i coeffs[3],
+                                                      const __m512i filt[3], const __m512i filt_center,
+                                                      const __m512i round_h0, const __m512i round_h1,
+                                                      const __m512i clamp_high) {
     const __m512i s = zz_loadu_512(src);
-    return wiener_convolve_tap5_avx512(
-        s, coeffs, filt, filt_center, round_h0, round_h1, clamp_high);
+    return wiener_convolve_tap5_avx512(s, coeffs, filt, filt_center, round_h0, round_h1, clamp_high);
 }
 
-static INLINE __m512i wiener_convolve_h32_tap7_avx512(
-    const uint8_t* src, const __m512i coeffs[4], const __m512i filt[4], const __m512i filt_center,
-    const __m512i round_h0, const __m512i round_h1, const __m512i clamp_high) {
+static INLINE __m512i wiener_convolve_h32_tap7_avx512(const uint8_t* src, const __m512i coeffs[4],
+                                                      const __m512i filt[4], const __m512i filt_center,
+                                                      const __m512i round_h0, const __m512i round_h1,
+                                                      const __m512i clamp_high) {
     const __m512i s = zz_loadu_512(src);
-    return wiener_convolve_tap7_avx512(
-        s, coeffs, filt, filt_center, round_h0, round_h1, clamp_high);
+    return wiener_convolve_tap7_avx512(s, coeffs, filt, filt_center, round_h0, round_h1, clamp_high);
 }
 
-SIMD_INLINE void wiener_convolve_h32x2_tap3(const uint8_t* src, const ptrdiff_t stride,
-                                            const __m512i coeffs[2], const __m512i filt[2],
-                                            const __m512i filt_center, const __m512i round_h0,
-                                            const __m512i round_h1, const __m512i clamp_high,
-                                            __m512i* const dst0, __m512i* const dst1) {
+SIMD_INLINE void wiener_convolve_h32x2_tap3(const uint8_t* src, const ptrdiff_t stride, const __m512i coeffs[2],
+                                            const __m512i filt[2], const __m512i filt_center, const __m512i round_h0,
+                                            const __m512i round_h1, const __m512i clamp_high, __m512i* const dst0,
+                                            __m512i* const dst1) {
     *dst0 = wiener_convolve_h16x2_tap3_avx512(
         src + 0, stride, coeffs, filt, filt_center, round_h0, round_h1, clamp_high);
     *dst1 = wiener_convolve_h16x2_tap3_avx512(
         src + 8, stride, coeffs, filt, filt_center, round_h0, round_h1, clamp_high);
 }
 
-SIMD_INLINE void wiener_convolve_h32x2_tap5(const uint8_t* src, const ptrdiff_t stride,
-                                            const __m512i coeffs[3], const __m512i filt[3],
-                                            const __m512i filt_center, const __m512i round_h0,
-                                            const __m512i round_h1, const __m512i clamp_high,
-                                            __m512i* const dst0, __m512i* const dst1) {
+SIMD_INLINE void wiener_convolve_h32x2_tap5(const uint8_t* src, const ptrdiff_t stride, const __m512i coeffs[3],
+                                            const __m512i filt[3], const __m512i filt_center, const __m512i round_h0,
+                                            const __m512i round_h1, const __m512i clamp_high, __m512i* const dst0,
+                                            __m512i* const dst1) {
     *dst0 = wiener_convolve_h16x2_tap5_avx512(
         src + 0, stride, coeffs, filt, filt_center, round_h0, round_h1, clamp_high);
     *dst1 = wiener_convolve_h16x2_tap5_avx512(
         src + 8, stride, coeffs, filt, filt_center, round_h0, round_h1, clamp_high);
 }
 
-SIMD_INLINE void wiener_convolve_h32x2_tap7(const uint8_t* src, const ptrdiff_t stride,
-                                            const __m512i coeffs[4], const __m512i filt[4],
-                                            const __m512i filt_center, const __m512i round_h0,
-                                            const __m512i round_h1, const __m512i clamp_high,
-                                            __m512i* const dst0, __m512i* const dst1) {
+SIMD_INLINE void wiener_convolve_h32x2_tap7(const uint8_t* src, const ptrdiff_t stride, const __m512i coeffs[4],
+                                            const __m512i filt[4], const __m512i filt_center, const __m512i round_h0,
+                                            const __m512i round_h1, const __m512i clamp_high, __m512i* const dst0,
+                                            __m512i* const dst1) {
     *dst0 = wiener_convolve_h16x2_tap7_avx512(
         src + 0, stride, coeffs, filt, filt_center, round_h0, round_h1, clamp_high);
     *dst1 = wiener_convolve_h16x2_tap7_avx512(
         src + 8, stride, coeffs, filt, filt_center, round_h0, round_h1, clamp_high);
 }
 
-static INLINE void wiener_convolve_h64_tap3(const uint8_t* src, const __m512i coeffs[2],
-                                            const __m512i filt[2], const __m512i filt_center,
-                                            const __m512i round_h0, const __m512i round_h1,
-                                            const __m512i clamp_high, __m512i* const dst0,
-                                            __m512i* const dst1) {
-    *dst0 = wiener_convolve_h32_tap3_avx512(
-        src + 0, coeffs, filt, filt_center, round_h0, round_h1, clamp_high);
-    *dst1 = wiener_convolve_h32_tap3_avx512(
-        src + 8, coeffs, filt, filt_center, round_h0, round_h1, clamp_high);
+static INLINE void wiener_convolve_h64_tap3(const uint8_t* src, const __m512i coeffs[2], const __m512i filt[2],
+                                            const __m512i filt_center, const __m512i round_h0, const __m512i round_h1,
+                                            const __m512i clamp_high, __m512i* const dst0, __m512i* const dst1) {
+    *dst0 = wiener_convolve_h32_tap3_avx512(src + 0, coeffs, filt, filt_center, round_h0, round_h1, clamp_high);
+    *dst1 = wiener_convolve_h32_tap3_avx512(src + 8, coeffs, filt, filt_center, round_h0, round_h1, clamp_high);
 }
 
-static INLINE void wiener_convolve_h64_tap5(const uint8_t* src, const __m512i coeffs[3],
-                                            const __m512i filt[3], const __m512i filt_center,
-                                            const __m512i round_h0, const __m512i round_h1,
-                                            const __m512i clamp_high, __m512i* const dst0,
-                                            __m512i* const dst1) {
-    *dst0 = wiener_convolve_h32_tap5_avx512(
-        src + 0, coeffs, filt, filt_center, round_h0, round_h1, clamp_high);
-    *dst1 = wiener_convolve_h32_tap5_avx512(
-        src + 8, coeffs, filt, filt_center, round_h0, round_h1, clamp_high);
+static INLINE void wiener_convolve_h64_tap5(const uint8_t* src, const __m512i coeffs[3], const __m512i filt[3],
+                                            const __m512i filt_center, const __m512i round_h0, const __m512i round_h1,
+                                            const __m512i clamp_high, __m512i* const dst0, __m512i* const dst1) {
+    *dst0 = wiener_convolve_h32_tap5_avx512(src + 0, coeffs, filt, filt_center, round_h0, round_h1, clamp_high);
+    *dst1 = wiener_convolve_h32_tap5_avx512(src + 8, coeffs, filt, filt_center, round_h0, round_h1, clamp_high);
 }
 
-static INLINE void wiener_convolve_h64_tap7_avx512(const uint8_t* src, const __m512i coeffs[4],
-                                                   const __m512i filt[4], const __m512i filt_center,
-                                                   const __m512i round_h0, const __m512i round_h1,
-                                                   const __m512i clamp_high, __m512i* const dst0,
-                                                   __m512i* const dst1) {
-    *dst0 = wiener_convolve_h32_tap7_avx512(
-        src + 0, coeffs, filt, filt_center, round_h0, round_h1, clamp_high);
-    *dst1 = wiener_convolve_h32_tap7_avx512(
-        src + 8, coeffs, filt, filt_center, round_h0, round_h1, clamp_high);
+static INLINE void wiener_convolve_h64_tap7_avx512(const uint8_t* src, const __m512i coeffs[4], const __m512i filt[4],
+                                                   const __m512i filt_center, const __m512i round_h0,
+                                                   const __m512i round_h1, const __m512i clamp_high,
+                                                   __m512i* const dst0, __m512i* const dst1) {
+    *dst0 = wiener_convolve_h32_tap7_avx512(src + 0, coeffs, filt, filt_center, round_h0, round_h1, clamp_high);
+    *dst1 = wiener_convolve_h32_tap7_avx512(src + 8, coeffs, filt, filt_center, round_h0, round_h1, clamp_high);
 }
 
-static INLINE __m512i round_store_avx512(const __m512i res0, const __m512i res1,
-                                         const __m512i round_v) {
+static INLINE __m512i round_store_avx512(const __m512i res0, const __m512i res1, const __m512i round_v) {
     const int     round_1 = 2 * FILTER_BITS - WIENER_ROUND0_BITS;
     const __m512i r0      = _mm512_srai_epi32(_mm512_add_epi32(res0, round_v), round_1);
     const __m512i r1      = _mm512_srai_epi32(_mm512_add_epi32(res1, round_v), round_1);
     return _mm512_packs_epi32(r0, r1);
 }
 
-SIMD_INLINE __m512i wiener_convolve_v_tap3_kernel_avx512(const __m512i coeffs[2],
-                                                         const __m512i round_v,
+SIMD_INLINE __m512i wiener_convolve_v_tap3_kernel_avx512(const __m512i coeffs[2], const __m512i round_v,
                                                          const __m512i s[3]) {
     const __m512i s0 = _mm512_add_epi16(s[0], s[2]);
     __m512i       ss[2];
@@ -200,8 +174,7 @@ SIMD_INLINE __m512i wiener_convolve_v_tap3_kernel_avx512(const __m512i coeffs[2]
     return round_store_avx512(res0, res1, round_v);
 }
 
-SIMD_INLINE __m512i wiener_convolve_v_tap5_kernel_avx512(const __m512i coeffs[2],
-                                                         const __m512i round_v,
+SIMD_INLINE __m512i wiener_convolve_v_tap5_kernel_avx512(const __m512i coeffs[2], const __m512i round_v,
                                                          const __m512i s[5]) {
     const __m512i s0 = _mm512_add_epi16(s[0], s[4]);
     const __m512i s1 = _mm512_add_epi16(s[1], s[3]);
@@ -215,8 +188,7 @@ SIMD_INLINE __m512i wiener_convolve_v_tap5_kernel_avx512(const __m512i coeffs[2]
     return round_store_avx512(res0, res1, round_v);
 }
 
-SIMD_INLINE __m512i wiener_convolve_v_tap7_kernel_avx512(const __m512i coeffs[2],
-                                                         const __m512i round_v,
+SIMD_INLINE __m512i wiener_convolve_v_tap7_kernel_avx512(const __m512i coeffs[2], const __m512i round_v,
                                                          const __m512i s[7]) {
     const __m512i s0 = _mm512_add_epi16(s[0], s[6]);
     const __m512i s1 = _mm512_add_epi16(s[1], s[5]);
@@ -231,15 +203,13 @@ SIMD_INLINE __m512i wiener_convolve_v_tap7_kernel_avx512(const __m512i coeffs[2]
     return round_store_avx512(res0, res1, round_v);
 }
 
-SIMD_INLINE __m512i wiener_convolve_v16x2_tap3(const __m512i coeffs[2], const __m512i round_v,
-                                               __m512i s[3]) {
+SIMD_INLINE __m512i wiener_convolve_v16x2_tap3(const __m512i coeffs[2], const __m512i round_v, __m512i s[3]) {
     const __m512i dst = wiener_convolve_v_tap3_kernel_avx512(coeffs, round_v, s);
     s[0]              = s[2];
     return dst;
 }
 
-SIMD_INLINE __m512i wiener_convolve_v16x2_tap5(const __m512i coeffs[2], const __m512i round_v,
-                                               __m512i s[5]) {
+SIMD_INLINE __m512i wiener_convolve_v16x2_tap5(const __m512i coeffs[2], const __m512i round_v, __m512i s[5]) {
     const __m512i dst = wiener_convolve_v_tap5_kernel_avx512(coeffs, round_v, s);
     s[0]              = s[2];
     s[1]              = s[3];
@@ -247,8 +217,7 @@ SIMD_INLINE __m512i wiener_convolve_v16x2_tap5(const __m512i coeffs[2], const __
     return dst;
 }
 
-SIMD_INLINE __m512i wiener_convolve_v16x2_tap7(const __m512i coeffs[2], const __m512i round_v,
-                                               __m512i s[7]) {
+SIMD_INLINE __m512i wiener_convolve_v16x2_tap7(const __m512i coeffs[2], const __m512i round_v, __m512i s[7]) {
     const __m512i dst = wiener_convolve_v_tap7_kernel_avx512(coeffs, round_v, s);
     s[0]              = s[2];
     s[1]              = s[3];
@@ -258,16 +227,14 @@ SIMD_INLINE __m512i wiener_convolve_v16x2_tap7(const __m512i coeffs[2], const __
     return dst;
 }
 
-SIMD_INLINE __m512i wiener_convolve_v32_tap3(const __m512i coeffs[2], const __m512i round_v,
-                                             __m512i s[3]) {
+SIMD_INLINE __m512i wiener_convolve_v32_tap3(const __m512i coeffs[2], const __m512i round_v, __m512i s[3]) {
     const __m512i dst = wiener_convolve_v_tap3_kernel_avx512(coeffs, round_v, s);
     s[0]              = s[1];
     s[1]              = s[2];
     return dst;
 }
 
-static INLINE __m512i wiener_convolve_v32_tap5(const __m512i coeffs[2], const __m512i round_v,
-                                               __m512i s[5]) {
+static INLINE __m512i wiener_convolve_v32_tap5(const __m512i coeffs[2], const __m512i round_v, __m512i s[5]) {
     const __m512i dst = wiener_convolve_v_tap5_kernel_avx512(coeffs, round_v, s);
     s[0]              = s[1];
     s[1]              = s[2];
@@ -276,8 +243,7 @@ static INLINE __m512i wiener_convolve_v32_tap5(const __m512i coeffs[2], const __
     return dst;
 }
 
-static INLINE __m512i wiener_convolve_v32_tap7(const __m512i coeffs[2], const __m512i round_v,
-                                               __m512i s[7]) {
+static INLINE __m512i wiener_convolve_v32_tap7(const __m512i coeffs[2], const __m512i round_v, __m512i s[7]) {
     const __m512i dst = wiener_convolve_v_tap7_kernel_avx512(coeffs, round_v, s);
     s[0]              = s[1];
     s[1]              = s[2];
@@ -288,8 +254,8 @@ static INLINE __m512i wiener_convolve_v32_tap7(const __m512i coeffs[2], const __
     return dst;
 }
 
-static INLINE void pack_store_32x2_avx512(const __m512i res0, const __m512i res1,
-                                          uint8_t* const dst, const ptrdiff_t stride) {
+static INLINE void pack_store_32x2_avx512(const __m512i res0, const __m512i res1, uint8_t* const dst,
+                                          const ptrdiff_t stride) {
     const __m512i d = _mm512_packus_epi16(res0, res1);
     storeu_u8_32x2_avx512(d, dst, stride);
 }
@@ -301,35 +267,33 @@ static INLINE void pack_store_32x2_avx512(const __m512i res0, const __m512i res1
 // several locations before coeffs_x is referenced.
 // 1. const __m128i coeffs_x = xx_loadu_128(filter_x);
 // 2. const int cnt_zero_coef = calc_zero_coef(filter_x, filter_y);
-void svt_av1_wiener_convolve_add_src_avx512(const uint8_t* const src, const ptrdiff_t src_stride,
-                                            uint8_t* const dst, const ptrdiff_t dst_stride,
-                                            const int16_t* const filter_x,
-                                            const int16_t* const filter_y, const int32_t w,
-                                            const int32_t               h,
+void svt_av1_wiener_convolve_add_src_avx512(const uint8_t* const src, const ptrdiff_t src_stride, uint8_t* const dst,
+                                            const ptrdiff_t dst_stride, const int16_t* const filter_x,
+                                            const int16_t* const filter_y, const int32_t w, const int32_t h,
                                             const ConvolveParams* const conv_params) {
-    const int32_t  bd            = 8;
-    const int      center_tap    = (SUBPEL_TAPS - 1) / 2;
-    const int      round_0       = WIENER_ROUND0_BITS;
-    const int      round_1       = 2 * FILTER_BITS - WIENER_ROUND0_BITS;
-    const int      cnt_zero_coef = calc_zero_coef(filter_x, filter_y);
-    const uint8_t* src_ptr       = src - center_tap * src_stride - center_tap;
-    const __m256i  round_h0      = _mm256_set1_epi16((1 << (round_0 - 1)));
-    const __m512i  round_h0_512  = _mm512_set1_epi16((1 << (round_0 - 1)));
-    const __m256i  round_h1      = _mm256_set1_epi16((1 << (bd + FILTER_BITS - round_0 - 1)));
-    const __m512i  round_h1_512  = _mm512_set1_epi16((1 << (bd + FILTER_BITS - round_0 - 1)));
-    const __m256i  round_v    = _mm256_set1_epi32((1 << (round_1 - 1)) - (1 << (bd + round_1 - 1)));
-    const __m512i round_v_512 = _mm512_set1_epi32((1 << (round_1 - 1)) - (1 << (bd + round_1 - 1)));
-    const __m256i clamp_high  = _mm256_set1_epi16(WIENER_CLAMP_LIMIT(round_0, bd) - 1);
-    const __m512i clamp_high_512      = _mm512_set1_epi16(WIENER_CLAMP_LIMIT(round_0, bd) - 1);
-    const __m128i zero_128            = _mm_setzero_si128();
-    const __m128i offset_0            = _mm_insert_epi16(zero_128, 1 << FILTER_BITS, 3);
-    const __m128i coeffs_y            = _mm_add_epi16(xx_loadu_128(filter_y), offset_0);
-    const __m256i filter_coeffs_y     = _mm256_broadcastsi128_si256(coeffs_y);
-    const __m512i filter_coeffs_y_512 = svt_mm512_broadcast_i64x2(coeffs_y);
-    int32_t       width               = w;
-    uint8_t*      dst_ptr             = dst;
-    __m256i       filt[4], coeffs_h[4], coeffs_v[2];
-    __m512i       filt_512[4], coeffs_h_512[4], coeffs_v_512[2];
+    const int32_t  bd                  = 8;
+    const int      center_tap          = (SUBPEL_TAPS - 1) / 2;
+    const int      round_0             = WIENER_ROUND0_BITS;
+    const int      round_1             = 2 * FILTER_BITS - WIENER_ROUND0_BITS;
+    const int      cnt_zero_coef       = calc_zero_coef(filter_x, filter_y);
+    const uint8_t* src_ptr             = src - center_tap * src_stride - center_tap;
+    const __m256i  round_h0            = _mm256_set1_epi16((1 << (round_0 - 1)));
+    const __m512i  round_h0_512        = _mm512_set1_epi16((1 << (round_0 - 1)));
+    const __m256i  round_h1            = _mm256_set1_epi16((1 << (bd + FILTER_BITS - round_0 - 1)));
+    const __m512i  round_h1_512        = _mm512_set1_epi16((1 << (bd + FILTER_BITS - round_0 - 1)));
+    const __m256i  round_v             = _mm256_set1_epi32((1 << (round_1 - 1)) - (1 << (bd + round_1 - 1)));
+    const __m512i  round_v_512         = _mm512_set1_epi32((1 << (round_1 - 1)) - (1 << (bd + round_1 - 1)));
+    const __m256i  clamp_high          = _mm256_set1_epi16(WIENER_CLAMP_LIMIT(round_0, bd) - 1);
+    const __m512i  clamp_high_512      = _mm512_set1_epi16(WIENER_CLAMP_LIMIT(round_0, bd) - 1);
+    const __m128i  zero_128            = _mm_setzero_si128();
+    const __m128i  offset_0            = _mm_insert_epi16(zero_128, 1 << FILTER_BITS, 3);
+    const __m128i  coeffs_y            = _mm_add_epi16(xx_loadu_128(filter_y), offset_0);
+    const __m256i  filter_coeffs_y     = _mm256_broadcastsi128_si256(coeffs_y);
+    const __m512i  filter_coeffs_y_512 = svt_mm512_broadcast_i64x2(coeffs_y);
+    int32_t        width               = w;
+    uint8_t*       dst_ptr             = dst;
+    __m256i        filt[4], coeffs_h[4], coeffs_v[2];
+    __m512i        filt_512[4], coeffs_h_512[4], coeffs_v_512[2];
 
     (void)conv_params;
     assert(!(w % 8));
@@ -486,14 +450,10 @@ void svt_av1_wiener_convolve_add_src_avx512(const uint8_t* const src, const ptrd
                                            &s[1][4]);
                 src_p += 2 * src_stride;
 
-                s[0][1] = _mm512_setr_m256i(_mm512_extracti64x4_epi64(s[0][0], 1),
-                                            _mm512_castsi512_si256(s[0][2]));
-                s[1][1] = _mm512_setr_m256i(_mm512_extracti64x4_epi64(s[1][0], 1),
-                                            _mm512_castsi512_si256(s[1][2]));
-                s[0][3] = _mm512_setr_m256i(_mm512_extracti64x4_epi64(s[0][2], 1),
-                                            _mm512_castsi512_si256(s[0][4]));
-                s[1][3] = _mm512_setr_m256i(_mm512_extracti64x4_epi64(s[1][2], 1),
-                                            _mm512_castsi512_si256(s[1][4]));
+                s[0][1] = _mm512_setr_m256i(_mm512_extracti64x4_epi64(s[0][0], 1), _mm512_castsi512_si256(s[0][2]));
+                s[1][1] = _mm512_setr_m256i(_mm512_extracti64x4_epi64(s[1][0], 1), _mm512_castsi512_si256(s[1][2]));
+                s[0][3] = _mm512_setr_m256i(_mm512_extracti64x4_epi64(s[0][2], 1), _mm512_castsi512_si256(s[0][4]));
+                s[1][3] = _mm512_setr_m256i(_mm512_extracti64x4_epi64(s[1][2], 1), _mm512_castsi512_si256(s[1][4]));
 
                 int y = h;
                 do {
@@ -507,10 +467,8 @@ void svt_av1_wiener_convolve_add_src_avx512(const uint8_t* const src, const ptrd
                                                clamp_high_512,
                                                &s[0][6],
                                                &s[1][6]);
-                    s[0][5] = _mm512_setr_m256i(_mm512_extracti64x4_epi64(s[0][4], 1),
-                                                _mm512_castsi512_si256(s[0][6]));
-                    s[1][5] = _mm512_setr_m256i(_mm512_extracti64x4_epi64(s[1][4], 1),
-                                                _mm512_castsi512_si256(s[1][6]));
+                    s[0][5] = _mm512_setr_m256i(_mm512_extracti64x4_epi64(s[0][4], 1), _mm512_castsi512_si256(s[0][6]));
+                    s[1][5] = _mm512_setr_m256i(_mm512_extracti64x4_epi64(s[1][4], 1), _mm512_castsi512_si256(s[1][6]));
                     src_p += 2 * src_stride;
                     const __m512i r0 = wiener_convolve_v16x2_tap7(coeffs_v_512, round_v_512, s[0]);
                     const __m512i r1 = wiener_convolve_v16x2_tap7(coeffs_v_512, round_v_512, s[1]);
@@ -549,65 +507,27 @@ void svt_av1_wiener_convolve_add_src_avx512(const uint8_t* const src, const ptrd
             uint8_t*       dst_p = dst_ptr;
             __m256i        s[2][7];
 
-            wiener_convolve_h16x2_tap7(src_p,
-                                       src_stride,
-                                       coeffs_h,
-                                       filt,
-                                       filt_center,
-                                       round_h0,
-                                       round_h1,
-                                       clamp_high,
-                                       &s[0][0],
-                                       &s[1][0]);
+            wiener_convolve_h16x2_tap7(
+                src_p, src_stride, coeffs_h, filt, filt_center, round_h0, round_h1, clamp_high, &s[0][0], &s[1][0]);
             src_p += 2 * src_stride;
-            wiener_convolve_h16x2_tap7(src_p,
-                                       src_stride,
-                                       coeffs_h,
-                                       filt,
-                                       filt_center,
-                                       round_h0,
-                                       round_h1,
-                                       clamp_high,
-                                       &s[0][2],
-                                       &s[1][2]);
+            wiener_convolve_h16x2_tap7(
+                src_p, src_stride, coeffs_h, filt, filt_center, round_h0, round_h1, clamp_high, &s[0][2], &s[1][2]);
             src_p += 2 * src_stride;
-            wiener_convolve_h16x2_tap7(src_p,
-                                       src_stride,
-                                       coeffs_h,
-                                       filt,
-                                       filt_center,
-                                       round_h0,
-                                       round_h1,
-                                       clamp_high,
-                                       &s[0][4],
-                                       &s[1][4]);
+            wiener_convolve_h16x2_tap7(
+                src_p, src_stride, coeffs_h, filt, filt_center, round_h0, round_h1, clamp_high, &s[0][4], &s[1][4]);
             src_p += 2 * src_stride;
 
-            s[0][1] = _mm256_setr_m128i(_mm256_extracti128_si256(s[0][0], 1),
-                                        _mm256_castsi256_si128(s[0][2]));
-            s[1][1] = _mm256_setr_m128i(_mm256_extracti128_si256(s[1][0], 1),
-                                        _mm256_castsi256_si128(s[1][2]));
-            s[0][3] = _mm256_setr_m128i(_mm256_extracti128_si256(s[0][2], 1),
-                                        _mm256_castsi256_si128(s[0][4]));
-            s[1][3] = _mm256_setr_m128i(_mm256_extracti128_si256(s[1][2], 1),
-                                        _mm256_castsi256_si128(s[1][4]));
+            s[0][1] = _mm256_setr_m128i(_mm256_extracti128_si256(s[0][0], 1), _mm256_castsi256_si128(s[0][2]));
+            s[1][1] = _mm256_setr_m128i(_mm256_extracti128_si256(s[1][0], 1), _mm256_castsi256_si128(s[1][2]));
+            s[0][3] = _mm256_setr_m128i(_mm256_extracti128_si256(s[0][2], 1), _mm256_castsi256_si128(s[0][4]));
+            s[1][3] = _mm256_setr_m128i(_mm256_extracti128_si256(s[1][2], 1), _mm256_castsi256_si128(s[1][4]));
 
             int y = h;
             do {
-                wiener_convolve_h16x2_tap7(src_p,
-                                           src_stride,
-                                           coeffs_h,
-                                           filt,
-                                           filt_center,
-                                           round_h0,
-                                           round_h1,
-                                           clamp_high,
-                                           &s[0][6],
-                                           &s[1][6]);
-                s[0][5] = _mm256_setr_m128i(_mm256_extracti128_si256(s[0][4], 1),
-                                            _mm256_castsi256_si128(s[0][6]));
-                s[1][5] = _mm256_setr_m128i(_mm256_extracti128_si256(s[1][4], 1),
-                                            _mm256_castsi256_si128(s[1][6]));
+                wiener_convolve_h16x2_tap7(
+                    src_p, src_stride, coeffs_h, filt, filt_center, round_h0, round_h1, clamp_high, &s[0][6], &s[1][6]);
+                s[0][5] = _mm256_setr_m128i(_mm256_extracti128_si256(s[0][4], 1), _mm256_castsi256_si128(s[0][6]));
+                s[1][5] = _mm256_setr_m128i(_mm256_extracti128_si256(s[1][4], 1), _mm256_castsi256_si128(s[1][6]));
                 src_p += 2 * src_stride;
                 const __m256i r0 = wiener_convolve_v8x2_tap7(coeffs_v, round_v, s[0]);
                 const __m256i r1 = wiener_convolve_v8x2_tap7(coeffs_v, round_v, s[1]);
@@ -644,17 +564,14 @@ void svt_av1_wiener_convolve_add_src_avx512(const uint8_t* const src, const ptrd
                 src_p, src_stride, coeffs_h, filt, filt_center, round_h0, round_h1, clamp_high);
             src_p += 2 * src_stride;
 
-            s[1] = _mm256_setr_m128i(_mm256_extracti128_si256(s[0], 1),
-                                     _mm256_castsi256_si128(s[2]));
-            s[3] = _mm256_setr_m128i(_mm256_extracti128_si256(s[2], 1),
-                                     _mm256_castsi256_si128(s[4]));
+            s[1] = _mm256_setr_m128i(_mm256_extracti128_si256(s[0], 1), _mm256_castsi256_si128(s[2]));
+            s[3] = _mm256_setr_m128i(_mm256_extracti128_si256(s[2], 1), _mm256_castsi256_si128(s[4]));
 
             int y = h;
             do {
                 s[6] = wiener_convolve_h8x2_tap7(
                     src_p, src_stride, coeffs_h, filt, filt_center, round_h0, round_h1, clamp_high);
-                s[5] = _mm256_setr_m128i(_mm256_extracti128_si256(s[4], 1),
-                                         _mm256_castsi256_si128(s[6]));
+                s[5] = _mm256_setr_m128i(_mm256_extracti128_si256(s[4], 1), _mm256_castsi256_si128(s[6]));
                 src_p += 2 * src_stride;
                 const __m256i r = wiener_convolve_v8x2_tap7(coeffs_v, round_v, s);
                 if (y == 1) {
@@ -680,11 +597,9 @@ void svt_av1_wiener_convolve_add_src_avx512(const uint8_t* const src, const ptrd
             filt_512[2]                   = zz_load_512(filt3_global_avx);
             populate_coeffs_6tap_avx512(coeffs_x, coeffs_h_512);
             // coeffs 1 2 1 2 1 2 1 2
-            coeffs_v_512[0] = _mm512_shuffle_epi8(filter_coeffs_y_512,
-                                                  _mm512_set1_epi32(0x05040302u));
+            coeffs_v_512[0] = _mm512_shuffle_epi8(filter_coeffs_y_512, _mm512_set1_epi32(0x05040302u));
             // coeffs 3 4 3 4 3 4 3 4
-            coeffs_v_512[1] = _mm512_shuffle_epi8(filter_coeffs_y_512,
-                                                  _mm512_set1_epi32(0x09080706u));
+            coeffs_v_512[1] = _mm512_shuffle_epi8(filter_coeffs_y_512, _mm512_set1_epi32(0x09080706u));
 
             width -= x;
             while (x) {
@@ -786,10 +701,8 @@ void svt_av1_wiener_convolve_add_src_avx512(const uint8_t* const src, const ptrd
                                            &s[1][2]);
                 src_p += 2 * src_stride;
 
-                s[0][1] = _mm512_setr_m256i(_mm512_extracti64x4_epi64(s[0][0], 1),
-                                            _mm512_castsi512_si256(s[0][2]));
-                s[1][1] = _mm512_setr_m256i(_mm512_extracti64x4_epi64(s[1][0], 1),
-                                            _mm512_castsi512_si256(s[1][2]));
+                s[0][1] = _mm512_setr_m256i(_mm512_extracti64x4_epi64(s[0][0], 1), _mm512_castsi512_si256(s[0][2]));
+                s[1][1] = _mm512_setr_m256i(_mm512_extracti64x4_epi64(s[1][0], 1), _mm512_castsi512_si256(s[1][2]));
 
                 int y = h;
                 do {
@@ -803,10 +716,8 @@ void svt_av1_wiener_convolve_add_src_avx512(const uint8_t* const src, const ptrd
                                                clamp_high_512,
                                                &s[0][4],
                                                &s[1][4]);
-                    s[0][3] = _mm512_setr_m256i(_mm512_extracti64x4_epi64(s[0][2], 1),
-                                                _mm512_castsi512_si256(s[0][4]));
-                    s[1][3] = _mm512_setr_m256i(_mm512_extracti64x4_epi64(s[1][2], 1),
-                                                _mm512_castsi512_si256(s[1][4]));
+                    s[0][3] = _mm512_setr_m256i(_mm512_extracti64x4_epi64(s[0][2], 1), _mm512_castsi512_si256(s[0][4]));
+                    s[1][3] = _mm512_setr_m256i(_mm512_extracti64x4_epi64(s[1][2], 1), _mm512_castsi512_si256(s[1][4]));
                     src_p += 2 * src_stride;
                     const __m512i r0 = wiener_convolve_v16x2_tap5(coeffs_v_512, round_v_512, s[0]);
                     const __m512i r1 = wiener_convolve_v16x2_tap5(coeffs_v_512, round_v_512, s[1]);
@@ -845,50 +756,22 @@ void svt_av1_wiener_convolve_add_src_avx512(const uint8_t* const src, const ptrd
             uint8_t*       dst_p = dst_ptr;
             __m256i        s[2][5];
 
-            wiener_convolve_h16x2_tap5(src_p,
-                                       src_stride,
-                                       coeffs_h,
-                                       filt,
-                                       filt_center,
-                                       round_h0,
-                                       round_h1,
-                                       clamp_high,
-                                       &s[0][0],
-                                       &s[1][0]);
+            wiener_convolve_h16x2_tap5(
+                src_p, src_stride, coeffs_h, filt, filt_center, round_h0, round_h1, clamp_high, &s[0][0], &s[1][0]);
             src_p += 2 * src_stride;
-            wiener_convolve_h16x2_tap5(src_p,
-                                       src_stride,
-                                       coeffs_h,
-                                       filt,
-                                       filt_center,
-                                       round_h0,
-                                       round_h1,
-                                       clamp_high,
-                                       &s[0][2],
-                                       &s[1][2]);
+            wiener_convolve_h16x2_tap5(
+                src_p, src_stride, coeffs_h, filt, filt_center, round_h0, round_h1, clamp_high, &s[0][2], &s[1][2]);
             src_p += 2 * src_stride;
 
-            s[0][1] = _mm256_setr_m128i(_mm256_extracti128_si256(s[0][0], 1),
-                                        _mm256_castsi256_si128(s[0][2]));
-            s[1][1] = _mm256_setr_m128i(_mm256_extracti128_si256(s[1][0], 1),
-                                        _mm256_castsi256_si128(s[1][2]));
+            s[0][1] = _mm256_setr_m128i(_mm256_extracti128_si256(s[0][0], 1), _mm256_castsi256_si128(s[0][2]));
+            s[1][1] = _mm256_setr_m128i(_mm256_extracti128_si256(s[1][0], 1), _mm256_castsi256_si128(s[1][2]));
 
             int y = h;
             do {
-                wiener_convolve_h16x2_tap5(src_p,
-                                           src_stride,
-                                           coeffs_h,
-                                           filt,
-                                           filt_center,
-                                           round_h0,
-                                           round_h1,
-                                           clamp_high,
-                                           &s[0][4],
-                                           &s[1][4]);
-                s[0][3] = _mm256_setr_m128i(_mm256_extracti128_si256(s[0][2], 1),
-                                            _mm256_castsi256_si128(s[0][4]));
-                s[1][3] = _mm256_setr_m128i(_mm256_extracti128_si256(s[1][2], 1),
-                                            _mm256_castsi256_si128(s[1][4]));
+                wiener_convolve_h16x2_tap5(
+                    src_p, src_stride, coeffs_h, filt, filt_center, round_h0, round_h1, clamp_high, &s[0][4], &s[1][4]);
+                s[0][3] = _mm256_setr_m128i(_mm256_extracti128_si256(s[0][2], 1), _mm256_castsi256_si128(s[0][4]));
+                s[1][3] = _mm256_setr_m128i(_mm256_extracti128_si256(s[1][2], 1), _mm256_castsi256_si128(s[1][4]));
                 src_p += 2 * src_stride;
                 const __m256i r0 = wiener_convolve_v8x2_tap5(coeffs_v, round_v, s[0]);
                 const __m256i r1 = wiener_convolve_v8x2_tap5(coeffs_v, round_v, s[1]);
@@ -922,15 +805,13 @@ void svt_av1_wiener_convolve_add_src_avx512(const uint8_t* const src, const ptrd
                 src_p, src_stride, coeffs_h, filt, filt_center, round_h0, round_h1, clamp_high);
             src_p += 2 * src_stride;
 
-            s[1] = _mm256_setr_m128i(_mm256_extracti128_si256(s[0], 1),
-                                     _mm256_castsi256_si128(s[2]));
+            s[1] = _mm256_setr_m128i(_mm256_extracti128_si256(s[0], 1), _mm256_castsi256_si128(s[2]));
 
             int y = h;
             do {
                 s[4] = wiener_convolve_h8x2_tap5(
                     src_p, src_stride, coeffs_h, filt, filt_center, round_h0, round_h1, clamp_high);
-                s[3] = _mm256_setr_m128i(_mm256_extracti128_si256(s[2], 1),
-                                         _mm256_castsi256_si128(s[4]));
+                s[3] = _mm256_setr_m128i(_mm256_extracti128_si256(s[2], 1), _mm256_castsi256_si128(s[4]));
                 src_p += 2 * src_stride;
                 const __m256i r = wiener_convolve_v8x2_tap5(coeffs_v, round_v, s);
                 if (y == 1) {
@@ -1040,10 +921,8 @@ void svt_av1_wiener_convolve_add_src_avx512(const uint8_t* const src, const ptrd
                                                clamp_high_512,
                                                &s[0][2],
                                                &s[1][2]);
-                    s[0][1] = _mm512_setr_m256i(_mm512_extracti64x4_epi64(s[0][0], 1),
-                                                _mm512_castsi512_si256(s[0][2]));
-                    s[1][1] = _mm512_setr_m256i(_mm512_extracti64x4_epi64(s[1][0], 1),
-                                                _mm512_castsi512_si256(s[1][2]));
+                    s[0][1] = _mm512_setr_m256i(_mm512_extracti64x4_epi64(s[0][0], 1), _mm512_castsi512_si256(s[0][2]));
+                    s[1][1] = _mm512_setr_m256i(_mm512_extracti64x4_epi64(s[1][0], 1), _mm512_castsi512_si256(s[1][2]));
                     src_p += 2 * src_stride;
                     const __m512i r0 = wiener_convolve_v16x2_tap3(coeffs_v_512, round_v_512, s[0]);
                     const __m512i r1 = wiener_convolve_v16x2_tap3(coeffs_v_512, round_v_512, s[1]);
@@ -1080,34 +959,16 @@ void svt_av1_wiener_convolve_add_src_avx512(const uint8_t* const src, const ptrd
             uint8_t*       dst_p = dst_ptr;
             __m256i        s[2][3];
 
-            wiener_convolve_h16x2_tap3(src_p,
-                                       src_stride,
-                                       coeffs_h,
-                                       filt,
-                                       filt_center,
-                                       round_h0,
-                                       round_h1,
-                                       clamp_high,
-                                       &s[0][0],
-                                       &s[1][0]);
+            wiener_convolve_h16x2_tap3(
+                src_p, src_stride, coeffs_h, filt, filt_center, round_h0, round_h1, clamp_high, &s[0][0], &s[1][0]);
             src_p += 2 * src_stride;
 
             int y = h;
             do {
-                wiener_convolve_h16x2_tap3(src_p,
-                                           src_stride,
-                                           coeffs_h,
-                                           filt,
-                                           filt_center,
-                                           round_h0,
-                                           round_h1,
-                                           clamp_high,
-                                           &s[0][2],
-                                           &s[1][2]);
-                s[0][1] = _mm256_setr_m128i(_mm256_extracti128_si256(s[0][0], 1),
-                                            _mm256_castsi256_si128(s[0][2]));
-                s[1][1] = _mm256_setr_m128i(_mm256_extracti128_si256(s[1][0], 1),
-                                            _mm256_castsi256_si128(s[1][2]));
+                wiener_convolve_h16x2_tap3(
+                    src_p, src_stride, coeffs_h, filt, filt_center, round_h0, round_h1, clamp_high, &s[0][2], &s[1][2]);
+                s[0][1] = _mm256_setr_m128i(_mm256_extracti128_si256(s[0][0], 1), _mm256_castsi256_si128(s[0][2]));
+                s[1][1] = _mm256_setr_m128i(_mm256_extracti128_si256(s[1][0], 1), _mm256_castsi256_si128(s[1][2]));
                 src_p += 2 * src_stride;
                 const __m256i r0 = wiener_convolve_v8x2_tap3(coeffs_v, round_v, s[0]);
                 const __m256i r1 = wiener_convolve_v8x2_tap3(coeffs_v, round_v, s[1]);
@@ -1142,8 +1003,7 @@ void svt_av1_wiener_convolve_add_src_avx512(const uint8_t* const src, const ptrd
             do {
                 s[2] = wiener_convolve_h8x2_tap3(
                     src_p, src_stride, coeffs_h, filt, filt_center, round_h0, round_h1, clamp_high);
-                s[1] = _mm256_setr_m128i(_mm256_extracti128_si256(s[0], 1),
-                                         _mm256_castsi256_si128(s[2]));
+                s[1] = _mm256_setr_m128i(_mm256_extracti128_si256(s[0], 1), _mm256_castsi256_si128(s[2]));
                 src_p += 2 * src_stride;
                 const __m256i r = wiener_convolve_v8x2_tap3(coeffs_v, round_v, s);
                 if (y == 1) {

@@ -67,8 +67,8 @@ DECLARE_ALIGNED(16, const int8_t, eb_av1_filter_intra_taps[FILTER_INTRA_MODES][8
     },
 };
 
-void svt_av1_filter_intra_predictor_c(uint8_t *dst, ptrdiff_t stride, TxSize tx_size,
-                                      const uint8_t *above, const uint8_t *left, int32_t mode) {
+void svt_av1_filter_intra_predictor_c(uint8_t *dst, ptrdiff_t stride, TxSize tx_size, const uint8_t *above,
+                                      const uint8_t *left, int32_t mode) {
     int       r, c;
     uint8_t   buffer[33][33];
     const int bw = tx_size_wide[tx_size];
@@ -94,15 +94,12 @@ void svt_av1_filter_intra_predictor_c(uint8_t *dst, ptrdiff_t stride, TxSize tx_
             for (int k = 0; k < 8; ++k) {
                 int r_offset                       = k >> 2;
                 int c_offset                       = k & 0x03;
-                buffer[r + r_offset][c + c_offset] = clip_pixel(
-                    ROUND_POWER_OF_TWO_SIGNED(eb_av1_filter_intra_taps[mode][k][0] * p0 +
-                                                  eb_av1_filter_intra_taps[mode][k][1] * p1 +
-                                                  eb_av1_filter_intra_taps[mode][k][2] * p2 +
-                                                  eb_av1_filter_intra_taps[mode][k][3] * p3 +
-                                                  eb_av1_filter_intra_taps[mode][k][4] * p4 +
-                                                  eb_av1_filter_intra_taps[mode][k][5] * p5 +
-                                                  eb_av1_filter_intra_taps[mode][k][6] * p6,
-                                              FILTER_INTRA_SCALE_BITS));
+                buffer[r + r_offset][c + c_offset] = clip_pixel(ROUND_POWER_OF_TWO_SIGNED(
+                    eb_av1_filter_intra_taps[mode][k][0] * p0 + eb_av1_filter_intra_taps[mode][k][1] * p1 +
+                        eb_av1_filter_intra_taps[mode][k][2] * p2 + eb_av1_filter_intra_taps[mode][k][3] * p3 +
+                        eb_av1_filter_intra_taps[mode][k][4] * p4 + eb_av1_filter_intra_taps[mode][k][5] * p5 +
+                        eb_av1_filter_intra_taps[mode][k][6] * p6,
+                    FILTER_INTRA_SCALE_BITS));
             }
         }
 

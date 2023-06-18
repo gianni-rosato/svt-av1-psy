@@ -12,12 +12,11 @@
 #include "common_dsp_rtcd.h"
 #include <emmintrin.h>
 
-typedef void (*SubtractWxHFuncType)(int16_t *diff, ptrdiff_t diff_stride, const uint16_t *src,
-                                    ptrdiff_t src_stride, const uint16_t *pred,
-                                    ptrdiff_t pred_stride);
+typedef void (*SubtractWxHFuncType)(int16_t *diff, ptrdiff_t diff_stride, const uint16_t *src, ptrdiff_t src_stride,
+                                    const uint16_t *pred, ptrdiff_t pred_stride);
 
-static void subtract_4x4(int16_t *diff, ptrdiff_t diff_stride, const uint16_t *src,
-                         ptrdiff_t src_stride, const uint16_t *pred, ptrdiff_t pred_stride) {
+static void subtract_4x4(int16_t *diff, ptrdiff_t diff_stride, const uint16_t *src, ptrdiff_t src_stride,
+                         const uint16_t *pred, ptrdiff_t pred_stride) {
     __m128i  u0, u1, u2, u3;
     __m128i  v0, v1, v2, v3;
     __m128i  x0, x1, x2, x3;
@@ -47,8 +46,8 @@ static void subtract_4x4(int16_t *diff, ptrdiff_t diff_stride, const uint16_t *s
     _mm_storel_epi64((__m128i *)store_diff, x3);
 }
 
-static void subtract_4x8(int16_t *diff, ptrdiff_t diff_stride, const uint16_t *src,
-                         ptrdiff_t src_stride, const uint16_t *pred, ptrdiff_t pred_stride) {
+static void subtract_4x8(int16_t *diff, ptrdiff_t diff_stride, const uint16_t *src, ptrdiff_t src_stride,
+                         const uint16_t *pred, ptrdiff_t pred_stride) {
     __m128i  u0, u1, u2, u3, u4, u5, u6, u7;
     __m128i  v0, v1, v2, v3, v4, v5, v6, v7;
     __m128i  x0, x1, x2, x3, x4, x5, x6, x7;
@@ -98,8 +97,8 @@ static void subtract_4x8(int16_t *diff, ptrdiff_t diff_stride, const uint16_t *s
     _mm_storel_epi64((__m128i *)store_diff, x7);
 }
 
-static void subtract_8x4(int16_t *diff, ptrdiff_t diff_stride, const uint16_t *src,
-                         ptrdiff_t src_stride, const uint16_t *pred, ptrdiff_t pred_stride) {
+static void subtract_8x4(int16_t *diff, ptrdiff_t diff_stride, const uint16_t *src, ptrdiff_t src_stride,
+                         const uint16_t *pred, ptrdiff_t pred_stride) {
     __m128i u0, u1, u2, u3;
     __m128i v0, v1, v2, v3;
     __m128i x0, x1, x2, x3;
@@ -125,8 +124,8 @@ static void subtract_8x4(int16_t *diff, ptrdiff_t diff_stride, const uint16_t *s
     _mm_storeu_si128((__m128i *)(diff + 3 * diff_stride), x3);
 }
 
-static void subtract_8x8(int16_t *diff, ptrdiff_t diff_stride, const uint16_t *src,
-                         ptrdiff_t src_stride, const uint16_t *pred, ptrdiff_t pred_stride) {
+static void subtract_8x8(int16_t *diff, ptrdiff_t diff_stride, const uint16_t *src, ptrdiff_t src_stride,
+                         const uint16_t *pred, ptrdiff_t pred_stride) {
     __m128i u0, u1, u2, u3, u4, u5, u6, u7;
     __m128i v0, v1, v2, v3, v4, v5, v6, v7;
     __m128i x0, x1, x2, x3, x4, x5, x6, x7;
@@ -273,9 +272,8 @@ static SubtractWxHFuncType get_subtract_func(int rows, int cols) {
     return NULL;
 }
 
-void svt_aom_highbd_subtract_block_sse2(int rows, int cols, int16_t *diff, ptrdiff_t diff_stride,
-                                        const uint8_t *src8, ptrdiff_t src_stride,
-                                        const uint8_t *pred8, ptrdiff_t pred_stride, int bd) {
+void svt_aom_highbd_subtract_block_sse2(int rows, int cols, int16_t *diff, ptrdiff_t diff_stride, const uint8_t *src8,
+                                        ptrdiff_t src_stride, const uint8_t *pred8, ptrdiff_t pred_stride, int bd) {
     uint16_t           *src  = (uint16_t *)(src8);
     uint16_t           *pred = (uint16_t *)(pred8);
     SubtractWxHFuncType func;

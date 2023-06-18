@@ -174,7 +174,6 @@ static EbErrorType preload_frames_info_ram(EbConfig *app_cfg) {
     return return_error;
 }
 
-#if FTR_ROI
 static int compare_seg_qp(const void *qp_first, const void *qp_second) {
     if (*(const int16_t *)qp_first < *(const int16_t *)qp_second) {
         return 1;
@@ -356,7 +355,6 @@ fail:
     free(roi_map);
     return ret;
 }
-#endif
 static void deallocate_buffers(EbConfig *app_cfg) {
     // Deallocate input buffers
     if (app_cfg->buffered_input == -1 && !app_cfg->mmap.enable) {
@@ -395,7 +393,6 @@ EbErrorType init_encoder(EbConfig *app_cfg, uint32_t instance_idx) {
     // Initialize Port Activity Flags
     app_cfg->output_stream_port_active = APP_PortActive;
 
-#if FTR_ROI
     if (app_cfg->roi_map_file != NULL) {
         // Load ROI map data from file
         app_cfg->config.enable_roi_map = true;
@@ -404,7 +401,6 @@ EbErrorType init_encoder(EbConfig *app_cfg, uint32_t instance_idx) {
             return return_error;
         }
     }
-#endif
 
     // Send over all configuration parameters
     // Set the Parameters

@@ -42,12 +42,10 @@ void svt_aom_dec_pic_mgr_update_ref_pic(EbDecHandle *dec_handle_ptr, int32_t fra
 
 void svt_aom_generate_next_ref_frame_map(EbDecHandle *dec_handle_ptr);
 
-EbDecPicBuf *svt_aom_get_ref_frame_buf(EbDecHandle           *dec_handle_ptr,
-                                       const MvReferenceFrame ref_frame);
+EbDecPicBuf *svt_aom_get_ref_frame_buf(EbDecHandle *dec_handle_ptr, const MvReferenceFrame ref_frame);
 void         svt_setup_frame_buf_refs(EbDecHandle *dec_handle_ptr);
 
-ScaleFactors *svt_aom_get_ref_scale_factors(EbDecHandle           *dec_handle_ptr,
-                                            const MvReferenceFrame ref_frame);
+ScaleFactors *svt_aom_get_ref_scale_factors(EbDecHandle *dec_handle_ptr, const MvReferenceFrame ref_frame);
 
 EbDecPicBuf *svt_aom_get_primary_ref_frame_buf(EbDecHandle *dec_handle_ptr);
 

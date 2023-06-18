@@ -27,10 +27,9 @@ typedef struct EbReferenceObject {
     EbPictureBufferDesc        *input_picture;
     EbPictureBufferDesc        *quarter_input_picture;
     EbPictureBufferDesc        *sixteenth_input_picture;
-    EbPictureBufferDesc *downscaled_reference_picture[NUM_SR_SCALES + 1][NUM_RESIZE_SCALES + 1];
-    uint64_t
-        downscaled_picture_number[NUM_SR_SCALES + 1]
-                                 [NUM_RESIZE_SCALES + 1]; // save the picture_number for each denom
+    EbPictureBufferDesc        *downscaled_reference_picture[NUM_SR_SCALES + 1][NUM_RESIZE_SCALES + 1];
+    uint64_t                    downscaled_picture_number[NUM_SR_SCALES + 1]
+                                      [NUM_RESIZE_SCALES + 1]; // save the picture_number for each denom
     EbHandle  resize_mutex[NUM_SR_SCALES + 1][NUM_RESIZE_SCALES + 1];
     uint64_t  ref_poc;
     uint16_t  qp;
@@ -62,16 +61,13 @@ typedef struct EbReferenceObject {
     uint32_t            *sb_me_8x8_cost_var;
     int32_t              mi_cols;
     int32_t              mi_rows;
-    WienerUnitInfo *
-        *unit_info; // per plane, per rest. unit; used for fwding wiener info to future frames
+    WienerUnitInfo     **unit_info; // per plane, per rest. unit; used for fwding wiener info to future frames
 } EbReferenceObject;
 
 typedef struct EbReferenceObjectDescInitData {
     EbPictureBufferDescInitData reference_picture_desc_init_data;
     int8_t                      hbd_md;
-#if FIX_GM_CI
-    EbSvtAv1EncConfiguration *static_config;
-#endif
+    EbSvtAv1EncConfiguration   *static_config;
 } EbReferenceObjectDescInitData;
 
 typedef struct EbPaReferenceObject {
@@ -81,15 +77,11 @@ typedef struct EbPaReferenceObject {
     EbPictureBufferDesc *sixteenth_downsampled_picture_ptr;
     // downscaled reference pointers
     // [super-res scales][resize scales]
-    EbPictureBufferDesc
-        *downscaled_input_padded_picture_ptr[NUM_SR_SCALES + 1][NUM_RESIZE_SCALES + 1];
-    EbPictureBufferDesc
-        *downscaled_quarter_downsampled_picture_ptr[NUM_SR_SCALES + 1][NUM_RESIZE_SCALES + 1];
-    EbPictureBufferDesc
-        *downscaled_sixteenth_downsampled_picture_ptr[NUM_SR_SCALES + 1][NUM_RESIZE_SCALES + 1];
-    uint64_t
-        downscaled_picture_number[NUM_SR_SCALES + 1]
-                                 [NUM_RESIZE_SCALES + 1]; // save the picture_number for each denom
+    EbPictureBufferDesc *downscaled_input_padded_picture_ptr[NUM_SR_SCALES + 1][NUM_RESIZE_SCALES + 1];
+    EbPictureBufferDesc *downscaled_quarter_downsampled_picture_ptr[NUM_SR_SCALES + 1][NUM_RESIZE_SCALES + 1];
+    EbPictureBufferDesc *downscaled_sixteenth_downsampled_picture_ptr[NUM_SR_SCALES + 1][NUM_RESIZE_SCALES + 1];
+    uint64_t             downscaled_picture_number[NUM_SR_SCALES + 1]
+                                      [NUM_RESIZE_SCALES + 1]; // save the picture_number for each denom
     EbHandle resize_mutex[NUM_SR_SCALES + 1][NUM_RESIZE_SCALES + 1];
     uint64_t picture_number;
     uint64_t avg_luma;
@@ -117,10 +109,8 @@ typedef struct EbTplReferenceObjectDescInitData {
 extern EbErrorType svt_reference_object_creator(EbPtr *object_dbl_ptr, EbPtr object_init_data_ptr);
 extern EbErrorType svt_reference_object_reset(EbReferenceObject *obj, SequenceControlSet *scs);
 
-extern EbErrorType svt_pa_reference_object_creator(EbPtr *object_dbl_ptr,
-                                                   EbPtr  object_init_data_ptr);
-extern EbErrorType svt_tpl_reference_object_creator(EbPtr *object_dbl_ptr,
-                                                    EbPtr  object_init_data_ptr);
-void svt_aom_release_pa_reference_objects(SequenceControlSet *scs, PictureParentControlSet *pcs);
+extern EbErrorType svt_pa_reference_object_creator(EbPtr *object_dbl_ptr, EbPtr object_init_data_ptr);
+extern EbErrorType svt_tpl_reference_object_creator(EbPtr *object_dbl_ptr, EbPtr object_init_data_ptr);
+void               svt_aom_release_pa_reference_objects(SequenceControlSet *scs, PictureParentControlSet *pcs);
 
 #endif //EbReferenceObject_h

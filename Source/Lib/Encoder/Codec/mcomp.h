@@ -89,12 +89,10 @@ typedef struct {
     uint8_t           abs_th_mult;
     int               round_dev_th;
     uint8_t           skip_diag_refinement;
-#if OPT_SPEL
-    SUBPEL_STAGE search_stage; //0: ME  1: PME
-    uint8_t      list_idx;
-    uint8_t      ref_idx;
-#endif
-    SubpelMvLimits mv_limits;
+    SUBPEL_STAGE      search_stage; //0: ME  1: PME
+    uint8_t           list_idx;
+    uint8_t           ref_idx;
+    SubpelMvLimits    mv_limits;
 
     // For calculating mv cost
     MV_COST_PARAMS mv_cost_params;
@@ -103,27 +101,16 @@ typedef struct {
     SUBPEL_SEARCH_VAR_PARAMS var_params;
 
 } SUBPEL_MOTION_SEARCH_PARAMS;
-#if OPT_SPEL
 typedef int(fractional_mv_step_fp)(void *ictx, MacroBlockD *xd, const struct AV1Common *const cm,
-                                   SUBPEL_MOTION_SEARCH_PARAMS *ms_params, MV start_mv, MV *bestmv,
-                                   int *distortion, unsigned int *sse1, int qp, BlockSize bsize,
-                                   uint8_t is_intra_bordered);
-#else
-typedef int(fractional_mv_step_fp)(MacroBlockD *xd, const struct AV1Common *const cm,
-                                   const SUBPEL_MOTION_SEARCH_PARAMS *ms_params, MV start_mv,
-                                   MV *bestmv, int *distortion, unsigned int *sse1, int qp,
-                                   BlockSize bsize, uint8_t is_intra_bordered);
-#endif
+                                   SUBPEL_MOTION_SEARCH_PARAMS *ms_params, MV start_mv, MV *bestmv, int *distortion,
+                                   unsigned int *sse1, int qp, BlockSize bsize, uint8_t is_intra_bordered);
 extern fractional_mv_step_fp svt_av1_find_best_sub_pixel_tree;
 extern fractional_mv_step_fp svt_av1_find_best_sub_pixel_tree_pruned;
 
-#if CLN_FUNC_DECL
 int svt_aom_fp_mv_err_cost(const MV *mv, const MV_COST_PARAMS *mv_cost_params);
-#endif
 
-static INLINE void svt_av1_set_subpel_mv_search_range(SubpelMvLimits     *subpel_limits,
-                                                      const FullMvLimits *mv_limits,
-                                                      const MV           *ref_mv) {
+static INLINE void svt_av1_set_subpel_mv_search_range(SubpelMvLimits *subpel_limits, const FullMvLimits *mv_limits,
+                                                      const MV *ref_mv) {
     const int max_mv = GET_MV_SUBPEL(MAX_FULL_PEL_VAL);
     const int minc   = AOMMAX(GET_MV_SUBPEL(mv_limits->col_min), ref_mv->col - max_mv);
     const int maxc   = AOMMIN(GET_MV_SUBPEL(mv_limits->col_max), ref_mv->col + max_mv);
@@ -137,8 +124,8 @@ static INLINE void svt_av1_set_subpel_mv_search_range(SubpelMvLimits     *subpel
 }
 
 static INLINE int svt_av1_is_subpelmv_in_range(const SubpelMvLimits *mv_limits, MV mv) {
-    return (mv.col >= mv_limits->col_min) && (mv.col <= mv_limits->col_max) &&
-        (mv.row >= mv_limits->row_min) && (mv.row <= mv_limits->row_max);
+    return (mv.col >= mv_limits->col_min) && (mv.col <= mv_limits->col_max) && (mv.row >= mv_limits->row_min) &&
+        (mv.row <= mv_limits->row_max);
 }
 
 // Returns the rate of encoding the current motion vector based on the

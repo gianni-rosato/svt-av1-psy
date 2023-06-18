@@ -28,9 +28,8 @@ DECLARE_ALIGNED(16, const uint8_t, svt_aom_compute_cross_byte_mask[8][16]) = {
    correlation/standard deviation are taken over MATCH_SZ by MATCH_SZ windows
    of each image, centered at (x1, y1) and (x2, y2) respectively.
 */
-double svt_av1_compute_cross_correlation_sse4_1(unsigned char *im1, int stride1, int x1, int y1,
-                                                unsigned char *im2, int stride2, int x2, int y2,
-                                                uint8_t match_sz) {
+double svt_av1_compute_cross_correlation_sse4_1(unsigned char *im1, int stride1, int x1, int y1, unsigned char *im2,
+                                                int stride2, int x2, int y2, uint8_t match_sz) {
     int i;
     // 2 16-bit partial sums in lanes 0, 4 (== 2 32-bit partial sums in lanes 0,
     // 2)
@@ -64,10 +63,8 @@ double svt_av1_compute_cross_correlation_sse4_1(unsigned char *im1, int stride1,
         const __m128i v2_l = _mm_cvtepu8_epi16(v2);
         const __m128i v2_r = _mm_cvtepu8_epi16(_mm_srli_si128(v2, 8));
 
-        sumsq2_vec = _mm_add_epi32(
-            sumsq2_vec, _mm_add_epi32(_mm_madd_epi16(v2_l, v2_l), _mm_madd_epi16(v2_r, v2_r)));
-        cross_vec = _mm_add_epi32(
-            cross_vec, _mm_add_epi32(_mm_madd_epi16(v1_l, v2_l), _mm_madd_epi16(v1_r, v2_r)));
+        sumsq2_vec = _mm_add_epi32(sumsq2_vec, _mm_add_epi32(_mm_madd_epi16(v2_l, v2_l), _mm_madd_epi16(v2_r, v2_r)));
+        cross_vec  = _mm_add_epi32(cross_vec, _mm_add_epi32(_mm_madd_epi16(v1_l, v2_l), _mm_madd_epi16(v1_r, v2_r)));
     }
 
     // Now we can treat the four registers (sum1_vec, sum2_vec, sumsq2_vec,

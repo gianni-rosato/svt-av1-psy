@@ -16,8 +16,8 @@
 #include "EbPictureBufferDesc.h"
 #include "aom_dsp_rtcd.h"
 
-static int32_t encoder_variance(const uint8_t *a, int32_t a_stride, const uint8_t *b,
-                                int32_t b_stride, int32_t w, int32_t h) {
+static int32_t encoder_variance(const uint8_t *a, int32_t a_stride, const uint8_t *b, int32_t b_stride, int32_t w,
+                                int32_t h) {
     int32_t i, j;
     int32_t sse = 0;
 
@@ -33,8 +33,8 @@ static int32_t encoder_variance(const uint8_t *a, int32_t a_stride, const uint8_
     return sse;
 }
 
-static int64_t encoder_highbd_variance64(const uint8_t *a8, int32_t a_stride, const uint8_t *b8,
-                                         int32_t b_stride, int32_t w, int32_t h) {
+static int64_t encoder_highbd_variance64(const uint8_t *a8, int32_t a_stride, const uint8_t *b8, int32_t b_stride,
+                                         int32_t w, int32_t h) {
     const uint16_t *a   = CONVERT_TO_SHORTPTR(a8);
     const uint16_t *b   = CONVERT_TO_SHORTPTR(b8);
     int64_t         sse = 0;
@@ -49,13 +49,13 @@ static int64_t encoder_highbd_variance64(const uint8_t *a8, int32_t a_stride, co
     return sse;
 }
 
-static void encoder_highbd_8_variance(const uint8_t *a8, int32_t a_stride, const uint8_t *b8,
-                                      int32_t b_stride, int32_t w, int32_t h, uint32_t *sse) {
+static void encoder_highbd_8_variance(const uint8_t *a8, int32_t a_stride, const uint8_t *b8, int32_t b_stride,
+                                      int32_t w, int32_t h, uint32_t *sse) {
     *sse = (uint32_t)encoder_highbd_variance64(a8, a_stride, b8, b_stride, w, h);
 }
 
-static void variance(const uint8_t *a, int32_t a_stride, const uint8_t *b, int b_stride, int w,
-                     int h, uint32_t *sse, int32_t *sum) {
+static void variance(const uint8_t *a, int32_t a_stride, const uint8_t *b, int b_stride, int w, int h, uint32_t *sse,
+                     int32_t *sum) {
     int i, j;
 
     *sum = 0;
@@ -73,15 +73,15 @@ static void variance(const uint8_t *a, int32_t a_stride, const uint8_t *b, int b
     }
 }
 
-uint32_t svt_aom_mse16x16_c(const uint8_t *src_ptr, int32_t source_stride, const uint8_t *ref_ptr,
-                            int32_t recon_stride, uint32_t *sse) {
+uint32_t svt_aom_mse16x16_c(const uint8_t *src_ptr, int32_t source_stride, const uint8_t *ref_ptr, int32_t recon_stride,
+                            uint32_t *sse) {
     int32_t sum;
     variance(src_ptr, source_stride, ref_ptr, recon_stride, 16, 16, sse, &sum);
     return *sse - (uint32_t)(((int64_t)sum * sum) / (16 * 16));
 }
 
-static int64_t get_sse(const uint8_t *a, int32_t a_stride, const uint8_t *b, int32_t b_stride,
-                       int32_t width, int32_t height) {
+static int64_t get_sse(const uint8_t *a, int32_t a_stride, const uint8_t *b, int32_t b_stride, int32_t width,
+                       int32_t height) {
     const int32_t dw        = width % 16;
     const int32_t dh        = height % 16;
     int64_t       total_sse = 0;
@@ -94,12 +94,8 @@ static int64_t get_sse(const uint8_t *a, int32_t a_stride, const uint8_t *b, int
     }
 
     if (dh > 0) {
-        sse = encoder_variance(&a[(height - dh) * a_stride],
-                               a_stride,
-                               &b[(height - dh) * b_stride],
-                               b_stride,
-                               width - dw,
-                               dh);
+        sse = encoder_variance(
+            &a[(height - dh) * a_stride], a_stride, &b[(height - dh) * b_stride], b_stride, width - dw, dh);
         total_sse += sse;
     }
 
@@ -122,26 +118,20 @@ static int64_t get_sse(const uint8_t *a, int32_t a_stride, const uint8_t *b, int
     return total_sse;
 }
 
-static int64_t highbd_get_sse(const uint8_t *a, int32_t a_stride, const uint8_t *b,
-                              int32_t b_stride, int32_t width, int32_t height) {
+static int64_t highbd_get_sse(const uint8_t *a, int32_t a_stride, const uint8_t *b, int32_t b_stride, int32_t width,
+                              int32_t height) {
     int64_t       total_sse = 0;
     int32_t       x, y;
     const int32_t dw  = width % 16;
     const int32_t dh  = height % 16;
     uint32_t      sse = 0;
     if (dw > 0) {
-        encoder_highbd_8_variance(
-            &a[width - dw], a_stride, &b[width - dw], b_stride, dw, height, &sse);
+        encoder_highbd_8_variance(&a[width - dw], a_stride, &b[width - dw], b_stride, dw, height, &sse);
         total_sse += sse;
     }
     if (dh > 0) {
-        encoder_highbd_8_variance(&a[(height - dh) * a_stride],
-                                  a_stride,
-                                  &b[(height - dh) * b_stride],
-                                  b_stride,
-                                  width - dw,
-                                  dh,
-                                  &sse);
+        encoder_highbd_8_variance(
+            &a[(height - dh) * a_stride], a_stride, &b[(height - dh) * b_stride], b_stride, width - dw, dh, &sse);
         total_sse += sse;
     }
     for (y = 0; y < height / 16; ++y) {
@@ -160,8 +150,8 @@ static int64_t highbd_get_sse(const uint8_t *a, int32_t a_stride, const uint8_t 
     return total_sse;
 }
 
-static void highbd_variance64(const uint8_t *a8, int a_stride, const uint8_t *b8, int b_stride,
-                              int w, int h, uint64_t *sse, int64_t *sum) {
+static void highbd_variance64(const uint8_t *a8, int a_stride, const uint8_t *b8, int b_stride, int w, int h,
+                              uint64_t *sse, int64_t *sum) {
     const uint16_t *a    = CONVERT_TO_SHORTPTR(a8);
     const uint16_t *b    = CONVERT_TO_SHORTPTR(b8);
     int64_t         tsum = 0;
@@ -181,8 +171,8 @@ static void highbd_variance64(const uint8_t *a8, int a_stride, const uint8_t *b8
     *sse = tsse;
 }
 
-static void highbd_10_variance(const uint8_t *a8, int a_stride, const uint8_t *b8, int b_stride,
-                               int w, int h, uint32_t *sse, int *sum) {
+static void highbd_10_variance(const uint8_t *a8, int a_stride, const uint8_t *b8, int b_stride, int w, int h,
+                               uint32_t *sse, int *sum) {
     uint64_t sse_long = 0;
     int64_t  sum_long = 0;
     highbd_variance64(a8, a_stride, b8, b_stride, w, h, &sse_long, &sum_long);
@@ -223,8 +213,8 @@ HIGHBD_VAR(32, 8)
 HIGHBD_VAR(16, 64)
 HIGHBD_VAR(64, 16)
 
-int64_t svt_aom_get_y_sse_part(const Yv12BufferConfig *a, const Yv12BufferConfig *b, int32_t hstart,
-                               int32_t width, int32_t vstart, int32_t height) {
+int64_t svt_aom_get_y_sse_part(const Yv12BufferConfig *a, const Yv12BufferConfig *b, int32_t hstart, int32_t width,
+                               int32_t vstart, int32_t height) {
     return get_sse(a->y_buffer + vstart * a->y_stride + hstart,
                    a->y_stride,
                    b->y_buffer + vstart * b->y_stride + hstart,
@@ -233,8 +223,8 @@ int64_t svt_aom_get_y_sse_part(const Yv12BufferConfig *a, const Yv12BufferConfig
                    height);
 }
 
-int64_t svt_aom_get_u_sse_part(const Yv12BufferConfig *a, const Yv12BufferConfig *b, int32_t hstart,
-                               int32_t width, int32_t vstart, int32_t height) {
+int64_t svt_aom_get_u_sse_part(const Yv12BufferConfig *a, const Yv12BufferConfig *b, int32_t hstart, int32_t width,
+                               int32_t vstart, int32_t height) {
     return get_sse(a->u_buffer + vstart * a->uv_stride + hstart,
                    a->uv_stride,
                    b->u_buffer + vstart * b->uv_stride + hstart,
@@ -243,8 +233,8 @@ int64_t svt_aom_get_u_sse_part(const Yv12BufferConfig *a, const Yv12BufferConfig
                    height);
 }
 
-int64_t svt_aom_get_v_sse_part(const Yv12BufferConfig *a, const Yv12BufferConfig *b, int32_t hstart,
-                               int32_t width, int32_t vstart, int32_t height) {
+int64_t svt_aom_get_v_sse_part(const Yv12BufferConfig *a, const Yv12BufferConfig *b, int32_t hstart, int32_t width,
+                               int32_t vstart, int32_t height) {
     return get_sse(a->v_buffer + vstart * a->uv_stride + hstart,
                    a->uv_stride,
                    b->v_buffer + vstart * b->uv_stride + hstart,
@@ -253,9 +243,8 @@ int64_t svt_aom_get_v_sse_part(const Yv12BufferConfig *a, const Yv12BufferConfig
                    height);
 }
 
-int64_t svt_aom_highbd_get_y_sse_part(const Yv12BufferConfig *a, const Yv12BufferConfig *b,
-                                      int32_t hstart, int32_t width, int32_t vstart,
-                                      int32_t height) {
+int64_t svt_aom_highbd_get_y_sse_part(const Yv12BufferConfig *a, const Yv12BufferConfig *b, int32_t hstart,
+                                      int32_t width, int32_t vstart, int32_t height) {
     return highbd_get_sse(a->y_buffer + vstart * a->y_stride + hstart,
                           a->y_stride,
                           b->y_buffer + vstart * b->y_stride + hstart,
@@ -264,9 +253,8 @@ int64_t svt_aom_highbd_get_y_sse_part(const Yv12BufferConfig *a, const Yv12Buffe
                           height);
 }
 
-int64_t svt_aom_highbd_get_u_sse_part(const Yv12BufferConfig *a, const Yv12BufferConfig *b,
-                                      int32_t hstart, int32_t width, int32_t vstart,
-                                      int32_t height) {
+int64_t svt_aom_highbd_get_u_sse_part(const Yv12BufferConfig *a, const Yv12BufferConfig *b, int32_t hstart,
+                                      int32_t width, int32_t vstart, int32_t height) {
     return highbd_get_sse(a->u_buffer + vstart * a->uv_stride + hstart,
                           a->uv_stride,
                           b->u_buffer + vstart * b->uv_stride + hstart,
@@ -275,9 +263,8 @@ int64_t svt_aom_highbd_get_u_sse_part(const Yv12BufferConfig *a, const Yv12Buffe
                           height);
 }
 
-int64_t svt_aom_highbd_get_v_sse_part(const Yv12BufferConfig *a, const Yv12BufferConfig *b,
-                                      int32_t hstart, int32_t width, int32_t vstart,
-                                      int32_t height) {
+int64_t svt_aom_highbd_get_v_sse_part(const Yv12BufferConfig *a, const Yv12BufferConfig *b, int32_t hstart,
+                                      int32_t width, int32_t vstart, int32_t height) {
     return highbd_get_sse(a->v_buffer + vstart * a->uv_stride + hstart,
                           a->uv_stride,
                           b->v_buffer + vstart * b->uv_stride + hstart,

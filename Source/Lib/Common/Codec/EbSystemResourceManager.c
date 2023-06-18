@@ -76,8 +76,7 @@ static EbErrorType svt_fifo_pop_front(EbFifo *fifoPtr, EbObjectWrapper **wrapper
     *wrapper_ptr = fifoPtr->first_ptr;
 
     // Update tail of BufferPool if the BufferPool is now empty
-    fifoPtr->last_ptr = (fifoPtr->first_ptr == fifoPtr->last_ptr) ? (EbObjectWrapper *)NULL
-                                                                  : fifoPtr->last_ptr;
+    fifoPtr->last_ptr = (fifoPtr->first_ptr == fifoPtr->last_ptr) ? (EbObjectWrapper *)NULL : fifoPtr->last_ptr;
 
     // Update head of BufferPool
     fifoPtr->first_ptr = fifoPtr->first_ptr->next_ptr;
@@ -107,8 +106,7 @@ static void svt_circular_buffer_dctor(EbPtr p) {
 /**************************************
  * svt_circular_buffer_ctor
  **************************************/
-static EbErrorType svt_circular_buffer_ctor(EbCircularBuffer *bufferPtr,
-                                            uint32_t          buffer_total_count) {
+static EbErrorType svt_circular_buffer_ctor(EbCircularBuffer *bufferPtr, uint32_t buffer_total_count) {
     bufferPtr->dctor = svt_circular_buffer_dctor;
 
     bufferPtr->buffer_total_count = buffer_total_count;
@@ -122,8 +120,7 @@ static EbErrorType svt_circular_buffer_ctor(EbCircularBuffer *bufferPtr,
  * svt_circular_buffer_empty_check
  **************************************/
 static Bool svt_circular_buffer_empty_check(EbCircularBuffer *bufferPtr) {
-    return ((bufferPtr->head_index == bufferPtr->tail_index) &&
-            (bufferPtr->array_ptr[bufferPtr->head_index] == NULL))
+    return ((bufferPtr->head_index == bufferPtr->tail_index) && (bufferPtr->array_ptr[bufferPtr->head_index] == NULL))
         ? TRUE
         : FALSE;
 }
@@ -139,9 +136,8 @@ static EbErrorType svt_circular_buffer_pop_front(EbCircularBuffer *bufferPtr, Eb
     bufferPtr->array_ptr[bufferPtr->head_index] = NULL;
 
     // Increment the head & check for rollover
-    bufferPtr->head_index = (bufferPtr->head_index == bufferPtr->buffer_total_count - 1)
-        ? 0
-        : bufferPtr->head_index + 1;
+    bufferPtr->head_index = (bufferPtr->head_index == bufferPtr->buffer_total_count - 1) ? 0
+                                                                                         : bufferPtr->head_index + 1;
 
     // Decrement the Current Count
     --bufferPtr->current_count;
@@ -159,9 +155,8 @@ static EbErrorType svt_circular_buffer_push_back(EbCircularBuffer *bufferPtr, Eb
     bufferPtr->array_ptr[bufferPtr->tail_index] = object_ptr;
 
     // Increment the tail & check for rollover
-    bufferPtr->tail_index = (bufferPtr->tail_index == bufferPtr->buffer_total_count - 1)
-        ? 0
-        : bufferPtr->tail_index + 1;
+    bufferPtr->tail_index = (bufferPtr->tail_index == bufferPtr->buffer_total_count - 1) ? 0
+                                                                                         : bufferPtr->tail_index + 1;
 
     // Increment the Current Count
     ++bufferPtr->current_count;
@@ -266,8 +261,7 @@ static EbErrorType svt_muxing_queue_assignation(EbMuxingQueue *queue_ptr) {
 /**************************************
  * svt_muxing_queue_object_push_back
  **************************************/
-static EbErrorType svt_muxing_queue_object_push_back(EbMuxingQueue   *queue_ptr,
-                                                     EbObjectWrapper *object_ptr) {
+static EbErrorType svt_muxing_queue_object_push_back(EbMuxingQueue *queue_ptr, EbObjectWrapper *object_ptr) {
     EbErrorType return_error = EB_ErrorNone;
 
     svt_circular_buffer_push_back(queue_ptr->object_queue, object_ptr);
@@ -280,8 +274,7 @@ static EbErrorType svt_muxing_queue_object_push_back(EbMuxingQueue   *queue_ptr,
 /**************************************
 * svt_muxing_queue_object_push_front
 **************************************/
-static EbErrorType svt_muxing_queue_object_push_front(EbMuxingQueue   *queue_ptr,
-                                                      EbObjectWrapper *object_ptr) {
+static EbErrorType svt_muxing_queue_object_push_front(EbMuxingQueue *queue_ptr, EbObjectWrapper *object_ptr) {
     EbErrorType return_error = EB_ErrorNone;
 
     svt_circular_buffer_push_front(queue_ptr->object_queue, object_ptr);
@@ -443,10 +436,8 @@ static void svt_system_resource_dctor(EbPtr p) {
  *     object destroyer, will call dctor if this is null
  *********************************************************************/
 EbErrorType svt_system_resource_ctor(EbSystemResource *resource_ptr, uint32_t object_total_count,
-                                     uint32_t  producer_process_total_count,
-                                     uint32_t  consumer_process_total_count,
-                                     EbCreator object_creator, EbPtr object_init_data_ptr,
-                                     EbDctor object_destroyer) {
+                                     uint32_t producer_process_total_count, uint32_t consumer_process_total_count,
+                                     EbCreator object_creator, EbPtr object_init_data_ptr, EbDctor object_destroyer) {
     uint32_t    wrapper_index;
     EbErrorType return_error = EB_ErrorNone;
     resource_ptr->dctor      = svt_system_resource_dctor;
@@ -477,8 +468,7 @@ EbErrorType svt_system_resource_ctor(EbSystemResource *resource_ptr, uint32_t ob
            producer_process_total_count);
     // Fill the Empty Fifo with every ObjectWrapper
     for (wrapper_index = 0; wrapper_index < resource_ptr->object_total_count; ++wrapper_index) {
-        svt_muxing_queue_object_push_back(resource_ptr->empty_queue,
-                                          resource_ptr->wrapper_ptr_pool[wrapper_index]);
+        svt_muxing_queue_object_push_back(resource_ptr->empty_queue, resource_ptr->wrapper_ptr_pool[wrapper_index]);
     }
 #if SRM_REPORT
     //at init time, the SRM is full
@@ -498,13 +488,11 @@ EbErrorType svt_system_resource_ctor(EbSystemResource *resource_ptr, uint32_t ob
     return return_error;
 }
 
-EbFifo *svt_system_resource_get_producer_fifo(const EbSystemResource *resource_ptr,
-                                              uint32_t                index) {
+EbFifo *svt_system_resource_get_producer_fifo(const EbSystemResource *resource_ptr, uint32_t index) {
     return svt_muxing_queue_get_fifo(resource_ptr->empty_queue, index);
 }
 
-EbFifo *svt_system_resource_get_consumer_fifo(const EbSystemResource *resource_ptr,
-                                              uint32_t                index) {
+EbFifo *svt_system_resource_get_consumer_fifo(const EbSystemResource *resource_ptr, uint32_t index) {
     return svt_muxing_queue_get_fifo(resource_ptr->full_queue, index);
 }
 
@@ -583,15 +571,13 @@ EbErrorType svt_release_object(EbObjectWrapper *object_ptr) {
                        "live_count should not be EB_ObjectWrapperReleasedValue when release");
 
     // Decrement live_count
-    object_ptr->live_count = (object_ptr->live_count == 0) ? object_ptr->live_count
-                                                           : object_ptr->live_count - 1;
+    object_ptr->live_count = (object_ptr->live_count == 0) ? object_ptr->live_count : object_ptr->live_count - 1;
 
     if ((object_ptr->release_enable == TRUE) && (object_ptr->live_count == 0)) {
         // Set live_count to EB_ObjectWrapperReleasedValue
         object_ptr->live_count = EB_ObjectWrapperReleasedValue;
 
-        svt_muxing_queue_object_push_front(object_ptr->system_resource_ptr->empty_queue,
-                                           object_ptr);
+        svt_muxing_queue_object_push_front(object_ptr->system_resource_ptr->empty_queue, object_ptr);
 #if SRM_REPORT
         object_ptr->pic_number = 99999999;
         //increment the fullness
@@ -614,8 +600,7 @@ EbErrorType svt_release_dual_object(EbObjectWrapper *object_ptr, EbObjectWrapper
     svt_block_on_mutex(object_ptr->system_resource_ptr->empty_queue->lockout_mutex);
 
     // Decrement live_count
-    object_ptr->live_count = (object_ptr->live_count == 0) ? object_ptr->live_count
-                                                           : object_ptr->live_count - 1;
+    object_ptr->live_count = (object_ptr->live_count == 0) ? object_ptr->live_count : object_ptr->live_count - 1;
 
     if ((object_ptr->release_enable == TRUE) && (object_ptr->live_count == 0)) {
         //release the second object
@@ -624,8 +609,7 @@ EbErrorType svt_release_dual_object(EbObjectWrapper *object_ptr, EbObjectWrapper
         // Set live_count to EB_ObjectWrapperReleasedValue
         object_ptr->live_count = EB_ObjectWrapperReleasedValue;
 
-        svt_muxing_queue_object_push_front(object_ptr->system_resource_ptr->empty_queue,
-                                           object_ptr);
+        svt_muxing_queue_object_push_front(object_ptr->system_resource_ptr->empty_queue, object_ptr);
 
 #if SRM_REPORT
 
@@ -652,8 +636,7 @@ EbErrorType dump_srm_content(EbSystemResource *resource_ptr, uint8_t log) {
     EbErrorType return_error = EB_ErrorNone;
     if (log) {
         SVT_LOG("SRM content:\n\n");
-        for (uint32_t wrapper_index = 0; wrapper_index < resource_ptr->object_total_count;
-             ++wrapper_index) {
+        for (uint32_t wrapper_index = 0; wrapper_index < resource_ptr->object_total_count; ++wrapper_index) {
             SVT_LOG("%lld ", resource_ptr->wrapper_ptr_pool[wrapper_index]->pic_number);
         }
     }
@@ -699,9 +682,9 @@ EbErrorType svt_get_empty_object(EbFifo *empty_fifo_ptr, EbObjectWrapper **wrapp
                (*wrapper_dbl_ptr)->system_resource_ptr->object_total_count);
 #endif
 
-    svt_aom_assert_err((*wrapper_dbl_ptr)->live_count == 0 ||
-                           (*wrapper_dbl_ptr)->live_count == EB_ObjectWrapperReleasedValue,
-                       "live_count should be 0 or EB_ObjectWrapperReleasedValue when get");
+    svt_aom_assert_err(
+        (*wrapper_dbl_ptr)->live_count == 0 || (*wrapper_dbl_ptr)->live_count == EB_ObjectWrapperReleasedValue,
+        "live_count should be 0 or EB_ObjectWrapperReleasedValue when get");
 
     // Reset the wrapper's live_count
     (*wrapper_dbl_ptr)->live_count = 0;
@@ -766,8 +749,7 @@ static Bool svt_fifo_peak_front(EbFifo *fifoPtr) {
         return FALSE;
 }
 
-EbErrorType svt_get_full_object_non_blocking(EbFifo           *full_fifo_ptr,
-                                             EbObjectWrapper **wrapper_dbl_ptr) {
+EbErrorType svt_get_full_object_non_blocking(EbFifo *full_fifo_ptr, EbObjectWrapper **wrapper_dbl_ptr) {
     EbErrorType return_error = EB_ErrorNone;
     Bool        fifo_empty;
     // Queue the Fifo requesting the full fifo

@@ -160,8 +160,8 @@ EB_API EbErrorType svt_av1_dec_init_handle(EbComponentType **p_handle, void *p_a
      * @ *pComponentParameterStructure  Decoder and buffer configurations will be copied to the library. */
 EB_API EbErrorType svt_av1_dec_set_parameter(
     EbComponentType *svt_dec_component,
-    EbSvtAv1DecConfiguration *
-        pComponentParameterStructure); // pComponentParameterStructure contents will be copied to the library
+    EbSvtAv1DecConfiguration
+        *pComponentParameterStructure); // pComponentParameterStructure contents will be copied to the library
 
 /* STEP 3: Initialize decoder and allocate memory to necessary buffers.
      *
@@ -178,8 +178,8 @@ EB_API EbErrorType svt_av1_dec_init(EbComponentType *svt_dec_component);
      * @ data_size              Data size in bytes
      *
      *  Returns EB_ErrorNone if the coded data has been processed successfully. */
-EB_API EbErrorType svt_av1_dec_frame(EbComponentType *svt_dec_component, const uint8_t *data,
-                                     const size_t data_size, uint32_t is_annexb);
+EB_API EbErrorType svt_av1_dec_frame(EbComponentType *svt_dec_component, const uint8_t *data, const size_t data_size,
+                                     uint32_t is_annexb);
 
 /* STEP 5: Get the next decoded picture. When several output pictures
      * have been generated, calling this function multiple times will
@@ -196,10 +196,8 @@ EB_API EbErrorType svt_av1_dec_frame(EbComponentType *svt_dec_component, const u
      *  Returns EB_ErrorNone if the picture has been returned successfully.
      *  Returns EB_DecNoOutputPicture if the next output picture has not
      *  been generated yet. Calling a decoding function is needed to generate more pictures. */
-EB_API EbErrorType svt_av1_dec_get_picture(EbComponentType    *svt_dec_component,
-                                           EbBufferHeaderType *p_buffer,
-                                           EbAV1StreamInfo    *stream_info,
-                                           EbAV1FrameInfo     *frame_info);
+EB_API EbErrorType svt_av1_dec_get_picture(EbComponentType *svt_dec_component, EbBufferHeaderType *p_buffer,
+                                           EbAV1StreamInfo *stream_info, EbAV1FrameInfo *frame_info);
 
 /* STEP 6: Deinitialize decoder library.
      *

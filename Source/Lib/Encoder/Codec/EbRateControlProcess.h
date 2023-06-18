@@ -96,8 +96,8 @@ typedef struct {
     uint8_t      resize_denom;
 } ResizePendingParams;
 
-extern EbErrorType svt_aom_rate_control_coded_frames_stats_context_ctor(
-    coded_frames_stats_entry *entry_ptr, uint64_t picture_number);
+extern EbErrorType svt_aom_rate_control_coded_frames_stats_context_ctor(coded_frames_stats_entry *entry_ptr,
+                                                                        uint64_t                  picture_number);
 typedef struct {
     int     last_boosted_qindex; // Last boosted GF/KF/ARF q
     int     gfu_boost;
@@ -204,13 +204,8 @@ typedef enum PicMgrInputPortTypes {
     PIC_MGR_INPUT_PORT_SOP           = 0,
     PIC_MGR_INPUT_PORT_PACKETIZATION = 1,
     PIC_MGR_INPUT_PORT_REST          = 2,
-#if FIX_ISSUE_2064
-    PIC_MGR_INPUT_PORT_INIT_RC     = 3,
-    PIC_MGR_INPUT_PORT_TOTAL_COUNT = 4,
-#else
-    PIC_MGR_INPUT_PORT_TOTAL_COUNT = 3,
-#endif
-    PIC_MGR_INPUT_PORT_INVALID = ~0,
+    PIC_MGR_INPUT_PORT_TOTAL_COUNT   = 3,
+    PIC_MGR_INPUT_PORT_INVALID       = ~0,
 } PicMgrInputPortTypes;
 typedef struct PicMgrPorts {
     PicMgrInputPortTypes type;
@@ -225,18 +220,15 @@ typedef struct PicMgrPorts {
  **************************************/
 int32_t svt_av1_convert_qindex_to_q_fp8(int32_t qindex, EbBitDepth bit_depth);
 double  svt_av1_convert_qindex_to_q(int32_t qindex, EbBitDepth bit_depth);
-double  svt_av1_get_gfu_boost_projection_factor(double min_factor, double max_factor,
-                                                int frame_count);
+double  svt_av1_get_gfu_boost_projection_factor(double min_factor, double max_factor, int frame_count);
 
-EbErrorType svt_aom_rate_control_context_ctor(EbThreadContext   *thread_ctx,
-                                              const EbEncHandle *enc_handle_ptr, int me_port_index);
+EbErrorType svt_aom_rate_control_context_ctor(EbThreadContext *thread_ctx, const EbEncHandle *enc_handle_ptr,
+                                              int me_port_index);
 
 extern void *svt_aom_rate_control_kernel(void *input_ptr);
-int svt_aom_compute_rd_mult_based_on_qindex(EbBitDepth bit_depth, SvtAv1FrameUpdateType update_type,
-                                            int qindex);
+int svt_aom_compute_rd_mult_based_on_qindex(EbBitDepth bit_depth, SvtAv1FrameUpdateType update_type, int qindex);
 struct PictureControlSet;
-int svt_aom_compute_rd_mult(struct PictureControlSet *pcs, uint8_t q_index, uint8_t me_q_index,
-                            uint8_t bit_depth);
+int svt_aom_compute_rd_mult(struct PictureControlSet *pcs, uint8_t q_index, uint8_t me_q_index, uint8_t bit_depth);
 
 struct PictureParentControlSet;
 void svt_aom_cyclic_refresh_init(struct PictureParentControlSet *ppcs);

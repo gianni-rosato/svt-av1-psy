@@ -39,8 +39,7 @@ typedef struct EntropyTileInfo {
     Bool          entropy_coding_tile_done;
 } EntropyTileInfo;
 
-extern EbErrorType svt_aom_entropy_tile_info_ctor(EntropyTileInfo* entropy_tile_info_ptr,
-                                                  uint32_t         buf_size);
+extern EbErrorType svt_aom_entropy_tile_info_ctor(EntropyTileInfo* entropy_tile_info_ptr, uint32_t buf_size);
 
 extern EbErrorType svt_aom_bitstream_ctor(Bitstream* bitstream_ptr, uint32_t buffer_size);
 

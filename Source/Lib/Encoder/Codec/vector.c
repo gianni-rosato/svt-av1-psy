@@ -71,9 +71,7 @@ int svt_aom_vector_push_back(Vector *vector, void *element) {
 
 /* Information */
 
-size_t svt_aom_vector_byte_size(const Vector *vector) {
-    return vector->size * vector->element_size;
-}
+size_t svt_aom_vector_byte_size(const Vector *vector) { return vector->size * vector->element_size; }
 
 /* Iterators */
 Iterator svt_aom_vector_begin(Vector *vector) { return svt_aom_vector_iterator(vector, 0); }

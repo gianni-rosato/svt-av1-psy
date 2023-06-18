@@ -16,8 +16,8 @@
 #include "EbDecParseFrame.h"
 #include "EbDecNbr.h"
 
-void svt_aom_update_block_nbrs(EbDecHandle *dec_handle, ParseCtxt *parse_ctx, int mi_row,
-                               int mi_col, BlockSize subsize) {
+void svt_aom_update_block_nbrs(EbDecHandle *dec_handle, ParseCtxt *parse_ctx, int mi_row, int mi_col,
+                               BlockSize subsize) {
     FrameMiMap *frame_mi_map = &dec_handle->main_frame_buf.frame_mi_map;
 
     int32_t offset = parse_ctx->cur_mode_info_cnt;
@@ -36,29 +36,25 @@ void svt_aom_update_block_nbrs(EbDecHandle *dec_handle, ParseCtxt *parse_ctx, in
     }
 }
 /* TODO : Should remove dec_mod_ctxt dependency */
-BlockModeInfo *svt_aom_get_cur_mode_info(void *pv_dec_handle, int mi_row, int mi_col,
-                                         SBInfo *sb_info) {
+BlockModeInfo *svt_aom_get_cur_mode_info(void *pv_dec_handle, int mi_row, int mi_col, SBInfo *sb_info) {
     EbDecHandle *dec_handle   = (EbDecHandle *)pv_dec_handle;
     FrameMiMap  *frame_mi_map = &dec_handle->main_frame_buf.frame_mi_map;
     (void)sb_info;
-    int32_t cur_sb_row = mi_row >> (frame_mi_map->sb_size_log2 - MI_SIZE_LOG2);
-    int32_t cur_sb_col = mi_col >> (frame_mi_map->sb_size_log2 - MI_SIZE_LOG2);
-    SBInfo *cur_sb_info =
-        frame_mi_map->pps_sb_info[cur_sb_row * frame_mi_map->sb_cols + cur_sb_col];
-    int32_t offset = *(frame_mi_map->p_mi_offset + mi_row * frame_mi_map->mi_cols_algnsb + mi_col);
+    int32_t cur_sb_row  = mi_row >> (frame_mi_map->sb_size_log2 - MI_SIZE_LOG2);
+    int32_t cur_sb_col  = mi_col >> (frame_mi_map->sb_size_log2 - MI_SIZE_LOG2);
+    SBInfo *cur_sb_info = frame_mi_map->pps_sb_info[cur_sb_row * frame_mi_map->sb_cols + cur_sb_col];
+    int32_t offset      = *(frame_mi_map->p_mi_offset + mi_row * frame_mi_map->mi_cols_algnsb + mi_col);
     return &cur_sb_info->sb_mode_info[offset];
 }
 
 /* TODO : Should remove parse_ctx dependency */
-BlockModeInfo *svt_aom_get_left_mode_info(EbDecHandle *dec_handle, int mi_row, int mi_col,
-                                          SBInfo *sb_info) {
+BlockModeInfo *svt_aom_get_left_mode_info(EbDecHandle *dec_handle, int mi_row, int mi_col, SBInfo *sb_info) {
     (void)sb_info;
     return svt_aom_get_cur_mode_info(dec_handle, mi_row, mi_col - 1, NULL);
 }
 
 /* TODO : Should remove parse_ctx dependency */
-BlockModeInfo *svt_aom_get_top_mode_info(EbDecHandle *dec_handle, int mi_row, int mi_col,
-                                         SBInfo *sb_info) {
+BlockModeInfo *svt_aom_get_top_mode_info(EbDecHandle *dec_handle, int mi_row, int mi_col, SBInfo *sb_info) {
     (void)sb_info;
     return svt_aom_get_cur_mode_info(dec_handle, mi_row - 1, mi_col, NULL);
 }

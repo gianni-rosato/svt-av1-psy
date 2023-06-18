@@ -15,8 +15,8 @@
 #include "EbSvtAv1ErrorCodes.h"
 #include "EbThreads.h"
 
-static EbErrorType create_stats_buffer(FIRSTPASS_STATS **frame_stats_buffer,
-                                       STATS_BUFFER_CTX *stats_buf_context, int num_lap_buffers) {
+static EbErrorType create_stats_buffer(FIRSTPASS_STATS **frame_stats_buffer, STATS_BUFFER_CTX *stats_buf_context,
+                                       int num_lap_buffers) {
     EbErrorType res = EB_ErrorNone;
 
     int size = get_stats_buf_size(num_lap_buffers, MAX_LAG_BUFFERS);
@@ -45,8 +45,7 @@ static EbErrorType create_stats_buffer(FIRSTPASS_STATS **frame_stats_buffer,
     return res;
 }
 
-static void destroy_stats_buffer(STATS_BUFFER_CTX *stats_buf_context,
-                                 FIRSTPASS_STATS  *frame_stats_buffer) {
+static void destroy_stats_buffer(STATS_BUFFER_CTX *stats_buf_context, FIRSTPASS_STATS *frame_stats_buffer) {
     EB_FREE_ARRAY(stats_buf_context->total_left_stats);
     EB_FREE_ARRAY(stats_buf_context->total_stats);
     EB_FREE_ARRAY(frame_stats_buffer);
@@ -62,8 +61,7 @@ static void encode_context_dctor(EbPtr p) {
     EB_DESTROY_MUTEX(obj->stat_file_mutex);
     EB_DESTROY_MUTEX(obj->frame_updated_mutex);
     EB_DELETE(obj->prediction_structure_group_ptr);
-    EB_DELETE_PTR_ARRAY(obj->picture_decision_reorder_queue,
-                        PICTURE_DECISION_REORDER_QUEUE_MAX_DEPTH);
+    EB_DELETE_PTR_ARRAY(obj->picture_decision_reorder_queue, PICTURE_DECISION_REORDER_QUEUE_MAX_DEPTH);
     EB_FREE(obj->pre_assignment_buffer);
     EB_DELETE_PTR_ARRAY(obj->input_picture_queue, INPUT_QUEUE_MAX_DEPTH);
     EB_DELETE_PTR_ARRAY(obj->ref_pic_list, obj->ref_pic_list_length);
@@ -74,8 +72,7 @@ static void encode_context_dctor(EbPtr p) {
 #if OPT_LD_LATENCY2
     EB_DESTROY_MUTEX(obj->pd_dpb_mutex);
 #endif
-    EB_DELETE_PTR_ARRAY(obj->initial_rate_control_reorder_queue,
-                        INITIAL_RATE_CONTROL_REORDER_QUEUE_MAX_DEPTH);
+    EB_DELETE_PTR_ARRAY(obj->initial_rate_control_reorder_queue, INITIAL_RATE_CONTROL_REORDER_QUEUE_MAX_DEPTH);
     EB_DELETE_PTR_ARRAY(obj->packetization_reorder_queue, PACKETIZATION_REORDER_QUEUE_MAX_DEPTH);
     EB_FREE(obj->stats_out.stat);
     destroy_stats_buffer(&obj->stats_buf_context, obj->frame_stats_buffer);
@@ -97,11 +94,9 @@ EbErrorType svt_aom_encode_context_ctor(EncodeContext *enc_ctx, EbPtr object_ini
 
     EB_CREATE_MUTEX(enc_ctx->total_number_of_recon_frame_mutex);
     EB_CREATE_MUTEX(enc_ctx->frame_updated_mutex);
-    EB_ALLOC_PTR_ARRAY(enc_ctx->picture_decision_reorder_queue,
-                       PICTURE_DECISION_REORDER_QUEUE_MAX_DEPTH);
+    EB_ALLOC_PTR_ARRAY(enc_ctx->picture_decision_reorder_queue, PICTURE_DECISION_REORDER_QUEUE_MAX_DEPTH);
 
-    for (picture_index = 0; picture_index < PICTURE_DECISION_REORDER_QUEUE_MAX_DEPTH;
-         ++picture_index) {
+    for (picture_index = 0; picture_index < PICTURE_DECISION_REORDER_QUEUE_MAX_DEPTH; ++picture_index) {
         EB_NEW(enc_ctx->picture_decision_reorder_queue[picture_index],
                svt_aom_picture_decision_reorder_entry_ctor,
                picture_index);
@@ -121,11 +116,9 @@ EbErrorType svt_aom_encode_context_ctor(EncodeContext *enc_ctx, EbPtr object_ini
 #if OPT_LD_LATENCY2
     EB_CREATE_MUTEX(enc_ctx->pd_dpb_mutex);
 #endif
-    EB_ALLOC_PTR_ARRAY(enc_ctx->initial_rate_control_reorder_queue,
-                       INITIAL_RATE_CONTROL_REORDER_QUEUE_MAX_DEPTH);
+    EB_ALLOC_PTR_ARRAY(enc_ctx->initial_rate_control_reorder_queue, INITIAL_RATE_CONTROL_REORDER_QUEUE_MAX_DEPTH);
 
-    for (picture_index = 0; picture_index < INITIAL_RATE_CONTROL_REORDER_QUEUE_MAX_DEPTH;
-         ++picture_index) {
+    for (picture_index = 0; picture_index < INITIAL_RATE_CONTROL_REORDER_QUEUE_MAX_DEPTH; ++picture_index) {
         EB_NEW(enc_ctx->initial_rate_control_reorder_queue[picture_index],
                svt_aom_initial_rate_control_reorder_entry_ctor,
                picture_index);
@@ -133,8 +126,7 @@ EbErrorType svt_aom_encode_context_ctor(EncodeContext *enc_ctx, EbPtr object_ini
 
     EB_ALLOC_PTR_ARRAY(enc_ctx->packetization_reorder_queue, PACKETIZATION_REORDER_QUEUE_MAX_DEPTH);
 
-    for (picture_index = 0; picture_index < PACKETIZATION_REORDER_QUEUE_MAX_DEPTH;
-         ++picture_index) {
+    for (picture_index = 0; picture_index < PACKETIZATION_REORDER_QUEUE_MAX_DEPTH; ++picture_index) {
         EB_NEW(enc_ctx->packetization_reorder_queue[picture_index],
                svt_aom_packetization_reorder_entry_ctor,
                picture_index);
@@ -156,8 +148,7 @@ EbErrorType svt_aom_encode_context_ctor(EncodeContext *enc_ctx, EbPtr object_ini
     EB_CREATE_MUTEX(enc_ctx->stat_file_mutex);
     enc_ctx->num_lap_buffers = 0; // lap not supported for now
     int *num_lap_buffers     = &enc_ctx->num_lap_buffers;
-    create_stats_buffer(
-        &enc_ctx->frame_stats_buffer, &enc_ctx->stats_buf_context, *num_lap_buffers);
+    create_stats_buffer(&enc_ctx->frame_stats_buffer, &enc_ctx->stats_buf_context, *num_lap_buffers);
     EB_ALLOC_PTR_ARRAY(enc_ctx->rc.coded_frames_stat_queue, CODED_FRAMES_STAT_QUEUE_MAX_DEPTH);
 
     EB_CREATE_MUTEX(enc_ctx->rc.rc_mutex);
@@ -177,24 +168,20 @@ EbErrorType svt_aom_encode_context_ctor(EncodeContext *enc_ctx, EbPtr object_ini
         enc_ctx->rc_param_queue[interval_index]->last_i_qp                = 0;
         enc_ctx->rc_param_queue[interval_index]->vbr_bits_off_target      = 0;
         enc_ctx->rc_param_queue[interval_index]->vbr_bits_off_target_fast = 0;
-        enc_ctx->rc_param_queue[interval_index]->rolling_target_bits =
-            enc_ctx->rc.avg_frame_bandwidth;
-        enc_ctx->rc_param_queue[interval_index]->rolling_actual_bits =
-            enc_ctx->rc.avg_frame_bandwidth;
-        enc_ctx->rc_param_queue[interval_index]->rate_error_estimate = 0;
-        enc_ctx->rc_param_queue[interval_index]->total_actual_bits   = 0;
-        enc_ctx->rc_param_queue[interval_index]->total_target_bits   = 0;
-        enc_ctx->rc_param_queue[interval_index]->extend_minq         = 0;
-        enc_ctx->rc_param_queue[interval_index]->extend_maxq         = 0;
-        enc_ctx->rc_param_queue[interval_index]->extend_minq_fast    = 0;
+        enc_ctx->rc_param_queue[interval_index]->rolling_target_bits      = enc_ctx->rc.avg_frame_bandwidth;
+        enc_ctx->rc_param_queue[interval_index]->rolling_actual_bits      = enc_ctx->rc.avg_frame_bandwidth;
+        enc_ctx->rc_param_queue[interval_index]->rate_error_estimate      = 0;
+        enc_ctx->rc_param_queue[interval_index]->total_actual_bits        = 0;
+        enc_ctx->rc_param_queue[interval_index]->total_target_bits        = 0;
+        enc_ctx->rc_param_queue[interval_index]->extend_minq              = 0;
+        enc_ctx->rc_param_queue[interval_index]->extend_maxq              = 0;
+        enc_ctx->rc_param_queue[interval_index]->extend_minq_fast         = 0;
     }
     enc_ctx->rc_param_queue_head_index = 0;
     enc_ctx->cr_sb_end                 = 0;
 
     EB_CREATE_MUTEX(enc_ctx->rc_param_queue_mutex);
 
-#if FTR_ROI
     enc_ctx->roi_map_evt = NULL;
-#endif
     return EB_ErrorNone;
 }

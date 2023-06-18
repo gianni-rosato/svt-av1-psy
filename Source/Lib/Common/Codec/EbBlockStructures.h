@@ -51,14 +51,12 @@ static const FULLPEL_MV kZeroFullMv = {0, 0};
 static INLINE int       is_zero_mv(const MV *mv) { return *((const uint32_t *)mv) == 0; }
 
 static AOM_INLINE FULLPEL_MV get_fullmv_from_mv(const MV *subpel_mv) {
-    const FULLPEL_MV full_mv = {(int16_t)GET_MV_RAWPEL(subpel_mv->row),
-                                (int16_t)GET_MV_RAWPEL(subpel_mv->col)};
+    const FULLPEL_MV full_mv = {(int16_t)GET_MV_RAWPEL(subpel_mv->row), (int16_t)GET_MV_RAWPEL(subpel_mv->col)};
     return full_mv;
 }
 
 static AOM_INLINE MV get_mv_from_fullmv(const FULLPEL_MV *full_mv) {
-    const MV subpel_mv = {(int16_t)GET_MV_SUBPEL(full_mv->row),
-                          (int16_t)GET_MV_SUBPEL(full_mv->col)};
+    const MV subpel_mv = {(int16_t)GET_MV_SUBPEL(full_mv->row), (int16_t)GET_MV_SUBPEL(full_mv->col)};
     return subpel_mv;
 }
 
@@ -136,9 +134,7 @@ typedef struct BlockModeInfoEnc {
     uint8_t skip_mode : 1;
     uint8_t use_intrabc : 1; // possible values: 0,1
 
-#if FTR_ROI
     uint8_t segment_id;
-#endif
 
 #if MODE_INFO_DBG
     int32_t mi_row;

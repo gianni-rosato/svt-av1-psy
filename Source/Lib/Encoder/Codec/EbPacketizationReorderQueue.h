@@ -53,7 +53,7 @@ typedef struct PacketizationReorderEntry {
 } PacketizationReorderEntry;
 
 extern EbErrorType svt_aom_packetization_reorder_entry_ctor(PacketizationReorderEntry *entry_ptr,
-                                                            uint32_t picture_number);
+                                                            uint32_t                   picture_number);
 
 #ifdef __cplusplus
 }

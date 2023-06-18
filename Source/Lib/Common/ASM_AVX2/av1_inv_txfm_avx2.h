@@ -43,9 +43,8 @@ static INLINE void write_recon_w16_avx2(__m256i res, uint8_t *output_r, uint8_t 
     _mm_storeu_si128((__m128i *)(output_w), y);
 }
 
-static INLINE void lowbd_write_buffer_16xn_avx2(__m256i *in, uint8_t *output_r, int32_t stride_r,
-                                                uint8_t *output_w, int32_t stride_w, int32_t flipud,
-                                                int32_t height) {
+static INLINE void lowbd_write_buffer_16xn_avx2(__m256i *in, uint8_t *output_r, int32_t stride_r, uint8_t *output_w,
+                                                int32_t stride_w, int32_t flipud, int32_t height) {
     int32_t       j    = flipud ? (height - 1) : 0;
     const int32_t step = flipud ? -1 : 1;
     for (int32_t i = 0; i < height; ++i, j += step)

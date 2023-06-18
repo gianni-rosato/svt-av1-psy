@@ -23,26 +23,25 @@ extern "C" {
  * early_mode_decision_sb
  *   predicts candidates (SB)
  *******************************************/
-extern EbErrorType early_mode_decision_sb(SequenceControlSet *scs, PictureControlSet *pcs,
-                                          SuperBlock *sb_ptr, uint32_t sb_index,
-                                          ModeDecisionConfigurationContext *context_ptr);
+extern EbErrorType early_mode_decision_sb(SequenceControlSet *scs, PictureControlSet *pcs, SuperBlock *sb_ptr,
+                                          uint32_t sb_index, ModeDecisionConfigurationContext *context_ptr);
 
 /*******************************************
 * derive_delta_qp_for_each_leaf_sb
 *   Derive Sb For Each Leaf (SB)
 *******************************************/
-extern EbErrorType derive_delta_qp_for_each_leaf_sb(
-    SequenceControlSet *scs, PictureControlSet *pcs, SuperBlock *sb_ptr, uint32_t sb_index,
-    int32_t intra_min_distance, int32_t intra_max_distance, int32_t inter_min_distance,
-    int32_t inter_max_distance, ModeDecisionConfigurationContext *context_ptr);
+extern EbErrorType derive_delta_qp_for_each_leaf_sb(SequenceControlSet *scs, PictureControlSet *pcs, SuperBlock *sb_ptr,
+                                                    uint32_t sb_index, int32_t intra_min_distance,
+                                                    int32_t intra_max_distance, int32_t inter_min_distance,
+                                                    int32_t                           inter_max_distance,
+                                                    ModeDecisionConfigurationContext *context_ptr);
 
-void qpm_derive_delta_qp_map_weights(ModeDecisionConfigurationContext *context_ptr,
-                                     PictureControlSet                *pcs);
+void qpm_derive_delta_qp_map_weights(ModeDecisionConfigurationContext *context_ptr, PictureControlSet *pcs);
 /**************************************
 * Function Ptrs Definitions
 **************************************/
-typedef EbErrorType (*EB_MDC_FUNC)(MdcpLocalBlkStruct *localCuArray, uint32_t blk_index,
-                                   uint32_t depth, Bool *mdcPrediction64);
+typedef EbErrorType (*EB_MDC_FUNC)(MdcpLocalBlkStruct *localCuArray, uint32_t blk_index, uint32_t depth,
+                                   Bool *mdcPrediction64);
 
 #define Pred 0x01
 #define Predp1 0x02
@@ -57,8 +56,7 @@ typedef EbErrorType (*EB_MDC_FUNC)(MdcpLocalBlkStruct *localCuArray, uint32_t bl
 #define ALL8 0x71
 #define AllD 0x80
 EB_ALIGN(16)
-static const uint8_t ndp_level_0[4] = {
-    Pred + Predp1 + Predp2, Pred + Predp1, Pred + Predp1, Pred + Predm1};
+static const uint8_t ndp_level_0[4] = {Pred + Predp1 + Predp2, Pred + Predp1, Pred + Predp1, Pred + Predm1};
 EB_ALIGN(16)
 static const uint8_t ndp_level_1[4] = {Pred + Predp1, Pred + Predp1, Pred + Predp1, Pred + Predm1};
 

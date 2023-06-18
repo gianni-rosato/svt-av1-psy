@@ -63,8 +63,8 @@ static INLINE int32_t linsolve(int32_t n, double *A, int32_t stride, double *b, 
 // Solves for n-dim x in a least squares sense to minimize |Ax - b|^2
 // The solution is simply x = (A'A)^-1 A'b or simply the solution for
 // the system: A'A x = A'b
-static INLINE int32_t least_squares(int32_t n, double *A, int32_t rows, int32_t stride, double *b,
-                                    double *scratch, double *x) {
+static INLINE int32_t least_squares(int32_t n, double *A, int32_t rows, int32_t stride, double *b, double *scratch,
+                                    double *x) {
     int32_t i, j, k;
     double *scratch_ = NULL;
     double *at_a, *atb;
@@ -91,17 +91,15 @@ static INLINE int32_t least_squares(int32_t n, double *A, int32_t rows, int32_t 
 }
 
 // Matrix multiply
-static INLINE void multiply_mat(const double *m1, const double *m2, double *res,
-                                const int32_t m1_rows, const int32_t inner_dim,
-                                const int32_t m2_cols) {
+static INLINE void multiply_mat(const double *m1, const double *m2, double *res, const int32_t m1_rows,
+                                const int32_t inner_dim, const int32_t m2_cols) {
     double sum;
 
     int32_t row, col, inner;
     for (row = 0; row < m1_rows; ++row) {
         for (col = 0; col < m2_cols; ++col) {
             sum = 0;
-            for (inner = 0; inner < inner_dim; ++inner)
-                sum += m1[row * inner_dim + inner] * m2[inner * m2_cols + col];
+            for (inner = 0; inner < inner_dim; ++inner) sum += m1[row * inner_dim + inner] * m2[inner * m2_cols + col];
             *(res++) = sum;
         }
     }

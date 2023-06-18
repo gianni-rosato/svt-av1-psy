@@ -31,8 +31,7 @@ void svt_print_alloc_fail_impl(const char* file, int line);
 void svt_print_memory_usage(void);
 void svt_increase_component_count(void);
 void svt_decrease_component_count(void);
-void svt_add_mem_entry_impl(void* ptr, EbPtrType type, size_t count, const char* file,
-                            uint32_t line);
+void svt_add_mem_entry_impl(void* ptr, EbPtrType type, size_t count, const char* file, uint32_t line);
 void svt_remove_mem_entry(void* ptr, EbPtrType type);
 
 #if EXCLUDE_HASH

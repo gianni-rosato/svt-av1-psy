@@ -50,8 +50,7 @@ typedef struct PictureResultInitData {
 /**************************************
  * Extern Function Declarations
  **************************************/
-extern EbErrorType svt_aom_picture_results_creator(EbPtr *object_dbl_ptr,
-                                                   EbPtr  object_init_data_ptr);
+extern EbErrorType svt_aom_picture_results_creator(EbPtr *object_dbl_ptr, EbPtr object_init_data_ptr);
 
 typedef struct PictureManagerResults {
     EbDctor          dctor;

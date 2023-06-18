@@ -34,8 +34,7 @@ typedef struct RateControlResultsInitData {
 /**************************************
  * Extern Function Declarations
  **************************************/
-extern EbErrorType svt_aom_rate_control_results_creator(EbPtr *object_dbl_ptr,
-                                                        EbPtr  object_init_data_ptr);
+extern EbErrorType svt_aom_rate_control_results_creator(EbPtr *object_dbl_ptr, EbPtr object_init_data_ptr);
 
 #ifdef __cplusplus
 }

@@ -58,16 +58,11 @@ int init_pic_buffer(EbSvtIOFormat *pic_buffer, CliInput *cli, EbSvtAv1DecConfigu
     return 0;
 }
 
-int read_input_frame(DecInputContext *input, uint8_t **buffer, size_t *bytes_read,
-                     size_t *buffer_size, int64_t *pts) {
+int read_input_frame(DecInputContext *input, uint8_t **buffer, size_t *bytes_read, size_t *buffer_size, int64_t *pts) {
     CliInput *cli = input->cli_ctx;
     switch (cli->in_file_type) {
-    case FILE_TYPE_IVF:
-        return read_ivf_frame(cli->in_file, buffer, bytes_read, buffer_size, pts);
-        break;
-    case FILE_TYPE_OBU:
-        return obudec_read_temporal_unit(input, buffer, bytes_read, buffer_size);
-        break;
+    case FILE_TYPE_IVF: return read_ivf_frame(cli->in_file, buffer, bytes_read, buffer_size, pts); break;
+    case FILE_TYPE_OBU: return obudec_read_temporal_unit(input, buffer, bytes_read, buffer_size); break;
     default: fprintf(stderr, "Unsupported Bitstream type. \n"); return 0;
     }
 }
@@ -134,9 +129,8 @@ int32_t main(int32_t argc, char *argv[]) {
 #endif
     // GLOBAL VARIABLES
     EbErrorType               return_error = EB_ErrorNone; // Error Handling
-    EbSvtAv1DecConfiguration *config_ptr   = (EbSvtAv1DecConfiguration *)malloc(
-        sizeof(EbSvtAv1DecConfiguration));
-    CliInput cli;
+    EbSvtAv1DecConfiguration *config_ptr   = (EbSvtAv1DecConfiguration *)malloc(sizeof(EbSvtAv1DecConfiguration));
+    CliInput                  cli;
     cli.in_file     = NULL;
     cli.out_file    = NULL;
     cli.enable_md5  = 0;
@@ -227,8 +221,7 @@ int32_t main(int32_t argc, char *argv[]) {
                 if (!stop_after || in_frame < stop_after) {
                     dec_timer_start(&timer);
 
-                    return_error |= svt_av1_dec_frame(
-                        p_handle, buf, bytes_in_buffer, obu_ctx.is_annexb);
+                    return_error |= svt_av1_dec_frame(p_handle, buf, bytes_in_buffer, obu_ctx.is_annexb);
 
                     dec_timer_mark(&timer);
                     dx_time += dec_timer_elapsed(&timer);

@@ -27,11 +27,9 @@ struct SvtMetadataArray;
 #define SVT_AV1_VERSION_MINOR 5
 #define SVT_AV1_VERSION_PATCHLEVEL 0
 
-#define SVT_AV1_CHECK_VERSION(major, minor, patch)                            \
-    (SVT_AV1_VERSION_MAJOR > (major) ||                                       \
-     (SVT_AV1_VERSION_MAJOR == (major) && SVT_AV1_VERSION_MINOR > (minor)) || \
-     (SVT_AV1_VERSION_MAJOR == (major) && SVT_AV1_VERSION_MINOR == (minor) && \
-      SVT_AV1_VERSION_PATCHLEVEL >= (patch)))
+#define SVT_AV1_CHECK_VERSION(major, minor, patch)                                                               \
+    (SVT_AV1_VERSION_MAJOR > (major) || (SVT_AV1_VERSION_MAJOR == (major) && SVT_AV1_VERSION_MINOR > (minor)) || \
+     (SVT_AV1_VERSION_MAJOR == (major) && SVT_AV1_VERSION_MINOR == (minor) && SVT_AV1_VERSION_PATCHLEVEL >= (patch)))
 
 #if defined(_WIN32)
 #define EB_HELPER_EXPORT __declspec(dllexport)
@@ -147,11 +145,7 @@ typedef enum EbErrorType {
 } EbErrorType;
 
 /* AV1 bistream profile (seq_profile syntax element) */
-typedef enum EbAv1SeqProfile {
-    MAIN_PROFILE         = 0,
-    HIGH_PROFILE         = 1,
-    PROFESSIONAL_PROFILE = 2
-} EbAv1SeqProfile;
+typedef enum EbAv1SeqProfile { MAIN_PROFILE = 0, HIGH_PROFILE = 1, PROFESSIONAL_PROFILE = 2 } EbAv1SeqProfile;
 
 // For 8-bit and 10-bit packed inputs and outputs, the luma, cb, and cr fields should be used
 //   for the three input picture planes.  However, for 10-bit unpacked planes the
@@ -299,9 +293,7 @@ typedef enum {
     PRIVATE_DATA, // data to be passed through and written to the bitstream
     //FILM_GRAIN_PARAM,        // passing film grain parameters per picture
     REF_FRAME_SCALING_EVENT, // reference frame scaling data per picture
-#if FTR_ROI
     ROI_MAP_EVENT, // ROI map data per picture
-#endif
     PRIVATE_DATA_TYPES // end of private data types
 } PrivDataType;
 typedef struct EbPrivDataNode {
@@ -315,7 +307,6 @@ typedef struct EbRefFrameScale {
     uint32_t scale_denom; // scaling denominator for non-key frame, from 8~16
     uint32_t scale_kf_denom; // scaling denominator for key frame, from 8~16
 } EbRefFrameScale;
-#if FTR_ROI
 typedef struct SvtAv1RoiMapEvt {
     uint64_t                start_picture_number;
     uint8_t                *b64_seg_map;
@@ -330,7 +321,6 @@ typedef struct SvtAv1RoiMap {
     int16_t         *qp_map;
     char            *buf;
 } SvtAv1RoiMap;
-#endif
 /**
 CPU FLAGS
 */

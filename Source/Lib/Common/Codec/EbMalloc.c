@@ -62,8 +62,7 @@ static EbHandle get_malloc_mutex() {
 // Simple hash function to speed up entry search
 // Takes the top half and bottom half of the pointer and adds them together.
 static inline uint32_t hash(const void* const p) {
-    const uintptr_t bit_mask = ((uintptr_t)1 << sizeof(bit_mask) / 2 * CHAR_BIT) - 1,
-                    v        = (uintptr_t)p;
+    const uintptr_t bit_mask = ((uintptr_t)1 << sizeof(bit_mask) / 2 * CHAR_BIT) - 1, v = (uintptr_t)p;
     return (uint32_t)((v >> (sizeof(v) / 2 * CHAR_BIT)) + (v & bit_mask));
 }
 
@@ -187,8 +186,7 @@ static Bool count_mem_entry(MemoryEntry* e, void* param) {
     return FALSE;
 }
 
-static inline void get_memory_usage_and_scale(size_t amount, double* const usage,
-                                              char* const scale) {
+static inline void get_memory_usage_and_scale(size_t amount, double* const usage, char* const scale) {
     static const char scales[] = {' ', 'K', 'M', 'G', 'T'};
     size_t            i        = 1;
     for (; i < sizeof(scales) && amount >= (size_t)1 << (++i * 10);)
@@ -279,8 +277,7 @@ void svt_print_memory_usage() {
 
     for_each_mem_entry(0, count_mem_entry, &sum);
     SVT_INFO("SVT Memory Usage:\n");
-    get_memory_usage_and_scale(
-        sum.amount[EB_N_PTR] + sum.amount[EB_C_PTR] + sum.amount[EB_A_PTR], &usage, &scale);
+    get_memory_usage_and_scale(sum.amount[EB_N_PTR] + sum.amount[EB_C_PTR] + sum.amount[EB_A_PTR], &usage, &scale);
     SVT_INFO("    total allocated memory:       %.2lf %cB\n", usage, scale);
     get_memory_usage_and_scale(sum.amount[EB_N_PTR], &usage, &scale);
     SVT_INFO("        malloced memory:          %.2lf %cB\n", usage, scale);
@@ -320,12 +317,10 @@ void svt_decrease_component_count() {
     svt_release_mutex(m);
 }
 
-void svt_add_mem_entry_impl(void* ptr, EbPtrType type, size_t count, const char* file,
-                            uint32_t line) {
-    if (for_each_mem_entry(
-            hash(ptr),
-            add_mem_entry,
-            &(MemoryEntry){.ptr = ptr, .type = type, .count = count, .file = file, .line = line}))
+void svt_add_mem_entry_impl(void* ptr, EbPtrType type, size_t count, const char* file, uint32_t line) {
+    if (for_each_mem_entry(hash(ptr),
+                           add_mem_entry,
+                           &(MemoryEntry){.ptr = ptr, .type = type, .count = count, .file = file, .line = line}))
         return;
     if (g_add_mem_entry_warning) {
         SVT_ERROR(
@@ -341,9 +336,7 @@ void svt_remove_mem_entry(void* ptr, EbPtrType type) {
     if (for_each_mem_entry(hash(ptr), remove_mem_entry, &(MemoryEntry){.ptr = ptr, .type = type}))
         return;
     if (g_remove_mem_entry_warning) {
-        SVT_ERROR("something wrong. you freed a unallocated memory %p, type = %s\n",
-                  ptr,
-                  mem_type_name(type));
+        SVT_ERROR("something wrong. you freed a unallocated memory %p, type = %s\n", ptr, mem_type_name(type));
         g_remove_mem_entry_warning = FALSE;
     }
 }

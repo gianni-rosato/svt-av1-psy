@@ -12,9 +12,9 @@
 //#include "EbUtility.h"
 #include "EbDefinitions.h"
 
-static void diffwtd_mask_d16(uint8_t *mask, int which_inverse, int mask_base,
-                             const CONV_BUF_TYPE *src0, int src0_stride, const CONV_BUF_TYPE *src1,
-                             int src1_stride, int h, int w, ConvolveParams *conv_params, int bd) {
+static void diffwtd_mask_d16(uint8_t *mask, int which_inverse, int mask_base, const CONV_BUF_TYPE *src0,
+                             int src0_stride, const CONV_BUF_TYPE *src1, int src1_stride, int h, int w,
+                             ConvolveParams *conv_params, int bd) {
     int round = 2 * FILTER_BITS - conv_params->round_0 - conv_params->round_1 + (bd - 8);
     int i, j, m, diff;
     for (i = 0; i < h; ++i) {
@@ -27,14 +27,11 @@ static void diffwtd_mask_d16(uint8_t *mask, int which_inverse, int mask_base,
     }
 }
 
-void svt_av1_build_compound_diffwtd_mask_d16_c(uint8_t *mask, DIFFWTD_MASK_TYPE mask_type,
-                                               const CONV_BUF_TYPE *src0, int src0_stride,
-                                               const CONV_BUF_TYPE *src1, int src1_stride, int h,
+void svt_av1_build_compound_diffwtd_mask_d16_c(uint8_t *mask, DIFFWTD_MASK_TYPE mask_type, const CONV_BUF_TYPE *src0,
+                                               int src0_stride, const CONV_BUF_TYPE *src1, int src1_stride, int h,
                                                int w, ConvolveParams *conv_params, int bd) {
     switch (mask_type) {
-    case DIFFWTD_38:
-        diffwtd_mask_d16(mask, 0, 38, src0, src0_stride, src1, src1_stride, h, w, conv_params, bd);
-        break;
+    case DIFFWTD_38: diffwtd_mask_d16(mask, 0, 38, src0, src0_stride, src1, src1_stride, h, w, conv_params, bd); break;
     case DIFFWTD_38_INV:
         diffwtd_mask_d16(mask, 1, 38, src0, src0_stride, src1, src1_stride, h, w, conv_params, bd);
         break;

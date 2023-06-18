@@ -68,18 +68,10 @@ typedef struct PredictionStructureGroup {
 /************************************************
      * Declarations
      ************************************************/
-extern PredictionStructure *svt_aom_get_prediction_structure(
-    PredictionStructureGroup *prediction_structure_group_ptr, SvtAv1PredStructure pred_structure,
-    uint32_t levels_of_hierarchy);
-typedef enum {
-    LAST  = 0,
-    LAST2 = 1,
-    LAST3 = 2,
-    GOLD  = 3,
-    BWD   = 4,
-    ALT2  = 5,
-    ALT   = 6
-} REF_FRAME_MINUS1;
+extern PredictionStructure *svt_aom_get_prediction_structure(PredictionStructureGroup *prediction_structure_group_ptr,
+                                                             SvtAv1PredStructure       pred_structure,
+                                                             uint32_t                  levels_of_hierarchy);
+typedef enum { LAST = 0, LAST2 = 1, LAST3 = 2, GOLD = 3, BWD = 4, ALT2 = 5, ALT = 6 } REF_FRAME_MINUS1;
 typedef struct Av1RpsNode {
     uint8_t  refresh_frame_mask;
     uint8_t  ref_dpb_index[7]; //LAST-LAST2-LAST3-GOLDEN-BWD-ALT2-ALT

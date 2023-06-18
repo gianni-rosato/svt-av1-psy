@@ -15,9 +15,8 @@
 #include "noise_util.h"
 #include "noise_model.h"
 
-void svt_av1_add_block_observations_internal_avx2(uint32_t n, const double val,
-                                                  const double recp_sqr_norm, double *buffer,
-                                                  double *buffer_norm, double *b, double *A) {
+void svt_av1_add_block_observations_internal_avx2(uint32_t n, const double val, const double recp_sqr_norm,
+                                                  double *buffer, double *buffer_norm, double *b, double *A) {
     uint32_t      i;
     const __m256d recp_spr_pd = _mm256_set1_pd(recp_sqr_norm);
     const __m256d val_pd      = _mm256_set1_pd(val);
@@ -67,8 +66,7 @@ void svt_av1_add_block_observations_internal_avx2(uint32_t n, const double val,
     }
 }
 
-void svt_av1_pointwise_multiply_avx2(const float *a, float *b, float *c, double *b_d, double *c_d,
-                                     int32_t n) {
+void svt_av1_pointwise_multiply_avx2(const float *a, float *b, float *c, double *b_d, double *c_d, int32_t n) {
     int32_t i = 0;
     __m256  a_ps, b_ps, c_ps;
     __m128  tmp_ps1, tmp_ps2;
@@ -144,8 +142,7 @@ void svt_aom_noise_tx_filter_avx2(int32_t block_size, float *block_ptr, const fl
             // 0 1 4 5 2 3 6 7
             __m256 p_ps      = _mm256_hadd_ps(p_ps1, p_ps2);
             __m256 cmp_ps    = _mm256_cmp_ps(p_ps, p_cmp_ps, _CMP_GT_OQ);
-            __m256 val_ps    = _mm256_div_ps(_mm256_sub_ps(p_ps, psd_ps),
-                                          _mm256_max_ps(p_ps, k_eps_ps));
+            __m256 val_ps    = _mm256_div_ps(_mm256_sub_ps(p_ps, psd_ps), _mm256_max_ps(p_ps, k_eps_ps));
             __m256 mul_final = _mm256_blendv_ps(mul_ps, val_ps, cmp_ps);
 
             block_ps1 = _mm256_mul_ps(block_ps1, _mm256_permutevar8x32_ps(mul_final, mask1));
@@ -157,9 +154,8 @@ void svt_aom_noise_tx_filter_avx2(int32_t block_size, float *block_ptr, const fl
     }
 }
 
-void svt_aom_flat_block_finder_extract_block_avx2(const AomFlatBlockFinder *block_finder,
-                                                  const uint8_t *const data, int32_t w, int32_t h,
-                                                  int32_t stride, int32_t offsx, int32_t offsy,
+void svt_aom_flat_block_finder_extract_block_avx2(const AomFlatBlockFinder *block_finder, const uint8_t *const data,
+                                                  int32_t w, int32_t h, int32_t stride, int32_t offsx, int32_t offsy,
                                                   double *plane, double *block) {
     const int32_t block_size = block_finder->block_size;
     const int32_t n          = block_size * block_size;
@@ -189,19 +185,16 @@ void svt_aom_flat_block_finder_extract_block_avx2(const AomFlatBlockFinder *bloc
                 const int32_t   y          = clamp(offsy + yi, 0, h - 1);
                 const uint16_t *data16_ptr = data16 + y * stride + offsx;
                 for (xi = 0; xi + 8 - 1 < block_size; xi += 8) {
-                    data_epi32 = _mm256_cvtepu16_epi32(
-                        _mm_loadu_si128((__m128i *)(data16_ptr + xi)));
-                    data_pd = _mm256_cvtepi32_pd(_mm256_castsi256_si128(data_epi32));
-                    data_pd = _mm256_mul_pd(data_pd, recp_norm_pd);
+                    data_epi32 = _mm256_cvtepu16_epi32(_mm_loadu_si128((__m128i *)(data16_ptr + xi)));
+                    data_pd    = _mm256_cvtepi32_pd(_mm256_castsi256_si128(data_epi32));
+                    data_pd    = _mm256_mul_pd(data_pd, recp_norm_pd);
                     _mm256_storeu_pd(block + yi * block_size + xi, data_pd);
 
                     data_pd = _mm256_cvtepi32_pd(_mm256_extracti128_si256(data_epi32, 0x1));
                     data_pd = _mm256_mul_pd(data_pd, recp_norm_pd);
                     _mm256_storeu_pd(block + yi * block_size + xi + 4, data_pd);
                 }
-                for (; xi < block_size; ++xi) {
-                    block[yi * block_size + xi] = ((double)data16_ptr[xi]) * recp_norm;
-                }
+                for (; xi < block_size; ++xi) { block[yi * block_size + xi] = ((double)data16_ptr[xi]) * recp_norm; }
             }
         }
     } else {
@@ -230,9 +223,7 @@ void svt_aom_flat_block_finder_extract_block_avx2(const AomFlatBlockFinder *bloc
                     data_pd = _mm256_mul_pd(data_pd, recp_norm_pd);
                     _mm256_storeu_pd(block + yi * block_size + xi + 4, data_pd);
                 }
-                for (; xi < block_size; ++xi) {
-                    block[yi * block_size + xi] = ((double)data_ptr[xi]) * recp_norm;
-                }
+                for (; xi < block_size; ++xi) { block[yi * block_size + xi] = ((double)data_ptr[xi]) * recp_norm; }
             }
         }
     }

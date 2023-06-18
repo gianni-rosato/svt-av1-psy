@@ -56,8 +56,7 @@ int svt_av1_haar_ac_sad_8x8_uint8_input_avx2(uint8_t *input, int stride, int hbd
 
         __m256i r = _mm256_shuffle_epi32(b, (1 << 4) + (2 << 6));
 
-        a = _mm256_add_epi32(a,
-                             _mm256_srai_epi32(_mm256_add_epi32(_mm256_add_epi32(r, b), one), 1));
+        a = _mm256_add_epi32(a, _mm256_srai_epi32(_mm256_add_epi32(_mm256_add_epi32(r, b), one), 1));
 
         _mm_storeu_si128((__m128i *)(output + i * 16), _mm256_castsi256_si128(a));
         _mm_storeu_si128((__m128i *)(output + i * 16 + 4), _mm256_castsi256_si128(b));
@@ -85,8 +84,7 @@ int svt_av1_haar_ac_sad_8x8_uint8_input_avx2(uint8_t *input, int stride, int hbd
 
         __m256i r = _mm256_shuffle_epi32(b, (1 << 4) + (2 << 6));
 
-        a = _mm256_add_epi32(a,
-                             _mm256_srai_epi32(_mm256_add_epi32(_mm256_add_epi32(r, b), one), 1));
+        a = _mm256_add_epi32(a, _mm256_srai_epi32(_mm256_add_epi32(_mm256_add_epi32(r, b), one), 1));
 
         sum[2 * i]     = _mm256_abs_epi32(a);
         sum[2 * i + 1] = _mm256_abs_epi32(b);
@@ -99,8 +97,7 @@ int svt_av1_haar_ac_sad_8x8_uint8_input_avx2(uint8_t *input, int stride, int hbd
     sum67 = _mm256_add_epi32(sum[6], sum[7]);
     sum13 = _mm256_add_epi32(sum13, _mm256_add_epi32(sum45, sum67));
 
-    __m128i sum_128 = _mm_add_epi32(_mm256_castsi256_si128(sum13),
-                                    _mm256_extracti128_si256(sum13, 1));
+    __m128i sum_128 = _mm_add_epi32(_mm256_castsi256_si128(sum13), _mm256_extracti128_si256(sum13, 1));
 
     sum_128 = _mm_hadd_epi32(sum_128, sum_128);
     sum_128 = _mm_hadd_epi32(sum_128, sum_128);

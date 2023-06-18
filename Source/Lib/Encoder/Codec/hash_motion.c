@@ -30,8 +30,7 @@ static void hash_table_clear_all(HashTable *p_hash_table) {
     }
 }
 
-static void get_pixels_in_1d_char_array_by_block_2x2(uint8_t *y_src, int stride,
-                                                     uint8_t *p_pixels_in1D) {
+static void get_pixels_in_1d_char_array_by_block_2x2(uint8_t *y_src, int stride, uint8_t *p_pixels_in1D) {
     uint8_t *p_pel = y_src;
     int      index = 0;
     for (int i = 0; i < 2; i++) {
@@ -40,8 +39,7 @@ static void get_pixels_in_1d_char_array_by_block_2x2(uint8_t *y_src, int stride,
     }
 }
 
-static void get_pixels_in_1d_short_array_by_block_2x2(uint16_t *y_src, int stride,
-                                                      uint16_t *p_pixels_in1D) {
+static void get_pixels_in_1d_short_array_by_block_2x2(uint16_t *y_src, int stride, uint16_t *p_pixels_in1D) {
     uint16_t *p_pel = y_src;
     int       index = 0;
     for (int i = 0; i < 2; i++) {
@@ -110,13 +108,10 @@ EbErrorType svt_aom_rtime_alloc_svt_av1_hash_table_create(HashTable *p_hash_tabl
     return err_code;
 }
 
-static void hash_table_add_to_table(HashTable *p_hash_table, uint32_t hash_value,
-                                    BlockHash *curr_block_hash) {
+static void hash_table_add_to_table(HashTable *p_hash_table, uint32_t hash_value, BlockHash *curr_block_hash) {
     if (p_hash_table->p_lookup_table[hash_value] == NULL) {
-        p_hash_table->p_lookup_table[hash_value] = malloc(
-            sizeof(p_hash_table->p_lookup_table[0][0]));
-        svt_aom_vector_setup(
-            p_hash_table->p_lookup_table[hash_value], 10, sizeof(curr_block_hash[0]));
+        p_hash_table->p_lookup_table[hash_value] = malloc(sizeof(p_hash_table->p_lookup_table[0][0]));
+        svt_aom_vector_setup(p_hash_table->p_lookup_table[hash_value], 10, sizeof(curr_block_hash[0]));
         svt_aom_vector_push_back(p_hash_table->p_lookup_table[hash_value], curr_block_hash);
     } else {
         svt_aom_vector_push_back(p_hash_table->p_lookup_table[hash_value], curr_block_hash);
@@ -135,8 +130,7 @@ Iterator svt_av1_hash_get_first_iterator(HashTable *p_hash_table, uint32_t hash_
     return svt_aom_vector_begin(p_hash_table->p_lookup_table[hash_value]);
 }
 
-void svt_av1_generate_block_2x2_hash_value(const Yv12BufferConfig *picture,
-                                           uint32_t               *pic_block_hash[2],
+void svt_av1_generate_block_2x2_hash_value(const Yv12BufferConfig *picture, uint32_t *pic_block_hash[2],
                                            int8_t *pic_block_same_info[3], PictureControlSet *pcs) {
     const int width  = 2;
     const int height = 2;
@@ -150,9 +144,7 @@ void svt_av1_generate_block_2x2_hash_value(const Yv12BufferConfig *picture,
         for (int y_pos = 0; y_pos < y_end; y_pos++) {
             for (int x_pos = 0; x_pos < x_end; x_pos++) {
                 get_pixels_in_1d_short_array_by_block_2x2(
-                    CONVERT_TO_SHORTPTR(picture->y_buffer) + y_pos * picture->y_stride + x_pos,
-                    picture->y_stride,
-                    p);
+                    CONVERT_TO_SHORTPTR(picture->y_buffer) + y_pos * picture->y_stride + x_pos, picture->y_stride, p);
                 pic_block_same_info[0][pos] = is_block16_2x2_row_same_value(p);
                 pic_block_same_info[1][pos] = is_block16_2x2_col_same_value(p);
 
@@ -174,10 +166,8 @@ void svt_av1_generate_block_2x2_hash_value(const Yv12BufferConfig *picture,
                 pic_block_same_info[0][pos] = is_block_2x2_row_same_value(p);
                 pic_block_same_info[1][pos] = is_block_2x2_col_same_value(p);
 
-                pic_block_hash[0][pos] = svt_av1_get_crc_value(
-                    &pcs->crc_calculator1, p, length * sizeof(p[0]));
-                pic_block_hash[1][pos] = svt_av1_get_crc_value(
-                    &pcs->crc_calculator2, p, length * sizeof(p[0]));
+                pic_block_hash[0][pos] = svt_av1_get_crc_value(&pcs->crc_calculator1, p, length * sizeof(p[0]));
+                pic_block_hash[1][pos] = svt_av1_get_crc_value(&pcs->crc_calculator2, p, length * sizeof(p[0]));
                 pos++;
             }
             pos += width - 1;
@@ -185,10 +175,8 @@ void svt_av1_generate_block_2x2_hash_value(const Yv12BufferConfig *picture,
     }
 }
 
-void svt_av1_generate_block_hash_value(const Yv12BufferConfig *picture, int block_size,
-                                       uint32_t *src_pic_block_hash[2],
-                                       uint32_t *dst_pic_block_hash[2],
-                                       int8_t   *src_pic_block_same_info[3],
+void svt_av1_generate_block_hash_value(const Yv12BufferConfig *picture, int block_size, uint32_t *src_pic_block_hash[2],
+                                       uint32_t *dst_pic_block_hash[2], int8_t *src_pic_block_same_info[3],
                                        int8_t *dst_pic_block_same_info[3], PictureControlSet *pcs) {
     const int pic_width = picture->y_crop_width;
     const int x_end     = picture->y_crop_width - block_size + 1;
@@ -203,30 +191,26 @@ void svt_av1_generate_block_hash_value(const Yv12BufferConfig *picture, int bloc
     int pos = 0;
     for (int y_pos = 0; y_pos < y_end; y_pos++) {
         for (int x_pos = 0; x_pos < x_end; x_pos++) {
-            p[0] = src_pic_block_hash[0][pos];
-            p[1] = src_pic_block_hash[0][pos + src_size];
-            p[2] = src_pic_block_hash[0][pos + src_size * pic_width];
-            p[3] = src_pic_block_hash[0][pos + src_size * pic_width + src_size];
-            dst_pic_block_hash[0][pos] = svt_av1_get_crc_value(
-                &pcs->crc_calculator1, (uint8_t *)p, length);
+            p[0]                       = src_pic_block_hash[0][pos];
+            p[1]                       = src_pic_block_hash[0][pos + src_size];
+            p[2]                       = src_pic_block_hash[0][pos + src_size * pic_width];
+            p[3]                       = src_pic_block_hash[0][pos + src_size * pic_width + src_size];
+            dst_pic_block_hash[0][pos] = svt_av1_get_crc_value(&pcs->crc_calculator1, (uint8_t *)p, length);
 
-            p[0] = src_pic_block_hash[1][pos];
-            p[1] = src_pic_block_hash[1][pos + src_size];
-            p[2] = src_pic_block_hash[1][pos + src_size * pic_width];
-            p[3] = src_pic_block_hash[1][pos + src_size * pic_width + src_size];
-            dst_pic_block_hash[1][pos] = svt_av1_get_crc_value(
-                &pcs->crc_calculator2, (uint8_t *)p, length);
+            p[0]                       = src_pic_block_hash[1][pos];
+            p[1]                       = src_pic_block_hash[1][pos + src_size];
+            p[2]                       = src_pic_block_hash[1][pos + src_size * pic_width];
+            p[3]                       = src_pic_block_hash[1][pos + src_size * pic_width + src_size];
+            dst_pic_block_hash[1][pos] = svt_av1_get_crc_value(&pcs->crc_calculator2, (uint8_t *)p, length);
 
             dst_pic_block_same_info[0][pos] = src_pic_block_same_info[0][pos] &&
-                src_pic_block_same_info[0][pos + quad_size] &&
-                src_pic_block_same_info[0][pos + src_size] &&
+                src_pic_block_same_info[0][pos + quad_size] && src_pic_block_same_info[0][pos + src_size] &&
                 src_pic_block_same_info[0][pos + src_size * pic_width] &&
                 src_pic_block_same_info[0][pos + src_size * pic_width + quad_size] &&
                 src_pic_block_same_info[0][pos + src_size * pic_width + src_size];
 
             dst_pic_block_same_info[1][pos] = src_pic_block_same_info[1][pos] &&
-                src_pic_block_same_info[1][pos + src_size] &&
-                src_pic_block_same_info[1][pos + quad_size * pic_width] &&
+                src_pic_block_same_info[1][pos + src_size] && src_pic_block_same_info[1][pos + quad_size * pic_width] &&
                 src_pic_block_same_info[1][pos + quad_size * pic_width + src_size] &&
                 src_pic_block_same_info[1][pos + src_size * pic_width] &&
                 src_pic_block_same_info[1][pos + src_size * pic_width + src_size];
@@ -250,9 +234,9 @@ void svt_av1_generate_block_hash_value(const Yv12BufferConfig *picture, int bloc
     }
 }
 
-void svt_aom_rtime_alloc_svt_av1_add_to_hash_map_by_row_with_precal_data(
-    HashTable *p_hash_table, uint32_t *pic_hash[2], int8_t *pic_is_same, int pic_width,
-    int pic_height, int block_size) {
+void svt_aom_rtime_alloc_svt_av1_add_to_hash_map_by_row_with_precal_data(HashTable *p_hash_table, uint32_t *pic_hash[2],
+                                                                         int8_t *pic_is_same, int pic_width,
+                                                                         int pic_height, int block_size) {
     const int x_end = pic_width - block_size + 1;
     const int y_end = pic_height - block_size + 1;
 
@@ -283,8 +267,8 @@ void svt_aom_rtime_alloc_svt_av1_add_to_hash_map_by_row_with_precal_data(
 }
 
 void svt_av1_get_block_hash_value(uint8_t *y_src, int stride, int block_size, uint32_t *hash_value1,
-                                  uint32_t *hash_value2, int use_highbitdepth,
-                                  struct PictureControlSet *pcs, IntraBcContext *x) {
+                                  uint32_t *hash_value2, int use_highbitdepth, struct PictureControlSet *pcs,
+                                  IntraBcContext *x) {
     UNUSED(pcs);
     uint32_t  to_hash[4];
     const int add_value = hash_block_size_to_index(block_size) << crc_bits;
@@ -299,8 +283,7 @@ void svt_av1_get_block_hash_value(uint8_t *y_src, int stride, int block_size, ui
         for (int y_pos = 0; y_pos < block_size; y_pos += 2) {
             for (int x_pos = 0; x_pos < block_size; x_pos += 2) {
                 int pos = (y_pos >> 1) * sub_block_in_width + (x_pos >> 1);
-                get_pixels_in_1d_short_array_by_block_2x2(
-                    y16_src + y_pos * stride + x_pos, stride, pixel_to_hash);
+                get_pixels_in_1d_short_array_by_block_2x2(y16_src + y_pos * stride + x_pos, stride, pixel_to_hash);
                 assert(pos < AOM_BUFFER_SIZE_FOR_BLOCK_HASH);
                 x->hash_value_buffer[0][0][pos] = svt_av1_get_crc_value(
                     &x->crc_calculator1, (uint8_t *)pixel_to_hash, sizeof(pixel_to_hash));
@@ -313,8 +296,7 @@ void svt_av1_get_block_hash_value(uint8_t *y_src, int stride, int block_size, ui
         for (int y_pos = 0; y_pos < block_size; y_pos += 2) {
             for (int x_pos = 0; x_pos < block_size; x_pos += 2) {
                 int pos = (y_pos >> 1) * sub_block_in_width + (x_pos >> 1);
-                get_pixels_in_1d_char_array_by_block_2x2(
-                    y_src + y_pos * stride + x_pos, stride, pixel_to_hash);
+                get_pixels_in_1d_char_array_by_block_2x2(y_src + y_pos * stride + x_pos, stride, pixel_to_hash);
                 assert(pos < AOM_BUFFER_SIZE_FOR_BLOCK_HASH);
                 x->hash_value_buffer[0][0][pos] = svt_av1_get_crc_value(
                     &x->crc_calculator1, pixel_to_hash, sizeof(pixel_to_hash));

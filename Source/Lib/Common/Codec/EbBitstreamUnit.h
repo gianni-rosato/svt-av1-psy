@@ -42,8 +42,7 @@ typedef struct OutputBitstreamUnit {
 /**********************************
      * Extern Function Declarations
      **********************************/
-extern EbErrorType svt_aom_output_bitstream_unit_ctor(OutputBitstreamUnit *bitstream_ptr,
-                                                      uint32_t             buffer_size);
+extern EbErrorType svt_aom_output_bitstream_unit_ctor(OutputBitstreamUnit *bitstream_ptr, uint32_t buffer_size);
 
 extern EbErrorType svt_aom_output_bitstream_reset(OutputBitstreamUnit *bitstream_ptr);
 
@@ -119,9 +118,8 @@ extern uint32_t svt_aom_od_divu_small_consts[OD_DIVU_DMAX][2];
 
 /*Enable special features for gcc and compatible compilers.*/
 #if defined(__GNUC__) && defined(__GNUC_MINOR__) && defined(__GNUC_PATCHLEVEL__)
-#define OD_GNUC_PREREQ(maj, min, pat)                                  \
-    ((__GNUC__ << 16) + (__GNUC_MINOR__ << 8) + __GNUC_PATCHLEVEL__ >= \
-     ((maj) << 16) + ((min) << 8) + pat) // NOLINT
+#define OD_GNUC_PREREQ(maj, min, pat) \
+    ((__GNUC__ << 16) + (__GNUC_MINOR__ << 8) + __GNUC_PATCHLEVEL__ >= ((maj) << 16) + ((min) << 8) + pat) // NOLINT
 #else
 #define OD_GNUC_PREREQ(maj, min, pat) (0)
 #endif
@@ -214,13 +212,12 @@ void svt_od_ec_enc_reset(OdEcEnc *enc) OD_ARG_NONNULL(1);
 void svt_od_ec_enc_clear(OdEcEnc *enc) OD_ARG_NONNULL(1);
 
 void svt_od_ec_encode_bool_q15(OdEcEnc *enc, int32_t val, unsigned f_q15) OD_ARG_NONNULL(1);
-void svt_od_ec_encode_cdf_q15(OdEcEnc *enc, int32_t s, const uint16_t *cdf, int32_t nsyms)
-    OD_ARG_NONNULL(1) OD_ARG_NONNULL(3);
+void svt_od_ec_encode_cdf_q15(OdEcEnc *enc, int32_t s, const uint16_t *cdf, int32_t nsyms) OD_ARG_NONNULL(1)
+    OD_ARG_NONNULL(3);
 
 void od_ec_enc_bits(OdEcEnc *enc, uint32_t fl, unsigned ftb) OD_ARG_NONNULL(1);
 
-OD_WARN_UNUSED_RESULT uint8_t *svt_od_ec_enc_done(OdEcEnc *enc, uint32_t *nbytes) OD_ARG_NONNULL(1)
-    OD_ARG_NONNULL(2);
+OD_WARN_UNUSED_RESULT uint8_t *svt_od_ec_enc_done(OdEcEnc *enc, uint32_t *nbytes) OD_ARG_NONNULL(1) OD_ARG_NONNULL(2);
 
 OD_WARN_UNUSED_RESULT int32_t svt_od_ec_enc_tell(const OdEcEnc *enc) OD_ARG_NONNULL(1);
 
@@ -230,8 +227,8 @@ struct DaalaWriter {
     uint32_t pos;
     uint8_t *buffer;
     uint32_t buffer_size;
-    OutputBitstreamUnit *
-        buffer_parent; // save a pointer to the container holding the buffer, in case the buffer must be resized
+    OutputBitstreamUnit
+           *buffer_parent; // save a pointer to the container holding the buffer, in case the buffer must be resized
     OdEcEnc ec;
     uint8_t allow_update_cdf;
 };
@@ -239,8 +236,7 @@ struct DaalaWriter {
 typedef struct DaalaWriter DaalaWriter;
 
 void        svt_aom_daala_start_encode(DaalaWriter *br, OutputBitstreamUnit *source);
-EbErrorType svt_realloc_output_bitstream_unit(OutputBitstreamUnit *output_bitstream_ptr,
-                                              uint32_t             sz);
+EbErrorType svt_realloc_output_bitstream_unit(OutputBitstreamUnit *output_bitstream_ptr, uint32_t sz);
 int32_t     svt_aom_daala_stop_encode(DaalaWriter *w);
 
 static INLINE void aom_daala_write(DaalaWriter *w, int32_t bit, int32_t prob) {
@@ -252,8 +248,7 @@ static INLINE void aom_daala_write(DaalaWriter *w, int32_t bit, int32_t prob) {
     svt_od_ec_encode_bool_q15(&w->ec, bit, p);
 }
 
-static INLINE void daala_write_symbol(DaalaWriter *w, int32_t symb, const AomCdfProb *cdf,
-                                      int32_t nsymbs) {
+static INLINE void daala_write_symbol(DaalaWriter *w, int32_t symb, const AomCdfProb *cdf, int32_t nsymbs) {
 #if CONFIG_BITSTREAM_DEBUG
     bitstream_queue_push(symb, cdf, nsymbs);
 #endif
@@ -268,9 +263,7 @@ static INLINE void         aom_start_encode(AomWriter *bc, OutputBitstreamUnit *
 }
 static INLINE int32_t aom_stop_encode(AomWriter *bc) { return svt_aom_daala_stop_encode(bc); }
 
-static INLINE void aom_write(AomWriter *br, int32_t bit, int32_t probability) {
-    aom_daala_write(br, bit, probability);
-}
+static INLINE void aom_write(AomWriter *br, int32_t bit, int32_t probability) { aom_daala_write(br, bit, probability); }
 
 static INLINE void aom_write_bit(AomWriter *w, int32_t bit) {
     aom_write(w, bit, 128); // aom_prob_half
@@ -282,8 +275,7 @@ static INLINE void aom_write_literal(AomWriter *w, int32_t data, int32_t bits) {
     for (bit = bits - 1; bit >= 0; bit--) aom_write_bit(w, 1 & (data >> bit));
 }
 
-static INLINE void aom_write_cdf(AomWriter *w, int32_t symb, const AomCdfProb *cdf,
-                                 int32_t nsymbs) {
+static INLINE void aom_write_cdf(AomWriter *w, int32_t symb, const AomCdfProb *cdf, int32_t nsymbs) {
     daala_write_symbol(w, symb, cdf, nsymbs);
 }
 

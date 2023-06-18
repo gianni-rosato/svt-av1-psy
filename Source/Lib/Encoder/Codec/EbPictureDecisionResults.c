@@ -13,16 +13,14 @@
 
 #include "EbPictureDecisionResults.h"
 
-static EbErrorType picture_decision_result_ctor(PictureDecisionResults *object_ptr,
-                                                EbPtr                   object_init_data_ptr) {
+static EbErrorType picture_decision_result_ctor(PictureDecisionResults *object_ptr, EbPtr object_init_data_ptr) {
     (void)object_ptr;
     (void)object_init_data_ptr;
 
     return EB_ErrorNone;
 }
 
-EbErrorType svt_aom_picture_decision_result_creator(EbPtr *object_dbl_ptr,
-                                                    EbPtr  object_init_data_ptr) {
+EbErrorType svt_aom_picture_decision_result_creator(EbPtr *object_dbl_ptr, EbPtr object_init_data_ptr) {
     PictureDecisionResults *obj;
 
     *object_dbl_ptr = NULL;

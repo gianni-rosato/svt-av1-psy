@@ -193,8 +193,7 @@ extern EbErrorType svt_object_release_disable(EbObjectWrapper *wrapper_ptr);
      *   increment_number
      *      The number to increment the live count by.
      *********************************************************************/
-extern EbErrorType svt_object_inc_live_count(EbObjectWrapper *wrapper_ptr,
-                                             uint32_t         increment_number);
+extern EbErrorType svt_object_inc_live_count(EbObjectWrapper *wrapper_ptr, uint32_t increment_number);
 
 /*********************************************************************
      * svt_system_resource_ctor
@@ -218,12 +217,10 @@ extern EbErrorType svt_object_inc_live_count(EbObjectWrapper *wrapper_ptr,
      *     the object. object_init_data_ptr is passed to object_ctor when
      *     object_ctor is called.
      *********************************************************************/
-extern EbErrorType svt_system_resource_ctor(EbSystemResource *resource_ptr,
-                                            uint32_t          object_total_count,
-                                            uint32_t          producer_process_total_count,
-                                            uint32_t          consumer_process_total_count,
-                                            EbCreator object_ctor, EbPtr object_init_data_ptr,
-                                            EbDctor object_destroyer);
+extern EbErrorType svt_system_resource_ctor(EbSystemResource *resource_ptr, uint32_t object_total_count,
+                                            uint32_t producer_process_total_count,
+                                            uint32_t consumer_process_total_count, EbCreator object_ctor,
+                                            EbPtr object_init_data_ptr, EbDctor object_destroyer);
 
 /*********************************************************************
      * svt_system_resource_get_producer_fifo
@@ -305,8 +302,7 @@ extern EbErrorType svt_post_full_object(EbObjectWrapper *object_ptr);
      *********************************************************************/
 extern EbErrorType svt_get_full_object(EbFifo *full_fifo_ptr, EbObjectWrapper **wrapper_dbl_ptr);
 
-extern EbErrorType svt_get_full_object_non_blocking(EbFifo           *full_fifo_ptr,
-                                                    EbObjectWrapper **wrapper_dbl_ptr);
+extern EbErrorType svt_get_full_object_non_blocking(EbFifo *full_fifo_ptr, EbObjectWrapper **wrapper_dbl_ptr);
 
 /*********************************************************************
      * EbSystemResourceReleaseObject

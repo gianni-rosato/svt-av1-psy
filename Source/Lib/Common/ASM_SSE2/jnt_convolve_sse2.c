@@ -14,10 +14,9 @@
 #include "common_dsp_rtcd.h"
 #include "filter.h"
 
-static INLINE void prepare_coeffs(const InterpFilterParams *const filter_params,
-                                  const int subpel_q4, __m128i *const coeffs /* [4] */) {
-    const int16_t *filter = av1_get_interp_filter_subpel_kernel(*filter_params,
-                                                                subpel_q4 & SUBPEL_MASK);
+static INLINE void prepare_coeffs(const InterpFilterParams *const filter_params, const int subpel_q4,
+                                  __m128i *const coeffs /* [4] */) {
+    const int16_t *filter = av1_get_interp_filter_subpel_kernel(*filter_params, subpel_q4 & SUBPEL_MASK);
     const __m128i  coeff  = _mm_loadu_si128((__m128i *)filter);
 
     // coeffs 0 1 0 1 0 1 0 1
@@ -89,19 +88,16 @@ static INLINE __m128i comp_avg(const __m128i *const data_ref_0, const __m128i *c
     return res;
 }
 
-static INLINE __m128i convolve_rounding(const __m128i *const res_unsigned,
-                                        const __m128i *const offset_const,
+static INLINE __m128i convolve_rounding(const __m128i *const res_unsigned, const __m128i *const offset_const,
                                         const __m128i *const round_const, const int round_shift) {
     const __m128i res_signed = _mm_sub_epi16(*res_unsigned, *offset_const);
     const __m128i res_round  = _mm_srai_epi16(_mm_add_epi16(res_signed, *round_const), round_shift);
     return res_round;
 }
 
-void svt_av1_jnt_convolve_x_sse2(const uint8_t *src, int32_t src_stride, uint8_t *dst8,
-                                 int32_t dst8_stride, int32_t w, int32_t h,
-                                 InterpFilterParams *filter_params_x,
-                                 InterpFilterParams *filter_params_y, const int32_t subpel_x_q4,
-                                 const int32_t subpel_y_q4, ConvolveParams *conv_params) {
+void svt_av1_jnt_convolve_x_sse2(const uint8_t *src, int32_t src_stride, uint8_t *dst8, int32_t dst8_stride, int32_t w,
+                                 int32_t h, InterpFilterParams *filter_params_x, InterpFilterParams *filter_params_y,
+                                 const int32_t subpel_x_q4, const int32_t subpel_y_q4, ConvolveParams *conv_params) {
     const int      bd               = 8;
     CONV_BUF_TYPE *dst              = conv_params->dst;
     const int      dst_stride       = conv_params->dst_stride;
@@ -118,11 +114,11 @@ void svt_av1_jnt_convolve_x_sse2(const uint8_t *src, int32_t src_stride, uint8_t
     const __m128i  wt               = _mm_unpacklo_epi16(wt0, wt1);
     const int      do_average       = conv_params->do_average;
     const int      use_jnt_comp_avg = conv_params->use_jnt_comp_avg;
-    const int      offset_0 = bd + 2 * FILTER_BITS - conv_params->round_0 - conv_params->round_1;
-    const int      offset   = (1 << offset_0) + (1 << (offset_0 - 1));
-    const __m128i  offset_const   = _mm_set1_epi16(offset);
-    const int      rounding_shift = 2 * FILTER_BITS - conv_params->round_0 - conv_params->round_1;
-    const __m128i  rounding_const = _mm_set1_epi16((1 << rounding_shift) >> 1);
+    const int      offset_0         = bd + 2 * FILTER_BITS - conv_params->round_0 - conv_params->round_1;
+    const int      offset           = (1 << offset_0) + (1 << (offset_0 - 1));
+    const __m128i  offset_const     = _mm_set1_epi16(offset);
+    const int      rounding_shift   = 2 * FILTER_BITS - conv_params->round_0 - conv_params->round_1;
+    const __m128i  rounding_const   = _mm_set1_epi16((1 << rounding_shift) >> 1);
     __m128i        coeffs[4];
 
     prepare_coeffs(filter_params_x, subpel_x_q4, coeffs);
@@ -143,13 +139,12 @@ void svt_av1_jnt_convolve_x_sse2(const uint8_t *src, int32_t src_stride, uint8_t
             const __m128i data = _mm_loadu_si128((__m128i *)src_ptr);
             __m128i       s[4];
 
-            s[0] = _mm_unpacklo_epi8(data, _mm_srli_si128(data, 1));
-            s[1] = _mm_unpacklo_epi8(_mm_srli_si128(data, 2), _mm_srli_si128(data, 3));
-            s[2] = _mm_unpacklo_epi8(_mm_srli_si128(data, 4), _mm_srli_si128(data, 5));
-            s[3] = _mm_unpacklo_epi8(_mm_srli_si128(data, 6), _mm_srli_si128(data, 7));
+            s[0]                       = _mm_unpacklo_epi8(data, _mm_srli_si128(data, 1));
+            s[1]                       = _mm_unpacklo_epi8(_mm_srli_si128(data, 2), _mm_srli_si128(data, 3));
+            s[2]                       = _mm_unpacklo_epi8(_mm_srli_si128(data, 4), _mm_srli_si128(data, 5));
+            s[3]                       = _mm_unpacklo_epi8(_mm_srli_si128(data, 6), _mm_srli_si128(data, 7));
             const __m128i res_lo       = convolve_lo_x(s, coeffs);
-            const __m128i res_lo_round = _mm_sra_epi32(_mm_add_epi32(res_lo, round_const),
-                                                       round_shift);
+            const __m128i res_lo_round = _mm_sra_epi32(_mm_add_epi32(res_lo, round_const), round_shift);
             const __m128i res_lo_shift = _mm_sll_epi32(res_lo_round, left_shift);
 
             const __m128i res_16b      = _mm_packs_epi32(res_lo_shift, res_lo_shift);
@@ -159,8 +154,7 @@ void svt_av1_jnt_convolve_x_sse2(const uint8_t *src, int32_t src_stride, uint8_t
             if (do_average) {
                 const __m128i data_ref_0 = _mm_loadu_si128((__m128i *)dst);
 
-                const __m128i comp_avg_res = comp_avg(
-                    &data_ref_0, &res_unsigned, &wt, use_jnt_comp_avg);
+                const __m128i comp_avg_res = comp_avg(&data_ref_0, &res_unsigned, &wt, use_jnt_comp_avg);
 
                 const __m128i round_result = convolve_rounding(
                     &comp_avg_res, &offset_const, &rounding_const, rounding_shift);
@@ -200,10 +194,8 @@ void svt_av1_jnt_convolve_x_sse2(const uint8_t *src, int32_t src_stride, uint8_t
                 // Rearrange pixels back into the order 0 ... 7
                 const __m128i res_lo       = _mm_unpacklo_epi32(res_even, res_odd);
                 const __m128i res_hi       = _mm_unpackhi_epi32(res_even, res_odd);
-                const __m128i res_lo_round = _mm_sra_epi32(_mm_add_epi32(res_lo, round_const),
-                                                           round_shift);
-                const __m128i res_hi_round = _mm_sra_epi32(_mm_add_epi32(res_hi, round_const),
-                                                           round_shift);
+                const __m128i res_lo_round = _mm_sra_epi32(_mm_add_epi32(res_lo, round_const), round_shift);
+                const __m128i res_hi_round = _mm_sra_epi32(_mm_add_epi32(res_hi, round_const), round_shift);
                 const __m128i res_lo_shift = _mm_sll_epi32(res_lo_round, left_shift);
                 const __m128i res_hi_shift = _mm_sll_epi32(res_hi_round, left_shift);
 
@@ -212,11 +204,9 @@ void svt_av1_jnt_convolve_x_sse2(const uint8_t *src, int32_t src_stride, uint8_t
 
                 // Accumulate values into the destination buffer
                 if (do_average) {
-                    const __m128i data_ref_0 = _mm_loadu_si128(
-                        (__m128i *)(&dst[i * dst_stride + j]));
+                    const __m128i data_ref_0 = _mm_loadu_si128((__m128i *)(&dst[i * dst_stride + j]));
 
-                    const __m128i comp_avg_res = comp_avg(
-                        &data_ref_0, &res_unsigned, &wt, use_jnt_comp_avg);
+                    const __m128i comp_avg_res = comp_avg(&data_ref_0, &res_unsigned, &wt, use_jnt_comp_avg);
 
                     const __m128i round_result = convolve_rounding(
                         &comp_avg_res, &offset_const, &rounding_const, rounding_shift);
@@ -232,11 +222,9 @@ void svt_av1_jnt_convolve_x_sse2(const uint8_t *src, int32_t src_stride, uint8_t
     }
 }
 
-void svt_av1_jnt_convolve_y_sse2(const uint8_t *src, int32_t src_stride, uint8_t *dst8,
-                                 int32_t dst8_stride, int32_t w, int32_t h,
-                                 InterpFilterParams *filter_params_x,
-                                 InterpFilterParams *filter_params_y, const int32_t subpel_x_q4,
-                                 const int32_t subpel_y_q4, ConvolveParams *conv_params) {
+void svt_av1_jnt_convolve_y_sse2(const uint8_t *src, int32_t src_stride, uint8_t *dst8, int32_t dst8_stride, int32_t w,
+                                 int32_t h, InterpFilterParams *filter_params_x, InterpFilterParams *filter_params_y,
+                                 const int32_t subpel_x_q4, const int32_t subpel_y_q4, ConvolveParams *conv_params) {
     const int      bd               = 8;
     CONV_BUF_TYPE *dst              = conv_params->dst;
     const int      dst_stride       = conv_params->dst_stride;
@@ -249,13 +237,13 @@ void svt_av1_jnt_convolve_y_sse2(const uint8_t *src, int32_t src_stride, uint8_t
     const __m128i  wt               = _mm_unpacklo_epi16(wt0, wt1);
     const int      do_average       = conv_params->do_average;
     const int      use_jnt_comp_avg = conv_params->use_jnt_comp_avg;
-    const int      offset_0 = bd + 2 * FILTER_BITS - conv_params->round_0 - conv_params->round_1;
-    const int      offset   = (1 << offset_0) + (1 << (offset_0 - 1));
-    const __m128i  offset_const   = _mm_set1_epi16(offset);
-    const int      rounding_shift = 2 * FILTER_BITS - conv_params->round_0 - conv_params->round_1;
-    const __m128i  rounding_const = _mm_set1_epi16((1 << rounding_shift) >> 1);
-    const __m128i  round_const    = _mm_set1_epi32((1 << conv_params->round_1) >> 1);
-    const __m128i  round_shift    = _mm_cvtsi32_si128(conv_params->round_1);
+    const int      offset_0         = bd + 2 * FILTER_BITS - conv_params->round_0 - conv_params->round_1;
+    const int      offset           = (1 << offset_0) + (1 << (offset_0 - 1));
+    const __m128i  offset_const     = _mm_set1_epi16(offset);
+    const int      rounding_shift   = 2 * FILTER_BITS - conv_params->round_0 - conv_params->round_1;
+    const __m128i  rounding_const   = _mm_set1_epi16((1 << rounding_shift) >> 1);
+    const __m128i  round_const      = _mm_set1_epi32((1 << conv_params->round_1) >> 1);
+    const __m128i  round_shift      = _mm_cvtsi32_si128(conv_params->round_1);
     __m128i        coeffs[4];
 
     prepare_coeffs(filter_params_y, subpel_y_q4, coeffs);
@@ -287,11 +275,9 @@ void svt_av1_jnt_convolve_y_sse2(const uint8_t *src, int32_t src_stride, uint8_t
         s[5] = _mm_unpacklo_epi8(_mm_cvtsi32_si128(*(uint32_t *)(src_ptr + 5 * src_stride)), src6);
 
         do {
-            s[6] = _mm_unpacklo_epi8(src6,
-                                     _mm_cvtsi32_si128(*(uint32_t *)(src_ptr + 7 * src_stride)));
+            s[6] = _mm_unpacklo_epi8(src6, _mm_cvtsi32_si128(*(uint32_t *)(src_ptr + 7 * src_stride)));
             src6 = _mm_cvtsi32_si128(*(uint32_t *)(src_ptr + 8 * src_stride));
-            s[7] = _mm_unpacklo_epi8(_mm_cvtsi32_si128(*(uint32_t *)(src_ptr + 7 * src_stride)),
-                                     src6);
+            s[7] = _mm_unpacklo_epi8(_mm_cvtsi32_si128(*(uint32_t *)(src_ptr + 7 * src_stride)), src6);
 
             res       = convolve_lo_y(s + 0, coeffs);
             res_shift = _mm_sll_epi32(res, left_shift);
@@ -304,8 +290,7 @@ void svt_av1_jnt_convolve_y_sse2(const uint8_t *src, int32_t src_stride, uint8_t
             if (do_average) {
                 const __m128i data_ref_0 = _mm_loadu_si128((__m128i *)dst);
 
-                const __m128i comp_avg_res = comp_avg(
-                    &data_ref_0, &res_unsigned, &wt, use_jnt_comp_avg);
+                const __m128i comp_avg_res = comp_avg(&data_ref_0, &res_unsigned, &wt, use_jnt_comp_avg);
 
                 const __m128i round_result = convolve_rounding(
                     &comp_avg_res, &offset_const, &rounding_const, rounding_shift);
@@ -332,8 +317,7 @@ void svt_av1_jnt_convolve_y_sse2(const uint8_t *src, int32_t src_stride, uint8_t
             if (do_average) {
                 const __m128i data_ref_0 = _mm_loadu_si128((__m128i *)dst);
 
-                const __m128i comp_avg_res = comp_avg(
-                    &data_ref_0, &res_unsigned, &wt, use_jnt_comp_avg);
+                const __m128i comp_avg_res = comp_avg(&data_ref_0, &res_unsigned, &wt, use_jnt_comp_avg);
 
                 const __m128i round_result = convolve_rounding(
                     &comp_avg_res, &offset_const, &rounding_const, rounding_shift);
@@ -396,11 +380,9 @@ void svt_av1_jnt_convolve_y_sse2(const uint8_t *src, int32_t src_stride, uint8_t
 
                 // Accumulate values into the destination buffer
                 if (do_average) {
-                    const __m128i data_ref_0 = _mm_loadu_si128(
-                        (__m128i *)(&dst[i * dst_stride + j]));
+                    const __m128i data_ref_0 = _mm_loadu_si128((__m128i *)(&dst[i * dst_stride + j]));
 
-                    const __m128i comp_avg_res = comp_avg(
-                        &data_ref_0, &res_unsigned, &wt, use_jnt_comp_avg);
+                    const __m128i comp_avg_res = comp_avg(&data_ref_0, &res_unsigned, &wt, use_jnt_comp_avg);
 
                     const __m128i round_result = convolve_rounding(
                         &comp_avg_res, &offset_const, &rounding_const, rounding_shift);
@@ -425,8 +407,7 @@ void svt_av1_jnt_convolve_y_sse2(const uint8_t *src, int32_t src_stride, uint8_t
                 if (do_average) {
                     __m128i data_ref_0 = _mm_loadu_si128((__m128i *)(&dst[i * dst_stride + j]));
 
-                    const __m128i comp_avg_res = comp_avg(
-                        &data_ref_0, &res_unsigned, &wt, use_jnt_comp_avg);
+                    const __m128i comp_avg_res = comp_avg(&data_ref_0, &res_unsigned, &wt, use_jnt_comp_avg);
 
                     const __m128i round_result = convolve_rounding(
                         &comp_avg_res, &offset_const, &rounding_const, rounding_shift);

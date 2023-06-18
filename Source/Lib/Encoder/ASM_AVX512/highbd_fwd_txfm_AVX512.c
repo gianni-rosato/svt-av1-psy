@@ -23,8 +23,7 @@ const int32_t *sinpi_arr(int32_t n);
 
 void svt_aom_transform_config(TxType tx_type, TxSize tx_size, Txfm2dFlipCfg *cfg);
 
-typedef void (*fwd_transform_1d_avx512)(const __m512i *in, __m512i *out, const int8_t bit,
-                                        const int32_t num_cols);
+typedef void (*fwd_transform_1d_avx512)(const __m512i *in, __m512i *out, const int8_t bit, const int32_t num_cols);
 
 #define btf_32_type0_avx512_new(ww0, ww1, in0, in1, out0, out1, r, bit) \
     do {                                                                \
@@ -46,14 +45,13 @@ typedef void (*fwd_transform_1d_avx512)(const __m512i *in, __m512i *out, const i
     do { btf_32_type0_avx512_new(ww1, ww0, in1, in0, out0, out1, r, bit); } while (0)
 
 static const int8_t *fwd_txfm_shift_ls[TX_SIZES_ALL] = {
-    fwd_shift_4x4,   fwd_shift_8x8,   fwd_shift_16x16, fwd_shift_32x32, fwd_shift_64x64,
-    fwd_shift_4x8,   fwd_shift_8x4,   fwd_shift_8x16,  fwd_shift_16x8,  fwd_shift_16x32,
-    fwd_shift_32x16, fwd_shift_32x64, fwd_shift_64x32, fwd_shift_4x16,  fwd_shift_16x4,
-    fwd_shift_8x32,  fwd_shift_32x8,  fwd_shift_16x64, fwd_shift_64x16,
+    fwd_shift_4x4,  fwd_shift_8x8,  fwd_shift_16x16, fwd_shift_32x32, fwd_shift_64x64, fwd_shift_4x8,   fwd_shift_8x4,
+    fwd_shift_8x16, fwd_shift_16x8, fwd_shift_16x32, fwd_shift_32x16, fwd_shift_32x64, fwd_shift_64x32, fwd_shift_4x16,
+    fwd_shift_16x4, fwd_shift_8x32, fwd_shift_32x8,  fwd_shift_16x64, fwd_shift_64x16,
 };
 
-static INLINE void load_buffer_16x16_avx512(const int16_t *input, __m512i *out, int32_t stride,
-                                            int32_t flipud, int32_t fliplr, const int8_t shift) {
+static INLINE void load_buffer_16x16_avx512(const int16_t *input, __m512i *out, int32_t stride, int32_t flipud,
+                                            int32_t fliplr, const int8_t shift) {
     __m256i temp[16];
     uint8_t ushift = (uint8_t)shift;
     if (flipud) {
@@ -82,8 +80,7 @@ static INLINE void load_buffer_16x16_avx512(const int16_t *input, __m512i *out, 
     }
 }
 
-static void fidtx16x16_avx512(const __m512i *in, __m512i *out, const int8_t bit,
-                              const int32_t col_num) {
+static void fidtx16x16_avx512(const __m512i *in, __m512i *out, const int8_t bit, const int32_t col_num) {
     (void)bit;
     const uint8_t bits     = 12; // new_sqrt2_bits = 12
     const int32_t sqrt     = 2 * 5793; // 2 * new_sqrt2
@@ -115,8 +112,8 @@ static INLINE void write_buffer_16x16(const __m512i *res, int32_t *output) {
     }
 }
 
-static INLINE __m512i half_btf_avx512(const __m512i *w0, const __m512i *n0, const __m512i *w1,
-                                      const __m512i *n1, const __m512i *rounding, uint8_t bit) {
+static INLINE __m512i half_btf_avx512(const __m512i *w0, const __m512i *n0, const __m512i *w1, const __m512i *n1,
+                                      const __m512i *rounding, uint8_t bit) {
     __m512i x, y;
 
     x = _mm512_mullo_epi32(*w0, *n0);
@@ -127,8 +124,7 @@ static INLINE __m512i half_btf_avx512(const __m512i *w0, const __m512i *n0, cons
     return x;
 }
 
-static void fadst16x16_avx512(const __m512i *in, __m512i *out, const int8_t bit,
-                              const int32_t col_num) {
+static void fadst16x16_avx512(const __m512i *in, __m512i *out, const int8_t bit, const int32_t col_num) {
     const int32_t *cospi    = cospi_arr(bit);
     const __m512i  cospi32  = _mm512_set1_epi32(cospi[32]);
     const __m512i  cospi48  = _mm512_set1_epi32(cospi[48]);
@@ -311,17 +307,14 @@ static void fadst16x16_avx512(const __m512i *in, __m512i *out, const int8_t bit,
         out[7 * col_num + col]  = half_btf_avx512(&cospi34, &u[8], &cospi30, &u[9], &rnding, bit);
         out[8 * col_num + col]  = half_btf_avx512(&cospi30, &u[8], &cospim34, &u[9], &rnding, bit);
         out[5 * col_num + col]  = half_btf_avx512(&cospi42, &u[10], &cospi22, &u[11], &rnding, bit);
-        out[10 * col_num + col] = half_btf_avx512(
-            &cospi22, &u[10], &cospim42, &u[11], &rnding, bit);
+        out[10 * col_num + col] = half_btf_avx512(&cospi22, &u[10], &cospim42, &u[11], &rnding, bit);
         out[3 * col_num + col]  = half_btf_avx512(&cospi50, &u[12], &cospi14, &u[13], &rnding, bit);
-        out[12 * col_num + col] = half_btf_avx512(
-            &cospi14, &u[12], &cospim50, &u[13], &rnding, bit);
+        out[12 * col_num + col] = half_btf_avx512(&cospi14, &u[12], &cospim50, &u[13], &rnding, bit);
         out[1 * col_num + col]  = half_btf_avx512(&cospi58, &u[14], &cospi6, &u[15], &rnding, bit);
         out[14 * col_num + col] = half_btf_avx512(&cospi6, &u[14], &cospim58, &u[15], &rnding, bit);
     }
 }
-static void fdct16x16_avx512(const __m512i *in, __m512i *out, const int8_t bit,
-                             const int32_t col_num) {
+static void fdct16x16_avx512(const __m512i *in, __m512i *out, const int8_t bit, const int32_t col_num) {
     const int32_t *cospi    = cospi_arr(bit);
     const __m512i  cospi32  = _mm512_set1_epi32(cospi[32]);
     const __m512i  cospim32 = _mm512_set1_epi32(-cospi[32]);
@@ -563,8 +556,7 @@ static void fdct16x16_avx512(const __m512i *in, __m512i *out, const int8_t bit,
     }
 }
 
-void av1_fwd_txfm2d_16x16_avx512(int16_t *input, int32_t *coeff, uint32_t stride, TxType tx_type,
-                                 uint8_t bd) {
+void av1_fwd_txfm2d_16x16_avx512(int16_t *input, int32_t *coeff, uint32_t stride, TxType tx_type, uint8_t bd) {
     __m512i       in[16], out[16];
     const int8_t *shift   = fwd_txfm_shift_ls[TX_16X16];
     const int32_t txw_idx = get_txw_idx(TX_16X16);
@@ -712,8 +704,8 @@ void av1_fwd_txfm2d_16x16_avx512(int16_t *input, int32_t *coeff, uint32_t stride
     (void)bd;
 }
 
-static void av1_fdct32_new_avx512(const __m512i *input, __m512i *output, const int8_t cos_bit,
-                                  const int32_t col_num, const int32_t stride) {
+static void av1_fdct32_new_avx512(const __m512i *input, __m512i *output, const int8_t cos_bit, const int32_t col_num,
+                                  const int32_t stride) {
     const int32_t *cospi      = cospi_arr(cos_bit);
     const __m512i  __rounding = _mm512_set1_epi32(1 << (cos_bit - 1));
     const int32_t  columns    = col_num >> 4;
@@ -816,14 +808,10 @@ static void av1_fdct32_new_avx512(const __m512i *input, __m512i *output, const i
         buf0[9]  = _mm512_sub_epi32(buf1[6], buf1[9]);
         buf0[7]  = _mm512_add_epi32(buf1[7], buf1[8]);
         buf0[8]  = _mm512_sub_epi32(buf1[7], buf1[8]);
-        btf_32_type0_avx512_new(
-            cospi_m32, cospi_p32, buf1[20], buf1[27], buf0[20], buf0[27], __rounding, cos_bit);
-        btf_32_type0_avx512_new(
-            cospi_m32, cospi_p32, buf1[21], buf1[26], buf0[21], buf0[26], __rounding, cos_bit);
-        btf_32_type0_avx512_new(
-            cospi_m32, cospi_p32, buf1[22], buf1[25], buf0[22], buf0[25], __rounding, cos_bit);
-        btf_32_type0_avx512_new(
-            cospi_m32, cospi_p32, buf1[23], buf1[24], buf0[23], buf0[24], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m32, cospi_p32, buf1[20], buf1[27], buf0[20], buf0[27], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m32, cospi_p32, buf1[21], buf1[26], buf0[21], buf0[26], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m32, cospi_p32, buf1[22], buf1[25], buf0[22], buf0[25], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m32, cospi_p32, buf1[23], buf1[24], buf0[23], buf0[24], __rounding, cos_bit);
 
         // stage 3
         buf1[0] = _mm512_add_epi32(buf0[0], buf0[7]);
@@ -834,10 +822,8 @@ static void av1_fdct32_new_avx512(const __m512i *input, __m512i *output, const i
         buf1[5] = _mm512_sub_epi32(buf0[2], buf0[5]);
         buf1[3] = _mm512_add_epi32(buf0[3], buf0[4]);
         buf1[4] = _mm512_sub_epi32(buf0[3], buf0[4]);
-        btf_32_type0_avx512_new(
-            cospi_m32, cospi_p32, buf0[10], buf0[13], buf1[10], buf1[13], __rounding, cos_bit);
-        btf_32_type0_avx512_new(
-            cospi_m32, cospi_p32, buf0[11], buf0[12], buf1[11], buf1[12], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m32, cospi_p32, buf0[10], buf0[13], buf1[10], buf1[13], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m32, cospi_p32, buf0[11], buf0[12], buf1[11], buf1[12], __rounding, cos_bit);
         buf1[23] = _mm512_sub_epi32(buf1[16], buf0[23]);
         buf1[16] = _mm512_add_epi32(buf1[16], buf0[23]);
         buf1[22] = _mm512_sub_epi32(buf1[17], buf0[22]);
@@ -860,8 +846,7 @@ static void av1_fdct32_new_avx512(const __m512i *input, __m512i *output, const i
         buf0[3] = _mm512_sub_epi32(buf1[0], buf1[3]);
         buf0[1] = _mm512_add_epi32(buf1[1], buf1[2]);
         buf0[2] = _mm512_sub_epi32(buf1[1], buf1[2]);
-        btf_32_type0_avx512_new(
-            cospi_m32, cospi_p32, buf1[5], buf1[6], buf0[5], buf0[6], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m32, cospi_p32, buf1[5], buf1[6], buf0[5], buf0[6], __rounding, cos_bit);
         buf0[11] = _mm512_sub_epi32(buf0[8], buf1[11]);
         buf0[8]  = _mm512_add_epi32(buf0[8], buf1[11]);
         buf0[10] = _mm512_sub_epi32(buf0[9], buf1[10]);
@@ -870,40 +855,22 @@ static void av1_fdct32_new_avx512(const __m512i *input, __m512i *output, const i
         buf0[15] = _mm512_add_epi32(buf0[15], buf1[12]);
         buf0[13] = _mm512_sub_epi32(buf0[14], buf1[13]);
         buf0[14] = _mm512_add_epi32(buf0[14], buf1[13]);
-        btf_32_type0_avx512_new(
-            cospi_m16, cospi_p48, buf1[18], buf1[29], buf0[18], buf0[29], __rounding, cos_bit);
-        btf_32_type0_avx512_new(
-            cospi_m16, cospi_p48, buf1[19], buf1[28], buf0[19], buf0[28], __rounding, cos_bit);
-        btf_32_type0_avx512_new(
-            cospi_m48, cospi_m16, buf1[20], buf1[27], buf0[20], buf0[27], __rounding, cos_bit);
-        btf_32_type0_avx512_new(
-            cospi_m48, cospi_m16, buf1[21], buf1[26], buf0[21], buf0[26], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m16, cospi_p48, buf1[18], buf1[29], buf0[18], buf0[29], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m16, cospi_p48, buf1[19], buf1[28], buf0[19], buf0[28], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m48, cospi_m16, buf1[20], buf1[27], buf0[20], buf0[27], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m48, cospi_m16, buf1[21], buf1[26], buf0[21], buf0[26], __rounding, cos_bit);
 
         // stage 5
-        btf_32_type0_avx512_new(cospi_p32,
-                                cospi_p32,
-                                buf0[0],
-                                buf0[1],
-                                out[0 * stride],
-                                out[16 * stride],
-                                __rounding,
-                                cos_bit);
-        btf_32_type1_avx512_new(cospi_p48,
-                                cospi_p16,
-                                buf0[2],
-                                buf0[3],
-                                out[8 * stride],
-                                out[24 * stride],
-                                __rounding,
-                                cos_bit);
+        btf_32_type0_avx512_new(
+            cospi_p32, cospi_p32, buf0[0], buf0[1], out[0 * stride], out[16 * stride], __rounding, cos_bit);
+        btf_32_type1_avx512_new(
+            cospi_p48, cospi_p16, buf0[2], buf0[3], out[8 * stride], out[24 * stride], __rounding, cos_bit);
         buf1[5] = _mm512_sub_epi32(buf1[4], buf0[5]);
         buf1[4] = _mm512_add_epi32(buf1[4], buf0[5]);
         buf1[6] = _mm512_sub_epi32(buf1[7], buf0[6]);
         buf1[7] = _mm512_add_epi32(buf1[7], buf0[6]);
-        btf_32_type0_avx512_new(
-            cospi_m16, cospi_p48, buf0[9], buf0[14], buf1[9], buf1[14], __rounding, cos_bit);
-        btf_32_type0_avx512_new(
-            cospi_m48, cospi_m16, buf0[10], buf0[13], buf1[10], buf1[13], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m16, cospi_p48, buf0[9], buf0[14], buf1[9], buf1[14], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m48, cospi_m16, buf0[10], buf0[13], buf1[10], buf1[13], __rounding, cos_bit);
         buf1[19] = _mm512_sub_epi32(buf1[16], buf0[19]);
         buf1[16] = _mm512_add_epi32(buf1[16], buf0[19]);
         buf1[18] = _mm512_sub_epi32(buf1[17], buf0[18]);
@@ -922,22 +889,10 @@ static void av1_fdct32_new_avx512(const __m512i *input, __m512i *output, const i
         buf1[30] = _mm512_add_epi32(buf1[30], buf0[29]);
 
         // stage 6
-        btf_32_type1_avx512_new(cospi_p56,
-                                cospi_p08,
-                                buf1[4],
-                                buf1[7],
-                                out[4 * stride],
-                                out[28 * stride],
-                                __rounding,
-                                cos_bit);
-        btf_32_type1_avx512_new(cospi_p24,
-                                cospi_p40,
-                                buf1[5],
-                                buf1[6],
-                                out[20 * stride],
-                                out[12 * stride],
-                                __rounding,
-                                cos_bit);
+        btf_32_type1_avx512_new(
+            cospi_p56, cospi_p08, buf1[4], buf1[7], out[4 * stride], out[28 * stride], __rounding, cos_bit);
+        btf_32_type1_avx512_new(
+            cospi_p24, cospi_p40, buf1[5], buf1[6], out[20 * stride], out[12 * stride], __rounding, cos_bit);
         buf0[9]  = _mm512_sub_epi32(buf0[8], buf1[9]);
         buf0[8]  = _mm512_add_epi32(buf0[8], buf1[9]);
         buf0[10] = _mm512_sub_epi32(buf0[11], buf1[10]);
@@ -946,48 +901,20 @@ static void av1_fdct32_new_avx512(const __m512i *input, __m512i *output, const i
         buf0[12] = _mm512_add_epi32(buf0[12], buf1[13]);
         buf0[14] = _mm512_sub_epi32(buf0[15], buf1[14]);
         buf0[15] = _mm512_add_epi32(buf0[15], buf1[14]);
-        btf_32_type0_avx512_new(
-            cospi_m08, cospi_p56, buf1[17], buf1[30], buf0[17], buf0[30], __rounding, cos_bit);
-        btf_32_type0_avx512_new(
-            cospi_m56, cospi_m08, buf1[18], buf1[29], buf0[18], buf0[29], __rounding, cos_bit);
-        btf_32_type0_avx512_new(
-            cospi_m40, cospi_p24, buf1[21], buf1[26], buf0[21], buf0[26], __rounding, cos_bit);
-        btf_32_type0_avx512_new(
-            cospi_m24, cospi_m40, buf1[22], buf1[25], buf0[22], buf0[25], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m08, cospi_p56, buf1[17], buf1[30], buf0[17], buf0[30], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m56, cospi_m08, buf1[18], buf1[29], buf0[18], buf0[29], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m40, cospi_p24, buf1[21], buf1[26], buf0[21], buf0[26], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m24, cospi_m40, buf1[22], buf1[25], buf0[22], buf0[25], __rounding, cos_bit);
 
         // stage 7
-        btf_32_type1_avx512_new(cospi_p60,
-                                cospi_p04,
-                                buf0[8],
-                                buf0[15],
-                                out[2 * stride],
-                                out[30 * stride],
-                                __rounding,
-                                cos_bit);
-        btf_32_type1_avx512_new(cospi_p28,
-                                cospi_p36,
-                                buf0[9],
-                                buf0[14],
-                                out[18 * stride],
-                                out[14 * stride],
-                                __rounding,
-                                cos_bit);
-        btf_32_type1_avx512_new(cospi_p44,
-                                cospi_p20,
-                                buf0[10],
-                                buf0[13],
-                                out[10 * stride],
-                                out[22 * stride],
-                                __rounding,
-                                cos_bit);
-        btf_32_type1_avx512_new(cospi_p12,
-                                cospi_p52,
-                                buf0[11],
-                                buf0[12],
-                                out[26 * stride],
-                                out[6 * stride],
-                                __rounding,
-                                cos_bit);
+        btf_32_type1_avx512_new(
+            cospi_p60, cospi_p04, buf0[8], buf0[15], out[2 * stride], out[30 * stride], __rounding, cos_bit);
+        btf_32_type1_avx512_new(
+            cospi_p28, cospi_p36, buf0[9], buf0[14], out[18 * stride], out[14 * stride], __rounding, cos_bit);
+        btf_32_type1_avx512_new(
+            cospi_p44, cospi_p20, buf0[10], buf0[13], out[10 * stride], out[22 * stride], __rounding, cos_bit);
+        btf_32_type1_avx512_new(
+            cospi_p12, cospi_p52, buf0[11], buf0[12], out[26 * stride], out[6 * stride], __rounding, cos_bit);
         buf1[17] = _mm512_sub_epi32(buf1[16], buf0[17]);
         buf1[16] = _mm512_add_epi32(buf1[16], buf0[17]);
         buf1[18] = _mm512_sub_epi32(buf1[19], buf0[18]);
@@ -1006,70 +933,22 @@ static void av1_fdct32_new_avx512(const __m512i *input, __m512i *output, const i
         buf1[31] = _mm512_add_epi32(buf1[31], buf0[30]);
 
         // stage 8
-        btf_32_type1_avx512_new(cospi_p62,
-                                cospi_p02,
-                                buf1[16],
-                                buf1[31],
-                                out[1 * stride],
-                                out[31 * stride],
-                                __rounding,
-                                cos_bit);
-        btf_32_type1_avx512_new(cospi_p30,
-                                cospi_p34,
-                                buf1[17],
-                                buf1[30],
-                                out[17 * stride],
-                                out[15 * stride],
-                                __rounding,
-                                cos_bit);
-        btf_32_type1_avx512_new(cospi_p46,
-                                cospi_p18,
-                                buf1[18],
-                                buf1[29],
-                                out[9 * stride],
-                                out[23 * stride],
-                                __rounding,
-                                cos_bit);
-        btf_32_type1_avx512_new(cospi_p14,
-                                cospi_p50,
-                                buf1[19],
-                                buf1[28],
-                                out[25 * stride],
-                                out[7 * stride],
-                                __rounding,
-                                cos_bit);
-        btf_32_type1_avx512_new(cospi_p54,
-                                cospi_p10,
-                                buf1[20],
-                                buf1[27],
-                                out[5 * stride],
-                                out[27 * stride],
-                                __rounding,
-                                cos_bit);
-        btf_32_type1_avx512_new(cospi_p22,
-                                cospi_p42,
-                                buf1[21],
-                                buf1[26],
-                                out[21 * stride],
-                                out[11 * stride],
-                                __rounding,
-                                cos_bit);
-        btf_32_type1_avx512_new(cospi_p38,
-                                cospi_p26,
-                                buf1[22],
-                                buf1[25],
-                                out[13 * stride],
-                                out[19 * stride],
-                                __rounding,
-                                cos_bit);
-        btf_32_type1_avx512_new(cospi_p06,
-                                cospi_p58,
-                                buf1[23],
-                                buf1[24],
-                                out[29 * stride],
-                                out[3 * stride],
-                                __rounding,
-                                cos_bit);
+        btf_32_type1_avx512_new(
+            cospi_p62, cospi_p02, buf1[16], buf1[31], out[1 * stride], out[31 * stride], __rounding, cos_bit);
+        btf_32_type1_avx512_new(
+            cospi_p30, cospi_p34, buf1[17], buf1[30], out[17 * stride], out[15 * stride], __rounding, cos_bit);
+        btf_32_type1_avx512_new(
+            cospi_p46, cospi_p18, buf1[18], buf1[29], out[9 * stride], out[23 * stride], __rounding, cos_bit);
+        btf_32_type1_avx512_new(
+            cospi_p14, cospi_p50, buf1[19], buf1[28], out[25 * stride], out[7 * stride], __rounding, cos_bit);
+        btf_32_type1_avx512_new(
+            cospi_p54, cospi_p10, buf1[20], buf1[27], out[5 * stride], out[27 * stride], __rounding, cos_bit);
+        btf_32_type1_avx512_new(
+            cospi_p22, cospi_p42, buf1[21], buf1[26], out[21 * stride], out[11 * stride], __rounding, cos_bit);
+        btf_32_type1_avx512_new(
+            cospi_p38, cospi_p26, buf1[22], buf1[25], out[13 * stride], out[19 * stride], __rounding, cos_bit);
+        btf_32_type1_avx512_new(
+            cospi_p06, cospi_p58, buf1[23], buf1[24], out[29 * stride], out[3 * stride], __rounding, cos_bit);
     }
 }
 
@@ -1082,25 +961,18 @@ static INLINE void fdct32x32_avx512(const __m512i *input, __m512i *output, const
     av1_fdct32_new_avx512(input, output, cos_bit, txfm_size, col_num);
 }
 
-void av1_idtx32_new_avx512(const __m512i *input, __m512i *output, const int8_t cos_bit,
-                           const int32_t col_num) {
+void av1_idtx32_new_avx512(const __m512i *input, __m512i *output, const int8_t cos_bit, const int32_t col_num) {
     (void)cos_bit;
-    for (int32_t i = 0; i < 32; i++) {
-        output[i * col_num] = _mm512_slli_epi32(input[i * col_num], (uint8_t)2);
-    }
+    for (int32_t i = 0; i < 32; i++) { output[i * col_num] = _mm512_slli_epi32(input[i * col_num], (uint8_t)2); }
 }
 
-static void fidtx32x32_avx512(const __m512i *input, __m512i *output, const int8_t cos_bit,
-                              const int8_t *stage_range) {
+static void fidtx32x32_avx512(const __m512i *input, __m512i *output, const int8_t cos_bit, const int8_t *stage_range) {
     (void)stage_range;
 
-    for (int32_t i = 0; i < 2; i++) {
-        av1_idtx32_new_avx512(&input[i * 32], &output[i * 32], cos_bit, 1);
-    }
+    for (int32_t i = 0; i < 2; i++) { av1_idtx32_new_avx512(&input[i * 32], &output[i * 32], cos_bit, 1); }
 }
 
-typedef void (*TxfmFuncAVX512)(const __m512i *input, __m512i *output, const int8_t cos_bit,
-                               const int8_t *stage_range);
+typedef void (*TxfmFuncAVX512)(const __m512i *input, __m512i *output, const int8_t cos_bit, const int8_t *stage_range);
 
 static INLINE TxfmFuncAVX512 fwd_txfm_type_to_func_avx512(TxfmType txfmtype) {
     switch (txfmtype) {
@@ -1127,23 +999,19 @@ static INLINE void load_buffer_32x32_avx512(const int16_t *input, __m512i *outpu
     }
 }
 
-static INLINE void av1_round_shift_array_avx512(__m512i *input, __m512i *output, const int32_t size,
-                                                const int8_t bit) {
+static INLINE void av1_round_shift_array_avx512(__m512i *input, __m512i *output, const int32_t size, const int8_t bit) {
     if (bit > 0) {
         __m512i round = _mm512_set1_epi32(1 << (bit - 1));
         int32_t i;
-        for (i = 0; i < size; i++) {
-            output[i] = _mm512_srai_epi32(_mm512_add_epi32(input[i], round), (uint8_t)bit);
-        }
+        for (i = 0; i < size; i++) { output[i] = _mm512_srai_epi32(_mm512_add_epi32(input[i], round), (uint8_t)bit); }
     } else {
         int32_t i;
         for (i = 0; i < size; i++) { output[i] = _mm512_slli_epi32(input[i], (uint8_t)(-bit)); }
     }
 }
 
-static INLINE void fwd_txfm2d_32x32_avx512(const int16_t *input, int32_t *output,
-                                           const int32_t stride, const Txfm2dFlipCfg *cfg,
-                                           int32_t *txfm_buf) {
+static INLINE void fwd_txfm2d_32x32_avx512(const int16_t *input, int32_t *output, const int32_t stride,
+                                           const Txfm2dFlipCfg *cfg, int32_t *txfm_buf) {
     assert(cfg->tx_size < TX_SIZES);
     const int32_t        txfm_size       = tx_size_wide[cfg->tx_size];
     const int8_t        *shift           = cfg->shift;
@@ -1170,8 +1038,7 @@ static INLINE void fwd_txfm2d_32x32_avx512(const int16_t *input, int32_t *output
     transpose_16nx16n_avx512(txfm_size, buf_512, out_512);
 }
 
-void av1_fwd_txfm2d_32x32_avx512(int16_t *input, int32_t *output, uint32_t stride, TxType tx_type,
-                                 uint8_t bd) {
+void av1_fwd_txfm2d_32x32_avx512(int16_t *input, int32_t *output, uint32_t stride, TxType tx_type, uint8_t bd) {
     DECLARE_ALIGNED(64, int32_t, txfm_buf[1024]);
     Txfm2dFlipCfg cfg;
     svt_aom_transform_config(tx_type, TX_32X32, &cfg);
@@ -1221,8 +1088,8 @@ static INLINE void load_buffer_64x64_avx512(const int16_t *input, int32_t stride
     }
 }
 
-static void av1_fdct64_new_avx512(const __m512i *input, __m512i *output, const int8_t cos_bit,
-                                  const int32_t col_num, const int32_t stride) {
+static void av1_fdct64_new_avx512(const __m512i *input, __m512i *output, const int8_t cos_bit, const int32_t col_num,
+                                  const int32_t stride) {
     const int32_t *cospi      = cospi_arr(cos_bit);
     const __m512i  __rounding = _mm512_set1_epi32(1 << (cos_bit - 1));
     const int32_t  columns    = col_num >> 4;
@@ -1411,22 +1278,14 @@ static void av1_fdct64_new_avx512(const __m512i *input, __m512i *output, const i
         x2[17] = _mm512_sub_epi32(x1[14], x1[17]);
         x2[15] = _mm512_add_epi32(x1[15], x1[16]);
         x2[16] = _mm512_sub_epi32(x1[15], x1[16]);
-        btf_32_type0_avx512_new(
-            cospi_m32, cospi_p32, x1[40], x1[55], x2[32], x2[47], __rounding, cos_bit);
-        btf_32_type0_avx512_new(
-            cospi_m32, cospi_p32, x1[41], x1[54], x2[33], x2[46], __rounding, cos_bit);
-        btf_32_type0_avx512_new(
-            cospi_m32, cospi_p32, x1[42], x1[53], x2[34], x2[45], __rounding, cos_bit);
-        btf_32_type0_avx512_new(
-            cospi_m32, cospi_p32, x1[43], x1[52], x2[35], x2[44], __rounding, cos_bit);
-        btf_32_type0_avx512_new(
-            cospi_m32, cospi_p32, x1[44], x1[51], x2[36], x2[43], __rounding, cos_bit);
-        btf_32_type0_avx512_new(
-            cospi_m32, cospi_p32, x1[45], x1[50], x2[37], x2[42], __rounding, cos_bit);
-        btf_32_type0_avx512_new(
-            cospi_m32, cospi_p32, x1[46], x1[49], x2[38], x2[41], __rounding, cos_bit);
-        btf_32_type0_avx512_new(
-            cospi_m32, cospi_p32, x1[47], x1[48], x2[39], x2[40], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m32, cospi_p32, x1[40], x1[55], x2[32], x2[47], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m32, cospi_p32, x1[41], x1[54], x2[33], x2[46], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m32, cospi_p32, x1[42], x1[53], x2[34], x2[45], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m32, cospi_p32, x1[43], x1[52], x2[35], x2[44], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m32, cospi_p32, x1[44], x1[51], x2[36], x2[43], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m32, cospi_p32, x1[45], x1[50], x2[37], x2[42], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m32, cospi_p32, x1[46], x1[49], x2[38], x2[41], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m32, cospi_p32, x1[47], x1[48], x2[39], x2[40], __rounding, cos_bit);
 
         // stage 3
         __m512i x3[56];
@@ -1446,14 +1305,10 @@ static void av1_fdct64_new_avx512(const __m512i *input, __m512i *output, const i
         x3[9]  = _mm512_sub_epi32(x2[6], x2[9]);
         x3[7]  = _mm512_add_epi32(x2[7], x2[8]);
         x3[8]  = _mm512_sub_epi32(x2[7], x2[8]);
-        btf_32_type0_avx512_new(
-            cospi_m32, cospi_p32, x2[20], x2[27], x3[16], x3[23], __rounding, cos_bit);
-        btf_32_type0_avx512_new(
-            cospi_m32, cospi_p32, x2[21], x2[26], x3[17], x3[22], __rounding, cos_bit);
-        btf_32_type0_avx512_new(
-            cospi_m32, cospi_p32, x2[22], x2[25], x3[18], x3[21], __rounding, cos_bit);
-        btf_32_type0_avx512_new(
-            cospi_m32, cospi_p32, x2[23], x2[24], x3[19], x3[20], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m32, cospi_p32, x2[20], x2[27], x3[16], x3[23], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m32, cospi_p32, x2[21], x2[26], x3[17], x3[22], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m32, cospi_p32, x2[22], x2[25], x3[18], x3[21], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m32, cospi_p32, x2[23], x2[24], x3[19], x3[20], __rounding, cos_bit);
         x3[32] = _mm512_add_epi32(x1[32], x2[39]);
         x3[47] = _mm512_sub_epi32(x1[32], x2[39]);
         x3[33] = _mm512_add_epi32(x1[33], x2[38]);
@@ -1497,10 +1352,8 @@ static void av1_fdct64_new_avx512(const __m512i *input, __m512i *output, const i
         x1[5] = _mm512_sub_epi32(x3[2], x3[5]);
         x1[3] = _mm512_add_epi32(x3[3], x3[4]);
         x1[4] = _mm512_sub_epi32(x3[3], x3[4]);
-        btf_32_type0_avx512_new(
-            cospi_m32, cospi_p32, x3[10], x3[13], x1[8], x1[11], __rounding, cos_bit);
-        btf_32_type0_avx512_new(
-            cospi_m32, cospi_p32, x3[11], x3[12], x1[9], x1[10], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m32, cospi_p32, x3[10], x3[13], x1[8], x1[11], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m32, cospi_p32, x3[11], x3[12], x1[9], x1[10], __rounding, cos_bit);
         x1[12] = _mm512_add_epi32(x2[16], x3[19]);
         x1[19] = _mm512_sub_epi32(x2[16], x3[19]);
         x1[13] = _mm512_add_epi32(x2[17], x3[18]);
@@ -1517,22 +1370,14 @@ static void av1_fdct64_new_avx512(const __m512i *input, __m512i *output, const i
         x1[25] = _mm512_add_epi32(x2[29], x3[22]);
         x1[23] = _mm512_sub_epi32(x2[28], x3[23]);
         x1[24] = _mm512_add_epi32(x2[28], x3[23]);
-        btf_32_type0_avx512_new(
-            cospi_m16, cospi_p48, x3[36], x3[28], x1[28], x1[43], __rounding, cos_bit);
-        btf_32_type0_avx512_new(
-            cospi_m16, cospi_p48, x3[37], x3[29], x1[29], x1[42], __rounding, cos_bit);
-        btf_32_type0_avx512_new(
-            cospi_m16, cospi_p48, x3[38], x3[30], x1[30], x1[41], __rounding, cos_bit);
-        btf_32_type0_avx512_new(
-            cospi_m16, cospi_p48, x3[39], x3[31], x1[31], x1[40], __rounding, cos_bit);
-        btf_32_type0_avx512_new(
-            cospi_m48, cospi_m16, x3[40], x3[55], x1[32], x1[39], __rounding, cos_bit);
-        btf_32_type0_avx512_new(
-            cospi_m48, cospi_m16, x3[41], x3[54], x1[33], x1[38], __rounding, cos_bit);
-        btf_32_type0_avx512_new(
-            cospi_m48, cospi_m16, x3[42], x3[53], x1[34], x1[37], __rounding, cos_bit);
-        btf_32_type0_avx512_new(
-            cospi_m48, cospi_m16, x3[43], x3[52], x1[35], x1[36], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m16, cospi_p48, x3[36], x3[28], x1[28], x1[43], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m16, cospi_p48, x3[37], x3[29], x1[29], x1[42], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m16, cospi_p48, x3[38], x3[30], x1[30], x1[41], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m16, cospi_p48, x3[39], x3[31], x1[31], x1[40], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m48, cospi_m16, x3[40], x3[55], x1[32], x1[39], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m48, cospi_m16, x3[41], x3[54], x1[33], x1[38], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m48, cospi_m16, x3[42], x3[53], x1[34], x1[37], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m48, cospi_m16, x3[43], x3[52], x1[35], x1[36], __rounding, cos_bit);
 
         // stage 5
         //__m512i x5[54]; replace with x2
@@ -1540,8 +1385,7 @@ static void av1_fdct64_new_avx512(const __m512i *input, __m512i *output, const i
         x2[3] = _mm512_sub_epi32(x1[0], x1[3]);
         x2[1] = _mm512_add_epi32(x1[1], x1[2]);
         x2[2] = _mm512_sub_epi32(x1[1], x1[2]);
-        btf_32_type0_avx512_new(
-            cospi_m32, cospi_p32, x1[5], x1[6], x2[4], x2[5], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m32, cospi_p32, x1[5], x1[6], x2[4], x2[5], __rounding, cos_bit);
         x2[6]  = _mm512_add_epi32(x3[8], x1[9]);
         x2[9]  = _mm512_sub_epi32(x3[8], x1[9]);
         x2[7]  = _mm512_add_epi32(x3[9], x1[8]);
@@ -1550,14 +1394,10 @@ static void av1_fdct64_new_avx512(const __m512i *input, __m512i *output, const i
         x2[13] = _mm512_add_epi32(x3[15], x1[10]);
         x2[11] = _mm512_sub_epi32(x3[14], x1[11]);
         x2[12] = _mm512_add_epi32(x3[14], x1[11]);
-        btf_32_type0_avx512_new(
-            cospi_m16, cospi_p48, x1[14], x1[25], x2[14], x2[21], __rounding, cos_bit);
-        btf_32_type0_avx512_new(
-            cospi_m16, cospi_p48, x1[15], x1[24], x2[15], x2[20], __rounding, cos_bit);
-        btf_32_type0_avx512_new(
-            cospi_m48, cospi_m16, x1[16], x1[23], x2[16], x2[19], __rounding, cos_bit);
-        btf_32_type0_avx512_new(
-            cospi_m48, cospi_m16, x1[17], x1[22], x2[17], x2[18], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m16, cospi_p48, x1[14], x1[25], x2[14], x2[21], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m16, cospi_p48, x1[15], x1[24], x2[15], x2[20], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m48, cospi_m16, x1[16], x1[23], x2[16], x2[19], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m48, cospi_m16, x1[17], x1[22], x2[17], x2[18], __rounding, cos_bit);
         x2[22] = _mm512_add_epi32(x3[32], x1[31]);
         x2[29] = _mm512_sub_epi32(x3[32], x1[31]);
         x2[23] = _mm512_add_epi32(x3[33], x1[30]);
@@ -1593,30 +1433,16 @@ static void av1_fdct64_new_avx512(const __m512i *input, __m512i *output, const i
 
         // stage 6
         //__m512i x6[40]; replace with x3
-        btf_32_type0_avx512_new(cospi_p32,
-                                cospi_p32,
-                                x2[0],
-                                x2[1],
-                                out[0 * stride],
-                                out[32 * stride],
-                                __rounding,
-                                cos_bit);
-        btf_32_type1_avx512_new(cospi_p48,
-                                cospi_p16,
-                                x2[2],
-                                x2[3],
-                                out[16 * stride],
-                                out[48 * stride],
-                                __rounding,
-                                cos_bit);
+        btf_32_type0_avx512_new(
+            cospi_p32, cospi_p32, x2[0], x2[1], out[0 * stride], out[32 * stride], __rounding, cos_bit);
+        btf_32_type1_avx512_new(
+            cospi_p48, cospi_p16, x2[2], x2[3], out[16 * stride], out[48 * stride], __rounding, cos_bit);
         x3[0] = _mm512_add_epi32(x1[4], x2[4]);
         x3[1] = _mm512_sub_epi32(x1[4], x2[4]);
         x3[2] = _mm512_sub_epi32(x1[7], x2[5]);
         x3[3] = _mm512_add_epi32(x1[7], x2[5]);
-        btf_32_type0_avx512_new(
-            cospi_m16, cospi_p48, x2[7], x2[12], x3[4], x3[7], __rounding, cos_bit);
-        btf_32_type0_avx512_new(
-            cospi_m48, cospi_m16, x2[8], x2[11], x3[5], x3[6], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m16, cospi_p48, x2[7], x2[12], x3[4], x3[7], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m48, cospi_m16, x2[8], x2[11], x3[5], x3[6], __rounding, cos_bit);
         x3[8]  = _mm512_add_epi32(x1[12], x2[15]);
         x3[11] = _mm512_sub_epi32(x1[12], x2[15]);
         x3[9]  = _mm512_add_epi32(x1[13], x2[14]);
@@ -1633,41 +1459,21 @@ static void av1_fdct64_new_avx512(const __m512i *input, __m512i *output, const i
         x3[23] = _mm512_add_epi32(x1[27], x2[20]);
         x3[21] = _mm512_sub_epi32(x1[26], x2[21]);
         x3[22] = _mm512_add_epi32(x1[26], x2[21]);
-        btf_32_type0_avx512_new(
-            cospi_m08, cospi_p56, x2[24], x2[51], x3[24], x3[39], __rounding, cos_bit);
-        btf_32_type0_avx512_new(
-            cospi_m08, cospi_p56, x2[25], x2[50], x3[25], x3[38], __rounding, cos_bit);
-        btf_32_type0_avx512_new(
-            cospi_m56, cospi_m08, x2[26], x2[49], x3[26], x3[37], __rounding, cos_bit);
-        btf_32_type0_avx512_new(
-            cospi_m56, cospi_m08, x2[27], x2[48], x3[27], x3[36], __rounding, cos_bit);
-        btf_32_type0_avx512_new(
-            cospi_m40, cospi_p24, x2[32], x2[43], x3[28], x3[35], __rounding, cos_bit);
-        btf_32_type0_avx512_new(
-            cospi_m40, cospi_p24, x2[33], x2[42], x3[29], x3[34], __rounding, cos_bit);
-        btf_32_type0_avx512_new(
-            cospi_m24, cospi_m40, x2[34], x2[41], x3[30], x3[33], __rounding, cos_bit);
-        btf_32_type0_avx512_new(
-            cospi_m24, cospi_m40, x2[35], x2[40], x3[31], x3[32], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m08, cospi_p56, x2[24], x2[51], x3[24], x3[39], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m08, cospi_p56, x2[25], x2[50], x3[25], x3[38], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m56, cospi_m08, x2[26], x2[49], x3[26], x3[37], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m56, cospi_m08, x2[27], x2[48], x3[27], x3[36], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m40, cospi_p24, x2[32], x2[43], x3[28], x3[35], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m40, cospi_p24, x2[33], x2[42], x3[29], x3[34], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m24, cospi_m40, x2[34], x2[41], x3[30], x3[33], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m24, cospi_m40, x2[35], x2[40], x3[31], x3[32], __rounding, cos_bit);
 
         // stage 7
         //__m512i x7[48]; replace with x1
-        btf_32_type1_avx512_new(cospi_p56,
-                                cospi_p08,
-                                x3[0],
-                                x3[3],
-                                out[8 * stride],
-                                out[56 * stride],
-                                __rounding,
-                                cos_bit);
-        btf_32_type1_avx512_new(cospi_p24,
-                                cospi_p40,
-                                x3[1],
-                                x3[2],
-                                out[40 * stride],
-                                out[24 * stride],
-                                __rounding,
-                                cos_bit);
+        btf_32_type1_avx512_new(
+            cospi_p56, cospi_p08, x3[0], x3[3], out[8 * stride], out[56 * stride], __rounding, cos_bit);
+        btf_32_type1_avx512_new(
+            cospi_p24, cospi_p40, x3[1], x3[2], out[40 * stride], out[24 * stride], __rounding, cos_bit);
         x1[0] = _mm512_add_epi32(x2[6], x3[4]);
         x1[1] = _mm512_sub_epi32(x2[6], x3[4]);
         x1[2] = _mm512_sub_epi32(x2[9], x3[5]);
@@ -1676,14 +1482,10 @@ static void av1_fdct64_new_avx512(const __m512i *input, __m512i *output, const i
         x1[5] = _mm512_sub_epi32(x2[10], x3[6]);
         x1[6] = _mm512_sub_epi32(x2[13], x3[7]);
         x1[7] = _mm512_add_epi32(x2[13], x3[7]);
-        btf_32_type0_avx512_new(
-            cospi_m08, cospi_p56, x3[9], x3[22], x1[8], x1[15], __rounding, cos_bit);
-        btf_32_type0_avx512_new(
-            cospi_m56, cospi_m08, x3[10], x3[21], x1[9], x1[14], __rounding, cos_bit);
-        btf_32_type0_avx512_new(
-            cospi_m40, cospi_p24, x3[13], x3[18], x1[10], x1[13], __rounding, cos_bit);
-        btf_32_type0_avx512_new(
-            cospi_m24, cospi_m40, x3[14], x3[17], x1[11], x1[12], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m08, cospi_p56, x3[9], x3[22], x1[8], x1[15], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m56, cospi_m08, x3[10], x3[21], x1[9], x1[14], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m40, cospi_p24, x3[13], x3[18], x1[10], x1[13], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m24, cospi_m40, x3[14], x3[17], x1[11], x1[12], __rounding, cos_bit);
         x1[16] = _mm512_add_epi32(x2[22], x3[25]);
         x1[17] = _mm512_sub_epi32(x2[22], x3[25]);
         x1[19] = _mm512_add_epi32(x2[23], x3[24]);
@@ -1719,38 +1521,14 @@ static void av1_fdct64_new_avx512(const __m512i *input, __m512i *output, const i
 
         // stage 8
         //__m512i x8[32]; replace with x2
-        btf_32_type1_avx512_new(cospi_p60,
-                                cospi_p04,
-                                x1[0],
-                                x1[7],
-                                out[4 * stride],
-                                out[60 * stride],
-                                __rounding,
-                                cos_bit);
-        btf_32_type1_avx512_new(cospi_p28,
-                                cospi_p36,
-                                x1[1],
-                                x1[6],
-                                out[36 * stride],
-                                out[28 * stride],
-                                __rounding,
-                                cos_bit);
-        btf_32_type1_avx512_new(cospi_p44,
-                                cospi_p20,
-                                x1[2],
-                                x1[5],
-                                out[20 * stride],
-                                out[44 * stride],
-                                __rounding,
-                                cos_bit);
-        btf_32_type1_avx512_new(cospi_p12,
-                                cospi_p52,
-                                x1[3],
-                                x1[4],
-                                out[52 * stride],
-                                out[12 * stride],
-                                __rounding,
-                                cos_bit);
+        btf_32_type1_avx512_new(
+            cospi_p60, cospi_p04, x1[0], x1[7], out[4 * stride], out[60 * stride], __rounding, cos_bit);
+        btf_32_type1_avx512_new(
+            cospi_p28, cospi_p36, x1[1], x1[6], out[36 * stride], out[28 * stride], __rounding, cos_bit);
+        btf_32_type1_avx512_new(
+            cospi_p44, cospi_p20, x1[2], x1[5], out[20 * stride], out[44 * stride], __rounding, cos_bit);
+        btf_32_type1_avx512_new(
+            cospi_p12, cospi_p52, x1[3], x1[4], out[52 * stride], out[12 * stride], __rounding, cos_bit);
         x2[0]  = _mm512_add_epi32(x3[8], x1[8]);
         x2[1]  = _mm512_sub_epi32(x3[8], x1[8]);
         x2[2]  = _mm512_sub_epi32(x3[11], x1[9]);
@@ -1767,89 +1545,33 @@ static void av1_fdct64_new_avx512(const __m512i *input, __m512i *output, const i
         x2[13] = _mm512_sub_epi32(x3[20], x1[14]);
         x2[14] = _mm512_sub_epi32(x3[23], x1[15]);
         x2[15] = _mm512_add_epi32(x3[23], x1[15]);
-        btf_32_type0_avx512_new(
-            cospi_m04, cospi_p60, x1[19], x1[47], x2[16], x2[31], __rounding, cos_bit);
-        btf_32_type0_avx512_new(
-            cospi_m60, cospi_m04, x1[20], x1[46], x2[17], x2[30], __rounding, cos_bit);
-        btf_32_type0_avx512_new(
-            cospi_m36, cospi_p28, x1[22], x1[43], x2[18], x2[29], __rounding, cos_bit);
-        btf_32_type0_avx512_new(
-            cospi_m28, cospi_m36, x1[23], x1[42], x2[19], x2[28], __rounding, cos_bit);
-        btf_32_type0_avx512_new(
-            cospi_m20, cospi_p44, x1[26], x1[39], x2[20], x2[27], __rounding, cos_bit);
-        btf_32_type0_avx512_new(
-            cospi_m44, cospi_m20, x1[27], x1[38], x2[21], x2[26], __rounding, cos_bit);
-        btf_32_type0_avx512_new(
-            cospi_m52, cospi_p12, x1[30], x1[35], x2[22], x2[25], __rounding, cos_bit);
-        btf_32_type0_avx512_new(
-            cospi_m12, cospi_m52, x1[31], x1[34], x2[23], x2[24], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m04, cospi_p60, x1[19], x1[47], x2[16], x2[31], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m60, cospi_m04, x1[20], x1[46], x2[17], x2[30], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m36, cospi_p28, x1[22], x1[43], x2[18], x2[29], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m28, cospi_m36, x1[23], x1[42], x2[19], x2[28], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m20, cospi_p44, x1[26], x1[39], x2[20], x2[27], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m44, cospi_m20, x1[27], x1[38], x2[21], x2[26], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m52, cospi_p12, x1[30], x1[35], x2[22], x2[25], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m12, cospi_m52, x1[31], x1[34], x2[23], x2[24], __rounding, cos_bit);
 
         // stage 9
         //__m512i x9[32]; replace with x3
-        btf_32_type1_avx512_new(cospi_p62,
-                                cospi_p02,
-                                x2[0],
-                                x2[15],
-                                out[2 * stride],
-                                out[62 * stride],
-                                __rounding,
-                                cos_bit);
-        btf_32_type1_avx512_new(cospi_p30,
-                                cospi_p34,
-                                x2[1],
-                                x2[14],
-                                out[34 * stride],
-                                out[30 * stride],
-                                __rounding,
-                                cos_bit);
-        btf_32_type1_avx512_new(cospi_p46,
-                                cospi_p18,
-                                x2[2],
-                                x2[13],
-                                out[18 * stride],
-                                out[46 * stride],
-                                __rounding,
-                                cos_bit);
-        btf_32_type1_avx512_new(cospi_p14,
-                                cospi_p50,
-                                x2[3],
-                                x2[12],
-                                out[50 * stride],
-                                out[14 * stride],
-                                __rounding,
-                                cos_bit);
-        btf_32_type1_avx512_new(cospi_p54,
-                                cospi_p10,
-                                x2[4],
-                                x2[11],
-                                out[10 * stride],
-                                out[54 * stride],
-                                __rounding,
-                                cos_bit);
-        btf_32_type1_avx512_new(cospi_p22,
-                                cospi_p42,
-                                x2[5],
-                                x2[10],
-                                out[42 * stride],
-                                out[22 * stride],
-                                __rounding,
-                                cos_bit);
-        btf_32_type1_avx512_new(cospi_p38,
-                                cospi_p26,
-                                x2[6],
-                                x2[9],
-                                out[26 * stride],
-                                out[38 * stride],
-                                __rounding,
-                                cos_bit);
-        btf_32_type1_avx512_new(cospi_p06,
-                                cospi_p58,
-                                x2[7],
-                                x2[8],
-                                out[58 * stride],
-                                out[6 * stride],
-                                __rounding,
-                                cos_bit);
+        btf_32_type1_avx512_new(
+            cospi_p62, cospi_p02, x2[0], x2[15], out[2 * stride], out[62 * stride], __rounding, cos_bit);
+        btf_32_type1_avx512_new(
+            cospi_p30, cospi_p34, x2[1], x2[14], out[34 * stride], out[30 * stride], __rounding, cos_bit);
+        btf_32_type1_avx512_new(
+            cospi_p46, cospi_p18, x2[2], x2[13], out[18 * stride], out[46 * stride], __rounding, cos_bit);
+        btf_32_type1_avx512_new(
+            cospi_p14, cospi_p50, x2[3], x2[12], out[50 * stride], out[14 * stride], __rounding, cos_bit);
+        btf_32_type1_avx512_new(
+            cospi_p54, cospi_p10, x2[4], x2[11], out[10 * stride], out[54 * stride], __rounding, cos_bit);
+        btf_32_type1_avx512_new(
+            cospi_p22, cospi_p42, x2[5], x2[10], out[42 * stride], out[22 * stride], __rounding, cos_bit);
+        btf_32_type1_avx512_new(
+            cospi_p38, cospi_p26, x2[6], x2[9], out[26 * stride], out[38 * stride], __rounding, cos_bit);
+        btf_32_type1_avx512_new(
+            cospi_p06, cospi_p58, x2[7], x2[8], out[58 * stride], out[6 * stride], __rounding, cos_bit);
         x3[0]  = _mm512_add_epi32(x1[16], x2[16]);
         x3[1]  = _mm512_sub_epi32(x1[16], x2[16]);
         x3[2]  = _mm512_sub_epi32(x1[17], x2[17]);
@@ -1884,134 +1606,38 @@ static void av1_fdct64_new_avx512(const __m512i *input, __m512i *output, const i
         x3[31] = _mm512_add_epi32(x1[45], x2[31]);
 
         // stage 10
-        btf_32_type1_avx512_new(cospi_p63,
-                                cospi_p01,
-                                x3[0],
-                                x3[31],
-                                out[1 * stride],
-                                out[63 * stride],
-                                __rounding,
-                                cos_bit);
-        btf_32_type1_avx512_new(cospi_p31,
-                                cospi_p33,
-                                x3[1],
-                                x3[30],
-                                out[33 * stride],
-                                out[31 * stride],
-                                __rounding,
-                                cos_bit);
-        btf_32_type1_avx512_new(cospi_p47,
-                                cospi_p17,
-                                x3[2],
-                                x3[29],
-                                out[17 * stride],
-                                out[47 * stride],
-                                __rounding,
-                                cos_bit);
-        btf_32_type1_avx512_new(cospi_p15,
-                                cospi_p49,
-                                x3[3],
-                                x3[28],
-                                out[49 * stride],
-                                out[15 * stride],
-                                __rounding,
-                                cos_bit);
-        btf_32_type1_avx512_new(cospi_p55,
-                                cospi_p09,
-                                x3[4],
-                                x3[27],
-                                out[9 * stride],
-                                out[55 * stride],
-                                __rounding,
-                                cos_bit);
-        btf_32_type1_avx512_new(cospi_p23,
-                                cospi_p41,
-                                x3[5],
-                                x3[26],
-                                out[41 * stride],
-                                out[23 * stride],
-                                __rounding,
-                                cos_bit);
-        btf_32_type1_avx512_new(cospi_p39,
-                                cospi_p25,
-                                x3[6],
-                                x3[25],
-                                out[25 * stride],
-                                out[39 * stride],
-                                __rounding,
-                                cos_bit);
-        btf_32_type1_avx512_new(cospi_p07,
-                                cospi_p57,
-                                x3[7],
-                                x3[24],
-                                out[57 * stride],
-                                out[7 * stride],
-                                __rounding,
-                                cos_bit);
-        btf_32_type1_avx512_new(cospi_p59,
-                                cospi_p05,
-                                x3[8],
-                                x3[23],
-                                out[5 * stride],
-                                out[59 * stride],
-                                __rounding,
-                                cos_bit);
-        btf_32_type1_avx512_new(cospi_p27,
-                                cospi_p37,
-                                x3[9],
-                                x3[22],
-                                out[37 * stride],
-                                out[27 * stride],
-                                __rounding,
-                                cos_bit);
-        btf_32_type1_avx512_new(cospi_p43,
-                                cospi_p21,
-                                x3[10],
-                                x3[21],
-                                out[21 * stride],
-                                out[43 * stride],
-                                __rounding,
-                                cos_bit);
-        btf_32_type1_avx512_new(cospi_p11,
-                                cospi_p53,
-                                x3[11],
-                                x3[20],
-                                out[53 * stride],
-                                out[11 * stride],
-                                __rounding,
-                                cos_bit);
-        btf_32_type1_avx512_new(cospi_p51,
-                                cospi_p13,
-                                x3[12],
-                                x3[19],
-                                out[13 * stride],
-                                out[51 * stride],
-                                __rounding,
-                                cos_bit);
-        btf_32_type1_avx512_new(cospi_p19,
-                                cospi_p45,
-                                x3[13],
-                                x3[18],
-                                out[45 * stride],
-                                out[19 * stride],
-                                __rounding,
-                                cos_bit);
-        btf_32_type1_avx512_new(cospi_p35,
-                                cospi_p29,
-                                x3[14],
-                                x3[17],
-                                out[29 * stride],
-                                out[35 * stride],
-                                __rounding,
-                                cos_bit);
-        btf_32_type1_avx512_new(cospi_p03,
-                                cospi_p61,
-                                x3[15],
-                                x3[16],
-                                out[61 * stride],
-                                out[3 * stride],
-                                __rounding,
-                                cos_bit);
+        btf_32_type1_avx512_new(
+            cospi_p63, cospi_p01, x3[0], x3[31], out[1 * stride], out[63 * stride], __rounding, cos_bit);
+        btf_32_type1_avx512_new(
+            cospi_p31, cospi_p33, x3[1], x3[30], out[33 * stride], out[31 * stride], __rounding, cos_bit);
+        btf_32_type1_avx512_new(
+            cospi_p47, cospi_p17, x3[2], x3[29], out[17 * stride], out[47 * stride], __rounding, cos_bit);
+        btf_32_type1_avx512_new(
+            cospi_p15, cospi_p49, x3[3], x3[28], out[49 * stride], out[15 * stride], __rounding, cos_bit);
+        btf_32_type1_avx512_new(
+            cospi_p55, cospi_p09, x3[4], x3[27], out[9 * stride], out[55 * stride], __rounding, cos_bit);
+        btf_32_type1_avx512_new(
+            cospi_p23, cospi_p41, x3[5], x3[26], out[41 * stride], out[23 * stride], __rounding, cos_bit);
+        btf_32_type1_avx512_new(
+            cospi_p39, cospi_p25, x3[6], x3[25], out[25 * stride], out[39 * stride], __rounding, cos_bit);
+        btf_32_type1_avx512_new(
+            cospi_p07, cospi_p57, x3[7], x3[24], out[57 * stride], out[7 * stride], __rounding, cos_bit);
+        btf_32_type1_avx512_new(
+            cospi_p59, cospi_p05, x3[8], x3[23], out[5 * stride], out[59 * stride], __rounding, cos_bit);
+        btf_32_type1_avx512_new(
+            cospi_p27, cospi_p37, x3[9], x3[22], out[37 * stride], out[27 * stride], __rounding, cos_bit);
+        btf_32_type1_avx512_new(
+            cospi_p43, cospi_p21, x3[10], x3[21], out[21 * stride], out[43 * stride], __rounding, cos_bit);
+        btf_32_type1_avx512_new(
+            cospi_p11, cospi_p53, x3[11], x3[20], out[53 * stride], out[11 * stride], __rounding, cos_bit);
+        btf_32_type1_avx512_new(
+            cospi_p51, cospi_p13, x3[12], x3[19], out[13 * stride], out[51 * stride], __rounding, cos_bit);
+        btf_32_type1_avx512_new(
+            cospi_p19, cospi_p45, x3[13], x3[18], out[45 * stride], out[19 * stride], __rounding, cos_bit);
+        btf_32_type1_avx512_new(
+            cospi_p35, cospi_p29, x3[14], x3[17], out[29 * stride], out[35 * stride], __rounding, cos_bit);
+        btf_32_type1_avx512_new(
+            cospi_p03, cospi_p61, x3[15], x3[16], out[61 * stride], out[3 * stride], __rounding, cos_bit);
     }
 }
 
@@ -2022,8 +1648,7 @@ static INLINE void fdct64x64_avx512(const __m512i *input, __m512i *output, const
     av1_fdct64_new_avx512(input, output, cos_bit, txfm_size, col_num);
 }
 
-void av1_fwd_txfm2d_64x64_avx512(int16_t *input, int32_t *output, uint32_t stride, TxType tx_type,
-                                 uint8_t bd) {
+void av1_fwd_txfm2d_64x64_avx512(int16_t *input, int32_t *output, uint32_t stride, TxType tx_type, uint8_t bd) {
     (void)bd;
     __m512i       in[256];
     __m512i      *out     = (__m512i *)output;
@@ -2058,8 +1683,8 @@ void av1_fwd_txfm2d_64x64_avx512(int16_t *input, int32_t *output, uint32_t strid
     }
 }
 
-static INLINE void load_buffer_16_avx512(const int16_t *input, __m512i *in, int32_t stride,
-                                         int32_t flipud, int32_t fliplr, const int8_t shift) {
+static INLINE void load_buffer_16_avx512(const int16_t *input, __m512i *in, int32_t stride, int32_t flipud,
+                                         int32_t fliplr, const int8_t shift) {
     (void)flipud;
     (void)fliplr;
     __m256i temp;
@@ -2070,8 +1695,8 @@ static INLINE void load_buffer_16_avx512(const int16_t *input, __m512i *in, int3
     in[0] = _mm512_slli_epi32(in[0], ushift);
 }
 
-static INLINE void load_buffer_32_avx512(const int16_t *input, __m512i *in, int32_t stride,
-                                         int32_t flipud, int32_t fliplr, const int8_t shift) {
+static INLINE void load_buffer_32_avx512(const int16_t *input, __m512i *in, int32_t stride, int32_t flipud,
+                                         int32_t fliplr, const int8_t shift) {
     (void)flipud;
     (void)fliplr;
     __m256i temp[2];
@@ -2086,9 +1711,8 @@ static INLINE void load_buffer_32_avx512(const int16_t *input, __m512i *in, int3
     in[1] = _mm512_slli_epi32(in[1], ushift);
 }
 
-static INLINE void load_buffer_32x16n(const int16_t *input, __m512i *out, int32_t stride,
-                                      int32_t flipud, int32_t fliplr, const int8_t shift,
-                                      const int32_t height) {
+static INLINE void load_buffer_32x16n(const int16_t *input, __m512i *out, int32_t stride, int32_t flipud,
+                                      int32_t fliplr, const int8_t shift, const int32_t height) {
     const int16_t *in     = input;
     __m512i       *output = out;
     for (int32_t col = 0; col < height; col++) {
@@ -2098,9 +1722,8 @@ static INLINE void load_buffer_32x16n(const int16_t *input, __m512i *out, int32_
     }
 }
 
-static INLINE void av1_round_shift_rect_array_32_avx512(__m512i *input, __m512i *output,
-                                                        const int32_t size, const int8_t bit,
-                                                        const int32_t val) {
+static INLINE void av1_round_shift_rect_array_32_avx512(__m512i *input, __m512i *output, const int32_t size,
+                                                        const int8_t bit, const int32_t val) {
     const __m512i sqrt2  = _mm512_set1_epi32(val);
     const __m512i round2 = _mm512_set1_epi32(1 << (12 - 1));
     int32_t       i;
@@ -2125,8 +1748,7 @@ static INLINE void av1_round_shift_rect_array_32_avx512(__m512i *input, __m512i 
     }
 }
 
-void av1_fwd_txfm2d_32x64_avx512(int16_t *input, int32_t *output, uint32_t stride, TxType tx_type,
-                                 uint8_t bd) {
+void av1_fwd_txfm2d_32x64_avx512(int16_t *input, int32_t *output, uint32_t stride, TxType tx_type, uint8_t bd) {
     (void)tx_type;
     __m512i       in[128];
     __m512i      *outcoef512    = (__m512i *)output;
@@ -2154,8 +1776,7 @@ void av1_fwd_txfm2d_32x64_avx512(int16_t *input, int32_t *output, uint32_t strid
     (void)bd;
 }
 
-void av1_fwd_txfm2d_64x32_avx512(int16_t *input, int32_t *output, uint32_t stride, TxType tx_type,
-                                 uint8_t bd) {
+void av1_fwd_txfm2d_64x32_avx512(int16_t *input, int32_t *output, uint32_t stride, TxType tx_type, uint8_t bd) {
     (void)tx_type;
     __m512i       in[128];
     __m512i      *outcoef512    = (__m512i *)output;
@@ -2187,8 +1808,7 @@ void av1_fwd_txfm2d_64x32_avx512(int16_t *input, int32_t *output, uint32_t strid
     (void)bd;
 }
 
-void av1_fwd_txfm2d_16x64_avx512(int16_t *input, int32_t *output, uint32_t stride, TxType tx_type,
-                                 uint8_t bd) {
+void av1_fwd_txfm2d_16x64_avx512(int16_t *input, int32_t *output, uint32_t stride, TxType tx_type, uint8_t bd) {
     __m512i       in[64];
     __m512i      *outcoeff512   = (__m512i *)output;
     const int8_t *shift         = fwd_txfm_shift_ls[TX_16X64];
@@ -2220,8 +1840,7 @@ void av1_fwd_txfm2d_16x64_avx512(int16_t *input, int32_t *output, uint32_t strid
     (void)tx_type;
 }
 
-void av1_fwd_txfm2d_64x16_avx512(int16_t *input, int32_t *output, uint32_t stride, TxType tx_type,
-                                 uint8_t bd) {
+void av1_fwd_txfm2d_64x16_avx512(int16_t *input, int32_t *output, uint32_t stride, TxType tx_type, uint8_t bd) {
     __m512i       in[64];
     __m512i      *outcoeff512   = (__m512i *)output;
     const int8_t *shift         = fwd_txfm_shift_ls[TX_64X16];
@@ -2254,8 +1873,8 @@ void av1_fwd_txfm2d_64x16_avx512(int16_t *input, int32_t *output, uint32_t strid
     (void)tx_type;
 }
 
-static void av1_fdct32_new_line_wraper_avx512(const __m512i *input, __m512i *output,
-                                              const int8_t cos_bit, const int32_t stride) {
+static void av1_fdct32_new_line_wraper_avx512(const __m512i *input, __m512i *output, const int8_t cos_bit,
+                                              const int32_t stride) {
     av1_fdct32_new_avx512(input, output, cos_bit, 16, stride);
 }
 
@@ -2298,8 +1917,7 @@ static const fwd_transform_1d_avx512 row_fwdtxfm_16x32_arr[TX_TYPES] = {
 };
 
 /* call this function only for DCT_DCT, IDTX */
-void av1_fwd_txfm2d_16x32_avx512(int16_t *input, int32_t *output, uint32_t stride, TxType tx_type,
-                                 uint8_t bd) {
+void av1_fwd_txfm2d_16x32_avx512(int16_t *input, int32_t *output, uint32_t stride, TxType tx_type, uint8_t bd) {
     __m512i                       in[32];
     __m512i                      *outcoef512    = (__m512i *)output;
     const int8_t                 *shift         = fwd_txfm_shift_ls[TX_16X32];
@@ -2331,8 +1949,7 @@ void av1_fwd_txfm2d_16x32_avx512(int16_t *input, int32_t *output, uint32_t strid
 }
 
 /* call this function only for DCT_DCT, IDTX */
-void av1_fwd_txfm2d_32x16_avx512(int16_t *input, int32_t *output, uint32_t stride, TxType tx_type,
-                                 uint8_t bd) {
+void av1_fwd_txfm2d_32x16_avx512(int16_t *input, int32_t *output, uint32_t stride, TxType tx_type, uint8_t bd) {
     __m512i                       in[32];
     __m512i                      *outcoef512    = (__m512i *)output;
     const int8_t                 *shift         = fwd_txfm_shift_ls[TX_32X16];
@@ -2362,33 +1979,30 @@ void av1_fwd_txfm2d_32x16_avx512(int16_t *input, int32_t *output, uint32_t strid
     (void)bd;
 }
 
-static AOM_FORCE_INLINE void av1_round_shift_array_wxh_N2_avx512(__m512i *input, __m512i *output,
-                                                                 const int32_t col_num,
-                                                                 const int32_t height,
-                                                                 const int8_t  bit) {
+static AOM_FORCE_INLINE void av1_round_shift_array_wxh_N2_avx512(__m512i *input, __m512i *output, const int32_t col_num,
+                                                                 const int32_t height, const int8_t bit) {
     if (bit > 0) {
         __m512i round = _mm512_set1_epi32(1 << (bit - 1));
         int32_t i, j;
         for (i = 0; i < height; i++) {
             for (j = 0; j < col_num / 2; j++) {
-                output[i * col_num + j] = _mm512_srai_epi32(
-                    _mm512_add_epi32(input[i * col_num + j], round), (uint8_t)bit);
+                output[i * col_num + j] = _mm512_srai_epi32(_mm512_add_epi32(input[i * col_num + j], round),
+                                                            (uint8_t)bit);
             }
         }
     } else {
         int32_t i, j;
         for (i = 0; i < height; i++) {
             for (j = 0; j < col_num / 2; j++) {
-                output[i * col_num + j] = _mm512_slli_epi32(input[i * col_num + j],
-                                                            (uint8_t)(-bit));
+                output[i * col_num + j] = _mm512_slli_epi32(input[i * col_num + j], (uint8_t)(-bit));
             }
         }
     }
 }
 
-static AOM_FORCE_INLINE void av1_round_shift_rect_array_wxh_N2_avx512(
-    __m512i *input, __m512i *output, const int32_t col_num, const int32_t height, const int8_t bit,
-    const int32_t val) {
+static AOM_FORCE_INLINE void av1_round_shift_rect_array_wxh_N2_avx512(__m512i *input, __m512i *output,
+                                                                      const int32_t col_num, const int32_t height,
+                                                                      const int8_t bit, const int32_t val) {
     const __m512i sqrt2  = _mm512_set1_epi32(val);
     const __m512i round2 = _mm512_set1_epi32(1 << (12 - 1));
     int32_t       i, j;
@@ -2417,8 +2031,7 @@ static AOM_FORCE_INLINE void av1_round_shift_rect_array_wxh_N2_avx512(
     }
 }
 
-static AOM_FORCE_INLINE void clear_buffer_wxh_N2_avx512(__m512i *buff, int32_t width,
-                                                        int32_t height) {
+static AOM_FORCE_INLINE void clear_buffer_wxh_N2_avx512(__m512i *buff, int32_t width, int32_t height) {
     const __m512i zero512 = _mm512_setzero_si512();
     int32_t       i, j;
     assert(width > 16);
@@ -2434,8 +2047,7 @@ static AOM_FORCE_INLINE void clear_buffer_wxh_N2_avx512(__m512i *buff, int32_t w
         for (j = 0; j < num_col; j++) buff[i * num_col + j] = zero512;
 }
 
-static AOM_FORCE_INLINE void load_buffer_32x32_in_64x64_avx512(const int16_t *input, int32_t stride,
-                                                               __m512i *output) {
+static AOM_FORCE_INLINE void load_buffer_32x32_in_64x64_avx512(const int16_t *input, int32_t stride, __m512i *output) {
     __m256i x0, x1;
     __m512i v0, v1;
     int32_t i;
@@ -2455,8 +2067,8 @@ static AOM_FORCE_INLINE void load_buffer_32x32_in_64x64_avx512(const int16_t *in
     }
 }
 
-static AOM_FORCE_INLINE void load_buffer_16xh_in_32x32_avx512(const int16_t *input, __m512i *output,
-                                                              int32_t stride, int32_t height) {
+static AOM_FORCE_INLINE void load_buffer_16xh_in_32x32_avx512(const int16_t *input, __m512i *output, int32_t stride,
+                                                              int32_t height) {
     __m256i temp;
     int32_t i;
 
@@ -2469,8 +2081,8 @@ static AOM_FORCE_INLINE void load_buffer_16xh_in_32x32_avx512(const int16_t *inp
     }
 }
 
-static AOM_FORCE_INLINE void load_buffer_32xh_in_32x32_avx512(const int16_t *input, __m512i *output,
-                                                              int32_t stride, int32_t height) {
+static AOM_FORCE_INLINE void load_buffer_32xh_in_32x32_avx512(const int16_t *input, __m512i *output, int32_t stride,
+                                                              int32_t height) {
     __m256i temp[2];
     int32_t i;
 
@@ -2486,8 +2098,8 @@ static AOM_FORCE_INLINE void load_buffer_32xh_in_32x32_avx512(const int16_t *inp
     }
 }
 
-static void av1_fdct64_new_N2_avx512(const __m512i *input, __m512i *output, const int8_t cos_bit,
-                                     const int32_t col_num, const int32_t stride) {
+static void av1_fdct64_new_N2_avx512(const __m512i *input, __m512i *output, const int8_t cos_bit, const int32_t col_num,
+                                     const int32_t stride) {
     const int32_t *cospi      = cospi_arr(cos_bit);
     const __m512i  __rounding = _mm512_set1_epi32(1 << (cos_bit - 1));
     const int32_t  columns    = col_num >> 4;
@@ -2681,22 +2293,14 @@ static void av1_fdct64_new_N2_avx512(const __m512i *input, __m512i *output, cons
         x2[37] = x1[37];
         x2[38] = x1[38];
         x2[39] = x1[39];
-        btf_32_type0_avx512_new(
-            cospi_m32, cospi_p32, x1[40], x1[55], x2[40], x2[55], __rounding, cos_bit);
-        btf_32_type0_avx512_new(
-            cospi_m32, cospi_p32, x1[41], x1[54], x2[41], x2[54], __rounding, cos_bit);
-        btf_32_type0_avx512_new(
-            cospi_m32, cospi_p32, x1[42], x1[53], x2[42], x2[53], __rounding, cos_bit);
-        btf_32_type0_avx512_new(
-            cospi_m32, cospi_p32, x1[43], x1[52], x2[43], x2[52], __rounding, cos_bit);
-        btf_32_type0_avx512_new(
-            cospi_m32, cospi_p32, x1[44], x1[51], x2[44], x2[51], __rounding, cos_bit);
-        btf_32_type0_avx512_new(
-            cospi_m32, cospi_p32, x1[45], x1[50], x2[45], x2[50], __rounding, cos_bit);
-        btf_32_type0_avx512_new(
-            cospi_m32, cospi_p32, x1[46], x1[49], x2[46], x2[49], __rounding, cos_bit);
-        btf_32_type0_avx512_new(
-            cospi_m32, cospi_p32, x1[47], x1[48], x2[47], x2[48], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m32, cospi_p32, x1[40], x1[55], x2[40], x2[55], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m32, cospi_p32, x1[41], x1[54], x2[41], x2[54], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m32, cospi_p32, x1[42], x1[53], x2[42], x2[53], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m32, cospi_p32, x1[43], x1[52], x2[43], x2[52], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m32, cospi_p32, x1[44], x1[51], x2[44], x2[51], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m32, cospi_p32, x1[45], x1[50], x2[45], x2[50], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m32, cospi_p32, x1[46], x1[49], x2[46], x2[49], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m32, cospi_p32, x1[47], x1[48], x2[47], x2[48], __rounding, cos_bit);
         x2[56] = x1[56];
         x2[57] = x1[57];
         x2[58] = x1[58];
@@ -2728,14 +2332,10 @@ static void av1_fdct64_new_N2_avx512(const __m512i *input, __m512i *output, cons
         x3[17] = x2[17];
         x3[18] = x2[18];
         x3[19] = x2[19];
-        btf_32_type0_avx512_new(
-            cospi_m32, cospi_p32, x2[20], x2[27], x3[20], x3[27], __rounding, cos_bit);
-        btf_32_type0_avx512_new(
-            cospi_m32, cospi_p32, x2[21], x2[26], x3[21], x3[26], __rounding, cos_bit);
-        btf_32_type0_avx512_new(
-            cospi_m32, cospi_p32, x2[22], x2[25], x3[22], x3[25], __rounding, cos_bit);
-        btf_32_type0_avx512_new(
-            cospi_m32, cospi_p32, x2[23], x2[24], x3[23], x3[24], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m32, cospi_p32, x2[20], x2[27], x3[20], x3[27], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m32, cospi_p32, x2[21], x2[26], x3[21], x3[26], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m32, cospi_p32, x2[22], x2[25], x3[22], x3[25], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m32, cospi_p32, x2[23], x2[24], x3[23], x3[24], __rounding, cos_bit);
         x3[28] = x2[28];
         x3[29] = x2[29];
         x3[30] = x2[30];
@@ -2785,10 +2385,8 @@ static void av1_fdct64_new_N2_avx512(const __m512i *input, __m512i *output, cons
         x4[4] = _mm512_sub_epi32(x3[3], x3[4]);
         x4[8] = x3[8];
         x4[9] = x3[9];
-        btf_32_type0_avx512_new(
-            cospi_m32, cospi_p32, x3[10], x3[13], x4[10], x4[13], __rounding, cos_bit);
-        btf_32_type0_avx512_new(
-            cospi_m32, cospi_p32, x3[11], x3[12], x4[11], x4[12], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m32, cospi_p32, x3[10], x3[13], x4[10], x4[13], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m32, cospi_p32, x3[11], x3[12], x4[11], x4[12], __rounding, cos_bit);
         x4[14] = x3[14];
         x4[15] = x3[15];
         x4[16] = _mm512_add_epi32(x3[16], x3[23]);
@@ -2811,22 +2409,14 @@ static void av1_fdct64_new_N2_avx512(const __m512i *input, __m512i *output, cons
         x4[33] = x3[33];
         x4[34] = x3[34];
         x4[35] = x3[35];
-        btf_32_type0_avx512_new(
-            cospi_m16, cospi_p48, x3[36], x3[59], x4[36], x4[59], __rounding, cos_bit);
-        btf_32_type0_avx512_new(
-            cospi_m16, cospi_p48, x3[37], x3[58], x4[37], x4[58], __rounding, cos_bit);
-        btf_32_type0_avx512_new(
-            cospi_m16, cospi_p48, x3[38], x3[57], x4[38], x4[57], __rounding, cos_bit);
-        btf_32_type0_avx512_new(
-            cospi_m16, cospi_p48, x3[39], x3[56], x4[39], x4[56], __rounding, cos_bit);
-        btf_32_type0_avx512_new(
-            cospi_m48, cospi_m16, x3[40], x3[55], x4[40], x4[55], __rounding, cos_bit);
-        btf_32_type0_avx512_new(
-            cospi_m48, cospi_m16, x3[41], x3[54], x4[41], x4[54], __rounding, cos_bit);
-        btf_32_type0_avx512_new(
-            cospi_m48, cospi_m16, x3[42], x3[53], x4[42], x4[53], __rounding, cos_bit);
-        btf_32_type0_avx512_new(
-            cospi_m48, cospi_m16, x3[43], x3[52], x4[43], x4[52], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m16, cospi_p48, x3[36], x3[59], x4[36], x4[59], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m16, cospi_p48, x3[37], x3[58], x4[37], x4[58], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m16, cospi_p48, x3[38], x3[57], x4[38], x4[57], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m16, cospi_p48, x3[39], x3[56], x4[39], x4[56], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m48, cospi_m16, x3[40], x3[55], x4[40], x4[55], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m48, cospi_m16, x3[41], x3[54], x4[41], x4[54], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m48, cospi_m16, x3[42], x3[53], x4[42], x4[53], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m48, cospi_m16, x3[43], x3[52], x4[43], x4[52], __rounding, cos_bit);
         x4[44] = x3[44];
         x4[45] = x3[45];
         x4[46] = x3[46];
@@ -2847,8 +2437,7 @@ static void av1_fdct64_new_N2_avx512(const __m512i *input, __m512i *output, cons
         x5[1] = _mm512_add_epi32(x4[1], x4[2]);
         x5[2] = _mm512_sub_epi32(x4[1], x4[2]);
         x5[4] = x4[4];
-        btf_32_type0_avx512_new(
-            cospi_m32, cospi_p32, x4[5], x4[6], x5[5], x5[6], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m32, cospi_p32, x4[5], x4[6], x5[5], x5[6], __rounding, cos_bit);
         x5[7]  = x4[7];
         x5[8]  = _mm512_add_epi32(x4[8], x4[11]);
         x5[11] = _mm512_sub_epi32(x4[8], x4[11]);
@@ -2860,14 +2449,10 @@ static void av1_fdct64_new_N2_avx512(const __m512i *input, __m512i *output, cons
         x5[14] = _mm512_add_epi32(x4[14], x4[13]);
         x5[16] = x4[16];
         x5[17] = x4[17];
-        btf_32_type0_avx512_new(
-            cospi_m16, cospi_p48, x4[18], x4[29], x5[18], x5[29], __rounding, cos_bit);
-        btf_32_type0_avx512_new(
-            cospi_m16, cospi_p48, x4[19], x4[28], x5[19], x5[28], __rounding, cos_bit);
-        btf_32_type0_avx512_new(
-            cospi_m48, cospi_m16, x4[20], x4[27], x5[20], x5[27], __rounding, cos_bit);
-        btf_32_type0_avx512_new(
-            cospi_m48, cospi_m16, x4[21], x4[26], x5[21], x5[26], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m16, cospi_p48, x4[18], x4[29], x5[18], x5[29], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m16, cospi_p48, x4[19], x4[28], x5[19], x5[28], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m48, cospi_m16, x4[20], x4[27], x5[20], x5[27], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m48, cospi_m16, x4[21], x4[26], x5[21], x5[26], __rounding, cos_bit);
         x5[22] = x4[22];
         x5[23] = x4[23];
         x5[24] = x4[24];
@@ -2916,10 +2501,8 @@ static void av1_fdct64_new_N2_avx512(const __m512i *input, __m512i *output, cons
         x6[6] = _mm512_sub_epi32(x5[7], x5[6]);
         x6[7] = _mm512_add_epi32(x5[7], x5[6]);
         x6[8] = x5[8];
-        btf_32_type0_avx512_new(
-            cospi_m16, cospi_p48, x5[9], x5[14], x6[9], x6[14], __rounding, cos_bit);
-        btf_32_type0_avx512_new(
-            cospi_m48, cospi_m16, x5[10], x5[13], x6[10], x6[13], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m16, cospi_p48, x5[9], x5[14], x6[9], x6[14], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m48, cospi_m16, x5[10], x5[13], x6[10], x6[13], __rounding, cos_bit);
         x6[11] = x5[11];
         x6[12] = x5[12];
         x6[15] = x5[15];
@@ -2941,26 +2524,18 @@ static void av1_fdct64_new_N2_avx512(const __m512i *input, __m512i *output, cons
         x6[30] = _mm512_add_epi32(x5[30], x5[29]);
         x6[32] = x5[32];
         x6[33] = x5[33];
-        btf_32_type0_avx512_new(
-            cospi_m08, cospi_p56, x5[34], x5[61], x6[34], x6[61], __rounding, cos_bit);
-        btf_32_type0_avx512_new(
-            cospi_m08, cospi_p56, x5[35], x5[60], x6[35], x6[60], __rounding, cos_bit);
-        btf_32_type0_avx512_new(
-            cospi_m56, cospi_m08, x5[36], x5[59], x6[36], x6[59], __rounding, cos_bit);
-        btf_32_type0_avx512_new(
-            cospi_m56, cospi_m08, x5[37], x5[58], x6[37], x6[58], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m08, cospi_p56, x5[34], x5[61], x6[34], x6[61], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m08, cospi_p56, x5[35], x5[60], x6[35], x6[60], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m56, cospi_m08, x5[36], x5[59], x6[36], x6[59], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m56, cospi_m08, x5[37], x5[58], x6[37], x6[58], __rounding, cos_bit);
         x6[38] = x5[38];
         x6[39] = x5[39];
         x6[40] = x5[40];
         x6[41] = x5[41];
-        btf_32_type0_avx512_new(
-            cospi_m40, cospi_p24, x5[42], x5[53], x6[42], x6[53], __rounding, cos_bit);
-        btf_32_type0_avx512_new(
-            cospi_m40, cospi_p24, x5[43], x5[52], x6[43], x6[52], __rounding, cos_bit);
-        btf_32_type0_avx512_new(
-            cospi_m24, cospi_m40, x5[44], x5[51], x6[44], x6[51], __rounding, cos_bit);
-        btf_32_type0_avx512_new(
-            cospi_m24, cospi_m40, x5[45], x5[50], x6[45], x6[50], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m40, cospi_p24, x5[42], x5[53], x6[42], x6[53], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m40, cospi_p24, x5[43], x5[52], x6[43], x6[52], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m24, cospi_m40, x5[44], x5[51], x6[44], x6[51], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m24, cospi_m40, x5[45], x5[50], x6[45], x6[50], __rounding, cos_bit);
         x6[46] = x5[46];
         x6[47] = x5[47];
         x6[48] = x5[48];
@@ -2987,16 +2562,12 @@ static void av1_fdct64_new_N2_avx512(const __m512i *input, __m512i *output, cons
         x7[14] = _mm512_sub_epi32(x6[15], x6[14]);
         x7[15] = _mm512_add_epi32(x6[15], x6[14]);
         x7[16] = x6[16];
-        btf_32_type0_avx512_new(
-            cospi_m08, cospi_p56, x6[17], x6[30], x7[17], x7[30], __rounding, cos_bit);
-        btf_32_type0_avx512_new(
-            cospi_m56, cospi_m08, x6[18], x6[29], x7[18], x7[29], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m08, cospi_p56, x6[17], x6[30], x7[17], x7[30], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m56, cospi_m08, x6[18], x6[29], x7[18], x7[29], __rounding, cos_bit);
         x7[19] = x6[19];
         x7[20] = x6[20];
-        btf_32_type0_avx512_new(
-            cospi_m40, cospi_p24, x6[21], x6[26], x7[21], x7[26], __rounding, cos_bit);
-        btf_32_type0_avx512_new(
-            cospi_m24, cospi_m40, x6[22], x6[25], x7[22], x7[25], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m40, cospi_p24, x6[21], x6[26], x7[21], x7[26], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m24, cospi_m40, x6[22], x6[25], x7[22], x7[25], __rounding, cos_bit);
         x7[23] = x6[23];
         x7[24] = x6[24];
         x7[27] = x6[27];
@@ -3063,28 +2634,20 @@ static void av1_fdct64_new_N2_avx512(const __m512i *input, __m512i *output, cons
         x8[30] = _mm512_sub_epi32(x7[31], x7[30]);
         x8[31] = _mm512_add_epi32(x7[31], x7[30]);
         x8[32] = x7[32];
-        btf_32_type0_avx512_new(
-            cospi_m04, cospi_p60, x7[33], x7[62], x8[33], x8[62], __rounding, cos_bit);
-        btf_32_type0_avx512_new(
-            cospi_m60, cospi_m04, x7[34], x7[61], x8[34], x8[61], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m04, cospi_p60, x7[33], x7[62], x8[33], x8[62], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m60, cospi_m04, x7[34], x7[61], x8[34], x8[61], __rounding, cos_bit);
         x8[35] = x7[35];
         x8[36] = x7[36];
-        btf_32_type0_avx512_new(
-            cospi_m36, cospi_p28, x7[37], x7[58], x8[37], x8[58], __rounding, cos_bit);
-        btf_32_type0_avx512_new(
-            cospi_m28, cospi_m36, x7[38], x7[57], x8[38], x8[57], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m36, cospi_p28, x7[37], x7[58], x8[37], x8[58], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m28, cospi_m36, x7[38], x7[57], x8[38], x8[57], __rounding, cos_bit);
         x8[39] = x7[39];
         x8[40] = x7[40];
-        btf_32_type0_avx512_new(
-            cospi_m20, cospi_p44, x7[41], x7[54], x8[41], x8[54], __rounding, cos_bit);
-        btf_32_type0_avx512_new(
-            cospi_m44, cospi_m20, x7[42], x7[53], x8[42], x8[53], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m20, cospi_p44, x7[41], x7[54], x8[41], x8[54], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m44, cospi_m20, x7[42], x7[53], x8[42], x8[53], __rounding, cos_bit);
         x8[43] = x7[43];
         x8[44] = x7[44];
-        btf_32_type0_avx512_new(
-            cospi_m52, cospi_p12, x7[45], x7[50], x8[45], x8[50], __rounding, cos_bit);
-        btf_32_type0_avx512_new(
-            cospi_m12, cospi_m52, x7[46], x7[49], x8[46], x8[49], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m52, cospi_p12, x7[45], x7[50], x8[45], x8[50], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m12, cospi_m52, x7[46], x7[49], x8[46], x8[49], __rounding, cos_bit);
         x8[47] = x7[47];
         x8[48] = x7[48];
         x8[51] = x7[51];
@@ -3164,22 +2727,22 @@ static void av1_fdct64_new_N2_avx512(const __m512i *input, __m512i *output, cons
         out[22 * stride] = x9[26];
         out[14 * stride] = x9[28];
         out[30 * stride] = x9[30];
-        x10[32] = half_btf_avx512(&cospi_p63, &x9[32], &cospi_p01, &x9[63], &__rounding, cos_bit);
-        x10[62] = half_btf_avx512(&cospi_p31, &x9[62], &cospi_m33, &x9[33], &__rounding, cos_bit);
-        x10[34] = half_btf_avx512(&cospi_p47, &x9[34], &cospi_p17, &x9[61], &__rounding, cos_bit);
-        x10[60] = half_btf_avx512(&cospi_p15, &x9[60], &cospi_m49, &x9[35], &__rounding, cos_bit);
-        x10[36] = half_btf_avx512(&cospi_p55, &x9[36], &cospi_p09, &x9[59], &__rounding, cos_bit);
-        x10[58] = half_btf_avx512(&cospi_p23, &x9[58], &cospi_m41, &x9[37], &__rounding, cos_bit);
-        x10[38] = half_btf_avx512(&cospi_p39, &x9[38], &cospi_p25, &x9[57], &__rounding, cos_bit);
-        x10[56] = half_btf_avx512(&cospi_p07, &x9[56], &cospi_m57, &x9[39], &__rounding, cos_bit);
-        x10[40] = half_btf_avx512(&cospi_p59, &x9[40], &cospi_p05, &x9[55], &__rounding, cos_bit);
-        x10[54] = half_btf_avx512(&cospi_p27, &x9[54], &cospi_m37, &x9[41], &__rounding, cos_bit);
-        x10[42] = half_btf_avx512(&cospi_p43, &x9[42], &cospi_p21, &x9[53], &__rounding, cos_bit);
-        x10[52] = half_btf_avx512(&cospi_p11, &x9[52], &cospi_m53, &x9[43], &__rounding, cos_bit);
-        x10[44] = half_btf_avx512(&cospi_p51, &x9[44], &cospi_p13, &x9[51], &__rounding, cos_bit);
-        x10[50] = half_btf_avx512(&cospi_p19, &x9[50], &cospi_m45, &x9[45], &__rounding, cos_bit);
-        x10[46] = half_btf_avx512(&cospi_p35, &x9[46], &cospi_p29, &x9[49], &__rounding, cos_bit);
-        x10[48] = half_btf_avx512(&cospi_p03, &x9[48], &cospi_m61, &x9[47], &__rounding, cos_bit);
+        x10[32]          = half_btf_avx512(&cospi_p63, &x9[32], &cospi_p01, &x9[63], &__rounding, cos_bit);
+        x10[62]          = half_btf_avx512(&cospi_p31, &x9[62], &cospi_m33, &x9[33], &__rounding, cos_bit);
+        x10[34]          = half_btf_avx512(&cospi_p47, &x9[34], &cospi_p17, &x9[61], &__rounding, cos_bit);
+        x10[60]          = half_btf_avx512(&cospi_p15, &x9[60], &cospi_m49, &x9[35], &__rounding, cos_bit);
+        x10[36]          = half_btf_avx512(&cospi_p55, &x9[36], &cospi_p09, &x9[59], &__rounding, cos_bit);
+        x10[58]          = half_btf_avx512(&cospi_p23, &x9[58], &cospi_m41, &x9[37], &__rounding, cos_bit);
+        x10[38]          = half_btf_avx512(&cospi_p39, &x9[38], &cospi_p25, &x9[57], &__rounding, cos_bit);
+        x10[56]          = half_btf_avx512(&cospi_p07, &x9[56], &cospi_m57, &x9[39], &__rounding, cos_bit);
+        x10[40]          = half_btf_avx512(&cospi_p59, &x9[40], &cospi_p05, &x9[55], &__rounding, cos_bit);
+        x10[54]          = half_btf_avx512(&cospi_p27, &x9[54], &cospi_m37, &x9[41], &__rounding, cos_bit);
+        x10[42]          = half_btf_avx512(&cospi_p43, &x9[42], &cospi_p21, &x9[53], &__rounding, cos_bit);
+        x10[52]          = half_btf_avx512(&cospi_p11, &x9[52], &cospi_m53, &x9[43], &__rounding, cos_bit);
+        x10[44]          = half_btf_avx512(&cospi_p51, &x9[44], &cospi_p13, &x9[51], &__rounding, cos_bit);
+        x10[50]          = half_btf_avx512(&cospi_p19, &x9[50], &cospi_m45, &x9[45], &__rounding, cos_bit);
+        x10[46]          = half_btf_avx512(&cospi_p35, &x9[46], &cospi_p29, &x9[49], &__rounding, cos_bit);
+        x10[48]          = half_btf_avx512(&cospi_p03, &x9[48], &cospi_m61, &x9[47], &__rounding, cos_bit);
 
         // stage 11
         out[1 * stride]  = x10[32];
@@ -3220,8 +2783,8 @@ static void fidtx64x64_N2_avx512(const __m512i *input, __m512i *output) {
     }
 }
 
-static void av1_fdct32_new_N2_avx512(const __m512i *input, __m512i *output, const int8_t cos_bit,
-                                     const int32_t col_num, const int32_t stride) {
+static void av1_fdct32_new_N2_avx512(const __m512i *input, __m512i *output, const int8_t cos_bit, const int32_t col_num,
+                                     const int32_t stride) {
     const int32_t *cospi      = cospi_arr(cos_bit);
     const __m512i  __rounding = _mm512_set1_epi32(1 << (cos_bit - 1));
     const int32_t  columns    = col_num >> 4;
@@ -3327,14 +2890,10 @@ static void av1_fdct32_new_N2_avx512(const __m512i *input, __m512i *output, cons
         buf0[17] = buf1[17];
         buf0[18] = buf1[18];
         buf0[19] = buf1[19];
-        btf_32_type0_avx512_new(
-            cospi_m32, cospi_p32, buf1[20], buf1[27], buf0[20], buf0[27], __rounding, cos_bit);
-        btf_32_type0_avx512_new(
-            cospi_m32, cospi_p32, buf1[21], buf1[26], buf0[21], buf0[26], __rounding, cos_bit);
-        btf_32_type0_avx512_new(
-            cospi_m32, cospi_p32, buf1[22], buf1[25], buf0[22], buf0[25], __rounding, cos_bit);
-        btf_32_type0_avx512_new(
-            cospi_m32, cospi_p32, buf1[23], buf1[24], buf0[23], buf0[24], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m32, cospi_p32, buf1[20], buf1[27], buf0[20], buf0[27], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m32, cospi_p32, buf1[21], buf1[26], buf0[21], buf0[26], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m32, cospi_p32, buf1[22], buf1[25], buf0[22], buf0[25], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m32, cospi_p32, buf1[23], buf1[24], buf0[23], buf0[24], __rounding, cos_bit);
         buf0[28] = buf1[28];
         buf0[29] = buf1[29];
         buf0[30] = buf1[30];
@@ -3351,10 +2910,8 @@ static void av1_fdct32_new_N2_avx512(const __m512i *input, __m512i *output, cons
         buf1[4] = _mm512_sub_epi32(buf0[3], buf0[4]);
         buf1[8] = buf0[8];
         buf1[9] = buf0[9];
-        btf_32_type0_avx512_new(
-            cospi_m32, cospi_p32, buf0[10], buf0[13], buf1[10], buf1[13], __rounding, cos_bit);
-        btf_32_type0_avx512_new(
-            cospi_m32, cospi_p32, buf0[11], buf0[12], buf1[11], buf1[12], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m32, cospi_p32, buf0[10], buf0[13], buf1[10], buf1[13], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m32, cospi_p32, buf0[11], buf0[12], buf1[11], buf1[12], __rounding, cos_bit);
         buf1[14] = buf0[14];
         buf1[15] = buf0[15];
         buf1[16] = _mm512_add_epi32(buf0[16], buf0[23]);
@@ -3380,8 +2937,7 @@ static void av1_fdct32_new_N2_avx512(const __m512i *input, __m512i *output, cons
         buf0[1] = _mm512_add_epi32(buf1[1], buf1[2]);
         buf0[2] = _mm512_sub_epi32(buf1[1], buf1[2]);
         buf0[4] = buf1[4];
-        btf_32_type0_avx512_new(
-            cospi_m32, cospi_p32, buf1[5], buf1[6], buf0[5], buf0[6], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m32, cospi_p32, buf1[5], buf1[6], buf0[5], buf0[6], __rounding, cos_bit);
         buf0[7]  = buf1[7];
         buf0[8]  = _mm512_add_epi32(buf1[8], buf1[11]);
         buf0[11] = _mm512_sub_epi32(buf1[8], buf1[11]);
@@ -3393,14 +2949,10 @@ static void av1_fdct32_new_N2_avx512(const __m512i *input, __m512i *output, cons
         buf0[14] = _mm512_add_epi32(buf1[14], buf1[13]);
         buf0[16] = buf1[16];
         buf0[17] = buf1[17];
-        btf_32_type0_avx512_new(
-            cospi_m16, cospi_p48, buf1[18], buf1[29], buf0[18], buf0[29], __rounding, cos_bit);
-        btf_32_type0_avx512_new(
-            cospi_m16, cospi_p48, buf1[19], buf1[28], buf0[19], buf0[28], __rounding, cos_bit);
-        btf_32_type0_avx512_new(
-            cospi_m48, cospi_m16, buf1[20], buf1[27], buf0[20], buf0[27], __rounding, cos_bit);
-        btf_32_type0_avx512_new(
-            cospi_m48, cospi_m16, buf1[21], buf1[26], buf0[21], buf0[26], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m16, cospi_p48, buf1[18], buf1[29], buf0[18], buf0[29], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m16, cospi_p48, buf1[19], buf1[28], buf0[19], buf0[28], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m48, cospi_m16, buf1[20], buf1[27], buf0[20], buf0[27], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m48, cospi_m16, buf1[21], buf1[26], buf0[21], buf0[26], __rounding, cos_bit);
         buf0[22] = buf1[22];
         buf0[23] = buf1[23];
         buf0[24] = buf1[24];
@@ -3416,10 +2968,8 @@ static void av1_fdct32_new_N2_avx512(const __m512i *input, __m512i *output, cons
         buf1[6] = _mm512_sub_epi32(buf0[7], buf0[6]);
         buf1[7] = _mm512_add_epi32(buf0[7], buf0[6]);
         buf1[8] = buf0[8];
-        btf_32_type0_avx512_new(
-            cospi_m16, cospi_p48, buf0[9], buf0[14], buf1[9], buf1[14], __rounding, cos_bit);
-        btf_32_type0_avx512_new(
-            cospi_m48, cospi_m16, buf0[10], buf0[13], buf1[10], buf1[13], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m16, cospi_p48, buf0[9], buf0[14], buf1[9], buf1[14], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m48, cospi_m16, buf0[10], buf0[13], buf1[10], buf1[13], __rounding, cos_bit);
         buf1[11] = buf0[11];
         buf1[12] = buf0[12];
         buf1[15] = buf0[15];
@@ -3441,12 +2991,12 @@ static void av1_fdct32_new_N2_avx512(const __m512i *input, __m512i *output, cons
         buf1[30] = _mm512_add_epi32(buf0[30], buf0[29]);
 
         // stage 6
-        buf0[0] = buf1[0];
-        buf0[2] = buf1[2];
-        buf0[4] = half_btf_avx512(&cospi_p56, &buf1[4], &cospi_p08, &buf1[7], &__rounding, cos_bit);
-        buf0[6] = half_btf_avx512(&cospi_p24, &buf1[6], &cospi_m40, &buf1[5], &__rounding, cos_bit);
-        buf0[8] = _mm512_add_epi32(buf1[8], buf1[9]);
-        buf0[9] = _mm512_sub_epi32(buf1[8], buf1[9]);
+        buf0[0]  = buf1[0];
+        buf0[2]  = buf1[2];
+        buf0[4]  = half_btf_avx512(&cospi_p56, &buf1[4], &cospi_p08, &buf1[7], &__rounding, cos_bit);
+        buf0[6]  = half_btf_avx512(&cospi_p24, &buf1[6], &cospi_m40, &buf1[5], &__rounding, cos_bit);
+        buf0[8]  = _mm512_add_epi32(buf1[8], buf1[9]);
+        buf0[9]  = _mm512_sub_epi32(buf1[8], buf1[9]);
         buf0[10] = _mm512_sub_epi32(buf1[11], buf1[10]);
         buf0[11] = _mm512_add_epi32(buf1[11], buf1[10]);
         buf0[12] = _mm512_add_epi32(buf1[12], buf1[13]);
@@ -3454,16 +3004,12 @@ static void av1_fdct32_new_N2_avx512(const __m512i *input, __m512i *output, cons
         buf0[14] = _mm512_sub_epi32(buf1[15], buf1[14]);
         buf0[15] = _mm512_add_epi32(buf1[15], buf1[14]);
         buf0[16] = buf1[16];
-        btf_32_type0_avx512_new(
-            cospi_m08, cospi_p56, buf1[17], buf1[30], buf0[17], buf0[30], __rounding, cos_bit);
-        btf_32_type0_avx512_new(
-            cospi_m56, cospi_m08, buf1[18], buf1[29], buf0[18], buf0[29], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m08, cospi_p56, buf1[17], buf1[30], buf0[17], buf0[30], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m56, cospi_m08, buf1[18], buf1[29], buf0[18], buf0[29], __rounding, cos_bit);
         buf0[19] = buf1[19];
         buf0[20] = buf1[20];
-        btf_32_type0_avx512_new(
-            cospi_m40, cospi_p24, buf1[21], buf1[26], buf0[21], buf0[26], __rounding, cos_bit);
-        btf_32_type0_avx512_new(
-            cospi_m24, cospi_m40, buf1[22], buf1[25], buf0[22], buf0[25], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m40, cospi_p24, buf1[21], buf1[26], buf0[21], buf0[26], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m24, cospi_m40, buf1[22], buf1[25], buf0[22], buf0[25], __rounding, cos_bit);
         buf0[23] = buf1[23];
         buf0[24] = buf1[24];
         buf0[27] = buf1[27];
@@ -3471,18 +3017,14 @@ static void av1_fdct32_new_N2_avx512(const __m512i *input, __m512i *output, cons
         buf0[31] = buf1[31];
 
         // stage 7
-        buf1[0] = buf0[0];
-        buf1[2] = buf0[2];
-        buf1[4] = buf0[4];
-        buf1[6] = buf0[6];
-        buf1[8] = half_btf_avx512(
-            &cospi_p60, &buf0[8], &cospi_p04, &buf0[15], &__rounding, cos_bit);
-        buf1[14] = half_btf_avx512(
-            &cospi_p28, &buf0[14], &cospi_m36, &buf0[9], &__rounding, cos_bit);
-        buf1[10] = half_btf_avx512(
-            &cospi_p44, &buf0[10], &cospi_p20, &buf0[13], &__rounding, cos_bit);
-        buf1[12] = half_btf_avx512(
-            &cospi_p12, &buf0[12], &cospi_m52, &buf0[11], &__rounding, cos_bit);
+        buf1[0]  = buf0[0];
+        buf1[2]  = buf0[2];
+        buf1[4]  = buf0[4];
+        buf1[6]  = buf0[6];
+        buf1[8]  = half_btf_avx512(&cospi_p60, &buf0[8], &cospi_p04, &buf0[15], &__rounding, cos_bit);
+        buf1[14] = half_btf_avx512(&cospi_p28, &buf0[14], &cospi_m36, &buf0[9], &__rounding, cos_bit);
+        buf1[10] = half_btf_avx512(&cospi_p44, &buf0[10], &cospi_p20, &buf0[13], &__rounding, cos_bit);
+        buf1[12] = half_btf_avx512(&cospi_p12, &buf0[12], &cospi_m52, &buf0[11], &__rounding, cos_bit);
         buf1[16] = _mm512_add_epi32(buf0[16], buf0[17]);
         buf1[17] = _mm512_sub_epi32(buf0[16], buf0[17]);
         buf1[18] = _mm512_sub_epi32(buf0[19], buf0[18]);
@@ -3509,22 +3051,14 @@ static void av1_fdct32_new_N2_avx512(const __m512i *input, __m512i *output, cons
         buf0[10] = buf1[10];
         buf0[12] = buf1[12];
         buf0[14] = buf1[14];
-        buf0[16] = half_btf_avx512(
-            &cospi_p62, &buf1[16], &cospi_p02, &buf1[31], &__rounding, cos_bit);
-        buf0[30] = half_btf_avx512(
-            &cospi_p30, &buf1[30], &cospi_m34, &buf1[17], &__rounding, cos_bit);
-        buf0[18] = half_btf_avx512(
-            &cospi_p46, &buf1[18], &cospi_p18, &buf1[29], &__rounding, cos_bit);
-        buf0[28] = half_btf_avx512(
-            &cospi_p14, &buf1[28], &cospi_m50, &buf1[19], &__rounding, cos_bit);
-        buf0[20] = half_btf_avx512(
-            &cospi_p54, &buf1[20], &cospi_p10, &buf1[27], &__rounding, cos_bit);
-        buf0[26] = half_btf_avx512(
-            &cospi_p22, &buf1[26], &cospi_m42, &buf1[21], &__rounding, cos_bit);
-        buf0[22] = half_btf_avx512(
-            &cospi_p38, &buf1[22], &cospi_p26, &buf1[25], &__rounding, cos_bit);
-        buf0[24] = half_btf_avx512(
-            &cospi_p06, &buf1[24], &cospi_m58, &buf1[23], &__rounding, cos_bit);
+        buf0[16] = half_btf_avx512(&cospi_p62, &buf1[16], &cospi_p02, &buf1[31], &__rounding, cos_bit);
+        buf0[30] = half_btf_avx512(&cospi_p30, &buf1[30], &cospi_m34, &buf1[17], &__rounding, cos_bit);
+        buf0[18] = half_btf_avx512(&cospi_p46, &buf1[18], &cospi_p18, &buf1[29], &__rounding, cos_bit);
+        buf0[28] = half_btf_avx512(&cospi_p14, &buf1[28], &cospi_m50, &buf1[19], &__rounding, cos_bit);
+        buf0[20] = half_btf_avx512(&cospi_p54, &buf1[20], &cospi_p10, &buf1[27], &__rounding, cos_bit);
+        buf0[26] = half_btf_avx512(&cospi_p22, &buf1[26], &cospi_m42, &buf1[21], &__rounding, cos_bit);
+        buf0[22] = half_btf_avx512(&cospi_p38, &buf1[22], &cospi_p26, &buf1[25], &__rounding, cos_bit);
+        buf0[24] = half_btf_avx512(&cospi_p06, &buf1[24], &cospi_m58, &buf1[23], &__rounding, cos_bit);
 
         // stage 9
         out[0 * stride]  = buf0[0];
@@ -3546,8 +3080,8 @@ static void av1_fdct32_new_N2_avx512(const __m512i *input, __m512i *output, cons
     }
 }
 
-static AOM_FORCE_INLINE void av1_idtx32_wxh_N2_avx512(const __m512i *input, __m512i *output,
-                                                      int32_t col_num, int32_t row_num) {
+static AOM_FORCE_INLINE void av1_idtx32_wxh_N2_avx512(const __m512i *input, __m512i *output, int32_t col_num,
+                                                      int32_t row_num) {
     for (int32_t i = 0; i < row_num; i++) {
         for (int32_t j = 0; j < col_num / 2; j++) {
             output[i * col_num + j] = _mm512_slli_epi32(input[i * col_num + j], (uint8_t)2);
@@ -3555,8 +3089,7 @@ static AOM_FORCE_INLINE void av1_idtx32_wxh_N2_avx512(const __m512i *input, __m5
     }
 }
 
-void av1_fwd_txfm2d_32x32_N2_avx512(int16_t *input, int32_t *output, uint32_t stride,
-                                    TxType tx_type, uint8_t bd) {
+void av1_fwd_txfm2d_32x32_N2_avx512(int16_t *input, int32_t *output, uint32_t stride, TxType tx_type, uint8_t bd) {
     DECLARE_ALIGNED(64, int32_t, txfm_buf[1024]);
     Txfm2dFlipCfg cfg;
     svt_aom_transform_config(tx_type, TX_32X32, &cfg);
@@ -3616,8 +3149,7 @@ void av1_fwd_txfm2d_32x32_N2_avx512(int16_t *input, int32_t *output, uint32_t st
     }
 }
 
-void av1_fwd_txfm2d_64x64_N2_avx512(int16_t *input, int32_t *output, uint32_t stride,
-                                    TxType tx_type, uint8_t bd) {
+void av1_fwd_txfm2d_64x64_N2_avx512(int16_t *input, int32_t *output, uint32_t stride, TxType tx_type, uint8_t bd) {
     (void)bd;
     __m512i       in[256];
     __m512i      *out         = (__m512i *)output;
@@ -3645,8 +3177,7 @@ void av1_fwd_txfm2d_64x64_N2_avx512(int16_t *input, int32_t *output, uint32_t st
         transpose_16nx16n_N2_half_avx512(64, out, in);
 
         /*row wise transform*/
-        av1_fdct64_new_N2_avx512(
-            in, out, fwd_cos_bit_row[txw_idx][txh_idx], txfm_size / 2, col_num);
+        av1_fdct64_new_N2_avx512(in, out, fwd_cos_bit_row[txw_idx][txh_idx], txfm_size / 2, col_num);
         av1_round_shift_array_wxh_N2_avx512(out, in, col_num, txfm_size / 2, -shift[2]);
         transpose_16nx16n_N2_quad_avx512(64, in, out);
         clear_buffer_wxh_N2_avx512(out, 64, 64);
@@ -3655,8 +3186,7 @@ void av1_fwd_txfm2d_64x64_N2_avx512(int16_t *input, int32_t *output, uint32_t st
     }
 }
 
-void av1_fwd_txfm2d_32x64_N2_avx512(int16_t *input, int32_t *output, uint32_t stride,
-                                    TxType tx_type, uint8_t bd) {
+void av1_fwd_txfm2d_32x64_N2_avx512(int16_t *input, int32_t *output, uint32_t stride, TxType tx_type, uint8_t bd) {
     (void)tx_type;
     __m512i       in[128];
     __m512i      *outcoef512    = (__m512i *)output;
@@ -3679,14 +3209,12 @@ void av1_fwd_txfm2d_32x64_N2_avx512(int16_t *input, int32_t *output, uint32_t st
     // row transform
     av1_fdct32_new_N2_avx512(outcoef512, in, bitrow, txfm_size_row / 2, num_row);
     transpose_16nx16m_N2_quad_avx512(in, outcoef512, txfm_size_row, txfm_size_col);
-    av1_round_shift_rect_array_wxh_N2_avx512(
-        outcoef512, outcoef512, num_col, txfm_size_row / 2, -shift[2], 5793);
+    av1_round_shift_rect_array_wxh_N2_avx512(outcoef512, outcoef512, num_col, txfm_size_row / 2, -shift[2], 5793);
     clear_buffer_wxh_N2_avx512(outcoef512, 32, 64);
     (void)bd;
 }
 
-void av1_fwd_txfm2d_64x32_N2_avx512(int16_t *input, int32_t *output, uint32_t stride,
-                                    TxType tx_type, uint8_t bd) {
+void av1_fwd_txfm2d_64x32_N2_avx512(int16_t *input, int32_t *output, uint32_t stride, TxType tx_type, uint8_t bd) {
     (void)tx_type;
     __m512i       in[128];
     __m512i      *outcoef512    = (__m512i *)output;
@@ -3712,8 +3240,7 @@ void av1_fwd_txfm2d_64x32_N2_avx512(int16_t *input, int32_t *output, uint32_t st
     // row transform
     av1_fdct64_new_N2_avx512(outcoef512, in, bitrow, txfm_size_row / 2, num_row);
     transpose_16nx16m_N2_quad_avx512(in, outcoef512, txfm_size_row, txfm_size_col);
-    av1_round_shift_rect_array_wxh_N2_avx512(
-        outcoef512, outcoef512, num_col, txfm_size_row / 2, -shift[2], 5793);
+    av1_round_shift_rect_array_wxh_N2_avx512(outcoef512, outcoef512, num_col, txfm_size_row / 2, -shift[2], 5793);
     clear_buffer_wxh_N2_avx512(outcoef512, 64, 32);
     (void)bd;
 }
@@ -3739,8 +3266,7 @@ static AOM_FORCE_INLINE void clear_buffer_64x64_N4_avx512(__m512i *buff) {
     }
 }
 
-static AOM_FORCE_INLINE void av1_round_shift_array_64x64_N4_avx512(__m512i *input, __m512i *output,
-                                                                   const int8_t bit) {
+static AOM_FORCE_INLINE void av1_round_shift_array_64x64_N4_avx512(__m512i *input, __m512i *output, const int8_t bit) {
     if (bit > 0) {
         __m512i round = _mm512_set1_epi32(1 << (bit - 1));
         int32_t i;
@@ -3749,14 +3275,11 @@ static AOM_FORCE_INLINE void av1_round_shift_array_64x64_N4_avx512(__m512i *inpu
         }
     } else {
         int32_t i;
-        for (i = 0; i < 16; i++) {
-            output[i * 4] = _mm512_slli_epi32(input[i * 4], (uint8_t)(-bit));
-        }
+        for (i = 0; i < 16; i++) { output[i * 4] = _mm512_slli_epi32(input[i * 4], (uint8_t)(-bit)); }
     }
 }
 
-static AOM_FORCE_INLINE void load_buffer_16x16_in_64x64_avx512(const int16_t *input, int32_t stride,
-                                                               __m512i *output) {
+static AOM_FORCE_INLINE void load_buffer_16x16_in_64x64_avx512(const int16_t *input, int32_t stride, __m512i *output) {
     __m256i x0;
     __m512i v0;
     int32_t i;
@@ -3771,8 +3294,8 @@ static AOM_FORCE_INLINE void load_buffer_16x16_in_64x64_avx512(const int16_t *in
     }
 }
 
-static void av1_fdct64_new_N4_avx512(const __m512i *input, __m512i *output, const int8_t cos_bit,
-                                     const int32_t col_num, const int32_t stride) {
+static void av1_fdct64_new_N4_avx512(const __m512i *input, __m512i *output, const int8_t cos_bit, const int32_t col_num,
+                                     const int32_t stride) {
     const int32_t *cospi      = cospi_arr(cos_bit);
     const __m512i  __rounding = _mm512_set1_epi32(1 << (cos_bit - 1));
     const int32_t  columns    = col_num >> 4;
@@ -3940,22 +3463,14 @@ static void av1_fdct64_new_N4_avx512(const __m512i *input, __m512i *output, cons
         x2[37] = x1[37];
         x2[38] = x1[38];
         x2[39] = x1[39];
-        btf_32_type0_avx512_new(
-            cospi_m32, cospi_p32, x1[40], x1[55], x2[40], x2[55], __rounding, cos_bit);
-        btf_32_type0_avx512_new(
-            cospi_m32, cospi_p32, x1[41], x1[54], x2[41], x2[54], __rounding, cos_bit);
-        btf_32_type0_avx512_new(
-            cospi_m32, cospi_p32, x1[42], x1[53], x2[42], x2[53], __rounding, cos_bit);
-        btf_32_type0_avx512_new(
-            cospi_m32, cospi_p32, x1[43], x1[52], x2[43], x2[52], __rounding, cos_bit);
-        btf_32_type0_avx512_new(
-            cospi_m32, cospi_p32, x1[44], x1[51], x2[44], x2[51], __rounding, cos_bit);
-        btf_32_type0_avx512_new(
-            cospi_m32, cospi_p32, x1[45], x1[50], x2[45], x2[50], __rounding, cos_bit);
-        btf_32_type0_avx512_new(
-            cospi_m32, cospi_p32, x1[46], x1[49], x2[46], x2[49], __rounding, cos_bit);
-        btf_32_type0_avx512_new(
-            cospi_m32, cospi_p32, x1[47], x1[48], x2[47], x2[48], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m32, cospi_p32, x1[40], x1[55], x2[40], x2[55], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m32, cospi_p32, x1[41], x1[54], x2[41], x2[54], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m32, cospi_p32, x1[42], x1[53], x2[42], x2[53], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m32, cospi_p32, x1[43], x1[52], x2[43], x2[52], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m32, cospi_p32, x1[44], x1[51], x2[44], x2[51], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m32, cospi_p32, x1[45], x1[50], x2[45], x2[50], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m32, cospi_p32, x1[46], x1[49], x2[46], x2[49], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m32, cospi_p32, x1[47], x1[48], x2[47], x2[48], __rounding, cos_bit);
         x2[56] = x1[56];
         x2[57] = x1[57];
         x2[58] = x1[58];
@@ -3987,14 +3502,10 @@ static void av1_fdct64_new_N4_avx512(const __m512i *input, __m512i *output, cons
         x3[17] = x2[17];
         x3[18] = x2[18];
         x3[19] = x2[19];
-        btf_32_type0_avx512_new(
-            cospi_m32, cospi_p32, x2[20], x2[27], x3[20], x3[27], __rounding, cos_bit);
-        btf_32_type0_avx512_new(
-            cospi_m32, cospi_p32, x2[21], x2[26], x3[21], x3[26], __rounding, cos_bit);
-        btf_32_type0_avx512_new(
-            cospi_m32, cospi_p32, x2[22], x2[25], x3[22], x3[25], __rounding, cos_bit);
-        btf_32_type0_avx512_new(
-            cospi_m32, cospi_p32, x2[23], x2[24], x3[23], x3[24], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m32, cospi_p32, x2[20], x2[27], x3[20], x3[27], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m32, cospi_p32, x2[21], x2[26], x3[21], x3[26], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m32, cospi_p32, x2[22], x2[25], x3[22], x3[25], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m32, cospi_p32, x2[23], x2[24], x3[23], x3[24], __rounding, cos_bit);
         x3[28] = x2[28];
         x3[29] = x2[29];
         x3[30] = x2[30];
@@ -4044,10 +3555,8 @@ static void av1_fdct64_new_N4_avx512(const __m512i *input, __m512i *output, cons
         x4[4] = _mm512_sub_epi32(x3[3], x3[4]);
         x4[8] = x3[8];
         x4[9] = x3[9];
-        btf_32_type0_avx512_new(
-            cospi_m32, cospi_p32, x3[10], x3[13], x4[10], x4[13], __rounding, cos_bit);
-        btf_32_type0_avx512_new(
-            cospi_m32, cospi_p32, x3[11], x3[12], x4[11], x4[12], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m32, cospi_p32, x3[10], x3[13], x4[10], x4[13], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m32, cospi_p32, x3[11], x3[12], x4[11], x4[12], __rounding, cos_bit);
         x4[14] = x3[14];
         x4[15] = x3[15];
         x4[16] = _mm512_add_epi32(x3[16], x3[23]);
@@ -4070,22 +3579,14 @@ static void av1_fdct64_new_N4_avx512(const __m512i *input, __m512i *output, cons
         x4[33] = x3[33];
         x4[34] = x3[34];
         x4[35] = x3[35];
-        btf_32_type0_avx512_new(
-            cospi_m16, cospi_p48, x3[36], x3[59], x4[36], x4[59], __rounding, cos_bit);
-        btf_32_type0_avx512_new(
-            cospi_m16, cospi_p48, x3[37], x3[58], x4[37], x4[58], __rounding, cos_bit);
-        btf_32_type0_avx512_new(
-            cospi_m16, cospi_p48, x3[38], x3[57], x4[38], x4[57], __rounding, cos_bit);
-        btf_32_type0_avx512_new(
-            cospi_m16, cospi_p48, x3[39], x3[56], x4[39], x4[56], __rounding, cos_bit);
-        btf_32_type0_avx512_new(
-            cospi_m48, cospi_m16, x3[40], x3[55], x4[40], x4[55], __rounding, cos_bit);
-        btf_32_type0_avx512_new(
-            cospi_m48, cospi_m16, x3[41], x3[54], x4[41], x4[54], __rounding, cos_bit);
-        btf_32_type0_avx512_new(
-            cospi_m48, cospi_m16, x3[42], x3[53], x4[42], x4[53], __rounding, cos_bit);
-        btf_32_type0_avx512_new(
-            cospi_m48, cospi_m16, x3[43], x3[52], x4[43], x4[52], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m16, cospi_p48, x3[36], x3[59], x4[36], x4[59], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m16, cospi_p48, x3[37], x3[58], x4[37], x4[58], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m16, cospi_p48, x3[38], x3[57], x4[38], x4[57], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m16, cospi_p48, x3[39], x3[56], x4[39], x4[56], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m48, cospi_m16, x3[40], x3[55], x4[40], x4[55], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m48, cospi_m16, x3[41], x3[54], x4[41], x4[54], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m48, cospi_m16, x3[42], x3[53], x4[42], x4[53], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m48, cospi_m16, x3[43], x3[52], x4[43], x4[52], __rounding, cos_bit);
         x4[44] = x3[44];
         x4[45] = x3[45];
         x4[46] = x3[46];
@@ -4104,8 +3605,7 @@ static void av1_fdct64_new_N4_avx512(const __m512i *input, __m512i *output, cons
         x5[0] = _mm512_add_epi32(x4[0], x4[3]);
         x5[1] = _mm512_add_epi32(x4[1], x4[2]);
         x5[4] = x4[4];
-        btf_32_type0_avx512_new(
-            cospi_m32, cospi_p32, x4[5], x4[6], x5[5], x5[6], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m32, cospi_p32, x4[5], x4[6], x5[5], x5[6], __rounding, cos_bit);
         x5[7]  = x4[7];
         x5[8]  = _mm512_add_epi32(x4[8], x4[11]);
         x5[11] = _mm512_sub_epi32(x4[8], x4[11]);
@@ -4117,14 +3617,10 @@ static void av1_fdct64_new_N4_avx512(const __m512i *input, __m512i *output, cons
         x5[14] = _mm512_add_epi32(x4[14], x4[13]);
         x5[16] = x4[16];
         x5[17] = x4[17];
-        btf_32_type0_avx512_new(
-            cospi_m16, cospi_p48, x4[18], x4[29], x5[18], x5[29], __rounding, cos_bit);
-        btf_32_type0_avx512_new(
-            cospi_m16, cospi_p48, x4[19], x4[28], x5[19], x5[28], __rounding, cos_bit);
-        btf_32_type0_avx512_new(
-            cospi_m48, cospi_m16, x4[20], x4[27], x5[20], x5[27], __rounding, cos_bit);
-        btf_32_type0_avx512_new(
-            cospi_m48, cospi_m16, x4[21], x4[26], x5[21], x5[26], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m16, cospi_p48, x4[18], x4[29], x5[18], x5[29], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m16, cospi_p48, x4[19], x4[28], x5[19], x5[28], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m48, cospi_m16, x4[20], x4[27], x5[20], x5[27], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m48, cospi_m16, x4[21], x4[26], x5[21], x5[26], __rounding, cos_bit);
         x5[22] = x4[22];
         x5[23] = x4[23];
         x5[24] = x4[24];
@@ -4170,10 +3666,8 @@ static void av1_fdct64_new_N4_avx512(const __m512i *input, __m512i *output, cons
         x6[4] = _mm512_add_epi32(x5[4], x5[5]);
         x6[7] = _mm512_add_epi32(x5[7], x5[6]);
         x6[8] = x5[8];
-        btf_32_type0_avx512_new(
-            cospi_m16, cospi_p48, x5[9], x5[14], x6[9], x6[14], __rounding, cos_bit);
-        btf_32_type0_avx512_new(
-            cospi_m48, cospi_m16, x5[10], x5[13], x6[10], x6[13], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m16, cospi_p48, x5[9], x5[14], x6[9], x6[14], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m48, cospi_m16, x5[10], x5[13], x6[10], x6[13], __rounding, cos_bit);
         x6[11] = x5[11];
         x6[12] = x5[12];
         x6[15] = x5[15];
@@ -4195,26 +3689,18 @@ static void av1_fdct64_new_N4_avx512(const __m512i *input, __m512i *output, cons
         x6[30] = _mm512_add_epi32(x5[30], x5[29]);
         x6[32] = x5[32];
         x6[33] = x5[33];
-        btf_32_type0_avx512_new(
-            cospi_m08, cospi_p56, x5[34], x5[61], x6[34], x6[61], __rounding, cos_bit);
-        btf_32_type0_avx512_new(
-            cospi_m08, cospi_p56, x5[35], x5[60], x6[35], x6[60], __rounding, cos_bit);
-        btf_32_type0_avx512_new(
-            cospi_m56, cospi_m08, x5[36], x5[59], x6[36], x6[59], __rounding, cos_bit);
-        btf_32_type0_avx512_new(
-            cospi_m56, cospi_m08, x5[37], x5[58], x6[37], x6[58], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m08, cospi_p56, x5[34], x5[61], x6[34], x6[61], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m08, cospi_p56, x5[35], x5[60], x6[35], x6[60], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m56, cospi_m08, x5[36], x5[59], x6[36], x6[59], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m56, cospi_m08, x5[37], x5[58], x6[37], x6[58], __rounding, cos_bit);
         x6[38] = x5[38];
         x6[39] = x5[39];
         x6[40] = x5[40];
         x6[41] = x5[41];
-        btf_32_type0_avx512_new(
-            cospi_m40, cospi_p24, x5[42], x5[53], x6[42], x6[53], __rounding, cos_bit);
-        btf_32_type0_avx512_new(
-            cospi_m40, cospi_p24, x5[43], x5[52], x6[43], x6[52], __rounding, cos_bit);
-        btf_32_type0_avx512_new(
-            cospi_m24, cospi_m40, x5[44], x5[51], x6[44], x6[51], __rounding, cos_bit);
-        btf_32_type0_avx512_new(
-            cospi_m24, cospi_m40, x5[45], x5[50], x6[45], x6[50], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m40, cospi_p24, x5[42], x5[53], x6[42], x6[53], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m40, cospi_p24, x5[43], x5[52], x6[43], x6[52], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m24, cospi_m40, x5[44], x5[51], x6[44], x6[51], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m24, cospi_m40, x5[45], x5[50], x6[45], x6[50], __rounding, cos_bit);
         x6[46] = x5[46];
         x6[47] = x5[47];
         x6[48] = x5[48];
@@ -4235,16 +3721,12 @@ static void av1_fdct64_new_N4_avx512(const __m512i *input, __m512i *output, cons
         x7[12] = _mm512_add_epi32(x6[12], x6[13]);
         x7[15] = _mm512_add_epi32(x6[15], x6[14]);
         x7[16] = x6[16];
-        btf_32_type0_avx512_new(
-            cospi_m08, cospi_p56, x6[17], x6[30], x7[17], x7[30], __rounding, cos_bit);
-        btf_32_type0_avx512_new(
-            cospi_m56, cospi_m08, x6[18], x6[29], x7[18], x7[29], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m08, cospi_p56, x6[17], x6[30], x7[17], x7[30], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m56, cospi_m08, x6[18], x6[29], x7[18], x7[29], __rounding, cos_bit);
         x7[19] = x6[19];
         x7[20] = x6[20];
-        btf_32_type0_avx512_new(
-            cospi_m40, cospi_p24, x6[21], x6[26], x7[21], x7[26], __rounding, cos_bit);
-        btf_32_type0_avx512_new(
-            cospi_m24, cospi_m40, x6[22], x6[25], x7[22], x7[25], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m40, cospi_p24, x6[21], x6[26], x7[21], x7[26], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m24, cospi_m40, x6[22], x6[25], x7[22], x7[25], __rounding, cos_bit);
         x7[23] = x6[23];
         x7[24] = x6[24];
         x7[27] = x6[27];
@@ -4285,43 +3767,33 @@ static void av1_fdct64_new_N4_avx512(const __m512i *input, __m512i *output, cons
 
         // stage 8
         __m512i x8[64];
-        out[0 * stride] = x7[0];
-        out[8 * stride] = x7[4];
-        out[4 * stride] = half_btf_avx512(
-            &cospi_p60, &x7[8], &cospi_p04, &x7[15], &__rounding, cos_bit);
-        out[12 * stride] = half_btf_avx512(
-            &cospi_p12, &x7[12], &cospi_m52, &x7[11], &__rounding, cos_bit);
-        x8[16] = _mm512_add_epi32(x7[16], x7[17]);
-        x8[19] = _mm512_add_epi32(x7[19], x7[18]);
-        x8[20] = _mm512_add_epi32(x7[20], x7[21]);
-        x8[23] = _mm512_add_epi32(x7[23], x7[22]);
-        x8[24] = _mm512_add_epi32(x7[24], x7[25]);
-        x8[27] = _mm512_add_epi32(x7[27], x7[26]);
-        x8[28] = _mm512_add_epi32(x7[28], x7[29]);
-        x8[31] = _mm512_add_epi32(x7[31], x7[30]);
-        x8[32] = x7[32];
-        btf_32_type0_avx512_new(
-            cospi_m04, cospi_p60, x7[33], x7[62], x8[33], x8[62], __rounding, cos_bit);
-        btf_32_type0_avx512_new(
-            cospi_m60, cospi_m04, x7[34], x7[61], x8[34], x8[61], __rounding, cos_bit);
+        out[0 * stride]  = x7[0];
+        out[8 * stride]  = x7[4];
+        out[4 * stride]  = half_btf_avx512(&cospi_p60, &x7[8], &cospi_p04, &x7[15], &__rounding, cos_bit);
+        out[12 * stride] = half_btf_avx512(&cospi_p12, &x7[12], &cospi_m52, &x7[11], &__rounding, cos_bit);
+        x8[16]           = _mm512_add_epi32(x7[16], x7[17]);
+        x8[19]           = _mm512_add_epi32(x7[19], x7[18]);
+        x8[20]           = _mm512_add_epi32(x7[20], x7[21]);
+        x8[23]           = _mm512_add_epi32(x7[23], x7[22]);
+        x8[24]           = _mm512_add_epi32(x7[24], x7[25]);
+        x8[27]           = _mm512_add_epi32(x7[27], x7[26]);
+        x8[28]           = _mm512_add_epi32(x7[28], x7[29]);
+        x8[31]           = _mm512_add_epi32(x7[31], x7[30]);
+        x8[32]           = x7[32];
+        btf_32_type0_avx512_new(cospi_m04, cospi_p60, x7[33], x7[62], x8[33], x8[62], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m60, cospi_m04, x7[34], x7[61], x8[34], x8[61], __rounding, cos_bit);
         x8[35] = x7[35];
         x8[36] = x7[36];
-        btf_32_type0_avx512_new(
-            cospi_m36, cospi_p28, x7[37], x7[58], x8[37], x8[58], __rounding, cos_bit);
-        btf_32_type0_avx512_new(
-            cospi_m28, cospi_m36, x7[38], x7[57], x8[38], x8[57], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m36, cospi_p28, x7[37], x7[58], x8[37], x8[58], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m28, cospi_m36, x7[38], x7[57], x8[38], x8[57], __rounding, cos_bit);
         x8[39] = x7[39];
         x8[40] = x7[40];
-        btf_32_type0_avx512_new(
-            cospi_m20, cospi_p44, x7[41], x7[54], x8[41], x8[54], __rounding, cos_bit);
-        btf_32_type0_avx512_new(
-            cospi_m44, cospi_m20, x7[42], x7[53], x8[42], x8[53], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m20, cospi_p44, x7[41], x7[54], x8[41], x8[54], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m44, cospi_m20, x7[42], x7[53], x8[42], x8[53], __rounding, cos_bit);
         x8[43] = x7[43];
         x8[44] = x7[44];
-        btf_32_type0_avx512_new(
-            cospi_m52, cospi_p12, x7[45], x7[50], x8[45], x8[50], __rounding, cos_bit);
-        btf_32_type0_avx512_new(
-            cospi_m12, cospi_m52, x7[46], x7[49], x8[46], x8[49], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m52, cospi_p12, x7[45], x7[50], x8[45], x8[50], __rounding, cos_bit);
+        btf_32_type0_avx512_new(cospi_m12, cospi_m52, x7[46], x7[49], x8[46], x8[49], __rounding, cos_bit);
         x8[47] = x7[47];
         x8[48] = x7[48];
         x8[51] = x7[51];
@@ -4334,48 +3806,36 @@ static void av1_fdct64_new_N4_avx512(const __m512i *input, __m512i *output, cons
 
         // stage 9
         __m512i x9[16];
-        out[2 * stride] = half_btf_avx512(
-            &cospi_p62, &x8[16], &cospi_p02, &x8[31], &__rounding, cos_bit);
-        out[14 * stride] = half_btf_avx512(
-            &cospi_p14, &x8[28], &cospi_m50, &x8[19], &__rounding, cos_bit);
-        out[10 * stride] = half_btf_avx512(
-            &cospi_p54, &x8[20], &cospi_p10, &x8[27], &__rounding, cos_bit);
-        out[6 * stride] = half_btf_avx512(
-            &cospi_p06, &x8[24], &cospi_m58, &x8[23], &__rounding, cos_bit);
-        x9[0]  = _mm512_add_epi32(x8[32], x8[33]);
-        x9[1]  = _mm512_add_epi32(x8[35], x8[34]);
-        x9[2]  = _mm512_add_epi32(x8[36], x8[37]);
-        x9[3]  = _mm512_add_epi32(x8[39], x8[38]);
-        x9[4]  = _mm512_add_epi32(x8[40], x8[41]);
-        x9[5]  = _mm512_add_epi32(x8[43], x8[42]);
-        x9[6]  = _mm512_add_epi32(x8[44], x8[45]);
-        x9[7]  = _mm512_add_epi32(x8[47], x8[46]);
-        x9[8]  = _mm512_add_epi32(x8[48], x8[49]);
-        x9[9]  = _mm512_add_epi32(x8[51], x8[50]);
-        x9[10] = _mm512_add_epi32(x8[63], x8[62]);
-        x9[11] = _mm512_add_epi32(x8[52], x8[53]);
-        x9[12] = _mm512_add_epi32(x8[55], x8[54]);
-        x9[13] = _mm512_add_epi32(x8[56], x8[57]);
-        x9[14] = _mm512_add_epi32(x8[59], x8[58]);
-        x9[15] = _mm512_add_epi32(x8[60], x8[61]);
+        out[2 * stride]  = half_btf_avx512(&cospi_p62, &x8[16], &cospi_p02, &x8[31], &__rounding, cos_bit);
+        out[14 * stride] = half_btf_avx512(&cospi_p14, &x8[28], &cospi_m50, &x8[19], &__rounding, cos_bit);
+        out[10 * stride] = half_btf_avx512(&cospi_p54, &x8[20], &cospi_p10, &x8[27], &__rounding, cos_bit);
+        out[6 * stride]  = half_btf_avx512(&cospi_p06, &x8[24], &cospi_m58, &x8[23], &__rounding, cos_bit);
+        x9[0]            = _mm512_add_epi32(x8[32], x8[33]);
+        x9[1]            = _mm512_add_epi32(x8[35], x8[34]);
+        x9[2]            = _mm512_add_epi32(x8[36], x8[37]);
+        x9[3]            = _mm512_add_epi32(x8[39], x8[38]);
+        x9[4]            = _mm512_add_epi32(x8[40], x8[41]);
+        x9[5]            = _mm512_add_epi32(x8[43], x8[42]);
+        x9[6]            = _mm512_add_epi32(x8[44], x8[45]);
+        x9[7]            = _mm512_add_epi32(x8[47], x8[46]);
+        x9[8]            = _mm512_add_epi32(x8[48], x8[49]);
+        x9[9]            = _mm512_add_epi32(x8[51], x8[50]);
+        x9[10]           = _mm512_add_epi32(x8[63], x8[62]);
+        x9[11]           = _mm512_add_epi32(x8[52], x8[53]);
+        x9[12]           = _mm512_add_epi32(x8[55], x8[54]);
+        x9[13]           = _mm512_add_epi32(x8[56], x8[57]);
+        x9[14]           = _mm512_add_epi32(x8[59], x8[58]);
+        x9[15]           = _mm512_add_epi32(x8[60], x8[61]);
 
         // stage 10
-        out[1 * stride] = half_btf_avx512(
-            &cospi_p63, &x9[0], &cospi_p01, &x9[10], &__rounding, cos_bit);
-        out[15 * stride] = half_btf_avx512(
-            &cospi_p15, &x9[15], &cospi_m49, &x9[1], &__rounding, cos_bit);
-        out[9 * stride] = half_btf_avx512(
-            &cospi_p55, &x9[2], &cospi_p09, &x9[14], &__rounding, cos_bit);
-        out[7 * stride] = half_btf_avx512(
-            &cospi_p07, &x9[13], &cospi_m57, &x9[3], &__rounding, cos_bit);
-        out[5 * stride] = half_btf_avx512(
-            &cospi_p59, &x9[4], &cospi_p05, &x9[12], &__rounding, cos_bit);
-        out[11 * stride] = half_btf_avx512(
-            &cospi_p11, &x9[11], &cospi_m53, &x9[5], &__rounding, cos_bit);
-        out[13 * stride] = half_btf_avx512(
-            &cospi_p51, &x9[6], &cospi_p13, &x9[9], &__rounding, cos_bit);
-        out[3 * stride] = half_btf_avx512(
-            &cospi_p03, &x9[8], &cospi_m61, &x9[7], &__rounding, cos_bit);
+        out[1 * stride]  = half_btf_avx512(&cospi_p63, &x9[0], &cospi_p01, &x9[10], &__rounding, cos_bit);
+        out[15 * stride] = half_btf_avx512(&cospi_p15, &x9[15], &cospi_m49, &x9[1], &__rounding, cos_bit);
+        out[9 * stride]  = half_btf_avx512(&cospi_p55, &x9[2], &cospi_p09, &x9[14], &__rounding, cos_bit);
+        out[7 * stride]  = half_btf_avx512(&cospi_p07, &x9[13], &cospi_m57, &x9[3], &__rounding, cos_bit);
+        out[5 * stride]  = half_btf_avx512(&cospi_p59, &x9[4], &cospi_p05, &x9[12], &__rounding, cos_bit);
+        out[11 * stride] = half_btf_avx512(&cospi_p11, &x9[11], &cospi_m53, &x9[5], &__rounding, cos_bit);
+        out[13 * stride] = half_btf_avx512(&cospi_p51, &x9[6], &cospi_p13, &x9[9], &__rounding, cos_bit);
+        out[3 * stride]  = half_btf_avx512(&cospi_p03, &x9[8], &cospi_m61, &x9[7], &__rounding, cos_bit);
     }
 }
 
@@ -4393,8 +3853,7 @@ static void fidtx64x64_N4_avx512(const __m512i *input, __m512i *output) {
     }
 }
 
-void av1_fwd_txfm2d_64x64_N4_avx512(int16_t *input, int32_t *output, uint32_t stride,
-                                    TxType tx_type, uint8_t bd) {
+void av1_fwd_txfm2d_64x64_N4_avx512(int16_t *input, int32_t *output, uint32_t stride, TxType tx_type, uint8_t bd) {
     (void)bd;
     __m512i       in[256];
     __m512i      *out         = (__m512i *)output;
@@ -4421,8 +3880,7 @@ void av1_fwd_txfm2d_64x64_N4_avx512(int16_t *input, int32_t *output, uint32_t st
         av1_round_shift_array_avx512(in, out, 256 / 4, -shift[1]);
         transpose_16nx16n_N4_half_avx512(64, out, in);
         /*row wise transform*/
-        av1_fdct64_new_N4_avx512(
-            in, out, fwd_cos_bit_row[txw_idx][txh_idx], txfm_size / 4, col_num);
+        av1_fdct64_new_N4_avx512(in, out, fwd_cos_bit_row[txw_idx][txh_idx], txfm_size / 4, col_num);
         av1_round_shift_array_64x64_N4_avx512(out, in, -shift[2]);
         transpose_16nx16n_N4_quad_avx512(64, in, out);
         clear_buffer_64x64_N4_avx512(out);

@@ -25,14 +25,10 @@ extern "C" {
 #define BLK4X4_ADDR_TO_HORIZONTAL_EDGE_BS_ARRAY_IDX(blk_4x4_addr) \
     (((blk_4x4_addr) & (MAX_SB_SIZE_IN_4X4BLK - 1)) +             \
      (((blk_4x4_addr) / MAX_SB_SIZE_IN_4X4BLK) * MAX_SB_SIZE_IN_4X4BLK))
-#define GET_LUMA_4X4BLK_ADDR(                                                       \
-    luma_sb_wise4x4_blk_pos_x, luma_sb_wise4x4_blk_pos_y, log_max_sb_size_in4x4blk) \
-    (((luma_sb_wise4x4_blk_pos_x) >> 2) +                                           \
-     (((luma_sb_wise4x4_blk_pos_y) >> 2) << (log_max_sb_size_in4x4blk)))
-#define GET_CHROMA_4X4BLK_ADDR(                                                         \
-    chroma_sb_wise2x2_blk_pos_x, chroma_sb_wise2x2_blk_pos_y, log_max_sb_size_in4x4blk) \
-    (((chroma_sb_wise2x2_blk_pos_x) >> 1) +                                             \
-     (((chroma_sb_wise2x2_blk_pos_y) >> 1) << (log_max_sb_size_in4x4blk)))
+#define GET_LUMA_4X4BLK_ADDR(luma_sb_wise4x4_blk_pos_x, luma_sb_wise4x4_blk_pos_y, log_max_sb_size_in4x4blk) \
+    (((luma_sb_wise4x4_blk_pos_x) >> 2) + (((luma_sb_wise4x4_blk_pos_y) >> 2) << (log_max_sb_size_in4x4blk)))
+#define GET_CHROMA_4X4BLK_ADDR(chroma_sb_wise2x2_blk_pos_x, chroma_sb_wise2x2_blk_pos_y, log_max_sb_size_in4x4blk) \
+    (((chroma_sb_wise2x2_blk_pos_x) >> 1) + (((chroma_sb_wise2x2_blk_pos_y) >> 1) << (log_max_sb_size_in4x4blk)))
 #define LUMA_SAMPLE_PIC_WISE_LOCATION_TO_QP_ARRAY_IDX(pos_x, pos_y, qp_array_stride) \
     (((pos_x) >> LOG_MIN_BLOCK_SIZE) + ((pos_y) >> LOG_MIN_BLOCK_SIZE) * (qp_array_stride))
 #define CHROMA_SAMPLE_PIC_WISE_LOCATION_TO_QP_ARRAY_IDX(pos_x, pos_y, qp_array_stride) \
@@ -69,16 +65,16 @@ static const int32_t mode_lf_lut[] = {
     1, 1, 1, 1, 1, 1, 0, 1 // INTER_COMPOUND_MODES (GLOBAL_GLOBALMV == 0)
 };
 
-uint8_t svt_aom_get_filter_level_delta_lf(FrameHeader *frm_hdr, const int32_t dir_idx,
-                                          int32_t plane, int32_t *sb_delta_lf, uint8_t seg_id,
-                                          PredictionMode pred_mode, MvReferenceFrame ref_frame_0);
+uint8_t svt_aom_get_filter_level_delta_lf(FrameHeader *frm_hdr, const int32_t dir_idx, int32_t plane,
+                                          int32_t *sb_delta_lf, uint8_t seg_id, PredictionMode pred_mode,
+                                          MvReferenceFrame ref_frame_0);
 
 static INLINE int32_t is_inter_block_no_intrabc(MvReferenceFrame ref_frame_0) {
     return /*is_intrabc_block(mbmi) ||*/ ref_frame_0 > INTRA_FRAME;
 }
 
-void svt_av1_loop_filter_frame_init(FrameHeader *frm_hdr, LoopFilterInfoN *lf_info,
-                                    int32_t plane_start, int32_t plane_end);
+void svt_av1_loop_filter_frame_init(FrameHeader *frm_hdr, LoopFilterInfoN *lf_info, int32_t plane_start,
+                                    int32_t plane_end);
 
 void svt_aom_update_sharpness(LoopFilterInfoN *lfi, int32_t sharpness_lvl);
 

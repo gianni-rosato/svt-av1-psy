@@ -44,8 +44,8 @@ void svt_av1_loop_filter_init(PictureControlSet *pcs);
 
 void svt_aom_loop_filter_sb(EbPictureBufferDesc *frame_buffer, //reconpicture,
                             //Yv12BufferConfig *frame_buffer,
-                            PictureControlSet *pcs, int32_t mi_row, int32_t mi_col,
-                            int32_t plane_start, int32_t plane_end, uint8_t last_col);
+                            PictureControlSet *pcs, int32_t mi_row, int32_t mi_col, int32_t plane_start,
+                            int32_t plane_end, uint8_t last_col);
 
 void svt_av1_loop_filter_frame(
         EbPictureBufferDesc *frame_buffer,//reconpicture,
@@ -56,9 +56,7 @@ void svt_av1_loop_filter_frame(
 
 EbErrorType svt_av1_pick_filter_level(EbPictureBufferDesc *srcBuffer, // source input
                                       PictureControlSet *pcs, LpfPickMethod method);
-#if FTR_ROI
-void svt_av1_pick_filter_level_by_q(PictureControlSet *pcs, uint8_t qindex, int32_t *filter_level);
-#endif
+void        svt_av1_pick_filter_level_by_q(PictureControlSet *pcs, uint8_t qindex, int32_t *filter_level);
 
 void svt_av1_filter_block_plane_vert(const PictureControlSet *const pcs, const int32_t plane,
                                      const MacroblockdPlane *const plane_ptr, const uint32_t mi_row,

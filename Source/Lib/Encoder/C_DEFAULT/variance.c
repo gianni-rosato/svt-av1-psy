@@ -25,15 +25,14 @@
 // taps should sum to FILTER_WEIGHT. pixel_step defines whether the filter is
 // applied horizontally (pixel_step = 1) or vertically (pixel_step = stride).
 // It defines the offset required to move from one input to the next.
-static void aom_var_filter_block2d_bil_first_pass_c(
-    const uint8_t *a, uint16_t *b, unsigned int src_pixels_per_line, unsigned int pixel_step,
-    unsigned int output_height, unsigned int output_width, const uint8_t *filter) {
+static void aom_var_filter_block2d_bil_first_pass_c(const uint8_t *a, uint16_t *b, unsigned int src_pixels_per_line,
+                                                    unsigned int pixel_step, unsigned int output_height,
+                                                    unsigned int output_width, const uint8_t *filter) {
     unsigned int i, j;
 
     for (i = 0; i < output_height; ++i) {
         for (j = 0; j < output_width; ++j) {
-            b[j] = ROUND_POWER_OF_TWO((int)a[0] * filter[0] + (int)a[pixel_step] * filter[1],
-                                      FILTER_BITS);
+            b[j] = ROUND_POWER_OF_TWO((int)a[0] * filter[0] + (int)a[pixel_step] * filter[1], FILTER_BITS);
 
             ++a;
         }
@@ -52,15 +51,14 @@ static void aom_var_filter_block2d_bil_first_pass_c(
 // filter is applied horizontally (pixel_step = 1) or vertically
 // (pixel_step = stride). It defines the offset required to move from one input
 // to the next. Output is 8-bit.
-static void aom_var_filter_block2d_bil_second_pass_c(
-    const uint16_t *a, uint8_t *b, unsigned int src_pixels_per_line, unsigned int pixel_step,
-    unsigned int output_height, unsigned int output_width, const uint8_t *filter) {
+static void aom_var_filter_block2d_bil_second_pass_c(const uint16_t *a, uint8_t *b, unsigned int src_pixels_per_line,
+                                                     unsigned int pixel_step, unsigned int output_height,
+                                                     unsigned int output_width, const uint8_t *filter) {
     unsigned int i, j;
 
     for (i = 0; i < output_height; ++i) {
         for (j = 0; j < output_width; ++j) {
-            b[j] = ROUND_POWER_OF_TWO((int)a[0] * filter[0] + (int)a[pixel_step] * filter[1],
-                                      FILTER_BITS);
+            b[j] = ROUND_POWER_OF_TWO((int)a[0] * filter[0] + (int)a[pixel_step] * filter[1], FILTER_BITS);
             ++a;
         }
 
@@ -69,26 +67,25 @@ static void aom_var_filter_block2d_bil_second_pass_c(
     }
 }
 
-static INLINE const int16_t *av1_get_interp_filter_subpel_kernel(
-    const InterpFilterParams filter_params, const int32_t subpel);
+static INLINE const int16_t *av1_get_interp_filter_subpel_kernel(const InterpFilterParams filter_params,
+                                                                 const int32_t            subpel);
 
-DECLARE_ALIGNED(256, static const InterpKernel, av1_bilinear_filters[SUBPEL_SHIFTS]) = {
-    {0, 0, 0, 128, 0, 0, 0, 0},
-    {0, 0, 0, 120, 8, 0, 0, 0},
-    {0, 0, 0, 112, 16, 0, 0, 0},
-    {0, 0, 0, 104, 24, 0, 0, 0},
-    {0, 0, 0, 96, 32, 0, 0, 0},
-    {0, 0, 0, 88, 40, 0, 0, 0},
-    {0, 0, 0, 80, 48, 0, 0, 0},
-    {0, 0, 0, 72, 56, 0, 0, 0},
-    {0, 0, 0, 64, 64, 0, 0, 0},
-    {0, 0, 0, 56, 72, 0, 0, 0},
-    {0, 0, 0, 48, 80, 0, 0, 0},
-    {0, 0, 0, 40, 88, 0, 0, 0},
-    {0, 0, 0, 32, 96, 0, 0, 0},
-    {0, 0, 0, 24, 104, 0, 0, 0},
-    {0, 0, 0, 16, 112, 0, 0, 0},
-    {0, 0, 0, 8, 120, 0, 0, 0}};
+DECLARE_ALIGNED(256, static const InterpKernel, av1_bilinear_filters[SUBPEL_SHIFTS]) = {{0, 0, 0, 128, 0, 0, 0, 0},
+                                                                                        {0, 0, 0, 120, 8, 0, 0, 0},
+                                                                                        {0, 0, 0, 112, 16, 0, 0, 0},
+                                                                                        {0, 0, 0, 104, 24, 0, 0, 0},
+                                                                                        {0, 0, 0, 96, 32, 0, 0, 0},
+                                                                                        {0, 0, 0, 88, 40, 0, 0, 0},
+                                                                                        {0, 0, 0, 80, 48, 0, 0, 0},
+                                                                                        {0, 0, 0, 72, 56, 0, 0, 0},
+                                                                                        {0, 0, 0, 64, 64, 0, 0, 0},
+                                                                                        {0, 0, 0, 56, 72, 0, 0, 0},
+                                                                                        {0, 0, 0, 48, 80, 0, 0, 0},
+                                                                                        {0, 0, 0, 40, 88, 0, 0, 0},
+                                                                                        {0, 0, 0, 32, 96, 0, 0, 0},
+                                                                                        {0, 0, 0, 24, 104, 0, 0, 0},
+                                                                                        {0, 0, 0, 16, 112, 0, 0, 0},
+                                                                                        {0, 0, 0, 8, 120, 0, 0, 0}};
 
 DECLARE_ALIGNED(256, static const InterpKernel, av1_sub_pel_filters_4[SUBPEL_SHIFTS]) = {
     {0, 0, 0, 128, 0, 0, 0, 0},
@@ -189,8 +186,7 @@ static const InterpFilterParams av1_interp_filter_params_list[SWITCHABLE_FILTERS
     {(const int16_t *)av1_sub_pel_filters_8smooth, SUBPEL_TAPS, SUBPEL_SHIFTS, EIGHTTAP_SMOOTH},
     {(const int16_t *)av1_sub_pel_filters_8sharp, SUBPEL_TAPS, SUBPEL_SHIFTS, MULTITAP_SHARP},
     {(const int16_t *)av1_bilinear_filters, SUBPEL_TAPS, SUBPEL_SHIFTS, BILINEAR}};
-static INLINE const InterpFilterParams *get_4tap_interp_filter_params(
-    const InterpFilter interp_filter) {
+static INLINE const InterpFilterParams *get_4tap_interp_filter_params(const InterpFilter interp_filter) {
     return &av1_interp_4tap[interp_filter];
 }
 static INLINE const InterpFilterParams *av1_get_filter(int subpel_search) {
@@ -207,9 +203,8 @@ static INLINE const InterpFilterParams *av1_get_filter(int subpel_search) {
 // Get pred block from up-sampled reference.
 void svt_aom_upsampled_pred_c(MacroBlockD                  *xd,
                               const struct AV1Common *const cm, //const AV1_COMMON *const cm,
-                              int mi_row, int mi_col, const MV *const mv, uint8_t *comp_pred,
-                              int width, int height, int subpel_x_q3, int subpel_y_q3,
-                              const uint8_t *ref, int ref_stride, int subpel_search) {
+                              int mi_row, int mi_col, const MV *const mv, uint8_t *comp_pred, int width, int height,
+                              int subpel_x_q3, int subpel_y_q3, const uint8_t *ref, int ref_stride, int subpel_search) {
     (void)xd;
     (void)cm;
     (void)mi_row;
@@ -224,22 +219,16 @@ void svt_aom_upsampled_pred_c(MacroBlockD                  *xd,
             ref += ref_stride;
         }
     } else if (!subpel_y_q3) {
-        const int16_t *const kernel = av1_get_interp_filter_subpel_kernel(*filter,
-                                                                          subpel_x_q3 << 1);
-        svt_aom_convolve8_horiz_c(
-            ref, ref_stride, comp_pred, width, kernel, 16, NULL, -1, width, height);
+        const int16_t *const kernel = av1_get_interp_filter_subpel_kernel(*filter, subpel_x_q3 << 1);
+        svt_aom_convolve8_horiz_c(ref, ref_stride, comp_pred, width, kernel, 16, NULL, -1, width, height);
     } else if (!subpel_x_q3) {
-        const int16_t *const kernel = av1_get_interp_filter_subpel_kernel(*filter,
-                                                                          subpel_y_q3 << 1);
-        svt_aom_convolve8_vert_c(
-            ref, ref_stride, comp_pred, width, NULL, -1, kernel, 16, width, height);
+        const int16_t *const kernel = av1_get_interp_filter_subpel_kernel(*filter, subpel_y_q3 << 1);
+        svt_aom_convolve8_vert_c(ref, ref_stride, comp_pred, width, NULL, -1, kernel, 16, width, height);
     } else {
         DECLARE_ALIGNED(16, uint8_t, temp[((MAX_SB_SIZE * 2 + 16) + 16) * MAX_SB_SIZE]);
-        const int16_t *const kernel_x = av1_get_interp_filter_subpel_kernel(*filter,
-                                                                            subpel_x_q3 << 1);
-        const int16_t *const kernel_y = av1_get_interp_filter_subpel_kernel(*filter,
-                                                                            subpel_y_q3 << 1);
-        const int intermediate_height = (((height - 1) * 8 + subpel_y_q3) >> 3) + filter->taps;
+        const int16_t *const kernel_x            = av1_get_interp_filter_subpel_kernel(*filter, subpel_x_q3 << 1);
+        const int16_t *const kernel_y            = av1_get_interp_filter_subpel_kernel(*filter, subpel_y_q3 << 1);
+        const int            intermediate_height = (((height - 1) * 8 + subpel_y_q3) >> 3) + filter->taps;
         assert(intermediate_height <= (MAX_SB_SIZE * 2 + 16) + 16);
         svt_aom_convolve8_horiz_c(ref - ref_stride * ((filter->taps >> 1) - 1),
                                   ref_stride,
@@ -265,8 +254,8 @@ void svt_aom_upsampled_pred_c(MacroBlockD                  *xd,
 }
 // functions are from deleted file, associated with this macro
 // Moved from EbComputeVariance_C.c
-static void variance_c(const uint8_t *a, int a_stride, const uint8_t *b, int b_stride, int w, int h,
-                       uint32_t *sse, int *sum) {
+static void variance_c(const uint8_t *a, int a_stride, const uint8_t *b, int b_stride, int w, int h, uint32_t *sse,
+                       int *sum) {
     int i, j;
 
     *sum = 0;
@@ -286,8 +275,8 @@ static void variance_c(const uint8_t *a, int a_stride, const uint8_t *b, int b_s
 
 // Moved from EbComputeVariance_C.c
 // TODO: use or implement a simd version of this
-uint32_t svt_aom_variance_highbd_c(const uint16_t *a, int a_stride, const uint16_t *b, int b_stride,
-                                   int w, int h, uint32_t *sse) {
+uint32_t svt_aom_variance_highbd_c(const uint16_t *a, int a_stride, const uint16_t *b, int b_stride, int w, int h,
+                                   uint32_t *sse) {
     int i, j;
 
     int sad = 0;
@@ -316,23 +305,16 @@ uint32_t svt_aom_variance_highbd_c(const uint16_t *a, int a_stride, const uint16
         return *sse - (uint32_t)(((int64_t)sum * sum) / (W * H));                        \
     }
 
-#define SUBPIX_VAR(W, H)                                                      \
-    uint32_t svt_aom_sub_pixel_variance##W##x##H##_c(const uint8_t *a,        \
-                                                     int            a_stride, \
-                                                     int            xoffset,  \
-                                                     int            yoffset,  \
-                                                     const uint8_t *b,        \
-                                                     int            b_stride, \
-                                                     uint32_t      *sse) {         \
-        uint16_t fdata3[(H + 1) * W];                                         \
-        uint8_t  temp2[H * W];                                                \
-                                                                              \
-        aom_var_filter_block2d_bil_first_pass_c(                              \
-            a, fdata3, a_stride, 1, H + 1, W, bilinear_filters_2t[xoffset]);  \
-        aom_var_filter_block2d_bil_second_pass_c(                             \
-            fdata3, temp2, W, W, H, W, bilinear_filters_2t[yoffset]);         \
-                                                                              \
-        return svt_aom_variance##W##x##H##_c(temp2, W, b, b_stride, sse);     \
+#define SUBPIX_VAR(W, H)                                                                                           \
+    uint32_t svt_aom_sub_pixel_variance##W##x##H##_c(                                                              \
+        const uint8_t *a, int a_stride, int xoffset, int yoffset, const uint8_t *b, int b_stride, uint32_t *sse) { \
+        uint16_t fdata3[(H + 1) * W];                                                                              \
+        uint8_t  temp2[H * W];                                                                                     \
+                                                                                                                   \
+        aom_var_filter_block2d_bil_first_pass_c(a, fdata3, a_stride, 1, H + 1, W, bilinear_filters_2t[xoffset]);   \
+        aom_var_filter_block2d_bil_second_pass_c(fdata3, temp2, W, W, H, W, bilinear_filters_2t[yoffset]);         \
+                                                                                                                   \
+        return svt_aom_variance##W##x##H##_c(temp2, W, b, b_stride, sse);                                          \
     }
 
 /* All the variance are available in the same sizes. */
@@ -362,8 +344,8 @@ VARIANCES(32, 8)
 VARIANCES(16, 64)
 VARIANCES(64, 16)
 
-static INLINE void obmc_variance(const uint8_t *pre, int pre_stride, const int32_t *wsrc,
-                                 const int32_t *mask, int w, int h, unsigned int *sse, int *sum) {
+static INLINE void obmc_variance(const uint8_t *pre, int pre_stride, const int32_t *wsrc, const int32_t *mask, int w,
+                                 int h, unsigned int *sse, int *sum) {
     int i, j;
 
     *sse = 0;
@@ -382,34 +364,29 @@ static INLINE void obmc_variance(const uint8_t *pre, int pre_stride, const int32
     }
 }
 
-#define OBMC_VAR(W, H)                                                         \
-    unsigned int svt_aom_obmc_variance##W##x##H##_c(const uint8_t *pre,        \
-                                                    int            pre_stride, \
-                                                    const int32_t *wsrc,       \
-                                                    const int32_t *mask,       \
-                                                    unsigned int  *sse) {       \
-        int sum;                                                               \
-        obmc_variance(pre, pre_stride, wsrc, mask, W, H, sse, &sum);           \
-        return *sse - (unsigned int)(((int64_t)sum * sum) / (W * H));          \
+#define OBMC_VAR(W, H)                                                                                     \
+    unsigned int svt_aom_obmc_variance##W##x##H##_c(                                                       \
+        const uint8_t *pre, int pre_stride, const int32_t *wsrc, const int32_t *mask, unsigned int *sse) { \
+        int sum;                                                                                           \
+        obmc_variance(pre, pre_stride, wsrc, mask, W, H, sse, &sum);                                       \
+        return *sse - (unsigned int)(((int64_t)sum * sum) / (W * H));                                      \
     }
 
-#define OBMC_SUBPIX_VAR(W, H)                                                            \
-    unsigned int svt_aom_obmc_sub_pixel_variance##W##x##H##_c(const uint8_t *pre,        \
-                                                              int            pre_stride, \
-                                                              int            xoffset,    \
-                                                              int            yoffset,    \
-                                                              const int32_t *wsrc,       \
-                                                              const int32_t *mask,       \
-                                                              unsigned int  *sse) {       \
-        uint16_t fdata3[(H + 1) * W];                                                    \
-        uint8_t  temp2[H * W];                                                           \
-                                                                                         \
-        aom_var_filter_block2d_bil_first_pass_c(                                         \
-            pre, fdata3, pre_stride, 1, H + 1, W, bilinear_filters_2t[xoffset]);         \
-        aom_var_filter_block2d_bil_second_pass_c(                                        \
-            fdata3, temp2, W, W, H, W, bilinear_filters_2t[yoffset]);                    \
-                                                                                         \
-        return svt_aom_obmc_variance##W##x##H##_c(temp2, W, wsrc, mask, sse);            \
+#define OBMC_SUBPIX_VAR(W, H)                                                                                        \
+    unsigned int svt_aom_obmc_sub_pixel_variance##W##x##H##_c(const uint8_t *pre,                                    \
+                                                              int            pre_stride,                             \
+                                                              int            xoffset,                                \
+                                                              int            yoffset,                                \
+                                                              const int32_t *wsrc,                                   \
+                                                              const int32_t *mask,                                   \
+                                                              unsigned int  *sse) {                                   \
+        uint16_t fdata3[(H + 1) * W];                                                                                \
+        uint8_t  temp2[H * W];                                                                                       \
+                                                                                                                     \
+        aom_var_filter_block2d_bil_first_pass_c(pre, fdata3, pre_stride, 1, H + 1, W, bilinear_filters_2t[xoffset]); \
+        aom_var_filter_block2d_bil_second_pass_c(fdata3, temp2, W, W, H, W, bilinear_filters_2t[yoffset]);           \
+                                                                                                                     \
+        return svt_aom_obmc_variance##W##x##H##_c(temp2, W, wsrc, mask, sse);                                        \
     }
 
 OBMC_VAR(4, 4)
@@ -473,8 +450,8 @@ OBMC_SUBPIX_VAR(16, 64)
 OBMC_VAR(64, 16)
 OBMC_SUBPIX_VAR(64, 16)
 
-void svt_aom_highbd_8_mse16x16_c(const uint8_t *src_ptr, int32_t source_stride,
-                                 const uint8_t *ref_ptr, int32_t recon_stride, uint32_t *sse) {
+void svt_aom_highbd_8_mse16x16_c(const uint8_t *src_ptr, int32_t source_stride, const uint8_t *ref_ptr,
+                                 int32_t recon_stride, uint32_t *sse) {
     const uint16_t *a    = CONVERT_TO_SHORTPTR(src_ptr);
     const uint16_t *b    = CONVERT_TO_SHORTPTR(ref_ptr);
     uint64_t        tsse = 0;

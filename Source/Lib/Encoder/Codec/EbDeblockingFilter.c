@@ -21,17 +21,13 @@
 #include "EbReferenceObject.h"
 #include "EbCommonUtils.h"
 //#include "EbLog.h"
-#if OPT_LD_DLF
 #define DLF_MAX_LVL 4
-const int32_t inter_frame_multiplier[INPUT_SIZE_COUNT] = {
-    6017, 6017, 6017, 12034, 12034, 12034, 12034};
-const uint32_t disable_dlf_th[DLF_MAX_LVL][INPUT_SIZE_COUNT] = {
-    {0, 0, 0, 0, 0, 0, 0},
-    {100, 200, 500, 800, 1000, 1300, 1600},
-    {900, 1000, 2000, 3000, 4000, 6000, 7000},
-    {6000, 7000, 8000, 9000, 10000, 20000, 30000}};
-#endif
-void svt_aom_get_recon_pic(PictureControlSet *pcs, EbPictureBufferDesc **recon_ptr, Bool is_highbd);
+const int32_t  inter_frame_multiplier[INPUT_SIZE_COUNT]      = {6017, 6017, 6017, 12034, 12034, 12034, 12034};
+const uint32_t disable_dlf_th[DLF_MAX_LVL][INPUT_SIZE_COUNT] = {{0, 0, 0, 0, 0, 0, 0},
+                                                                {100, 200, 500, 800, 1000, 1300, 1600},
+                                                                {900, 1000, 2000, 3000, 4000, 6000, 7000},
+                                                                {6000, 7000, 8000, 9000, 10000, 20000, 30000}};
+void           svt_aom_get_recon_pic(PictureControlSet *pcs, EbPictureBufferDesc **recon_ptr, Bool is_highbd);
 /*************************************************************************************************
  * svt_av1_loop_filter_init
  * Initialize the loop filter limits and thresholds
@@ -48,8 +44,7 @@ void svt_av1_loop_filter_init(PictureControlSet *pcs) {
     svt_aom_update_sharpness(lfi, lf->sharpness_level);
 
     // init hev threshold const vectors
-    for (lvl = 0; lvl <= MAX_LOOP_FILTER; lvl++)
-        memset(lfi->lfthr[lvl].hev_thr, (lvl >> 4), SIMD_WIDTH);
+    for (lvl = 0; lvl <= MAX_LOOP_FILTER; lvl++) memset(lfi->lfthr[lvl].hev_thr, (lvl >> 4), SIMD_WIDTH);
 }
 
 //***************************************************************************************************//
@@ -62,11 +57,10 @@ static INLINE int32_t scaled_buffer_offset(int32_t x_offset, int32_t y_offset, i
         /*sf ? sf->scale_value_y(y_offset, sf) >> SCALE_EXTRA_BITS :*/ y_offset;
     return y * stride + x;
 }
-static INLINE void setup_pred_plane(struct Buf2D *dst, BlockSize bsize, uint8_t *src, int32_t width,
-                                    int32_t height, int32_t stride, int32_t mi_row, int32_t mi_col,
+static INLINE void setup_pred_plane(struct Buf2D *dst, BlockSize bsize, uint8_t *src, int32_t width, int32_t height,
+                                    int32_t stride, int32_t mi_row, int32_t mi_col,
                                     /*const struct scale_factors *scale,*/
-                                    int32_t subsampling_x, int32_t subsampling_y,
-                                    int32_t is_16bit) {
+                                    int32_t subsampling_x, int32_t subsampling_y, int32_t is_16bit) {
     // Offset the buffer pointer
     if (subsampling_y && (mi_row & 0x01) && (mi_size_high[bsize] == 1))
         mi_row -= 1;
@@ -81,11 +75,10 @@ static INLINE void setup_pred_plane(struct Buf2D *dst, BlockSize bsize, uint8_t 
     dst->height     = height;
     dst->stride     = stride;
 }
-void svt_av1_setup_dst_planes(PictureControlSet *pcs, struct MacroblockdPlane *planes,
-                              BlockSize bsize,
+void svt_av1_setup_dst_planes(PictureControlSet *pcs, struct MacroblockdPlane *planes, BlockSize bsize,
                               //const Yv12BufferConfig *src,
-                              const EbPictureBufferDesc *src, int32_t mi_row, int32_t mi_col,
-                              const int32_t plane_start, const int32_t plane_end) {
+                              const EbPictureBufferDesc *src, int32_t mi_row, int32_t mi_col, const int32_t plane_start,
+                              const int32_t plane_end) {
     // We use AOMMIN(num_planes, MAX_MB_PLANE) instead of num_planes to quiet
     // the static analysis warnings.
     //for (int32_t i = plane_start; i < AOMMIN(plane_end, MAX_MB_PLANE); ++i) {
@@ -147,18 +140,14 @@ void svt_av1_setup_dst_planes(PictureControlSet *pcs, struct MacroblockdPlane *p
 }
 
 //***************************************************************************************************//
-static INLINE TxSize get_transform_size(const MbModeInfo *const mbmi, const EdgeDir edge_dir,
-                                        const int32_t                  plane,
-                                        const struct MacroblockdPlane *plane_ptr,
-                                        const Bool                     is_skip) {
+static INLINE TxSize get_transform_size(const MbModeInfo *const mbmi, const EdgeDir edge_dir, const int32_t plane,
+                                        const struct MacroblockdPlane *plane_ptr, const Bool is_skip) {
     assert(mbmi != NULL);
 
     TxSize tx_size = (plane == COMPONENT_LUMA)
         ? (is_skip ? tx_depth_to_tx_size[0][mbmi->block_mi.bsize]
-                   : tx_depth_to_tx_size[mbmi->block_mi.tx_depth]
-                                        [mbmi->block_mi.bsize]) // use max_tx_size
-        : av1_get_max_uv_txsize(
-              mbmi->block_mi.bsize, plane_ptr->subsampling_x, plane_ptr->subsampling_y);
+                   : tx_depth_to_tx_size[mbmi->block_mi.tx_depth][mbmi->block_mi.bsize]) // use max_tx_size
+        : av1_get_max_uv_txsize(mbmi->block_mi.bsize, plane_ptr->subsampling_x, plane_ptr->subsampling_y);
     assert(tx_size < TX_SIZES_ALL);
 
     // since in case of chrominance or non-square transorm need to convert
@@ -171,8 +160,8 @@ static INLINE TxSize get_transform_size(const MbModeInfo *const mbmi, const Edge
 // Return TxSize from get_transform_size(), so it is plane and direction
 // awared
 static TxSize set_lpf_parameters(Av1DeblockingParameters *const params, const uint64_t mode_step,
-                                 const PictureControlSet *const pcs, const EdgeDir edge_dir,
-                                 const uint32_t x, const uint32_t y, const int32_t plane,
+                                 const PictureControlSet *const pcs, const EdgeDir edge_dir, const uint32_t x,
+                                 const uint32_t y, const int32_t plane,
                                  const struct MacroblockdPlane *const plane_ptr) {
     FrameHeader           *frm_hdr = &pcs->ppcs->frm_hdr;
     const LoopFilterInfoN *lfi_n   = &pcs->ppcs->lf_info;
@@ -208,20 +197,14 @@ static TxSize set_lpf_parameters(Av1DeblockingParameters *const params, const ui
     // it not set up.
     if (mbmi == NULL)
         return TX_INVALID;
-#if FTR_ROI
-    const uint8_t segment_id = mbmi->block_mi.segment_id;
-#else
-    const uint8_t segment_id = 0;
-#endif
-    const int32_t curr_skipped = mbmi->block_mi.skip &&
-        is_inter_block_no_intrabc(mbmi->block_mi.ref_frame[0]);
-    const TxSize ts = get_transform_size(mbmi, edge_dir, plane, plane_ptr, curr_skipped);
+    const uint8_t segment_id   = mbmi->block_mi.segment_id;
+    const int32_t curr_skipped = mbmi->block_mi.skip && is_inter_block_no_intrabc(mbmi->block_mi.ref_frame[0]);
+    const TxSize  ts           = get_transform_size(mbmi, edge_dir, plane, plane_ptr, curr_skipped);
     assert(ts < TX_SIZES_ALL);
 
     {
         const uint32_t coord           = (VERT_EDGE == edge_dir) ? (x) : (y);
-        const uint32_t transform_masks = edge_dir == VERT_EDGE ? tx_size_wide[ts] - 1
-                                                               : tx_size_high[ts] - 1;
+        const uint32_t transform_masks = edge_dir == VERT_EDGE ? tx_size_wide[ts] - 1 : tx_size_high[ts] - 1;
         const int32_t  txb_edge        = (coord & transform_masks) ? (0) : (1);
 
         if (!txb_edge)
@@ -229,25 +212,14 @@ static TxSize set_lpf_parameters(Av1DeblockingParameters *const params, const ui
 
         // prepare outer edge parameters. deblock the edge if it's an edge of a TU
         {
-            uint32_t curr_level; // Added to address 4x4 problem
-#if CLN_MISC_CLEANUPS
+            uint32_t       curr_level; // Added to address 4x4 problem
             PredictionMode mode = mbmi->block_mi.mode;
-#else
-            PredictionMode mode = (mbmi->block_mi.mode == INTRA_MODE_4x4) ? DC_PRED
-                                                                          : mbmi->block_mi.mode;
-#endif
             if (frm_hdr->delta_lf_params.delta_lf_present) {
-                curr_level = svt_aom_get_filter_level_delta_lf(frm_hdr,
-                                                               edge_dir,
-                                                               plane,
-                                                               pcs->ppcs->curr_delta_lf,
-                                                               segment_id,
-                                                               mode,
-                                                               mbmi->block_mi.ref_frame[0]);
+                curr_level = svt_aom_get_filter_level_delta_lf(
+                    frm_hdr, edge_dir, plane, pcs->ppcs->curr_delta_lf, segment_id, mode, mbmi->block_mi.ref_frame[0]);
             } else {
                 assert(mode < 25);
-                curr_level = lfi_n->lvl[plane][segment_id][edge_dir][mbmi->block_mi.ref_frame[0]]
-                                       [mode_lf_lut[mode]];
+                curr_level = lfi_n->lvl[plane][segment_id][edge_dir][mbmi->block_mi.ref_frame[0]][mode_lf_lut[mode]];
             }
 
             uint32_t level = curr_level;
@@ -260,17 +232,10 @@ static TxSize set_lpf_parameters(Av1DeblockingParameters *const params, const ui
                     return TX_INVALID;
                 const int32_t pv_skip = mi_prev->block_mi.skip &&
                     is_inter_block_no_intrabc(mi_prev->block_mi.ref_frame[0]);
-                const TxSize pv_ts = get_transform_size(
-                    mi_prev, edge_dir, plane, plane_ptr, pv_skip);
-                uint32_t pv_lvl;
-#if CLN_MISC_CLEANUPS
+                const TxSize pv_ts = get_transform_size(mi_prev, edge_dir, plane, plane_ptr, pv_skip);
+                uint32_t     pv_lvl;
                 mode = mi_prev->block_mi.mode;
-#else
-                mode = (mi_prev->block_mi.mode == INTRA_MODE_4x4) ? DC_PRED
-                                                                  : mi_prev->block_mi.mode;
-#endif
                 if (frm_hdr->delta_lf_params.delta_lf_present) {
-#if FTR_ROI
                     pv_lvl = svt_aom_get_filter_level_delta_lf(frm_hdr,
                                                                edge_dir,
                                                                plane,
@@ -278,32 +243,17 @@ static TxSize set_lpf_parameters(Av1DeblockingParameters *const params, const ui
                                                                mi_prev->block_mi.segment_id,
                                                                mi_prev->block_mi.mode,
                                                                mi_prev->block_mi.ref_frame[0]);
-#else
-                    pv_lvl = svt_aom_get_filter_level_delta_lf(frm_hdr,
-                                                               edge_dir,
-                                                               plane,
-                                                               pcs->ppcs->curr_delta_lf,
-                                                               segment_id,
-                                                               mi_prev->block_mi.mode,
-                                                               mi_prev->block_mi.ref_frame[0]);
-#endif
                 } else {
                     assert(mode < 25);
-#if FTR_ROI
-                    pv_lvl = lfi_n->lvl[plane][mi_prev->block_mi.segment_id][edge_dir]
-                                       [mi_prev->block_mi.ref_frame[0]][mode_lf_lut[mode]];
-#else
-                    pv_lvl = lfi_n->lvl[plane][segment_id][edge_dir][mi_prev->block_mi.ref_frame[0]]
+                    pv_lvl = lfi_n->lvl[plane][mi_prev->block_mi.segment_id][edge_dir][mi_prev->block_mi.ref_frame[0]]
                                        [mode_lf_lut[mode]];
-#endif
                 }
 
                 const BlockSize bsize = get_plane_block_size(
                     mbmi->block_mi.bsize, plane_ptr->subsampling_x, plane_ptr->subsampling_y);
                 assert(bsize < BlockSizeS_ALL);
-                const int32_t prediction_masks = (edge_dir == VERT_EDGE)
-                    ? block_size_wide[bsize] - 1
-                    : block_size_high[bsize] - 1;
+                const int32_t prediction_masks = (edge_dir == VERT_EDGE) ? block_size_wide[bsize] - 1
+                                                                         : block_size_high[bsize] - 1;
                 const int32_t pu_edge          = !(coord & prediction_masks);
                 // if the current and the previous blocks are skipped,
                 // deblock the edge if the edge belongs to a PU's edge only.
@@ -347,10 +297,10 @@ void svt_av1_filter_block_plane_vert(const PictureControlSet *const pcs, const i
     const uint32_t scale_vert = plane_ptr->subsampling_y;
     uint8_t *const dst_ptr    = plane_ptr->dst.buf;
     const int32_t  dst_stride = plane_ptr->dst.stride;
-    int32_t        y_range = scs->seq_header.sb_size == BLOCK_128X128 ? (MAX_MIB_SIZE >> scale_vert)
-                                                                      : (SB64_MIB_SIZE >> scale_vert);
-    int32_t        x_range = scs->seq_header.sb_size == BLOCK_128X128 ? (MAX_MIB_SIZE >> scale_horz)
-                                                                      : (SB64_MIB_SIZE >> scale_horz);
+    int32_t        y_range    = scs->seq_header.sb_size == BLOCK_128X128 ? (MAX_MIB_SIZE >> scale_vert)
+                                                                         : (SB64_MIB_SIZE >> scale_vert);
+    int32_t        x_range    = scs->seq_header.sb_size == BLOCK_128X128 ? (MAX_MIB_SIZE >> scale_horz)
+                                                                         : (SB64_MIB_SIZE >> scale_horz);
 
     if (pcs->ppcs->frame_superres_enabled || pcs->ppcs->frame_resize_enabled) {
         // the boundary of last column should use the actual width for frame might be downscaled in
@@ -360,17 +310,13 @@ void svt_av1_filter_block_plane_vert(const PictureControlSet *const pcs, const i
         if (mi_col == (pic_ptr->width / sb_size * sb_size) >> MI_SIZE_LOG2) {
             x_range = (((pic_ptr->width) % sb_size) + MI_SIZE - 1) >> MI_SIZE_LOG2;
             if (plane) {
-                x_range = ((((pic_ptr->width) % sb_size + scale_horz) >> scale_horz) + MI_SIZE -
-                           1) >>
-                    MI_SIZE_LOG2;
+                x_range = ((((pic_ptr->width) % sb_size + scale_horz) >> scale_horz) + MI_SIZE - 1) >> MI_SIZE_LOG2;
             }
         }
         if (mi_row == (pic_ptr->height / sb_size * sb_size) >> MI_SIZE_LOG2) {
             y_range = (((pic_ptr->height) % sb_size) + MI_SIZE - 1) >> MI_SIZE_LOG2;
             if (plane) {
-                y_range = ((((pic_ptr->height) % sb_size + scale_vert) >> scale_vert) + MI_SIZE -
-                           1) >>
-                    MI_SIZE_LOG2;
+                y_range = ((((pic_ptr->height) % sb_size + scale_vert) >> scale_vert) + MI_SIZE - 1) >> MI_SIZE_LOG2;
             }
         }
     }
@@ -388,14 +334,8 @@ void svt_av1_filter_block_plane_vert(const PictureControlSet *const pcs, const i
             Av1DeblockingParameters params;
             memset(&params, 0, sizeof(params));
 
-            tx_size = set_lpf_parameters(&params,
-                                         ((uint64_t)1 << scale_horz),
-                                         pcs,
-                                         VERT_EDGE,
-                                         curr_x,
-                                         curr_y,
-                                         plane,
-                                         plane_ptr);
+            tx_size = set_lpf_parameters(
+                &params, ((uint64_t)1 << scale_horz), pcs, VERT_EDGE, curr_x, curr_y, plane, plane_ptr);
             if (tx_size == TX_INVALID) {
                 params.filter_length = 0;
                 tx_size              = TX_4X4;
@@ -451,8 +391,7 @@ void svt_av1_filter_block_plane_vert(const PictureControlSet *const pcs, const i
                                                    params.hev_thr,
                                                    scs->static_config.encoder_bit_depth);
                 } else {
-                    svt_aom_lpf_vertical_14(
-                        p, dst_stride, params.mblim, params.lim, params.hev_thr);
+                    svt_aom_lpf_vertical_14(p, dst_stride, params.mblim, params.lim, params.hev_thr);
                 }
                 break;
                 // no filtering
@@ -482,10 +421,10 @@ void svt_av1_filter_block_plane_horz(const PictureControlSet *const pcs, const i
     const uint32_t scale_vert = plane_ptr->subsampling_y;
     uint8_t *const dst_ptr    = plane_ptr->dst.buf;
     const int32_t  dst_stride = plane_ptr->dst.stride;
-    int32_t        y_range = scs->seq_header.sb_size == BLOCK_128X128 ? (MAX_MIB_SIZE >> scale_vert)
-                                                                      : (SB64_MIB_SIZE >> scale_vert);
-    int32_t        x_range = scs->seq_header.sb_size == BLOCK_128X128 ? (MAX_MIB_SIZE >> scale_horz)
-                                                                      : (SB64_MIB_SIZE >> scale_horz);
+    int32_t        y_range    = scs->seq_header.sb_size == BLOCK_128X128 ? (MAX_MIB_SIZE >> scale_vert)
+                                                                         : (SB64_MIB_SIZE >> scale_vert);
+    int32_t        x_range    = scs->seq_header.sb_size == BLOCK_128X128 ? (MAX_MIB_SIZE >> scale_horz)
+                                                                         : (SB64_MIB_SIZE >> scale_horz);
 
     uint32_t mi_stride = pcs->mi_stride;
 
@@ -497,17 +436,13 @@ void svt_av1_filter_block_plane_horz(const PictureControlSet *const pcs, const i
         if (mi_col == (pic_ptr->width / sb_size * sb_size) >> MI_SIZE_LOG2) {
             x_range = (((pic_ptr->width) % sb_size) + MI_SIZE - 1) >> MI_SIZE_LOG2;
             if (plane) {
-                x_range = ((((pic_ptr->width) % sb_size + scale_horz) >> scale_horz) + MI_SIZE -
-                           1) >>
-                    MI_SIZE_LOG2;
+                x_range = ((((pic_ptr->width) % sb_size + scale_horz) >> scale_horz) + MI_SIZE - 1) >> MI_SIZE_LOG2;
             }
         }
         if (mi_row == (pic_ptr->height / sb_size * sb_size) >> MI_SIZE_LOG2) {
             y_range = (((pic_ptr->height) % sb_size) + MI_SIZE - 1) >> MI_SIZE_LOG2;
             if (plane) {
-                y_range = ((((pic_ptr->height) % sb_size + scale_vert) >> scale_vert) + MI_SIZE -
-                           1) >>
-                    MI_SIZE_LOG2;
+                y_range = ((((pic_ptr->height) % sb_size + scale_vert) >> scale_vert) + MI_SIZE - 1) >> MI_SIZE_LOG2;
             }
         }
     }
@@ -550,8 +485,7 @@ void svt_av1_filter_block_plane_horz(const PictureControlSet *const pcs, const i
                                                     params.hev_thr,
                                                     scs->static_config.encoder_bit_depth);
                 } else {
-                    svt_aom_lpf_horizontal_4(
-                        p, dst_stride, params.mblim, params.lim, params.hev_thr);
+                    svt_aom_lpf_horizontal_4(p, dst_stride, params.mblim, params.lim, params.hev_thr);
                 }
                 break;
                 // apply 6-tap filtering
@@ -565,8 +499,7 @@ void svt_av1_filter_block_plane_horz(const PictureControlSet *const pcs, const i
                                                     params.hev_thr,
                                                     scs->static_config.encoder_bit_depth);
                 } else {
-                    svt_aom_lpf_horizontal_6(
-                        p, dst_stride, params.mblim, params.lim, params.hev_thr);
+                    svt_aom_lpf_horizontal_6(p, dst_stride, params.mblim, params.lim, params.hev_thr);
                 }
                 break;
                 // apply 8-tap filtering
@@ -579,8 +512,7 @@ void svt_av1_filter_block_plane_horz(const PictureControlSet *const pcs, const i
                                                     params.hev_thr,
                                                     scs->static_config.encoder_bit_depth);
                 } else {
-                    svt_aom_lpf_horizontal_8(
-                        p, dst_stride, params.mblim, params.lim, params.hev_thr);
+                    svt_aom_lpf_horizontal_8(p, dst_stride, params.mblim, params.lim, params.hev_thr);
                 }
                 break;
                 // apply 14-tap filtering
@@ -593,8 +525,7 @@ void svt_av1_filter_block_plane_horz(const PictureControlSet *const pcs, const i
                                                      params.hev_thr,
                                                      scs->static_config.encoder_bit_depth);
                 } else {
-                    svt_aom_lpf_horizontal_14(
-                        p, dst_stride, params.mblim, params.lim, params.hev_thr);
+                    svt_aom_lpf_horizontal_14(p, dst_stride, params.mblim, params.lim, params.hev_thr);
                 }
                 break;
                 // no filtering
@@ -615,8 +546,8 @@ void svt_av1_filter_block_plane_horz(const PictureControlSet *const pcs, const i
 *************************************************************************************************/
 void svt_aom_loop_filter_sb(EbPictureBufferDesc *frame_buffer, //reconpicture,
                             //Yv12BufferConfig *frame_buffer,
-                            PictureControlSet *pcs, int32_t mi_row, int32_t mi_col,
-                            int32_t plane_start, int32_t plane_end, uint8_t last_col) {
+                            PictureControlSet *pcs, int32_t mi_row, int32_t mi_col, int32_t plane_start,
+                            int32_t plane_end, uint8_t last_col) {
     FrameHeader            *frm_hdr = &pcs->ppcs->frm_hdr;
     struct MacroblockdPlane pd[3];
     int32_t                 plane;
@@ -649,19 +580,11 @@ void svt_aom_loop_filter_sb(EbPictureBufferDesc *frame_buffer, //reconpicture,
         if (frm_hdr->loop_filter_params.combine_vert_horz_lf) {
             // filter all vertical and horizontal edges in every super block
             // filter vertical edges
-            svt_av1_setup_dst_planes(pcs,
-                                     pd,
-                                     pcs->ppcs->scs->seq_header.sb_size,
-                                     frame_buffer,
-                                     mi_row,
-                                     mi_col,
-                                     plane,
-                                     plane + 1);
+            svt_av1_setup_dst_planes(
+                pcs, pd, pcs->ppcs->scs->seq_header.sb_size, frame_buffer, mi_row, mi_col, plane, plane + 1);
             svt_av1_filter_block_plane_vert(pcs, plane, &pd[plane], mi_row, mi_col);
             // filter horizontal edges
-            int32_t max_mib_size = pcs->ppcs->scs->seq_header.sb_size == BLOCK_128X128
-                ? MAX_MIB_SIZE
-                : SB64_MIB_SIZE;
+            int32_t max_mib_size = pcs->ppcs->scs->seq_header.sb_size == BLOCK_128X128 ? MAX_MIB_SIZE : SB64_MIB_SIZE;
 
             if (mi_col - max_mib_size >= 0) {
                 svt_av1_setup_dst_planes(pcs,
@@ -672,43 +595,24 @@ void svt_aom_loop_filter_sb(EbPictureBufferDesc *frame_buffer, //reconpicture,
                                          mi_col - max_mib_size,
                                          plane,
                                          plane + 1);
-                svt_av1_filter_block_plane_horz(
-                    pcs, plane, &pd[plane], mi_row, mi_col - max_mib_size);
+                svt_av1_filter_block_plane_horz(pcs, plane, &pd[plane], mi_row, mi_col - max_mib_size);
             }
             // Filter the horizontal edges of the last sb in each row
             if (last_col) {
-                svt_av1_setup_dst_planes(pcs,
-                                         pd,
-                                         pcs->ppcs->scs->seq_header.sb_size,
-                                         frame_buffer,
-                                         mi_row,
-                                         mi_col,
-                                         plane,
-                                         plane + 1);
+                svt_av1_setup_dst_planes(
+                    pcs, pd, pcs->ppcs->scs->seq_header.sb_size, frame_buffer, mi_row, mi_col, plane, plane + 1);
                 svt_av1_filter_block_plane_horz(pcs, plane, &pd[plane], mi_row, mi_col);
             }
         } else {
             // filter all vertical edges in every 64x64 super block
-            svt_av1_setup_dst_planes(pcs,
-                                     pd,
-                                     pcs->ppcs->scs->seq_header.sb_size,
-                                     frame_buffer,
-                                     mi_row,
-                                     mi_col,
-                                     plane,
-                                     plane + 1);
+            svt_av1_setup_dst_planes(
+                pcs, pd, pcs->ppcs->scs->seq_header.sb_size, frame_buffer, mi_row, mi_col, plane, plane + 1);
 
             svt_av1_filter_block_plane_vert(pcs, plane, &pd[plane], mi_row, mi_col);
 
             // filter all horizontal edges in every 64x64 super block
-            svt_av1_setup_dst_planes(pcs,
-                                     pd,
-                                     pcs->ppcs->scs->seq_header.sb_size,
-                                     frame_buffer,
-                                     mi_row,
-                                     mi_col,
-                                     plane,
-                                     plane + 1);
+            svt_av1_setup_dst_planes(
+                pcs, pd, pcs->ppcs->scs->seq_header.sb_size, frame_buffer, mi_row, mi_col, plane, plane + 1);
             svt_av1_filter_block_plane_horz(pcs, plane, &pd[plane], mi_row, mi_col);
         }
     }
@@ -717,8 +621,8 @@ void svt_aom_loop_filter_sb(EbPictureBufferDesc *frame_buffer, //reconpicture,
 * svt_av1_loop_filter_frame
 * Apply loop filtering to the frame based on the selected loop filter parameters
 *************************************************************************************************/
-void svt_av1_loop_filter_frame(EbPictureBufferDesc *frame_buffer, PictureControlSet *pcs,
-                               int32_t plane_start, int32_t plane_end) {
+void svt_av1_loop_filter_frame(EbPictureBufferDesc *frame_buffer, PictureControlSet *pcs, int32_t plane_start,
+                               int32_t plane_end) {
     SequenceControlSet *scs = pcs->scs;
     //SuperBlock                     *sb_ptr;
     //uint16_t                                   sb_index;
@@ -732,8 +636,7 @@ void svt_av1_loop_filter_frame(EbPictureBufferDesc *frame_buffer, PictureControl
     uint32_t pic_width_in_sb      = (pcs->ppcs->aligned_width + scs->sb_size - 1) / scs->sb_size;
     uint32_t picture_height_in_sb = (pcs->ppcs->aligned_height + scs->sb_size - 1) / scs->sb_size;
 
-    svt_av1_loop_filter_frame_init(
-        &pcs->ppcs->frm_hdr, &pcs->ppcs->lf_info, plane_start, plane_end);
+    svt_av1_loop_filter_frame_init(&pcs->ppcs->frm_hdr, &pcs->ppcs->lf_info, plane_start, plane_end);
 
     for (y_sb_index = 0; y_sb_index < picture_height_in_sb; ++y_sb_index) {
         for (x_sb_index = 0; x_sb_index < pic_width_in_sb; ++x_sb_index) {
@@ -743,19 +646,14 @@ void svt_av1_loop_filter_frame(EbPictureBufferDesc *frame_buffer, PictureControl
             sb_origin_y     = y_sb_index << sb_size_log2;
             end_of_row_flag = (x_sb_index == pic_width_in_sb - 1) ? TRUE : FALSE;
 
-            svt_aom_loop_filter_sb(frame_buffer,
-                                   pcs,
-                                   sb_origin_y >> 2,
-                                   sb_origin_x >> 2,
-                                   plane_start,
-                                   plane_end,
-                                   end_of_row_flag);
+            svt_aom_loop_filter_sb(
+                frame_buffer, pcs, sb_origin_y >> 2, sb_origin_x >> 2, plane_start, plane_end, end_of_row_flag);
         }
     }
 }
 
-void svt_copy_buffer(EbPictureBufferDesc *srcBuffer, EbPictureBufferDesc *dstBuffer,
-                     PictureControlSet *pcs, uint8_t plane) {
+void svt_copy_buffer(EbPictureBufferDesc *srcBuffer, EbPictureBufferDesc *dstBuffer, PictureControlSet *pcs,
+                     uint8_t plane) {
     Bool is_16bit           = pcs->ppcs->scs->is_16bit_pipeline;
     dstBuffer->org_x        = srcBuffer->org_x;
     dstBuffer->org_y        = srcBuffer->org_y;
@@ -770,10 +668,9 @@ void svt_copy_buffer(EbPictureBufferDesc *srcBuffer, EbPictureBufferDesc *dstBuf
     dstBuffer->chroma_size  = srcBuffer->chroma_size;
     dstBuffer->packed_flag  = srcBuffer->packed_flag;
 
-    uint32_t luma_buffer_offset = (srcBuffer->org_x + srcBuffer->org_y * srcBuffer->stride_y)
-        << is_16bit;
-    uint16_t luma_width  = ALIGN_POWER_OF_TWO(srcBuffer->width, 3) << is_16bit;
-    uint16_t luma_height = ALIGN_POWER_OF_TWO(srcBuffer->height, 3);
+    uint32_t luma_buffer_offset = (srcBuffer->org_x + srcBuffer->org_y * srcBuffer->stride_y) << is_16bit;
+    uint16_t luma_width         = ALIGN_POWER_OF_TWO(srcBuffer->width, 3) << is_16bit;
+    uint16_t luma_height        = ALIGN_POWER_OF_TWO(srcBuffer->height, 3);
 
     uint16_t chroma_width = (luma_width >> 1);
     if (plane == 0) {
@@ -792,8 +689,8 @@ void svt_copy_buffer(EbPictureBufferDesc *srcBuffer, EbPictureBufferDesc *dstBuf
         dstBuffer->stride_cb         = srcBuffer->stride_cb;
         dstBuffer->stride_bit_inc_cb = srcBuffer->stride_bit_inc_cb;
 
-        uint32_t chroma_buffer_offset =
-            (srcBuffer->org_x / 2 + srcBuffer->org_y / 2 * srcBuffer->stride_cb) << is_16bit;
+        uint32_t chroma_buffer_offset = (srcBuffer->org_x / 2 + srcBuffer->org_y / 2 * srcBuffer->stride_cb)
+            << is_16bit;
 
         for (int32_t input_row_index = 0; input_row_index < luma_height / 2; input_row_index++) {
             svt_memcpy((dstBuffer->buffer_cb + chroma_buffer_offset + stride_cb * input_row_index),
@@ -806,8 +703,8 @@ void svt_copy_buffer(EbPictureBufferDesc *srcBuffer, EbPictureBufferDesc *dstBuf
         dstBuffer->stride_cr         = srcBuffer->stride_cr;
         dstBuffer->stride_bit_inc_cr = srcBuffer->stride_bit_inc_cr;
 
-        uint32_t chroma_buffer_offset =
-            (srcBuffer->org_x / 2 + srcBuffer->org_y / 2 * srcBuffer->stride_cr) << is_16bit;
+        uint32_t chroma_buffer_offset = (srcBuffer->org_x / 2 + srcBuffer->org_y / 2 * srcBuffer->stride_cr)
+            << is_16bit;
 
         for (int32_t input_row_index = 0; input_row_index < luma_height / 2; input_row_index++) {
             svt_memcpy((dstBuffer->buffer_cr + chroma_buffer_offset + stride_cr * input_row_index),
@@ -816,8 +713,7 @@ void svt_copy_buffer(EbPictureBufferDesc *srcBuffer, EbPictureBufferDesc *dstBuf
         }
     }
 }
-static uint64_t picture_sse_calculations(PictureControlSet *pcs, EbPictureBufferDesc *recon_ptr,
-                                         int32_t plane)
+static uint64_t picture_sse_calculations(PictureControlSet *pcs, EbPictureBufferDesc *recon_ptr, int32_t plane)
 
 {
     SequenceControlSet *scs      = pcs->ppcs->scs;
@@ -856,11 +752,9 @@ static uint64_t picture_sse_calculations(PictureControlSet *pcs, EbPictureBuffer
                                                       input_align_height);
         } else if (plane == 1) {
             recon_coeff_buffer = (uint8_t *)&(
-                (recon_ptr->buffer_cb)[recon_ptr->org_x / 2 +
-                                       recon_ptr->org_y / 2 * recon_ptr->stride_cb]);
+                (recon_ptr->buffer_cb)[recon_ptr->org_x / 2 + recon_ptr->org_y / 2 * recon_ptr->stride_cb]);
             input_buffer = (uint8_t *)&(
-                (input_pic->buffer_cb)[input_pic->org_x / 2 +
-                                       input_pic->org_y / 2 * input_pic->stride_cb]);
+                (input_pic->buffer_cb)[input_pic->org_x / 2 + input_pic->org_y / 2 * input_pic->stride_cb]);
 
             return svt_spatial_full_distortion_kernel(input_buffer,
                                                       0,
@@ -872,11 +766,9 @@ static uint64_t picture_sse_calculations(PictureControlSet *pcs, EbPictureBuffer
                                                       input_align_height >> ss_y);
         } else if (plane == 2) {
             recon_coeff_buffer = (uint8_t *)&(
-                (recon_ptr->buffer_cr)[recon_ptr->org_x / 2 +
-                                       recon_ptr->org_y / 2 * recon_ptr->stride_cr]);
+                (recon_ptr->buffer_cr)[recon_ptr->org_x / 2 + recon_ptr->org_y / 2 * recon_ptr->stride_cr]);
             input_buffer = (uint8_t *)&(
-                (input_pic->buffer_cr)[input_pic->org_x / 2 +
-                                       input_pic->org_y / 2 * input_pic->stride_cr]);
+                (input_pic->buffer_cr)[input_pic->org_x / 2 + input_pic->org_y / 2 * input_pic->stride_cr]);
 
             return svt_spatial_full_distortion_kernel(input_buffer,
                                                       0,
@@ -893,11 +785,9 @@ static uint64_t picture_sse_calculations(PictureControlSet *pcs, EbPictureBuffer
 
         if (plane == 0) {
             recon_coeff_buffer = (uint8_t *)&(
-                (recon_ptr->buffer_y)[(recon_ptr->org_x + recon_ptr->org_y * recon_ptr->stride_y)
-                                      << is_16bit]);
+                (recon_ptr->buffer_y)[(recon_ptr->org_x + recon_ptr->org_y * recon_ptr->stride_y) << is_16bit]);
             input_buffer = (uint8_t *)&(
-                (input_pic->buffer_y)[(input_pic->org_x + input_pic->org_y * input_pic->stride_y)
-                                      << is_16bit]);
+                (input_pic->buffer_y)[(input_pic->org_x + input_pic->org_y * input_pic->stride_y) << is_16bit]);
 
             return svt_full_distortion_kernel16_bits(input_buffer,
                                                      0,
@@ -909,13 +799,11 @@ static uint64_t picture_sse_calculations(PictureControlSet *pcs, EbPictureBuffer
                                                      input_pic->height);
         } else if (plane == 1) {
             recon_coeff_buffer = (uint8_t *)&(
-                (recon_ptr->buffer_cb)[(recon_ptr->org_x / 2 +
-                                        recon_ptr->org_y / 2 * recon_ptr->stride_cb)
-                                       << is_16bit]);
+                (recon_ptr
+                     ->buffer_cb)[(recon_ptr->org_x / 2 + recon_ptr->org_y / 2 * recon_ptr->stride_cb) << is_16bit]);
             input_buffer = (uint8_t *)&(
-                (input_pic->buffer_cb)[(input_pic->org_x / 2 +
-                                        input_pic->org_y / 2 * input_pic->stride_cb)
-                                       << is_16bit]);
+                (input_pic
+                     ->buffer_cb)[(input_pic->org_x / 2 + input_pic->org_y / 2 * input_pic->stride_cb) << is_16bit]);
 
             return svt_full_distortion_kernel16_bits(input_buffer,
                                                      0,
@@ -927,13 +815,11 @@ static uint64_t picture_sse_calculations(PictureControlSet *pcs, EbPictureBuffer
                                                      (input_pic->height + ss_y) >> ss_y);
         } else if (plane == 2) {
             recon_coeff_buffer = (uint8_t *)&(
-                (recon_ptr->buffer_cr)[(recon_ptr->org_x / 2 +
-                                        recon_ptr->org_y / 2 * recon_ptr->stride_cr)
-                                       << is_16bit]);
+                (recon_ptr
+                     ->buffer_cr)[(recon_ptr->org_x / 2 + recon_ptr->org_y / 2 * recon_ptr->stride_cr) << is_16bit]);
             input_buffer = (uint8_t *)&(
-                (input_pic->buffer_cr)[(input_pic->org_x / 2 +
-                                        input_pic->org_y / 2 * input_pic->stride_cr)
-                                       << is_16bit]);
+                (input_pic
+                     ->buffer_cr)[(input_pic->org_x / 2 + input_pic->org_y / 2 * input_pic->stride_cr) << is_16bit]);
 
             return svt_full_distortion_kernel16_bits(input_buffer,
                                                      0,
@@ -955,8 +841,8 @@ static uint64_t picture_sse_calculations(PictureControlSet *pcs, EbPictureBuffer
 static int64_t try_filter_frame(
     //const Yv12BufferConfig *sd,
     //Av1Comp *const cpi,
-    const EbPictureBufferDesc *sd, EbPictureBufferDesc *temp_lf_recon_buffer,
-    PictureControlSet *pcs, int32_t filt_level, int32_t partial_frame, int32_t plane, int32_t dir) {
+    const EbPictureBufferDesc *sd, EbPictureBufferDesc *temp_lf_recon_buffer, PictureControlSet *pcs,
+    int32_t filt_level, int32_t partial_frame, int32_t plane, int32_t dir) {
     (void)sd;
     (void)partial_frame;
     (void)sd;
@@ -988,10 +874,8 @@ static int64_t try_filter_frame(
     filt_err = picture_sse_calculations(pcs, recon_buffer, plane);
 
     // Re-instate the unfiltered frame
-    svt_copy_buffer(temp_lf_recon_buffer /*cpi->last_frame_uf*/,
-                    recon_buffer /*cm->frame_to_show*/,
-                    pcs,
-                    (uint8_t)plane);
+    svt_copy_buffer(
+        temp_lf_recon_buffer /*cpi->last_frame_uf*/, recon_buffer /*cm->frame_to_show*/, pcs, (uint8_t)plane);
 
     return filt_err;
 }
@@ -1038,12 +922,10 @@ static int32_t search_filter_level(
     // Set each entry to -1
     memset(ss_err, 0xFF, sizeof(ss_err));
     // make a copy of recon_buffer
-    svt_copy_buffer(recon_buffer /*cm->frame_to_show*/,
-                    temp_lf_recon_buffer /*&cpi->last_frame_uf*/,
-                    pcs,
-                    (uint8_t)plane);
+    svt_copy_buffer(
+        recon_buffer /*cm->frame_to_show*/, temp_lf_recon_buffer /*&cpi->last_frame_uf*/, pcs, (uint8_t)plane);
 
-    best_err = try_filter_frame(sd, temp_lf_recon_buffer, pcs, filt_mid, partial_frame, plane, dir);
+    best_err                = try_filter_frame(sd, temp_lf_recon_buffer, pcs, filt_mid, partial_frame, plane, dir);
     filt_best               = filt_mid;
     ss_err[filt_mid]        = best_err;
     int32_t tot_convergence = 0;
@@ -1061,8 +943,7 @@ static int32_t search_filter_level(
         if (filt_direction <= 0 && filt_low != filt_mid) {
             // Get Low filter error score
             if (ss_err[filt_low] < 0) {
-                ss_err[filt_low] = try_filter_frame(
-                    sd, temp_lf_recon_buffer, pcs, filt_low, partial_frame, plane, dir);
+                ss_err[filt_low] = try_filter_frame(sd, temp_lf_recon_buffer, pcs, filt_low, partial_frame, plane, dir);
             }
             // If value is close to the best so far then bias towards a lower loop
             // filter value.
@@ -1108,16 +989,14 @@ static int32_t search_filter_level(
         *best_cost_ret = (double)best_err; //RDCOST_DBL(x->rdmult, 0, best_err);
     return filt_best;
 }
-EbErrorType qp_based_dlf_param(PictureControlSet *pcs, int32_t *filter_level_y,
-                               int32_t *filter_level_uv) {
+EbErrorType qp_based_dlf_param(PictureControlSet *pcs, int32_t *filter_level_y, int32_t *filter_level_uv) {
     SequenceControlSet *scs     = pcs->scs;
     FrameHeader        *frm_hdr = &pcs->ppcs->frm_hdr;
 
     const int32_t min_filter_level = 0;
     const int32_t max_filter_level = MAX_LOOP_FILTER;
-    const int32_t q                = svt_aom_ac_quant_qtx(frm_hdr->quantization_params.base_q_idx,
-                                           0,
-                                           (EbBitDepth)scs->static_config.encoder_bit_depth);
+    const int32_t q                = svt_aom_ac_quant_qtx(
+        frm_hdr->quantization_params.base_q_idx, 0, (EbBitDepth)scs->static_config.encoder_bit_depth);
     // These values were determined by linear fitting the result of the
     // searched level for 8 bit depth:
     // Keyframes: filt_guess = q * 0.06699 - 1.60817
@@ -1142,7 +1021,7 @@ EbErrorType qp_based_dlf_param(PictureControlSet *pcs, int32_t *filter_level_y,
     if (scs->static_config.encoder_bit_depth != EB_EIGHT_BIT && frm_hdr->frame_type == KEY_FRAME)
         filt_guess -= 4;
 
-    filt_guess = filt_guess > 2 ? filt_guess - 2 : filt_guess > 1 ? filt_guess - 1 : filt_guess;
+    filt_guess                = filt_guess > 2 ? filt_guess - 2 : filt_guess > 1 ? filt_guess - 1 : filt_guess;
     int32_t filt_guess_chroma = filt_guess > 1 ? filt_guess / 2 : filt_guess;
 
     *filter_level_y  = clamp(filt_guess, min_filter_level, max_filter_level);
@@ -1150,7 +1029,6 @@ EbErrorType qp_based_dlf_param(PictureControlSet *pcs, int32_t *filter_level_y,
 
     return EB_ErrorNone;
 }
-#if FTR_ROI
 /*************************************************************************************************
 * svt_av1_pick_filter_level_by_q
 * Choose the optimal loop filter levels by qindex
@@ -1159,16 +1037,8 @@ void svt_av1_pick_filter_level_by_q(PictureControlSet *pcs, uint8_t qindex, int3
     SequenceControlSet *scs     = pcs->scs;
     FrameHeader        *frm_hdr = &pcs->ppcs->frm_hdr;
 
-#if OPT_LD_DLF
-#if ENABLE_LD_DLF_RA
     const uint8_t in_res           = pcs->ppcs->input_resolution;
     const int32_t inter_frame_mult = inter_frame_multiplier[in_res];
-#else
-    const bool    rtc_tune         = pcs->rtc_tune ? true : false;
-    const uint8_t in_res           = pcs->ppcs->input_resolution;
-    const int32_t inter_frame_mult = rtc_tune ? inter_frame_multiplier[in_res] : 6017;
-#endif
-#endif
 
     int32_t min_ref_filter_level[2] = {MAX_LOOP_FILTER, MAX_LOOP_FILTER};
     int32_t min_ref_filter_level_u  = MAX_LOOP_FILTER;
@@ -1193,8 +1063,7 @@ void svt_av1_pick_filter_level_by_q(PictureControlSet *pcs, uint8_t qindex, int3
 
     const int32_t min_filter_level = 0;
     const int32_t max_filter_level = MAX_LOOP_FILTER; // av1_get_max_filter_level(cpi);
-    const int32_t q                = svt_aom_ac_quant_qtx(
-        qindex, 0, (EbBitDepth)scs->static_config.encoder_bit_depth);
+    const int32_t q                = svt_aom_ac_quant_qtx(qindex, 0, (EbBitDepth)scs->static_config.encoder_bit_depth);
     // These values were determined by linear fitting the result of the
     // searched level for 8 bit depth:
     // Keyframes: filt_guess = q * 0.06699 - 1.60817
@@ -1205,13 +1074,8 @@ void svt_av1_pick_filter_level_by_q(PictureControlSet *pcs, uint8_t qindex, int3
     int32_t filt_guess;
     switch (scs->static_config.encoder_bit_depth) {
     case EB_EIGHT_BIT:
-        filt_guess = (frm_hdr->frame_type == KEY_FRAME)
-            ? ROUND_POWER_OF_TWO(q * 17563 - 421574, 18)
-#if OPT_LD_DLF
-            : ROUND_POWER_OF_TWO(q * inter_frame_mult + 650707, 18);
-#else
-            : ROUND_POWER_OF_TWO(q * 6017 + 650707, 18);
-#endif
+        filt_guess = (frm_hdr->frame_type == KEY_FRAME) ? ROUND_POWER_OF_TWO(q * 17563 - 421574, 18)
+                                                        : ROUND_POWER_OF_TWO(q * inter_frame_mult + 650707, 18);
         break;
     case EB_TEN_BIT: filt_guess = ROUND_POWER_OF_TWO(q * 20723 + 4060632, 20); break;
     case EB_TWELVE_BIT: filt_guess = ROUND_POWER_OF_TWO(q * 20723 + 16242526, 22); break;
@@ -1224,46 +1088,23 @@ void svt_av1_pick_filter_level_by_q(PictureControlSet *pcs, uint8_t qindex, int3
     if (scs->static_config.encoder_bit_depth != EB_EIGHT_BIT && frm_hdr->frame_type == KEY_FRAME)
         filt_guess -= 4;
 
-#if OPT_LD_DLF
     int32_t filt_guess_chroma = filt_guess / 2;
-#if !ENABLE_LD_DLF_RA
-    if (pcs->rtc_tune) {
-#endif
-        if (pcs->slice_type != I_SLICE) {
-#if ENABLE_LD_DLF_RA
-            const uint32_t use_zero_strength_th =
-                disable_dlf_th[pcs->ppcs->dlf_ctrls.zero_filter_strength_lvl][in_res] *
-                (pcs->temporal_layer_index + 1);
-#else
-        const uint32_t use_zero_strength_th =
-            disable_dlf_th[pcs->ppcs->dlf_ctrls.ld_zero_filter_strength_lvl][in_res] *
+    if (pcs->slice_type != I_SLICE) {
+        const uint32_t use_zero_strength_th = disable_dlf_th[pcs->ppcs->dlf_ctrls.zero_filter_strength_lvl][in_res] *
             (pcs->temporal_layer_index + 1);
-#endif
-            if (use_zero_strength_th) {
-                uint32_t total_me_sad = 0;
-                for (uint16_t b64_index = 0; b64_index < pcs->b64_total_count; ++b64_index) {
-                    total_me_sad += pcs->ppcs->rc_me_distortion[b64_index];
-                }
-                uint32_t average_me_sad = total_me_sad / pcs->b64_total_count;
-
-                if (average_me_sad < use_zero_strength_th)
-                    filt_guess = 0;
-                if (average_me_sad < (use_zero_strength_th * 2))
-                    filt_guess_chroma = 0;
+        if (use_zero_strength_th) {
+            uint32_t total_me_sad = 0;
+            for (uint16_t b64_index = 0; b64_index < pcs->b64_total_count; ++b64_index) {
+                total_me_sad += pcs->ppcs->rc_me_distortion[b64_index];
             }
+            uint32_t average_me_sad = total_me_sad / pcs->b64_total_count;
+
+            if (average_me_sad < use_zero_strength_th)
+                filt_guess = 0;
+            if (average_me_sad < (use_zero_strength_th * 2))
+                filt_guess_chroma = 0;
         }
-#if !ENABLE_LD_DLF_RA
-    } else {
-        filt_guess = filt_guess > 2 ? filt_guess - 2 : filt_guess > 1 ? filt_guess - 1 : filt_guess;
-        filt_guess = filt_guess > pcs->ppcs->dlf_ctrls.min_filter_level ? filt_guess : 0;
-        filt_guess_chroma = filt_guess > 1 ? filt_guess / 2 : filt_guess;
     }
-#endif
-#else
-    filt_guess = filt_guess > 2 ? filt_guess - 2 : filt_guess > 1 ? filt_guess - 1 : filt_guess;
-    filt_guess = filt_guess > pcs->ppcs->dlf_ctrls.min_filter_level ? filt_guess : 0;
-    int32_t filt_guess_chroma = filt_guess > 1 ? filt_guess / 2 : filt_guess;
-#endif
     // Force filter_level to 0 if loop-filter is shut for 1 (or many) of the sub-layer reference frame(s)
     filter_level[0] = min_ref_filter_level[0] || !pcs->ppcs->temporal_layer_index
         ? clamp(filt_guess, min_filter_level, max_filter_level)
@@ -1281,7 +1122,6 @@ void svt_av1_pick_filter_level_by_q(PictureControlSet *pcs, uint8_t qindex, int3
         ? clamp(filt_guess_chroma, min_filter_level, max_filter_level)
         : 0;
 }
-#endif
 /*************************************************************************************************
 * svt_av1_pick_filter_level
 * Choose the optimal loop filter levels
@@ -1297,91 +1137,15 @@ EbErrorType svt_av1_pick_filter_level(EbPictureBufferDesc *srcBuffer, // source 
     if (method == LPF_PICK_MINIMAL_LPF)
         lf->filter_level[0] = lf->filter_level[1] = 0;
     else if (method >= LPF_PICK_FROM_Q) {
-#if FTR_ROI
         int32_t filter_level[4];
         svt_av1_pick_filter_level_by_q(pcs, frm_hdr->quantization_params.base_q_idx, filter_level);
         lf->filter_level[0] = filter_level[0];
         lf->filter_level[1] = filter_level[1];
         lf->filter_level_u  = filter_level[2];
         lf->filter_level_v  = filter_level[3];
-#else
-        int32_t min_ref_filter_level[2] = {MAX_LOOP_FILTER, MAX_LOOP_FILTER};
-        int32_t min_ref_filter_level_u  = MAX_LOOP_FILTER;
-        int32_t min_ref_filter_level_v  = MAX_LOOP_FILTER;
-
-        for (uint32_t ref_it = 0; ref_it < pcs->ppcs->tot_ref_frame_types; ++ref_it) {
-            MvReferenceFrame ref_pair = pcs->ppcs->ref_frame_type_arr[ref_it];
-            MvReferenceFrame rf[2];
-            av1_set_ref_frame(rf, ref_pair);
-
-            if (rf[1] == NONE_FRAME) {
-                uint8_t            list_idx = get_list_idx(rf[0]);
-                uint8_t            ref_idx  = get_ref_frame_idx(rf[0]);
-                EbReferenceObject *ref_obj  = pcs->ref_pic_ptr_array[list_idx][ref_idx]->object_ptr;
-
-                min_ref_filter_level[0] = MIN(min_ref_filter_level[0], ref_obj->filter_level[0]);
-                min_ref_filter_level[1] = MIN(min_ref_filter_level[1], ref_obj->filter_level[1]);
-                min_ref_filter_level_u  = MIN(min_ref_filter_level_u, ref_obj->filter_level_u);
-                min_ref_filter_level_v  = MIN(min_ref_filter_level_v, ref_obj->filter_level_v);
-            }
-        }
-
-        const int32_t min_filter_level = 0;
-        const int32_t max_filter_level = MAX_LOOP_FILTER; // av1_get_max_filter_level(cpi);
-        const int32_t q = svt_aom_ac_quant_qtx(frm_hdr->quantization_params.base_q_idx,
-                                               0,
-                                               (EbBitDepth)scs->static_config.encoder_bit_depth);
-        // These values were determined by linear fitting the result of the
-        // searched level for 8 bit depth:
-        // Keyframes: filt_guess = q * 0.06699 - 1.60817
-        // Other frames: filt_guess = q * 0.02295 + 2.48225
-        //
-        // And high bit depth separately:
-        // filt_guess = q * 0.316206 + 3.87252
-        int32_t filt_guess;
-        switch (scs->static_config.encoder_bit_depth) {
-        case EB_EIGHT_BIT:
-            filt_guess = (frm_hdr->frame_type == KEY_FRAME)
-                ? ROUND_POWER_OF_TWO(q * 17563 - 421574, 18)
-                : ROUND_POWER_OF_TWO(q * 6017 + 650707, 18);
-            break;
-        case EB_TEN_BIT: filt_guess = ROUND_POWER_OF_TWO(q * 20723 + 4060632, 20); break;
-        case EB_TWELVE_BIT: filt_guess = ROUND_POWER_OF_TWO(q * 20723 + 16242526, 22); break;
-        default:
-            assert(0 &&
-                   "bit_depth should be EB_EIGHT_BIT, EB_TEN_BIT "
-                   "or EB_TWELVE_BIT");
-            return EB_ErrorNone;
-        }
-        if (scs->static_config.encoder_bit_depth != EB_EIGHT_BIT &&
-            frm_hdr->frame_type == KEY_FRAME)
-            filt_guess -= 4;
-
-        filt_guess = filt_guess > 2 ? filt_guess - 2 : filt_guess > 1 ? filt_guess - 1 : filt_guess;
-        filt_guess = filt_guess > pcs->ppcs->dlf_ctrls.min_filter_level ? filt_guess : 0;
-        int32_t filt_guess_chroma = filt_guess > 1 ? filt_guess / 2 : filt_guess;
-
-        // Force filter_level to 0 if loop-filter is shut for 1 (or many) of the sub-layer reference frame(s)
-        lf->filter_level[0] = min_ref_filter_level[0] || !pcs->ppcs->temporal_layer_index
-            ? clamp(filt_guess, min_filter_level, max_filter_level)
-            : 0;
-
-        lf->filter_level[1] = min_ref_filter_level[1] || !pcs->ppcs->temporal_layer_index
-            ? clamp(filt_guess, min_filter_level, max_filter_level)
-            : 0;
-
-        lf->filter_level_u = min_ref_filter_level_u || !pcs->ppcs->temporal_layer_index
-            ? clamp(filt_guess_chroma, min_filter_level, max_filter_level)
-            : 0;
-
-        lf->filter_level_v = min_ref_filter_level_v || !pcs->ppcs->temporal_layer_index
-            ? clamp(filt_guess_chroma, min_filter_level, max_filter_level)
-            : 0;
-#endif
     } else {
         uint16_t padding = scs->super_block_size + 32;
-        if (scs->static_config.superres_mode > SUPERRES_NONE ||
-            scs->static_config.resize_mode > RESIZE_NONE) {
+        if (scs->static_config.superres_mode > SUPERRES_NONE || scs->static_config.resize_mode > RESIZE_NONE) {
             padding += scs->super_block_size;
         }
         EbPictureBufferDescInitData temp_lf_recon_desc_init_data;
@@ -1395,19 +1159,16 @@ EbErrorType svt_av1_pick_filter_level(EbPictureBufferDesc *srcBuffer, // source 
         temp_lf_recon_desc_init_data.bot_padding   = padding;
         temp_lf_recon_desc_init_data.split_mode    = FALSE;
         temp_lf_recon_desc_init_data.color_format  = scs->static_config.encoder_color_format;
-        Bool is_16bit = scs->static_config.encoder_bit_depth > 8 ? TRUE : FALSE;
+        Bool is_16bit                              = scs->static_config.encoder_bit_depth > 8 ? TRUE : FALSE;
         if (scs->is_16bit_pipeline || is_16bit) {
             temp_lf_recon_desc_init_data.bit_depth = EB_SIXTEEN_BIT;
-            EB_NEW(pcs->temp_lf_recon_pic_16bit,
-                   svt_recon_picture_buffer_desc_ctor,
-                   (EbPtr)&temp_lf_recon_desc_init_data);
+            EB_NEW(
+                pcs->temp_lf_recon_pic_16bit, svt_recon_picture_buffer_desc_ctor, (EbPtr)&temp_lf_recon_desc_init_data);
             if (!is_16bit)
                 pcs->temp_lf_recon_pic_16bit->bit_depth = EB_EIGHT_BIT;
         } else {
             temp_lf_recon_desc_init_data.bit_depth = EB_EIGHT_BIT;
-            EB_NEW(pcs->temp_lf_recon_pic,
-                   svt_recon_picture_buffer_desc_ctor,
-                   (EbPtr)&temp_lf_recon_desc_init_data);
+            EB_NEW(pcs->temp_lf_recon_pic, svt_recon_picture_buffer_desc_ctor, (EbPtr)&temp_lf_recon_desc_init_data);
         }
 
         if (pcs->ppcs->dlf_ctrls.dlf_avg && pcs->ppcs->tot_ref_frame_types > 0) {
@@ -1425,8 +1186,7 @@ EbErrorType svt_av1_pick_filter_level(EbPictureBufferDesc *srcBuffer, // source 
                 if (rf[1] == NONE_FRAME) {
                     uint8_t            list_idx = get_list_idx(rf[0]);
                     uint8_t            ref_idx  = get_ref_frame_idx(rf[0]);
-                    EbReferenceObject *ref_obj =
-                        pcs->ref_pic_ptr_array[list_idx][ref_idx]->object_ptr;
+                    EbReferenceObject *ref_obj  = pcs->ref_pic_ptr_array[list_idx][ref_idx]->object_ptr;
 
                     tot_ref_filter_level[0] += ref_obj->filter_level[0];
                     tot_ref_filter_level[1] += ref_obj->filter_level[1];
@@ -1445,20 +1205,18 @@ EbErrorType svt_av1_pick_filter_level(EbPictureBufferDesc *srcBuffer, // source 
 
         const int32_t last_frame_filter_level[4] = {
             lf->filter_level[0], lf->filter_level[1], lf->filter_level_u, lf->filter_level_v};
-        EbPictureBufferDesc *temp_lf_recon_buffer = scs->is_16bit_pipeline
-            ? pcs->temp_lf_recon_pic_16bit
-            : pcs->temp_lf_recon_pic;
+        EbPictureBufferDesc *temp_lf_recon_buffer = scs->is_16bit_pipeline ? pcs->temp_lf_recon_pic_16bit
+                                                                           : pcs->temp_lf_recon_pic;
 
-        lf->filter_level[0] = lf->filter_level[1] = search_filter_level(
-            srcBuffer,
-            temp_lf_recon_buffer,
-            pcs,
-            method == LPF_PICK_FROM_SUBIMAGE,
-            last_frame_filter_level,
-            NULL,
-            0,
-            2);
-        bool use_qp_for_chroma = pcs->ppcs->dlf_ctrls.dlf_avg_uv && pcs->temporal_layer_index > 0;
+        lf->filter_level[0] = lf->filter_level[1] = search_filter_level(srcBuffer,
+                                                                        temp_lf_recon_buffer,
+                                                                        pcs,
+                                                                        method == LPF_PICK_FROM_SUBIMAGE,
+                                                                        last_frame_filter_level,
+                                                                        NULL,
+                                                                        0,
+                                                                        2);
+        bool use_qp_for_chroma                    = pcs->ppcs->dlf_ctrls.dlf_avg_uv && pcs->temporal_layer_index > 0;
 
         if (use_qp_for_chroma) {
             int32_t filter_level_y, filter_level_uv;

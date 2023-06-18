@@ -40,10 +40,6 @@
     MULTI_LINE_MACRO_END
 
 #define SUPERRES_INVALID_STATE 0x7fffffff
-#if !CLN_FUNC_DECL
-int svt_aom_filter_intra_allowed_bsize(uint8_t enable_filter_intra, BlockSize bs);
-#endif
-#if CLN_FUNC_DECL
 static Bool check_mv_validity(int16_t x_mv, int16_t y_mv, uint8_t need_shift) {
     MV mv;
     //go to 1/8th if input is 1/4pel
@@ -59,53 +55,29 @@ static Bool check_mv_validity(int16_t x_mv, int16_t y_mv, uint8_t need_shift) {
     }
     return TRUE;
 }
-#else
-Bool            check_mv_validity(int16_t x_mv, int16_t y_mv, uint8_t need_shift);
-#endif
 
-static INLINE int32_t derive_rmv_setting(const SequenceControlSet      *scs,
-                                         const PictureParentControlSet *ppcs) {
+static INLINE int32_t derive_rmv_setting(const SequenceControlSet *scs, const PictureParentControlSet *ppcs) {
     // force RMV on to fix quality issue caused by MVs out of picture boundary
-    int32_t rmv = scs->static_config.restricted_motion_vector ? 1
-        : ppcs->frm_hdr.frame_type == S_FRAME                 ? 1
-                                                              : 0;
+    int32_t rmv = scs->static_config.restricted_motion_vector ? 1 : ppcs->frm_hdr.frame_type == S_FRAME ? 1 : 0;
     return rmv;
 }
-#if !CLN_FUNC_DECL
-static INLINE int svt_aom_is_interintra_allowed_bsize(const BlockSize bsize) {
-    return (bsize >= BLOCK_8X8) && (bsize <= BLOCK_32X32);
-}
-
-static INLINE int svt_aom_is_interintra_allowed_mode(const PredictionMode mode) {
-    return (mode >= SINGLE_INTER_MODE_START) && (mode < SINGLE_INTER_MODE_END);
-}
-
-static INLINE int svt_aom_is_interintra_allowed_ref(const MvReferenceFrame rf[2]) {
-    return (rf[0] > INTRA_FRAME) && (rf[1] <= INTRA_FRAME);
-}
-#endif
 int svt_is_interintra_allowed(uint8_t enable_inter_intra, BlockSize bsize, PredictionMode mode,
                               const MvReferenceFrame ref_frame[2]) {
     return enable_inter_intra && svt_aom_is_interintra_allowed_bsize((const BlockSize)bsize) &&
         svt_aom_is_interintra_allowed_mode(mode) && svt_aom_is_interintra_allowed_ref(ref_frame);
 }
-#if CLN_FUNC_DECL
 int svt_aom_filter_intra_allowed_bsize(uint8_t enable_filter_intra, BlockSize bs) {
     if (!enable_filter_intra)
         return 0;
     return block_size_wide[bs] <= 32 && block_size_high[bs] <= 32;
 }
-int svt_aom_filter_intra_allowed(uint8_t enable_filter_intra, BlockSize bsize, uint8_t palette_size,
-                                 uint32_t mode) {
-    return mode == DC_PRED && palette_size == 0 &&
-        svt_aom_filter_intra_allowed_bsize(enable_filter_intra, bsize);
+int svt_aom_filter_intra_allowed(uint8_t enable_filter_intra, BlockSize bsize, uint8_t palette_size, uint32_t mode) {
+    return mode == DC_PRED && palette_size == 0 && svt_aom_filter_intra_allowed_bsize(enable_filter_intra, bsize);
 }
-#endif
 //Given one reference frame identified by the pair (list_index,ref_index)
 //indicate if ME data is valid
-uint8_t svt_aom_is_me_data_present(uint32_t me_block_offset, uint32_t me_cand_offset,
-                                   const MeSbResults *me_results, uint8_t list_idx,
-                                   uint8_t ref_idx) {
+uint8_t svt_aom_is_me_data_present(uint32_t me_block_offset, uint32_t me_cand_offset, const MeSbResults *me_results,
+                                   uint8_t list_idx, uint8_t ref_idx) {
     uint8_t            total_me_cnt     = me_results->total_me_candidate_index[me_block_offset];
     const MeCandidate *me_block_results = &me_results->me_candidate_array[me_cand_offset];
     for (uint32_t me_cand_i = 0; me_cand_i < total_me_cnt; ++me_cand_i) {
@@ -130,20 +102,14 @@ uint8_t svt_aom_is_me_data_present(uint32_t me_block_offset, uint32_t me_cand_of
 // 3 - Regular uni-pred + Wedge compound Inter Intra + Smooth compound Inter Intra
 
 #define II_COUNT 3
-#if CLN_FUNC_DECL
 static Bool warped_motion_mode_allowed(PictureControlSet *pcs, ModeDecisionContext *ctx) {
-#else
-Bool            warped_motion_mode_allowed(PictureControlSet *pcs, ModeDecisionContext *ctx) {
-#endif
     FrameHeader *frm_hdr = &pcs->ppcs->frm_hdr;
-    return frm_hdr->allow_warped_motion && has_overlappable_candidates(ctx->blk_ptr) &&
-        ctx->blk_geom->bwidth >= 8 && ctx->blk_geom->bheight >= 8 && ctx->wm_ctrls.enabled &&
-        ctx->inject_new_warp;
+    return frm_hdr->allow_warped_motion && has_overlappable_candidates(ctx->blk_ptr) && ctx->blk_geom->bwidth >= 8 &&
+        ctx->blk_geom->bheight >= 8 && ctx->wm_ctrls.enabled && ctx->inject_new_warp;
 }
 MotionMode svt_aom_obmc_motion_mode_allowed(
     const PictureControlSet *pcs, struct ModeDecisionContext *ctx, const BlockSize bsize,
-    uint8_t
-        situation, // 0: candidate(s) preparation, 1: data preparation, 2: simple translation face-off
+    uint8_t          situation, // 0: candidate(s) preparation, 1: data preparation, 2: simple translation face-off
     MvReferenceFrame rf0, MvReferenceFrame rf1, PredictionMode mode) {
     if (ctx->obmc_ctrls.trans_face_off && !situation)
         return SIMPLE_TRANSLATION;
@@ -163,8 +129,8 @@ MotionMode svt_aom_obmc_motion_mode_allowed(
         if (is_global_mv_block(mode, bsize, gm_type))
             return SIMPLE_TRANSLATION;
     }
-    if (is_motion_variation_allowed_bsize(bsize) && is_inter_singleref_mode(mode) &&
-        rf1 != INTRA_FRAME && !(rf1 > INTRA_FRAME)) // is_motion_variation_allowed_compound
+    if (is_motion_variation_allowed_bsize(bsize) && is_inter_singleref_mode(mode) && rf1 != INTRA_FRAME &&
+        !(rf1 > INTRA_FRAME)) // is_motion_variation_allowed_compound
     {
         if (!has_overlappable_candidates(ctx->blk_ptr)) // check_num_overlappable_neighbors
             return SIMPLE_TRANSLATION;
@@ -174,25 +140,17 @@ MotionMode svt_aom_obmc_motion_mode_allowed(
         return SIMPLE_TRANSLATION;
 }
 
-#if !CLN_FUNC_DECL
-void precompute_obmc_data(PictureControlSet *pcs, ModeDecisionContext *ctx);
-#endif
-
 //static uint32_t  AntiContouringIntraMode[11] = { EB_INTRA_PLANAR, EB_INTRA_DC, EB_INTRA_HORIZONTAL, EB_INTRA_VERTICAL,
 //EB_INTRA_MODE_2, EB_INTRA_MODE_6, EB_INTRA_MODE_14, EB_INTRA_MODE_18, EB_INTRA_MODE_22, EB_INTRA_MODE_30, EB_INTRA_MODE_34 };
 int32_t svt_aom_have_newmv_in_inter_mode(PredictionMode mode) {
     return (mode == NEWMV || mode == NEW_NEWMV || mode == NEAREST_NEWMV || mode == NEW_NEARESTMV ||
             mode == NEAR_NEWMV || mode == NEW_NEARMV);
 }
-static MvReferenceFrame to_ref_frame[2][4] = {
-    {LAST_FRAME, LAST2_FRAME, LAST3_FRAME, GOLDEN_FRAME},
-    {BWDREF_FRAME, ALTREF2_FRAME, ALTREF_FRAME, INVALID_REF}};
+static MvReferenceFrame to_ref_frame[2][4] = {{LAST_FRAME, LAST2_FRAME, LAST3_FRAME, GOLDEN_FRAME},
+                                              {BWDREF_FRAME, ALTREF2_FRAME, ALTREF_FRAME, INVALID_REF}};
 
-MvReferenceFrame svt_get_ref_frame_type(uint8_t list, uint8_t ref_idx) {
-    return to_ref_frame[list][ref_idx];
-};
-#if CLN_FUNC_DECL
-uint8_t svt_aom_get_max_drl_index(uint8_t refmvCnt, PredictionMode mode) {
+MvReferenceFrame svt_get_ref_frame_type(uint8_t list, uint8_t ref_idx) { return to_ref_frame[list][ref_idx]; };
+uint8_t          svt_aom_get_max_drl_index(uint8_t refmvCnt, PredictionMode mode) {
     uint8_t max_drl = 0;
 
     if (mode == NEWMV || mode == NEW_NEWMV) {
@@ -215,50 +173,20 @@ uint8_t svt_aom_get_max_drl_index(uint8_t refmvCnt, PredictionMode mode) {
 
     return max_drl;
 }
-#else
-extern uint32_t stage1ModesArray[];
-
-uint8_t svt_aom_get_max_drl_index(uint8_t refmvCnt, PredictionMode mode);
-int32_t svt_av1_mv_bit_cost(const MV *mv, const MV *ref, const int32_t *mvjcost, int32_t *mvcost[2],
-                            int32_t weight);
-int32_t svt_av1_mv_bit_cost_light(const MV *mv, const MV *ref);
-#endif
 #define MV_COST_WEIGHT 108
 #define MAX_INTERINTRA_SB_SQUARE 32 * 32
-#if !CLN_FUNC_DECL
-EbErrorType intra_luma_prediction_for_interintra(ModeDecisionContext *ctx, PictureControlSet *pcs,
-                                                 InterIntraMode       interintra_mode,
-                                                 EbPictureBufferDesc *prediction_ptr);
-int64_t     pick_wedge_fixed_sign(PictureControlSet *pcs, ModeDecisionContext *ctx,
-                                  const BlockSize bsize, const int16_t *const residual1,
-                                  const int16_t *const diff10, const int8_t wedge_sign,
-                                  int8_t *const best_wedge_index);
-void model_rd_for_sb_with_curvfit(PictureControlSet *pcs, ModeDecisionContext *ctx, BlockSize bsize,
-                                  int bw, int bh, uint8_t *src_buf, uint32_t src_stride,
-                                  uint8_t *pred_buf, uint32_t pred_stride, int plane_from,
-                                  int plane_to, int mi_row, int mi_col, int *out_rate_sum,
-                                  int64_t *out_dist_sum, int *plane_rate, int64_t *plane_sse,
-                                  int64_t *plane_dist);
-#endif
-static int64_t pick_interintra_wedge(PictureControlSet *pcs, ModeDecisionContext *ctx,
-                                     const BlockSize bsize, const uint8_t *const p0,
-                                     const uint8_t *const p1, uint8_t *src_buf, uint32_t src_stride,
-                                     int8_t *wedge_index_out) {
+static int64_t pick_interintra_wedge(PictureControlSet *pcs, ModeDecisionContext *ctx, const BlockSize bsize,
+                                     const uint8_t *const p0, const uint8_t *const p1, uint8_t *src_buf,
+                                     uint32_t src_stride, int8_t *wedge_index_out) {
     assert(svt_aom_is_interintra_wedge_used(bsize));
     // assert(cpi->common.seq_params.enable_interintra_compound);
 
     const int bw = block_size_wide[bsize];
     const int bh = block_size_high[bsize];
-#if CLN_MISC_CLEANUPS // Max interintra bsize is 32x32
     DECLARE_ALIGNED(32, int16_t, residual1[MAX_INTERINTRA_SB_SQUARE]); // src - pred1
     DECLARE_ALIGNED(32, int16_t, diff10[MAX_INTERINTRA_SB_SQUARE]); // pred1 - pred0
-#else
-    DECLARE_ALIGNED(32, int16_t, residual1[MAX_SB_SQUARE]); // src - pred1
-    DECLARE_ALIGNED(32, int16_t, diff10[MAX_SB_SQUARE]); // pred1 - pred0
-#endif
     if (ctx->hbd_md) {
-        svt_aom_highbd_subtract_block(
-            bh, bw, residual1, bw, src_buf, src_stride, p1, bw, EB_TEN_BIT);
+        svt_aom_highbd_subtract_block(bh, bw, residual1, bw, src_buf, src_stride, p1, bw, EB_TEN_BIT);
         svt_aom_highbd_subtract_block(bh, bw, diff10, bw, p1, bw, p0, bw, EB_TEN_BIT);
 
     } else {
@@ -267,45 +195,24 @@ static int64_t pick_interintra_wedge(PictureControlSet *pcs, ModeDecisionContext
     }
 
     int8_t  wedge_index = -1;
-    int64_t rd       = pick_wedge_fixed_sign(pcs, ctx, bsize, residual1, diff10, 0, &wedge_index);
-    *wedge_index_out = wedge_index;
+    int64_t rd          = pick_wedge_fixed_sign(pcs, ctx, bsize, residual1, diff10, 0, &wedge_index);
+    *wedge_index_out    = wedge_index;
 
     return rd;
 }
-#if !CLN_FUNC_DECL
-//for every CU, perform DC/V/H/S intra prediction to be used later in inter-intra search
-void precompute_intra_pred_for_inter_intra(PictureControlSet *pcs, ModeDecisionContext *ctx) {
-    uint32_t            j;
-    EbPictureBufferDesc pred_desc;
-    pred_desc.org_x = pred_desc.org_y = 0;
-    pred_desc.stride_y                = ctx->blk_geom->bwidth;
-
-    for (j = 0; j < INTERINTRA_MODES; ++j) {
-        InterIntraMode interintra_mode = (InterIntraMode)j;
-        pred_desc.buffer_y             = ctx->intrapred_buf[j];
-        intra_luma_prediction_for_interintra(ctx, pcs, interintra_mode, &pred_desc);
-    }
-}
-void svt_aom_combine_interintra(InterIntraMode mode, int8_t use_wedge_interintra, int wedge_index,
-                                int wedge_sign, BlockSize bsize, BlockSize plane_bsize,
-                                uint8_t *comppred, int compstride, const uint8_t *interpred,
-                                int interstride, const uint8_t *intrapred, int intrastride);
-#endif
-static void inter_intra_search(PictureControlSet *pcs, ModeDecisionContext *ctx,
-                               ModeDecisionCandidate *cand) {
+static void inter_intra_search(PictureControlSet *pcs, ModeDecisionContext *ctx, ModeDecisionCandidate *cand) {
     SequenceControlSet *scs = pcs->scs;
     DECLARE_ALIGNED(16, uint8_t, tmp_buf[2 * MAX_INTERINTRA_SB_SQUARE]);
     DECLARE_ALIGNED(16, uint8_t, ii_pred_buf[2 * MAX_INTERINTRA_SB_SQUARE]);
     // get inter pred for ref0
-    EbPictureBufferDesc *src_pic = ctx->hbd_md ? pcs->input_frame16bit : pcs->ppcs->enhanced_pic;
-    uint16_t *src_buf_hbd = (uint16_t *)src_pic->buffer_y + (ctx->blk_org_x + src_pic->org_x) +
+    EbPictureBufferDesc *src_pic     = ctx->hbd_md ? pcs->input_frame16bit : pcs->ppcs->enhanced_pic;
+    uint16_t            *src_buf_hbd = (uint16_t *)src_pic->buffer_y + (ctx->blk_org_x + src_pic->org_x) +
         (ctx->blk_org_y + src_pic->org_y) * src_pic->stride_y;
     uint8_t *src_buf = src_pic->buffer_y + (ctx->blk_org_x + src_pic->org_x) +
         (ctx->blk_org_y + src_pic->org_y) * src_pic->stride_y;
 
     uint8_t  bit_depth   = ctx->hbd_md ? EB_TEN_BIT : EB_EIGHT_BIT;
-    uint32_t full_lambda = ctx->hbd_md ? ctx->full_lambda_md[EB_10_BIT_MD]
-                                       : ctx->full_lambda_md[EB_8_BIT_MD];
+    uint32_t full_lambda = ctx->hbd_md ? ctx->full_lambda_md[EB_10_BIT_MD] : ctx->full_lambda_md[EB_8_BIT_MD];
 
     uint32_t            bwidth  = ctx->blk_geom->bwidth;
     uint32_t            bheight = ctx->blk_geom->bheight;
@@ -396,8 +303,7 @@ static void inter_intra_search(PictureControlSet *pcs, ModeDecisionContext *ctx,
                              ctx->hbd_md ? EB_TEN_BIT : EB_EIGHT_BIT,
                              0); // is_16bit_pipeline
 
-    assert(svt_aom_is_interintra_wedge_used(
-        ctx->blk_geom->bsize)); //if not I need to add nowedge path!!
+    assert(svt_aom_is_interintra_wedge_used(ctx->blk_geom->bsize)); //if not I need to add nowedge path!!
 
     int64_t        best_interintra_rd   = INT64_MAX;
     InterIntraMode best_interintra_mode = INTERINTRA_MODES;
@@ -408,24 +314,22 @@ static void inter_intra_search(PictureControlSet *pcs, ModeDecisionContext *ctx,
         InterIntraMode interintra_mode = (InterIntraMode)j;
         // rmode = interintra_mode_cost[mbmi->interintra_mode];
         const int bsize_group = size_group_lookup[ctx->blk_geom->bsize];
-        const int rmode =
-            ctx->md_rate_est_ctx->inter_intra_mode_fac_bits[bsize_group][interintra_mode];
+        const int rmode       = ctx->md_rate_est_ctx->inter_intra_mode_fac_bits[bsize_group][interintra_mode];
         // av1_combine_interintra(xd, bsize, 0, tmp_buf, bw, intrapred, bw);
         if (ctx->hbd_md)
-            svt_aom_combine_interintra_highbd(
-                interintra_mode, // mode,
-                0, // use_wedge_interintra,
-                0, // cand->interintra_wedge_index,
-                0, // int wedge_sign,
-                ctx->blk_geom->bsize,
-                ctx->blk_geom->bsize, // plane_bsize,
-                ii_pred_buf,
-                bwidth, /*uint8_t *comppred, int compstride,*/
-                tmp_buf,
-                bwidth, /*const uint8_t *interpred, int interstride,*/
-                ctx->intrapred_buf[j],
-                bwidth /*const uint8_t *intrapred,   int intrastride*/,
-                bit_depth);
+            svt_aom_combine_interintra_highbd(interintra_mode, // mode,
+                                              0, // use_wedge_interintra,
+                                              0, // cand->interintra_wedge_index,
+                                              0, // int wedge_sign,
+                                              ctx->blk_geom->bsize,
+                                              ctx->blk_geom->bsize, // plane_bsize,
+                                              ii_pred_buf,
+                                              bwidth, /*uint8_t *comppred, int compstride,*/
+                                              tmp_buf,
+                                              bwidth, /*const uint8_t *interpred, int interstride,*/
+                                              ctx->intrapred_buf[j],
+                                              bwidth /*const uint8_t *intrapred,   int intrastride*/,
+                                              bit_depth);
         else
 
             svt_aom_combine_interintra(interintra_mode, //mode,
@@ -466,12 +370,8 @@ static void inter_intra_search(PictureControlSet *pcs, ModeDecisionContext *ctx,
             rd = RDCOST(full_lambda, rate_sum + rmode, dist_sum);
         } else {
             if (ctx->hbd_md)
-                rd = svt_aom_highbd_sse((uint8_t *)src_buf_hbd,
-                                        src_pic->stride_y,
-                                        ii_pred_buf,
-                                        bwidth,
-                                        bwidth,
-                                        bheight);
+                rd = svt_aom_highbd_sse(
+                    (uint8_t *)src_buf_hbd, src_pic->stride_y, ii_pred_buf, bwidth, bwidth, bheight);
             else
                 rd = svt_aom_sse(src_buf, src_pic->stride_y, ii_pred_buf, bwidth, bwidth, bheight);
         }
@@ -483,19 +383,17 @@ static void inter_intra_search(PictureControlSet *pcs, ModeDecisionContext *ctx,
     // To test: Enable wedge search if source variance and edge strength are above the thresholds.
     //CHKN need to re-do intra pred using the winner, or have a separate intra serch for wedge
     int64_t       best_interintra_rd_wedge = INT64_MAX;
-    const uint8_t ii_wedge_mode            = ctx->blk_geom->shape == PART_N
-                   ? ctx->inter_intra_comp_ctrls.wedge_mode_sq
-                   : ctx->inter_intra_comp_ctrls.wedge_mode_nsq;
+    const uint8_t ii_wedge_mode            = ctx->blk_geom->shape == PART_N ? ctx->inter_intra_comp_ctrls.wedge_mode_sq
+                                                                            : ctx->inter_intra_comp_ctrls.wedge_mode_nsq;
     if (ii_wedge_mode) {
-        best_interintra_rd_wedge = pick_interintra_wedge(
-            pcs,
-            ctx,
-            ctx->blk_geom->bsize,
-            ctx->intrapred_buf[best_interintra_mode],
-            tmp_buf,
-            ctx->hbd_md ? (uint8_t *)src_buf_hbd : src_buf,
-            src_pic->stride_y,
-            &cand->interintra_wedge_index);
+        best_interintra_rd_wedge = pick_interintra_wedge(pcs,
+                                                         ctx,
+                                                         ctx->blk_geom->bsize,
+                                                         ctx->intrapred_buf[best_interintra_mode],
+                                                         tmp_buf,
+                                                         ctx->hbd_md ? (uint8_t *)src_buf_hbd : src_buf,
+                                                         src_pic->stride_y,
+                                                         &cand->interintra_wedge_index);
     }
 
     // for ii_wedge_mode 1, always inject wedge as a separate candidate; for wedge mode 2 only inject
@@ -507,8 +405,7 @@ static void inter_intra_search(PictureControlSet *pcs, ModeDecisionContext *ctx,
     }
 }
 
-static COMPOUND_TYPE to_av1_compound_lut[] = {
-    COMPOUND_AVERAGE, COMPOUND_DISTWTD, COMPOUND_DIFFWTD, COMPOUND_WEDGE};
+static COMPOUND_TYPE to_av1_compound_lut[] = {COMPOUND_AVERAGE, COMPOUND_DISTWTD, COMPOUND_DIFFWTD, COMPOUND_WEDGE};
 
 static void determine_compound_mode(PictureControlSet *pcs, ModeDecisionContext *ctx,
                                     ModeDecisionCandidate *candidatePtr, MD_COMP_TYPE cur_type) {
@@ -541,9 +438,8 @@ static void determine_compound_mode(PictureControlSet *pcs, ModeDecisionContext 
     }
 }
 
-void choose_best_av1_mv_pred(ModeDecisionContext            *ctx,
-                             struct MdRateEstimationContext *md_rate_est_ctx, BlkStruct *blk_ptr,
-                             MvReferenceFrame ref_frame, uint8_t is_compound,
+void choose_best_av1_mv_pred(ModeDecisionContext *ctx, struct MdRateEstimationContext *md_rate_est_ctx,
+                             BlkStruct *blk_ptr, MvReferenceFrame ref_frame, uint8_t is_compound,
                              PredictionMode mode, // NEW or NEW_NEW
                              int16_t mv0x, int16_t mv0y, int16_t mv1x, int16_t mv1y,
                              uint8_t *bestDrlIndex, // output
@@ -564,17 +460,14 @@ void choose_best_av1_mv_pred(ModeDecisionContext            *ctx,
     if (max_drl_index == 1) {
         *bestDrlIndex = 0;
 
-        best_pred_mv[0] =
-            ctx->md_local_blk_unit[ctx->blk_ptr->mds_idx].ed_ref_mv_stack[ref_frame][0].this_mv;
-        best_pred_mv[1] =
-            ctx->md_local_blk_unit[ctx->blk_ptr->mds_idx].ed_ref_mv_stack[ref_frame][0].comp_mv;
+        best_pred_mv[0] = ctx->md_local_blk_unit[ctx->blk_ptr->mds_idx].ed_ref_mv_stack[ref_frame][0].this_mv;
+        best_pred_mv[1] = ctx->md_local_blk_unit[ctx->blk_ptr->mds_idx].ed_ref_mv_stack[ref_frame][0].comp_mv;
 
     } else {
         uint8_t  drli;
         uint32_t best_mv_cost = 0xFFFFFFFF;
         for (drli = 0; drli < max_drl_index; drli++) {
-            svt_aom_get_av1_mv_pred_drl(
-                ctx, blk_ptr, ref_frame, is_compound, mode, drli, nearestmv, nearmv, ref_mv);
+            svt_aom_get_av1_mv_pred_drl(ctx, blk_ptr, ref_frame, is_compound, mode, drli, nearestmv, nearmv, ref_mv);
 
             //compute the rate for this drli Cand
             mv.row           = mv0y;
@@ -631,11 +524,9 @@ static void mode_decision_scratch_cand_bf_dctor(EbPtr p) {
 /***************************************
 * Mode Decision Candidate Ctor
 ***************************************/
-EbErrorType svt_aom_mode_decision_cand_bf_ctor(ModeDecisionCandidateBuffer *buffer_ptr,
-                                               EbBitDepth max_bitdepth, uint8_t sb_size,
-                                               uint32_t             buffer_desc_mask,
-                                               EbPictureBufferDesc *temp_residual,
-                                               EbPictureBufferDesc *temp_recon_ptr,
+EbErrorType svt_aom_mode_decision_cand_bf_ctor(ModeDecisionCandidateBuffer *buffer_ptr, EbBitDepth max_bitdepth,
+                                               uint8_t sb_size, uint32_t buffer_desc_mask,
+                                               EbPictureBufferDesc *temp_residual, EbPictureBufferDesc *temp_recon_ptr,
                                                uint64_t *fast_cost, uint64_t *full_cost) {
     EbPictureBufferDescInitData picture_buffer_desc_init_data;
 
@@ -673,12 +564,8 @@ EbErrorType svt_aom_mode_decision_cand_bf_ctor(ModeDecisionCandidateBuffer *buff
     EB_NEW(buffer_ptr->pred, svt_picture_buffer_desc_ctor, (EbPtr)&picture_buffer_desc_init_data);
     // Reuse the residual_ptr memory in MD context
     buffer_ptr->residual = temp_residual;
-    EB_NEW(buffer_ptr->rec_coeff,
-           svt_picture_buffer_desc_ctor,
-           (EbPtr)&thirty_two_width_picture_buffer_desc_init_data);
-    EB_NEW(buffer_ptr->quant,
-           svt_picture_buffer_desc_ctor,
-           (EbPtr)&thirty_two_width_picture_buffer_desc_init_data);
+    EB_NEW(buffer_ptr->rec_coeff, svt_picture_buffer_desc_ctor, (EbPtr)&thirty_two_width_picture_buffer_desc_init_data);
+    EB_NEW(buffer_ptr->quant, svt_picture_buffer_desc_ctor, (EbPtr)&thirty_two_width_picture_buffer_desc_init_data);
     // Reuse the recon_ptr memory in MD context
     buffer_ptr->recon = temp_recon_ptr;
 
@@ -687,8 +574,8 @@ EbErrorType svt_aom_mode_decision_cand_bf_ctor(ModeDecisionCandidateBuffer *buff
     buffer_ptr->full_cost = full_cost;
     return EB_ErrorNone;
 }
-EbErrorType svt_aom_mode_decision_scratch_cand_bf_ctor(ModeDecisionCandidateBuffer *buffer_ptr,
-                                                       uint8_t sb_size, EbBitDepth max_bitdepth) {
+EbErrorType svt_aom_mode_decision_scratch_cand_bf_ctor(ModeDecisionCandidateBuffer *buffer_ptr, uint8_t sb_size,
+                                                       EbBitDepth max_bitdepth) {
     EbPictureBufferDescInitData picture_buffer_desc_init_data;
     EbPictureBufferDescInitData double_width_picture_buffer_desc_init_data;
     EbPictureBufferDescInitData thirty_two_width_picture_buffer_desc_init_data;
@@ -696,52 +583,45 @@ EbErrorType svt_aom_mode_decision_scratch_cand_bf_ctor(ModeDecisionCandidateBuff
     buffer_ptr->dctor = mode_decision_scratch_cand_bf_dctor;
 
     // Init Picture Data
-    picture_buffer_desc_init_data.max_width                       = sb_size;
-    picture_buffer_desc_init_data.max_height                      = sb_size;
-    picture_buffer_desc_init_data.bit_depth                       = max_bitdepth;
-    picture_buffer_desc_init_data.color_format                    = EB_YUV420;
-    picture_buffer_desc_init_data.buffer_enable_mask              = PICTURE_BUFFER_DESC_FULL_MASK;
-    picture_buffer_desc_init_data.left_padding                    = 0;
-    picture_buffer_desc_init_data.right_padding                   = 0;
-    picture_buffer_desc_init_data.top_padding                     = 0;
-    picture_buffer_desc_init_data.bot_padding                     = 0;
-    picture_buffer_desc_init_data.split_mode                      = FALSE;
-    double_width_picture_buffer_desc_init_data.max_width          = sb_size;
-    double_width_picture_buffer_desc_init_data.max_height         = sb_size;
-    double_width_picture_buffer_desc_init_data.bit_depth          = EB_SIXTEEN_BIT;
-    double_width_picture_buffer_desc_init_data.color_format       = EB_YUV420;
-    double_width_picture_buffer_desc_init_data.buffer_enable_mask = PICTURE_BUFFER_DESC_FULL_MASK;
-    double_width_picture_buffer_desc_init_data.left_padding       = 0;
-    double_width_picture_buffer_desc_init_data.right_padding      = 0;
-    double_width_picture_buffer_desc_init_data.top_padding        = 0;
-    double_width_picture_buffer_desc_init_data.bot_padding        = 0;
-    double_width_picture_buffer_desc_init_data.split_mode         = FALSE;
-    thirty_two_width_picture_buffer_desc_init_data.max_width      = sb_size;
-    thirty_two_width_picture_buffer_desc_init_data.max_height     = sb_size;
-    thirty_two_width_picture_buffer_desc_init_data.bit_depth      = EB_THIRTYTWO_BIT;
-    thirty_two_width_picture_buffer_desc_init_data.color_format   = EB_YUV420;
-    thirty_two_width_picture_buffer_desc_init_data.buffer_enable_mask =
-        PICTURE_BUFFER_DESC_FULL_MASK;
-    thirty_two_width_picture_buffer_desc_init_data.left_padding  = 0;
-    thirty_two_width_picture_buffer_desc_init_data.right_padding = 0;
-    thirty_two_width_picture_buffer_desc_init_data.top_padding   = 0;
-    thirty_two_width_picture_buffer_desc_init_data.bot_padding   = 0;
-    thirty_two_width_picture_buffer_desc_init_data.split_mode    = FALSE;
+    picture_buffer_desc_init_data.max_width                           = sb_size;
+    picture_buffer_desc_init_data.max_height                          = sb_size;
+    picture_buffer_desc_init_data.bit_depth                           = max_bitdepth;
+    picture_buffer_desc_init_data.color_format                        = EB_YUV420;
+    picture_buffer_desc_init_data.buffer_enable_mask                  = PICTURE_BUFFER_DESC_FULL_MASK;
+    picture_buffer_desc_init_data.left_padding                        = 0;
+    picture_buffer_desc_init_data.right_padding                       = 0;
+    picture_buffer_desc_init_data.top_padding                         = 0;
+    picture_buffer_desc_init_data.bot_padding                         = 0;
+    picture_buffer_desc_init_data.split_mode                          = FALSE;
+    double_width_picture_buffer_desc_init_data.max_width              = sb_size;
+    double_width_picture_buffer_desc_init_data.max_height             = sb_size;
+    double_width_picture_buffer_desc_init_data.bit_depth              = EB_SIXTEEN_BIT;
+    double_width_picture_buffer_desc_init_data.color_format           = EB_YUV420;
+    double_width_picture_buffer_desc_init_data.buffer_enable_mask     = PICTURE_BUFFER_DESC_FULL_MASK;
+    double_width_picture_buffer_desc_init_data.left_padding           = 0;
+    double_width_picture_buffer_desc_init_data.right_padding          = 0;
+    double_width_picture_buffer_desc_init_data.top_padding            = 0;
+    double_width_picture_buffer_desc_init_data.bot_padding            = 0;
+    double_width_picture_buffer_desc_init_data.split_mode             = FALSE;
+    thirty_two_width_picture_buffer_desc_init_data.max_width          = sb_size;
+    thirty_two_width_picture_buffer_desc_init_data.max_height         = sb_size;
+    thirty_two_width_picture_buffer_desc_init_data.bit_depth          = EB_THIRTYTWO_BIT;
+    thirty_two_width_picture_buffer_desc_init_data.color_format       = EB_YUV420;
+    thirty_two_width_picture_buffer_desc_init_data.buffer_enable_mask = PICTURE_BUFFER_DESC_FULL_MASK;
+    thirty_two_width_picture_buffer_desc_init_data.left_padding       = 0;
+    thirty_two_width_picture_buffer_desc_init_data.right_padding      = 0;
+    thirty_two_width_picture_buffer_desc_init_data.top_padding        = 0;
+    thirty_two_width_picture_buffer_desc_init_data.bot_padding        = 0;
+    thirty_two_width_picture_buffer_desc_init_data.split_mode         = FALSE;
 
     // Candidate Ptr
     buffer_ptr->cand = (ModeDecisionCandidate *)NULL;
 
     // Video Buffers
     EB_NEW(buffer_ptr->pred, svt_picture_buffer_desc_ctor, (EbPtr)&picture_buffer_desc_init_data);
-    EB_NEW(buffer_ptr->residual,
-           svt_picture_buffer_desc_ctor,
-           (EbPtr)&double_width_picture_buffer_desc_init_data);
-    EB_NEW(buffer_ptr->rec_coeff,
-           svt_picture_buffer_desc_ctor,
-           (EbPtr)&thirty_two_width_picture_buffer_desc_init_data);
-    EB_NEW(buffer_ptr->quant,
-           svt_picture_buffer_desc_ctor,
-           (EbPtr)&thirty_two_width_picture_buffer_desc_init_data);
+    EB_NEW(buffer_ptr->residual, svt_picture_buffer_desc_ctor, (EbPtr)&double_width_picture_buffer_desc_init_data);
+    EB_NEW(buffer_ptr->rec_coeff, svt_picture_buffer_desc_ctor, (EbPtr)&thirty_two_width_picture_buffer_desc_init_data);
+    EB_NEW(buffer_ptr->quant, svt_picture_buffer_desc_ctor, (EbPtr)&thirty_two_width_picture_buffer_desc_init_data);
 
     EB_NEW(buffer_ptr->recon, svt_picture_buffer_desc_ctor, (EbPtr)&picture_buffer_desc_init_data);
     return EB_ErrorNone;
@@ -760,27 +640,23 @@ static Bool mv_is_already_injected(ModeDecisionContext *ctx, Mv mv0, Mv mv1, uin
             return TRUE;
 
         for (int cand_idx = 0; cand_idx < ctx->injected_mv_count; cand_idx++) {
-            if (ctx->injected_ref_types[cand_idx] == ref_type &&
-                ctx->injected_mvs[cand_idx][0].as_int == mv0.as_int) {
+            if (ctx->injected_ref_types[cand_idx] == ref_type && ctx->injected_mvs[cand_idx][0].as_int == mv0.as_int) {
                 return TRUE;
             }
         }
     } else { // Bipred Candidate
         // First check the validity of the candidate MV, and exit if invalid MV
-        if (ctx->corrupted_mv_check &&
-            (!check_mv_validity(mv0.x, mv0.y, 0) || !check_mv_validity(mv1.x, mv1.y, 0)))
+        if (ctx->corrupted_mv_check && (!check_mv_validity(mv0.x, mv0.y, 0) || !check_mv_validity(mv1.x, mv1.y, 0)))
             return TRUE;
 
         RedundantCandCtrls *redund_ctrls = &ctx->cand_reduction_ctrls.redundant_cand_ctrls;
         if (redund_ctrls->score_th) {
-            uint8_t is_high_mag = (ABS(mv0.x) > redund_ctrls->mag_th) &&
-                (ABS(mv0.y) > redund_ctrls->mag_th) && (ABS(mv1.x) > redund_ctrls->mag_th) &&
-                (ABS(mv1.y) > redund_ctrls->mag_th);
+            uint8_t is_high_mag = (ABS(mv0.x) > redund_ctrls->mag_th) && (ABS(mv0.y) > redund_ctrls->mag_th) &&
+                (ABS(mv1.x) > redund_ctrls->mag_th) && (ABS(mv1.y) > redund_ctrls->mag_th);
             for (int cand_idx = 0; cand_idx < ctx->injected_mv_count; cand_idx++) {
                 if (ctx->injected_ref_types[cand_idx] == ref_type) {
                     int score = ABS(ctx->injected_mvs[cand_idx][0].x - mv0.x) +
-                        ABS(ctx->injected_mvs[cand_idx][0].y - mv0.y) +
-                        ABS(ctx->injected_mvs[cand_idx][1].x - mv1.x) +
+                        ABS(ctx->injected_mvs[cand_idx][0].y - mv0.y) + ABS(ctx->injected_mvs[cand_idx][1].x - mv1.x) +
                         ABS(ctx->injected_mvs[cand_idx][1].y - mv1.y);
 
                     if (score == 0 || (score < redund_ctrls->score_th && is_high_mag)) {
@@ -800,8 +676,8 @@ static Bool mv_is_already_injected(ModeDecisionContext *ctx, Mv mv0, Mv mv1, uin
     }
     return FALSE;
 }
-Bool svt_aom_is_valid_unipred_ref(struct ModeDecisionContext *ctx, uint8_t inter_cand_group,
-                                  uint8_t list_idx, uint8_t ref_idx) {
+Bool svt_aom_is_valid_unipred_ref(struct ModeDecisionContext *ctx, uint8_t inter_cand_group, uint8_t list_idx,
+                                  uint8_t ref_idx) {
     if (!ctx->ref_pruning_ctrls.enabled)
         return TRUE;
     if (!ctx->ref_filtering_res[inter_cand_group][list_idx][ref_idx].do_ref &&
@@ -833,9 +709,8 @@ static Bool is_valid_mv_diff(IntMv best_pred_mv[2], Mv mv0, Mv mv1, uint8_t is_c
 }
 // Determine if a unipred reference is valid, based on the current
 // prediction type (i.e. inter_cand_group)
-static Bool is_valid_uni_type(struct ModeDecisionContext *ctx, uint8_t inter_type,
-                              uint8_t is_ii_allowed, uint8_t is_warp_allowed, uint8_t list_idx,
-                              uint8_t ref_idx) {
+static Bool is_valid_uni_type(struct ModeDecisionContext *ctx, uint8_t inter_type, uint8_t is_ii_allowed,
+                              uint8_t is_warp_allowed, uint8_t list_idx, uint8_t ref_idx) {
     uint8_t inter_cand_group = TOT_INTER_GROUP;
 
     switch (inter_type) {
@@ -844,22 +719,17 @@ static Bool is_valid_uni_type(struct ModeDecisionContext *ctx, uint8_t inter_typ
         break;
     case 1:
     case 2:
-        inter_cand_group = is_ii_allowed ? INTER_INTRA_GROUP
-            : is_warp_allowed            ? WARP_GROUP
-                                         : OBMC_GROUP;
+        inter_cand_group = is_ii_allowed ? INTER_INTRA_GROUP : is_warp_allowed ? WARP_GROUP : OBMC_GROUP;
 
-        return svt_aom_is_valid_unipred_ref(
-            ctx, MIN(TOT_INTER_GROUP - 1, inter_cand_group), list_idx, ref_idx);
+        return svt_aom_is_valid_unipred_ref(ctx, MIN(TOT_INTER_GROUP - 1, inter_cand_group), list_idx, ref_idx);
         break;
     case 3: // warp
         inter_cand_group = is_warp_allowed ? WARP_GROUP : OBMC_GROUP;
-        return svt_aom_is_valid_unipred_ref(
-            ctx, MIN(TOT_INTER_GROUP - 1, inter_cand_group), list_idx, ref_idx);
+        return svt_aom_is_valid_unipred_ref(ctx, MIN(TOT_INTER_GROUP - 1, inter_cand_group), list_idx, ref_idx);
         break;
     case 4: // obmc
         inter_cand_group = OBMC_GROUP;
-        return svt_aom_is_valid_unipred_ref(
-            ctx, MIN(TOT_INTER_GROUP - 1, inter_cand_group), list_idx, ref_idx);
+        return svt_aom_is_valid_unipred_ref(ctx, MIN(TOT_INTER_GROUP - 1, inter_cand_group), list_idx, ref_idx);
         break;
     default:
         assert(0);
@@ -868,9 +738,8 @@ static Bool is_valid_uni_type(struct ModeDecisionContext *ctx, uint8_t inter_typ
     }
 }
 
-static Bool is_valid_bipred_ref(struct ModeDecisionContext *ctx, uint8_t inter_cand_group,
-                                uint8_t list_idx_0, uint8_t ref_idx_0, uint8_t list_idx_1,
-                                uint8_t ref_idx_1) {
+static Bool is_valid_bipred_ref(struct ModeDecisionContext *ctx, uint8_t inter_cand_group, uint8_t list_idx_0,
+                                uint8_t ref_idx_0, uint8_t list_idx_1, uint8_t ref_idx_1) {
     if (!ctx->ref_pruning_ctrls.enabled)
         return TRUE;
     // Both ref should be 1 for bipred refs to be valid: if 1 is not best_refs then there is a chance to exit the injection
@@ -888,17 +757,12 @@ static Bool is_valid_bipred_ref(struct ModeDecisionContext *ctx, uint8_t inter_c
 }
 // Determine if a bipred reference is valid, based on the current
 // prediction type (i.e. inter_cand_group)
-static Bool is_valid_bi_type(struct ModeDecisionContext *ctx, MD_COMP_TYPE cur_type,
-                             uint8_t list_idx_0, uint8_t ref_idx_0, uint8_t list_idx_1,
-                             uint8_t ref_idx_1) {
+static Bool is_valid_bi_type(struct ModeDecisionContext *ctx, MD_COMP_TYPE cur_type, uint8_t list_idx_0,
+                             uint8_t ref_idx_0, uint8_t list_idx_1, uint8_t ref_idx_1) {
     switch (cur_type) {
     case MD_COMP_AVG: return TRUE; break;
-    case MD_COMP_DIST:
-        return is_valid_bipred_ref(ctx, COMP_DIST, list_idx_0, ref_idx_0, list_idx_1, ref_idx_1);
-        break;
-    case MD_COMP_DIFF0:
-        return is_valid_bipred_ref(ctx, COMP_DIFF, list_idx_0, ref_idx_0, list_idx_1, ref_idx_1);
-        break;
+    case MD_COMP_DIST: return is_valid_bipred_ref(ctx, COMP_DIST, list_idx_0, ref_idx_0, list_idx_1, ref_idx_1); break;
+    case MD_COMP_DIFF0: return is_valid_bipred_ref(ctx, COMP_DIFF, list_idx_0, ref_idx_0, list_idx_1, ref_idx_1); break;
     case MD_COMP_WEDGE:
         return is_valid_bipred_ref(ctx, COMP_WEDGE, list_idx_0, ref_idx_0, list_idx_1, ref_idx_1);
         break;
@@ -914,24 +778,23 @@ static int8_t allow_refinement_flag[BIPRED_3x3_REFINMENT_POSITIONS] = {1, 0, 1, 
 static int8_t bipred_3x3_x_pos[BIPRED_3x3_REFINMENT_POSITIONS]      = {-1, -1, 0, 1, 1, 1, 0, -1};
 static int8_t bipred_3x3_y_pos[BIPRED_3x3_REFINMENT_POSITIONS]      = {0, 1, 1, 1, 0, -1, -1, -1};
 
-void unipred_3x3_candidates_injection(const SequenceControlSet *scs, PictureControlSet *pcs,
-                                      ModeDecisionContext *ctx, SuperBlock *sb_ptr,
-                                      uint32_t me_sb_addr, uint32_t *candidate_total_cnt) {
+void unipred_3x3_candidates_injection(const SequenceControlSet *scs, PictureControlSet *pcs, ModeDecisionContext *ctx,
+                                      SuperBlock *sb_ptr, uint32_t me_sb_addr, uint32_t *candidate_total_cnt) {
     UNUSED(sb_ptr);
-    uint32_t           bipred_index;
-    uint32_t           cand_total_cnt = (*candidate_total_cnt);
-    FrameHeader       *frm_hdr        = &pcs->ppcs->frm_hdr;
-    MeSbResults       *me_results     = pcs->ppcs->pa_me_data->me_results[me_sb_addr];
-    uint8_t            total_me_cnt   = me_results->total_me_candidate_index[ctx->me_block_offset];
-    const MeCandidate *me_block_results = &me_results->me_candidate_array[ctx->me_cand_offset];
-    ModeDecisionCandidate *cand_array   = ctx->fast_cand_array;
-    Bool         is_compound_enabled    = (frm_hdr->reference_mode == SINGLE_REFERENCE) ? 0 : 1;
-    IntMv        best_pred_mv[2]        = {{0}, {0}};
-    int          inside_tile            = 1;
-    MacroBlockD *xd                     = ctx->blk_ptr->av1xd;
-    int          umv0tile               = derive_rmv_setting(scs, pcs->ppcs);
-    uint32_t     mi_row                 = ctx->blk_org_y >> MI_SIZE_LOG2;
-    uint32_t     mi_col                 = ctx->blk_org_x >> MI_SIZE_LOG2;
+    uint32_t               bipred_index;
+    uint32_t               cand_total_cnt      = (*candidate_total_cnt);
+    FrameHeader           *frm_hdr             = &pcs->ppcs->frm_hdr;
+    MeSbResults           *me_results          = pcs->ppcs->pa_me_data->me_results[me_sb_addr];
+    uint8_t                total_me_cnt        = me_results->total_me_candidate_index[ctx->me_block_offset];
+    const MeCandidate     *me_block_results    = &me_results->me_candidate_array[ctx->me_cand_offset];
+    ModeDecisionCandidate *cand_array          = ctx->fast_cand_array;
+    Bool                   is_compound_enabled = (frm_hdr->reference_mode == SINGLE_REFERENCE) ? 0 : 1;
+    IntMv                  best_pred_mv[2]     = {{0}, {0}};
+    int                    inside_tile         = 1;
+    MacroBlockD           *xd                  = ctx->blk_ptr->av1xd;
+    int                    umv0tile            = derive_rmv_setting(scs, pcs->ppcs);
+    uint32_t               mi_row              = ctx->blk_org_y >> MI_SIZE_LOG2;
+    uint32_t               mi_col              = ctx->blk_org_x >> MI_SIZE_LOG2;
 
     // (8 Best_L0 neighbors)
     for (uint8_t me_candidate_index = 0; me_candidate_index < total_me_cnt; ++me_candidate_index) {
@@ -953,30 +816,22 @@ void unipred_3x3_candidates_injection(const SequenceControlSet *scs, PictureCont
                 int16_t to_inject_mv_x;
                 int16_t to_inject_mv_y;
                 if (pcs->ppcs->frm_hdr.allow_high_precision_mv) {
-                    to_inject_mv_x =
-                        ctx->sb_me_mv[ctx->blk_geom->blkidx_mds][REF_LIST_0][list0_ref_index][0] +
+                    to_inject_mv_x = ctx->sb_me_mv[ctx->blk_geom->blkidx_mds][REF_LIST_0][list0_ref_index][0] +
                         bipred_3x3_x_pos[bipred_index];
-                    to_inject_mv_y =
-                        ctx->sb_me_mv[ctx->blk_geom->blkidx_mds][REF_LIST_0][list0_ref_index][1] +
+                    to_inject_mv_y = ctx->sb_me_mv[ctx->blk_geom->blkidx_mds][REF_LIST_0][list0_ref_index][1] +
                         bipred_3x3_y_pos[bipred_index];
                 } else {
-                    to_inject_mv_x =
-                        ctx->sb_me_mv[ctx->blk_geom->blkidx_mds][REF_LIST_0][list0_ref_index][0] +
+                    to_inject_mv_x = ctx->sb_me_mv[ctx->blk_geom->blkidx_mds][REF_LIST_0][list0_ref_index][0] +
                         (bipred_3x3_x_pos[bipred_index] << 1);
-                    to_inject_mv_y =
-                        ctx->sb_me_mv[ctx->blk_geom->blkidx_mds][REF_LIST_0][list0_ref_index][1] +
+                    to_inject_mv_y = ctx->sb_me_mv[ctx->blk_geom->blkidx_mds][REF_LIST_0][list0_ref_index][1] +
                         (bipred_3x3_y_pos[bipred_index] << 1);
                 }
                 uint8_t to_inject_ref_type = svt_get_ref_frame_type(REF_LIST_0, list0_ref_index);
 
                 inside_tile = 1;
                 if (umv0tile)
-                    inside_tile = svt_aom_is_inside_tile_boundary(&(xd->tile),
-                                                                  to_inject_mv_x,
-                                                                  to_inject_mv_y,
-                                                                  mi_col,
-                                                                  mi_row,
-                                                                  ctx->blk_geom->bsize);
+                    inside_tile = svt_aom_is_inside_tile_boundary(
+                        &(xd->tile), to_inject_mv_x, to_inject_mv_y, mi_col, mi_row, ctx->blk_geom->bsize);
                 uint8_t skip_cand = (!inside_tile);
 
                 MvReferenceFrame rf[2];
@@ -985,8 +840,7 @@ void unipred_3x3_candidates_injection(const SequenceControlSet *scs, PictureCont
                 Mv to_inj_mv = {{to_inject_mv_x, to_inject_mv_y}};
                 if (!skip_cand &&
                     (ctx->injected_mv_count == 0 ||
-                     mv_is_already_injected(ctx, to_inj_mv, to_inj_mv, to_inject_ref_type) ==
-                         FALSE)) {
+                     mv_is_already_injected(ctx, to_inj_mv, to_inj_mv, to_inject_ref_type) == FALSE)) {
                     uint8_t drl_index = 0;
                     choose_best_av1_mv_pred(ctx,
                                             ctx->md_rate_est_ctx,
@@ -1001,23 +855,17 @@ void unipred_3x3_candidates_injection(const SequenceControlSet *scs, PictureCont
                                             &drl_index,
                                             best_pred_mv);
                     if (!ctx->corrupted_mv_check ||
-                        is_valid_mv_diff(best_pred_mv,
-                                         to_inj_mv,
-                                         to_inj_mv,
-                                         0,
-                                         pcs->ppcs->frm_hdr.allow_high_precision_mv)) {
+                        is_valid_mv_diff(
+                            best_pred_mv, to_inj_mv, to_inj_mv, 0, pcs->ppcs->frm_hdr.allow_high_precision_mv)) {
                         uint8_t inter_type;
                         uint8_t is_ii_allowed = svt_is_interintra_allowed(
                             ctx->inter_intra_comp_ctrls.enabled, ctx->blk_geom->bsize, NEWMV, rf);
                         const uint8_t ii_wedge_mode   = ctx->blk_geom->shape == PART_N
                               ? ctx->inter_intra_comp_ctrls.wedge_mode_sq
                               : ctx->inter_intra_comp_ctrls.wedge_mode_nsq;
-                        uint8_t       tot_inter_types = is_ii_allowed
-                                  ? (ii_wedge_mode == 1 ? II_COUNT : 2)
-                                  : 1;
+                        uint8_t       tot_inter_types = is_ii_allowed ? (ii_wedge_mode == 1 ? II_COUNT : 2) : 1;
                         for (inter_type = 0; inter_type < tot_inter_types; inter_type++) {
-                            if (!is_valid_uni_type(
-                                    ctx, inter_type, is_ii_allowed, 0, REF_LIST_0, list0_ref_index))
+                            if (!is_valid_uni_type(ctx, inter_type, is_ii_allowed, 0, REF_LIST_0, list0_ref_index))
                                 continue;
                             cand_array[cand_total_cnt].use_intrabc       = 0;
                             cand_array[cand_total_cnt].skip_mode_allowed = FALSE;
@@ -1084,31 +932,22 @@ void unipred_3x3_candidates_injection(const SequenceControlSet *scs, PictureCont
                     int16_t to_inject_mv_x;
                     int16_t to_inject_mv_y;
                     if (pcs->ppcs->frm_hdr.allow_high_precision_mv) {
-                        to_inject_mv_x = ctx->sb_me_mv[ctx->blk_geom->blkidx_mds][REF_LIST_1]
-                                                      [list1_ref_index][0] +
+                        to_inject_mv_x = ctx->sb_me_mv[ctx->blk_geom->blkidx_mds][REF_LIST_1][list1_ref_index][0] +
                             bipred_3x3_x_pos[bipred_index];
-                        to_inject_mv_y = ctx->sb_me_mv[ctx->blk_geom->blkidx_mds][REF_LIST_1]
-                                                      [list1_ref_index][1] +
+                        to_inject_mv_y = ctx->sb_me_mv[ctx->blk_geom->blkidx_mds][REF_LIST_1][list1_ref_index][1] +
                             bipred_3x3_y_pos[bipred_index];
                     } else {
-                        to_inject_mv_x = ctx->sb_me_mv[ctx->blk_geom->blkidx_mds][REF_LIST_1]
-                                                      [list1_ref_index][0] +
+                        to_inject_mv_x = ctx->sb_me_mv[ctx->blk_geom->blkidx_mds][REF_LIST_1][list1_ref_index][0] +
                             (bipred_3x3_x_pos[bipred_index] << 1);
-                        to_inject_mv_y = ctx->sb_me_mv[ctx->blk_geom->blkidx_mds][REF_LIST_1]
-                                                      [list1_ref_index][1] +
+                        to_inject_mv_y = ctx->sb_me_mv[ctx->blk_geom->blkidx_mds][REF_LIST_1][list1_ref_index][1] +
                             (bipred_3x3_y_pos[bipred_index] << 1);
                     }
-                    uint8_t to_inject_ref_type = svt_get_ref_frame_type(REF_LIST_1,
-                                                                        list1_ref_index);
+                    uint8_t to_inject_ref_type = svt_get_ref_frame_type(REF_LIST_1, list1_ref_index);
 
                     inside_tile = 1;
                     if (umv0tile)
-                        inside_tile = svt_aom_is_inside_tile_boundary(&(xd->tile),
-                                                                      to_inject_mv_x,
-                                                                      to_inject_mv_y,
-                                                                      mi_col,
-                                                                      mi_row,
-                                                                      ctx->blk_geom->bsize);
+                        inside_tile = svt_aom_is_inside_tile_boundary(
+                            &(xd->tile), to_inject_mv_x, to_inject_mv_y, mi_col, mi_row, ctx->blk_geom->bsize);
                     uint8_t skip_cand = (!inside_tile);
 
                     MvReferenceFrame rf[2];
@@ -1117,8 +956,7 @@ void unipred_3x3_candidates_injection(const SequenceControlSet *scs, PictureCont
                     Mv to_inj_mv = {{to_inject_mv_x, to_inject_mv_y}};
                     if (!skip_cand &&
                         (ctx->injected_mv_count == 0 ||
-                         mv_is_already_injected(ctx, to_inj_mv, to_inj_mv, to_inject_ref_type) ==
-                             FALSE)) {
+                         mv_is_already_injected(ctx, to_inj_mv, to_inj_mv, to_inject_ref_type) == FALSE)) {
                         uint8_t drl_index = 0;
                         choose_best_av1_mv_pred(ctx,
                                                 ctx->md_rate_est_ctx,
@@ -1133,30 +971,17 @@ void unipred_3x3_candidates_injection(const SequenceControlSet *scs, PictureCont
                                                 &drl_index,
                                                 best_pred_mv);
                         if (!ctx->corrupted_mv_check ||
-                            is_valid_mv_diff(best_pred_mv,
-                                             to_inj_mv,
-                                             to_inj_mv,
-                                             0,
-                                             pcs->ppcs->frm_hdr.allow_high_precision_mv)) {
+                            is_valid_mv_diff(
+                                best_pred_mv, to_inj_mv, to_inj_mv, 0, pcs->ppcs->frm_hdr.allow_high_precision_mv)) {
                             uint8_t inter_type;
                             uint8_t is_ii_allowed = svt_is_interintra_allowed(
-                                ctx->inter_intra_comp_ctrls.enabled,
-                                ctx->blk_geom->bsize,
-                                NEWMV,
-                                rf);
+                                ctx->inter_intra_comp_ctrls.enabled, ctx->blk_geom->bsize, NEWMV, rf);
                             const uint8_t ii_wedge_mode   = ctx->blk_geom->shape == PART_N
                                   ? ctx->inter_intra_comp_ctrls.wedge_mode_sq
                                   : ctx->inter_intra_comp_ctrls.wedge_mode_nsq;
-                            uint8_t       tot_inter_types = is_ii_allowed
-                                      ? (ii_wedge_mode == 1 ? II_COUNT : 2)
-                                      : 1;
+                            uint8_t       tot_inter_types = is_ii_allowed ? (ii_wedge_mode == 1 ? II_COUNT : 2) : 1;
                             for (inter_type = 0; inter_type < tot_inter_types; inter_type++) {
-                                if (!is_valid_uni_type(ctx,
-                                                       inter_type,
-                                                       is_ii_allowed,
-                                                       0,
-                                                       REF_LIST_1,
-                                                       list1_ref_index))
+                                if (!is_valid_uni_type(ctx, inter_type, is_ii_allowed, 0, REF_LIST_1, list1_ref_index))
                                     continue;
                                 cand_array[cand_total_cnt].use_intrabc       = 0;
                                 cand_array[cand_total_cnt].skip_mode_allowed = FALSE;
@@ -1171,12 +996,11 @@ void unipred_3x3_candidates_injection(const SequenceControlSet *scs, PictureCont
                                     {best_pred_mv[0].as_mv.col, best_pred_mv[0].as_mv.row}};
                                 if (inter_type == 0) {
                                     cand_array[cand_total_cnt].is_interintra_used = 0;
-                                    cand_array[cand_total_cnt].motion_mode = SIMPLE_TRANSLATION;
+                                    cand_array[cand_total_cnt].motion_mode        = SIMPLE_TRANSLATION;
                                 } else {
                                     if (is_ii_allowed) {
                                         if (inter_type == 1) {
-                                            inter_intra_search(
-                                                pcs, ctx, &cand_array[cand_total_cnt]);
+                                            inter_intra_search(pcs, ctx, &cand_array[cand_total_cnt]);
                                             cand_array[cand_total_cnt].is_interintra_used = 1;
                                         } else if (ii_wedge_mode == 1 && inter_type == 2) {
                                             cand_array[cand_total_cnt].is_interintra_used = 1;
@@ -1194,7 +1018,7 @@ void unipred_3x3_candidates_injection(const SequenceControlSet *scs, PictureCont
                                 INC_MD_CAND_CNT(cand_total_cnt, pcs->ppcs->max_can_count);
                             }
                             ctx->injected_mvs[ctx->injected_mv_count][0].as_int = to_inj_mv.as_int;
-                            ctx->injected_ref_types[ctx->injected_mv_count] = to_inject_ref_type;
+                            ctx->injected_ref_types[ctx->injected_mv_count]     = to_inject_ref_type;
                             ++ctx->injected_mv_count;
                         }
                     }
@@ -1209,31 +1033,29 @@ void unipred_3x3_candidates_injection(const SequenceControlSet *scs, PictureCont
     return;
 }
 static void bipred_3x3_candidates_injection(const SequenceControlSet *scs, PictureControlSet *pcs,
-                                            ModeDecisionContext *ctx, SuperBlock *sb_ptr,
-                                            uint32_t me_sb_addr, uint32_t *candidate_total_cnt) {
+                                            ModeDecisionContext *ctx, SuperBlock *sb_ptr, uint32_t me_sb_addr,
+                                            uint32_t *candidate_total_cnt) {
     UNUSED(sb_ptr);
-    uint32_t           cand_total_cnt = (*candidate_total_cnt);
-    const FrameHeader *frm_hdr        = &pcs->ppcs->frm_hdr;
-    const MeSbResults *me_results     = pcs->ppcs->pa_me_data->me_results[me_sb_addr];
-    const uint8_t      total_me_cnt   = me_results->total_me_candidate_index[ctx->me_block_offset];
-    const MeCandidate *me_block_results = &me_results->me_candidate_array[ctx->me_cand_offset];
-    ModeDecisionCandidate *cand_array   = ctx->fast_cand_array;
-    Bool         is_compound_enabled    = (frm_hdr->reference_mode == SINGLE_REFERENCE) ? 0 : 1;
-    IntMv        best_pred_mv[2]        = {{0}, {0}};
-    MacroBlockD *xd                     = ctx->blk_ptr->av1xd;
-    int          umv0tile               = derive_rmv_setting(scs, pcs->ppcs);
-    uint32_t     mi_row                 = ctx->blk_org_y >> MI_SIZE_LOG2;
-    uint32_t     mi_col                 = ctx->blk_org_x >> MI_SIZE_LOG2;
+    uint32_t               cand_total_cnt      = (*candidate_total_cnt);
+    const FrameHeader     *frm_hdr             = &pcs->ppcs->frm_hdr;
+    const MeSbResults     *me_results          = pcs->ppcs->pa_me_data->me_results[me_sb_addr];
+    const uint8_t          total_me_cnt        = me_results->total_me_candidate_index[ctx->me_block_offset];
+    const MeCandidate     *me_block_results    = &me_results->me_candidate_array[ctx->me_cand_offset];
+    ModeDecisionCandidate *cand_array          = ctx->fast_cand_array;
+    Bool                   is_compound_enabled = (frm_hdr->reference_mode == SINGLE_REFERENCE) ? 0 : 1;
+    IntMv                  best_pred_mv[2]     = {{0}, {0}};
+    MacroBlockD           *xd                  = ctx->blk_ptr->av1xd;
+    int                    umv0tile            = derive_rmv_setting(scs, pcs->ppcs);
+    uint32_t               mi_row              = ctx->blk_org_y >> MI_SIZE_LOG2;
+    uint32_t               mi_col              = ctx->blk_org_x >> MI_SIZE_LOG2;
 
     if (is_compound_enabled) {
-        MD_COMP_TYPE tot_comp_types = (ctx->inter_comp_ctrls.do_3x3_bi == 0)
-            ? MD_COMP_DIST
-            : ctx->inter_comp_ctrls.tot_comp_types;
+        MD_COMP_TYPE tot_comp_types = (ctx->inter_comp_ctrls.do_3x3_bi == 0) ? MD_COMP_DIST
+                                                                             : ctx->inter_comp_ctrls.tot_comp_types;
         /**************
        NEW_NEWMV
        ************* */
-        for (uint8_t me_candidate_index = 0; me_candidate_index < total_me_cnt;
-             ++me_candidate_index) {
+        for (uint8_t me_candidate_index = 0; me_candidate_index < total_me_cnt; ++me_candidate_index) {
             const MeCandidate *me_block_results_ptr = &me_block_results[me_candidate_index];
             const uint8_t      inter_direction      = me_block_results_ptr->direction;
             const uint8_t      list0_ref_index      = me_block_results_ptr->ref_idx_l0;
@@ -1247,38 +1069,31 @@ static void bipred_3x3_candidates_injection(const SequenceControlSet *scs, Pictu
                                          list1_ref_index))
                     continue;
                 // (Best_L0, 8 Best_L1 neighbors)
-                for (uint32_t bipred_index = 0; bipred_index < BIPRED_3x3_REFINMENT_POSITIONS;
-                     ++bipred_index) {
+                for (uint32_t bipred_index = 0; bipred_index < BIPRED_3x3_REFINMENT_POSITIONS; ++bipred_index) {
                     if (ctx->bipred3x3_injection >= 2) {
                         if (allow_refinement_flag[bipred_index] == 0)
                             continue;
                     }
                     int16_t to_inject_mv_x_l0 =
-                        ctx->sb_me_mv[ctx->blk_geom->blkidx_mds][me_block_results_ptr->ref0_list]
-                                     [list0_ref_index][0];
+                        ctx->sb_me_mv[ctx->blk_geom->blkidx_mds][me_block_results_ptr->ref0_list][list0_ref_index][0];
                     int16_t to_inject_mv_y_l0 =
-                        ctx->sb_me_mv[ctx->blk_geom->blkidx_mds][me_block_results_ptr->ref0_list]
-                                     [list0_ref_index][1];
+                        ctx->sb_me_mv[ctx->blk_geom->blkidx_mds][me_block_results_ptr->ref0_list][list0_ref_index][1];
 
                     int16_t to_inject_mv_x_l1;
                     int16_t to_inject_mv_y_l1;
                     if (pcs->ppcs->frm_hdr.allow_high_precision_mv) {
-                        to_inject_mv_x_l1 =
-                            ctx->sb_me_mv[ctx->blk_geom->blkidx_mds]
-                                         [me_block_results_ptr->ref1_list][list1_ref_index][0] +
+                        to_inject_mv_x_l1 = ctx->sb_me_mv[ctx->blk_geom->blkidx_mds][me_block_results_ptr->ref1_list]
+                                                         [list1_ref_index][0] +
                             bipred_3x3_x_pos[bipred_index];
-                        to_inject_mv_y_l1 =
-                            ctx->sb_me_mv[ctx->blk_geom->blkidx_mds]
-                                         [me_block_results_ptr->ref1_list][list1_ref_index][1] +
+                        to_inject_mv_y_l1 = ctx->sb_me_mv[ctx->blk_geom->blkidx_mds][me_block_results_ptr->ref1_list]
+                                                         [list1_ref_index][1] +
                             bipred_3x3_y_pos[bipred_index];
                     } else {
-                        to_inject_mv_x_l1 =
-                            ctx->sb_me_mv[ctx->blk_geom->blkidx_mds]
-                                         [me_block_results_ptr->ref1_list][list1_ref_index][0] +
+                        to_inject_mv_x_l1 = ctx->sb_me_mv[ctx->blk_geom->blkidx_mds][me_block_results_ptr->ref1_list]
+                                                         [list1_ref_index][0] +
                             (bipred_3x3_x_pos[bipred_index] << 1);
-                        to_inject_mv_y_l1 =
-                            ctx->sb_me_mv[ctx->blk_geom->blkidx_mds]
-                                         [me_block_results_ptr->ref1_list][list1_ref_index][1] +
+                        to_inject_mv_y_l1 = ctx->sb_me_mv[ctx->blk_geom->blkidx_mds][me_block_results_ptr->ref1_list]
+                                                         [list1_ref_index][1] +
                             (bipred_3x3_y_pos[bipred_index] << 1);
                     }
 
@@ -1287,20 +1102,15 @@ static void bipred_3x3_candidates_injection(const SequenceControlSet *scs, Pictu
                         svt_get_ref_frame_type(me_block_results_ptr->ref1_list, list1_ref_index)});
 
                     int     inside_tile = umv0tile
-                            ? svt_aom_is_inside_tile_boundary(&(xd->tile),
-                                                          to_inject_mv_x_l0,
-                                                          to_inject_mv_y_l0,
-                                                          mi_col,
-                                                          mi_row,
-                                                          ctx->blk_geom->bsize)
+                            ? svt_aom_is_inside_tile_boundary(
+                              &(xd->tile), to_inject_mv_x_l0, to_inject_mv_y_l0, mi_col, mi_row, ctx->blk_geom->bsize)
                             : 1;
                     uint8_t skip_cand   = (!inside_tile);
                     Mv      to_inj_mv0  = {{to_inject_mv_x_l0, to_inject_mv_y_l0}};
                     Mv      to_inj_mv1  = {{to_inject_mv_x_l1, to_inject_mv_y_l1}};
                     if (!skip_cand &&
                         (ctx->injected_mv_count == 0 ||
-                         mv_is_already_injected(ctx, to_inj_mv0, to_inj_mv1, to_inject_ref_type) ==
-                             FALSE)) {
+                         mv_is_already_injected(ctx, to_inj_mv0, to_inj_mv1, to_inject_ref_type) == FALSE)) {
                         uint8_t drl_index = 0;
                         choose_best_av1_mv_pred(ctx,
                                                 ctx->md_rate_est_ctx,
@@ -1315,18 +1125,12 @@ static void bipred_3x3_candidates_injection(const SequenceControlSet *scs, Pictu
                                                 &drl_index,
                                                 best_pred_mv);
                         if (!ctx->corrupted_mv_check ||
-                            is_valid_mv_diff(best_pred_mv,
-                                             to_inj_mv0,
-                                             to_inj_mv1,
-                                             1,
-                                             pcs->ppcs->frm_hdr.allow_high_precision_mv)) {
+                            is_valid_mv_diff(
+                                best_pred_mv, to_inj_mv0, to_inj_mv1, 1, pcs->ppcs->frm_hdr.allow_high_precision_mv)) {
                             Bool mask_done = 0;
-                            for (MD_COMP_TYPE cur_type = MD_COMP_AVG; cur_type < tot_comp_types;
-                                 cur_type++) {
-#if OPT_CMP
+                            for (MD_COMP_TYPE cur_type = MD_COMP_AVG; cur_type < tot_comp_types; cur_type++) {
                                 if (ctx->inter_comp_ctrls.no_dist && cur_type == MD_COMP_DIST)
                                     continue;
-#endif
                                 if (!is_valid_bi_type(ctx,
                                                       cur_type,
                                                       me_block_results_ptr->ref0_list,
@@ -1339,10 +1143,8 @@ static void bipred_3x3_candidates_injection(const SequenceControlSet *scs, Pictu
                                 cand_array[cand_total_cnt].drl_index         = drl_index;
 
                                 // Set the MV to ME result
-                                cand_array[cand_total_cnt].mv[REF_LIST_0].as_int =
-                                    to_inj_mv0.as_int;
-                                cand_array[cand_total_cnt].mv[REF_LIST_1].as_int =
-                                    to_inj_mv1.as_int;
+                                cand_array[cand_total_cnt].mv[REF_LIST_0].as_int = to_inj_mv0.as_int;
+                                cand_array[cand_total_cnt].mv[REF_LIST_1].as_int = to_inj_mv1.as_int;
                                 // will be needed later by the rate estimation
                                 cand_array[cand_total_cnt].pred_mode           = NEW_NEWMV;
                                 cand_array[cand_total_cnt].motion_mode         = SIMPLE_TRANSLATION;
@@ -1354,29 +1156,26 @@ static void bipred_3x3_candidates_injection(const SequenceControlSet *scs, Pictu
                                     {best_pred_mv[1].as_mv.col, best_pred_mv[1].as_mv.row}};
                                 if (cur_type > MD_COMP_AVG) {
                                     if (mask_done != 1) {
-                                        if (svt_aom_calc_pred_masked_compound(
-                                                pcs, ctx, &cand_array[cand_total_cnt]))
+                                        if (svt_aom_calc_pred_masked_compound(pcs, ctx, &cand_array[cand_total_cnt]))
                                             break;
 
                                         mask_done = 1;
                                     }
                                 }
                                 //BIP 3x3
-                                determine_compound_mode(
-                                    pcs, ctx, &cand_array[cand_total_cnt], cur_type);
+                                determine_compound_mode(pcs, ctx, &cand_array[cand_total_cnt], cur_type);
                                 INC_MD_CAND_CNT(cand_total_cnt, pcs->ppcs->max_can_count);
                             }
                             ctx->injected_mvs[ctx->injected_mv_count][0].as_int = to_inj_mv0.as_int;
                             ctx->injected_mvs[ctx->injected_mv_count][1].as_int = to_inj_mv1.as_int;
-                            ctx->injected_ref_types[ctx->injected_mv_count] = to_inject_ref_type;
+                            ctx->injected_ref_types[ctx->injected_mv_count]     = to_inject_ref_type;
                             ++ctx->injected_mv_count;
                         }
                     }
                 }
 
                 // (8 Best_L0 neighbors, Best_L1) :
-                for (uint32_t bipred_index = 0; bipred_index < BIPRED_3x3_REFINMENT_POSITIONS;
-                     ++bipred_index) {
+                for (uint32_t bipred_index = 0; bipred_index < BIPRED_3x3_REFINMENT_POSITIONS; ++bipred_index) {
                     if (ctx->bipred3x3_injection >= 2) {
                         if (allow_refinement_flag[bipred_index] == 0)
                             continue;
@@ -1385,30 +1184,24 @@ static void bipred_3x3_candidates_injection(const SequenceControlSet *scs, Pictu
                     int16_t to_inject_mv_x_l0;
                     int16_t to_inject_mv_y_l0;
                     if (pcs->ppcs->frm_hdr.allow_high_precision_mv) {
-                        to_inject_mv_x_l0 =
-                            ctx->sb_me_mv[ctx->blk_geom->blkidx_mds]
-                                         [me_block_results_ptr->ref0_list][list0_ref_index][0] +
+                        to_inject_mv_x_l0 = ctx->sb_me_mv[ctx->blk_geom->blkidx_mds][me_block_results_ptr->ref0_list]
+                                                         [list0_ref_index][0] +
                             bipred_3x3_x_pos[bipred_index];
-                        to_inject_mv_y_l0 =
-                            ctx->sb_me_mv[ctx->blk_geom->blkidx_mds]
-                                         [me_block_results_ptr->ref0_list][list0_ref_index][1] +
+                        to_inject_mv_y_l0 = ctx->sb_me_mv[ctx->blk_geom->blkidx_mds][me_block_results_ptr->ref0_list]
+                                                         [list0_ref_index][1] +
                             bipred_3x3_y_pos[bipred_index];
                     } else {
-                        to_inject_mv_x_l0 =
-                            ctx->sb_me_mv[ctx->blk_geom->blkidx_mds]
-                                         [me_block_results_ptr->ref0_list][list0_ref_index][0] +
+                        to_inject_mv_x_l0 = ctx->sb_me_mv[ctx->blk_geom->blkidx_mds][me_block_results_ptr->ref0_list]
+                                                         [list0_ref_index][0] +
                             (bipred_3x3_x_pos[bipred_index] << 1);
-                        to_inject_mv_y_l0 =
-                            ctx->sb_me_mv[ctx->blk_geom->blkidx_mds]
-                                         [me_block_results_ptr->ref0_list][list0_ref_index][1] +
+                        to_inject_mv_y_l0 = ctx->sb_me_mv[ctx->blk_geom->blkidx_mds][me_block_results_ptr->ref0_list]
+                                                         [list0_ref_index][1] +
                             (bipred_3x3_y_pos[bipred_index] << 1);
                     }
                     int16_t to_inject_mv_x_l1 =
-                        ctx->sb_me_mv[ctx->blk_geom->blkidx_mds][me_block_results_ptr->ref1_list]
-                                     [list1_ref_index][0];
+                        ctx->sb_me_mv[ctx->blk_geom->blkidx_mds][me_block_results_ptr->ref1_list][list1_ref_index][0];
                     int16_t to_inject_mv_y_l1 =
-                        ctx->sb_me_mv[ctx->blk_geom->blkidx_mds][me_block_results_ptr->ref1_list]
-                                     [list1_ref_index][1];
+                        ctx->sb_me_mv[ctx->blk_geom->blkidx_mds][me_block_results_ptr->ref1_list][list1_ref_index][1];
                     uint8_t to_inject_ref_type = av1_ref_frame_type((const MvReferenceFrame[]){
                         svt_get_ref_frame_type(me_block_results_ptr->ref0_list, list0_ref_index),
                         svt_get_ref_frame_type(me_block_results_ptr->ref1_list, list1_ref_index)});
@@ -1420,20 +1213,15 @@ static void bipred_3x3_candidates_injection(const SequenceControlSet *scs, Pictu
                                                           mi_col,
                                                           mi_row,
                                                           ctx->blk_geom->bsize) &&
-                            svt_aom_is_inside_tile_boundary(&(xd->tile),
-                                                            to_inject_mv_x_l1,
-                                                            to_inject_mv_y_l1,
-                                                            mi_col,
-                                                            mi_row,
-                                                            ctx->blk_geom->bsize)
+                            svt_aom_is_inside_tile_boundary(
+                                &(xd->tile), to_inject_mv_x_l1, to_inject_mv_y_l1, mi_col, mi_row, ctx->blk_geom->bsize)
                             : 1;
                     uint8_t skip_cand   = (!inside_tile);
                     Mv      to_inj_mv0  = {{to_inject_mv_x_l0, to_inject_mv_y_l0}};
                     Mv      to_inj_mv1  = {{to_inject_mv_x_l1, to_inject_mv_y_l1}};
                     if (!skip_cand &&
                         (ctx->injected_mv_count == 0 ||
-                         mv_is_already_injected(ctx, to_inj_mv0, to_inj_mv1, to_inject_ref_type) ==
-                             FALSE)) {
+                         mv_is_already_injected(ctx, to_inj_mv0, to_inj_mv1, to_inject_ref_type) == FALSE)) {
                         uint8_t drl_index = 0;
                         choose_best_av1_mv_pred(ctx,
                                                 ctx->md_rate_est_ctx,
@@ -1448,18 +1236,12 @@ static void bipred_3x3_candidates_injection(const SequenceControlSet *scs, Pictu
                                                 &drl_index,
                                                 best_pred_mv);
                         if (!ctx->corrupted_mv_check ||
-                            is_valid_mv_diff(best_pred_mv,
-                                             to_inj_mv0,
-                                             to_inj_mv1,
-                                             1,
-                                             pcs->ppcs->frm_hdr.allow_high_precision_mv)) {
+                            is_valid_mv_diff(
+                                best_pred_mv, to_inj_mv0, to_inj_mv1, 1, pcs->ppcs->frm_hdr.allow_high_precision_mv)) {
                             Bool mask_done = 0;
-                            for (MD_COMP_TYPE cur_type = MD_COMP_AVG; cur_type < tot_comp_types;
-                                 cur_type++) {
-#if OPT_CMP
+                            for (MD_COMP_TYPE cur_type = MD_COMP_AVG; cur_type < tot_comp_types; cur_type++) {
                                 if (ctx->inter_comp_ctrls.no_dist && cur_type == MD_COMP_DIST)
                                     continue;
-#endif
                                 if (!is_valid_bi_type(ctx,
                                                       cur_type,
                                                       me_block_results_ptr->ref0_list,
@@ -1472,10 +1254,8 @@ static void bipred_3x3_candidates_injection(const SequenceControlSet *scs, Pictu
                                 cand_array[cand_total_cnt].drl_index         = drl_index;
 
                                 // Set the MV to ME result
-                                cand_array[cand_total_cnt].mv[REF_LIST_0].as_int =
-                                    to_inj_mv0.as_int;
-                                cand_array[cand_total_cnt].mv[REF_LIST_1].as_int =
-                                    to_inj_mv1.as_int;
+                                cand_array[cand_total_cnt].mv[REF_LIST_0].as_int = to_inj_mv0.as_int;
+                                cand_array[cand_total_cnt].mv[REF_LIST_1].as_int = to_inj_mv1.as_int;
                                 // will be needed later by the rate estimation
                                 cand_array[cand_total_cnt].pred_mode           = NEW_NEWMV;
                                 cand_array[cand_total_cnt].motion_mode         = SIMPLE_TRANSLATION;
@@ -1487,20 +1267,18 @@ static void bipred_3x3_candidates_injection(const SequenceControlSet *scs, Pictu
                                     {best_pred_mv[1].as_mv.col, best_pred_mv[1].as_mv.row}};
                                 if (cur_type > MD_COMP_AVG) {
                                     if (mask_done != 1) {
-                                        if (svt_aom_calc_pred_masked_compound(
-                                                pcs, ctx, &cand_array[cand_total_cnt]))
+                                        if (svt_aom_calc_pred_masked_compound(pcs, ctx, &cand_array[cand_total_cnt]))
                                             break;
                                         mask_done = 1;
                                     }
                                 }
                                 //BIP 3x3
-                                determine_compound_mode(
-                                    pcs, ctx, &cand_array[cand_total_cnt], cur_type);
+                                determine_compound_mode(pcs, ctx, &cand_array[cand_total_cnt], cur_type);
                                 INC_MD_CAND_CNT(cand_total_cnt, pcs->ppcs->max_can_count);
                             }
                             ctx->injected_mvs[ctx->injected_mv_count][0].as_int = to_inj_mv0.as_int;
                             ctx->injected_mvs[ctx->injected_mv_count][1].as_int = to_inj_mv1.as_int;
-                            ctx->injected_ref_types[ctx->injected_mv_count] = to_inject_ref_type;
+                            ctx->injected_ref_types[ctx->injected_mv_count]     = to_inject_ref_type;
                             ++ctx->injected_mv_count;
                         }
                     }
@@ -1514,31 +1292,6 @@ static void bipred_3x3_candidates_injection(const SequenceControlSet *scs, Pictu
 
     return;
 }
-#if !CLN_FUNC_DECL
-uint8_t svt_aom_get_max_drl_index(uint8_t refmvCnt, PredictionMode mode) {
-    uint8_t max_drl = 0;
-
-    if (mode == NEWMV || mode == NEW_NEWMV) {
-        if (refmvCnt < 2)
-            max_drl = 1;
-        else if (refmvCnt == 2)
-            max_drl = 2;
-        else
-            max_drl = 3;
-    }
-
-    if (mode == NEARMV || mode == NEAR_NEARMV || mode == NEAR_NEWMV || mode == NEW_NEARMV) {
-        if (refmvCnt < 3)
-            max_drl = 1;
-        else if (refmvCnt == 3)
-            max_drl = 2;
-        else
-            max_drl = 3;
-    }
-
-    return max_drl;
-}
-#endif
 /*********************************************************************
 **********************************************************************
         Upto 12 inter Candidated injected
@@ -1548,8 +1301,7 @@ UniPred L1 : NEARST         + upto 3x NEAR
 BIPred     : NEARST_NEARST  + upto 3x NEAR_NEAR
 **********************************************************************
 **********************************************************************/
-static void inject_mvp_candidates_ii_light_pd1(PictureControlSet *pcs, ModeDecisionContext *ctx,
-                                               uint32_t *candTotCnt) {
+static void inject_mvp_candidates_ii_light_pd1(PictureControlSet *pcs, ModeDecisionContext *ctx, uint32_t *candTotCnt) {
     BlkStruct   *blk_ptr        = ctx->blk_ptr;
     FrameHeader *frm_hdr        = &pcs->ppcs->frm_hdr;
     Bool         allow_compound = (frm_hdr->reference_mode == SINGLE_REFERENCE) ? FALSE : TRUE;
@@ -1574,11 +1326,9 @@ static void inject_mvp_candidates_ii_light_pd1(PictureControlSet *pcs, ModeDecis
                 continue;
             }
             if (ctx->cand_reduction_ctrls.lpd1_mvp_best_me_list) {
-                const MeSbResults *me_results = pcs->ppcs->pa_me_data->me_results[ctx->me_sb_addr];
-                const uint8_t      total_me_cnt =
-                    me_results->total_me_candidate_index[ctx->me_block_offset];
-                const MeCandidate *me_block_results =
-                    &me_results->me_candidate_array[ctx->me_cand_offset];
+                const MeSbResults *me_results           = pcs->ppcs->pa_me_data->me_results[ctx->me_sb_addr];
+                const uint8_t      total_me_cnt         = me_results->total_me_candidate_index[ctx->me_block_offset];
+                const MeCandidate *me_block_results     = &me_results->me_candidate_array[ctx->me_cand_offset];
                 const MeCandidate *me_block_results_ptr = &me_block_results[0];
                 const uint8_t      inter_direction      = me_block_results_ptr->direction;
                 if (total_me_cnt && list_idx != inter_direction)
@@ -1586,12 +1336,10 @@ static void inject_mvp_candidates_ii_light_pd1(PictureControlSet *pcs, ModeDecis
             }
             //NEAREST
             // Don't check if MV is already injected b/c NEAREST is the first INTER MV injected
-            int16_t to_inject_mv_x = ctx->md_local_blk_unit[ctx->blk_geom->blkidx_mds]
-                                         .ed_ref_mv_stack[frame_type][0]
-                                         .this_mv.as_mv.col;
-            int16_t to_inject_mv_y = ctx->md_local_blk_unit[ctx->blk_geom->blkidx_mds]
-                                         .ed_ref_mv_stack[frame_type][0]
-                                         .this_mv.as_mv.row;
+            int16_t to_inject_mv_x =
+                ctx->md_local_blk_unit[ctx->blk_geom->blkidx_mds].ed_ref_mv_stack[frame_type][0].this_mv.as_mv.col;
+            int16_t to_inject_mv_y =
+                ctx->md_local_blk_unit[ctx->blk_geom->blkidx_mds].ed_ref_mv_stack[frame_type][0].this_mv.as_mv.row;
 
             cand_array[cand_idx].pred_mode         = NEARESTMV;
             cand_array[cand_idx].motion_mode       = SIMPLE_TRANSLATION;
@@ -1602,15 +1350,14 @@ static void inject_mvp_candidates_ii_light_pd1(PictureControlSet *pcs, ModeDecis
             cand_array[cand_idx].mv[list_idx] = (Mv){{to_inject_mv_x, to_inject_mv_y}};
             INC_MD_CAND_CNT(cand_idx, pcs->ppcs->max_can_count);
 
-            ctx->injected_mvs[ctx->injected_mv_count][0] = (Mv){{to_inject_mv_x, to_inject_mv_y}};
+            ctx->injected_mvs[ctx->injected_mv_count][0]    = (Mv){{to_inject_mv_x, to_inject_mv_y}};
             ctx->injected_ref_types[ctx->injected_mv_count] = frame_type;
             ++ctx->injected_mv_count;
             //NEAR
-            max_drl_index = svt_aom_get_max_drl_index(xd->ref_mv_count[frame_type], NEARMV);
+            max_drl_index             = svt_aom_get_max_drl_index(xd->ref_mv_count[frame_type], NEARMV);
             uint8_t cap_max_drl_index = 0;
             if (ctx->cand_reduction_ctrls.near_count_ctrls.enabled)
-                cap_max_drl_index = MIN(ctx->cand_reduction_ctrls.near_count_ctrls.near_count,
-                                        max_drl_index);
+                cap_max_drl_index = MIN(ctx->cand_reduction_ctrls.near_count_ctrls.near_count, max_drl_index);
             for (drli = 0; drli < cap_max_drl_index; drli++) {
                 to_inject_mv_x = ctx->md_local_blk_unit[ctx->blk_geom->blkidx_mds]
                                      .ed_ref_mv_stack[frame_type][1 + drli]
@@ -1640,18 +1387,14 @@ static void inject_mvp_candidates_ii_light_pd1(PictureControlSet *pcs, ModeDecis
         } else if (allow_compound) {
             //NEAREST_NEAREST
             // Don't check if MV is already injected b/c NEAREST_NEAREST is the first bipred INTER candidate injected
-            int16_t to_inject_mv_x_l0 = ctx->md_local_blk_unit[ctx->blk_geom->blkidx_mds]
-                                            .ed_ref_mv_stack[ref_pair][0]
-                                            .this_mv.as_mv.col;
-            int16_t to_inject_mv_y_l0 = ctx->md_local_blk_unit[ctx->blk_geom->blkidx_mds]
-                                            .ed_ref_mv_stack[ref_pair][0]
-                                            .this_mv.as_mv.row;
-            int16_t to_inject_mv_x_l1 = ctx->md_local_blk_unit[ctx->blk_geom->blkidx_mds]
-                                            .ed_ref_mv_stack[ref_pair][0]
-                                            .comp_mv.as_mv.col;
-            int16_t to_inject_mv_y_l1 = ctx->md_local_blk_unit[ctx->blk_geom->blkidx_mds]
-                                            .ed_ref_mv_stack[ref_pair][0]
-                                            .comp_mv.as_mv.row;
+            int16_t to_inject_mv_x_l0 =
+                ctx->md_local_blk_unit[ctx->blk_geom->blkidx_mds].ed_ref_mv_stack[ref_pair][0].this_mv.as_mv.col;
+            int16_t to_inject_mv_y_l0 =
+                ctx->md_local_blk_unit[ctx->blk_geom->blkidx_mds].ed_ref_mv_stack[ref_pair][0].this_mv.as_mv.row;
+            int16_t to_inject_mv_x_l1 =
+                ctx->md_local_blk_unit[ctx->blk_geom->blkidx_mds].ed_ref_mv_stack[ref_pair][0].comp_mv.as_mv.col;
+            int16_t to_inject_mv_y_l1 =
+                ctx->md_local_blk_unit[ctx->blk_geom->blkidx_mds].ed_ref_mv_stack[ref_pair][0].comp_mv.as_mv.row;
 
             const bool is_skip_mode = frm_hdr->skip_mode_params.skip_mode_flag &&
                 (rf[0] == frm_hdr->skip_mode_params.ref_frame_idx_0) &&
@@ -1671,10 +1414,8 @@ static void inject_mvp_candidates_ii_light_pd1(PictureControlSet *pcs, ModeDecis
 
             INC_MD_CAND_CNT(cand_idx, pcs->ppcs->max_can_count);
 
-            ctx->injected_mvs[ctx->injected_mv_count][0] = (Mv){
-                {to_inject_mv_x_l0, to_inject_mv_y_l0}};
-            ctx->injected_mvs[ctx->injected_mv_count][1] = (Mv){
-                {to_inject_mv_x_l1, to_inject_mv_y_l1}};
+            ctx->injected_mvs[ctx->injected_mv_count][0]    = (Mv){{to_inject_mv_x_l0, to_inject_mv_y_l0}};
+            ctx->injected_mvs[ctx->injected_mv_count][1]    = (Mv){{to_inject_mv_x_l1, to_inject_mv_y_l1}};
             ctx->injected_ref_types[ctx->injected_mv_count] = ref_pair;
             ++ctx->injected_mv_count;
             //NEAR_NEAR
@@ -1682,21 +1423,16 @@ static void inject_mvp_candidates_ii_light_pd1(PictureControlSet *pcs, ModeDecis
 
             uint8_t cap_max_drl_index = 0;
             if (ctx->cand_reduction_ctrls.near_count_ctrls.enabled)
-                cap_max_drl_index = MIN(ctx->cand_reduction_ctrls.near_count_ctrls.near_near_count,
-                                        max_drl_index);
+                cap_max_drl_index = MIN(ctx->cand_reduction_ctrls.near_count_ctrls.near_near_count, max_drl_index);
             for (drli = 0; drli < cap_max_drl_index; drli++) {
-                to_inject_mv_x_l0 = ctx->md_local_blk_unit[blk_ptr->mds_idx]
-                                        .ed_ref_mv_stack[ref_pair][1 + drli]
-                                        .this_mv.as_mv.col;
-                to_inject_mv_y_l0 = ctx->md_local_blk_unit[blk_ptr->mds_idx]
-                                        .ed_ref_mv_stack[ref_pair][1 + drli]
-                                        .this_mv.as_mv.row;
-                to_inject_mv_x_l1 = ctx->md_local_blk_unit[blk_ptr->mds_idx]
-                                        .ed_ref_mv_stack[ref_pair][1 + drli]
-                                        .comp_mv.as_mv.col;
-                to_inject_mv_y_l1 = ctx->md_local_blk_unit[blk_ptr->mds_idx]
-                                        .ed_ref_mv_stack[ref_pair][1 + drli]
-                                        .comp_mv.as_mv.row;
+                to_inject_mv_x_l0 =
+                    ctx->md_local_blk_unit[blk_ptr->mds_idx].ed_ref_mv_stack[ref_pair][1 + drli].this_mv.as_mv.col;
+                to_inject_mv_y_l0 =
+                    ctx->md_local_blk_unit[blk_ptr->mds_idx].ed_ref_mv_stack[ref_pair][1 + drli].this_mv.as_mv.row;
+                to_inject_mv_x_l1 =
+                    ctx->md_local_blk_unit[blk_ptr->mds_idx].ed_ref_mv_stack[ref_pair][1 + drli].comp_mv.as_mv.col;
+                to_inject_mv_y_l1 =
+                    ctx->md_local_blk_unit[blk_ptr->mds_idx].ed_ref_mv_stack[ref_pair][1 + drli].comp_mv.as_mv.row;
 
                 Mv to_inj_mv0 = {{to_inject_mv_x_l0, to_inject_mv_y_l0}};
                 Mv to_inj_mv1 = {{to_inject_mv_x_l1, to_inject_mv_y_l1}};
@@ -1746,12 +1482,12 @@ static bool skip_mvp_compound_on_ref_types(ModeDecisionContext *ctx, MvReference
         const BlockModeInfoEnc *const left_mi  = &xd->left_mbmi->block_mi;
         const BlockModeInfoEnc *const above_mi = &xd->above_mbmi->block_mi;
         if (is_inter_mode(left_mi->mode) &&
-            (left_mi->ref_frame[0] == rf[0] || left_mi->ref_frame[0] == rf[1] ||
-             left_mi->ref_frame[1] == rf[0] || left_mi->ref_frame[1] == rf[1]))
+            (left_mi->ref_frame[0] == rf[0] || left_mi->ref_frame[0] == rf[1] || left_mi->ref_frame[1] == rf[0] ||
+             left_mi->ref_frame[1] == rf[1]))
             skip_comp = false;
         if (is_inter_mode(above_mi->mode) &&
-            (above_mi->ref_frame[0] == rf[0] || above_mi->ref_frame[0] == rf[1] ||
-             above_mi->ref_frame[1] == rf[0] || above_mi->ref_frame[1] == rf[1]))
+            (above_mi->ref_frame[0] == rf[0] || above_mi->ref_frame[0] == rf[1] || above_mi->ref_frame[1] == rf[0] ||
+             above_mi->ref_frame[1] == rf[1]))
             skip_comp = false;
     } else
         skip_comp = false;
@@ -1767,16 +1503,16 @@ UniPred L1 : NEARST         + upto 3x NEAR
 BIPred     : NEARST_NEARST  + upto 3x NEAR_NEAR
 **********************************************************************
 **********************************************************************/
-static void inject_mvp_candidates_ii(const SequenceControlSet *scs, PictureControlSet *pcs,
-                                     ModeDecisionContext *ctx, uint32_t *candTotCnt) {
-    BlkStruct             *blk_ptr        = ctx->blk_ptr;
-    FrameHeader           *frm_hdr        = &pcs->ppcs->frm_hdr;
-    Bool                   allow_compound = (frm_hdr->reference_mode == SINGLE_REFERENCE ||
-                           ctx->blk_geom->bwidth == 4 || ctx->blk_geom->bheight == 4)
-                          ? FALSE
-                          : TRUE;
-    uint8_t                inj_mv;
-    uint32_t               cand_idx   = *candTotCnt;
+static void inject_mvp_candidates_ii(const SequenceControlSet *scs, PictureControlSet *pcs, ModeDecisionContext *ctx,
+                                     uint32_t *candTotCnt) {
+    BlkStruct   *blk_ptr        = ctx->blk_ptr;
+    FrameHeader *frm_hdr        = &pcs->ppcs->frm_hdr;
+    Bool         allow_compound = (frm_hdr->reference_mode == SINGLE_REFERENCE || ctx->blk_geom->bwidth == 4 ||
+                           ctx->blk_geom->bheight == 4)
+                ? FALSE
+                : TRUE;
+    uint8_t      inj_mv;
+    uint32_t     cand_idx             = *candTotCnt;
     ModeDecisionCandidate *cand_array = ctx->fast_cand_array;
     MacroBlockD           *xd         = blk_ptr->av1xd;
     uint8_t                drli, max_drl_index;
@@ -1798,47 +1534,36 @@ static void inject_mvp_candidates_ii(const SequenceControlSet *scs, PictureContr
             uint8_t          list_idx   = get_list_idx(rf[0]);
             uint8_t          ref_idx    = get_ref_frame_idx(rf[0]);
             // Always consider the 2 closet ref frames (i.e. ref_idx=0) @ MVP cand generation
-            if (!svt_aom_is_valid_unipred_ref(
-                    ctx, MIN(TOT_INTER_GROUP - 1, NRST_NEAR_GROUP), list_idx, ref_idx))
+            if (!svt_aom_is_valid_unipred_ref(ctx, MIN(TOT_INTER_GROUP - 1, NRST_NEAR_GROUP), list_idx, ref_idx))
                 continue;
             //NEAREST
-            int16_t to_inject_mv_x = ctx->md_local_blk_unit[ctx->blk_geom->blkidx_mds]
-                                         .ed_ref_mv_stack[frame_type][0]
-                                         .this_mv.as_mv.col;
-            int16_t to_inject_mv_y = ctx->md_local_blk_unit[ctx->blk_geom->blkidx_mds]
-                                         .ed_ref_mv_stack[frame_type][0]
-                                         .this_mv.as_mv.row;
+            int16_t to_inject_mv_x =
+                ctx->md_local_blk_unit[ctx->blk_geom->blkidx_mds].ed_ref_mv_stack[frame_type][0].this_mv.as_mv.col;
+            int16_t to_inject_mv_y =
+                ctx->md_local_blk_unit[ctx->blk_geom->blkidx_mds].ed_ref_mv_stack[frame_type][0].this_mv.as_mv.row;
 
             Mv to_inj_mv = {{to_inject_mv_x, to_inject_mv_y}};
             inj_mv       = (ctx->injected_mv_count == 0 ||
                       mv_is_already_injected(ctx, to_inj_mv, to_inj_mv, frame_type) == FALSE);
             if (umv0tile)
-                inside_tile = svt_aom_is_inside_tile_boundary(&(xd->tile),
-                                                              to_inject_mv_x,
-                                                              to_inject_mv_y,
-                                                              mi_col,
-                                                              mi_row,
-                                                              ctx->blk_geom->bsize);
+                inside_tile = svt_aom_is_inside_tile_boundary(
+                    &(xd->tile), to_inject_mv_x, to_inject_mv_y, mi_col, mi_row, ctx->blk_geom->bsize);
             inj_mv = inj_mv && inside_tile;
             if (inj_mv) {
                 uint8_t inter_type;
                 uint8_t is_ii_allowed = svt_is_interintra_allowed(
                     ctx->inter_intra_comp_ctrls.enabled, bsize, NEARESTMV, rf);
-                const uint8_t ii_wedge_mode = ctx->blk_geom->shape == PART_N
-                    ? ctx->inter_intra_comp_ctrls.wedge_mode_sq
-                    : ctx->inter_intra_comp_ctrls.wedge_mode_nsq;
-                uint8_t tot_inter_types = is_ii_allowed ? (ii_wedge_mode == 1 ? II_COUNT : 2) : 1;
-                uint8_t is_obmc_allowed = svt_aom_obmc_motion_mode_allowed(
-                                              pcs, ctx, bsize, 0, rf[0], rf[1], NEARESTMV) ==
-                    OBMC_CAUSAL;
-                uint8_t is_warp_allowed = ctx->wm_ctrls.use_wm_for_mvp
-                    ? warped_motion_mode_allowed(pcs, ctx)
-                    : 0;
+                const uint8_t ii_wedge_mode   = ctx->blk_geom->shape == PART_N
+                      ? ctx->inter_intra_comp_ctrls.wedge_mode_sq
+                      : ctx->inter_intra_comp_ctrls.wedge_mode_nsq;
+                uint8_t       tot_inter_types = is_ii_allowed ? (ii_wedge_mode == 1 ? II_COUNT : 2) : 1;
+                uint8_t       is_obmc_allowed = svt_aom_obmc_motion_mode_allowed(
+                                              pcs, ctx, bsize, 0, rf[0], rf[1], NEARESTMV) == OBMC_CAUSAL;
+                uint8_t is_warp_allowed = ctx->wm_ctrls.use_wm_for_mvp ? warped_motion_mode_allowed(pcs, ctx) : 0;
                 tot_inter_types         = is_warp_allowed ? tot_inter_types + 1 : tot_inter_types;
                 tot_inter_types         = is_obmc_allowed ? tot_inter_types + 1 : tot_inter_types;
                 for (inter_type = 0; inter_type < tot_inter_types; inter_type++) {
-                    if (!is_valid_uni_type(
-                            ctx, inter_type, is_ii_allowed, is_warp_allowed, list_idx, ref_idx))
+                    if (!is_valid_uni_type(ctx, inter_type, is_ii_allowed, is_warp_allowed, list_idx, ref_idx))
                         continue;
                     cand_array[cand_idx].pred_mode         = NEARESTMV;
                     cand_array[cand_idx].motion_mode       = SIMPLE_TRANSLATION;
@@ -1858,14 +1583,12 @@ static void inject_mvp_candidates_ii(const SequenceControlSet *scs, PictureContr
                                 inter_intra_search(pcs, ctx, &cand_array[cand_idx]);
                                 cand_array[cand_idx].is_interintra_used = 1;
                             } else if (ii_wedge_mode == 1 && inter_type == 2) {
-                                cand_array[cand_idx].is_interintra_used = 1;
-                                cand_array[cand_idx].interintra_mode =
-                                    cand_array[cand_idx - 1].interintra_mode;
+                                cand_array[cand_idx].is_interintra_used   = 1;
+                                cand_array[cand_idx].interintra_mode      = cand_array[cand_idx - 1].interintra_mode;
                                 cand_array[cand_idx].use_wedge_interintra = 0;
                             }
                         }
-                        if (is_warp_allowed &&
-                            inter_type == (tot_inter_types - (1 + is_obmc_allowed))) {
+                        if (is_warp_allowed && inter_type == (tot_inter_types - (1 + is_obmc_allowed))) {
                             cand_array[cand_idx].is_interintra_used  = 0;
                             cand_array[cand_idx].motion_mode         = WARPED_CAUSAL;
                             cand_array[cand_idx].wm_params_l0.wmtype = AFFINE;
@@ -1873,29 +1596,27 @@ static void inject_mvp_candidates_ii(const SequenceControlSet *scs, PictureContr
                             MvUnit mv_unit;
                             mv_unit.mv[list_idx]   = cand_array[cand_idx].mv[list_idx];
                             mv_unit.pred_direction = list_idx;
-                            local_warp_valid       = svt_aom_warped_motion_parameters(
-                                pcs,
-                                ctx->blk_ptr,
-                                &mv_unit,
-                                ctx->blk_geom,
-                                ctx->blk_org_x,
-                                ctx->blk_org_y,
-                                cand_array[cand_idx].ref_frame_type,
-                                &cand_array[cand_idx].wm_params_l0,
-                                &cand_array[cand_idx].num_proj_ref,
-                                ctx->wm_ctrls.min_neighbour_perc,
-                                ctx->wm_ctrls.corner_perc_bias,
-                                ctx->wm_ctrls.lower_band_th,
-                                ctx->wm_ctrls.upper_band_th,
-                                0);
+                            local_warp_valid       = svt_aom_warped_motion_parameters(pcs,
+                                                                                ctx->blk_ptr,
+                                                                                &mv_unit,
+                                                                                ctx->blk_geom,
+                                                                                ctx->blk_org_x,
+                                                                                ctx->blk_org_y,
+                                                                                cand_array[cand_idx].ref_frame_type,
+                                                                                &cand_array[cand_idx].wm_params_l0,
+                                                                                &cand_array[cand_idx].num_proj_ref,
+                                                                                ctx->wm_ctrls.min_neighbour_perc,
+                                                                                ctx->wm_ctrls.corner_perc_bias,
+                                                                                ctx->wm_ctrls.lower_band_th,
+                                                                                ctx->wm_ctrls.upper_band_th,
+                                                                                0);
                         }
                         if (is_obmc_allowed && inter_type == tot_inter_types - 1) {
                             cand_array[cand_idx].is_interintra_used = 0;
                             cand_array[cand_idx].motion_mode        = OBMC_CAUSAL;
                         }
                     }
-                    if (!(is_warp_allowed &&
-                          inter_type == (tot_inter_types - (1 + is_obmc_allowed))))
+                    if (!(is_warp_allowed && inter_type == (tot_inter_types - (1 + is_obmc_allowed))))
                         INC_MD_CAND_CNT(cand_idx, pcs->ppcs->max_can_count);
                     else if (local_warp_valid)
                         INC_MD_CAND_CNT(cand_idx, pcs->ppcs->max_can_count);
@@ -1906,14 +1627,12 @@ static void inject_mvp_candidates_ii(const SequenceControlSet *scs, PictureContr
             }
 
             //NEAR
-            max_drl_index = svt_aom_get_max_drl_index(xd->ref_mv_count[frame_type], NEARMV);
+            max_drl_index             = svt_aom_get_max_drl_index(xd->ref_mv_count[frame_type], NEARMV);
             uint8_t cap_max_drl_index = 0;
             if (ctx->cand_reduction_ctrls.near_count_ctrls.enabled)
-                cap_max_drl_index = MIN(ctx->cand_reduction_ctrls.near_count_ctrls.near_count,
-                                        max_drl_index);
+                cap_max_drl_index = MIN(ctx->cand_reduction_ctrls.near_count_ctrls.near_count, max_drl_index);
             for (drli = 0; drli < cap_max_drl_index; drli++) {
-                svt_aom_get_av1_mv_pred_drl(
-                    ctx, blk_ptr, frame_type, 0, NEARMV, drli, nearestmv, nearmv, ref_mv);
+                svt_aom_get_av1_mv_pred_drl(ctx, blk_ptr, frame_type, 0, NEARMV, drli, nearestmv, nearmv, ref_mv);
 
                 to_inject_mv_x = nearmv[0].as_mv.col;
                 to_inject_mv_y = nearmv[0].as_mv.row;
@@ -1922,33 +1641,24 @@ static void inject_mvp_candidates_ii(const SequenceControlSet *scs, PictureContr
                 inj_mv    = (ctx->injected_mv_count == 0 ||
                           mv_is_already_injected(ctx, to_inj_mv, to_inj_mv, frame_type) == FALSE);
                 if (umv0tile)
-                    inside_tile = svt_aom_is_inside_tile_boundary(&(xd->tile),
-                                                                  to_inject_mv_x,
-                                                                  to_inject_mv_y,
-                                                                  mi_col,
-                                                                  mi_row,
-                                                                  ctx->blk_geom->bsize);
+                    inside_tile = svt_aom_is_inside_tile_boundary(
+                        &(xd->tile), to_inject_mv_x, to_inject_mv_y, mi_col, mi_row, ctx->blk_geom->bsize);
                 inj_mv = inj_mv && inside_tile;
                 if (inj_mv) {
                     uint8_t inter_type;
                     uint8_t is_ii_allowed = svt_is_interintra_allowed(
                         ctx->inter_intra_comp_ctrls.enabled, bsize, NEARMV, rf);
-                    const uint8_t ii_wedge_mode = ctx->blk_geom->shape == PART_N
-                        ? ctx->inter_intra_comp_ctrls.wedge_mode_sq
-                        : ctx->inter_intra_comp_ctrls.wedge_mode_nsq;
-                    uint8_t tot_inter_types = is_ii_allowed ? (ii_wedge_mode == 1 ? II_COUNT : 2)
-                                                            : 1;
-                    uint8_t is_obmc_allowed = svt_aom_obmc_motion_mode_allowed(
-                                                  pcs, ctx, bsize, 0, rf[0], rf[1], NEARMV) ==
-                        OBMC_CAUSAL;
-                    uint8_t is_warp_allowed = ctx->wm_ctrls.use_wm_for_mvp
-                        ? warped_motion_mode_allowed(pcs, ctx)
-                        : 0;
-                    tot_inter_types = is_warp_allowed ? tot_inter_types + 1 : tot_inter_types;
-                    tot_inter_types = is_obmc_allowed ? tot_inter_types + 1 : tot_inter_types;
+                    const uint8_t ii_wedge_mode   = ctx->blk_geom->shape == PART_N
+                          ? ctx->inter_intra_comp_ctrls.wedge_mode_sq
+                          : ctx->inter_intra_comp_ctrls.wedge_mode_nsq;
+                    uint8_t       tot_inter_types = is_ii_allowed ? (ii_wedge_mode == 1 ? II_COUNT : 2) : 1;
+                    uint8_t       is_obmc_allowed = svt_aom_obmc_motion_mode_allowed(
+                                                  pcs, ctx, bsize, 0, rf[0], rf[1], NEARMV) == OBMC_CAUSAL;
+                    uint8_t is_warp_allowed = ctx->wm_ctrls.use_wm_for_mvp ? warped_motion_mode_allowed(pcs, ctx) : 0;
+                    tot_inter_types         = is_warp_allowed ? tot_inter_types + 1 : tot_inter_types;
+                    tot_inter_types         = is_obmc_allowed ? tot_inter_types + 1 : tot_inter_types;
                     for (inter_type = 0; inter_type < tot_inter_types; inter_type++) {
-                        if (!is_valid_uni_type(
-                                ctx, inter_type, is_ii_allowed, is_warp_allowed, list_idx, ref_idx))
+                        if (!is_valid_uni_type(ctx, inter_type, is_ii_allowed, is_warp_allowed, list_idx, ref_idx))
                             continue;
                         cand_array[cand_idx].pred_mode         = NEARMV;
                         cand_array[cand_idx].motion_mode       = SIMPLE_TRANSLATION;
@@ -1969,13 +1679,11 @@ static void inject_mvp_candidates_ii(const SequenceControlSet *scs, PictureContr
                                     cand_array[cand_idx].is_interintra_used = 1;
                                 } else if (ii_wedge_mode == 1 && inter_type == 2) {
                                     cand_array[cand_idx].is_interintra_used = 1;
-                                    cand_array[cand_idx].interintra_mode =
-                                        cand_array[cand_idx - 1].interintra_mode;
+                                    cand_array[cand_idx].interintra_mode    = cand_array[cand_idx - 1].interintra_mode;
                                     cand_array[cand_idx].use_wedge_interintra = 0;
                                 }
                             }
-                            if (is_warp_allowed &&
-                                inter_type == (tot_inter_types - (1 + is_obmc_allowed))) {
+                            if (is_warp_allowed && inter_type == (tot_inter_types - (1 + is_obmc_allowed))) {
                                 cand_array[cand_idx].is_interintra_used  = 0;
                                 cand_array[cand_idx].motion_mode         = WARPED_CAUSAL;
                                 cand_array[cand_idx].wm_params_l0.wmtype = AFFINE;
@@ -1983,29 +1691,27 @@ static void inject_mvp_candidates_ii(const SequenceControlSet *scs, PictureContr
                                 MvUnit mv_unit;
                                 mv_unit.mv[list_idx]   = cand_array[cand_idx].mv[list_idx];
                                 mv_unit.pred_direction = list_idx;
-                                local_warp_valid       = svt_aom_warped_motion_parameters(
-                                    pcs,
-                                    ctx->blk_ptr,
-                                    &mv_unit,
-                                    ctx->blk_geom,
-                                    ctx->blk_org_x,
-                                    ctx->blk_org_y,
-                                    cand_array[cand_idx].ref_frame_type,
-                                    &cand_array[cand_idx].wm_params_l0,
-                                    &cand_array[cand_idx].num_proj_ref,
-                                    ctx->wm_ctrls.min_neighbour_perc,
-                                    ctx->wm_ctrls.corner_perc_bias,
-                                    ctx->wm_ctrls.lower_band_th,
-                                    ctx->wm_ctrls.upper_band_th,
-                                    0);
+                                local_warp_valid       = svt_aom_warped_motion_parameters(pcs,
+                                                                                    ctx->blk_ptr,
+                                                                                    &mv_unit,
+                                                                                    ctx->blk_geom,
+                                                                                    ctx->blk_org_x,
+                                                                                    ctx->blk_org_y,
+                                                                                    cand_array[cand_idx].ref_frame_type,
+                                                                                    &cand_array[cand_idx].wm_params_l0,
+                                                                                    &cand_array[cand_idx].num_proj_ref,
+                                                                                    ctx->wm_ctrls.min_neighbour_perc,
+                                                                                    ctx->wm_ctrls.corner_perc_bias,
+                                                                                    ctx->wm_ctrls.lower_band_th,
+                                                                                    ctx->wm_ctrls.upper_band_th,
+                                                                                    0);
                             }
                             if (is_obmc_allowed && inter_type == tot_inter_types - 1) {
                                 cand_array[cand_idx].is_interintra_used = 0;
                                 cand_array[cand_idx].motion_mode        = OBMC_CAUSAL;
                             }
                         }
-                        if (!(is_warp_allowed &&
-                              inter_type == (tot_inter_types - (1 + is_obmc_allowed))))
+                        if (!(is_warp_allowed && inter_type == (tot_inter_types - (1 + is_obmc_allowed))))
                             INC_MD_CAND_CNT(cand_idx, pcs->ppcs->max_can_count);
                         else if (local_warp_valid)
                             INC_MD_CAND_CNT(cand_idx, pcs->ppcs->max_can_count);
@@ -2022,44 +1728,32 @@ static void inject_mvp_candidates_ii(const SequenceControlSet *scs, PictureContr
             uint8_t list_idx_0 = get_list_idx(rf[0]);
             uint8_t list_idx_1 = get_list_idx(rf[1]);
             // Always consider the 2 closet ref frames (i.e. ref_idx=0) @ MVP cand generation
-            if (!is_valid_bipred_ref(
-                    ctx, NRST_NEAR_GROUP, list_idx_0, ref_idx_0, list_idx_1, ref_idx_1))
+            if (!is_valid_bipred_ref(ctx, NRST_NEAR_GROUP, list_idx_0, ref_idx_0, list_idx_1, ref_idx_1))
                 continue;
             {
                 //NEAREST_NEAREST
-                MD_COMP_TYPE tot_comp_types    = (ctx->inter_comp_ctrls.do_nearest_nearest == 0) ||
+                MD_COMP_TYPE tot_comp_types = (ctx->inter_comp_ctrls.do_nearest_nearest == 0) ||
                         skip_mvp_compound_on_ref_types(ctx, rf)
-                       ? MD_COMP_DIST
-                       : ctx->inter_comp_ctrls.tot_comp_types;
-                int16_t      to_inject_mv_x_l0 = ctx->md_local_blk_unit[ctx->blk_geom->blkidx_mds]
-                                                .ed_ref_mv_stack[ref_pair][0]
-                                                .this_mv.as_mv.col;
-                int16_t to_inject_mv_y_l0 = ctx->md_local_blk_unit[ctx->blk_geom->blkidx_mds]
-                                                .ed_ref_mv_stack[ref_pair][0]
-                                                .this_mv.as_mv.row;
-                int16_t to_inject_mv_x_l1 = ctx->md_local_blk_unit[ctx->blk_geom->blkidx_mds]
-                                                .ed_ref_mv_stack[ref_pair][0]
-                                                .comp_mv.as_mv.col;
-                int16_t to_inject_mv_y_l1 = ctx->md_local_blk_unit[ctx->blk_geom->blkidx_mds]
-                                                .ed_ref_mv_stack[ref_pair][0]
-                                                .comp_mv.as_mv.row;
+                    ? MD_COMP_DIST
+                    : ctx->inter_comp_ctrls.tot_comp_types;
+                int16_t      to_inject_mv_x_l0 =
+                    ctx->md_local_blk_unit[ctx->blk_geom->blkidx_mds].ed_ref_mv_stack[ref_pair][0].this_mv.as_mv.col;
+                int16_t to_inject_mv_y_l0 =
+                    ctx->md_local_blk_unit[ctx->blk_geom->blkidx_mds].ed_ref_mv_stack[ref_pair][0].this_mv.as_mv.row;
+                int16_t to_inject_mv_x_l1 =
+                    ctx->md_local_blk_unit[ctx->blk_geom->blkidx_mds].ed_ref_mv_stack[ref_pair][0].comp_mv.as_mv.col;
+                int16_t to_inject_mv_y_l1 =
+                    ctx->md_local_blk_unit[ctx->blk_geom->blkidx_mds].ed_ref_mv_stack[ref_pair][0].comp_mv.as_mv.row;
                 Mv to_inj_mv0 = {{to_inject_mv_x_l0, to_inject_mv_y_l0}};
                 Mv to_inj_mv1 = {{to_inject_mv_x_l1, to_inject_mv_y_l1}};
                 inj_mv        = (ctx->injected_mv_count == 0 ||
                           mv_is_already_injected(ctx, to_inj_mv0, to_inj_mv1, ref_pair) == FALSE);
                 if (umv0tile) {
-                    inside_tile = svt_aom_is_inside_tile_boundary(&(xd->tile),
-                                                                  to_inject_mv_x_l0,
-                                                                  to_inject_mv_y_l0,
-                                                                  mi_col,
-                                                                  mi_row,
-                                                                  ctx->blk_geom->bsize) &&
-                        svt_aom_is_inside_tile_boundary(&(xd->tile),
-                                                        to_inject_mv_x_l1,
-                                                        to_inject_mv_y_l1,
-                                                        mi_col,
-                                                        mi_row,
-                                                        ctx->blk_geom->bsize);
+                    inside_tile =
+                        svt_aom_is_inside_tile_boundary(
+                            &(xd->tile), to_inject_mv_x_l0, to_inject_mv_y_l0, mi_col, mi_row, ctx->blk_geom->bsize) &&
+                        svt_aom_is_inside_tile_boundary(
+                            &(xd->tile), to_inject_mv_x_l1, to_inject_mv_y_l1, mi_col, mi_row, ctx->blk_geom->bsize);
                 }
                 inj_mv = inj_mv && inside_tile;
                 if (inj_mv) {
@@ -2067,23 +1761,16 @@ static void inject_mvp_candidates_ii(const SequenceControlSet *scs, PictureContr
                         (rf[0] == frm_hdr->skip_mode_params.ref_frame_idx_0) &&
                         (rf[1] == frm_hdr->skip_mode_params.ref_frame_idx_1);
                     Bool mask_done = 0;
-                    for (MD_COMP_TYPE cur_type = MD_COMP_AVG; cur_type < tot_comp_types;
-                         cur_type++) {
-#if OPT_CMP
+                    for (MD_COMP_TYPE cur_type = MD_COMP_AVG; cur_type < tot_comp_types; cur_type++) {
                         if (ctx->inter_comp_ctrls.no_dist && cur_type == MD_COMP_DIST)
                             continue;
-#endif
-                        if (!is_valid_bi_type(
-                                ctx, cur_type, list_idx_0, ref_idx_0, list_idx_1, ref_idx_1))
+                        if (!is_valid_bi_type(ctx, cur_type, list_idx_0, ref_idx_0, list_idx_1, ref_idx_1))
                             continue;
-                        cand_array[cand_idx].pred_mode             = NEAREST_NEARESTMV;
-                        cand_array[cand_idx].motion_mode           = SIMPLE_TRANSLATION;
-                        cand_array[cand_idx].is_interintra_used    = 0;
-                        cand_array[cand_idx].use_intrabc           = 0;
-                        cand_array[cand_idx].skip_mode_allowed     = cur_type == MD_COMP_AVG &&
-                                is_skip_mode
-                                ? TRUE
-                                : FALSE;
+                        cand_array[cand_idx].pred_mode          = NEAREST_NEARESTMV;
+                        cand_array[cand_idx].motion_mode        = SIMPLE_TRANSLATION;
+                        cand_array[cand_idx].is_interintra_used = 0;
+                        cand_array[cand_idx].use_intrabc        = 0;
+                        cand_array[cand_idx].skip_mode_allowed = cur_type == MD_COMP_AVG && is_skip_mode ? TRUE : FALSE;
                         cand_array[cand_idx].mv[REF_LIST_0].as_int = to_inj_mv0.as_int;
                         cand_array[cand_idx].mv[REF_LIST_1].as_int = to_inj_mv1.as_int;
                         cand_array[cand_idx].drl_index             = 0;
@@ -2091,8 +1778,7 @@ static void inject_mvp_candidates_ii(const SequenceControlSet *scs, PictureContr
                         //NRST-NRST
                         if (cur_type > MD_COMP_AVG) {
                             if (mask_done != 1) {
-                                if (svt_aom_calc_pred_masked_compound(
-                                        pcs, ctx, &cand_array[cand_idx]))
+                                if (svt_aom_calc_pred_masked_compound(pcs, ctx, &cand_array[cand_idx]))
                                     break;
                                 mask_done = 1;
                             }
@@ -2107,15 +1793,13 @@ static void inject_mvp_candidates_ii(const SequenceControlSet *scs, PictureContr
                 }
 
                 //NEAR_NEAR
-                tot_comp_types = (ctx->inter_comp_ctrls.do_near_near == 0) ||
-                        skip_mvp_compound_on_ref_types(ctx, rf)
+                tot_comp_types = (ctx->inter_comp_ctrls.do_near_near == 0) || skip_mvp_compound_on_ref_types(ctx, rf)
                     ? MD_COMP_DIST
                     : ctx->inter_comp_ctrls.tot_comp_types;
                 max_drl_index  = svt_aom_get_max_drl_index(xd->ref_mv_count[ref_pair], NEAR_NEARMV);
                 uint8_t cap_max_drl_index = 0;
                 if (ctx->cand_reduction_ctrls.near_count_ctrls.enabled)
-                    cap_max_drl_index = MIN(
-                        ctx->cand_reduction_ctrls.near_count_ctrls.near_near_count, max_drl_index);
+                    cap_max_drl_index = MIN(ctx->cand_reduction_ctrls.near_count_ctrls.near_near_count, max_drl_index);
                 for (drli = 0; drli < cap_max_drl_index; drli++) {
                     svt_aom_get_av1_mv_pred_drl(
                         ctx, blk_ptr, ref_pair, 1, NEAR_NEARMV, drli, nearestmv, nearmv, ref_mv);
@@ -2128,8 +1812,7 @@ static void inject_mvp_candidates_ii(const SequenceControlSet *scs, PictureContr
                     to_inj_mv0 = (Mv){{to_inject_mv_x_l0, to_inject_mv_y_l0}};
                     to_inj_mv1 = (Mv){{to_inject_mv_x_l1, to_inject_mv_y_l1}};
                     inj_mv     = (ctx->injected_mv_count == 0 ||
-                              mv_is_already_injected(ctx, to_inj_mv0, to_inj_mv1, ref_pair) ==
-                                  FALSE);
+                              mv_is_already_injected(ctx, to_inj_mv0, to_inj_mv1, ref_pair) == FALSE);
 
                     if (umv0tile) {
                         inside_tile = svt_aom_is_inside_tile_boundary(&(xd->tile),
@@ -2148,14 +1831,10 @@ static void inject_mvp_candidates_ii(const SequenceControlSet *scs, PictureContr
                     inj_mv = inj_mv && inside_tile;
                     if (inj_mv) {
                         Bool mask_done = 0;
-                        for (MD_COMP_TYPE cur_type = MD_COMP_AVG; cur_type < tot_comp_types;
-                             cur_type++) {
-#if OPT_CMP
+                        for (MD_COMP_TYPE cur_type = MD_COMP_AVG; cur_type < tot_comp_types; cur_type++) {
                             if (ctx->inter_comp_ctrls.no_dist && cur_type == MD_COMP_DIST)
                                 continue;
-#endif
-                            if (!is_valid_bi_type(
-                                    ctx, cur_type, list_idx_0, ref_idx_0, list_idx_1, ref_idx_1))
+                            if (!is_valid_bi_type(ctx, cur_type, list_idx_0, ref_idx_0, list_idx_1, ref_idx_1))
                                 continue;
                             cand_array[cand_idx].pred_mode             = NEAR_NEARMV;
                             cand_array[cand_idx].motion_mode           = SIMPLE_TRANSLATION;
@@ -2168,8 +1847,7 @@ static void inject_mvp_candidates_ii(const SequenceControlSet *scs, PictureContr
                             cand_array[cand_idx].ref_frame_type        = ref_pair;
                             if (cur_type > MD_COMP_AVG) {
                                 if (mask_done != 1) {
-                                    if (svt_aom_calc_pred_masked_compound(
-                                            pcs, ctx, &cand_array[cand_idx]))
+                                    if (svt_aom_calc_pred_masked_compound(pcs, ctx, &cand_array[cand_idx]))
                                         break;
                                     mask_done = 1;
                                 }
@@ -2190,9 +1868,8 @@ static void inject_mvp_candidates_ii(const SequenceControlSet *scs, PictureContr
     *candTotCnt = cand_idx;
 }
 
-static void inject_new_nearest_new_comb_candidates(const SequenceControlSet *scs,
-                                                   PictureControlSet *pcs, ModeDecisionContext *ctx,
-                                                   uint32_t *candTotCnt) {
+static void inject_new_nearest_new_comb_candidates(const SequenceControlSet *scs, PictureControlSet *pcs,
+                                                   ModeDecisionContext *ctx, uint32_t *candTotCnt) {
     uint32_t               cand_idx   = *candTotCnt;
     ModeDecisionCandidate *cand_array = ctx->fast_cand_array;
     MacroBlockD           *xd         = ctx->blk_ptr->av1xd;
@@ -2225,8 +1902,7 @@ static void inject_new_nearest_new_comb_candidates(const SequenceControlSet *scs
             if (rf[1] != NONE_FRAME) {
                 {
                     //NEAREST_NEWMV
-                    const MeSbResults *me_results =
-                        pcs->ppcs->pa_me_data->me_results[ctx->me_sb_addr];
+                    const MeSbResults *me_results = pcs->ppcs->pa_me_data->me_results[ctx->me_sb_addr];
 
                     int16_t to_inject_mv_x_l0 = ctx->md_local_blk_unit[ctx->blk_geom->blkidx_mds]
                                                     .ed_ref_mv_stack[ref_pair][0]
@@ -2241,8 +1917,7 @@ static void inject_new_nearest_new_comb_candidates(const SequenceControlSet *scs
                     Mv      to_inj_mv0  = {{to_inject_mv_x_l0, to_inject_mv_y_l0}};
                     Mv      to_inj_mv1  = {{to_inject_mv_x_l1, to_inject_mv_y_l1}};
                     uint8_t inj_mv      = (ctx->injected_mv_count == 0 ||
-                                      mv_is_already_injected(
-                                          ctx, to_inj_mv0, to_inj_mv1, ref_pair) == FALSE);
+                                      mv_is_already_injected(ctx, to_inj_mv0, to_inj_mv1, ref_pair) == FALSE);
                     int     inside_tile = umv0tile
                             ? svt_aom_is_inside_tile_boundary(&(xd->tile),
                                                           to_inject_mv_x_l0,
@@ -2250,30 +1925,19 @@ static void inject_new_nearest_new_comb_candidates(const SequenceControlSet *scs
                                                           mi_col,
                                                           mi_row,
                                                           ctx->blk_geom->bsize) &&
-                            svt_aom_is_inside_tile_boundary(&(xd->tile),
-                                                            to_inject_mv_x_l1,
-                                                            to_inject_mv_y_l1,
-                                                            mi_col,
-                                                            mi_row,
-                                                            ctx->blk_geom->bsize)
+                            svt_aom_is_inside_tile_boundary(
+                                &(xd->tile), to_inject_mv_x_l1, to_inject_mv_y_l1, mi_col, mi_row, ctx->blk_geom->bsize)
                             : 1;
                     inj_mv              = inj_mv && inside_tile;
                     inj_mv              = inj_mv &&
-                        svt_aom_is_me_data_present(ctx->me_block_offset,
-                                                   ctx->me_cand_offset,
-                                                   me_results,
-                                                   get_list_idx(rf[1]),
-                                                   ref_idx_1);
+                        svt_aom_is_me_data_present(
+                                 ctx->me_block_offset, ctx->me_cand_offset, me_results, get_list_idx(rf[1]), ref_idx_1);
                     if (inj_mv) {
                         Bool mask_done = 0;
-                        for (MD_COMP_TYPE cur_type = MD_COMP_AVG; cur_type < tot_comp_types;
-                             cur_type++) {
-#if OPT_CMP
+                        for (MD_COMP_TYPE cur_type = MD_COMP_AVG; cur_type < tot_comp_types; cur_type++) {
                             if (ctx->inter_comp_ctrls.no_dist && cur_type == MD_COMP_DIST)
                                 continue;
-#endif
-                            if (!is_valid_bi_type(
-                                    ctx, cur_type, list_idx_0, ref_idx_0, list_idx_1, ref_idx_1))
+                            if (!is_valid_bi_type(ctx, cur_type, list_idx_0, ref_idx_0, list_idx_1, ref_idx_1))
                                 continue;
                             cand_array[cand_idx].pred_mode          = NEAREST_NEWMV;
                             cand_array[cand_idx].motion_mode        = SIMPLE_TRANSLATION;
@@ -2294,13 +1958,11 @@ static void inject_new_nearest_new_comb_candidates(const SequenceControlSet *scs
                                                         nearestmv,
                                                         nearmv,
                                                         ref_mv);
-                            cand_array[cand_idx].pred_mv[REF_LIST_1] = (Mv){
-                                {ref_mv[1].as_mv.col, ref_mv[1].as_mv.row}};
+                            cand_array[cand_idx].pred_mv[REF_LIST_1] = (Mv){{ref_mv[1].as_mv.col, ref_mv[1].as_mv.row}};
                             //NRST_N
                             if (cur_type > MD_COMP_AVG) {
                                 if (mask_done != 1) {
-                                    if (svt_aom_calc_pred_masked_compound(
-                                            pcs, ctx, &cand_array[cand_idx]))
+                                    if (svt_aom_calc_pred_masked_compound(pcs, ctx, &cand_array[cand_idx]))
                                         break;
                                     mask_done = 1;
                                 }
@@ -2317,13 +1979,10 @@ static void inject_new_nearest_new_comb_candidates(const SequenceControlSet *scs
 
                 {
                     //NEW_NEARESTMV
-                    const MeSbResults *me_results =
-                        pcs->ppcs->pa_me_data->me_results[ctx->me_sb_addr];
-                    int16_t to_inject_mv_x_l0 =
-                        ctx->sb_me_mv[ctx->blk_geom->blkidx_mds][REF_LIST_0][ref_idx_0][0];
-                    int16_t to_inject_mv_y_l0 =
-                        ctx->sb_me_mv[ctx->blk_geom->blkidx_mds][REF_LIST_0][ref_idx_0][1];
-                    int16_t to_inject_mv_x_l1 = ctx->md_local_blk_unit[ctx->blk_geom->blkidx_mds]
+                    const MeSbResults *me_results = pcs->ppcs->pa_me_data->me_results[ctx->me_sb_addr];
+                    int16_t to_inject_mv_x_l0     = ctx->sb_me_mv[ctx->blk_geom->blkidx_mds][REF_LIST_0][ref_idx_0][0];
+                    int16_t to_inject_mv_y_l0     = ctx->sb_me_mv[ctx->blk_geom->blkidx_mds][REF_LIST_0][ref_idx_0][1];
+                    int16_t to_inject_mv_x_l1     = ctx->md_local_blk_unit[ctx->blk_geom->blkidx_mds]
                                                     .ed_ref_mv_stack[ref_pair][0]
                                                     .comp_mv.as_mv.col;
                     int16_t to_inject_mv_y_l1 = ctx->md_local_blk_unit[ctx->blk_geom->blkidx_mds]
@@ -2333,8 +1992,7 @@ static void inject_new_nearest_new_comb_candidates(const SequenceControlSet *scs
                     Mv      to_inj_mv0  = {{to_inject_mv_x_l0, to_inject_mv_y_l0}};
                     Mv      to_inj_mv1  = {{to_inject_mv_x_l1, to_inject_mv_y_l1}};
                     uint8_t inj_mv      = (ctx->injected_mv_count == 0 ||
-                                      mv_is_already_injected(
-                                          ctx, to_inj_mv0, to_inj_mv1, ref_pair) == FALSE);
+                                      mv_is_already_injected(ctx, to_inj_mv0, to_inj_mv1, ref_pair) == FALSE);
                     int     inside_tile = umv0tile
                             ? svt_aom_is_inside_tile_boundary(&(xd->tile),
                                                           to_inject_mv_x_l0,
@@ -2342,30 +2000,18 @@ static void inject_new_nearest_new_comb_candidates(const SequenceControlSet *scs
                                                           mi_col,
                                                           mi_row,
                                                           ctx->blk_geom->bsize) &&
-                            svt_aom_is_inside_tile_boundary(&(xd->tile),
-                                                            to_inject_mv_x_l1,
-                                                            to_inject_mv_y_l1,
-                                                            mi_col,
-                                                            mi_row,
-                                                            ctx->blk_geom->bsize)
+                            svt_aom_is_inside_tile_boundary(
+                                &(xd->tile), to_inject_mv_x_l1, to_inject_mv_y_l1, mi_col, mi_row, ctx->blk_geom->bsize)
                             : 1;
                     inj_mv              = inj_mv && inside_tile;
                     inj_mv              = inj_mv &&
-                        svt_aom_is_me_data_present(ctx->me_block_offset,
-                                                   ctx->me_cand_offset,
-                                                   me_results,
-                                                   0,
-                                                   ref_idx_0);
+                        svt_aom_is_me_data_present(ctx->me_block_offset, ctx->me_cand_offset, me_results, 0, ref_idx_0);
                     if (inj_mv) {
                         Bool mask_done = 0;
-                        for (MD_COMP_TYPE cur_type = MD_COMP_AVG; cur_type < tot_comp_types;
-                             cur_type++) {
-#if OPT_CMP
+                        for (MD_COMP_TYPE cur_type = MD_COMP_AVG; cur_type < tot_comp_types; cur_type++) {
                             if (ctx->inter_comp_ctrls.no_dist && cur_type == MD_COMP_DIST)
                                 continue;
-#endif
-                            if (!is_valid_bi_type(
-                                    ctx, cur_type, list_idx_0, ref_idx_0, list_idx_1, ref_idx_1))
+                            if (!is_valid_bi_type(ctx, cur_type, list_idx_0, ref_idx_0, list_idx_1, ref_idx_1))
                                 continue;
                             cand_array[cand_idx].pred_mode             = NEW_NEARESTMV;
                             cand_array[cand_idx].motion_mode           = SIMPLE_TRANSLATION;
@@ -2385,12 +2031,10 @@ static void inject_new_nearest_new_comb_candidates(const SequenceControlSet *scs
                                                         nearestmv,
                                                         nearmv,
                                                         ref_mv);
-                            cand_array[cand_idx].pred_mv[REF_LIST_0] = (Mv){
-                                {ref_mv[0].as_mv.col, ref_mv[0].as_mv.row}};
+                            cand_array[cand_idx].pred_mv[REF_LIST_0] = (Mv){{ref_mv[0].as_mv.col, ref_mv[0].as_mv.row}};
                             if (cur_type > MD_COMP_AVG) {
                                 if (mask_done != 1) {
-                                    if (svt_aom_calc_pred_masked_compound(
-                                            pcs, ctx, &cand_array[cand_idx]))
+                                    if (svt_aom_calc_pred_masked_compound(pcs, ctx, &cand_array[cand_idx]))
                                         break;
                                     mask_done = 1;
                                 }
@@ -2406,55 +2050,32 @@ static void inject_new_nearest_new_comb_candidates(const SequenceControlSet *scs
                 }
                 //NEW_NEARMV
                 {
-                    uint8_t max_drl_index = svt_aom_get_max_drl_index(xd->ref_mv_count[ref_pair],
-                                                                      NEW_NEARMV);
+                    uint8_t max_drl_index = svt_aom_get_max_drl_index(xd->ref_mv_count[ref_pair], NEW_NEARMV);
 
                     for (uint8_t drli = 0; drli < max_drl_index; drli++) {
-                        svt_aom_get_av1_mv_pred_drl(ctx,
-                                                    ctx->blk_ptr,
-                                                    ref_pair,
-                                                    1,
-                                                    NEW_NEARMV,
-                                                    drli,
-                                                    nearestmv,
-                                                    nearmv,
-                                                    ref_mv);
+                        svt_aom_get_av1_mv_pred_drl(
+                            ctx, ctx->blk_ptr, ref_pair, 1, NEW_NEARMV, drli, nearestmv, nearmv, ref_mv);
 
                         //NEW_NEARMV
-                        const MeSbResults *me_results =
-                            pcs->ppcs->pa_me_data->me_results[ctx->me_sb_addr];
-                        int16_t to_inject_mv_x_l0 =
-                            ctx->sb_me_mv[ctx->blk_geom->blkidx_mds][REF_LIST_0][ref_idx_0][0];
-                        int16_t to_inject_mv_y_l0 =
-                            ctx->sb_me_mv[ctx->blk_geom->blkidx_mds][REF_LIST_0][ref_idx_0][1];
+                        const MeSbResults *me_results = pcs->ppcs->pa_me_data->me_results[ctx->me_sb_addr];
+                        int16_t to_inject_mv_x_l0 = ctx->sb_me_mv[ctx->blk_geom->blkidx_mds][REF_LIST_0][ref_idx_0][0];
+                        int16_t to_inject_mv_y_l0 = ctx->sb_me_mv[ctx->blk_geom->blkidx_mds][REF_LIST_0][ref_idx_0][1];
                         int16_t to_inject_mv_x_l1 = nearmv[1].as_mv.col;
                         int16_t to_inject_mv_y_l1 = nearmv[1].as_mv.row;
 
                         Mv      to_inj_mv0 = {{to_inject_mv_x_l0, to_inject_mv_y_l0}};
                         Mv      to_inj_mv1 = {{to_inject_mv_x_l1, to_inject_mv_y_l1}};
                         uint8_t inj_mv     = (ctx->injected_mv_count == 0 ||
-                                          mv_is_already_injected(
-                                              ctx, to_inj_mv0, to_inj_mv1, ref_pair) == FALSE);
+                                          mv_is_already_injected(ctx, to_inj_mv0, to_inj_mv1, ref_pair) == FALSE);
                         inj_mv             = inj_mv &&
-                            svt_aom_is_me_data_present(ctx->me_block_offset,
-                                                       ctx->me_cand_offset,
-                                                       me_results,
-                                                       0,
-                                                       ref_idx_0);
+                            svt_aom_is_me_data_present(
+                                     ctx->me_block_offset, ctx->me_cand_offset, me_results, 0, ref_idx_0);
                         if (inj_mv) {
                             Bool mask_done = 0;
-                            for (MD_COMP_TYPE cur_type = MD_COMP_AVG; cur_type < tot_comp_types;
-                                 cur_type++) {
-#if OPT_CMP
+                            for (MD_COMP_TYPE cur_type = MD_COMP_AVG; cur_type < tot_comp_types; cur_type++) {
                                 if (ctx->inter_comp_ctrls.no_dist && cur_type == MD_COMP_DIST)
                                     continue;
-#endif
-                                if (!is_valid_bi_type(ctx,
-                                                      cur_type,
-                                                      list_idx_0,
-                                                      ref_idx_0,
-                                                      list_idx_1,
-                                                      ref_idx_1))
+                                if (!is_valid_bi_type(ctx, cur_type, list_idx_0, ref_idx_0, list_idx_1, ref_idx_1))
                                     continue;
                                 cand_array[cand_idx].pred_mode             = NEW_NEARMV;
                                 cand_array[cand_idx].motion_mode           = SIMPLE_TRANSLATION;
@@ -2469,8 +2090,7 @@ static void inject_new_nearest_new_comb_candidates(const SequenceControlSet *scs
                                     {ref_mv[0].as_mv.col, ref_mv[0].as_mv.row}};
                                 if (cur_type > MD_COMP_AVG) {
                                     if (mask_done != 1) {
-                                        if (svt_aom_calc_pred_masked_compound(
-                                                pcs, ctx, &cand_array[cand_idx]))
+                                        if (svt_aom_calc_pred_masked_compound(pcs, ctx, &cand_array[cand_idx]))
                                             break;
                                         mask_done = 1;
                                     }
@@ -2488,37 +2108,25 @@ static void inject_new_nearest_new_comb_candidates(const SequenceControlSet *scs
                 }
                 //NEAR_NEWMV
                 {
-                    uint8_t max_drl_index = svt_aom_get_max_drl_index(xd->ref_mv_count[ref_pair],
-                                                                      NEAR_NEWMV);
+                    uint8_t max_drl_index = svt_aom_get_max_drl_index(xd->ref_mv_count[ref_pair], NEAR_NEWMV);
 
                     for (uint8_t drli = 0; drli < max_drl_index; drli++) {
-                        svt_aom_get_av1_mv_pred_drl(ctx,
-                                                    ctx->blk_ptr,
-                                                    ref_pair,
-                                                    1,
-                                                    NEAR_NEWMV,
-                                                    drli,
-                                                    nearestmv,
-                                                    nearmv,
-                                                    ref_mv);
+                        svt_aom_get_av1_mv_pred_drl(
+                            ctx, ctx->blk_ptr, ref_pair, 1, NEAR_NEWMV, drli, nearestmv, nearmv, ref_mv);
 
                         //NEAR_NEWMV
-                        const MeSbResults *me_results =
-                            pcs->ppcs->pa_me_data->me_results[ctx->me_sb_addr];
+                        const MeSbResults *me_results = pcs->ppcs->pa_me_data->me_results[ctx->me_sb_addr];
 
                         int16_t to_inject_mv_x_l0 = nearmv[0].as_mv.col;
                         int16_t to_inject_mv_y_l0 = nearmv[0].as_mv.row;
                         int16_t to_inject_mv_x_l1 =
-                            ctx->sb_me_mv[ctx->blk_geom->blkidx_mds][get_list_idx(rf[1])][ref_idx_1]
-                                         [0];
+                            ctx->sb_me_mv[ctx->blk_geom->blkidx_mds][get_list_idx(rf[1])][ref_idx_1][0];
                         int16_t to_inject_mv_y_l1 =
-                            ctx->sb_me_mv[ctx->blk_geom->blkidx_mds][get_list_idx(rf[1])][ref_idx_1]
-                                         [1];
+                            ctx->sb_me_mv[ctx->blk_geom->blkidx_mds][get_list_idx(rf[1])][ref_idx_1][1];
                         Mv      to_inj_mv0 = {{to_inject_mv_x_l0, to_inject_mv_y_l0}};
                         Mv      to_inj_mv1 = {{to_inject_mv_x_l1, to_inject_mv_y_l1}};
                         uint8_t inj_mv     = (ctx->injected_mv_count == 0 ||
-                                          mv_is_already_injected(
-                                              ctx, to_inj_mv0, to_inj_mv1, ref_pair) == FALSE);
+                                          mv_is_already_injected(ctx, to_inj_mv0, to_inj_mv1, ref_pair) == FALSE);
                         inj_mv             = inj_mv &&
                             svt_aom_is_me_data_present(ctx->me_block_offset,
                                                        ctx->me_cand_offset,
@@ -2527,18 +2135,10 @@ static void inject_new_nearest_new_comb_candidates(const SequenceControlSet *scs
                                                        ref_idx_1);
                         if (inj_mv) {
                             Bool mask_done = 0;
-                            for (MD_COMP_TYPE cur_type = MD_COMP_AVG; cur_type < tot_comp_types;
-                                 cur_type++) {
-#if OPT_CMP
+                            for (MD_COMP_TYPE cur_type = MD_COMP_AVG; cur_type < tot_comp_types; cur_type++) {
                                 if (ctx->inter_comp_ctrls.no_dist && cur_type == MD_COMP_DIST)
                                     continue;
-#endif
-                                if (!is_valid_bi_type(ctx,
-                                                      cur_type,
-                                                      list_idx_0,
-                                                      ref_idx_0,
-                                                      list_idx_1,
-                                                      ref_idx_1))
+                                if (!is_valid_bi_type(ctx, cur_type, list_idx_0, ref_idx_0, list_idx_1, ref_idx_1))
                                     continue;
                                 cand_array[cand_idx].pred_mode             = NEAR_NEWMV;
                                 cand_array[cand_idx].motion_mode           = SIMPLE_TRANSLATION;
@@ -2553,8 +2153,7 @@ static void inject_new_nearest_new_comb_candidates(const SequenceControlSet *scs
                                     {ref_mv[1].as_mv.col, ref_mv[1].as_mv.row}};
                                 if (cur_type > MD_COMP_AVG) {
                                     if (mask_done != 1) {
-                                        if (svt_aom_calc_pred_masked_compound(
-                                                pcs, ctx, &cand_array[cand_idx]))
+                                        if (svt_aom_calc_pred_masked_compound(pcs, ctx, &cand_array[cand_idx]))
                                             break;
                                         mask_done = 1;
                                     }
@@ -2578,9 +2177,8 @@ static void inject_new_nearest_new_comb_candidates(const SequenceControlSet *scs
 
 // Refine the WM MV (8 bit search).  Return true if search found a valid MV; false otherwise
 uint8_t svt_aom_wm_motion_refinement(PictureControlSet *pcs, ModeDecisionContext *ctx,
-                                     ModeDecisionCandidateBuffer *cand_bf,
-                                     ModeDecisionCandidate *cand, uint8_t list_idx,
-                                     int shut_approx) {
+                                     ModeDecisionCandidateBuffer *cand_bf, ModeDecisionCandidate *cand,
+                                     uint8_t list_idx, int shut_approx) {
     PictureParentControlSet *ppcs         = pcs->ppcs;
     const MV                 neighbors[5] = {{0, 0}, {0, -1}, {1, 0}, {0, 1}, {-1, 0}};
 
@@ -2590,20 +2188,14 @@ uint8_t svt_aom_wm_motion_refinement(PictureControlSet *pcs, ModeDecisionContext
     uint32_t full_lambda   = ctx->full_lambda_md[EB_8_BIT_MD]; // 8bit only
     int      error_per_bit = full_lambda >> RD_EPB_SHIFT;
     error_per_bit += (error_per_bit == 0);
-    cand_bf->cand = cand;
-#if !CLN_OBMC_WARP
-    EbPictureBufferDesc *pred = cand_bf->pred;
-#endif
-    uint32_t blk_origin_index      = ctx->blk_geom->org_x + ctx->blk_geom->org_y * ctx->sb_size;
-    EbPictureBufferDesc *input_pic = ppcs->enhanced_pic; // 10BIT not supported
-    uint32_t input_origin_index    = (ctx->blk_org_y + input_pic->org_y) * input_pic->stride_y +
+    cand_bf->cand                           = cand;
+    uint32_t             blk_origin_index   = ctx->blk_geom->org_x + ctx->blk_geom->org_y * ctx->sb_size;
+    EbPictureBufferDesc *input_pic          = ppcs->enhanced_pic; // 10BIT not supported
+    uint32_t             input_origin_index = (ctx->blk_org_y + input_pic->org_y) * input_pic->stride_y +
         (ctx->blk_org_x + input_pic->org_x);
     const AomVarianceFnPtr *fn_ptr = &svt_aom_mefn_ptr[ctx->blk_geom->bsize];
     unsigned int            sse;
-#if !CLN_OBMC_WARP
-    uint8_t *pred_y = pred->buffer_y + blk_origin_index;
-#endif
-    uint8_t *src_y = input_pic->buffer_y + input_origin_index;
+    uint8_t                *src_y = input_pic->buffer_y + input_origin_index;
 
     int mv_prec_shift    = ppcs->frm_hdr.allow_high_precision_mv ? 0 : 1;
     int best_cost        = INT_MAX;
@@ -2642,31 +2234,28 @@ uint8_t svt_aom_wm_motion_refinement(PictureControlSet *pcs, ModeDecisionContext
             mv_unit.mv[list_idx]      = test_mv;
             mv_unit.pred_direction    = list_idx;
             cand->mv[list_idx].as_int = test_mv.as_int;
-            uint8_t local_warp_valid  = svt_aom_warped_motion_parameters(
-                pcs,
-                ctx->blk_ptr,
-                &mv_unit,
-                ctx->blk_geom,
-                ctx->blk_org_x,
-                ctx->blk_org_y,
-                cand->ref_frame_type,
-                &cand->wm_params_l0,
-                &cand->num_proj_ref,
-                ctx->wm_ctrls.min_neighbour_perc,
-                ctx->wm_ctrls.corner_perc_bias,
-                ctx->wm_ctrls.lower_band_th,
-                ctx->wm_ctrls.upper_band_th,
-                shut_approx);
+            uint8_t local_warp_valid  = svt_aom_warped_motion_parameters(pcs,
+                                                                        ctx->blk_ptr,
+                                                                        &mv_unit,
+                                                                        ctx->blk_geom,
+                                                                        ctx->blk_org_x,
+                                                                        ctx->blk_org_y,
+                                                                        cand->ref_frame_type,
+                                                                        &cand->wm_params_l0,
+                                                                        &cand->num_proj_ref,
+                                                                        ctx->wm_ctrls.min_neighbour_perc,
+                                                                        ctx->wm_ctrls.corner_perc_bias,
+                                                                        ctx->wm_ctrls.lower_band_th,
+                                                                        ctx->wm_ctrls.upper_band_th,
+                                                                        shut_approx);
             if (!local_warp_valid)
                 continue;
-#if CLN_OBMC_WARP
             EbPictureBufferDesc *ref_pic_list0 = (EbPictureBufferDesc *)NULL;
             EbPictureBufferDesc *ref_pic_list1 = (EbPictureBufferDesc *)NULL;
             MvReferenceFrame     rf[2];
             av1_set_ref_frame(rf, cand_bf->cand->ref_frame_type);
             int8_t  ref_idx_l0 = get_ref_frame_idx(rf[0]);
-            int8_t  ref_idx_l1 = rf[1] == NONE_FRAME ? get_ref_frame_idx(rf[0])
-                                                     : get_ref_frame_idx(rf[1]);
+            int8_t  ref_idx_l1 = rf[1] == NONE_FRAME ? get_ref_frame_idx(rf[0]) : get_ref_frame_idx(rf[1]);
             uint8_t list_idx0  = get_list_idx(rf[0]);
             uint8_t list_idx1  = rf[1] == NONE_FRAME ? get_list_idx(rf[0]) : get_list_idx(rf[1]);
             assert(list_idx0 < MAX_NUM_OF_REF_PIC_LIST && list_idx1 < MAX_NUM_OF_REF_PIC_LIST);
@@ -2709,25 +2298,15 @@ uint8_t svt_aom_wm_motion_refinement(PictureControlSet *pcs, ModeDecisionContext
                                              &cand->wm_params_l0,
                                              &cand->wm_params_l1,
                                              EB_EIGHT_BIT,
-#if OPT_WM_UV_ONLY
                                              PICTURE_BUFFER_DESC_LUMA_MASK,
-#else
-                                             ctx->uv_ctrls.uv_mode <= CHROMA_MODE_1 &&
-                                                 ctx->mds_skip_uv_pred == FALSE,
-#endif
                                              FALSE);
 
-            int var = fn_ptr->vf(ctx->scratch_prediction_ptr->buffer_y + blk_origin_index,
+            int var  = fn_ptr->vf(ctx->scratch_prediction_ptr->buffer_y + blk_origin_index,
                                  ctx->scratch_prediction_ptr->stride_y,
                                  src_y,
                                  input_pic->stride_y,
                                  &sse);
-#else
-            svt_aom_inter_pu_prediction_av1(0, ctx, pcs, cand_bf);
-
-            int var = fn_ptr->vf(pred_y, pred->stride_y, src_y, input_pic->stride_y, &sse);
-#endif
-            MV curr = (MV){.col = test_mv.x, .row = test_mv.y};
+            MV  curr = (MV){.col = test_mv.x, .row = test_mv.y};
             if (ctx->approx_inter_rate)
                 var += svt_aom_mv_err_cost_light(&curr, &ref_mv);
             else
@@ -2764,8 +2343,7 @@ uint8_t svt_aom_wm_motion_refinement(PictureControlSet *pcs, ModeDecisionContext
 
     // Check that final chosen MV is valid
     if (!ctx->corrupted_mv_check ||
-        is_valid_mv_diff(
-            best_pred_mv, best_mv, best_mv, 0, ppcs->frm_hdr.allow_high_precision_mv)) {
+        is_valid_mv_diff(best_pred_mv, best_mv, best_mv, 0, ppcs->frm_hdr.allow_high_precision_mv)) {
         int umv0_tile   = derive_rmv_setting(pcs->scs, ppcs);
         int inside_tile = 1;
         if (umv0_tile) {
@@ -2780,9 +2358,8 @@ uint8_t svt_aom_wm_motion_refinement(PictureControlSet *pcs, ModeDecisionContext
 
     return 0;
 }
-static INLINE void setup_pred_plane(struct Buf2D *dst, BlockSize bsize, uint8_t *src, int width,
-                                    int height, int stride, int mi_row, int mi_col,
-                                    int subsampling_x, int subsampling_y) {
+static INLINE void setup_pred_plane(struct Buf2D *dst, BlockSize bsize, uint8_t *src, int width, int height, int stride,
+                                    int mi_row, int mi_col, int subsampling_x, int subsampling_y) {
     // Offset the buffer pointer
     if (subsampling_y && (mi_row & 0x01) && (mi_size_high[bsize] == 1))
         mi_row -= 1;
@@ -2797,24 +2374,16 @@ static INLINE void setup_pred_plane(struct Buf2D *dst, BlockSize bsize, uint8_t 
     dst->height = height;
     dst->stride = stride;
 }
-void svt_av1_setup_pred_block(BlockSize bsize, struct Buf2D dst[MAX_MB_PLANE],
-                              const Yv12BufferConfig *src, int mi_row, int mi_col) {
+void svt_av1_setup_pred_block(BlockSize bsize, struct Buf2D dst[MAX_MB_PLANE], const Yv12BufferConfig *src, int mi_row,
+                              int mi_col) {
     dst[0].buf    = src->y_buffer;
     dst[0].stride = src->y_stride;
     dst[1].buf    = src->u_buffer;
     dst[2].buf    = src->v_buffer;
     dst[1].stride = dst[2].stride = src->uv_stride;
 
-    setup_pred_plane(dst,
-                     bsize,
-                     dst[0].buf,
-                     src->y_crop_width,
-                     src->y_crop_height,
-                     dst[0].stride,
-                     mi_row,
-                     mi_col,
-                     0,
-                     0);
+    setup_pred_plane(
+        dst, bsize, dst[0].buf, src->y_crop_width, src->y_crop_height, dst[0].stride, mi_row, mi_col, 0, 0);
 }
 
 static int sad_per_bit_lut_8[QINDEX_RANGE];
@@ -2840,24 +2409,17 @@ void svt_av1_init_me_luts(void) {
     init_me_luts_bd(sad_per_bit_lut_10, QINDEX_RANGE, EB_TEN_BIT);
 }
 
-int svt_av1_find_best_obmc_sub_pixel_tree_up(ModeDecisionContext *ctx, IntraBcContext *x,
-                                             const AV1_COMMON *const cm, int mi_row, int mi_col,
-                                             MV *bestmv, const MV *ref_mv, int allow_hp,
-                                             int error_per_bit, const AomVarianceFnPtr *vfp,
-                                             int forced_stop, int iters_per_step, int *mvjcost,
-                                             int *mvcost[2], int *distortion, unsigned int *sse1,
-                                             int is_second, int use_accurate_subpel_search);
+int svt_av1_find_best_obmc_sub_pixel_tree_up(ModeDecisionContext *ctx, IntraBcContext *x, const AV1_COMMON *const cm,
+                                             int mi_row, int mi_col, MV *bestmv, const MV *ref_mv, int allow_hp,
+                                             int error_per_bit, const AomVarianceFnPtr *vfp, int forced_stop,
+                                             int iters_per_step, int *mvjcost, int *mvcost[2], int *distortion,
+                                             unsigned int *sse1, int is_second, int use_accurate_subpel_search);
 
-int  svt_av1_obmc_full_pixel_search(ModeDecisionContext *ctx, IntraBcContext *x, MV *mvp_full,
-                                    int sadpb, const AomVarianceFnPtr *fn_ptr, const MV *ref_mv,
-                                    MV *dst_mv, int is_second);
-void single_motion_search(PictureControlSet *pcs, ModeDecisionContext *ctx,
-                          ModeDecisionCandidate *cand,
-#if !CLN_MISC_CLEANUPS
-                          const MvReferenceFrame *rf,
-#endif
-                          IntMv best_pred_mv, IntraBcContext *x, BlockSize bsize, MV *ref_mv,
-                          int *rate_mv, int refine_level) {
+int  svt_av1_obmc_full_pixel_search(ModeDecisionContext *ctx, IntraBcContext *x, MV *mvp_full, int sadpb,
+                                    const AomVarianceFnPtr *fn_ptr, const MV *ref_mv, MV *dst_mv, int is_second);
+void single_motion_search(PictureControlSet *pcs, ModeDecisionContext *ctx, ModeDecisionCandidate *cand,
+                          IntMv best_pred_mv, IntraBcContext *x, BlockSize bsize, MV *ref_mv, int *rate_mv,
+                          int refine_level) {
     bool do_full_refine = 0;
     bool do_frac_refine = 0;
     switch (refine_level) {
@@ -2928,10 +2490,8 @@ void single_motion_search(PictureControlSet *pcs, ModeDecisionContext *ctx,
         x->best_mv.as_mv.row = best_pred_mv.as_mv.row >> 3;
     }
     if (do_frac_refine) {
-        int dis; /* TODO: use dis in distortion calculation later. */
-#if CLN_MISC_CLEANUPS
+        int          dis; /* TODO: use dis in distortion calculation later. */
         unsigned int sse1; //unused
-#endif
         switch (cand->motion_mode) {
         case OBMC_CAUSAL:
             svt_av1_find_best_obmc_sub_pixel_tree_up(ctx,
@@ -2949,11 +2509,7 @@ void single_motion_search(PictureControlSet *pcs, ModeDecisionContext *ctx,
                                                      x->nmv_vec_cost,
                                                      x->mv_cost_stack,
                                                      &dis,
-#if CLN_MISC_CLEANUPS
                                                      &sse1,
-#else
-                                                     &ctx->pred_sse[rf[0]],
-#endif
                                                      0,
                                                      USE_8_TAPS);
             break;
@@ -2966,17 +2522,14 @@ void single_motion_search(PictureControlSet *pcs, ModeDecisionContext *ctx,
     if (ctx->approx_inter_rate)
         *rate_mv = svt_av1_mv_bit_cost_light(&x->best_mv.as_mv, ref_mv);
     else
-        *rate_mv = svt_av1_mv_bit_cost(
-            &x->best_mv.as_mv, ref_mv, x->nmv_vec_cost, x->mv_cost_stack, MV_COST_WEIGHT);
+        *rate_mv = svt_av1_mv_bit_cost(&x->best_mv.as_mv, ref_mv, x->nmv_vec_cost, x->mv_cost_stack, MV_COST_WEIGHT);
 }
 
 // Refine the OBMC MV (8 bit search). Return true if search found a valid MV; false otherwise
 uint8_t svt_aom_obmc_motion_refinement(PictureControlSet *pcs, struct ModeDecisionContext *ctx,
-                                       ModeDecisionCandidate *cand, uint8_t ref_list_idx,
-                                       int refine_level) {
+                                       ModeDecisionCandidate *cand, uint8_t ref_list_idx, int refine_level) {
     if (ctx->obmc_ctrls.max_blk_size_to_refine_16x16) {
-        if (block_size_wide[ctx->blk_geom->bsize] > 16 ||
-            block_size_high[ctx->blk_geom->bsize] > 16) {
+        if (block_size_wide[ctx->blk_geom->bsize] > 16 || block_size_high[ctx->blk_geom->bsize] > 16) {
             // No refinement performed, therefore input MVs haven't changed and are assumed to be valid
             return 1;
         }
@@ -2996,8 +2549,7 @@ uint8_t svt_aom_obmc_motion_refinement(PictureControlSet *pcs, struct ModeDecisi
 
         assert(list_idx < MAX_NUM_OF_REF_PIC_LIST);
         EbPictureBufferDesc *reference_picture =
-            ((EbReferenceObject *)pcs->ref_pic_ptr_array[list_idx][ref_idx]->object_ptr)
-                ->reference_picture;
+            ((EbReferenceObject *)pcs->ref_pic_ptr_array[list_idx][ref_idx]->object_ptr)->reference_picture;
 
         svt_aom_use_scaled_rec_refs_if_needed(
             pcs,
@@ -3026,18 +2578,7 @@ uint8_t svt_aom_obmc_motion_refinement(PictureControlSet *pcs, struct ModeDecisi
     ref_mv.col = cand->pred_mv[ref_list_idx].x;
     ref_mv.row = cand->pred_mv[ref_list_idx].y;
 
-    single_motion_search(pcs,
-                         ctx,
-                         cand,
-#if !CLN_MISC_CLEANUPS
-                         (const MvReferenceFrame[]){cand->ref_frame_type, -1},
-#endif
-                         best_mv,
-                         x,
-                         ctx->blk_geom->bsize,
-                         &ref_mv,
-                         &tmp_rate_mv,
-                         refine_level);
+    single_motion_search(pcs, ctx, cand, best_mv, x, ctx->blk_geom->bsize, &ref_mv, &tmp_rate_mv, refine_level);
     cand->mv[ref_list_idx].x = x->best_mv.as_mv.col;
     cand->mv[ref_list_idx].y = x->best_mv.as_mv.row;
     choose_best_av1_mv_pred(ctx,
@@ -3080,9 +2621,8 @@ uint8_t svt_aom_obmc_motion_refinement(PictureControlSet *pcs, struct ModeDecisi
    inject ME candidates for Light PD0
 */
 static void inject_new_candidates_light_pd0(struct ModeDecisionContext *ctx, PictureControlSet *pcs,
-                                            Bool is_compound_enabled, Bool allow_bipred,
-                                            uint32_t me_sb_addr, uint32_t me_block_offset,
-                                            uint32_t *candidate_total_cnt) {
+                                            Bool is_compound_enabled, Bool allow_bipred, uint32_t me_sb_addr,
+                                            uint32_t me_block_offset, uint32_t *candidate_total_cnt) {
     ModeDecisionCandidate *cand_array       = ctx->fast_cand_array;
     uint32_t               cand_total_cnt   = (*candidate_total_cnt);
     const MeSbResults     *me_results       = pcs->ppcs->pa_me_data->me_results[me_sb_addr];
@@ -3105,10 +2645,10 @@ static void inject_new_candidates_light_pd0(struct ModeDecisionContext *ctx, Pic
             NEWMV L0
         ************* */
         if (inter_direction == 0) {
-            const int16_t to_inject_mv_x =
-                (me_results->me_mv_array[me_block_offset * max_refs + list0_ref_index].x_mv) << 1;
-            const int16_t to_inject_mv_y =
-                (me_results->me_mv_array[me_block_offset * max_refs + list0_ref_index].y_mv) << 1;
+            const int16_t to_inject_mv_x = (me_results->me_mv_array[me_block_offset * max_refs + list0_ref_index].x_mv)
+                << 1;
+            const int16_t to_inject_mv_y = (me_results->me_mv_array[me_block_offset * max_refs + list0_ref_index].y_mv)
+                << 1;
             uint8_t to_inject_ref_type = svt_get_ref_frame_type(REF_LIST_0, list0_ref_index);
 
             cand_array[cand_total_cnt].pred_mode = NEWMV;
@@ -3127,13 +2667,9 @@ static void inject_new_candidates_light_pd0(struct ModeDecisionContext *ctx, Pic
            ************* */
             if (inter_direction == 1) {
                 const int16_t to_inject_mv_x =
-                    (me_results->me_mv_array[me_block_offset * max_refs + max_l0 + list0_ref_index]
-                         .x_mv)
-                    << 1;
+                    (me_results->me_mv_array[me_block_offset * max_refs + max_l0 + list0_ref_index].x_mv) << 1;
                 const int16_t to_inject_mv_y =
-                    (me_results->me_mv_array[me_block_offset * max_refs + max_l0 + list0_ref_index]
-                         .y_mv)
-                    << 1;
+                    (me_results->me_mv_array[me_block_offset * max_refs + max_l0 + list0_ref_index].y_mv) << 1;
 
                 uint8_t to_inject_ref_type = svt_get_ref_frame_type(REF_LIST_1, list1_ref_index);
 
@@ -3155,24 +2691,18 @@ static void inject_new_candidates_light_pd0(struct ModeDecisionContext *ctx, Pic
                         (me_block_results_ptr->ref0_list > 0 ? max_l0 : 0) + list0_ref_index;
                     const uint32_t ref1_offset = me_block_offset * max_refs +
                         (me_block_results_ptr->ref1_list > 0 ? max_l0 : 0) + list1_ref_index;
-                    const int16_t to_inject_mv_x_l0 = (me_results->me_mv_array[ref0_offset].x_mv)
-                        << 1;
-                    const int16_t to_inject_mv_y_l0 = (me_results->me_mv_array[ref0_offset].y_mv)
-                        << 1;
-                    const int16_t to_inject_mv_x_l1 = (me_results->me_mv_array[ref1_offset].x_mv)
-                        << 1;
-                    const int16_t to_inject_mv_y_l1 = (me_results->me_mv_array[ref1_offset].y_mv)
-                        << 1;
-                    uint8_t to_inject_ref_type = av1_ref_frame_type((const MvReferenceFrame[]){
+                    const int16_t to_inject_mv_x_l0  = (me_results->me_mv_array[ref0_offset].x_mv) << 1;
+                    const int16_t to_inject_mv_y_l0  = (me_results->me_mv_array[ref0_offset].y_mv) << 1;
+                    const int16_t to_inject_mv_x_l1  = (me_results->me_mv_array[ref1_offset].x_mv) << 1;
+                    const int16_t to_inject_mv_y_l1  = (me_results->me_mv_array[ref1_offset].y_mv) << 1;
+                    uint8_t       to_inject_ref_type = av1_ref_frame_type((const MvReferenceFrame[]){
                         svt_get_ref_frame_type(me_block_results_ptr->ref0_list, list0_ref_index),
                         svt_get_ref_frame_type(me_block_results_ptr->ref1_list, list1_ref_index)});
 
                     // Inject AVG candidate only
                     // Set the MV to ME result
-                    cand_array[cand_total_cnt].mv[REF_LIST_0] = (Mv){
-                        {to_inject_mv_x_l0, to_inject_mv_y_l0}};
-                    cand_array[cand_total_cnt].mv[REF_LIST_1] = (Mv){
-                        {to_inject_mv_x_l1, to_inject_mv_y_l1}};
+                    cand_array[cand_total_cnt].mv[REF_LIST_0] = (Mv){{to_inject_mv_x_l0, to_inject_mv_y_l0}};
+                    cand_array[cand_total_cnt].mv[REF_LIST_1] = (Mv){{to_inject_mv_x_l1, to_inject_mv_y_l1}};
                     // will be needed later by the rate estimation
                     cand_array[cand_total_cnt].pred_mode      = NEW_NEWMV;
                     cand_array[cand_total_cnt].ref_frame_type = to_inject_ref_type;
@@ -3188,9 +2718,8 @@ static void inject_new_candidates_light_pd0(struct ModeDecisionContext *ctx, Pic
     (*candidate_total_cnt) = cand_total_cnt;
 }
 static void inject_new_candidates_light_pd1(PictureControlSet *pcs, struct ModeDecisionContext *ctx,
-                                            Bool is_compound_enabled, Bool allow_bipred,
-                                            uint32_t me_sb_addr, uint32_t me_block_offset,
-                                            uint32_t *candidate_total_cnt) {
+                                            Bool is_compound_enabled, Bool allow_bipred, uint32_t me_sb_addr,
+                                            uint32_t me_block_offset, uint32_t *candidate_total_cnt) {
     ModeDecisionCandidate *cand_array       = ctx->fast_cand_array;
     IntMv                  best_pred_mv[2]  = {{0}, {0}};
     uint32_t               cand_total_cnt   = (*candidate_total_cnt);
@@ -3215,10 +2744,8 @@ static void inject_new_candidates_light_pd1(PictureControlSet *pcs, struct ModeD
             NEWMV L0
         ************* */
         if (inter_direction == 0) {
-            int16_t to_inject_mv_x =
-                ctx->sb_me_mv[ctx->blk_geom->blkidx_mds][REF_LIST_0][list0_ref_index][0];
-            int16_t to_inject_mv_y =
-                ctx->sb_me_mv[ctx->blk_geom->blkidx_mds][REF_LIST_0][list0_ref_index][1];
+            int16_t to_inject_mv_x     = ctx->sb_me_mv[ctx->blk_geom->blkidx_mds][REF_LIST_0][list0_ref_index][0];
+            int16_t to_inject_mv_y     = ctx->sb_me_mv[ctx->blk_geom->blkidx_mds][REF_LIST_0][list0_ref_index][1];
             uint8_t to_inject_ref_type = svt_get_ref_frame_type(REF_LIST_0, list0_ref_index);
 
             Mv to_inj_mv = {{to_inject_mv_x, to_inject_mv_y}};
@@ -3238,11 +2765,8 @@ static void inject_new_candidates_light_pd1(PictureControlSet *pcs, struct ModeD
                                         &drl_index,
                                         best_pred_mv);
                 if (!ctx->corrupted_mv_check ||
-                    is_valid_mv_diff(best_pred_mv,
-                                     to_inj_mv,
-                                     to_inj_mv,
-                                     0,
-                                     pcs->ppcs->frm_hdr.allow_high_precision_mv)) {
+                    is_valid_mv_diff(
+                        best_pred_mv, to_inj_mv, to_inj_mv, 0, pcs->ppcs->frm_hdr.allow_high_precision_mv)) {
                     cand_array[cand_total_cnt].skip_mode_allowed     = FALSE;
                     cand_array[cand_total_cnt].pred_mode             = NEWMV;
                     cand_array[cand_total_cnt].motion_mode           = SIMPLE_TRANSLATION;
@@ -3265,16 +2789,13 @@ static void inject_new_candidates_light_pd1(PictureControlSet *pcs, struct ModeD
                NEWMV L1
            ************* */
             if (inter_direction == 1) {
-                int16_t to_inject_mv_x =
-                    ctx->sb_me_mv[ctx->blk_geom->blkidx_mds][REF_LIST_1][list1_ref_index][0];
-                int16_t to_inject_mv_y =
-                    ctx->sb_me_mv[ctx->blk_geom->blkidx_mds][REF_LIST_1][list1_ref_index][1];
+                int16_t to_inject_mv_x     = ctx->sb_me_mv[ctx->blk_geom->blkidx_mds][REF_LIST_1][list1_ref_index][0];
+                int16_t to_inject_mv_y     = ctx->sb_me_mv[ctx->blk_geom->blkidx_mds][REF_LIST_1][list1_ref_index][1];
                 uint8_t to_inject_ref_type = svt_get_ref_frame_type(REF_LIST_1, list1_ref_index);
 
                 Mv to_inj_mv = {{to_inject_mv_x, to_inject_mv_y}};
                 if (ctx->injected_mv_count == 0 ||
-                    mv_is_already_injected(ctx, to_inj_mv, to_inj_mv, to_inject_ref_type) ==
-                        FALSE) {
+                    mv_is_already_injected(ctx, to_inj_mv, to_inj_mv, to_inject_ref_type) == FALSE) {
                     uint8_t drl_index = 0;
                     choose_best_av1_mv_pred(ctx,
                                             ctx->md_rate_est_ctx,
@@ -3289,11 +2810,8 @@ static void inject_new_candidates_light_pd1(PictureControlSet *pcs, struct ModeD
                                             &drl_index,
                                             best_pred_mv);
                     if (!ctx->corrupted_mv_check ||
-                        is_valid_mv_diff(best_pred_mv,
-                                         to_inj_mv,
-                                         to_inj_mv,
-                                         0,
-                                         pcs->ppcs->frm_hdr.allow_high_precision_mv)) {
+                        is_valid_mv_diff(
+                            best_pred_mv, to_inj_mv, to_inj_mv, 0, pcs->ppcs->frm_hdr.allow_high_precision_mv)) {
                         cand_array[cand_total_cnt].skip_mode_allowed = FALSE;
                         cand_array[cand_total_cnt].pred_mode         = NEWMV;
                         cand_array[cand_total_cnt].motion_mode       = SIMPLE_TRANSLATION;
@@ -3316,20 +2834,15 @@ static void inject_new_candidates_light_pd1(PictureControlSet *pcs, struct ModeD
                NEW_NEWMV
             ************* */
             if (allow_bipred && inter_direction == 2 &&
-                !(ctx->is_intra_bordered &&
-                  ctx->cand_reduction_ctrls.use_neighbouring_mode_ctrls.enabled)) {
+                !(ctx->is_intra_bordered && ctx->cand_reduction_ctrls.use_neighbouring_mode_ctrls.enabled)) {
                 int16_t to_inject_mv_x_l0 =
-                    ctx->sb_me_mv[ctx->blk_geom->blkidx_mds][me_block_results_ptr->ref0_list]
-                                 [list0_ref_index][0];
+                    ctx->sb_me_mv[ctx->blk_geom->blkidx_mds][me_block_results_ptr->ref0_list][list0_ref_index][0];
                 int16_t to_inject_mv_y_l0 =
-                    ctx->sb_me_mv[ctx->blk_geom->blkidx_mds][me_block_results_ptr->ref0_list]
-                                 [list0_ref_index][1];
+                    ctx->sb_me_mv[ctx->blk_geom->blkidx_mds][me_block_results_ptr->ref0_list][list0_ref_index][1];
                 int16_t to_inject_mv_x_l1 =
-                    ctx->sb_me_mv[ctx->blk_geom->blkidx_mds][me_block_results_ptr->ref1_list]
-                                 [list1_ref_index][0];
+                    ctx->sb_me_mv[ctx->blk_geom->blkidx_mds][me_block_results_ptr->ref1_list][list1_ref_index][0];
                 int16_t to_inject_mv_y_l1 =
-                    ctx->sb_me_mv[ctx->blk_geom->blkidx_mds][me_block_results_ptr->ref1_list]
-                                 [list1_ref_index][1];
+                    ctx->sb_me_mv[ctx->blk_geom->blkidx_mds][me_block_results_ptr->ref1_list][list1_ref_index][1];
 
                 uint8_t to_inject_ref_type = av1_ref_frame_type((const MvReferenceFrame[]){
                     svt_get_ref_frame_type(me_block_results_ptr->ref0_list, list0_ref_index),
@@ -3338,8 +2851,7 @@ static void inject_new_candidates_light_pd1(PictureControlSet *pcs, struct ModeD
                 Mv to_inj_mv0 = {{to_inject_mv_x_l0, to_inject_mv_y_l0}};
                 Mv to_inj_mv1 = {{to_inject_mv_x_l1, to_inject_mv_y_l1}};
                 if ((ctx->injected_mv_count == 0 ||
-                     mv_is_already_injected(ctx, to_inj_mv0, to_inj_mv1, to_inject_ref_type) ==
-                         FALSE)) {
+                     mv_is_already_injected(ctx, to_inj_mv0, to_inj_mv1, to_inject_ref_type) == FALSE)) {
                     uint8_t drl_index = 0;
                     choose_best_av1_mv_pred(ctx,
                                             ctx->md_rate_est_ctx,
@@ -3354,11 +2866,8 @@ static void inject_new_candidates_light_pd1(PictureControlSet *pcs, struct ModeD
                                             &drl_index,
                                             best_pred_mv);
                     if (!ctx->corrupted_mv_check ||
-                        is_valid_mv_diff(best_pred_mv,
-                                         to_inj_mv0,
-                                         to_inj_mv1,
-                                         1,
-                                         pcs->ppcs->frm_hdr.allow_high_precision_mv)) {
+                        is_valid_mv_diff(
+                            best_pred_mv, to_inj_mv0, to_inj_mv1, 1, pcs->ppcs->frm_hdr.allow_high_precision_mv)) {
                         cand_array[cand_total_cnt].skip_mode_allowed     = FALSE;
                         cand_array[cand_total_cnt].drl_index             = drl_index;
                         cand_array[cand_total_cnt].mv[REF_LIST_0].as_int = to_inj_mv0.as_int;
@@ -3389,9 +2898,8 @@ static void inject_new_candidates_light_pd1(PictureControlSet *pcs, struct ModeD
     (*candidate_total_cnt) = cand_total_cnt;
 }
 static void inject_new_candidates(const SequenceControlSet *scs, struct ModeDecisionContext *ctx,
-                                  PictureControlSet *pcs, Bool is_compound_enabled,
-                                  Bool allow_bipred, uint32_t me_sb_addr, uint32_t me_block_offset,
-                                  uint32_t *candidate_total_cnt) {
+                                  PictureControlSet *pcs, Bool is_compound_enabled, Bool allow_bipred,
+                                  uint32_t me_sb_addr, uint32_t me_block_offset, uint32_t *candidate_total_cnt) {
     ModeDecisionCandidate *cand_array       = ctx->fast_cand_array;
     IntMv                  best_pred_mv[2]  = {{0}, {0}};
     uint32_t               cand_total_cnt   = (*candidate_total_cnt);
@@ -3404,9 +2912,8 @@ static void inject_new_candidates(const SequenceControlSet *scs, struct ModeDeci
     uint32_t               mi_row           = ctx->blk_org_y >> MI_SIZE_LOG2;
     uint32_t               mi_col           = ctx->blk_org_x >> MI_SIZE_LOG2;
     BlockSize              bsize            = ctx->blk_geom->bsize; // bloc size
-    MD_COMP_TYPE           tot_comp_types   = (ctx->inter_comp_ctrls.do_me == 0)
-                    ? MD_COMP_DIST
-                    : ctx->inter_comp_ctrls.tot_comp_types;
+    MD_COMP_TYPE           tot_comp_types   = (ctx->inter_comp_ctrls.do_me == 0) ? MD_COMP_DIST
+                                                                                 : ctx->inter_comp_ctrls.tot_comp_types;
     for (uint8_t me_candidate_index = 0; me_candidate_index < total_me_cnt; ++me_candidate_index) {
         const MeCandidate *me_block_results_ptr = &me_block_results[me_candidate_index];
         const uint8_t      inter_direction      = me_block_results_ptr->direction;
@@ -3421,22 +2928,15 @@ static void inject_new_candidates(const SequenceControlSet *scs, struct ModeDeci
             NEWMV L0
         ************* */
         if (inter_direction == 0) {
-            if (!svt_aom_is_valid_unipred_ref(
-                    ctx, MIN(TOT_INTER_GROUP - 1, PA_ME_GROUP), REF_LIST_0, list0_ref_index))
+            if (!svt_aom_is_valid_unipred_ref(ctx, MIN(TOT_INTER_GROUP - 1, PA_ME_GROUP), REF_LIST_0, list0_ref_index))
                 continue;
-            int16_t to_inject_mv_x =
-                ctx->sb_me_mv[ctx->blk_geom->blkidx_mds][REF_LIST_0][list0_ref_index][0];
-            int16_t to_inject_mv_y =
-                ctx->sb_me_mv[ctx->blk_geom->blkidx_mds][REF_LIST_0][list0_ref_index][1];
+            int16_t to_inject_mv_x     = ctx->sb_me_mv[ctx->blk_geom->blkidx_mds][REF_LIST_0][list0_ref_index][0];
+            int16_t to_inject_mv_y     = ctx->sb_me_mv[ctx->blk_geom->blkidx_mds][REF_LIST_0][list0_ref_index][1];
             uint8_t to_inject_ref_type = svt_get_ref_frame_type(REF_LIST_0, list0_ref_index);
             inside_tile                = 1;
             if (umv0tile)
-                inside_tile = svt_aom_is_inside_tile_boundary(&(xd->tile),
-                                                              to_inject_mv_x,
-                                                              to_inject_mv_y,
-                                                              mi_col,
-                                                              mi_row,
-                                                              ctx->blk_geom->bsize);
+                inside_tile = svt_aom_is_inside_tile_boundary(
+                    &(xd->tile), to_inject_mv_x, to_inject_mv_y, mi_col, mi_row, ctx->blk_geom->bsize);
             uint8_t skip_cand = (!inside_tile);
             Mv      to_inj_mv = {{to_inject_mv_x, to_inject_mv_y}};
             if (!skip_cand &&
@@ -3456,35 +2956,26 @@ static void inject_new_candidates(const SequenceControlSet *scs, struct ModeDeci
                                         &drl_index,
                                         best_pred_mv);
                 if (!ctx->corrupted_mv_check ||
-                    is_valid_mv_diff(best_pred_mv,
-                                     to_inj_mv,
-                                     to_inj_mv,
-                                     0,
-                                     pcs->ppcs->frm_hdr.allow_high_precision_mv)) {
+                    is_valid_mv_diff(
+                        best_pred_mv, to_inj_mv, to_inj_mv, 0, pcs->ppcs->frm_hdr.allow_high_precision_mv)) {
                     uint8_t inter_type;
                     uint8_t is_ii_allowed = svt_is_interintra_allowed(
                         ctx->inter_intra_comp_ctrls.enabled,
                         bsize,
                         NEWMV,
                         (const MvReferenceFrame[]){to_inject_ref_type, -1});
-                    const uint8_t ii_wedge_mode = ctx->blk_geom->shape == PART_N
-                        ? ctx->inter_intra_comp_ctrls.wedge_mode_sq
-                        : ctx->inter_intra_comp_ctrls.wedge_mode_nsq;
-                    uint8_t tot_inter_types = is_ii_allowed ? (ii_wedge_mode == 1 ? II_COUNT : 2)
-                                                            : 1;
-                    uint8_t is_obmc_allowed =
-                        svt_aom_obmc_motion_mode_allowed(
-                            pcs, ctx, bsize, 0, to_inject_ref_type, -1, NEWMV) == OBMC_CAUSAL;
+                    const uint8_t ii_wedge_mode   = ctx->blk_geom->shape == PART_N
+                          ? ctx->inter_intra_comp_ctrls.wedge_mode_sq
+                          : ctx->inter_intra_comp_ctrls.wedge_mode_nsq;
+                    uint8_t       tot_inter_types = is_ii_allowed ? (ii_wedge_mode == 1 ? II_COUNT : 2) : 1;
+                    uint8_t       is_obmc_allowed = svt_aom_obmc_motion_mode_allowed(
+                                                  pcs, ctx, bsize, 0, to_inject_ref_type, -1, NEWMV) == OBMC_CAUSAL;
                     uint8_t is_warp_allowed = warped_motion_mode_allowed(pcs, ctx);
-                    tot_inter_types = is_warp_allowed ? tot_inter_types + 1 : tot_inter_types;
-                    tot_inter_types = is_obmc_allowed ? tot_inter_types + 1 : tot_inter_types;
+                    tot_inter_types         = is_warp_allowed ? tot_inter_types + 1 : tot_inter_types;
+                    tot_inter_types         = is_obmc_allowed ? tot_inter_types + 1 : tot_inter_types;
                     for (inter_type = 0; inter_type < tot_inter_types; inter_type++) {
-                        if (!is_valid_uni_type(ctx,
-                                               inter_type,
-                                               is_ii_allowed,
-                                               is_warp_allowed,
-                                               REF_LIST_0,
-                                               list0_ref_index))
+                        if (!is_valid_uni_type(
+                                ctx, inter_type, is_ii_allowed, is_warp_allowed, REF_LIST_0, list0_ref_index))
                             continue;
                         cand_array[cand_total_cnt].use_intrabc       = 0;
                         cand_array[cand_total_cnt].skip_mode_allowed = FALSE;
@@ -3514,8 +3005,7 @@ static void inject_new_candidates(const SequenceControlSet *scs, struct ModeDeci
                                     cand_array[cand_total_cnt].use_wedge_interintra = 0;
                                 }
                             }
-                            if (is_warp_allowed &&
-                                inter_type == (tot_inter_types - (1 + is_obmc_allowed))) {
+                            if (is_warp_allowed && inter_type == (tot_inter_types - (1 + is_obmc_allowed))) {
                                 cand_array[cand_total_cnt].is_interintra_used  = 0;
                                 cand_array[cand_total_cnt].motion_mode         = WARPED_CAUSAL;
                                 cand_array[cand_total_cnt].wm_params_l0.wmtype = AFFINE;
@@ -3534,8 +3024,7 @@ static void inject_new_candidates(const SequenceControlSet *scs, struct ModeDeci
                                 //mv.y = to_inject_mv_y;
                                 if (motion_mode_valid) {
                                     MvUnit mv_unit;
-                                    mv_unit.mv[REF_LIST_0] =
-                                        cand_array[cand_total_cnt].mv[REF_LIST_0];
+                                    mv_unit.mv[REF_LIST_0] = cand_array[cand_total_cnt].mv[REF_LIST_0];
                                     mv_unit.pred_direction = REF_LIST_0;
                                     motion_mode_valid      = svt_aom_warped_motion_parameters(
                                         pcs,
@@ -3557,17 +3046,16 @@ static void inject_new_candidates(const SequenceControlSet *scs, struct ModeDeci
                             if (is_obmc_allowed && inter_type == tot_inter_types - 1) {
                                 cand_array[cand_total_cnt].is_interintra_used = 0;
                                 cand_array[cand_total_cnt].motion_mode        = OBMC_CAUSAL;
-                                motion_mode_valid = ctx->obmc_ctrls.refine_level == 0
-                                    ? svt_aom_obmc_motion_refinement(pcs,
+                                motion_mode_valid                             = ctx->obmc_ctrls.refine_level == 0
+                                                                ? svt_aom_obmc_motion_refinement(pcs,
                                                                      ctx,
                                                                      &cand_array[cand_total_cnt],
                                                                      REF_LIST_0,
                                                                      ctx->obmc_ctrls.refine_level)
-                                    : 1;
+                                                                : 1;
                             }
                         }
-                        if (cand_array[cand_total_cnt].motion_mode == SIMPLE_TRANSLATION ||
-                            motion_mode_valid)
+                        if (cand_array[cand_total_cnt].motion_mode == SIMPLE_TRANSLATION || motion_mode_valid)
                             INC_MD_CAND_CNT(cand_total_cnt, pcs->ppcs->max_can_count);
                     }
                     ctx->injected_mvs[ctx->injected_mv_count][0].as_int = to_inj_mv.as_int;
@@ -3585,27 +3073,20 @@ static void inject_new_candidates(const SequenceControlSet *scs, struct ModeDeci
                 if (!svt_aom_is_valid_unipred_ref(
                         ctx, MIN(TOT_INTER_GROUP - 1, PA_ME_GROUP), REF_LIST_1, list1_ref_index))
                     continue;
-                int16_t to_inject_mv_x =
-                    ctx->sb_me_mv[ctx->blk_geom->blkidx_mds][REF_LIST_1][list1_ref_index][0];
-                int16_t to_inject_mv_y =
-                    ctx->sb_me_mv[ctx->blk_geom->blkidx_mds][REF_LIST_1][list1_ref_index][1];
+                int16_t to_inject_mv_x     = ctx->sb_me_mv[ctx->blk_geom->blkidx_mds][REF_LIST_1][list1_ref_index][0];
+                int16_t to_inject_mv_y     = ctx->sb_me_mv[ctx->blk_geom->blkidx_mds][REF_LIST_1][list1_ref_index][1];
                 uint8_t to_inject_ref_type = svt_get_ref_frame_type(REF_LIST_1, list1_ref_index);
 
                 inside_tile = 1;
                 if (umv0tile)
-                    inside_tile = svt_aom_is_inside_tile_boundary(&(xd->tile),
-                                                                  to_inject_mv_x,
-                                                                  to_inject_mv_y,
-                                                                  mi_col,
-                                                                  mi_row,
-                                                                  ctx->blk_geom->bsize);
+                    inside_tile = svt_aom_is_inside_tile_boundary(
+                        &(xd->tile), to_inject_mv_x, to_inject_mv_y, mi_col, mi_row, ctx->blk_geom->bsize);
                 uint8_t skip_cand = !inside_tile;
 
                 Mv to_inj_mv = {{to_inject_mv_x, to_inject_mv_y}};
                 if (!skip_cand &&
                     (ctx->injected_mv_count == 0 ||
-                     mv_is_already_injected(ctx, to_inj_mv, to_inj_mv, to_inject_ref_type) ==
-                         FALSE)) {
+                     mv_is_already_injected(ctx, to_inj_mv, to_inj_mv, to_inject_ref_type) == FALSE)) {
                     uint8_t drl_index = 0;
                     choose_best_av1_mv_pred(ctx,
                                             ctx->md_rate_est_ctx,
@@ -3620,11 +3101,8 @@ static void inject_new_candidates(const SequenceControlSet *scs, struct ModeDeci
                                             &drl_index,
                                             best_pred_mv);
                     if (!ctx->corrupted_mv_check ||
-                        is_valid_mv_diff(best_pred_mv,
-                                         to_inj_mv,
-                                         to_inj_mv,
-                                         0,
-                                         pcs->ppcs->frm_hdr.allow_high_precision_mv)) {
+                        is_valid_mv_diff(
+                            best_pred_mv, to_inj_mv, to_inj_mv, 0, pcs->ppcs->frm_hdr.allow_high_precision_mv)) {
                         uint8_t inter_type;
                         uint8_t is_ii_allowed = svt_is_interintra_allowed(
                             ctx->inter_intra_comp_ctrls.enabled,
@@ -3634,22 +3112,15 @@ static void inject_new_candidates(const SequenceControlSet *scs, struct ModeDeci
                         const uint8_t ii_wedge_mode   = ctx->blk_geom->shape == PART_N
                               ? ctx->inter_intra_comp_ctrls.wedge_mode_sq
                               : ctx->inter_intra_comp_ctrls.wedge_mode_nsq;
-                        uint8_t       tot_inter_types = is_ii_allowed
-                                  ? (ii_wedge_mode == 1 ? II_COUNT : 2)
-                                  : 1;
-                        uint8_t       is_obmc_allowed =
-                            svt_aom_obmc_motion_mode_allowed(
-                                pcs, ctx, bsize, 0, to_inject_ref_type, -1, NEWMV) == OBMC_CAUSAL;
+                        uint8_t       tot_inter_types = is_ii_allowed ? (ii_wedge_mode == 1 ? II_COUNT : 2) : 1;
+                        uint8_t       is_obmc_allowed = svt_aom_obmc_motion_mode_allowed(
+                                                      pcs, ctx, bsize, 0, to_inject_ref_type, -1, NEWMV) == OBMC_CAUSAL;
                         uint8_t is_warp_allowed = warped_motion_mode_allowed(pcs, ctx);
-                        tot_inter_types = is_warp_allowed ? tot_inter_types + 1 : tot_inter_types;
-                        tot_inter_types = is_obmc_allowed ? tot_inter_types + 1 : tot_inter_types;
+                        tot_inter_types         = is_warp_allowed ? tot_inter_types + 1 : tot_inter_types;
+                        tot_inter_types         = is_obmc_allowed ? tot_inter_types + 1 : tot_inter_types;
                         for (inter_type = 0; inter_type < tot_inter_types; inter_type++) {
-                            if (!is_valid_uni_type(ctx,
-                                                   inter_type,
-                                                   is_ii_allowed,
-                                                   is_warp_allowed,
-                                                   REF_LIST_1,
-                                                   list1_ref_index))
+                            if (!is_valid_uni_type(
+                                    ctx, inter_type, is_ii_allowed, is_warp_allowed, REF_LIST_1, list1_ref_index))
                                 continue;
                             cand_array[cand_total_cnt].use_intrabc       = 0;
                             cand_array[cand_total_cnt].skip_mode_allowed = FALSE;
@@ -3679,8 +3150,7 @@ static void inject_new_candidates(const SequenceControlSet *scs, struct ModeDeci
                                         cand_array[cand_total_cnt].use_wedge_interintra = 0;
                                     }
                                 }
-                                if (is_warp_allowed &&
-                                    inter_type == (tot_inter_types - (1 + is_obmc_allowed))) {
+                                if (is_warp_allowed && inter_type == (tot_inter_types - (1 + is_obmc_allowed))) {
                                     cand_array[cand_total_cnt].is_interintra_used  = 0;
                                     cand_array[cand_total_cnt].motion_mode         = WARPED_CAUSAL;
                                     cand_array[cand_total_cnt].wm_params_l0.wmtype = AFFINE;
@@ -3699,8 +3169,7 @@ static void inject_new_candidates(const SequenceControlSet *scs, struct ModeDeci
                                         //mv.x = to_inject_mv_x;
                                         //mv.y = to_inject_mv_y;
                                         MvUnit mv_unit;
-                                        mv_unit.mv[REF_LIST_1] =
-                                            cand_array[cand_total_cnt].mv[REF_LIST_1];
+                                        mv_unit.mv[REF_LIST_1] = cand_array[cand_total_cnt].mv[REF_LIST_1];
                                         mv_unit.pred_direction = REF_LIST_1;
                                         motion_mode_valid      = svt_aom_warped_motion_parameters(
                                             pcs,
@@ -3722,18 +3191,16 @@ static void inject_new_candidates(const SequenceControlSet *scs, struct ModeDeci
                                 if (is_obmc_allowed && inter_type == tot_inter_types - 1) {
                                     cand_array[cand_total_cnt].is_interintra_used = 0;
                                     cand_array[cand_total_cnt].motion_mode        = OBMC_CAUSAL;
-                                    motion_mode_valid = ctx->obmc_ctrls.refine_level == 0
-                                        ? svt_aom_obmc_motion_refinement(
-                                              pcs,
-                                              ctx,
-                                              &cand_array[cand_total_cnt],
-                                              REF_LIST_1,
-                                              ctx->obmc_ctrls.refine_level)
-                                        : 1;
+                                    motion_mode_valid                             = ctx->obmc_ctrls.refine_level == 0
+                                                                    ? svt_aom_obmc_motion_refinement(pcs,
+                                                                         ctx,
+                                                                         &cand_array[cand_total_cnt],
+                                                                         REF_LIST_1,
+                                                                         ctx->obmc_ctrls.refine_level)
+                                                                    : 1;
                                 }
                             }
-                            if (cand_array[cand_total_cnt].motion_mode == SIMPLE_TRANSLATION ||
-                                motion_mode_valid)
+                            if (cand_array[cand_total_cnt].motion_mode == SIMPLE_TRANSLATION || motion_mode_valid)
                                 INC_MD_CAND_CNT(cand_total_cnt, pcs->ppcs->max_can_count);
                         }
                         ctx->injected_mvs[ctx->injected_mv_count][0].as_int = to_inj_mv.as_int;
@@ -3746,8 +3213,7 @@ static void inject_new_candidates(const SequenceControlSet *scs, struct ModeDeci
                NEW_NEWMV
             ************* */
             if (allow_bipred &&
-                !(ctx->is_intra_bordered &&
-                  ctx->cand_reduction_ctrls.use_neighbouring_mode_ctrls.enabled)) {
+                !(ctx->is_intra_bordered && ctx->cand_reduction_ctrls.use_neighbouring_mode_ctrls.enabled)) {
                 if (inter_direction == 2) {
                     if (!is_valid_bipred_ref(ctx,
                                              PA_ME_GROUP,
@@ -3757,17 +3223,13 @@ static void inject_new_candidates(const SequenceControlSet *scs, struct ModeDeci
                                              list1_ref_index))
                         continue;
                     int16_t to_inject_mv_x_l0 =
-                        ctx->sb_me_mv[ctx->blk_geom->blkidx_mds][me_block_results_ptr->ref0_list]
-                                     [list0_ref_index][0];
+                        ctx->sb_me_mv[ctx->blk_geom->blkidx_mds][me_block_results_ptr->ref0_list][list0_ref_index][0];
                     int16_t to_inject_mv_y_l0 =
-                        ctx->sb_me_mv[ctx->blk_geom->blkidx_mds][me_block_results_ptr->ref0_list]
-                                     [list0_ref_index][1];
+                        ctx->sb_me_mv[ctx->blk_geom->blkidx_mds][me_block_results_ptr->ref0_list][list0_ref_index][1];
                     int16_t to_inject_mv_x_l1 =
-                        ctx->sb_me_mv[ctx->blk_geom->blkidx_mds][me_block_results_ptr->ref1_list]
-                                     [list1_ref_index][0];
+                        ctx->sb_me_mv[ctx->blk_geom->blkidx_mds][me_block_results_ptr->ref1_list][list1_ref_index][0];
                     int16_t to_inject_mv_y_l1 =
-                        ctx->sb_me_mv[ctx->blk_geom->blkidx_mds][me_block_results_ptr->ref1_list]
-                                     [list1_ref_index][1];
+                        ctx->sb_me_mv[ctx->blk_geom->blkidx_mds][me_block_results_ptr->ref1_list][list1_ref_index][1];
                     uint8_t to_inject_ref_type = av1_ref_frame_type((const MvReferenceFrame[]){
                         svt_get_ref_frame_type(me_block_results_ptr->ref0_list, list0_ref_index),
                         svt_get_ref_frame_type(me_block_results_ptr->ref1_list, list1_ref_index)});
@@ -3792,8 +3254,7 @@ static void inject_new_candidates(const SequenceControlSet *scs, struct ModeDeci
                     Mv      to_inj_mv1 = {{to_inject_mv_x_l1, to_inject_mv_y_l1}};
                     if (!skip_cand &&
                         (ctx->injected_mv_count == 0 ||
-                         mv_is_already_injected(ctx, to_inj_mv0, to_inj_mv1, to_inject_ref_type) ==
-                             FALSE)) {
+                         mv_is_already_injected(ctx, to_inj_mv0, to_inj_mv1, to_inject_ref_type) == FALSE)) {
                         uint8_t drl_index = 0;
                         choose_best_av1_mv_pred(ctx,
                                                 ctx->md_rate_est_ctx,
@@ -3808,18 +3269,12 @@ static void inject_new_candidates(const SequenceControlSet *scs, struct ModeDeci
                                                 &drl_index,
                                                 best_pred_mv);
                         if (!ctx->corrupted_mv_check ||
-                            is_valid_mv_diff(best_pred_mv,
-                                             to_inj_mv0,
-                                             to_inj_mv1,
-                                             1,
-                                             pcs->ppcs->frm_hdr.allow_high_precision_mv)) {
+                            is_valid_mv_diff(
+                                best_pred_mv, to_inj_mv0, to_inj_mv1, 1, pcs->ppcs->frm_hdr.allow_high_precision_mv)) {
                             Bool mask_done = 0;
-                            for (MD_COMP_TYPE cur_type = MD_COMP_AVG; cur_type < tot_comp_types;
-                                 cur_type++) {
-#if OPT_CMP
+                            for (MD_COMP_TYPE cur_type = MD_COMP_AVG; cur_type < tot_comp_types; cur_type++) {
                                 if (ctx->inter_comp_ctrls.no_dist && cur_type == MD_COMP_DIST)
                                     continue;
-#endif
                                 if (!is_valid_bi_type(ctx,
                                                       cur_type,
                                                       me_block_results_ptr->ref0_list,
@@ -3833,10 +3288,8 @@ static void inject_new_candidates(const SequenceControlSet *scs, struct ModeDeci
                                 cand_array[cand_total_cnt].drl_index         = drl_index;
 
                                 // Set the MV to ME result
-                                cand_array[cand_total_cnt].mv[REF_LIST_0].as_int =
-                                    to_inj_mv0.as_int;
-                                cand_array[cand_total_cnt].mv[REF_LIST_1].as_int =
-                                    to_inj_mv1.as_int;
+                                cand_array[cand_total_cnt].mv[REF_LIST_0].as_int = to_inj_mv0.as_int;
+                                cand_array[cand_total_cnt].mv[REF_LIST_1].as_int = to_inj_mv1.as_int;
                                 // will be needed later by the rate estimation
                                 cand_array[cand_total_cnt].pred_mode           = NEW_NEWMV;
                                 cand_array[cand_total_cnt].motion_mode         = SIMPLE_TRANSLATION;
@@ -3849,19 +3302,17 @@ static void inject_new_candidates(const SequenceControlSet *scs, struct ModeDeci
                                 //NEW_NEW
                                 if (cur_type > MD_COMP_AVG) {
                                     if (mask_done != 1) {
-                                        if (svt_aom_calc_pred_masked_compound(
-                                                pcs, ctx, &cand_array[cand_total_cnt]))
+                                        if (svt_aom_calc_pred_masked_compound(pcs, ctx, &cand_array[cand_total_cnt]))
                                             break;
                                         mask_done = 1;
                                     }
                                 }
-                                determine_compound_mode(
-                                    pcs, ctx, &cand_array[cand_total_cnt], cur_type);
+                                determine_compound_mode(pcs, ctx, &cand_array[cand_total_cnt], cur_type);
                                 INC_MD_CAND_CNT(cand_total_cnt, pcs->ppcs->max_can_count);
                             }
                             ctx->injected_mvs[ctx->injected_mv_count][0].as_int = to_inj_mv0.as_int;
                             ctx->injected_mvs[ctx->injected_mv_count][1].as_int = to_inj_mv1.as_int;
-                            ctx->injected_ref_types[ctx->injected_mv_count] = to_inject_ref_type;
+                            ctx->injected_ref_types[ctx->injected_mv_count]     = to_inject_ref_type;
                             ++ctx->injected_mv_count;
                         }
                     }
@@ -3873,8 +3324,8 @@ static void inject_new_candidates(const SequenceControlSet *scs, struct ModeDeci
     (*candidate_total_cnt) = cand_total_cnt;
 }
 static void inject_global_candidates(const SequenceControlSet *scs, struct ModeDecisionContext *ctx,
-                                     PictureControlSet *pcs, Bool is_compound_enabled,
-                                     Bool allow_bipred, uint32_t *candidate_total_cnt) {
+                                     PictureControlSet *pcs, Bool is_compound_enabled, Bool allow_bipred,
+                                     uint32_t *candidate_total_cnt) {
     ModeDecisionCandidate *cand_array     = ctx->fast_cand_array;
     uint32_t               cand_total_cnt = (*candidate_total_cnt);
     uint8_t                inj_mv;
@@ -3913,36 +3364,29 @@ static void inject_global_candidates(const SequenceControlSet *scs, struct ModeD
             int16_t to_inject_mv_x = mv.as_mv.col;
             int16_t to_inject_mv_y = mv.as_mv.row;
 
-            inj_mv =
-                1; // Always test GLOBAL even if MV already injected as rate diff might be significant
+            inj_mv = 1; // Always test GLOBAL even if MV already injected as rate diff might be significant
             if (umv0tile)
-                inside_tile = svt_aom_is_inside_tile_boundary(&(xd->tile),
-                                                              to_inject_mv_x,
-                                                              to_inject_mv_y,
-                                                              mi_col,
-                                                              mi_row,
-                                                              ctx->blk_geom->bsize);
+                inside_tile = svt_aom_is_inside_tile_boundary(
+                    &(xd->tile), to_inject_mv_x, to_inject_mv_y, mi_col, mi_row, ctx->blk_geom->bsize);
 
             inj_mv = inj_mv && inside_tile;
 
             if (inj_mv &&
-                (((gm_params->wmtype > TRANSLATION && ctx->blk_geom->bwidth >= 8 &&
-                   ctx->blk_geom->bheight >= 8) ||
+                (((gm_params->wmtype > TRANSLATION && ctx->blk_geom->bwidth >= 8 && ctx->blk_geom->bheight >= 8) ||
                   gm_params->wmtype <= TRANSLATION))) {
                 uint8_t inter_type;
                 uint8_t is_ii_allowed = svt_is_interintra_allowed(
                     ctx->inter_intra_comp_ctrls.enabled, bsize, GLOBALMV, rf);
-                const uint8_t ii_wedge_mode = ctx->blk_geom->shape == PART_N
-                    ? ctx->inter_intra_comp_ctrls.wedge_mode_sq
-                    : ctx->inter_intra_comp_ctrls.wedge_mode_nsq;
-                uint8_t tot_inter_types = is_ii_allowed ? (ii_wedge_mode == 1 ? II_COUNT : 2) : 1;
+                const uint8_t ii_wedge_mode   = ctx->blk_geom->shape == PART_N
+                      ? ctx->inter_intra_comp_ctrls.wedge_mode_sq
+                      : ctx->inter_intra_comp_ctrls.wedge_mode_nsq;
+                uint8_t       tot_inter_types = is_ii_allowed ? (ii_wedge_mode == 1 ? II_COUNT : 2) : 1;
                 for (inter_type = 0; inter_type < tot_inter_types; inter_type++) {
                     if (!is_valid_uni_type(ctx, inter_type, is_ii_allowed, 0, list_idx, ref_idx))
                         continue;
                     cand_array[cand_total_cnt].pred_mode   = GLOBALMV;
-                    cand_array[cand_total_cnt].motion_mode = gm_params->wmtype > TRANSLATION
-                        ? WARPED_CAUSAL
-                        : SIMPLE_TRANSLATION;
+                    cand_array[cand_total_cnt].motion_mode = gm_params->wmtype > TRANSLATION ? WARPED_CAUSAL
+                                                                                             : SIMPLE_TRANSLATION;
 
                     cand_array[cand_total_cnt].wm_params_l0 = *gm_params;
                     cand_array[cand_total_cnt].wm_params_l1 = *gm_params;
@@ -3950,8 +3394,7 @@ static void inject_global_candidates(const SequenceControlSet *scs, struct ModeD
                     cand_array[cand_total_cnt].use_intrabc       = 0;
                     cand_array[cand_total_cnt].skip_mode_allowed = FALSE;
                     assert(list_idx == 0 || list_idx == 1);
-                    cand_array[cand_total_cnt].mv[list_idx] = (Mv){
-                        {to_inject_mv_x, to_inject_mv_y}};
+                    cand_array[cand_total_cnt].mv[list_idx]   = (Mv){{to_inject_mv_x, to_inject_mv_y}};
                     cand_array[cand_total_cnt].drl_index      = 0;
                     cand_array[cand_total_cnt].ref_frame_type = frame_type;
                     if (inter_type == 0) {
@@ -3971,8 +3414,7 @@ static void inject_global_candidates(const SequenceControlSet *scs, struct ModeD
                     }
                     INC_MD_CAND_CNT(cand_total_cnt, pcs->ppcs->max_can_count);
                 }
-                ctx->injected_mvs[ctx->injected_mv_count][0] = (Mv){
-                    {to_inject_mv_x, to_inject_mv_y}};
+                ctx->injected_mvs[ctx->injected_mv_count][0]    = (Mv){{to_inject_mv_x, to_inject_mv_y}};
                 ctx->injected_ref_types[ctx->injected_mv_count] = frame_type;
                 ++ctx->injected_mv_count;
             }
@@ -3984,8 +3426,7 @@ static void inject_global_candidates(const SequenceControlSet *scs, struct ModeD
             uint8_t      list_idx_0     = get_list_idx(rf[0]);
             uint8_t      list_idx_1     = get_list_idx(rf[1]);
 
-            if (!is_valid_bipred_ref(
-                    ctx, GLOBAL_GROUP, list_idx_0, ref_idx_0, list_idx_1, ref_idx_1))
+            if (!is_valid_bipred_ref(ctx, GLOBAL_GROUP, list_idx_0, ref_idx_0, list_idx_1, ref_idx_1))
                 return;
             // Get gm params
             EbWarpedMotionParams *gm_params_0 =
@@ -3994,43 +3435,33 @@ static void inject_global_candidates(const SequenceControlSet *scs, struct ModeD
             EbWarpedMotionParams *gm_params_1 =
                 &pcs->ppcs->global_motion[svt_get_ref_frame_type(list_idx_1, ref_idx_1)];
 
-            IntMv mv_0 = svt_aom_gm_get_motion_vector_enc(
-                gm_params_0,
-                pcs->ppcs->frm_hdr.allow_high_precision_mv,
-                ctx->blk_geom->bsize,
-                mi_col,
-                mi_row,
-                0 /* force_integer_mv */);
+            IntMv mv_0 = svt_aom_gm_get_motion_vector_enc(gm_params_0,
+                                                          pcs->ppcs->frm_hdr.allow_high_precision_mv,
+                                                          ctx->blk_geom->bsize,
+                                                          mi_col,
+                                                          mi_row,
+                                                          0 /* force_integer_mv */);
 
             int16_t to_inject_mv_x_l0 = mv_0.as_mv.col;
             int16_t to_inject_mv_y_l0 = mv_0.as_mv.row;
 
-            IntMv mv_1 = svt_aom_gm_get_motion_vector_enc(
-                gm_params_1,
-                pcs->ppcs->frm_hdr.allow_high_precision_mv,
-                ctx->blk_geom->bsize,
-                mi_col,
-                mi_row,
-                0 /* force_integer_mv */);
+            IntMv mv_1 = svt_aom_gm_get_motion_vector_enc(gm_params_1,
+                                                          pcs->ppcs->frm_hdr.allow_high_precision_mv,
+                                                          ctx->blk_geom->bsize,
+                                                          mi_col,
+                                                          mi_row,
+                                                          0 /* force_integer_mv */);
 
             int16_t to_inject_mv_x_l1 = mv_1.as_mv.col;
             int16_t to_inject_mv_y_l1 = mv_1.as_mv.row;
 
-            inj_mv =
-                1; // Always test GLOBAL-GLOBAL even if MV already injected as rate diff might be significant
+            inj_mv = 1; // Always test GLOBAL-GLOBAL even if MV already injected as rate diff might be significant
             if (umv0tile) {
-                inside_tile = svt_aom_is_inside_tile_boundary(&(xd->tile),
-                                                              to_inject_mv_x_l0,
-                                                              to_inject_mv_y_l0,
-                                                              mi_col,
-                                                              mi_row,
-                                                              ctx->blk_geom->bsize) &&
-                    svt_aom_is_inside_tile_boundary(&(xd->tile),
-                                                    to_inject_mv_x_l1,
-                                                    to_inject_mv_y_l1,
-                                                    mi_col,
-                                                    mi_row,
-                                                    ctx->blk_geom->bsize);
+                inside_tile =
+                    svt_aom_is_inside_tile_boundary(
+                        &(xd->tile), to_inject_mv_x_l0, to_inject_mv_y_l0, mi_col, mi_row, ctx->blk_geom->bsize) &&
+                    svt_aom_is_inside_tile_boundary(
+                        &(xd->tile), to_inject_mv_x_l1, to_inject_mv_y_l1, mi_col, mi_row, ctx->blk_geom->bsize);
             }
 
             inj_mv = inj_mv && inside_tile;
@@ -4039,39 +3470,31 @@ static void inject_global_candidates(const SequenceControlSet *scs, struct ModeD
                 uint8_t to_inject_ref_type = av1_ref_frame_type(rf);
 
                 for (MD_COMP_TYPE cur_type = MD_COMP_AVG; cur_type < tot_comp_types; cur_type++) {
-#if OPT_CMP
                     if (ctx->inter_comp_ctrls.no_dist && cur_type == MD_COMP_DIST)
                         continue;
-#endif
-                    if (!is_valid_bi_type(
-                            ctx, cur_type, list_idx_0, ref_idx_0, list_idx_1, ref_idx_1))
+                    if (!is_valid_bi_type(ctx, cur_type, list_idx_0, ref_idx_0, list_idx_1, ref_idx_1))
                         continue;
                     cand_array[cand_total_cnt].use_intrabc = 0;
 
-                    cand_array[cand_total_cnt].skip_mode_allowed = FALSE;
-                    cand_array[cand_total_cnt].pred_mode         = GLOBAL_GLOBALMV;
-                    cand_array[cand_total_cnt].motion_mode       = gm_params_0->wmtype > TRANSLATION
-                              ? WARPED_CAUSAL
-                              : SIMPLE_TRANSLATION;
-                    cand_array[cand_total_cnt].wm_params_l0      = *gm_params_0;
-                    cand_array[cand_total_cnt].wm_params_l1      = *gm_params_1;
+                    cand_array[cand_total_cnt].skip_mode_allowed  = FALSE;
+                    cand_array[cand_total_cnt].pred_mode          = GLOBAL_GLOBALMV;
+                    cand_array[cand_total_cnt].motion_mode        = gm_params_0->wmtype > TRANSLATION ? WARPED_CAUSAL
+                                                                                                      : SIMPLE_TRANSLATION;
+                    cand_array[cand_total_cnt].wm_params_l0       = *gm_params_0;
+                    cand_array[cand_total_cnt].wm_params_l1       = *gm_params_1;
                     cand_array[cand_total_cnt].is_interintra_used = 0;
                     cand_array[cand_total_cnt].drl_index          = 0;
                     // will be needed later by the rate estimation
                     cand_array[cand_total_cnt].ref_frame_type = to_inject_ref_type;
                     // Set the MV to frame MV
-                    cand_array[cand_total_cnt].mv[REF_LIST_0] = (Mv){
-                        {to_inject_mv_x_l0, to_inject_mv_y_l0}};
-                    cand_array[cand_total_cnt].mv[REF_LIST_1] = (Mv){
-                        {to_inject_mv_x_l1, to_inject_mv_y_l1}};
+                    cand_array[cand_total_cnt].mv[REF_LIST_0] = (Mv){{to_inject_mv_x_l0, to_inject_mv_y_l0}};
+                    cand_array[cand_total_cnt].mv[REF_LIST_1] = (Mv){{to_inject_mv_x_l1, to_inject_mv_y_l1}};
                     //GLOB-GLOB
                     determine_compound_mode(pcs, ctx, &cand_array[cand_total_cnt], cur_type);
                     INC_MD_CAND_CNT(cand_total_cnt, pcs->ppcs->max_can_count);
                 }
-                ctx->injected_mvs[ctx->injected_mv_count][0] = (Mv){
-                    {to_inject_mv_x_l0, to_inject_mv_y_l0}};
-                ctx->injected_mvs[ctx->injected_mv_count][1] = (Mv){
-                    {to_inject_mv_x_l1, to_inject_mv_y_l1}};
+                ctx->injected_mvs[ctx->injected_mv_count][0]    = (Mv){{to_inject_mv_x_l0, to_inject_mv_y_l0}};
+                ctx->injected_mvs[ctx->injected_mv_count][1]    = (Mv){{to_inject_mv_x_l1, to_inject_mv_y_l1}};
                 ctx->injected_ref_types[ctx->injected_mv_count] = to_inject_ref_type;
                 ++ctx->injected_mv_count;
             }
@@ -4082,15 +3505,14 @@ static void inject_global_candidates(const SequenceControlSet *scs, struct ModeD
 }
 static void inject_pme_candidates(
     //const SequenceControlSet   *scs,
-    struct ModeDecisionContext *ctx, PictureControlSet *pcs, Bool is_compound_enabled,
-    Bool allow_bipred, uint32_t *candidate_total_cnt) {
+    struct ModeDecisionContext *ctx, PictureControlSet *pcs, Bool is_compound_enabled, Bool allow_bipred,
+    uint32_t *candidate_total_cnt) {
     ModeDecisionCandidate *cand_array      = ctx->fast_cand_array;
     IntMv                  best_pred_mv[2] = {{0}, {0}};
     uint32_t               cand_total_cnt  = (*candidate_total_cnt);
     BlockSize              bsize           = ctx->blk_geom->bsize; // bloc size
-    MD_COMP_TYPE           tot_comp_types  = (ctx->inter_comp_ctrls.do_pme == 0)
-                   ? MD_COMP_DIST
-                   : ctx->inter_comp_ctrls.tot_comp_types;
+    MD_COMP_TYPE           tot_comp_types  = (ctx->inter_comp_ctrls.do_pme == 0) ? MD_COMP_DIST
+                                                                                 : ctx->inter_comp_ctrls.tot_comp_types;
     MacroBlockD           *xd              = ctx->blk_ptr->av1xd;
     int32_t                umv0tile        = derive_rmv_setting(pcs->ppcs->scs, pcs->ppcs);
     uint32_t               mi_row          = ctx->blk_org_y >> MI_SIZE_LOG2;
@@ -4111,17 +3533,13 @@ static void inject_pme_candidates(
                 int16_t to_inject_mv_x = ctx->best_pme_mv[list_idx][ref_idx][0];
                 int16_t to_inject_mv_y = ctx->best_pme_mv[list_idx][ref_idx][1];
 
-                Mv      to_inj_mv   = {{to_inject_mv_x, to_inject_mv_y}};
-                uint8_t inj_mv      = (ctx->injected_mv_count == 0 ||
-                                  mv_is_already_injected(ctx, to_inj_mv, to_inj_mv, frame_type) ==
-                                      FALSE);
-                int     inside_tile = (!umv0tile) ||
-                    svt_aom_is_inside_tile_boundary(&(xd->tile),
-                                                    to_inject_mv_x,
-                                                    to_inject_mv_y,
-                                                    mi_col,
-                                                    mi_row,
-                                                    ctx->blk_geom->bsize);
+                Mv      to_inj_mv = {{to_inject_mv_x, to_inject_mv_y}};
+                uint8_t inj_mv    = (ctx->injected_mv_count == 0 ||
+                                  mv_is_already_injected(ctx, to_inj_mv, to_inj_mv, frame_type) == FALSE);
+                int     inside_tile =
+                    (!umv0tile) ||
+                    svt_aom_is_inside_tile_boundary(
+                        &(xd->tile), to_inject_mv_x, to_inject_mv_y, mi_col, mi_row, ctx->blk_geom->bsize);
                 inj_mv = inj_mv && inside_tile;
                 if (inj_mv) {
                     uint8_t drl_index = 0;
@@ -4138,33 +3556,22 @@ static void inject_pme_candidates(
                                             &drl_index,
                                             best_pred_mv);
                     if (!ctx->corrupted_mv_check ||
-                        is_valid_mv_diff(best_pred_mv,
-                                         to_inj_mv,
-                                         to_inj_mv,
-                                         0,
-                                         pcs->ppcs->frm_hdr.allow_high_precision_mv)) {
+                        is_valid_mv_diff(
+                            best_pred_mv, to_inj_mv, to_inj_mv, 0, pcs->ppcs->frm_hdr.allow_high_precision_mv)) {
                         uint8_t inter_type;
                         uint8_t is_ii_allowed = svt_is_interintra_allowed(
                             ctx->inter_intra_comp_ctrls.enabled, bsize, NEWMV, rf);
                         const uint8_t ii_wedge_mode   = ctx->blk_geom->shape == PART_N
                               ? ctx->inter_intra_comp_ctrls.wedge_mode_sq
                               : ctx->inter_intra_comp_ctrls.wedge_mode_nsq;
-                        uint8_t       tot_inter_types = is_ii_allowed
-                                  ? (ii_wedge_mode == 1 ? II_COUNT : 2)
-                                  : 1;
+                        uint8_t       tot_inter_types = is_ii_allowed ? (ii_wedge_mode == 1 ? II_COUNT : 2) : 1;
                         uint8_t       is_obmc_allowed = svt_aom_obmc_motion_mode_allowed(
-                                                      pcs, ctx, bsize, 0, rf[0], rf[1], NEWMV) ==
-                            OBMC_CAUSAL;
+                                                      pcs, ctx, bsize, 0, rf[0], rf[1], NEWMV) == OBMC_CAUSAL;
                         uint8_t is_warp_allowed = warped_motion_mode_allowed(pcs, ctx);
-                        tot_inter_types = is_warp_allowed ? tot_inter_types + 1 : tot_inter_types;
-                        tot_inter_types = is_obmc_allowed ? tot_inter_types + 1 : tot_inter_types;
+                        tot_inter_types         = is_warp_allowed ? tot_inter_types + 1 : tot_inter_types;
+                        tot_inter_types         = is_obmc_allowed ? tot_inter_types + 1 : tot_inter_types;
                         for (inter_type = 0; inter_type < tot_inter_types; inter_type++) {
-                            if (!is_valid_uni_type(ctx,
-                                                   inter_type,
-                                                   is_ii_allowed,
-                                                   is_warp_allowed,
-                                                   list_idx,
-                                                   ref_idx))
+                            if (!is_valid_uni_type(ctx, inter_type, is_ii_allowed, is_warp_allowed, list_idx, ref_idx))
                                 continue;
                             cand_array[cand_total_cnt].use_intrabc        = 0;
                             cand_array[cand_total_cnt].skip_mode_allowed  = FALSE;
@@ -4193,8 +3600,7 @@ static void inject_pme_candidates(
                                         cand_array[cand_total_cnt].use_wedge_interintra = 0;
                                     }
                                 }
-                                if (is_warp_allowed &&
-                                    inter_type == (tot_inter_types - (1 + is_obmc_allowed))) {
+                                if (is_warp_allowed && inter_type == (tot_inter_types - (1 + is_obmc_allowed))) {
                                     cand_array[cand_total_cnt].is_interintra_used  = 0;
                                     cand_array[cand_total_cnt].motion_mode         = WARPED_CAUSAL;
                                     cand_array[cand_total_cnt].wm_params_l0.wmtype = AFFINE;
@@ -4211,8 +3617,7 @@ static void inject_pme_candidates(
                                     if (motion_mode_valid) {
                                         //mv.x = to_inject_mv_x;
                                         //mv.y = to_inject_mv_y;
-                                        mv_unit.mv[list_idx] =
-                                            cand_array[cand_total_cnt].mv[list_idx];
+                                        mv_unit.mv[list_idx]   = cand_array[cand_total_cnt].mv[list_idx];
                                         mv_unit.pred_direction = list_idx;
                                         motion_mode_valid      = svt_aom_warped_motion_parameters(
                                             pcs,
@@ -4234,18 +3639,16 @@ static void inject_pme_candidates(
                                 if (is_obmc_allowed && inter_type == tot_inter_types - 1) {
                                     cand_array[cand_total_cnt].is_interintra_used = 0;
                                     cand_array[cand_total_cnt].motion_mode        = OBMC_CAUSAL;
-                                    motion_mode_valid = ctx->obmc_ctrls.refine_level == 0
-                                        ? svt_aom_obmc_motion_refinement(
-                                              pcs,
-                                              ctx,
-                                              &cand_array[cand_total_cnt],
-                                              list_idx,
-                                              ctx->obmc_ctrls.refine_level)
-                                        : 1;
+                                    motion_mode_valid                             = ctx->obmc_ctrls.refine_level == 0
+                                                                    ? svt_aom_obmc_motion_refinement(pcs,
+                                                                         ctx,
+                                                                         &cand_array[cand_total_cnt],
+                                                                         list_idx,
+                                                                         ctx->obmc_ctrls.refine_level)
+                                                                    : 1;
                                 }
                             }
-                            if (cand_array[cand_total_cnt].motion_mode == SIMPLE_TRANSLATION ||
-                                motion_mode_valid)
+                            if (cand_array[cand_total_cnt].motion_mode == SIMPLE_TRANSLATION || motion_mode_valid)
                                 INC_MD_CAND_CNT(cand_total_cnt, pcs->ppcs->max_can_count);
                         }
                         ctx->injected_mvs[ctx->injected_mv_count][0].as_int = to_inj_mv.as_int;
@@ -4262,8 +3665,7 @@ static void inject_pme_candidates(
             uint8_t list_idx_0 = get_list_idx(rf[0]);
             uint8_t list_idx_1 = get_list_idx(rf[1]);
 
-            if (ctx->valid_pme_mv[list_idx_0][ref_idx_0] &&
-                ctx->valid_pme_mv[list_idx_1][ref_idx_1]) {
+            if (ctx->valid_pme_mv[list_idx_0][ref_idx_0] && ctx->valid_pme_mv[list_idx_1][ref_idx_1]) {
                 int16_t to_inject_mv_x_l0 = ctx->best_pme_mv[list_idx_0][ref_idx_0][0];
                 int16_t to_inject_mv_y_l0 = ctx->best_pme_mv[list_idx_0][ref_idx_0][1];
                 int16_t to_inject_mv_x_l1 = ctx->best_pme_mv[list_idx_1][ref_idx_1][0];
@@ -4271,18 +3673,11 @@ static void inject_pme_candidates(
 
                 uint8_t inj_mv = 1;
                 if (umv0tile) {
-                    inj_mv = svt_aom_is_inside_tile_boundary(&(xd->tile),
-                                                             to_inject_mv_x_l0,
-                                                             to_inject_mv_y_l0,
-                                                             mi_col,
-                                                             mi_row,
-                                                             ctx->blk_geom->bsize) &&
-                        svt_aom_is_inside_tile_boundary(&(xd->tile),
-                                                        to_inject_mv_x_l1,
-                                                        to_inject_mv_y_l1,
-                                                        mi_col,
-                                                        mi_row,
-                                                        ctx->blk_geom->bsize);
+                    inj_mv =
+                        svt_aom_is_inside_tile_boundary(
+                            &(xd->tile), to_inject_mv_x_l0, to_inject_mv_y_l0, mi_col, mi_row, ctx->blk_geom->bsize) &&
+                        svt_aom_is_inside_tile_boundary(
+                            &(xd->tile), to_inject_mv_x_l1, to_inject_mv_y_l1, mi_col, mi_row, ctx->blk_geom->bsize);
                 }
                 if (inj_mv) {
                     uint8_t to_inject_ref_type = av1_ref_frame_type((const MvReferenceFrame[]){
@@ -4292,8 +3687,7 @@ static void inject_pme_candidates(
                     Mv      to_inj_mv0         = {{to_inject_mv_x_l0, to_inject_mv_y_l0}};
                     Mv      to_inj_mv1         = {{to_inject_mv_x_l1, to_inject_mv_y_l1}};
                     if ((ctx->injected_mv_count == 0 ||
-                         mv_is_already_injected(ctx, to_inj_mv0, to_inj_mv1, to_inject_ref_type) ==
-                             FALSE)) {
+                         mv_is_already_injected(ctx, to_inj_mv0, to_inj_mv1, to_inject_ref_type) == FALSE)) {
                         uint8_t drl_index = 0;
                         choose_best_av1_mv_pred(ctx,
                                                 ctx->md_rate_est_ctx,
@@ -4308,34 +3702,21 @@ static void inject_pme_candidates(
                                                 &drl_index,
                                                 best_pred_mv);
                         if (!ctx->corrupted_mv_check ||
-                            is_valid_mv_diff(best_pred_mv,
-                                             to_inj_mv0,
-                                             to_inj_mv1,
-                                             1,
-                                             pcs->ppcs->frm_hdr.allow_high_precision_mv)) {
+                            is_valid_mv_diff(
+                                best_pred_mv, to_inj_mv0, to_inj_mv1, 1, pcs->ppcs->frm_hdr.allow_high_precision_mv)) {
                             Bool mask_done = 0;
-                            for (MD_COMP_TYPE cur_type = MD_COMP_AVG; cur_type < tot_comp_types;
-                                 cur_type++) {
-#if OPT_CMP
+                            for (MD_COMP_TYPE cur_type = MD_COMP_AVG; cur_type < tot_comp_types; cur_type++) {
                                 if (ctx->inter_comp_ctrls.no_dist && cur_type == MD_COMP_DIST)
                                     continue;
-#endif
 
-                                if (!is_valid_bi_type(ctx,
-                                                      cur_type,
-                                                      list_idx_0,
-                                                      ref_idx_0,
-                                                      list_idx_1,
-                                                      ref_idx_1))
+                                if (!is_valid_bi_type(ctx, cur_type, list_idx_0, ref_idx_0, list_idx_1, ref_idx_1))
                                     continue;
                                 cand_array[cand_total_cnt].use_intrabc       = 0;
                                 cand_array[cand_total_cnt].skip_mode_allowed = FALSE;
                                 cand_array[cand_total_cnt].drl_index         = drl_index;
                                 // Set the MV to ME result
-                                cand_array[cand_total_cnt].mv[REF_LIST_0].as_int =
-                                    to_inj_mv0.as_int;
-                                cand_array[cand_total_cnt].mv[REF_LIST_1].as_int =
-                                    to_inj_mv1.as_int;
+                                cand_array[cand_total_cnt].mv[REF_LIST_0].as_int = to_inj_mv0.as_int;
+                                cand_array[cand_total_cnt].mv[REF_LIST_1].as_int = to_inj_mv1.as_int;
                                 // will be needed later by the rate estimation
                                 cand_array[cand_total_cnt].pred_mode           = NEW_NEWMV;
                                 cand_array[cand_total_cnt].motion_mode         = SIMPLE_TRANSLATION;
@@ -4348,19 +3729,17 @@ static void inject_pme_candidates(
                                 //MVP REFINE
                                 if (cur_type > MD_COMP_AVG) {
                                     if (mask_done != 1) {
-                                        if (svt_aom_calc_pred_masked_compound(
-                                                pcs, ctx, &cand_array[cand_total_cnt]))
+                                        if (svt_aom_calc_pred_masked_compound(pcs, ctx, &cand_array[cand_total_cnt]))
                                             break;
                                         mask_done = 1;
                                     }
                                 }
-                                determine_compound_mode(
-                                    pcs, ctx, &cand_array[cand_total_cnt], cur_type);
+                                determine_compound_mode(pcs, ctx, &cand_array[cand_total_cnt], cur_type);
                                 INC_MD_CAND_CNT(cand_total_cnt, pcs->ppcs->max_can_count);
                             }
                             ctx->injected_mvs[ctx->injected_mv_count][0].as_int = to_inj_mv0.as_int;
                             ctx->injected_mvs[ctx->injected_mv_count][1].as_int = to_inj_mv1.as_int;
-                            ctx->injected_ref_types[ctx->injected_mv_count] = to_inject_ref_type;
+                            ctx->injected_ref_types[ctx->injected_mv_count]     = to_inject_ref_type;
                             ++ctx->injected_mv_count;
                         }
                     }
@@ -4392,8 +3771,7 @@ static void inject_inter_candidates_light_pd1(PictureControlSet *pcs, ModeDecisi
     if (frm_hdr->is_motion_mode_switchable) {
         const uint16_t mi_row = ctx->blk_org_y >> MI_SIZE_LOG2;
         const uint16_t mi_col = ctx->blk_org_x >> MI_SIZE_LOG2;
-        svt_av1_count_overlappable_neighbors(
-            pcs, ctx->blk_ptr, ctx->blk_geom->bsize, mi_row, mi_col);
+        svt_av1_count_overlappable_neighbors(pcs, ctx->blk_ptr, ctx->blk_geom->bsize, mi_row, mi_col);
     } else {
         // Overlappable neighbours only needed for non-"SIMPLE_TRANSLATION" candidates
         ctx->blk_ptr->prediction_unit_array[0].overlappable_neighbors[0] = 0;
@@ -4416,9 +3794,8 @@ static void inject_inter_candidates_light_pd1(PictureControlSet *pcs, ModeDecisi
     // update the total number of candidates injected
     *candidate_total_cnt = cand_total_cnt;
 }
-void svt_aom_inject_inter_candidates(PictureControlSet *pcs, ModeDecisionContext *ctx,
-                                     const SequenceControlSet *scs, SuperBlock *sb_ptr,
-                                     uint32_t *candidate_total_cnt) {
+void svt_aom_inject_inter_candidates(PictureControlSet *pcs, ModeDecisionContext *ctx, const SequenceControlSet *scs,
+                                     SuperBlock *sb_ptr, uint32_t *candidate_total_cnt) {
     (void)scs;
 
     FrameHeader *frm_hdr             = &pcs->ppcs->frm_hdr;
@@ -4432,15 +3809,9 @@ void svt_aom_inject_inter_candidates(PictureControlSet *pcs, ModeDecisionContext
 
     svt_av1_count_overlappable_neighbors(pcs, ctx->blk_ptr, ctx->blk_geom->bsize, mi_row, mi_col);
     const uint8_t is_obmc_allowed = svt_aom_obmc_motion_mode_allowed(
-                                        pcs, ctx, ctx->blk_geom->bsize, 1, LAST_FRAME, -1, NEWMV) ==
-        OBMC_CAUSAL;
-#if CLN_FUNC_DECL
+                                        pcs, ctx, ctx->blk_geom->bsize, 1, LAST_FRAME, -1, NEWMV) == OBMC_CAUSAL;
     if (is_obmc_allowed)
         svt_aom_precompute_obmc_data(pcs, ctx);
-#else
-    if (is_obmc_allowed)
-        precompute_obmc_data(pcs, ctx);
-#endif
     /**************
          MVP
     ************* */
@@ -4451,21 +3822,15 @@ void svt_aom_inject_inter_candidates(PictureControlSet *pcs, ModeDecisionContext
     //    NEAREST_NEWMV, NEW_NEARESTMV, NEAR_NEWMV, NEW_NEARMV.
     //----------------------
     if (ctx->new_nearest_near_comb_injection) {
-        const Bool allow_compound = frm_hdr->reference_mode != SINGLE_REFERENCE &&
-            ctx->blk_geom->bwidth != 4 && ctx->blk_geom->bheight != 4;
+        const Bool allow_compound = frm_hdr->reference_mode != SINGLE_REFERENCE && ctx->blk_geom->bwidth != 4 &&
+            ctx->blk_geom->bheight != 4;
         if (allow_compound) {
             inject_new_nearest_new_comb_candidates(scs, pcs, ctx, &cand_total_cnt);
         }
     }
     if (ctx->inject_new_me)
-        inject_new_candidates(scs,
-                              ctx,
-                              pcs,
-                              is_compound_enabled,
-                              allow_bipred,
-                              ctx->me_sb_addr,
-                              ctx->me_block_offset,
-                              &cand_total_cnt);
+        inject_new_candidates(
+            scs, ctx, pcs, is_compound_enabled, allow_bipred, ctx->me_sb_addr, ctx->me_block_offset, &cand_total_cnt);
     if (ctx->global_mv_injection) {
         inject_global_candidates(scs, ctx, pcs, is_compound_enabled, allow_bipred, &cand_total_cnt);
     }
@@ -4474,15 +3839,13 @@ void svt_aom_inject_inter_candidates(PictureControlSet *pcs, ModeDecisionContext
             //----------------------
             // Bipred2Nx2N
             //----------------------
-            bipred_3x3_candidates_injection(
-                scs, pcs, ctx, sb_ptr, ctx->me_sb_addr, &cand_total_cnt);
+            bipred_3x3_candidates_injection(scs, pcs, ctx, sb_ptr, ctx->me_sb_addr, &cand_total_cnt);
 
         //----------------------
         // Unipred2Nx2N
         //----------------------
         if (ctx->unipred3x3_injection > 0 && pcs->slice_type != I_SLICE)
-            unipred_3x3_candidates_injection(
-                scs, pcs, ctx, sb_ptr, ctx->me_sb_addr, &cand_total_cnt);
+            unipred_3x3_candidates_injection(scs, pcs, ctx, sb_ptr, ctx->me_sb_addr, &cand_total_cnt);
     }
     // determine when to inject pme candidates based on size and resolution of block
     if (ctx->inject_new_pme && ctx->updated_enable_pme)
@@ -4491,12 +3854,10 @@ void svt_aom_inject_inter_candidates(PictureControlSet *pcs, ModeDecisionContext
     // update the total number of candidates injected
     *candidate_total_cnt = cand_total_cnt;
 }
-#if FIX_TXT
 /* For intra prediction, the chroma transform type may not follow the luma type.
 This function will return the intra chroma TX type to be used, which is based on TX size and chroma mode.
 Refer to section 5.11.40 of the AV1 spec (compute_tx_type). */
-TxType svt_aom_get_intra_uv_tx_type(UvPredictionMode pred_mode_uv, TxSize tx_size,
-                                    int32_t reduced_tx_set) {
+TxType svt_aom_get_intra_uv_tx_type(UvPredictionMode pred_mode_uv, TxSize tx_size, int32_t reduced_tx_set) {
     if (txsize_sqr_up_map[tx_size] > TX_32X32) {
         return DCT_DCT;
     }
@@ -4509,22 +3870,6 @@ TxType svt_aom_get_intra_uv_tx_type(UvPredictionMode pred_mode_uv, TxSize tx_siz
     const TxSetType tx_set_type = get_ext_tx_set_type(tx_size, /*is_inter*/ 0, reduced_tx_set);
     return !av1_ext_tx_used[tx_set_type][tx_type] ? DCT_DCT : tx_type;
 }
-#else
-static INLINE TxType av1_get_tx_type(int32_t is_inter, PredictionMode pred_mode,
-                                     UvPredictionMode pred_mode_uv, PlaneType plane_type,
-                                     TxSize tx_size, int32_t reduced_tx_set) {
-    if (txsize_sqr_up_map[tx_size] > TX_32X32 || plane_type == PLANE_TYPE_Y || is_inter) {
-        return DCT_DCT;
-    }
-
-    // In intra mode, uv planes don't share the same prediction mode as y
-    // plane, so the tx_type should not be shared
-    TxType tx_type = intra_mode_to_tx_type(pred_mode, pred_mode_uv, PLANE_TYPE_UV);
-    assert(tx_type < TX_TYPES);
-    const TxSetType tx_set_type = get_ext_tx_set_type(tx_size, is_inter, reduced_tx_set);
-    return !av1_ext_tx_used[tx_set_type][tx_type] ? DCT_DCT : tx_type;
-}
-#endif
 double svt_av1_convert_qindex_to_q(int32_t qindex, EbBitDepth bit_depth);
 
 // Values are now correlated to quantizer.
@@ -4537,13 +3882,11 @@ static void assert_release(int statement) {
         SVT_LOG("ASSERT_ERRRR\n");
 }
 
-static void intra_bc_search(PictureControlSet *pcs, ModeDecisionContext *ctx,
-                            const SequenceControlSet *scs, BlkStruct *blk_ptr, MV *dv_cand,
-                            uint8_t *num_dv_cand) {
+static void intra_bc_search(PictureControlSet *pcs, ModeDecisionContext *ctx, const SequenceControlSet *scs,
+                            BlkStruct *blk_ptr, MV *dv_cand, uint8_t *num_dv_cand) {
     IntraBcContext  x_st;
     IntraBcContext *x           = &x_st;
-    uint32_t        full_lambda = ctx->hbd_md ? ctx->full_lambda_md[EB_10_BIT_MD]
-                                              : ctx->full_lambda_md[EB_8_BIT_MD];
+    uint32_t        full_lambda = ctx->hbd_md ? ctx->full_lambda_md[EB_10_BIT_MD] : ctx->full_lambda_md[EB_8_BIT_MD];
     //fill x with what needed.
     x->is_exhaustive_allowed = ctx->blk_geom->bwidth == 4 || ctx->blk_geom->bheight == 4 ? 1 : 0;
     svt_memcpy(&x->crc_calculator1, &pcs->crc_calculator1, sizeof(pcs->crc_calculator1));
@@ -4582,18 +3925,16 @@ static void intra_bc_search(PictureControlSet *pcs, ModeDecisionContext *ctx,
     //temp buffer for hash me
     for (int xi = 0; xi < 2; xi++)
         for (int yj = 0; yj < 2; yj++)
-            x->hash_value_buffer[xi][yj] = (uint32_t *)malloc(AOM_BUFFER_SIZE_FOR_BLOCK_HASH *
-                                                              sizeof(uint32_t));
+            x->hash_value_buffer[xi][yj] = (uint32_t *)malloc(AOM_BUFFER_SIZE_FOR_BLOCK_HASH * sizeof(uint32_t));
 
     IntMv nearestmv, nearmv;
-    svt_av1_find_best_ref_mvs_from_stack(
-        0,
-        ctx->md_local_blk_unit[ctx->blk_geom->blkidx_mds].ed_ref_mv_stack /*mbmi_ext*/,
-        xd,
-        ref_frame,
-        &nearestmv,
-        &nearmv,
-        0);
+    svt_av1_find_best_ref_mvs_from_stack(0,
+                                         ctx->md_local_blk_unit[ctx->blk_geom->blkidx_mds].ed_ref_mv_stack /*mbmi_ext*/,
+                                         xd,
+                                         ref_frame,
+                                         &nearestmv,
+                                         &nearmv,
+                                         0);
     if (nearestmv.as_int == INVALID_MV)
         nearestmv.as_int = 0;
     if (nearmv.as_int == INVALID_MV)
@@ -4604,8 +3945,7 @@ static void intra_bc_search(PictureControlSet *pcs, ModeDecisionContext *ctx,
     // Ref DV should not have sub-pel.
     assert((dv_ref.as_mv.col & 7) == 0);
     assert((dv_ref.as_mv.row & 7) == 0);
-    ctx->md_local_blk_unit[ctx->blk_geom->blkidx_mds].ed_ref_mv_stack[INTRA_FRAME][0].this_mv =
-        dv_ref;
+    ctx->md_local_blk_unit[ctx->blk_geom->blkidx_mds].ed_ref_mv_stack[INTRA_FRAME][0].this_mv = dv_ref;
 
     /* pointer to current frame */
     Yv12BufferConfig cur_buf;
@@ -4617,9 +3957,8 @@ static void intra_bc_search(PictureControlSet *pcs, ModeDecisionContext *ctx,
     x->plane[0].src = x->xdplane[0].pre[0];
     // up to two dv candidates will be generated
     // IBC Modes:   0: OFF 1:Slow   2:Faster   3:Fastest
-    enum IntrabcMotionDirection max_dir = pcs->ppcs->intraBC_ctrls.ibc_direction
-        ? IBC_MOTION_LEFT
-        : IBC_MOTION_DIRECTIONS;
+    enum IntrabcMotionDirection max_dir = pcs->ppcs->intraBC_ctrls.ibc_direction ? IBC_MOTION_LEFT
+                                                                                 : IBC_MOTION_DIRECTIONS;
 
     for (enum IntrabcMotionDirection dir = IBC_MOTION_ABOVE; dir < max_dir; ++dir) {
         const MvLimits tmp_mv_limits = x->mv_limits;
@@ -4637,8 +3976,7 @@ static void intra_bc_search(PictureControlSet *pcs, ModeDecisionContext *ctx,
             // TODO: Minimize the overlap between above and
             // left areas.
             x->mv_limits.row_min     = (tile->mi_row_start - mi_row) * MI_SIZE;
-            int bottom_coded_mi_edge = AOMMIN((sb_row + 1) * scs->seq_header.sb_mi_size,
-                                              tile->mi_row_end);
+            int bottom_coded_mi_edge = AOMMIN((sb_row + 1) * scs->seq_header.sb_mi_size, tile->mi_row_end);
             x->mv_limits.row_max     = (bottom_coded_mi_edge - mi_row) * MI_SIZE - h;
             break;
         default: assert(0);
@@ -4650,8 +3988,7 @@ static void intra_bc_search(PictureControlSet *pcs, ModeDecisionContext *ctx,
 
         svt_av1_set_mv_search_range(&x->mv_limits, &dv_ref.as_mv);
 
-        if (x->mv_limits.col_max < x->mv_limits.col_min ||
-            x->mv_limits.row_max < x->mv_limits.row_min) {
+        if (x->mv_limits.col_max < x->mv_limits.col_min || x->mv_limits.row_max < x->mv_limits.row_min) {
             x->mv_limits = tmp_mv_limits;
             continue;
         }
@@ -4704,26 +4041,8 @@ static void intra_bc_search(PictureControlSet *pcs, ModeDecisionContext *ctx,
     for (int i = 0; i < 2; i++)
         for (int j = 0; j < 2; j++) free(x->hash_value_buffer[i][j]);
 }
-#if !CLN_FUNC_DECL
-void svt_init_mv_cost_params(MV_COST_PARAMS *mv_cost_params, ModeDecisionContext *ctx,
-                             const MV *ref_mv, uint8_t base_q_idx, uint32_t rdmult,
-                             uint8_t hbd_md) {
-    mv_cost_params->ref_mv        = ref_mv;
-    mv_cost_params->full_ref_mv   = get_fullmv_from_mv(ref_mv);
-    mv_cost_params->early_exit_th = 1020 - (ctx->blk_geom->sq_size >> 2);
-    mv_cost_params->mv_cost_type  = ctx->md_subpel_me_ctrls.skip_diag_refinement >= 3
-         ? MV_COST_OPT
-         : MV_COST_ENTROPY;
-    mv_cost_params->error_per_bit = AOMMAX(rdmult >> RD_EPB_SHIFT, 1);
-    mv_cost_params->sad_per_bit   = svt_aom_get_sad_per_bit(base_q_idx, hbd_md);
-    mv_cost_params->mvjcost       = ctx->md_rate_est_ctx->nmv_vec_cost;
-    mv_cost_params->mvcost[0]     = ctx->md_rate_est_ctx->nmvcoststack[0];
-    mv_cost_params->mvcost[1]     = ctx->md_rate_est_ctx->nmvcoststack[1];
-}
-#endif
-static void inject_intra_bc_candidates(PictureControlSet *pcs, ModeDecisionContext *ctx,
-                                       const SequenceControlSet *scs, BlkStruct *blk_ptr,
-                                       uint32_t *cand_cnt) {
+static void inject_intra_bc_candidates(PictureControlSet *pcs, ModeDecisionContext *ctx, const SequenceControlSet *scs,
+                                       BlkStruct *blk_ptr, uint32_t *cand_cnt) {
     MV      dv_cand[2];
     uint8_t num_dv_cand = 0;
 
@@ -4751,12 +4070,8 @@ static void inject_intra_bc_candidates(PictureControlSet *pcs, ModeDecisionConte
         cand_array[*cand_cnt].skip_mode_allowed   = FALSE;
         cand_array[*cand_cnt].mv[REF_LIST_0]      = (Mv){{dv_cand[dv_i].col, dv_cand[dv_i].row}};
         cand_array[*cand_cnt].pred_mv[REF_LIST_0] = (Mv){
-            {ctx->md_local_blk_unit[ctx->blk_geom->blkidx_mds]
-                 .ed_ref_mv_stack[INTRA_FRAME][0]
-                 .this_mv.as_mv.col,
-             ctx->md_local_blk_unit[ctx->blk_geom->blkidx_mds]
-                 .ed_ref_mv_stack[INTRA_FRAME][0]
-                 .this_mv.as_mv.row}};
+            {ctx->md_local_blk_unit[ctx->blk_geom->blkidx_mds].ed_ref_mv_stack[INTRA_FRAME][0].this_mv.as_mv.col,
+             ctx->md_local_blk_unit[ctx->blk_geom->blkidx_mds].ed_ref_mv_stack[INTRA_FRAME][0].this_mv.as_mv.row}};
         cand_array[*cand_cnt].drl_index         = 0;
         cand_array[*cand_cnt].interp_filters    = av1_broadcast_interp_filter(BILINEAR);
         cand_array[*cand_cnt].filter_intra_mode = FILTER_INTRA_MODES;
@@ -4841,7 +4156,6 @@ void svt_av1_get_gradient_hist_c(const uint8_t *src, int src_stride, int rows,
 
      return;
  }
- #if CLN_IND_UV_SEARCH
 static void inject_intra_candidates(
     PictureControlSet            *pcs,
     ModeDecisionContext          *ctx,
@@ -4852,10 +4166,6 @@ static void inject_intra_candidates(
     PredictionMode              intra_mode_end = dc_cand_only_flag ? DC_PRED : ctx->intra_ctrls.intra_mode_end;
     uint32_t                    cand_total_cnt = *candidate_total_cnt;
     ModeDecisionCandidate    *cand_array = ctx->fast_cand_array;
-#if !CLN_CFL_SIGNALLING
-    Bool                      disable_cfl_flag = (MAX(ctx->blk_geom->bheight, ctx->blk_geom->bwidth) > 32) ? TRUE : FALSE;
-    disable_cfl_flag = ctx->cfl_ctrls.enabled ? disable_cfl_flag : TRUE;
-#endif
     const Bool use_angle_delta = av1_use_angle_delta(ctx->blk_geom->bsize, ctx->intra_ctrls.angular_pred_level);
     const uint8_t disable_angle_prediction = (ctx->intra_ctrls.angular_pred_level == 0);
     uint8_t directional_mode_skip_mask[INTRA_MODES] = { 0 };
@@ -4882,73 +4192,19 @@ static void inject_intra_candidates(
             cand_array[cand_total_cnt].use_intrabc = 0;
             cand_array[cand_total_cnt].filter_intra_mode = FILTER_INTRA_MODES;
             cand_array[cand_total_cnt].angle_delta[PLANE_TYPE_Y] = angle_delta;
-#if FIX_UV_INTRA_MODE_RATE
             cand_array[cand_total_cnt].intra_chroma_mode = ctx->ind_uv_avail
                 ? ctx->best_uv_mode[intra_mode]
                 : intra_luma_to_chroma[intra_mode];
             cand_array[cand_total_cnt].angle_delta[PLANE_TYPE_UV] = ctx->ind_uv_avail
                 ? ctx->best_uv_angle[intra_mode]
                 : cand_array[cand_total_cnt].angle_delta[PLANE_TYPE_Y];
-#if !CLN_CFL_SIGNALLING
-            if (!disable_cfl_flag) {
-                cand_array[cand_total_cnt].intra_chroma_mode = UV_CFL_PRED;
-                cand_array[cand_total_cnt].angle_delta[PLANE_TYPE_UV] = 0;
-            }
-#endif
-#else
-            // Search the best independent intra chroma mode
-            if (ctx->uv_ctrls.uv_mode == CHROMA_MODE_0) {
-#if FIX_FI_UV_RATE
-                cand_array[cand_total_cnt].intra_chroma_mode = disable_cfl_flag ?
-                    (ctx->ind_uv_avail ? ctx->best_uv_mode[intra_mode] : intra_luma_to_chroma[intra_mode]) :
-                    UV_CFL_PRED;
-                cand_array[cand_total_cnt].angle_delta[PLANE_TYPE_UV] = disable_cfl_flag ?
-                    (ctx->ind_uv_avail ? ctx->best_uv_angle[intra_mode] : cand_array[cand_total_cnt].angle_delta[PLANE_TYPE_Y]) :
-                    0;
-#else
-                cand_array[cand_total_cnt].intra_chroma_mode = disable_cfl_flag ?
-                    (ctx->ind_uv_avail ? ctx->best_uv_mode[intra_mode][MAX_ANGLE_DELTA + cand_array[cand_total_cnt].angle_delta[PLANE_TYPE_Y]] : intra_luma_to_chroma[intra_mode]) :
-                    UV_CFL_PRED ;
-                cand_array[cand_total_cnt].angle_delta[PLANE_TYPE_UV] = disable_cfl_flag ?
-                    (ctx->ind_uv_avail ? ctx->best_uv_angle[cand_array[cand_total_cnt].pred_mode][MAX_ANGLE_DELTA + cand_array[cand_total_cnt].angle_delta[PLANE_TYPE_Y]] : cand_array[cand_total_cnt].angle_delta[PLANE_TYPE_Y]) :
-                    0;
-#endif
-            }
-            else {
-                // Hsan/Omar: why the restriction below ? (i.e. disable_ang_uv)
-                const int32_t disable_ang_uv = (ctx->blk_geom->bwidth == 4 || ctx->blk_geom->bheight == 4) && ctx->blk_geom->has_uv ? 1 : 0;
-                cand_array[cand_total_cnt].intra_chroma_mode = disable_cfl_flag ?
-                    intra_luma_to_chroma[intra_mode] :
-                    (ctx->uv_ctrls.uv_mode == CHROMA_MODE_1) ?
-                    UV_CFL_PRED :
-                    UV_DC_PRED;
-                cand_array[cand_total_cnt].intra_chroma_mode = disable_ang_uv && av1_is_directional_mode(get_uv_mode(cand_array[cand_total_cnt].intra_chroma_mode)) ?
-                    UV_DC_PRED : cand_array[cand_total_cnt].intra_chroma_mode;
-                cand_array[cand_total_cnt].angle_delta[PLANE_TYPE_UV] = 0;
-            }
-#endif
             cand_array[cand_total_cnt].cfl_alpha_signs = 0;
             cand_array[cand_total_cnt].cfl_alpha_idx = 0;
             cand_array[cand_total_cnt].transform_type[0] = DCT_DCT;
-#if !CLN_CFL_SIGNALLING
-            if (cand_array[cand_total_cnt].intra_chroma_mode == UV_CFL_PRED)
-                cand_array[cand_total_cnt].transform_type_uv = DCT_DCT;
-            else
-#endif
                 cand_array[cand_total_cnt].transform_type_uv =
-#if FIX_TXT
                 svt_aom_get_intra_uv_tx_type(cand_array[cand_total_cnt].intra_chroma_mode,
                     ctx->blk_geom->txsize_uv[0],
                     frm_hdr->reduced_tx_set);
-#else
-                av1_get_tx_type(
-                    0, // is_inter
-                    cand_array[cand_total_cnt].pred_mode,
-                    (UvPredictionMode)cand_array[cand_total_cnt].intra_chroma_mode,
-                    PLANE_TYPE_UV,
-                    ctx->blk_geom->txsize_uv[0][0],
-                    frm_hdr->reduced_tx_set);
-#endif
             cand_array[cand_total_cnt].ref_frame_type = INTRA_FRAME;
             cand_array[cand_total_cnt].motion_mode = SIMPLE_TRANSLATION;
             cand_array[cand_total_cnt].is_interintra_used = 0;
@@ -4976,10 +4232,6 @@ static void inject_filter_intra_candidates(
     FilterIntraMode             filter_intra_mode;
     uint32_t                    cand_total_cnt = *candidate_total_cnt;
     ModeDecisionCandidate      *cand_array = ctx->fast_cand_array;
-#if !CLN_CFL_SIGNALLING
-    Bool                      disable_cfl_flag = (MAX(ctx->blk_geom->bheight, ctx->blk_geom->bwidth) > 32) ? TRUE : FALSE;
-    disable_cfl_flag = ctx->cfl_ctrls.enabled ? disable_cfl_flag : TRUE;
-#endif
     FrameHeader *frm_hdr = &pcs->ppcs->frm_hdr;
 
     for (filter_intra_mode = intra_mode_start; filter_intra_mode <= intra_mode_end; ++filter_intra_mode) {
@@ -4990,75 +4242,20 @@ static void inject_filter_intra_candidates(
             cand_array[cand_total_cnt].palette_info = NULL;
             cand_array[cand_total_cnt].angle_delta[PLANE_TYPE_Y] = 0;
 
-#if FIX_UV_INTRA_MODE_RATE
             cand_array[cand_total_cnt].intra_chroma_mode = ctx->ind_uv_avail
                 ? ctx->best_uv_mode[fimode_to_intramode[filter_intra_mode]]
                 : intra_luma_to_chroma[fimode_to_intramode[filter_intra_mode]];
             cand_array[cand_total_cnt].angle_delta[PLANE_TYPE_UV] = ctx->ind_uv_avail
                 ? ctx->best_uv_angle[fimode_to_intramode[filter_intra_mode]]
                 : cand_array[cand_total_cnt].angle_delta[PLANE_TYPE_Y];
-#if !CLN_CFL_SIGNALLING
-            if (!disable_cfl_flag) {
-                cand_array[cand_total_cnt].intra_chroma_mode = UV_CFL_PRED;
-                cand_array[cand_total_cnt].angle_delta[PLANE_TYPE_UV] = 0;
-            }
-#endif
-#else
-            // Search the best independent intra chroma mode
-            if (ctx->uv_ctrls.uv_mode == CHROMA_MODE_0) {
-#if FIX_FI_UV_RATE // TODO: should we use DC_PRED instead of filter intra mode?
-                cand_array[cand_total_cnt].intra_chroma_mode = disable_cfl_flag ?
-                    (ctx->ind_uv_avail ? ctx->best_uv_mode[fimode_to_intramode[filter_intra_mode]] : intra_luma_to_chroma[fimode_to_intramode[filter_intra_mode]]) :
-                    UV_CFL_PRED;
-
-                cand_array[cand_total_cnt].angle_delta[PLANE_TYPE_UV] = disable_cfl_flag ?
-                    (ctx->ind_uv_avail ? ctx->best_uv_angle[fimode_to_intramode[filter_intra_mode]] : cand_array[cand_total_cnt].angle_delta[PLANE_TYPE_Y]) :
-                    0;
-#else
-                cand_array[cand_total_cnt].intra_chroma_mode = disable_cfl_flag ?
-                    (ctx->ind_uv_avail ? ctx->best_uv_mode[fimode_to_intramode[filter_intra_mode]][MAX_ANGLE_DELTA + cand_array[cand_total_cnt].angle_delta[PLANE_TYPE_Y]] : intra_luma_to_chroma[fimode_to_intramode[filter_intra_mode]]):
-                    UV_CFL_PRED;
-
-                cand_array[cand_total_cnt].angle_delta[PLANE_TYPE_UV] = disable_cfl_flag ? (ctx->ind_uv_avail ? ctx->best_uv_angle[fimode_to_intramode[filter_intra_mode]][MAX_ANGLE_DELTA + cand_array[cand_total_cnt].angle_delta[PLANE_TYPE_Y]] : cand_array[cand_total_cnt].angle_delta[PLANE_TYPE_Y]):
-                0;
-#endif
-            }
-            else {
-                // Hsan/Omar: why the restriction below ? (i.e. disable_ang_uv)
-                const int32_t disable_ang_uv = (ctx->blk_geom->bwidth == 4 || ctx->blk_geom->bheight == 4) && ctx->blk_geom->has_uv ? 1 : 0;
-                cand_array[cand_total_cnt].intra_chroma_mode = disable_cfl_flag ? intra_luma_to_chroma[fimode_to_intramode[filter_intra_mode]] :
-                    (ctx->uv_ctrls.uv_mode == CHROMA_MODE_1) ?
-                        UV_CFL_PRED :
-                        UV_DC_PRED;
-
-                cand_array[cand_total_cnt].intra_chroma_mode =  disable_ang_uv && av1_is_directional_mode(get_uv_mode(cand_array[cand_total_cnt].intra_chroma_mode)) ?
-                    UV_DC_PRED : cand_array[cand_total_cnt].intra_chroma_mode;
-                cand_array[cand_total_cnt].angle_delta[PLANE_TYPE_UV] = 0;
-            }
-#endif
 
             cand_array[cand_total_cnt].cfl_alpha_signs = 0;
             cand_array[cand_total_cnt].cfl_alpha_idx = 0;
             cand_array[cand_total_cnt].transform_type[0] = DCT_DCT;
-#if !CLN_CFL_SIGNALLING
-            if (cand_array[cand_total_cnt].intra_chroma_mode == UV_CFL_PRED)
-                cand_array[cand_total_cnt].transform_type_uv = DCT_DCT;
-            else
-#endif
                 cand_array[cand_total_cnt].transform_type_uv =
-#if FIX_TXT
                 svt_aom_get_intra_uv_tx_type(cand_array[cand_total_cnt].intra_chroma_mode,
                     ctx->blk_geom->txsize_uv[0],
                     frm_hdr->reduced_tx_set);
-#else
-                av1_get_tx_type(
-                    0, // is_inter
-                    cand_array[cand_total_cnt].pred_mode,
-                    (UvPredictionMode)cand_array[cand_total_cnt].intra_chroma_mode,
-                    PLANE_TYPE_UV,
-                    ctx->blk_geom->txsize_uv[0][0],
-                    frm_hdr->reduced_tx_set);
-#endif
             cand_array[cand_total_cnt].ref_frame_type = INTRA_FRAME;
             cand_array[cand_total_cnt].motion_mode = SIMPLE_TRANSLATION;
             cand_array[cand_total_cnt].is_interintra_used = 0;
@@ -5070,230 +4267,6 @@ static void inject_filter_intra_candidates(
 
     return;
 }
-#else
-// END of Function Declarations
-void  inject_intra_candidates(
-    PictureControlSet            *pcs,
-    ModeDecisionContext          *ctx,
-    const SequenceControlSet     *scs,
-    SuperBlock                   *sb_ptr,
-    Bool                        dc_cand_only_flag,
-    uint32_t                     *candidate_total_cnt){
-    (void)scs;
-    (void)sb_ptr;
-    FrameHeader *frm_hdr = &pcs->ppcs->frm_hdr;
-    uint8_t                     intra_mode_start = DC_PRED;
-    uint8_t                     intra_mode_end = dc_cand_only_flag ? DC_PRED : ctx->intra_ctrls.intra_mode_end;
-    uint32_t                    cand_total_cnt = *candidate_total_cnt;
-    ModeDecisionCandidate    *cand_array = ctx->fast_cand_array;
-    Bool                      disable_cfl_flag = (MAX(ctx->blk_geom->bheight, ctx->blk_geom->bwidth) > 32) ? TRUE : FALSE;
-    disable_cfl_flag = ctx->cfl_ctrls.enabled ? disable_cfl_flag : TRUE;
-    if (scs->disable_cfl_flag != DEFAULT && !disable_cfl_flag)
-        // if disable_cfl_flag == 1 then it doesn't matter what cli says otherwise change it to cli
-        disable_cfl_flag = (Bool)scs->disable_cfl_flag;
-
-    uint8_t     angle_delta_shift = 1;
-    Bool use_angle_delta = av1_use_angle_delta(ctx->blk_geom->bsize, ctx->intra_ctrls.angular_pred_level);
-    uint8_t angle_delta_candidate_count = (use_angle_delta && ctx->intra_ctrls.angular_pred_level <= 2) ? 7 : 1;
-    uint8_t disable_angle_prediction = (ctx->intra_ctrls.angular_pred_level == 0);
-    uint8_t directional_mode_skip_mask[INTRA_MODES] = { 0 };
-    if (ctx->intra_ctrls.angular_pred_level >= 4) {
-        for (uint8_t i = D45_PRED; i < INTRA_MODE_END; i++)
-            directional_mode_skip_mask[i] = 1;
-    }
-
-    for (uint8_t open_loop_intra_candidate = intra_mode_start; open_loop_intra_candidate <= intra_mode_end; ++open_loop_intra_candidate) {
-        if (av1_is_directional_mode((PredictionMode)open_loop_intra_candidate)) {
-            if (!disable_angle_prediction &&
-                directional_mode_skip_mask[(PredictionMode)open_loop_intra_candidate] == 0) {
-                for (uint8_t angle_delta_counter = 0; angle_delta_counter < angle_delta_candidate_count; ++angle_delta_counter) {
-                    int32_t angle_delta = CLIP( angle_delta_shift * (angle_delta_candidate_count == 1 ? 0 : angle_delta_counter - (angle_delta_candidate_count >> 1)), -3 , 3);
-                    if (ctx->intra_ctrls.angular_pred_level >= 2 && (angle_delta == -1 || angle_delta == 1 || angle_delta == -2 || angle_delta == 2))
-                        continue;
-                    cand_array[cand_total_cnt].skip_mode_allowed = FALSE;
-                    cand_array[cand_total_cnt].palette_info = NULL;
-                    cand_array[cand_total_cnt].pred_mode = (PredictionMode)open_loop_intra_candidate;
-                    cand_array[cand_total_cnt].use_intrabc = 0;
-                    cand_array[cand_total_cnt].filter_intra_mode = FILTER_INTRA_MODES;
-                    cand_array[cand_total_cnt].angle_delta[PLANE_TYPE_Y] = angle_delta;
-                    // Search the best independent intra chroma mode
-                    if (ctx->uv_ctrls.uv_mode == CHROMA_MODE_0) {
-                        cand_array[cand_total_cnt].intra_chroma_mode = disable_cfl_flag ?
-                            ctx->best_uv_mode[open_loop_intra_candidate][MAX_ANGLE_DELTA + cand_array[cand_total_cnt].angle_delta[PLANE_TYPE_Y]] :
-                            UV_CFL_PRED ;
-                        cand_array[cand_total_cnt].angle_delta[PLANE_TYPE_UV] = disable_cfl_flag ?
-                            ctx->best_uv_angle[cand_array[cand_total_cnt].pred_mode][MAX_ANGLE_DELTA + cand_array[cand_total_cnt].angle_delta[PLANE_TYPE_Y]] : 0;
-                    }
-                    else {
-                        // Hsan/Omar: why the restriction below ? (i.e. disable_ang_uv)
-                        const int32_t disable_ang_uv = (ctx->blk_geom->bwidth == 4 || ctx->blk_geom->bheight == 4) && ctx->blk_geom->has_uv ? 1 : 0;
-                        cand_array[cand_total_cnt].intra_chroma_mode = disable_cfl_flag ?
-                            intra_luma_to_chroma[open_loop_intra_candidate] :
-                            (ctx->uv_ctrls.uv_mode == CHROMA_MODE_1) ?
-                            UV_CFL_PRED :
-                            UV_DC_PRED;
-                        cand_array[cand_total_cnt].intra_chroma_mode = disable_ang_uv && av1_is_directional_mode(get_uv_mode(cand_array[cand_total_cnt].intra_chroma_mode)) ?
-                            UV_DC_PRED : cand_array[cand_total_cnt].intra_chroma_mode;
-                        cand_array[cand_total_cnt].angle_delta[PLANE_TYPE_UV] = 0;
-                    }
-                    cand_array[cand_total_cnt].cfl_alpha_signs = 0;
-                    cand_array[cand_total_cnt].cfl_alpha_idx = 0;
-                    cand_array[cand_total_cnt].transform_type[0] = DCT_DCT;
-
-                    if (cand_array[cand_total_cnt].intra_chroma_mode == UV_CFL_PRED)
-                        cand_array[cand_total_cnt].transform_type_uv = DCT_DCT;
-                    else
-                        cand_array[cand_total_cnt].transform_type_uv =
-                        av1_get_tx_type(
-                            0, // is_inter
-                            cand_array[cand_total_cnt].pred_mode,
-                            (UvPredictionMode)cand_array[cand_total_cnt].intra_chroma_mode,
-                            PLANE_TYPE_UV,
-                            ctx->blk_geom->txsize_uv[0],
-                            frm_hdr->reduced_tx_set);
-                    cand_array[cand_total_cnt].ref_frame_type = INTRA_FRAME;
-                    cand_array[cand_total_cnt].motion_mode = SIMPLE_TRANSLATION;
-                    cand_array[cand_total_cnt].is_interintra_used = 0;
-                    INC_MD_CAND_CNT (cand_total_cnt,pcs->ppcs->max_can_count);
-            }
-        }
-        }
-        else {
-            cand_array[cand_total_cnt].skip_mode_allowed = FALSE;
-            cand_array[cand_total_cnt].palette_info = NULL;
-            cand_array[cand_total_cnt].pred_mode = (PredictionMode)open_loop_intra_candidate;
-            cand_array[cand_total_cnt].use_intrabc = 0;
-            cand_array[cand_total_cnt].filter_intra_mode = FILTER_INTRA_MODES;
-            cand_array[cand_total_cnt].angle_delta[PLANE_TYPE_Y] = 0;
-            // Search the best independent intra chroma mode
-            if (ctx->uv_ctrls.uv_mode == CHROMA_MODE_0) {
-                cand_array[cand_total_cnt].intra_chroma_mode = disable_cfl_flag ?
-                    ctx->best_uv_mode[open_loop_intra_candidate][MAX_ANGLE_DELTA + cand_array[cand_total_cnt].angle_delta[PLANE_TYPE_Y]] :
-                    UV_CFL_PRED;
-                cand_array[cand_total_cnt].angle_delta[PLANE_TYPE_UV] = disable_cfl_flag ?
-                    ctx->best_uv_angle[cand_array[cand_total_cnt].pred_mode][MAX_ANGLE_DELTA + cand_array[cand_total_cnt].angle_delta[PLANE_TYPE_Y]] : 0;
-            }
-            else {
-                // Hsan/Omar: why the restriction below ? (i.e. disable_ang_uv)
-                const int32_t disable_ang_uv = (ctx->blk_geom->bwidth == 4 || ctx->blk_geom->bheight == 4) && ctx->blk_geom->has_uv ? 1 : 0;
-                cand_array[cand_total_cnt].intra_chroma_mode = disable_cfl_flag ?
-                    intra_luma_to_chroma[open_loop_intra_candidate] :
-                    (ctx->uv_ctrls.uv_mode == CHROMA_MODE_1) ?
-                        UV_CFL_PRED :
-                        UV_DC_PRED;
-
-                cand_array[cand_total_cnt].intra_chroma_mode = disable_ang_uv && av1_is_directional_mode(get_uv_mode(cand_array[cand_total_cnt].intra_chroma_mode)) ?
-                    UV_DC_PRED : cand_array[cand_total_cnt].intra_chroma_mode;
-
-                cand_array[cand_total_cnt].angle_delta[PLANE_TYPE_UV] = 0;
-
-            }
-            cand_array[cand_total_cnt].cfl_alpha_signs = 0;
-            cand_array[cand_total_cnt].cfl_alpha_idx = 0;
-            cand_array[cand_total_cnt].transform_type[0] = DCT_DCT;
-
-            if (cand_array[cand_total_cnt].intra_chroma_mode == UV_CFL_PRED)
-                cand_array[cand_total_cnt].transform_type_uv = DCT_DCT;
-            else
-                cand_array[cand_total_cnt].transform_type_uv =
-                av1_get_tx_type(
-                    0, // is_inter
-                    cand_array[cand_total_cnt].pred_mode,
-                    (UvPredictionMode)cand_array[cand_total_cnt].intra_chroma_mode,
-                    PLANE_TYPE_UV,
-                    ctx->blk_geom->txsize_uv[0],
-                    frm_hdr->reduced_tx_set);
-            cand_array[cand_total_cnt].ref_frame_type = INTRA_FRAME;
-            cand_array[cand_total_cnt].motion_mode = SIMPLE_TRANSLATION;
-            cand_array[cand_total_cnt].is_interintra_used = 0;
-            INC_MD_CAND_CNT (cand_total_cnt,pcs->ppcs->max_can_count);
-        }
-    }
-
-    // update the total number of candidates injected
-    (*candidate_total_cnt) = cand_total_cnt;
-
-    return;
-}
-// END of Function Declarations
-void  inject_filter_intra_candidates(
-    PictureControlSet            *pcs,
-    ModeDecisionContext          *ctx,
-    uint32_t                     *candidate_total_cnt){
-    FilterIntraMode             intra_mode_start = FILTER_DC_PRED;
-    FilterIntraMode intra_mode_end = ctx->intra_ctrls.intra_mode_end == PAETH_PRED ? FILTER_PAETH_PRED :
-                                     ctx->intra_ctrls.intra_mode_end >= D157_PRED ? FILTER_D157_PRED :
-                                     ctx->intra_ctrls.intra_mode_end >= H_PRED ? FILTER_H_PRED :
-                                     ctx->intra_ctrls.intra_mode_end >= V_PRED ? FILTER_V_PRED :
-                                     FILTER_DC_PRED;
-
-    FilterIntraMode             filter_intra_mode;
-    uint32_t                    cand_total_cnt = *candidate_total_cnt;
-    ModeDecisionCandidate      *cand_array = ctx->fast_cand_array;
-
-    Bool                      disable_cfl_flag = (MAX(ctx->blk_geom->bheight, ctx->blk_geom->bwidth) > 32) ? TRUE : FALSE;
-    disable_cfl_flag = ctx->cfl_ctrls.enabled ? disable_cfl_flag : TRUE;
-    SequenceControlSet *scs = pcs->scs;
-    if (scs->disable_cfl_flag != DEFAULT && !disable_cfl_flag)
-        // if disable_cfl_flag == 1 then it doesn't matter what cli says otherwise change it to cli
-        disable_cfl_flag = (Bool)scs->disable_cfl_flag;
-
-    FrameHeader *frm_hdr = &pcs->ppcs->frm_hdr;
-
-    for (filter_intra_mode = intra_mode_start; filter_intra_mode <= intra_mode_end; ++filter_intra_mode) {
-            cand_array[cand_total_cnt].skip_mode_allowed = FALSE;
-            cand_array[cand_total_cnt].pred_mode = DC_PRED;
-            cand_array[cand_total_cnt].use_intrabc = 0;
-            cand_array[cand_total_cnt].filter_intra_mode = filter_intra_mode;
-            cand_array[cand_total_cnt].palette_info = NULL;
-            cand_array[cand_total_cnt].angle_delta[PLANE_TYPE_Y] = 0;
-
-            // Search the best independent intra chroma mode
-            if (ctx->uv_ctrls.uv_mode == CHROMA_MODE_0) {
-                cand_array[cand_total_cnt].intra_chroma_mode  = disable_cfl_flag ? ctx->best_uv_mode[fimode_to_intramode[filter_intra_mode]][MAX_ANGLE_DELTA + cand_array[cand_total_cnt].angle_delta[PLANE_TYPE_Y]] : UV_CFL_PRED;
-
-                cand_array[cand_total_cnt].angle_delta[PLANE_TYPE_UV] = disable_cfl_flag ? ctx->best_uv_angle[fimode_to_intramode[filter_intra_mode]][MAX_ANGLE_DELTA + cand_array[cand_total_cnt].angle_delta[PLANE_TYPE_Y]] : 0;
-            }
-            else {
-                // Hsan/Omar: why the restriction below ? (i.e. disable_ang_uv)
-                const int32_t disable_ang_uv = (ctx->blk_geom->bwidth == 4 || ctx->blk_geom->bheight == 4) && ctx->blk_geom->has_uv ? 1 : 0;
-                cand_array[cand_total_cnt].intra_chroma_mode = disable_cfl_flag ? intra_luma_to_chroma[fimode_to_intramode[filter_intra_mode]] :
-                    (ctx->uv_ctrls.uv_mode == CHROMA_MODE_1) ?
-                        UV_CFL_PRED :
-                        UV_DC_PRED;
-
-                cand_array[cand_total_cnt].intra_chroma_mode =  disable_ang_uv && av1_is_directional_mode(get_uv_mode(cand_array[cand_total_cnt].intra_chroma_mode)) ?
-                    UV_DC_PRED : cand_array[cand_total_cnt].intra_chroma_mode;
-                cand_array[cand_total_cnt].angle_delta[PLANE_TYPE_UV] = 0;
-            }
-
-            cand_array[cand_total_cnt].cfl_alpha_signs = 0;
-            cand_array[cand_total_cnt].cfl_alpha_idx = 0;
-            cand_array[cand_total_cnt].transform_type[0] = DCT_DCT;
-
-            if (cand_array[cand_total_cnt].intra_chroma_mode == UV_CFL_PRED)
-                cand_array[cand_total_cnt].transform_type_uv = DCT_DCT;
-            else
-                cand_array[cand_total_cnt].transform_type_uv =
-                av1_get_tx_type(
-                    0, // is_inter
-                    cand_array[cand_total_cnt].pred_mode,
-                    (UvPredictionMode)cand_array[cand_total_cnt].intra_chroma_mode,
-                    PLANE_TYPE_UV,
-                    ctx->blk_geom->txsize_uv[0],
-                    frm_hdr->reduced_tx_set);
-            cand_array[cand_total_cnt].ref_frame_type = INTRA_FRAME;
-            cand_array[cand_total_cnt].motion_mode = SIMPLE_TRANSLATION;
-            cand_array[cand_total_cnt].is_interintra_used = 0;
-            INC_MD_CAND_CNT (cand_total_cnt,pcs->ppcs->max_can_count);
-    }
-
-    // update the total number of candidates injected
-    (*candidate_total_cnt) = cand_total_cnt;
-
-    return;
-}
-#endif
 static void inject_zz_backup_candidate(
      PictureControlSet   *pcs,
     struct ModeDecisionContext *ctx,
@@ -5354,25 +4327,12 @@ void  inject_palette_candidates(
 
     uint32_t                  can_total_cnt = *candidate_total_cnt;
     ModeDecisionCandidate    *cand_array = ctx->fast_cand_array;
-#if !CLN_CFL_SIGNALLING
-    Bool                    disable_cfl_flag = (MAX(ctx->blk_geom->bheight, ctx->blk_geom->bwidth) > 32) ? TRUE : FALSE;
-    disable_cfl_flag = ctx->cfl_ctrls.enabled ? disable_cfl_flag : TRUE;
-#endif
     uint32_t cand_i;
     uint32_t tot_palette_cands = 0;
     PaletteInfo    *palette_cand_array = ctx->palette_cand_array;
     // MD palette search
     uint8_t  * palette_size_array_0  = ctx->palette_size_array_0;
-#if !FIX_UV_INTRA_MODE_RATE
-    uint8_t  * palette_size_array_1  = ctx->palette_size_array_1;
-#endif
 
-#if !CLN_IND_UV_SEARCH
-    SequenceControlSet *scs = pcs->scs;
-    if (scs->disable_cfl_flag != DEFAULT && !disable_cfl_flag)
-        // if disable_cfl_flag == 1 then it doesn't matter what cli says otherwise change it to cli
-        disable_cfl_flag = (Bool)scs->disable_cfl_flag;
-#endif
     search_palette_luma(
         pcs,
         ctx,
@@ -5382,16 +4342,9 @@ void  inject_palette_candidates(
 
     for (cand_i = 0; cand_i < tot_palette_cands; ++cand_i) {
         cand_array[can_total_cnt].is_interintra_used = 0;
-#if !FIX_UV_INTRA_MODE_RATE
-        palette_size_array_1[cand_i] = 0;
-#endif
         cand_array[can_total_cnt].palette_size[0] = palette_size_array_0[cand_i];
-#if FIX_UV_INTRA_MODE_RATE
         // Palette is not supported for chroma
         cand_array[can_total_cnt].palette_size[1] = 0;
-#else
-        cand_array[can_total_cnt].palette_size[1] = palette_size_array_1[cand_i];
-#endif
         cand_array[can_total_cnt].palette_info = &palette_cand_array[cand_i];
         assert(palette_size_array_0[cand_i] < 9);
         //to re check these fields
@@ -5401,7 +4354,6 @@ void  inject_palette_candidates(
 
         cand_array[can_total_cnt].filter_intra_mode = FILTER_INTRA_MODES;
         cand_array[can_total_cnt].angle_delta[PLANE_TYPE_Y] = 0;
-#if FIX_UV_INTRA_MODE_RATE
         // Palette is not supported for chroma mode, so we can set the intra chroma mode to anything. To use palette
         // for chroma, we must force DC_PRED to be used for the intra chroma mode
         assert(cand_array[can_total_cnt].palette_size[1] == 0);
@@ -5411,47 +4363,13 @@ void  inject_palette_candidates(
         cand_array[can_total_cnt].angle_delta[PLANE_TYPE_UV] = ctx->ind_uv_avail
             ? ctx->best_uv_angle[DC_PRED]
             : cand_array[can_total_cnt].angle_delta[PLANE_TYPE_Y];
-#if !CLN_CFL_SIGNALLING
-        if (!disable_cfl_flag) {
-            cand_array[can_total_cnt].intra_chroma_mode = UV_CFL_PRED;
-            cand_array[can_total_cnt].angle_delta[PLANE_TYPE_UV] = 0;
-        }
-#endif
-#else
-        const int32_t disable_ang_uv = (ctx->blk_geom->bwidth == 4 || ctx->blk_geom->bheight == 4) && ctx->blk_geom->has_uv ? 1 : 0;
-        cand_array[can_total_cnt].intra_chroma_mode = disable_cfl_flag ?
-            intra_luma_to_chroma[DC_PRED] :
-            (ctx->uv_ctrls.uv_mode <= CHROMA_MODE_1) ?
-            UV_CFL_PRED :
-            UV_DC_PRED;
-
-        cand_array[can_total_cnt].intra_chroma_mode = disable_ang_uv && av1_is_directional_mode(get_uv_mode(cand_array[can_total_cnt].intra_chroma_mode)) ?
-            UV_DC_PRED : cand_array[can_total_cnt].intra_chroma_mode;
-
-        cand_array[can_total_cnt].angle_delta[PLANE_TYPE_UV] = 0;
-#endif
         cand_array[can_total_cnt].cfl_alpha_signs = 0;
         cand_array[can_total_cnt].cfl_alpha_idx = 0;
         cand_array[can_total_cnt].transform_type[0] = DCT_DCT;
-#if !CLN_CFL_SIGNALLING
-        if (cand_array[can_total_cnt].intra_chroma_mode == UV_CFL_PRED)
-            cand_array[can_total_cnt].transform_type_uv = DCT_DCT;
-        else
-#endif
             cand_array[can_total_cnt].transform_type_uv =
-#if FIX_TXT
             svt_aom_get_intra_uv_tx_type(cand_array[can_total_cnt].intra_chroma_mode,
                 ctx->blk_geom->txsize_uv[0],
                 pcs->ppcs->frm_hdr.reduced_tx_set);
-#else
-            av1_get_tx_type(
-                0, // is_inter
-                cand_array[can_total_cnt].pred_mode,
-                (UvPredictionMode)cand_array[can_total_cnt].intra_chroma_mode,
-                PLANE_TYPE_UV,
-                ctx->blk_geom->txsize_uv[0][0],
-                pcs->ppcs->frm_hdr.reduced_tx_set);
-#endif
         cand_array[can_total_cnt].ref_frame_type = INTRA_FRAME;
         cand_array[can_total_cnt].motion_mode = SIMPLE_TRANSLATION;
         INC_MD_CAND_CNT (can_total_cnt,pcs->ppcs->max_can_count);
@@ -5525,16 +4443,10 @@ EbErrorType generate_md_stage_0_cand_light_pd0(
    generate candidates for light pd1
 */
 void generate_md_stage_0_cand_light_pd1(
-#if !CLN_IND_UV_SEARCH
-    SuperBlock          *sb_ptr,
-#endif
     ModeDecisionContext *ctx,
     uint32_t            *candidate_total_count_ptr,
     PictureControlSet   *pcs)
 {
-#if !CLN_IND_UV_SEARCH
-    const SequenceControlSet *scs = pcs->scs;
-#endif
     const SliceType slice_type = pcs->slice_type;
     uint32_t cand_total_cnt = 0;
     // Reset duplicates variables
@@ -5553,10 +4465,6 @@ void generate_md_stage_0_cand_light_pd1(
         inject_intra_candidates(
             pcs,
             ctx,
-#if !CLN_IND_UV_SEARCH
-            scs,
-            sb_ptr,
-#endif
             dc_cand_only_flag,
             &cand_total_cnt);
     }
@@ -5604,10 +4512,6 @@ EbErrorType generate_md_stage_0_cand(
              inject_intra_candidates(
                  pcs,
                  ctx,
-#if !CLN_IND_UV_SEARCH
-                 scs,
-                 sb_ptr,
-#endif
                  dc_cand_only_flag,
                  &cand_total_cnt);
          }
@@ -5718,11 +4622,7 @@ void svt_aom_product_full_mode_decision_light_pd1(
             blk_ptr->comp_group_idx = cand->comp_group_idx;
             assert(IMPLIES(blk_ptr->interinter_comp.type == COMPOUND_AVERAGE, (blk_ptr->comp_group_idx == 0 && blk_ptr->compound_idx == 1)));
         }
-#if CLN_IFS_PATH
         blk_ptr->interp_filters = cand->interp_filters;
-#else
-        blk_ptr->interp_filters = 0;
-#endif
 
         // Set MVs
         if (pu_ptr->inter_pred_direction_index == UNI_PRED_LIST_0)
@@ -6034,11 +4934,7 @@ uint32_t svt_aom_product_full_mode_decision(
         blk_ptr->skip_mode |= !blk_ptr->block_has_coeff;
     }
 
-#if CLN_IFS_PATH
     assert(IMPLIES(pcs->ppcs->frm_hdr.interpolation_filter == SWITCHABLE && blk_ptr->skip_mode, cand->interp_filters == 0));
-#else
-    assert(IMPLIES(blk_ptr->skip_mode, cand->interp_filters == 0));
-#endif
     if (blk_ptr->skip_mode) {
         blk_ptr->block_has_coeff = 0;
         cand_bf->y_has_coeff = 0;

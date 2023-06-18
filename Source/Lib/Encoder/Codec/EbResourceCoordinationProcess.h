@@ -19,8 +19,7 @@ extern "C" {
 /***************************************
  * Extern Function Declaration
  ***************************************/
-EbErrorType svt_aom_resource_coordination_context_ctor(EbThreadContext* thread_ctx,
-                                                       EbEncHandle*     enc_handle_ptr);
+EbErrorType svt_aom_resource_coordination_context_ctor(EbThreadContext* thread_ctx, EbEncHandle* enc_handle_ptr);
 
 extern void* svt_aom_resource_coordination_kernel(void* input_ptr);
 #ifdef __cplusplus

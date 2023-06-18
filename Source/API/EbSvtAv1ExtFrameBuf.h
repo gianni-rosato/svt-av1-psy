@@ -43,8 +43,7 @@ typedef struct EbExtFrameBuf {
  * @  *frame_buf pointer to the frame buffer structure to be allocated
  * @  min_size  requested data size in bytes.
  * @  private_data is the private data that can be used by the allocator*/
-typedef int (*EbAllocateFrameBuffer)(EbExtFrameBuf *frame_buf, uint32_t min_size,
-                                     void *private_data);
+typedef int (*EbAllocateFrameBuffer)(EbExtFrameBuf *frame_buf, uint32_t min_size, void *private_data);
 
 /* Callback function to release frame buffer.
  *

@@ -20,9 +20,8 @@ static INLINE __m128i calc_mask(const __m128i mask_base, const __m128i s0, const
     // clamp(diff, 0, 64) can be skiped for diff is always in the range ( 38, 54)
 }
 
-void svt_av1_build_compound_diffwtd_mask_sse4_1(uint8_t *mask, DIFFWTD_MASK_TYPE mask_type,
-                                                const uint8_t *src0, int stride0,
-                                                const uint8_t *src1, int stride1, int h, int w) {
+void svt_av1_build_compound_diffwtd_mask_sse4_1(uint8_t *mask, DIFFWTD_MASK_TYPE mask_type, const uint8_t *src0,
+                                                int stride0, const uint8_t *src1, int stride1, int h, int w) {
     const int     mb        = (mask_type == DIFFWTD_38_INV) ? AOM_BLEND_A64_MAX_ALPHA : 0;
     const __m128i mask_base = _mm_set1_epi16(38 - mb);
     int           i         = 0;
@@ -91,17 +90,16 @@ void svt_av1_build_compound_diffwtd_mask_sse4_1(uint8_t *mask, DIFFWTD_MASK_TYPE
 
 void svt_av1_build_compound_diffwtd_mask_d16_sse4_1(uint8_t *mask, DIFFWTD_MASK_TYPE mask_type,
                                                     const CONV_BUF_TYPE *src0, int src0_stride,
-                                                    const CONV_BUF_TYPE *src1, int src1_stride,
-                                                    int h, int w, ConvolveParams *conv_params,
-                                                    int bd) {
+                                                    const CONV_BUF_TYPE *src1, int src1_stride, int h, int w,
+                                                    ConvolveParams *conv_params, int bd) {
     const int     which_inverse = (mask_type == DIFFWTD_38) ? 0 : 1;
     const int     mask_base     = 38;
-    int           round = 2 * FILTER_BITS - conv_params->round_0 - conv_params->round_1 + (bd - 8);
-    const __m128i round_const  = _mm_set1_epi16((1 << round) >> 1);
-    const __m128i mask_base_16 = _mm_set1_epi16(mask_base);
-    const __m128i clip_diff    = _mm_set1_epi16(AOM_BLEND_A64_MAX_ALPHA);
-    const __m128i add_const    = _mm_set1_epi16((which_inverse ? AOM_BLEND_A64_MAX_ALPHA : 0));
-    const __m128i add_sign     = _mm_set1_epi16((which_inverse ? -1 : 1));
+    int           round         = 2 * FILTER_BITS - conv_params->round_0 - conv_params->round_1 + (bd - 8);
+    const __m128i round_const   = _mm_set1_epi16((1 << round) >> 1);
+    const __m128i mask_base_16  = _mm_set1_epi16(mask_base);
+    const __m128i clip_diff     = _mm_set1_epi16(AOM_BLEND_A64_MAX_ALPHA);
+    const __m128i add_const     = _mm_set1_epi16((which_inverse ? AOM_BLEND_A64_MAX_ALPHA : 0));
+    const __m128i add_sign      = _mm_set1_epi16((which_inverse ? -1 : 1));
 
     int i, j;
     // When rounding constant is added, there is a possibility of overflow.

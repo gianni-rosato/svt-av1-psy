@@ -16,17 +16,15 @@
 /******************************************************************************************************
                                        svt_residual_kernel16bit_sse2_intrin
 ******************************************************************************************************/
-void svt_residual_kernel16bit_sse2_intrin(uint16_t *input, uint32_t input_stride, uint16_t *pred,
-                                          uint32_t pred_stride, int16_t *residual,
-                                          uint32_t residual_stride, uint32_t area_width,
+void svt_residual_kernel16bit_sse2_intrin(uint16_t *input, uint32_t input_stride, uint16_t *pred, uint32_t pred_stride,
+                                          int16_t *residual, uint32_t residual_stride, uint32_t area_width,
                                           uint32_t area_height) {
     uint32_t x, y;
     __m128i  residual0, residual1;
 
     if (area_width == 4) {
         for (y = 0; y < area_height; y += 2) {
-            residual0 = _mm_sub_epi16(_mm_loadl_epi64((__m128i *)input),
-                                      _mm_loadl_epi64((__m128i *)pred));
+            residual0 = _mm_sub_epi16(_mm_loadl_epi64((__m128i *)input), _mm_loadl_epi64((__m128i *)pred));
             residual1 = _mm_sub_epi16(_mm_loadl_epi64((__m128i *)(input + input_stride)),
                                       _mm_loadl_epi64((__m128i *)(pred + pred_stride)));
 
@@ -39,8 +37,7 @@ void svt_residual_kernel16bit_sse2_intrin(uint16_t *input, uint32_t input_stride
         }
     } else if (area_width == 8) {
         for (y = 0; y < area_height; y += 2) {
-            residual0 = _mm_sub_epi16(_mm_loadu_si128((__m128i *)input),
-                                      _mm_loadu_si128((__m128i *)pred));
+            residual0 = _mm_sub_epi16(_mm_loadu_si128((__m128i *)input), _mm_loadu_si128((__m128i *)pred));
             residual1 = _mm_sub_epi16(_mm_loadu_si128((__m128i *)(input + input_stride)),
                                       _mm_loadu_si128((__m128i *)(pred + pred_stride)));
 
@@ -55,10 +52,8 @@ void svt_residual_kernel16bit_sse2_intrin(uint16_t *input, uint32_t input_stride
         __m128i residual2, residual3;
 
         for (y = 0; y < area_height; y += 2) {
-            residual0 = _mm_sub_epi16(_mm_loadu_si128((__m128i *)input),
-                                      _mm_loadu_si128((__m128i *)pred));
-            residual1 = _mm_sub_epi16(_mm_loadu_si128((__m128i *)(input + 8)),
-                                      _mm_loadu_si128((__m128i *)(pred + 8)));
+            residual0 = _mm_sub_epi16(_mm_loadu_si128((__m128i *)input), _mm_loadu_si128((__m128i *)pred));
+            residual1 = _mm_sub_epi16(_mm_loadu_si128((__m128i *)(input + 8)), _mm_loadu_si128((__m128i *)(pred + 8)));
             residual2 = _mm_sub_epi16(_mm_loadu_si128((__m128i *)(input + input_stride)),
                                       _mm_loadu_si128((__m128i *)(pred + pred_stride)));
             residual3 = _mm_sub_epi16(_mm_loadu_si128((__m128i *)(input + input_stride + 8)),
@@ -76,18 +71,17 @@ void svt_residual_kernel16bit_sse2_intrin(uint16_t *input, uint32_t input_stride
     } else if (area_width == 32) {
         for (y = 0; y < area_height; y += 2) {
             //residual[column_index] = ((int16_t)input[column_index]) - ((int16_t)pred[column_index]);
+            _mm_storeu_si128((__m128i *)residual,
+                             _mm_sub_epi16(_mm_loadu_si128((__m128i *)input), _mm_loadu_si128((__m128i *)pred)));
             _mm_storeu_si128(
-                (__m128i *)residual,
-                _mm_sub_epi16(_mm_loadu_si128((__m128i *)input), _mm_loadu_si128((__m128i *)pred)));
-            _mm_storeu_si128((__m128i *)(residual + 8),
-                             _mm_sub_epi16(_mm_loadu_si128((__m128i *)(input + 8)),
-                                           _mm_loadu_si128((__m128i *)(pred + 8))));
-            _mm_storeu_si128((__m128i *)(residual + 16),
-                             _mm_sub_epi16(_mm_loadu_si128((__m128i *)(input + 16)),
-                                           _mm_loadu_si128((__m128i *)(pred + 16))));
-            _mm_storeu_si128((__m128i *)(residual + 24),
-                             _mm_sub_epi16(_mm_loadu_si128((__m128i *)(input + 24)),
-                                           _mm_loadu_si128((__m128i *)(pred + 24))));
+                (__m128i *)(residual + 8),
+                _mm_sub_epi16(_mm_loadu_si128((__m128i *)(input + 8)), _mm_loadu_si128((__m128i *)(pred + 8))));
+            _mm_storeu_si128(
+                (__m128i *)(residual + 16),
+                _mm_sub_epi16(_mm_loadu_si128((__m128i *)(input + 16)), _mm_loadu_si128((__m128i *)(pred + 16))));
+            _mm_storeu_si128(
+                (__m128i *)(residual + 24),
+                _mm_sub_epi16(_mm_loadu_si128((__m128i *)(input + 24)), _mm_loadu_si128((__m128i *)(pred + 24))));
 
             _mm_storeu_si128((__m128i *)(residual + residual_stride),
                              _mm_sub_epi16(_mm_loadu_si128((__m128i *)(input + input_stride)),
@@ -106,35 +100,33 @@ void svt_residual_kernel16bit_sse2_intrin(uint16_t *input, uint32_t input_stride
             pred += pred_stride << 1;
             residual += residual_stride << 1;
         }
-    } else if (area_width ==
-               64) { // Branch was not tested because the encoder had max txb_size of 32
+    } else if (area_width == 64) { // Branch was not tested because the encoder had max txb_size of 32
 
         for (y = 0; y < area_height; y += 2) {
             //residual[column_index] = ((int16_t)input[column_index]) - ((int16_t)pred[column_index]) 8 indices per _mm_sub_epi16
+            _mm_storeu_si128((__m128i *)residual,
+                             _mm_sub_epi16(_mm_loadu_si128((__m128i *)input), _mm_loadu_si128((__m128i *)pred)));
             _mm_storeu_si128(
-                (__m128i *)residual,
-                _mm_sub_epi16(_mm_loadu_si128((__m128i *)input), _mm_loadu_si128((__m128i *)pred)));
-            _mm_storeu_si128((__m128i *)(residual + 8),
-                             _mm_sub_epi16(_mm_loadu_si128((__m128i *)(input + 8)),
-                                           _mm_loadu_si128((__m128i *)(pred + 8))));
-            _mm_storeu_si128((__m128i *)(residual + 16),
-                             _mm_sub_epi16(_mm_loadu_si128((__m128i *)(input + 16)),
-                                           _mm_loadu_si128((__m128i *)(pred + 16))));
-            _mm_storeu_si128((__m128i *)(residual + 24),
-                             _mm_sub_epi16(_mm_loadu_si128((__m128i *)(input + 24)),
-                                           _mm_loadu_si128((__m128i *)(pred + 24))));
-            _mm_storeu_si128((__m128i *)(residual + 32),
-                             _mm_sub_epi16(_mm_loadu_si128((__m128i *)(input + 32)),
-                                           _mm_loadu_si128((__m128i *)(pred + 32))));
-            _mm_storeu_si128((__m128i *)(residual + 40),
-                             _mm_sub_epi16(_mm_loadu_si128((__m128i *)(input + 40)),
-                                           _mm_loadu_si128((__m128i *)(pred + 40))));
-            _mm_storeu_si128((__m128i *)(residual + 48),
-                             _mm_sub_epi16(_mm_loadu_si128((__m128i *)(input + 48)),
-                                           _mm_loadu_si128((__m128i *)(pred + 48))));
-            _mm_storeu_si128((__m128i *)(residual + 56),
-                             _mm_sub_epi16(_mm_loadu_si128((__m128i *)(input + 56)),
-                                           _mm_loadu_si128((__m128i *)(pred + 56))));
+                (__m128i *)(residual + 8),
+                _mm_sub_epi16(_mm_loadu_si128((__m128i *)(input + 8)), _mm_loadu_si128((__m128i *)(pred + 8))));
+            _mm_storeu_si128(
+                (__m128i *)(residual + 16),
+                _mm_sub_epi16(_mm_loadu_si128((__m128i *)(input + 16)), _mm_loadu_si128((__m128i *)(pred + 16))));
+            _mm_storeu_si128(
+                (__m128i *)(residual + 24),
+                _mm_sub_epi16(_mm_loadu_si128((__m128i *)(input + 24)), _mm_loadu_si128((__m128i *)(pred + 24))));
+            _mm_storeu_si128(
+                (__m128i *)(residual + 32),
+                _mm_sub_epi16(_mm_loadu_si128((__m128i *)(input + 32)), _mm_loadu_si128((__m128i *)(pred + 32))));
+            _mm_storeu_si128(
+                (__m128i *)(residual + 40),
+                _mm_sub_epi16(_mm_loadu_si128((__m128i *)(input + 40)), _mm_loadu_si128((__m128i *)(pred + 40))));
+            _mm_storeu_si128(
+                (__m128i *)(residual + 48),
+                _mm_sub_epi16(_mm_loadu_si128((__m128i *)(input + 48)), _mm_loadu_si128((__m128i *)(pred + 48))));
+            _mm_storeu_si128(
+                (__m128i *)(residual + 56),
+                _mm_sub_epi16(_mm_loadu_si128((__m128i *)(input + 56)), _mm_loadu_si128((__m128i *)(pred + 56))));
 
             _mm_storeu_si128((__m128i *)(residual + residual_stride),
                              _mm_sub_epi16(_mm_loadu_si128((__m128i *)(input + input_stride)),
@@ -176,13 +168,12 @@ void svt_residual_kernel16bit_sse2_intrin(uint16_t *input, uint32_t input_stride
         if (!(area_width & 7)) {
             for (x = 0; x < area_height; x += 2) {
                 for (y = 0; y < area_width; y += 8) {
-                    _mm_storeu_si128((__m128i *)residual,
-                                     _mm_sub_epi16(_mm_loadu_si128((__m128i *)input),
-                                                   _mm_loadu_si128((__m128i *)pred)));
                     _mm_storeu_si128(
-                        (__m128i *)(residual + residual_stride),
-                        _mm_sub_epi16(_mm_loadu_si128((__m128i *)(input + input_stride)),
-                                      _mm_loadu_si128((__m128i *)(pred + pred_stride))));
+                        (__m128i *)residual,
+                        _mm_sub_epi16(_mm_loadu_si128((__m128i *)input), _mm_loadu_si128((__m128i *)pred)));
+                    _mm_storeu_si128((__m128i *)(residual + residual_stride),
+                                     _mm_sub_epi16(_mm_loadu_si128((__m128i *)(input + input_stride)),
+                                                   _mm_loadu_si128((__m128i *)(pred + pred_stride))));
 
                     input += 8;
                     pred += 8;
@@ -195,13 +186,12 @@ void svt_residual_kernel16bit_sse2_intrin(uint16_t *input, uint32_t input_stride
         } else {
             for (x = 0; x < area_height; x += 2) {
                 for (y = 0; y < area_width; y += 4) {
-                    _mm_storel_epi64((__m128i *)residual,
-                                     _mm_sub_epi16(_mm_loadu_si128((__m128i *)input),
-                                                   _mm_loadu_si128((__m128i *)pred)));
                     _mm_storel_epi64(
-                        (__m128i *)(residual + residual_stride),
-                        _mm_sub_epi16(_mm_loadu_si128((__m128i *)(input + input_stride)),
-                                      _mm_loadu_si128((__m128i *)(pred + pred_stride))));
+                        (__m128i *)residual,
+                        _mm_sub_epi16(_mm_loadu_si128((__m128i *)input), _mm_loadu_si128((__m128i *)pred)));
+                    _mm_storel_epi64((__m128i *)(residual + residual_stride),
+                                     _mm_sub_epi16(_mm_loadu_si128((__m128i *)(input + input_stride)),
+                                                   _mm_loadu_si128((__m128i *)(pred + pred_stride))));
 
                     input += 4;
                     pred += 4;
@@ -234,14 +224,12 @@ svt_memcpy_small(void *dst_ptr, const void *src_ptr, size_t size) {
 #pragma unroll
 #endif
     while ((i + 16) <= size) {
-        _mm_storeu_ps((float *)(void *)(dst + i),
-                      _mm_loadu_ps((const float *)(const void *)(src + i)));
+        _mm_storeu_ps((float *)(void *)(dst + i), _mm_loadu_ps((const float *)(const void *)(src + i)));
         i += 16;
     }
 
     if ((i + 8) <= size) {
-        _mm_store_sd((double *)(void *)(dst + i),
-                     _mm_load_sd((const double *)(const void *)(src + i)));
+        _mm_store_sd((double *)(void *)(dst + i), _mm_load_sd((const double *)(const void *)(src + i)));
         i += 8;
     }
 
@@ -376,8 +364,7 @@ static INLINE void hadamard_col8_sse2(__m128i *in, int iter) {
     }
 }
 
-static INLINE void hadamard_8x8_sse2(const int16_t *src_diff, ptrdiff_t src_stride, int32_t *coeff,
-                                     int is_final) {
+static INLINE void hadamard_8x8_sse2(const int16_t *src_diff, ptrdiff_t src_stride, int32_t *coeff, int is_final) {
     __m128i src[8];
     src[0] = _mm_load_si128((const __m128i *)src_diff);
     src[1] = _mm_load_si128((const __m128i *)(src_diff += src_stride));

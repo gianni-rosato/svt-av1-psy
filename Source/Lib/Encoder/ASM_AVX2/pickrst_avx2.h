@@ -49,70 +49,10 @@ static const uint16_t mask_16bit[16][16] = {
     {0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0, 0, 0, 0, 0, 0, 0, 0, 0},
     {0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0, 0, 0, 0, 0, 0, 0, 0},
     {0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0, 0, 0, 0, 0, 0, 0},
-    {0xFFFF,
-     0xFFFF,
-     0xFFFF,
-     0xFFFF,
-     0xFFFF,
-     0xFFFF,
-     0xFFFF,
-     0xFFFF,
-     0xFFFF,
-     0xFFFF,
-     0,
-     0,
-     0,
-     0,
-     0,
-     0},
-    {0xFFFF,
-     0xFFFF,
-     0xFFFF,
-     0xFFFF,
-     0xFFFF,
-     0xFFFF,
-     0xFFFF,
-     0xFFFF,
-     0xFFFF,
-     0xFFFF,
-     0xFFFF,
-     0,
-     0,
-     0,
-     0,
-     0},
-    {0xFFFF,
-     0xFFFF,
-     0xFFFF,
-     0xFFFF,
-     0xFFFF,
-     0xFFFF,
-     0xFFFF,
-     0xFFFF,
-     0xFFFF,
-     0xFFFF,
-     0xFFFF,
-     0xFFFF,
-     0,
-     0,
-     0,
-     0},
-    {0xFFFF,
-     0xFFFF,
-     0xFFFF,
-     0xFFFF,
-     0xFFFF,
-     0xFFFF,
-     0xFFFF,
-     0xFFFF,
-     0xFFFF,
-     0xFFFF,
-     0xFFFF,
-     0xFFFF,
-     0xFFFF,
-     0,
-     0,
-     0},
+    {0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0, 0, 0, 0, 0, 0},
+    {0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0, 0, 0, 0, 0},
+    {0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0, 0, 0, 0},
+    {0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0, 0, 0},
     {0xFFFF,
      0xFFFF,
      0xFFFF,
@@ -146,8 +86,7 @@ static const uint16_t mask_16bit[16][16] = {
      0xFFFF,
      0}};
 
-static INLINE void add_six_32_to_64_avx2(const __m256i src, __m256i *const sum,
-                                         __m128i *const sum128) {
+static INLINE void add_six_32_to_64_avx2(const __m256i src, __m256i *const sum, __m128i *const sum128) {
     const __m256i s0 = _mm256_cvtepi32_epi64(_mm256_castsi256_si128(src));
     const __m128i s1 = _mm_cvtepi32_epi64(_mm256_extracti128_si256(src, 1));
     *sum             = _mm256_add_epi64(*sum, s0);
@@ -266,8 +205,8 @@ static INLINE __m256i hadd_x_64_avx2(const __m256i src01, const __m256i src23) {
 }
 
 // inputs' value range is 31-bit
-static INLINE __m256i hadd_four_31_to_64_avx2(const __m256i src0, const __m256i src1,
-                                              const __m256i src2, const __m256i src3) {
+static INLINE __m256i hadd_four_31_to_64_avx2(const __m256i src0, const __m256i src1, const __m256i src2,
+                                              const __m256i src3) {
     __m256i s[2];
     s[0] = _mm256_hadd_epi32(src0, src1); // 0 0 1 1  0 0 1 1
     s[1] = _mm256_hadd_epi32(src2, src3); // 2 2 3 3  2 2 3 3
@@ -277,8 +216,8 @@ static INLINE __m256i hadd_four_31_to_64_avx2(const __m256i src0, const __m256i 
     return hadd_x_64_avx2(s[0], s[1]);
 }
 
-static INLINE __m256i hadd_four_32_to_64_avx2(const __m256i src0, const __m256i src1,
-                                              const __m256i src2, const __m256i src3) {
+static INLINE __m256i hadd_four_32_to_64_avx2(const __m256i src0, const __m256i src1, const __m256i src2,
+                                              const __m256i src3) {
     __m256i s[4];
 
     s[0] = hadd_32x8_to_64x4_avx2(src0); // 00 01  02 03
@@ -304,60 +243,54 @@ static INLINE void msub_avx2(const __m256i src, const __m256i dgd, __m256i *sum)
     *sum             = _mm256_sub_epi32(*sum, sd);
 }
 
-static INLINE void update_2_stats_sse2(const int64_t *const src, const __m128i delta,
-                                       int64_t *const dst) {
+static INLINE void update_2_stats_sse2(const int64_t *const src, const __m128i delta, int64_t *const dst) {
     const __m128i s = _mm_loadu_si128((__m128i *)src);
     const __m128i d = _mm_add_epi64(s, delta);
     _mm_storeu_si128((__m128i *)dst, d);
 }
 
-static INLINE void update_4_stats_avx2(const int64_t *const src, const __m128i delta,
-                                       int64_t *const dst) {
+static INLINE void update_4_stats_avx2(const int64_t *const src, const __m128i delta, int64_t *const dst) {
     const __m256i s   = _mm256_loadu_si256((__m256i *)src);
     const __m256i dlt = _mm256_cvtepi32_epi64(delta);
     const __m256i d   = _mm256_add_epi64(s, dlt);
     _mm256_storeu_si256((__m256i *)dst, d);
 }
 
-static INLINE void update_4_stats_highbd_avx2(const int64_t *const src, const __m256i delta,
-                                              int64_t *const dst) {
+static INLINE void update_4_stats_highbd_avx2(const int64_t *const src, const __m256i delta, int64_t *const dst) {
     const __m256i s = _mm256_loadu_si256((__m256i *)src);
     const __m256i d = _mm256_add_epi64(s, delta);
     _mm256_storeu_si256((__m256i *)dst, d);
 }
 
-static INLINE void update_5_stats_avx2(const int64_t *const src, const __m128i delta,
-                                       const int64_t delta4, int64_t *const dst) {
+static INLINE void update_5_stats_avx2(const int64_t *const src, const __m128i delta, const int64_t delta4,
+                                       int64_t *const dst) {
     update_4_stats_avx2(src + 0, delta, dst + 0);
     dst[4] = src[4] + delta4;
 }
 
-static INLINE void update_5_stats_highbd_avx2(const int64_t *const src, const __m256i delta,
-                                              const int64_t delta4, int64_t *const dst) {
+static INLINE void update_5_stats_highbd_avx2(const int64_t *const src, const __m256i delta, const int64_t delta4,
+                                              int64_t *const dst) {
     update_4_stats_highbd_avx2(src + 0, delta, dst + 0);
     dst[4] = src[4] + delta4;
 }
 
-static INLINE void update_8_stats_avx2(const int64_t *const src, const __m256i delta,
-                                       int64_t *const dst) {
+static INLINE void update_8_stats_avx2(const int64_t *const src, const __m256i delta, int64_t *const dst) {
     update_4_stats_avx2(src + 0, _mm256_castsi256_si128(delta), dst + 0);
     update_4_stats_avx2(src + 4, _mm256_extracti128_si256(delta, 1), dst + 4);
 }
 
-static INLINE void hadd_update_4_stats_avx2(const int64_t *const src, const __m256i deltas[4],
-                                            int64_t *const dst) {
+static INLINE void hadd_update_4_stats_avx2(const int64_t *const src, const __m256i deltas[4], int64_t *const dst) {
     const __m128i delta = hadd_four_32_avx2(deltas[0], deltas[1], deltas[2], deltas[3]);
     update_4_stats_avx2(src, delta, dst);
 }
 
-static INLINE void hadd_update_4_stats_highbd_avx2(const int64_t *const src,
-                                                   const __m256i deltas[4], int64_t *const dst) {
+static INLINE void hadd_update_4_stats_highbd_avx2(const int64_t *const src, const __m256i deltas[4],
+                                                   int64_t *const dst) {
     const __m256i delta = hadd_four_31_to_64_avx2(deltas[0], deltas[1], deltas[2], deltas[3]);
     update_4_stats_highbd_avx2(src, delta, dst);
 }
 
-static INLINE void hadd_update_6_stats_avx2(const int64_t *const src, const __m256i deltas[6],
-                                            int64_t *const dst) {
+static INLINE void hadd_update_6_stats_avx2(const int64_t *const src, const __m256i deltas[6], int64_t *const dst) {
     const __m128i delta0123 = hadd_four_32_avx2(deltas[0], deltas[1], deltas[2], deltas[3]);
     const __m128i delta45   = hadd_two_32_avx2(deltas[4], deltas[5]);
     const __m128i delta45_t = _mm_cvtepi32_epi64(delta45);
@@ -365,30 +298,28 @@ static INLINE void hadd_update_6_stats_avx2(const int64_t *const src, const __m2
     update_2_stats_sse2(src + 4, delta45_t, dst + 4);
 }
 
-static INLINE void hadd_update_6_stats_highbd_avx2(const int64_t *const src,
-                                                   const __m256i deltas[6], int64_t *const dst) {
+static INLINE void hadd_update_6_stats_highbd_avx2(const int64_t *const src, const __m256i deltas[6],
+                                                   int64_t *const dst) {
     const __m256i delta0123 = hadd_four_31_to_64_avx2(deltas[0], deltas[1], deltas[2], deltas[3]);
     const __m128i delta45   = hadd_two_31_to_64_avx2(deltas[4], deltas[5]);
     update_4_stats_highbd_avx2(src + 0, delta0123, dst + 0);
     update_2_stats_sse2(src + 4, delta45, dst + 4);
 }
 
-static INLINE void load_more_16_avx2(const int16_t *const src, const int32_t width,
-                                     const __m256i org, __m256i *const dst) {
+static INLINE void load_more_16_avx2(const int16_t *const src, const int32_t width, const __m256i org,
+                                     __m256i *const dst) {
     *dst = _mm256_srli_si256(org, 2);
     *dst = _mm256_insert_epi16(*dst, *(int32_t *)src, 7);
     *dst = _mm256_insert_epi16(*dst, *(int32_t *)(src + width), 15);
 }
 
-static INLINE void load_more_32_avx2(const int16_t *const src, const int32_t width,
-                                     __m256i *const dst) {
+static INLINE void load_more_32_avx2(const int16_t *const src, const int32_t width, __m256i *const dst) {
     *dst = _mm256_srli_si256(*dst, 4);
     *dst = _mm256_insert_epi32(*dst, *(int32_t *)src, 3);
     *dst = _mm256_insert_epi32(*dst, *(int32_t *)(src + width), 7);
 }
 
-static INLINE void load_more_64_avx2(const int16_t *const src, const int32_t width,
-                                     __m256i *const dst) {
+static INLINE void load_more_64_avx2(const int16_t *const src, const int32_t width, __m256i *const dst) {
     *dst = _mm256_srli_si256(*dst, 8);
     *dst = _mm256_insert_epi64(*dst, *(int64_t *)src, 1);
     *dst = _mm256_insert_epi64(*dst, *(int64_t *)(src + width), 3);
@@ -396,38 +327,8 @@ static INLINE void load_more_64_avx2(const int16_t *const src, const int32_t wid
 
 static INLINE __m256i load_win7_avx2(const int16_t *const d, const int32_t width) {
     // 16-bit idx: 0, 4, 1, 5, 2, 6, 3, 7
-    const __m256i shf = _mm256_setr_epi8(0,
-                                         1,
-                                         8,
-                                         9,
-                                         2,
-                                         3,
-                                         10,
-                                         11,
-                                         4,
-                                         5,
-                                         12,
-                                         13,
-                                         6,
-                                         7,
-                                         14,
-                                         15,
-                                         0,
-                                         1,
-                                         8,
-                                         9,
-                                         2,
-                                         3,
-                                         10,
-                                         11,
-                                         4,
-                                         5,
-                                         12,
-                                         13,
-                                         6,
-                                         7,
-                                         14,
-                                         15);
+    const __m256i shf = _mm256_setr_epi8(
+        0, 1, 8, 9, 2, 3, 10, 11, 4, 5, 12, 13, 6, 7, 14, 15, 0, 1, 8, 9, 2, 3, 10, 11, 4, 5, 12, 13, 6, 7, 14, 15);
     // 00s 01s 02s 03s 04s 05s 06s 07s
     const __m128i ds = _mm_loadu_si128((__m128i *)d);
     // 00e 01e 02e 03e 04e 05e 06e 07e
@@ -439,42 +340,11 @@ static INLINE __m256i load_win7_avx2(const int16_t *const d, const int32_t width
     return _mm256_shuffle_epi8(t1, shf);
 }
 
-static INLINE void step3_win3_avx2(const int16_t **const d, const int32_t d_stride,
-                                   const int32_t width, const int32_t h4, __m256i *const dd,
-                                   __m256i deltas[WIENER_WIN_3TAP]) {
+static INLINE void step3_win3_avx2(const int16_t **const d, const int32_t d_stride, const int32_t width,
+                                   const int32_t h4, __m256i *const dd, __m256i deltas[WIENER_WIN_3TAP]) {
     // 16-bit idx: 0, 2, 4, 6, 1, 3, 5, 7, 0, 2, 4, 6, 1, 3, 5, 7
-    const __m256i shf = _mm256_setr_epi8(0,
-                                         1,
-                                         4,
-                                         5,
-                                         8,
-                                         9,
-                                         12,
-                                         13,
-                                         2,
-                                         3,
-                                         6,
-                                         7,
-                                         10,
-                                         11,
-                                         14,
-                                         15,
-                                         0,
-                                         1,
-                                         4,
-                                         5,
-                                         8,
-                                         9,
-                                         12,
-                                         13,
-                                         2,
-                                         3,
-                                         6,
-                                         7,
-                                         10,
-                                         11,
-                                         14,
-                                         15);
+    const __m256i shf = _mm256_setr_epi8(
+        0, 1, 4, 5, 8, 9, 12, 13, 2, 3, 6, 7, 10, 11, 14, 15, 0, 1, 4, 5, 8, 9, 12, 13, 2, 3, 6, 7, 10, 11, 14, 15);
 
     int32_t y = h4;
     while (y) {
@@ -508,43 +378,12 @@ static INLINE void step3_win3_avx2(const int16_t **const d, const int32_t d_stri
     };
 }
 
-static INLINE void step3_win5_avx2(const int16_t **const d, const int32_t d_stride,
-                                   const int32_t width, const int32_t height, __m256i *const dd,
-                                   __m256i ds[WIENER_WIN_CHROMA],
+static INLINE void step3_win5_avx2(const int16_t **const d, const int32_t d_stride, const int32_t width,
+                                   const int32_t height, __m256i *const dd, __m256i ds[WIENER_WIN_CHROMA],
                                    __m256i deltas[WIENER_WIN_CHROMA]) {
     // 16-bit idx: 0, 4, 1, 5, 2, 6, 3, 7
-    const __m256i shf = _mm256_setr_epi8(0,
-                                         1,
-                                         8,
-                                         9,
-                                         2,
-                                         3,
-                                         10,
-                                         11,
-                                         4,
-                                         5,
-                                         12,
-                                         13,
-                                         6,
-                                         7,
-                                         14,
-                                         15,
-                                         0,
-                                         1,
-                                         8,
-                                         9,
-                                         2,
-                                         3,
-                                         10,
-                                         11,
-                                         4,
-                                         5,
-                                         12,
-                                         13,
-                                         6,
-                                         7,
-                                         14,
-                                         15);
+    const __m256i shf = _mm256_setr_epi8(
+        0, 1, 8, 9, 2, 3, 10, 11, 4, 5, 12, 13, 6, 7, 14, 15, 0, 1, 8, 9, 2, 3, 10, 11, 4, 5, 12, 13, 6, 7, 14, 15);
 
     int32_t y = height;
     do {
@@ -573,9 +412,8 @@ static INLINE void step3_win5_avx2(const int16_t **const d, const int32_t d_stri
     } while (y);
 }
 
-static INLINE void step3_win5_oneline_avx2(const int16_t **const d, const int32_t d_stride,
-                                           const int32_t width, const int32_t height,
-                                           __m256i ds[WIENER_WIN_CHROMA],
+static INLINE void step3_win5_oneline_avx2(const int16_t **const d, const int32_t d_stride, const int32_t width,
+                                           const int32_t height, __m256i ds[WIENER_WIN_CHROMA],
                                            __m256i deltas[WIENER_WIN_CHROMA]) {
     const __m256i const_n1_0 = _mm256_setr_epi16(
         0xFFFF, 0, 0xFFFF, 0, 0xFFFF, 0, 0xFFFF, 0, 0xFFFF, 0, 0xFFFF, 0, 0xFFFF, 0, 0xFFFF, 0);
@@ -606,9 +444,8 @@ static INLINE void step3_win5_oneline_avx2(const int16_t **const d, const int32_
     } while (--y);
 }
 
-static INLINE void step3_win7_avx2(const int16_t **const d, const int32_t d_stride,
-                                   const int32_t width, const int32_t height,
-                                   __m256i ds[WIENER_WIN], __m256i deltas[WIENER_WIN]) {
+static INLINE void step3_win7_avx2(const int16_t **const d, const int32_t d_stride, const int32_t width,
+                                   const int32_t height, __m256i ds[WIENER_WIN], __m256i deltas[WIENER_WIN]) {
     const __m256i const_n1_0 = _mm256_setr_epi16(
         0xFFFF, 0, 0xFFFF, 0, 0xFFFF, 0, 0xFFFF, 0, 0xFFFF, 0, 0xFFFF, 0, 0xFFFF, 0, 0xFFFF, 0);
 

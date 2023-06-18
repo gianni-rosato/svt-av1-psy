@@ -18,8 +18,8 @@ extern const int8_t eb_av1_filter_intra_taps[FILTER_INTRA_MODES][8][8];
 
 static INLINE __m128i xx_load_128(const void *a) { return _mm_loadu_si128((const __m128i *)a); }
 
-void svt_av1_filter_intra_predictor_sse4_1(uint8_t *dst, ptrdiff_t stride, TxSize tx_size,
-                                           const uint8_t *above, const uint8_t *left, int mode) {
+void svt_av1_filter_intra_predictor_sse4_1(uint8_t *dst, ptrdiff_t stride, TxSize tx_size, const uint8_t *above,
+                                           const uint8_t *left, int mode) {
     int       r, c;
     uint8_t   buffer[33][33];
     const int bw = tx_size_wide[tx_size];

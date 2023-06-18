@@ -30,11 +30,11 @@
 // ransac
 typedef int (*IsDegenerateFunc)(double *p);
 typedef int (*FindTransformationFunc)(int points, double *points1, double *points2, double *params);
-typedef void (*ProjectPointsDoubleFunc)(double *mat, double *points, double *proj, int n,
-                                        int stride_points, int stride_proj);
+typedef void (*ProjectPointsDoubleFunc)(double *mat, double *points, double *proj, int n, int stride_points,
+                                        int stride_proj);
 
-static void project_points_double_translation(double *mat, double *points, double *proj, int n,
-                                              int stride_points, int stride_proj) {
+static void project_points_double_translation(double *mat, double *points, double *proj, int n, int stride_points,
+                                              int stride_proj) {
     int i;
     for (i = 0; i < n; ++i) {
         const double x = *(points++), y = *(points++);
@@ -45,8 +45,8 @@ static void project_points_double_translation(double *mat, double *points, doubl
     }
 }
 
-static void project_points_double_rotzoom(double *mat, double *points, double *proj, int n,
-                                          int stride_points, int stride_proj) {
+static void project_points_double_rotzoom(double *mat, double *points, double *proj, int n, int stride_points,
+                                          int stride_proj) {
     int i;
     for (i = 0; i < n; ++i) {
         const double x = *(points++), y = *(points++);
@@ -57,8 +57,8 @@ static void project_points_double_rotzoom(double *mat, double *points, double *p
     }
 }
 
-static void project_points_double_affine(double *mat, double *points, double *proj, int n,
-                                         int stride_points, int stride_proj) {
+static void project_points_double_affine(double *mat, double *points, double *proj, int n, int stride_points,
+                                         int stride_proj) {
     int i;
     for (i = 0; i < n; ++i) {
         const double x = *(points++), y = *(points++);
@@ -341,8 +341,7 @@ static int is_better_motion(const RANSAC_MOTION *motion_a, const RANSAC_MOTION *
     return compare_motions(motion_a, motion_b) < 0;
 }
 
-static void copy_points_at_indices(double *dest, const double *src, const int *indices,
-                                   int num_points) {
+static void copy_points_at_indices(double *dest, const double *src, const int *indices, int num_points) {
     for (int i = 0; i < num_points; ++i) {
         const int index = indices[i];
         dest[i * 2]     = src[index * 2];
@@ -358,10 +357,9 @@ static void clear_motion(RANSAC_MOTION *motion, int num_points) {
     memset(motion->inlier_indices, 0, sizeof(*motion->inlier_indices) * num_points);
 }
 
-static int ransac(const int *matched_points, int npoints, int *num_inliers_by_motion,
-                  MotionModel *params_by_motion, int num_desired_motions, int minpts,
-                  IsDegenerateFunc is_degenerate, FindTransformationFunc find_transformation,
-                  ProjectPointsDoubleFunc projectpoints) {
+static int ransac(const int *matched_points, int npoints, int *num_inliers_by_motion, MotionModel *params_by_motion,
+                  int num_desired_motions, int minpts, IsDegenerateFunc is_degenerate,
+                  FindTransformationFunc find_transformation, ProjectPointsDoubleFunc projectpoints) {
     int trial_count = 0;
     int ret_val     = 0;
 
@@ -407,8 +405,7 @@ static int ransac(const int *matched_points, int npoints, int *num_inliers_by_mo
 
     worst_kept_motion = motions;
 
-    if (!(points1 && points2 && corners1 && corners2 && image1_coord && motions &&
-          current_motion.inlier_indices)) {
+    if (!(points1 && points2 && corners1 && corners2 && image1_coord && motions && current_motion.inlier_indices)) {
         ret_val = 1;
         goto finish_ransac;
     }
@@ -467,12 +464,10 @@ static int ransac(const int *matched_points, int npoints, int *num_inliers_by_mo
             }
         }
 
-        if (current_motion.num_inliers >= worst_kept_motion->num_inliers &&
-            current_motion.num_inliers > 1) {
+        if (current_motion.num_inliers >= worst_kept_motion->num_inliers && current_motion.num_inliers > 1) {
             double mean_distance;
             mean_distance           = sum_distance / ((double)current_motion.num_inliers);
-            current_motion.variance = sum_distance_squared /
-                    ((double)current_motion.num_inliers - 1.0) -
+            current_motion.variance = sum_distance_squared / ((double)current_motion.num_inliers - 1.0) -
                 mean_distance * mean_distance * ((double)current_motion.num_inliers) /
                     ((double)current_motion.num_inliers - 1.0);
             if (is_better_motion(&current_motion, worst_kept_motion)) {
@@ -507,13 +502,10 @@ static int ransac(const int *matched_points, int npoints, int *num_inliers_by_mo
     // Recompute the motions using only the inliers.
     for (int i = 0; i < num_desired_motions; ++i) {
         if (motions[i].num_inliers >= minpts) {
-            copy_points_at_indices(
-                points1, corners1, motions[i].inlier_indices, motions[i].num_inliers);
-            copy_points_at_indices(
-                points2, corners2, motions[i].inlier_indices, motions[i].num_inliers);
+            copy_points_at_indices(points1, corners1, motions[i].inlier_indices, motions[i].num_inliers);
+            copy_points_at_indices(points2, corners2, motions[i].inlier_indices, motions[i].num_inliers);
 
-            find_transformation(
-                motions[i].num_inliers, points1, points2, params_by_motion[i].params);
+            find_transformation(motions[i].num_inliers, points1, points2, params_by_motion[i].params);
 
             params_by_motion[i].num_inliers = motions[i].num_inliers;
             if (svt_memcpy != NULL)
@@ -545,7 +537,7 @@ finish_ransac:
 
 static int is_collinear3(double *p1, double *p2, double *p3) {
     static const double collinear_eps = 1e-3;
-    const double        v = (p2[0] - p1[0]) * (p3[1] - p1[1]) - (p2[1] - p1[1]) * (p3[0] - p1[0]);
+    const double        v             = (p2[0] - p1[0]) * (p3[1] - p1[1]) - (p2[1] - p1[1]) * (p3[0] - p1[0]);
     return fabs(v) < collinear_eps;
 }
 
@@ -568,8 +560,8 @@ static int ransac_translation(int *matched_points, int npoints, int *num_inliers
                   project_points_double_translation);
 }
 
-static int ransac_rotzoom(int *matched_points, int npoints, int *num_inliers_by_motion,
-                          MotionModel *params_by_motion, int num_desired_motions) {
+static int ransac_rotzoom(int *matched_points, int npoints, int *num_inliers_by_motion, MotionModel *params_by_motion,
+                          int num_desired_motions) {
     return ransac(matched_points,
                   npoints,
                   num_inliers_by_motion,
@@ -581,8 +573,8 @@ static int ransac_rotzoom(int *matched_points, int npoints, int *num_inliers_by_
                   project_points_double_rotzoom);
 }
 
-static int ransac_affine(int *matched_points, int npoints, int *num_inliers_by_motion,
-                         MotionModel *params_by_motion, int num_desired_motions) {
+static int ransac_affine(int *matched_points, int npoints, int *num_inliers_by_motion, MotionModel *params_by_motion,
+                         int num_desired_motions) {
     return ransac(matched_points,
                   npoints,
                   num_inliers_by_motion,

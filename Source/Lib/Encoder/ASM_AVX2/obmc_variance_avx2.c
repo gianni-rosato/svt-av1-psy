@@ -23,9 +23,8 @@ static INLINE int32_t xx_hsum_epi32_si32(__m128i v_d) {
     return _mm_cvtsi128_si32(v_d);
 }
 
-static INLINE void obmc_variance_w4(const uint8_t *pre, const int pre_stride, const int32_t *wsrc,
-                                    const int32_t *mask, unsigned int *const sse, int *const sum,
-                                    const int h) {
+static INLINE void obmc_variance_w4(const uint8_t *pre, const int pre_stride, const int32_t *wsrc, const int32_t *mask,
+                                    unsigned int *const sse, int *const sum, const int h) {
     const int pre_step = pre_stride - 4;
     int       n        = 0;
     __m128i   v_sum_d  = _mm_setzero_si128();
@@ -62,9 +61,8 @@ static INLINE void obmc_variance_w4(const uint8_t *pre, const int pre_stride, co
     *sse = xx_hsum_epi32_si32(v_sse_d);
 }
 
-static INLINE void obmc_variance_w8n(const uint8_t *pre, const int pre_stride, const int32_t *wsrc,
-                                     const int32_t *mask, unsigned int *const sse, int *const sum,
-                                     const int w, const int h) {
+static INLINE void obmc_variance_w8n(const uint8_t *pre, const int pre_stride, const int32_t *wsrc, const int32_t *mask,
+                                     unsigned int *const sse, int *const sum, const int w, const int h) {
     int           n = 0, height = h;
     __m128i       v_sum_d  = _mm_setzero_si128();
     __m128i       v_sse_d  = _mm_setzero_si128();
@@ -89,8 +87,7 @@ static INLINE void obmc_variance_w8n(const uint8_t *pre, const int pre_stride, c
             const __m256i v_diff0_d = _mm256_sub_epi32(v_w_d, v_pm_d);
 
             const __m256i v_sign_d   = _mm256_srai_epi32(v_diff0_d, 31);
-            const __m256i v_tmp_d    = _mm256_add_epi32(_mm256_add_epi32(v_diff0_d, v_bias_d),
-                                                     v_sign_d);
+            const __m256i v_tmp_d    = _mm256_add_epi32(_mm256_add_epi32(v_diff0_d, v_bias_d), v_sign_d);
             const __m256i v_rdiff0_d = _mm256_srai_epi32(v_tmp_d, 12);
             const __m128i v_rdiff_d  = _mm256_castsi256_si128(v_rdiff0_d);
             const __m128i v_rdiff1_d = _mm256_extracti128_si256(v_rdiff0_d, 1);
@@ -116,8 +113,8 @@ static INLINE void obmc_variance_w8n(const uint8_t *pre, const int pre_stride, c
 }
 
 static INLINE void obmc_variance_w16n(const uint8_t *pre, const int pre_stride, const int32_t *wsrc,
-                                      const int32_t *mask, unsigned int *const sse, int *const sum,
-                                      const int w, const int h) {
+                                      const int32_t *mask, unsigned int *const sse, int *const sum, const int w,
+                                      const int h) {
     int           n = 0, height = h;
     __m256i       v_d;
     __m128i       res0;
@@ -150,10 +147,8 @@ static INLINE void obmc_variance_w16n(const uint8_t *pre, const int pre_stride, 
             const __m256i v_sign0_d = _mm256_srai_epi32(v_diff0_d, 31);
             const __m256i v_sign1_d = _mm256_srai_epi32(v_diff1_d, 31);
 
-            const __m256i v_tmp0_d = _mm256_add_epi32(_mm256_add_epi32(v_diff0_d, v_bias_d),
-                                                      v_sign0_d);
-            const __m256i v_tmp1_d = _mm256_add_epi32(_mm256_add_epi32(v_diff1_d, v_bias_d),
-                                                      v_sign1_d);
+            const __m256i v_tmp0_d = _mm256_add_epi32(_mm256_add_epi32(v_diff0_d, v_bias_d), v_sign0_d);
+            const __m256i v_tmp1_d = _mm256_add_epi32(_mm256_add_epi32(v_diff1_d, v_bias_d), v_sign1_d);
 
             const __m256i v_rdiff0_d = _mm256_srai_epi32(v_tmp0_d, 12);
             const __m256i v_rdiff2_d = _mm256_srai_epi32(v_tmp1_d, 12);
@@ -181,22 +176,19 @@ static INLINE void obmc_variance_w16n(const uint8_t *pre, const int pre_stride, 
     *sse = _mm_cvtsi128_si32(_mm_srli_si128(res0, 4));
 }
 
-#define OBMCVARWXH(W, H)                                                          \
-    unsigned int svt_aom_obmc_variance##W##x##H##_avx2(const uint8_t *pre,        \
-                                                       int            pre_stride, \
-                                                       const int32_t *wsrc,       \
-                                                       const int32_t *mask,       \
-                                                       unsigned int  *sse) {       \
-        int sum;                                                                  \
-        if (W == 4) {                                                             \
-            obmc_variance_w4(pre, pre_stride, wsrc, mask, sse, &sum, H);          \
-        } else if (W == 8) {                                                      \
-            obmc_variance_w8n(pre, pre_stride, wsrc, mask, sse, &sum, W, H);      \
-        } else {                                                                  \
-            obmc_variance_w16n(pre, pre_stride, wsrc, mask, sse, &sum, W, H);     \
-        }                                                                         \
-                                                                                  \
-        return *sse - (unsigned int)(((int64_t)sum * sum) / (W * H));             \
+#define OBMCVARWXH(W, H)                                                                                   \
+    unsigned int svt_aom_obmc_variance##W##x##H##_avx2(                                                    \
+        const uint8_t *pre, int pre_stride, const int32_t *wsrc, const int32_t *mask, unsigned int *sse) { \
+        int sum;                                                                                           \
+        if (W == 4) {                                                                                      \
+            obmc_variance_w4(pre, pre_stride, wsrc, mask, sse, &sum, H);                                   \
+        } else if (W == 8) {                                                                               \
+            obmc_variance_w8n(pre, pre_stride, wsrc, mask, sse, &sum, W, H);                               \
+        } else {                                                                                           \
+            obmc_variance_w16n(pre, pre_stride, wsrc, mask, sse, &sum, W, H);                              \
+        }                                                                                                  \
+                                                                                                           \
+        return *sse - (unsigned int)(((int64_t)sum * sum) / (W * H));                                      \
     }
 
 OBMCVARWXH(128, 128)
@@ -222,9 +214,8 @@ OBMCVARWXH(32, 8)
 OBMCVARWXH(16, 64)
 OBMCVARWXH(64, 16)
 
-void svt_av1_calc_target_weighted_pred_above_avx2(uint8_t is16bit, MacroBlockD *xd, int rel_mi_col,
-                                                  uint8_t nb_mi_width, MbModeInfo *nb_mi,
-                                                  void *fun_ctxt, const int num_planes) {
+void svt_av1_calc_target_weighted_pred_above_avx2(uint8_t is16bit, MacroBlockD *xd, int rel_mi_col, uint8_t nb_mi_width,
+                                                  MbModeInfo *nb_mi, void *fun_ctxt, const int num_planes) {
     (void)nb_mi;
     (void)num_planes;
     (void)is16bit;
@@ -329,9 +320,8 @@ void svt_av1_calc_target_weighted_pred_above_avx2(uint8_t is16bit, MacroBlockD *
     }
 }
 
-void svt_av1_calc_target_weighted_pred_left_avx2(uint8_t is16bit, MacroBlockD *xd, int rel_mi_row,
-                                                 uint8_t nb_mi_height, MbModeInfo *nb_mi,
-                                                 void *fun_ctxt, const int num_planes) {
+void svt_av1_calc_target_weighted_pred_left_avx2(uint8_t is16bit, MacroBlockD *xd, int rel_mi_row, uint8_t nb_mi_height,
+                                                 MbModeInfo *nb_mi, void *fun_ctxt, const int num_planes) {
     (void)nb_mi;
     (void)num_planes;
     (void)is16bit;
@@ -442,8 +432,7 @@ void svt_av1_calc_target_weighted_pred_left_avx2(uint8_t is16bit, MacroBlockD *x
             for (; col < ctxt->overlap; ++col) {
                 const uint8_t m0 = mask1d[col];
                 const uint8_t m1 = AOM_BLEND_A64_MAX_ALPHA - m0;
-                wsrc[col]        = (wsrc[col] >> AOM_BLEND_A64_ROUND_BITS) * m0 +
-                    (tmp[col] << AOM_BLEND_A64_ROUND_BITS) * m1;
+                wsrc[col] = (wsrc[col] >> AOM_BLEND_A64_ROUND_BITS) * m0 + (tmp[col] << AOM_BLEND_A64_ROUND_BITS) * m1;
                 mask[col] = (mask[col] >> AOM_BLEND_A64_ROUND_BITS) * m0;
             }
             wsrc += bw;

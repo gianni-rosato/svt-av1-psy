@@ -42,7 +42,6 @@ typedef struct PictureDecisionResultInitData {
 /**************************************
  * Extern Function Declarations
  **************************************/
-extern EbErrorType svt_aom_picture_decision_result_creator(EbPtr *object_dbl_ptr,
-                                                           EbPtr  object_init_data_ptr);
+extern EbErrorType svt_aom_picture_decision_result_creator(EbPtr *object_dbl_ptr, EbPtr object_init_data_ptr);
 
 #endif //EbPictureDecisionResults_h

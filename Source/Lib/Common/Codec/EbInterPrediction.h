@@ -89,8 +89,7 @@ static const InterpFilterParams av1_interp_filter_params_list[SWITCHABLE_FILTERS
     {(const int16_t *)sub_pel_filters_8sharp, SUBPEL_TAPS, SUBPEL_SHIFTS, MULTITAP_SHARP},
     {(const int16_t *)bilinear_filters, SUBPEL_TAPS, SUBPEL_SHIFTS, BILINEAR}};
 
-static INLINE void clamp_mv(MV *mv, int32_t min_col, int32_t max_col, int32_t min_row,
-                            int32_t max_row) {
+static INLINE void clamp_mv(MV *mv, int32_t min_col, int32_t max_col, int32_t min_row, int32_t max_row) {
     mv->col = (int16_t)clamp(mv->col, min_col, max_col);
     mv->row = (int16_t)clamp(mv->row, min_row, max_row);
 }
@@ -109,49 +108,36 @@ typedef struct WedgeParamsType {
     WedgeMasksType      *masks;
 } WedgeParamsType;
 
-void svt_inter_predictor_light_pd0(const uint8_t *src, int32_t src_stride, uint8_t *dst,
-                                   int32_t dst_stride, int32_t w, int32_t h,
-                                   SubpelParams *subpel_params, ConvolveParams *conv_params);
-#if !OPT_LPD0_8BIT_ONLY
-void svt_highbd_inter_predictor_light_pd0(uint8_t *src, uint8_t *src_ptr_2b, int32_t src_stride,
-                                          uint16_t *dst, int32_t dst_stride, int32_t w, int32_t h,
-                                          SubpelParams *subpel_params, ConvolveParams *conv_params,
-                                          int32_t bd);
-#endif
-void svt_inter_predictor_light_pd1(uint8_t *src, uint8_t *src_2b, int32_t src_stride, uint8_t *dst,
-                                   int32_t dst_stride, int32_t w, int32_t h,
-                                   InterpFilterParams *filter_x, InterpFilterParams *filter_y,
-                                   SubpelParams *subpel_params, ConvolveParams *conv_params,
-                                   int32_t bd);
+void svt_inter_predictor_light_pd0(const uint8_t *src, int32_t src_stride, uint8_t *dst, int32_t dst_stride, int32_t w,
+                                   int32_t h, SubpelParams *subpel_params, ConvolveParams *conv_params);
+void svt_inter_predictor_light_pd1(uint8_t *src, uint8_t *src_2b, int32_t src_stride, uint8_t *dst, int32_t dst_stride,
+                                   int32_t w, int32_t h, InterpFilterParams *filter_x, InterpFilterParams *filter_y,
+                                   SubpelParams *subpel_params, ConvolveParams *conv_params, int32_t bd);
 void svt_inter_predictor(const uint8_t *src, int32_t src_stride, uint8_t *dst, int32_t dst_stride,
-                         const SubpelParams *subpel_params, const ScaleFactors *sf, int32_t w,
-                         int32_t h, ConvolveParams *conv_params, InterpFilters interp_filters,
-                         int32_t is_intrabc);
+                         const SubpelParams *subpel_params, const ScaleFactors *sf, int32_t w, int32_t h,
+                         ConvolveParams *conv_params, InterpFilters interp_filters, int32_t is_intrabc);
 
-void svt_highbd_inter_predictor(const uint16_t *src, int32_t src_stride, uint16_t *dst,
-                                int32_t dst_stride, const SubpelParams *subpel_params,
-                                const ScaleFactors *sf, int32_t w, int32_t h,
-                                ConvolveParams *conv_params, InterpFilters interp_filters,
-                                int32_t is_intrabc, int32_t bd);
+void svt_highbd_inter_predictor(const uint16_t *src, int32_t src_stride, uint16_t *dst, int32_t dst_stride,
+                                const SubpelParams *subpel_params, const ScaleFactors *sf, int32_t w, int32_t h,
+                                ConvolveParams *conv_params, InterpFilters interp_filters, int32_t is_intrabc,
+                                int32_t bd);
 
-void svt_av1_dist_wtd_comp_weight_assign(SeqHeader *seq_header, int cur_frame_index,
-                                         int bck_frame_index, int fwd_frame_index, int compound_idx,
-                                         int order_idx, int *fwd_offset, int *bck_offset,
-                                         int *use_dist_wtd_comp_avg, int is_compound);
+void svt_av1_dist_wtd_comp_weight_assign(SeqHeader *seq_header, int cur_frame_index, int bck_frame_index,
+                                         int fwd_frame_index, int compound_idx, int order_idx, int *fwd_offset,
+                                         int *bck_offset, int *use_dist_wtd_comp_avg, int is_compound);
 
-void svt_aom_build_masked_compound_no_round(uint8_t *dst, int dst_stride, const CONV_BUF_TYPE *src0,
-                                            int src0_stride, const CONV_BUF_TYPE *src1,
-                                            int                                 src1_stride,
-                                            const InterInterCompoundData *const comp_data,
-                                            uint8_t *seg_mask, BlockSize bsize, int h, int w,
-                                            ConvolveParams *conv_params, uint8_t bd, Bool is_16bit);
+void svt_aom_build_masked_compound_no_round(uint8_t *dst, int dst_stride, const CONV_BUF_TYPE *src0, int src0_stride,
+                                            const CONV_BUF_TYPE *src1, int src1_stride,
+                                            const InterInterCompoundData *const comp_data, uint8_t *seg_mask,
+                                            BlockSize bsize, int h, int w, ConvolveParams *conv_params, uint8_t bd,
+                                            Bool is_16bit);
 
 static const InterpFilterParams av1_interp_4tap[2] = {
     {(const int16_t *)sub_pel_filters_4, SUBPEL_TAPS, SUBPEL_SHIFTS, EIGHTTAP_REGULAR},
     {(const int16_t *)sub_pel_filters_4smooth, SUBPEL_TAPS, SUBPEL_SHIFTS, EIGHTTAP_SMOOTH}};
 
-static INLINE InterpFilterParams
-av1_get_interp_filter_params_with_block_size(const InterpFilter interp_filter, const int32_t w) {
+static INLINE InterpFilterParams av1_get_interp_filter_params_with_block_size(const InterpFilter interp_filter,
+                                                                              const int32_t      w) {
     if (w <= 4 && (interp_filter == MULTITAP_SHARP || interp_filter == EIGHTTAP_REGULAR))
         return av1_interp_4tap[0];
     else if (w <= 4 && interp_filter == EIGHTTAP_SMOOTH)
@@ -160,61 +146,47 @@ av1_get_interp_filter_params_with_block_size(const InterpFilter interp_filter, c
     return av1_interp_filter_params_list[interp_filter];
 }
 
-static INLINE void av1_get_convolve_filter_params(uint32_t            interp_filters,
-                                                  InterpFilterParams *params_x,
-                                                  InterpFilterParams *params_y, int32_t w,
-                                                  int32_t h) {
+static INLINE void av1_get_convolve_filter_params(uint32_t interp_filters, InterpFilterParams *params_x,
+                                                  InterpFilterParams *params_y, int32_t w, int32_t h) {
     InterpFilter filter_x = av1_extract_interp_filter(interp_filters, 1);
     InterpFilter filter_y = av1_extract_interp_filter(interp_filters, 0);
     *params_x             = av1_get_interp_filter_params_with_block_size(filter_x, w);
     *params_y             = av1_get_interp_filter_params_with_block_size(filter_y, h);
 };
 /* Mapping of interintra to intra mode for use in the intra component */
-static const PredictionMode interintra_to_intra_mode[INTERINTRA_MODES] = {
-    DC_PRED, V_PRED, H_PRED, SMOOTH_PRED};
+static const PredictionMode interintra_to_intra_mode[INTERINTRA_MODES] = {DC_PRED, V_PRED, H_PRED, SMOOTH_PRED};
 
-void svt_aom_combine_interintra(InterIntraMode mode, int8_t use_wedge_interintra, int wedge_index,
-                                int wedge_sign, BlockSize bsize, BlockSize plane_bsize,
-                                uint8_t *comppred, int compstride, const uint8_t *interpred,
-                                int interstride, const uint8_t *intrapred, int intrastride);
+void svt_aom_combine_interintra(InterIntraMode mode, int8_t use_wedge_interintra, int wedge_index, int wedge_sign,
+                                BlockSize bsize, BlockSize plane_bsize, uint8_t *comppred, int compstride,
+                                const uint8_t *interpred, int interstride, const uint8_t *intrapred, int intrastride);
 
-void svt_aom_combine_interintra_highbd(InterIntraMode mode, uint8_t use_wedge_interintra,
-                                       uint8_t wedge_index, uint8_t wedge_sign, BlockSize bsize,
-                                       BlockSize plane_bsize, uint8_t *comppred8, int compstride,
-                                       const uint8_t *interpred8, int interstride,
+void svt_aom_combine_interintra_highbd(InterIntraMode mode, uint8_t use_wedge_interintra, uint8_t wedge_index,
+                                       uint8_t wedge_sign, BlockSize bsize, BlockSize plane_bsize, uint8_t *comppred8,
+                                       int compstride, const uint8_t *interpred8, int interstride,
                                        const uint8_t *intrapred8, int intrastride, int bd);
 
-void svt_av1_setup_scale_factors_for_frame(ScaleFactors *sf, int other_w, int other_h, int this_w,
-                                           int this_h);
+void svt_av1_setup_scale_factors_for_frame(ScaleFactors *sf, int other_w, int other_h, int this_w, int this_h);
 
 static INLINE int av1_is_valid_scale(const struct ScaleFactors *sf) {
     return sf->x_scale_fp != REF_INVALID_SCALE && sf->y_scale_fp != REF_INVALID_SCALE;
 }
 static INLINE int av1_is_scaled(const struct ScaleFactors *sf) {
-    return av1_is_valid_scale(sf) &&
-        (sf->x_scale_fp != REF_NO_SCALE || sf->y_scale_fp != REF_NO_SCALE);
+    return av1_is_valid_scale(sf) && (sf->x_scale_fp != REF_NO_SCALE || sf->y_scale_fp != REF_NO_SCALE);
 }
-static INLINE int valid_ref_frame_size(int ref_width, int ref_height, int this_width,
-                                       int this_height) {
-    return 2 * this_width >= ref_width && 2 * this_height >= ref_height &&
-        this_width <= 16 * ref_width && this_height <= 16 * ref_height;
+static INLINE int valid_ref_frame_size(int ref_width, int ref_height, int this_width, int this_height) {
+    return 2 * this_width >= ref_width && 2 * this_height >= ref_height && this_width <= 16 * ref_width &&
+        this_height <= 16 * ref_height;
 }
 MV32 svt_av1_scale_mv(const MV *mvq4, int x, int y, const ScaleFactors *sf);
-#if CLN_FUNC_DECL
-void svt_aom_pack_block(uint8_t *in8_bit_buffer, uint32_t in8_stride, uint8_t *inn_bit_buffer,
-                        uint32_t inn_stride, uint16_t *out16_bit_buffer, uint32_t out_stride,
-                        uint32_t width, uint32_t height);
-#endif
-void build_smooth_interintra_mask(uint8_t *mask, int stride, BlockSize plane_bsize,
-                                  InterIntraMode mode);
+void svt_aom_pack_block(uint8_t *in8_bit_buffer, uint32_t in8_stride, uint8_t *inn_bit_buffer, uint32_t inn_stride,
+                        uint16_t *out16_bit_buffer, uint32_t out_stride, uint32_t width, uint32_t height);
+void build_smooth_interintra_mask(uint8_t *mask, int stride, BlockSize plane_bsize, InterIntraMode mode);
 
-void highbd_convolve_2d_for_intrabc(const uint16_t *src, int src_stride, uint16_t *dst,
-                                    int dst_stride, int w, int h, int subpel_x_q4, int subpel_y_q4,
-                                    ConvolveParams *conv_params, int bd);
+void highbd_convolve_2d_for_intrabc(const uint16_t *src, int src_stride, uint16_t *dst, int dst_stride, int w, int h,
+                                    int subpel_x_q4, int subpel_y_q4, ConvolveParams *conv_params, int bd);
 
-void convolve_2d_for_intrabc(const uint8_t *src, int src_stride, uint8_t *dst, int dst_stride,
-                             int w, int h, int subpel_x_q4, int subpel_y_q4,
-                             ConvolveParams *conv_params);
+void convolve_2d_for_intrabc(const uint8_t *src, int src_stride, uint8_t *dst, int dst_stride, int w, int h,
+                             int subpel_x_q4, int subpel_y_q4, ConvolveParams *conv_params);
 
 extern aom_highbd_convolve_fn_t convolve_hbd[/*sub_x*/ 2][/*sub_y*/ 2][/*bi*/ 2];
 
@@ -274,18 +246,17 @@ static INLINE void lower_mv_precision(MV *mv, int allow_hp, int is_integer) {
 }
 
 static INLINE void get_mv_projection(MV *output, MV ref, int num, int den) {
-    den              = AOMMIN(den, MAX_FRAME_DISTANCE);
-    num              = num > 0 ? AOMMIN(num, MAX_FRAME_DISTANCE) : AOMMAX(num, -MAX_FRAME_DISTANCE);
-    const int mv_row = ROUND_POWER_OF_TWO_SIGNED(ref.row * num * div_mult[den], 14);
-    const int mv_col = ROUND_POWER_OF_TWO_SIGNED(ref.col * num * div_mult[den], 14);
+    den                 = AOMMIN(den, MAX_FRAME_DISTANCE);
+    num                 = num > 0 ? AOMMIN(num, MAX_FRAME_DISTANCE) : AOMMAX(num, -MAX_FRAME_DISTANCE);
+    const int mv_row    = ROUND_POWER_OF_TWO_SIGNED(ref.row * num * div_mult[den], 14);
+    const int mv_col    = ROUND_POWER_OF_TWO_SIGNED(ref.col * num * div_mult[den], 14);
     const int clamp_max = MV_UPP - 1;
     const int clamp_min = MV_LOW + 1;
     output->row         = (int16_t)clamp(mv_row, clamp_min, clamp_max);
     output->col         = (int16_t)clamp(mv_col, clamp_min, clamp_max);
 }
 
-static INLINE int check_sb_border(const int mi_row, const int mi_col, const int row_offset,
-                                  const int col_offset) {
+static INLINE int check_sb_border(const int mi_row, const int mi_col, const int row_offset, const int col_offset) {
     const int sb_mi_size = mi_size_wide[BLOCK_64X64];
     const int row        = mi_row & (sb_mi_size - 1);
     const int col        = mi_col & (sb_mi_size - 1);
@@ -298,20 +269,17 @@ static INLINE int check_sb_border(const int mi_row, const int mi_col, const int 
 }
 
 static INLINE int is_neighbor_overlappable(const MbModeInfo *mbmi) {
-    return /*is_intrabc_block(mbmi) ||*/ mbmi->block_mi.ref_frame[0] >
-        INTRA_FRAME; // TODO: modify when add intra_bc
+    return /*is_intrabc_block(mbmi) ||*/ mbmi->block_mi.ref_frame[0] > INTRA_FRAME; // TODO: modify when add intra_bc
 }
 
 static INLINE int32_t is_mv_valid(const MV *mv) {
     return mv->row > MV_LOW && mv->row < MV_UPP && mv->col > MV_LOW && mv->col < MV_UPP;
 }
 
-#define CHECK_BACKWARD_REFS(ref_frame) \
-    (((ref_frame) >= BWDREF_FRAME) && ((ref_frame) <= ALTREF_FRAME))
+#define CHECK_BACKWARD_REFS(ref_frame) (((ref_frame) >= BWDREF_FRAME) && ((ref_frame) <= ALTREF_FRAME))
 #define IS_BACKWARD_REF_FRAME(ref_frame) CHECK_BACKWARD_REFS(ref_frame)
 
-void svt_aom_find_ref_dv(IntMv *ref_dv, const TileInfo *const tile, int mib_size, int mi_row,
-                         int mi_col);
+void svt_aom_find_ref_dv(IntMv *ref_dv, const TileInfo *const tile, int mib_size, int mi_row, int mi_col);
 
 static INLINE int32_t is_comp_ref_allowed(BlockSize bsize) {
     return AOMMIN(block_size_wide[bsize], block_size_high[bsize]) >= 8;
@@ -335,8 +303,7 @@ static INLINE int is_any_masked_compound_used(BlockSize bsize) {
         return 0;
     for (i = 0; i < COMPOUND_TYPES; i++) {
         comp_type = (CompoundType)i;
-        if (svt_aom_is_masked_compound_type(comp_type) &&
-            is_interinter_compound_used(comp_type, bsize))
+        if (svt_aom_is_masked_compound_type(comp_type) && is_interinter_compound_used(comp_type, bsize))
             return 1;
     }
     return 0;
@@ -435,8 +402,7 @@ static INLINE Bool is_motion_variation_allowed_bsize(const BlockSize bsize) {
     return (block_size_wide[bsize] >= 8 && block_size_high[bsize] >= 8);
 }
 
-static INLINE int is_global_mv_block(const PredictionMode mode, const BlockSize bsize,
-                                     TransformationType type) {
+static INLINE int is_global_mv_block(const PredictionMode mode, const BlockSize bsize, TransformationType type) {
     return (mode == GLOBALMV || mode == GLOBAL_GLOBALMV) && type > TRANSLATION &&
         is_motion_variation_allowed_bsize(bsize);
 }
@@ -445,12 +411,8 @@ static INLINE uint32_t have_nearmv_in_inter_mode(PredictionMode mode) {
     return (mode == NEARMV || mode == NEAR_NEARMV || mode == NEAR_NEWMV || mode == NEW_NEARMV);
 }
 
-static INLINE int is_intrabc_block(const BlockModeInfoEnc *block_mi) {
-    return block_mi->use_intrabc;
-}
-static INLINE int is_intrabc_block_dec(const BlockModeInfo *block_mi) {
-    return block_mi->use_intrabc;
-}
+static INLINE int is_intrabc_block(const BlockModeInfoEnc *block_mi) { return block_mi->use_intrabc; }
+static INLINE int is_intrabc_block_dec(const BlockModeInfo *block_mi) { return block_mi->use_intrabc; }
 static INLINE int is_inter_block(const BlockModeInfoEnc *bloc_mi) {
     return is_intrabc_block(bloc_mi) || bloc_mi->ref_frame[0] > INTRA_FRAME;
 }
@@ -512,8 +474,7 @@ static INLINE int8_t av1_ref_frame_type(const MvReferenceFrame *const rf) {
     if (rf[1] > INTRA_FRAME) {
         const int8_t uni_comp_ref_idx = get_uni_comp_ref_idx(rf);
         if (uni_comp_ref_idx >= 0) {
-            assert((TOTAL_REFS_PER_FRAME + FWD_REFS * BWD_REFS + uni_comp_ref_idx) <
-                   MODE_CTX_REF_FRAMES);
+            assert((TOTAL_REFS_PER_FRAME + FWD_REFS * BWD_REFS + uni_comp_ref_idx) < MODE_CTX_REF_FRAMES);
             return TOTAL_REFS_PER_FRAME + FWD_REFS * BWD_REFS + uni_comp_ref_idx;
         } else {
             return TOTAL_REFS_PER_FRAME + FWD_RF_OFFSET(rf[0]) + BWD_RF_OFFSET(rf[1]) * FWD_REFS;
@@ -566,23 +527,18 @@ static INLINE void av1_set_ref_frame(MvReferenceFrame *rf, int8_t ref_frame_type
       | List1            BWD         ALT2         ALT                  |
       |----------------------------------------------------------------|
 */
-static uint8_t        ref_type_to_list_idx[REFS_PER_FRAME + 1] = {0, 0, 0, 0, 0, 1, 1, 1};
-static INLINE uint8_t get_list_idx(uint8_t ref_type) { return ref_type_to_list_idx[ref_type]; }
-static uint8_t        ref_type_to_ref_idx[REFS_PER_FRAME + 1] = {0, 0, 1, 2, 3, 0, 1, 2};
-static INLINE uint8_t get_ref_frame_idx(uint8_t ref_type) { return ref_type_to_ref_idx[ref_type]; };
+static uint8_t              ref_type_to_list_idx[REFS_PER_FRAME + 1] = {0, 0, 0, 0, 0, 1, 1, 1};
+static INLINE uint8_t       get_list_idx(uint8_t ref_type) { return ref_type_to_list_idx[ref_type]; }
+static uint8_t              ref_type_to_ref_idx[REFS_PER_FRAME + 1] = {0, 0, 1, 2, 3, 0, 1, 2};
+static INLINE uint8_t       get_ref_frame_idx(uint8_t ref_type) { return ref_type_to_ref_idx[ref_type]; };
 static INLINE PredDirection av1_get_pred_dir(int8_t ref_frame_type) {
     MvReferenceFrame rf[2];
     av1_set_ref_frame(rf, ref_frame_type);
     return (rf[1] == NONE_FRAME) ? (PredDirection)ref_type_to_list_idx[rf[0]] : BI_PRED;
 }
-int svt_av1_skip_u4x4_pred_in_obmc(BlockSize bsize, int dir, int subsampling_x, int subsampling_y);
-int svt_aom_get_relative_dist_enc(SeqHeader *seq_header, int ref_hint, int order_hint);
-#if CLN_MBMI_12
+int     svt_av1_skip_u4x4_pred_in_obmc(BlockSize bsize, int dir, int subsampling_x, int subsampling_y);
+int     svt_aom_get_relative_dist_enc(SeqHeader *seq_header, int ref_hint, int order_hint);
 int16_t svt_aom_mode_context_analyzer(int16_t mode_context, const MvReferenceFrame *const rf);
-#else
-int16_t svt_aom_mode_context_analyzer(const int16_t *const          mode_context,
-                                      const MvReferenceFrame *const rf);
-#endif
 
 #ifdef __cplusplus
 }

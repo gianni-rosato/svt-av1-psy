@@ -210,8 +210,7 @@ static int od_ec_decode_cdf_q15(OdEcDec *dec, const uint16_t *icdf, int nsyms) {
     ret = -1;
     do {
         u = v;
-        v = ((r >> 8) * (uint32_t)(icdf[++ret] >> EC_PROB_SHIFT) >>
-             (7 - EC_PROB_SHIFT - CDF_SHIFT));
+        v = ((r >> 8) * (uint32_t)(icdf[++ret] >> EC_PROB_SHIFT) >> (7 - EC_PROB_SHIFT - CDF_SHIFT));
         v += EC_MIN_PROB * (N - ret);
     } while (c < v);
     assert(v < u);
@@ -308,9 +307,7 @@ static inline int svt_aom_daala_reader_init(DaalaReader_t *r, const uint8_t *buf
 
 static inline const uint8_t *svt_aom_daala_reader_find_begin(DaalaReader_t *r) { return r->buffer; }
 
-static inline const uint8_t *svt_aom_daala_reader_find_end(DaalaReader_t *r) {
-    return r->buffer_end;
-}
+static inline const uint8_t *svt_aom_daala_reader_find_end(DaalaReader_t *r) { return r->buffer_end; }
 
 static INLINE int aom_daala_read(DaalaReader_t *r, int prob) {
     int bit;
@@ -336,11 +333,8 @@ static INLINE int aom_daala_read(DaalaReader_t *r, int prob) {
             assert(0);
         }
         if ((ref_nsymbs != 2) || (ref_cdf[0] != (AomCdfProb)p) || (ref_cdf[1] != 32767)) {
-            SVT_ERROR("\n *** [bit] cdf error, frame_idx_r %d cdf {%d, %d} ref_cdf {%d",
-                      frame_idx,
-                      p,
-                      32767,
-                      ref_cdf[0]);
+            SVT_ERROR(
+                "\n *** [bit] cdf error, frame_idx_r %d cdf {%d, %d} ref_cdf {%d", frame_idx, p, 32767, ref_cdf[0]);
             for (i = 1; i < ref_nsymbs; ++i) SVT_ERROR(", %d", ref_cdf[i]);
             SVT_ERROR("} queue_r %d\n", queue_r);
             assert(0);
