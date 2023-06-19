@@ -241,6 +241,10 @@ typedef struct DepthCtrls {
     // end depth; 0: consider no child blocks; else number of child blocks to consider, specified as
     // a positive number (e.g. 2 means consider 2 children)
     int8_t e_depth;
+#if OPT_DEPTH_LVLS
+    // If true, limit the max/min block sizes for PD1 to the max/min selected by PD0 (when the max/min block sizes are different).
+    uint8_t limit_max_min_to_pd0;
+#endif
 } DepthCtrls;
 #define MAX_RANGE_CNT 8
 #define MAX_RANGE_CNT 8
@@ -590,6 +594,12 @@ typedef struct NsqCtrls {
     // For non-H/V partitions, skip testing the partition if its signaling rate cost is significantly higher than the signaling rate cost of the
     // best partition.  Specified as a percentage TH. 0 is off, higher is more aggressive.
     uint32_t non_HV_split_rate_th;
+#if OPT_HV_NON_HV
+    // Apply an offset to H_vs_V_split_rate_th
+    uint8_t H_vs_V_split_rate_moulation;
+    // Apply an offset to non_HV_split_rate_th
+    uint32_t non_HV_split_rate_moulation;
+#endif
     // If the distortion (or rate) component of the SQ cost is more than component_multiple_th times the rate (or distortion) component, skip the NSQ shapes
     // 0: off, higher is safer
     uint32_t component_multiple_th;

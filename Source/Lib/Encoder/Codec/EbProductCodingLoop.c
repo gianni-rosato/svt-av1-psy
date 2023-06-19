@@ -9729,10 +9729,16 @@ bool update_skip_nsq_based_on_split_rate(PictureControlSet *pcs, ModeDecisionCon
         if (part_cost * 1000 > ctx->md_local_blk_unit[blk_geom->sqi_mds].default_cost * nsq_split_cost_th)
             return true;
     }
-
+#if OPT_HV_NON_HV
+    int H_vs_V_split_rate_th = ctx->nsq_ctrls.H_vs_V_split_rate_th;
+    // Skip H/V if the rate cost of signaling H/V is significantly bigger than the rate cost of signaling V/H
+    if ((H_vs_V_split_rate_th || ctx->nsq_ctrls.H_vs_V_split_rate_moulation) &&
+        (blk_geom->shape == PART_H || blk_geom->shape == PART_V)) {
+#else
     const uint32_t H_vs_V_split_rate_th = ctx->nsq_ctrls.H_vs_V_split_rate_th;
     // Skip H/V if the rate cost of signaling H/V is significantly bigger than the rate cost of signaling V/H
     if (H_vs_V_split_rate_th && (blk_geom->shape == PART_H || blk_geom->shape == PART_V)) {
+#endif
         const uint64_t H_rate_cost = svt_aom_partition_rate_cost(pcs->ppcs,
                                                                  ctx,
                                                                  blk_geom->sqi_mds,
@@ -9748,16 +9754,33 @@ bool update_skip_nsq_based_on_split_rate(PictureControlSet *pcs, ModeDecisionCon
                                                                  full_lambda,
                                                                  TRUE, // Use accurate split cost for early exit
                                                                  ctx->md_rate_est_ctx);
+#if OPT_HV_NON_HV
+        int ratio = ctx->md_local_blk_unit[blk_geom->sqi_mds].cost
+            ? (MAX(H_rate_cost, V_rate_cost) * 1000) / ctx->md_local_blk_unit[blk_geom->sqi_mds].default_cost
+            : 1000;
 
+        if (ctx->nsq_ctrls.H_vs_V_split_rate_moulation) {
+            if (ratio >= 30)
+                H_vs_V_split_rate_th += 20;
+        }
+
+#endif
         if (blk_geom->shape == PART_H && H_rate_cost * H_vs_V_split_rate_th > V_rate_cost * 100)
             return true;
 
         if (blk_geom->shape == PART_V && V_rate_cost * H_vs_V_split_rate_th > H_rate_cost * 100)
             return true;
     }
+#if OPT_HV_NON_HV
+    int non_HV_split_rate_th = ctx->nsq_ctrls.non_HV_split_rate_th;
+    // Skip non-H/V if the rate cost of signaling the shape is significantly bigger than the rate cost of signaling the current best shape
+    if ((non_HV_split_rate_th || ctx->nsq_ctrls.non_HV_split_rate_moulation) &&
+        !(blk_geom->shape == PART_H || blk_geom->shape == PART_V)) {
+#else
     const uint32_t non_HV_split_rate_th = ctx->nsq_ctrls.non_HV_split_rate_th;
     // Skip non-H/V if the rate cost of signaling the shape is significantly bigger than the rate cost of signaling the current best shape
     if (non_HV_split_rate_th && !(blk_geom->shape == PART_H || blk_geom->shape == PART_V)) {
+#endif
         const uint64_t part_cost = svt_aom_partition_rate_cost(pcs->ppcs,
                                                                ctx,
                                                                blk_geom->sqi_mds,
@@ -9773,6 +9796,17 @@ bool update_skip_nsq_based_on_split_rate(PictureControlSet *pcs, ModeDecisionCon
                                                                     full_lambda,
                                                                     TRUE, // Use accurate split cost for early exit
                                                                     ctx->md_rate_est_ctx);
+
+#if OPT_HV_NON_HV
+        int ratio = ctx->md_local_blk_unit[blk_geom->sqi_mds].cost
+            ? (MAX(part_cost, best_part_cost) * 1000) / ctx->md_local_blk_unit[blk_geom->sqi_mds].default_cost
+            : 1000;
+
+        if (ctx->nsq_ctrls.non_HV_split_rate_moulation) {
+            if (ratio >= 30)
+                non_HV_split_rate_th += 20;
+        }
+#endif
 
         if (part_cost * non_HV_split_rate_th > best_part_cost * 100)
             return true;

@@ -503,8 +503,13 @@ typedef struct TplControls {
     uint8_t              disable_intra_pred_nref; // 0:OFF 1:ON - Disable intra prediction in NREF
     PredictionMode       intra_mode_end; // The MAX intra mode to be tested in TPL
     EB_TRANS_COEFF_SHAPE pf_shape;
+#if FIX_TPL_LVLS
+    // Use SAD as a distortion metric when searching the best mode (based on src pic). If false, will use SATD
+    uint8_t              use_sad_in_src_search;
+#else
     uint8_t              use_pred_sad_in_intra_search;
     uint8_t              use_pred_sad_in_inter_search;
+#endif
     int8_t               reduced_tpl_group;
     double               r0_adjust_factor;
     // 0: use 16x16 block(s), 1: use 32x32 block(s), 2: use 64x64 block(s)  (for incomplete 64x64,

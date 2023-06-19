@@ -7,6 +7,10 @@
 #include "EbPictureDecisionProcess.h"
 #include "EbPictureBufferDesc.h"
 
+#if OPT_P_CPLX
+#define PSQ_L3p5  35  //level 3.5 for parent sq complexity
+#endif
+
 uint16_t svt_aom_get_max_can_count(EncMode enc_mode);
 void     svt_aom_md_pme_search_controls(ModeDecisionContext *ctx, uint8_t md_pme_level);
 void     svt_aom_set_inter_intra_ctrls(ModeDecisionContext *ctx, uint8_t inter_intra_level);

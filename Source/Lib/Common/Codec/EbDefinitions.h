@@ -39,7 +39,11 @@ extern "C" {
 #define TASK_FIRST_PASS_ME 2
 #define TASK_SUPERRES_RE_ME 3
 #define TASK_DG_DETECTOR_HME 4
+#if FIX_LINUX_MISMATCH
+#define SCD_LAD 8 //number of future frames
+#else
 #define SCD_LAD 6 //number of future frames
+#endif
 #define PD_WINDOW_SIZE (SCD_LAD + 2) //adding previous+current to future
 #define MAX_TPL_GROUP_SIZE 512 //enough to cover 6L gop
 
@@ -116,7 +120,9 @@ typedef struct MrpCtrls {
     uint8_t base_ref_list1_count;
     uint8_t non_base_ref_list0_count;
     uint8_t non_base_ref_list1_count;
-
+#if OPT_RPS_ADD
+    uint8_t more_5L_refs;      //use few more references in the rps list.
+#endif
     // Limit references to (1,1) if it's safe to do so based on avg luma
     bool safe_limit_nref;
     // Limit candidate types to LAST, BWD and LAST-BWD
@@ -291,9 +297,15 @@ enum {
 #define NSQ_TAB_SIZE 8
 #define NUMBER_OF_DEPTH 6
 #define NUMBER_OF_SHAPES 10
+#if MCTF_OPT_REFS_MODULATION
+#define TF_MAX_EXTENSION 6 // Max additional tf pics after modulation per side
+#define TF_MAX_BASE_REF_PICS_6L 7 // Max additional tf pics at each side for BASE for 6L hierarchy
+#define TF_MAX_BASE_REF_PICS_SUB_6L 7 // Max additional tf pics at each side for BASE for sub-6L hierarchy
+#else
 #define TF_MAX_EXTENSION 7 // Max additional tf pics after modulation per side
 #define TF_MAX_BASE_REF_PICS_6L 8 // Max additional tf pics at each side for BASE for 6L hierarchy
 #define TF_MAX_BASE_REF_PICS_SUB_6L 8 // Max additional tf pics at each side for BASE for sub-6L hierarchy
+#endif
 #define TF_MAX_L1_REF_PICS_6L 2 // Max additional tf pics at each side for L1 for 6L hierarchy
 #define TF_MAX_L1_REF_PICS_SUB_6L 1 // Max additional tf pics at each side for L1 for sub-6L hierarchy
 //  Delta QP support

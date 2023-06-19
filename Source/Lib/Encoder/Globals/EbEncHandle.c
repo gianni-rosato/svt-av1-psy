@@ -3272,6 +3272,9 @@ static void set_mrp_ctrl(SequenceControlSet* scs, uint8_t mrp_level) {
         mrp_ctrl->base_ref_list1_count        = 1;
         mrp_ctrl->non_base_ref_list0_count    = 1;
         mrp_ctrl->non_base_ref_list1_count    = 1;
+#if OPT_RPS_ADD
+        mrp_ctrl->more_5L_refs                = 0;
+#endif
         mrp_ctrl->safe_limit_nref             = 0;
         mrp_ctrl->only_l_bwd                  = 0;
         mrp_ctrl->pme_ref0_only               = 0;
@@ -3288,6 +3291,9 @@ static void set_mrp_ctrl(SequenceControlSet* scs, uint8_t mrp_level) {
         mrp_ctrl->base_ref_list1_count        = 3;
         mrp_ctrl->non_base_ref_list0_count    = 4;
         mrp_ctrl->non_base_ref_list1_count    = 3;
+#if OPT_RPS_ADD
+        mrp_ctrl->more_5L_refs                = 1;
+#endif
         mrp_ctrl->safe_limit_nref             = 0;
         mrp_ctrl->only_l_bwd                  = 0;
         mrp_ctrl->pme_ref0_only               = 0;
@@ -3304,6 +3310,9 @@ static void set_mrp_ctrl(SequenceControlSet* scs, uint8_t mrp_level) {
         mrp_ctrl->base_ref_list1_count        = 3;
         mrp_ctrl->non_base_ref_list0_count    = 4;
         mrp_ctrl->non_base_ref_list1_count    = 3;
+#if OPT_RPS_ADD
+        mrp_ctrl->more_5L_refs                = 1;
+#endif
         mrp_ctrl->safe_limit_nref             = 0;
         mrp_ctrl->only_l_bwd                  = 1;
         mrp_ctrl->pme_ref0_only               = 0;
@@ -3320,6 +3329,9 @@ static void set_mrp_ctrl(SequenceControlSet* scs, uint8_t mrp_level) {
         mrp_ctrl->base_ref_list1_count        = 3;
         mrp_ctrl->non_base_ref_list0_count    = 4;
         mrp_ctrl->non_base_ref_list1_count    = 3;
+#if OPT_RPS_ADD
+        mrp_ctrl->more_5L_refs                = 0;
+#endif
         mrp_ctrl->safe_limit_nref             = 0;
         mrp_ctrl->only_l_bwd                  = 1;
         mrp_ctrl->pme_ref0_only               = 0;
@@ -3335,6 +3347,9 @@ static void set_mrp_ctrl(SequenceControlSet* scs, uint8_t mrp_level) {
         mrp_ctrl->base_ref_list1_count        = 3;
         mrp_ctrl->non_base_ref_list0_count    = 4;
         mrp_ctrl->non_base_ref_list1_count    = 3;
+#if OPT_RPS_ADD
+        mrp_ctrl->more_5L_refs                = 0;
+#endif
         mrp_ctrl->safe_limit_nref             = 0;
         mrp_ctrl->only_l_bwd                  = 1;
         mrp_ctrl->pme_ref0_only               = 1;
@@ -3351,6 +3366,9 @@ static void set_mrp_ctrl(SequenceControlSet* scs, uint8_t mrp_level) {
         mrp_ctrl->base_ref_list1_count        = 2;
         mrp_ctrl->non_base_ref_list0_count    = 3;
         mrp_ctrl->non_base_ref_list1_count    = 2;
+#if OPT_RPS_ADD
+        mrp_ctrl->more_5L_refs                = 0;
+#endif
         mrp_ctrl->safe_limit_nref             = 0;
         mrp_ctrl->only_l_bwd                  = 1;
         mrp_ctrl->pme_ref0_only               = 1;
@@ -3366,6 +3384,9 @@ static void set_mrp_ctrl(SequenceControlSet* scs, uint8_t mrp_level) {
         mrp_ctrl->base_ref_list1_count        = 2;
         mrp_ctrl->non_base_ref_list0_count    = 3;
         mrp_ctrl->non_base_ref_list1_count    = 2;
+#if OPT_RPS_ADD
+        mrp_ctrl->more_5L_refs                = 0;
+#endif
         mrp_ctrl->safe_limit_nref             = 1;
         mrp_ctrl->only_l_bwd                  = 1;
         mrp_ctrl->pme_ref0_only               = 1;
@@ -3381,6 +3402,9 @@ static void set_mrp_ctrl(SequenceControlSet* scs, uint8_t mrp_level) {
         mrp_ctrl->base_ref_list1_count        = 2;
         mrp_ctrl->non_base_ref_list0_count    = 3;
         mrp_ctrl->non_base_ref_list1_count    = 2;
+#if OPT_RPS_ADD
+        mrp_ctrl->more_5L_refs                = 0;
+#endif
         mrp_ctrl->safe_limit_nref             = 1;
         mrp_ctrl->only_l_bwd                  = 1;
         mrp_ctrl->pme_ref0_only               = 1;
@@ -3396,6 +3420,9 @@ static void set_mrp_ctrl(SequenceControlSet* scs, uint8_t mrp_level) {
         mrp_ctrl->base_ref_list1_count = 2;
         mrp_ctrl->non_base_ref_list0_count = 2;
         mrp_ctrl->non_base_ref_list1_count = 2;
+#if OPT_RPS_ADD
+        mrp_ctrl->more_5L_refs                = 0;
+#endif
         mrp_ctrl->safe_limit_nref             = 1;
         mrp_ctrl->only_l_bwd                  = 1;
         mrp_ctrl->pme_ref0_only               = 1;
@@ -3412,6 +3439,9 @@ static void set_mrp_ctrl(SequenceControlSet* scs, uint8_t mrp_level) {
         mrp_ctrl->base_ref_list1_count = 2;
         mrp_ctrl->non_base_ref_list0_count = 1;
         mrp_ctrl->non_base_ref_list1_count = 1;
+#if OPT_RPS_ADD
+        mrp_ctrl->more_5L_refs                = 0;
+#endif
         mrp_ctrl->safe_limit_nref             = 1;
         mrp_ctrl->only_l_bwd                  = 1;
         mrp_ctrl->pme_ref0_only               = 1;
@@ -3427,6 +3457,9 @@ static void set_mrp_ctrl(SequenceControlSet* scs, uint8_t mrp_level) {
         mrp_ctrl->base_ref_list1_count = 2;
         mrp_ctrl->non_base_ref_list0_count = 1;
         mrp_ctrl->non_base_ref_list1_count = 1;
+#if OPT_RPS_ADD
+        mrp_ctrl->more_5L_refs                = 0;
+#endif
         mrp_ctrl->safe_limit_nref             = 1;
         mrp_ctrl->only_l_bwd                  = 1;
         mrp_ctrl->pme_ref0_only               = 1;
@@ -3443,6 +3476,9 @@ static void set_mrp_ctrl(SequenceControlSet* scs, uint8_t mrp_level) {
         mrp_ctrl->base_ref_list1_count = 0;
         mrp_ctrl->non_base_ref_list1_count = 0;
         mrp_ctrl->referencing_scheme = 0;
+#if OPT_RPS_ADD
+        mrp_ctrl->more_5L_refs                = 0;
+#endif
         mrp_ctrl->safe_limit_nref             = 0;
         mrp_ctrl->only_l_bwd                  = 0;
         mrp_ctrl->pme_ref0_only               = 0;
@@ -3548,6 +3584,27 @@ static uint8_t get_tpl_level(int8_t enc_mode, int32_t pass, int32_t lap_rc, uint
         SVT_WARN("TPL will be disabled when reference scalings (resize) is enabled!\n");
         tpl_level = 0;
     }
+#if OPT_NEW_TPL_LVL
+    else if (enc_mode <= ENC_M3)
+        tpl_level = 1;
+    else if (enc_mode <= ENC_M5)
+        tpl_level = 2;
+    else if (enc_mode <= ENC_M8)
+        tpl_level = 3;
+    else if (enc_mode <= ENC_M10)
+        tpl_level = 4;
+    else if (enc_mode <= ENC_M11)
+        tpl_level = 6;
+#if OPT_TPL_LAY1_5L
+    else if (enc_mode <= ENC_M12)
+        tpl_level = 7;
+    else
+        tpl_level = 8;
+#else
+    else
+        tpl_level = 7;
+#endif
+#else
     else if (enc_mode <= ENC_M4)
         tpl_level = 1;
     else if (enc_mode <= ENC_M8)
@@ -3558,6 +3615,7 @@ static uint8_t get_tpl_level(int8_t enc_mode, int32_t pass, int32_t lap_rc, uint
         tpl_level = 7;
     else
         tpl_level = 8;
+#endif
 
     return tpl_level;
 }
@@ -4062,7 +4120,11 @@ static void set_param_based_on_input(SequenceControlSet *scs)
         else if (scs->static_config.enc_mode <= ENC_M3) {
             mrp_level = 3;
         }
+#if OPT_MRP
+        else if (scs->static_config.enc_mode <= ENC_M5) {
+#else
         else if (scs->static_config.enc_mode <= ENC_M4) {
+#endif
             mrp_level = 4;
         }
         else if (scs->static_config.enc_mode <= ENC_M5) {

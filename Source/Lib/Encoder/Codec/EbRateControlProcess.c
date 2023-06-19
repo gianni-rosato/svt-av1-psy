@@ -729,11 +729,26 @@ static int svt_av1_get_q_index_from_qstep_ratio(int leaf_qindex, double qstep_ra
     const double leaf_qstep   = svt_aom_dc_quant_qtx(leaf_qindex, 0, bit_depth);
     const double target_qstep = leaf_qstep * qstep_ratio;
     int          qindex;
+#if CLN_TPL_FUNCS
+    if (qstep_ratio < 1.0) {
+        for (qindex = leaf_qindex; qindex > 0; --qindex) {
+            const double qstep = svt_aom_dc_quant_qtx(qindex, 0, bit_depth);
+            if (qstep <= target_qstep) break;
+        }
+    }
+    else {
+        for (qindex = leaf_qindex; qindex <= MAXQ; ++qindex) {
+            const double qstep = svt_aom_dc_quant_qtx(qindex, 0, bit_depth);
+            if (qstep >= target_qstep) break;
+        }
+    }
+#else
     for (qindex = leaf_qindex; qindex > 0; --qindex) {
         const double qstep = svt_aom_dc_quant_qtx(qindex, 0, bit_depth);
         if (qstep + 0.1 <= target_qstep)
             break;
     }
+#endif
     return qindex;
 }
 static const double r0_weight[3] = {0.75 /* I_SLICE */, 0.9 /* BASE */, 1 /* NON-BASE */};
@@ -1303,16 +1318,30 @@ void svt_aom_sb_qp_derivation_tpl_la(PictureControlSet *pcs) {
         for (sb_addr = 0; sb_addr < sb_cnt; ++sb_addr) {
             sb_ptr        = pcs->sb_ptr_array[sb_addr];
             double beta   = ppcs_ptr->pa_me_data->tpl_beta[sb_addr];
+#if FIX_SCENE_TRANSITION
+            int offset = svt_av1_get_deltaq_offset(scs->static_config.encoder_bit_depth,
+                                                   ppcs_ptr->frm_hdr.quantization_params.base_q_idx,
+                                                   beta,
+                                                   pcs->ppcs->slice_type == I_SLICE);
+#else
             int    offset = svt_av1_get_deltaq_offset(
                 scs->static_config.encoder_bit_depth,
                 ppcs_ptr->frm_hdr.quantization_params.base_q_idx,
                 beta,
                 pcs->ppcs->slice_type == I_SLICE || pcs->ppcs->transition_present == 1);
+#endif
             offset         = AOMMIN(offset, pcs->ppcs->frm_hdr.delta_q_params.delta_q_res * 9 * 4 - 1);
             offset         = AOMMAX(offset, -pcs->ppcs->frm_hdr.delta_q_params.delta_q_res * 9 * 4 + 1);
+#if CLN_TPL_FUNCS
+            sb_ptr->qindex = CLIP3(
+                1, // q_index 0 is lossless, and is currently not supported in SVT-AV1
+                MAXQ,
+                ((int16_t)ppcs_ptr->frm_hdr.quantization_params.base_q_idx + (int16_t)offset));
+#else
             sb_ptr->qindex = CLIP3(pcs->ppcs->frm_hdr.delta_q_params.delta_q_res,
                                    255 - pcs->ppcs->frm_hdr.delta_q_params.delta_q_res,
                                    ((int16_t)ppcs_ptr->frm_hdr.quantization_params.base_q_idx + (int16_t)offset));
+#endif
 
             sb_setup_lambda(pcs, sb_ptr);
         }
@@ -3142,6 +3171,9 @@ void *svt_aom_rate_control_kernel(void *input_ptr) {
                 }
                 if (pcs->ppcs->slice_type == I_SLICE) {
                     pcs->ppcs->rate_control_param_ptr->last_i_qp = pcs->picture_qp;
+#if FIX_SCENE_TRANSITION
+                }
+#else
                 } else if (pcs->ppcs->transition_present == 1 && pcs->ppcs->slice_type != P_SLICE) {
                     pcs->picture_qp = (uint8_t)CLIP3(
                         scs->static_config.min_qp_allowed,
@@ -3149,6 +3181,7 @@ void *svt_aom_rate_control_kernel(void *input_ptr) {
                         (uint32_t)((pcs->picture_qp + pcs->ppcs->rate_control_param_ptr->last_i_qp) / 2));
                     frm_hdr->quantization_params.base_q_idx = quantizer_to_qindex[pcs->picture_qp];
                 }
+#endif
             }
             pcs->ppcs->picture_qp = pcs->picture_qp;
 

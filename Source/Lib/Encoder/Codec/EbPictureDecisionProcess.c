@@ -1266,7 +1266,9 @@ static void  av1_generate_rps_info(
     SequenceControlSet *scs = pcs->scs;
     const unsigned int hierarchical_levels = pcs->hierarchical_levels;
     const unsigned int temporal_layer = pcs->temporal_layer_index;
-
+#if OPT_RPS_ADD
+    const uint8_t more_5L_refs = pcs->scs->mrp_ctrls.more_5L_refs;
+#endif
     pcs->is_ref =
         svt_aom_is_pic_used_as_ref(hierarchical_levels,
             temporal_layer,
@@ -1812,12 +1814,20 @@ static void  av1_generate_rps_info(
             //{16, 32, 0, 0}       // GOP Index 0 - Ref List 1
             ref_dpb_index[LAST] = base2_idx;
             ref_dpb_index[LAST2] = base0_idx;
+#if OPT_RPS_ADD
+            ref_dpb_index[LAST3] = more_5L_refs ? lay1_1_idx : ref_dpb_index[LAST];//48:p24
+#else
             ref_dpb_index[LAST3] = ref_dpb_index[LAST];
+#endif
             ref_dpb_index[GOLD] = ref_dpb_index[LAST];
 
             ref_dpb_index[BWD] = base2_idx;
             ref_dpb_index[ALT2] = base1_idx;
+#if OPT_RPS_ADD
+            ref_dpb_index[ALT] = more_5L_refs ? lay1_0_idx : ref_dpb_index[BWD];//48:p8
+#else
             ref_dpb_index[ALT] = ref_dpb_index[BWD];
+#endif
 
             av1_rps->refresh_frame_mask = 1 << ctx->lay0_toggle;
             //Layer0 toggle 0->1->2
@@ -1834,7 +1844,11 @@ static void  av1_generate_rps_info(
 
             ref_dpb_index[BWD] = base2_idx;
             ref_dpb_index[ALT2] = lay2_idx;
+#if OPT_RPS_40m30
+            ref_dpb_index[ALT] = ref_dpb_index[BWD]; //40:-30
+#else
             ref_dpb_index[ALT] = lay3_idx;
+#endif
 
             av1_rps->refresh_frame_mask = 1 << (LAY1_OFF + ctx->lay1_toggle);
             //Layer1 toggle 3->4
@@ -1852,7 +1866,11 @@ static void  av1_generate_rps_info(
 
                 ref_dpb_index[BWD] = lay1_1_idx;
                 ref_dpb_index[ALT2] = base2_idx;
+#if OPT_RPS_ADD
+                ref_dpb_index[ALT] = more_5L_refs ? lay3_idx : ref_dpb_index[BWD];//36:+30
+#else
                 ref_dpb_index[ALT] = ref_dpb_index[BWD];
+#endif
             }
             else if (pic_idx == 11) {
                 //{ 4, 8, 12, 0},       // GOP Index 12 - Ref List 0
@@ -1864,7 +1882,11 @@ static void  av1_generate_rps_info(
 
                 ref_dpb_index[BWD] = base2_idx;
                 ref_dpb_index[ALT2] = lay4_idx;
+#if OPT_RPS_ADD
+                ref_dpb_index[ALT] = more_5L_refs ? lay1_0_idx : ref_dpb_index[BWD];//44:+24
+#else
                 ref_dpb_index[ALT] = ref_dpb_index[BWD];
+#endif
             }
 
             av1_rps->refresh_frame_mask = 1 << (LAY2_OFF);
@@ -1891,7 +1913,11 @@ static void  av1_generate_rps_info(
                 ref_dpb_index[GOLD] = lay1_0_idx;
                 ref_dpb_index[BWD] = lay1_1_idx;
                 ref_dpb_index[ALT2] = base2_idx;
+#if OPT_RPS_ADD
+                ref_dpb_index[ALT] = more_5L_refs ? lay4_idx : ref_dpb_index[BWD];// 38:p35
+#else
                 ref_dpb_index[ALT] = ref_dpb_index[BWD];
+#endif
             }
             else if (pic_idx == 9) {
                 //{ 2, 4, 10, 18},       // GOP Index 10 - Ref List 0
@@ -1977,7 +2003,11 @@ static void  av1_generate_rps_info(
                 ref_dpb_index[GOLD] = base1_idx;
                 ref_dpb_index[BWD] = lay1_1_idx;
                 ref_dpb_index[ALT2] = base2_idx;
+#if OPT_RPS_ADD
+                ref_dpb_index[ALT] = more_5L_refs ? lay1_0_idx : ref_dpb_index[BWD]; //39:p24
+#else
                 ref_dpb_index[ALT] = ref_dpb_index[BWD];
+#endif
             }
             else if (pic_idx == 8) {
                 //{ 1, 9, 8, 17},  // GOP Index 9 - Ref List 0
@@ -2792,19 +2822,42 @@ static int ref_pics_modulation(
             }
     }
     else if (pcs->temporal_layer_index == 0) {
+
+#if MCTF_OPT_REFS_MODULATION
+        int ratio = noise_levels_log1p_fp16
+            ? (pcs->filt_to_unfilt_diff * 100) / noise_levels_log1p_fp16
+            : 0;
+#endif
         switch (pcs->tf_ctrls.modulate_pics) {
         case 0:
             offset = 0;
             break;
         case 1:
+#if MCTF_OPT_REFS_MODULATION
+            if (ratio < 50)
+                offset = 4;
+            else if (ratio < 100)
+                offset = 5;
+            else
+                offset = 6;
+#else
             if (pcs->filt_to_unfilt_diff < 20000)
                 offset = 3;
             else if (pcs->filt_to_unfilt_diff > HIGH_BAND)
                 offset = TF_MAX_EXTENSION;
             else
                 offset = 5;
+#endif
             break;
         case 2:
+#if MCTF_OPT_REFS_MODULATION
+            if (ratio < 50)
+                offset = 3;
+            else if (ratio < 100)
+                offset = 4;
+            else
+                offset = 5;
+#else
             if (pcs->filt_to_unfilt_diff < 20000)
                 offset = 1;
             else if (pcs->filt_to_unfilt_diff < 60000)
@@ -2813,8 +2866,17 @@ static int ref_pics_modulation(
                 offset = TF_MAX_EXTENSION;
             else
                 offset = 5;
+#endif
             break;
         case 3:
+#if MCTF_OPT_REFS_MODULATION
+            if (ratio < 50)
+                offset = 0;
+            else if (ratio < 100)
+                offset = 1;
+            else
+                offset = 2;
+#else
             if (pcs->filt_to_unfilt_diff < 60000)
                 offset = 0;
             else if (pcs->filt_to_unfilt_diff < 120000)
@@ -2823,29 +2885,48 @@ static int ref_pics_modulation(
                 offset = TF_MAX_EXTENSION;
             else
                 offset = 2;
+#endif
             break;
         default:
             break;
         }
     } else  {
+#if MCTF_OPT_REFS_MODULATION
+    int ratio = noise_levels_log1p_fp16
+        ? (pcs->filt_to_unfilt_diff * 100) / noise_levels_log1p_fp16
+        : 0;
+#endif
         switch (pcs->tf_ctrls.modulate_pics) {
         case 0:
             offset = 0;
             break;
         case 1:
+#if MCTF_OPT_REFS_MODULATION
+            if (ratio < 25)
+#else
             if (pcs->filt_to_unfilt_diff < 20000)
+#endif
                 offset = 0;
             else
                 offset = 1;
             break;
         case 2:
+#if MCTF_OPT_REFS_MODULATION
+            if (ratio < 50)
+#else
             if (pcs->filt_to_unfilt_diff < 60000)
+#endif
                 offset = 0;
             else
                 offset = 1;
+
             break;
         case 3:
+#if MCTF_OPT_REFS_MODULATION
+            if (ratio < 75)
+#else
             if (pcs->filt_to_unfilt_diff < 120000)
+#endif
                 offset = 0;
             else
                 offset = 1;
@@ -2988,10 +3069,17 @@ static EbErrorType derive_tf_window_params(
     // Adjust the number of filtering frames
     int offset = pcs->tf_ctrls.modulate_pics ? ref_pics_modulation(pcs, noise_levels_log1p_fp16[0]) : 0;
     if (scs->static_config.pred_structure != SVT_AV1_PRED_RANDOM_ACCESS) {
+#if MCTF_OPT_REFS_MODULATION
+        int num_past_pics = pcs->tf_ctrls.num_past_pics + (pcs->tf_ctrls.modulate_pics ? offset : 0);
+#else
         int num_past_pics = pcs->tf_ctrls.num_past_pics + (pcs->tf_ctrls.modulate_pics ? (offset >> 1) : 0);
+#endif
         num_past_pics = MIN(pcs->tf_ctrls.max_num_past_pics, num_past_pics);
-
+#if MCTF_OPT_REFS_MODULATION
+        int num_future_pics = pcs->tf_ctrls.num_future_pics + (pcs->tf_ctrls.modulate_pics ? offset : 0);
+#else
         int num_future_pics = pcs->tf_ctrls.num_future_pics + (pcs->tf_ctrls.modulate_pics ? (offset >> 1) : 0);
+        #endif
         num_future_pics = MIN(pcs->tf_ctrls.max_num_future_pics, num_future_pics);
         //initilize list
         for (int pic_itr = 0; pic_itr < ALTREF_MAX_NFRAMES; pic_itr++)
@@ -3024,12 +3112,18 @@ static EbErrorType derive_tf_window_params(
 
         //search in pre-ass if still short
         if (pic_i < num_future_pics) {
+#if  !MCTF_FIX_BUILD
             actual_future_pics = 0;
+#endif
             for (int pic_i_future = 0; pic_i_future < num_future_pics; pic_i_future++) {
                 for (uint32_t pic_i_pa = 0; pic_i_pa < enc_ctx->pre_assignment_buffer_count; pic_i_pa++) {
                     PictureParentControlSet* pcs_itr = (PictureParentControlSet*)enc_ctx->pre_assignment_buffer[pic_i_pa]->object_ptr;
                     if (pcs_itr->picture_number == pcs->picture_number + pic_i_future + 1) {
+#if  MCTF_FIX_BUILD
+                        pcs->temp_filt_pcs_list[pic_i_future + pic_i + num_past_pics + 1] = pcs_itr;
+#else
                         pcs->temp_filt_pcs_list[pic_i_future + num_past_pics + 1] = pcs_itr;
+#endif
                         actual_future_pics++;
                         break; //exist the pre-ass loop, go search the next
                     }
@@ -3066,9 +3160,24 @@ static EbErrorType derive_tf_window_params(
                 centre_pcs->hierarchical_levels = pcs->temp_filt_pcs_list[0]->hierarchical_levels = pd_ctx->mg_pictures_array[idx]->hierarchical_levels;
                 // tpl setting are updated if hierarchical level has changed
                 svt_aom_set_tpl_extended_controls(centre_pcs, scs->tpl_level);
+#if OPT_TPL_LAY1_5L
+                centre_pcs->r0_based_qps_qpm = centre_pcs->tpl_ctrls.enable &&
+                    (centre_pcs->temporal_layer_index == 0 ||
+                        (scs->static_config.rate_control_mode == SVT_AV1_RC_MODE_CQP_OR_CRF &&
+                            ((pcs->hierarchical_levels == 5 && pcs->temporal_layer_index <= 2) || (pcs->hierarchical_levels >= 4 && pcs->temporal_layer_index <= 1))));
+
+                // If TPL results are needed for the current hierarchical layer, but are not available, shut r0-based QPS/QPM
+                if (centre_pcs->r0_based_qps_qpm &&
+                    centre_pcs->tpl_ctrls.reduced_tpl_group >= 0 &&
+                    centre_pcs->temporal_layer_index > centre_pcs->tpl_ctrls.reduced_tpl_group) {
+                    assert(centre_pcs->temporal_layer_index != 0);
+                    centre_pcs->r0_based_qps_qpm = 0;
+                }
+#else
                 centre_pcs->r0_based_qps_qpm = centre_pcs->tpl_ctrls.enable &&
                     (centre_pcs->temporal_layer_index == 0 ||
                     (scs->static_config.rate_control_mode == SVT_AV1_RC_MODE_CQP_OR_CRF && centre_pcs->hierarchical_levels == 5 && centre_pcs->temporal_layer_index == 1));
+#endif
             }
             num_future_pics = MIN((uint8_t)num_future_pics, svt_aom_tf_max_ref_per_struct(pcs->hierarchical_levels, 0, 1));
             uint32_t pic_i;
@@ -3149,12 +3258,18 @@ static EbErrorType derive_tf_window_params(
 
                 //search in pre-ass if still short
                 if (pic_i < num_future_pics) {
+#if  !MCTF_FIX_BUILD
                     actual_future_pics = 0;
+#endif
                     for (int pic_i_future = 0; pic_i_future < num_future_pics; pic_i_future++) {
                         for (uint32_t pic_i_pa = 0; pic_i_pa < enc_ctx->pre_assignment_buffer_count; pic_i_pa++) {
                             PictureParentControlSet* pcs_itr = (PictureParentControlSet*)enc_ctx->pre_assignment_buffer[pic_i_pa]->object_ptr;
                             if (pcs_itr->picture_number == pcs->picture_number + pic_i_future + 1) {
+#if  MCTF_FIX_BUILD
+                                pcs->temp_filt_pcs_list[pic_i_future + pic_i + num_past_pics + 1] = pcs_itr;
+#else
                                 pcs->temp_filt_pcs_list[pic_i_future + num_past_pics + 1] = pcs_itr;
+#endif
                                 actual_future_pics++;
                                 break; //exist the pre-ass loop, go search the next
                             }

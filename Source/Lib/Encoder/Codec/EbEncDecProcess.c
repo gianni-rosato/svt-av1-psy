@@ -2391,6 +2391,35 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs, PictureContro
             blk_index++;
         }
     }
+
+#if OPT_DEPTH_LVLS
+    // Get max/min PD0 selected block sizes
+    uint16_t max_pd0_size = 0;
+    uint16_t min_pd0_size = 255;
+
+    blk_index = 0;
+    while (blk_index < scs->max_block_cnt) {
+        const BlockGeom* blk_geom = get_blk_geom_mds(blk_index);
+        // if the parent square is inside inject this block
+        const uint8_t is_blk_allowed = pcs->slice_type != I_SLICE ? 1 : (blk_geom->sq_size < 128) ? 1 : 0;
+
+        // derive split_flag
+        const Bool split_flag = ctx->md_blk_arr_nsq[blk_index].split_flag;
+
+        if (is_blk_allowed) {
+            if (blk_geom->shape == PART_N) {
+                if (split_flag == FALSE) {
+                    if (blk_geom->sq_size > max_pd0_size)
+                        max_pd0_size = blk_geom->sq_size;
+
+                    if (blk_geom->sq_size < min_pd0_size)
+                        min_pd0_size = blk_geom->sq_size;
+                }
+            }
+        }
+        blk_index += split_flag ? blk_geom->d1_depth_offset : blk_geom->ns_depth_offset;
+    }
+#endif
     results_ptr->leaf_count = 0;
     blk_index               = 0;
     Bool pred_depth_only    = 1;
@@ -2467,6 +2496,15 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs, PictureContro
                                                                     : e_depth;
                             }
                         }
+#if OPT_DEPTH_LVLS
+                        if (ctx->depth_ctrls.limit_max_min_to_pd0) {
+                            // If PD0 selected multiple depths, don't test depths above the largest or below the smallest block sizes
+                            if (max_pd0_size != min_pd0_size && blk_geom->sq_size == max_pd0_size)
+                                s_depth = 0;
+                            if (max_pd0_size != min_pd0_size && blk_geom->sq_size == min_pd0_size)
+                                e_depth = 0;
+                        }
+#endif
 
                         uint8_t sq_size_idx = 7 - (uint8_t)svt_log2f((uint8_t)blk_geom->sq_size);
                         int64_t th_offset   = 0;
