@@ -412,6 +412,9 @@ typedef struct MeContext {
     uint16_t         num_hme_sa_w;
     uint16_t         num_hme_sa_h;
     SearchAreaMinMax hme_l0_sa; // Total HME Level-0 search area
+#if MCTF_OPT_HME_LEVEL
+    SearchAreaMinMax hme_l0_sa_default_tf; // Total HME Level-0 search area TF
+#endif
     SearchArea       hme_l1_sa; // HME Level-1 search area per HME-L0 search centre
     SearchArea       hme_l2_sa; // HME Level-2 search area per HME-L1 search centre
     SearchResults    search_results[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];

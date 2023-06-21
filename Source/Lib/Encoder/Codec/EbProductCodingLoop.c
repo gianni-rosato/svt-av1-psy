@@ -8992,7 +8992,11 @@ static void md_encode_block_light_pd1(PictureControlSet *pcs, ModeDecisionContex
     ctx->tot_ref_frame_types = pcs->ppcs->tot_ref_frame_types;
     memcpy(ctx->ref_frame_type_arr, pcs->ppcs->ref_frame_type_arr, sizeof(MvReferenceFrame) * MODE_CTX_REF_FRAMES);
 
+#if OPT_BEST_REF
+    if (pcs->ppcs->scs->mrp_ctrls.use_best_references==3 && pcs->temporal_layer_index > 0)
+#else
     if (pcs->ppcs->scs->mrp_ctrls.use_best_references && pcs->temporal_layer_index > 0)
+#endif
         determine_best_references(pcs, ctx, ctx->ref_frame_type_arr, &ctx->tot_ref_frame_types);
 
     if (!ctx->shut_fast_rate && pcs->slice_type != I_SLICE) {
@@ -9344,6 +9348,46 @@ uint64_t get_best_intra_new_cost(struct ModeDecisionContext *ctx, ModeDecisionCa
     }
     return best_intra_new_cost;
 }
+#if OPT_BEST_REF
+//determine condition to activate the use best me references speed feature 
+bool  get_enable_use_best_me(PictureControlSet *pcs, ModeDecisionContext *ctx) {
+
+    bool enable_best_me = 0;
+    if (pcs->ppcs->scs->mrp_ctrls.use_best_references && pcs->temporal_layer_index > 0) {
+
+        if (pcs->ppcs->scs->mrp_ctrls.use_best_references == 1) {
+
+            uint32_t  b64_x = ctx->blk_org_x / 64;
+            uint32_t  b64_y = ctx->blk_org_y / 64;
+            uint32_t  pic_width_in_b64 = (pcs->ppcs->aligned_width + pcs->ppcs->scs->b64_size - 1) / pcs->ppcs->scs->b64_size;
+            uint32_t  b64_idx = b64_y * pic_width_in_b64 + b64_x;
+            svt_aom_assert_err(b64_idx < pcs->b64_total_count, "out of range index");
+            uint32_t  me_8x8_dist = pcs->ppcs->me_8x8_distortion[b64_idx];
+            if (me_8x8_dist > 45000)
+                enable_best_me = 1;
+        }
+        else if (pcs->ppcs->scs->mrp_ctrls.use_best_references == 2) {
+
+            bool  use_tpl_info = 0;
+            uint8_t sb_max_list0_ref_idx, sb_max_list1_ref_idx, sb_inter_selection;
+            if (pcs->ppcs->tpl_ctrls.enable) {
+                if (get_sb_tpl_inter_stats(
+                    pcs, ctx, &sb_inter_selection, &sb_max_list0_ref_idx, &sb_max_list1_ref_idx)) {
+                    use_tpl_info = 1;
+                }
+            }
+            if (use_tpl_info && sb_max_list0_ref_idx == 0 && sb_max_list1_ref_idx == 0)
+                enable_best_me = 1;
+        }
+        else {
+            svt_aom_assert_err(pcs->ppcs->scs->mrp_ctrls.use_best_references == 3, "use best me err");
+            enable_best_me = 1;
+        }
+    }
+
+    return enable_best_me;
+}
+#endif
 static void md_encode_block(PictureControlSet *pcs, ModeDecisionContext *ctx, uint32_t sb_addr,
                             EbPictureBufferDesc *input_pic) {
     ModeDecisionCandidateBuffer **cand_bf_ptr_array_base = ctx->cand_bf_ptr_array;
@@ -9382,9 +9426,14 @@ static void md_encode_block(PictureControlSet *pcs, ModeDecisionContext *ctx, ui
 
     derive_me_offsets(pcs->ppcs->scs, pcs, ctx);
 
+#if OPT_BEST_REF  
+    bool enable_best_me = get_enable_use_best_me(pcs, ctx);
+    if (enable_best_me)
+        determine_best_references(pcs, ctx, ctx->ref_frame_type_arr, &ctx->tot_ref_frame_types);
+#else
     if (pcs->ppcs->scs->mrp_ctrls.use_best_references && pcs->temporal_layer_index > 0)
         determine_best_references(pcs, ctx, ctx->ref_frame_type_arr, &ctx->tot_ref_frame_types);
-
+#endif
     svt_aom_init_xd(pcs, ctx);
     if (!ctx->shut_fast_rate) {
         FrameHeader *frm_hdr = &pcs->ppcs->frm_hdr;

@@ -1716,6 +1716,10 @@ void svt_aom_generate_r0beta(PictureParentControlSet *pcs) {
     // Super-res upscaled size should be used here.
     const int32_t mi_cols_sr = ((pcs->enhanced_unscaled_pic->width + 15) / 16) << 2; // picture column boundary
     const int32_t mi_rows    = ((pcs->enhanced_unscaled_pic->height + 15) / 16) << 2; // picture row boundary
+#if OPT_ENABLE_2L_INCOMP
+    int64_t count = 0;
+    int64_t max_dist = 0;
+#endif
 
     for (int row = 0; row < cm->mi_rows; row += step) {
         for (int col = 0; col < mi_cols_sr; col += col_step_sr) {
@@ -1725,12 +1729,23 @@ void svt_aom_generate_r0beta(PictureParentControlSet *pcs) {
                 pcs->pa_me_data->base_rdmult, tpl_stats_ptr->mc_dep_rate, tpl_stats_ptr->mc_dep_dist);
             recrf_dist_base_sum += tpl_stats_ptr->recrf_dist;
             mc_dep_delta_base_sum += mc_dep_delta;
+#if OPT_ENABLE_2L_INCOMP
+            count++;
+            if (mc_dep_delta > max_dist)
+                max_dist = mc_dep_delta;
+#endif
         }
     }
 
     mc_dep_cost_base = (recrf_dist_base_sum << RDDIV_BITS) + mc_dep_delta_base_sum;
     if (mc_dep_cost_base != 0) {
         pcs->r0           = ((double)(recrf_dist_base_sum << (RDDIV_BITS))) / mc_dep_cost_base;
+#if OPT_ENABLE_2L_INCOMP
+        // If there are outlier blocks responsible for most of the propagation, disable QPS as the result may
+        // not be reliable.
+        if (max_dist > (mc_dep_delta_base_sum / count) * 100 && max_dist > (mc_dep_delta_base_sum * 9 / 10))
+            pcs->r0 = 1.0;
+#endif
         pcs->tpl_is_valid = 1;
     } else {
         pcs->tpl_is_valid = 0;

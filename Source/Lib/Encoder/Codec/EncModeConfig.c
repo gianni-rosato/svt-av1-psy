@@ -505,8 +505,13 @@ static void tf_set_me_hme_params_oq(MeContext *me_ctx, PictureParentControlSet *
     case 0:
         me_ctx->num_hme_sa_w     = 2;
         me_ctx->num_hme_sa_h     = 2;
+#if MCTF_OPT_HME_LEVEL
+        me_ctx->hme_l0_sa_default_tf.sa_min = (SearchArea){30, 30};
+        me_ctx->hme_l0_sa_default_tf.sa_max = (SearchArea){60, 60};
+#else
         me_ctx->hme_l0_sa.sa_min = (SearchArea){30, 30};
         me_ctx->hme_l0_sa.sa_max = (SearchArea){60, 60};
+#endif
         me_ctx->hme_l1_sa        = (SearchArea){16, 16};
         me_ctx->hme_l2_sa        = (SearchArea){16, 16};
         me_ctx->me_sa.sa_min     = (SearchArea){60, 60};
@@ -516,8 +521,13 @@ static void tf_set_me_hme_params_oq(MeContext *me_ctx, PictureParentControlSet *
     case 1:
         me_ctx->num_hme_sa_w     = 2;
         me_ctx->num_hme_sa_h     = 2;
+#if MCTF_OPT_HME_LEVEL
+        me_ctx->hme_l0_sa_default_tf.sa_min = (SearchArea){16, 16};
+        me_ctx->hme_l0_sa_default_tf.sa_max = (SearchArea){32, 32};
+#else
         me_ctx->hme_l0_sa.sa_min = (SearchArea){16, 16};
         me_ctx->hme_l0_sa.sa_max = (SearchArea){32, 32};
+#endif
         me_ctx->hme_l1_sa        = (SearchArea){16, 16};
         me_ctx->hme_l2_sa        = (SearchArea){16, 16};
         me_ctx->me_sa.sa_min     = (SearchArea){16, 16};
@@ -527,8 +537,13 @@ static void tf_set_me_hme_params_oq(MeContext *me_ctx, PictureParentControlSet *
     case 2:
         me_ctx->num_hme_sa_w     = 2;
         me_ctx->num_hme_sa_h     = 2;
+#if MCTF_OPT_HME_LEVEL
+        me_ctx->hme_l0_sa_default_tf.sa_min = (SearchArea){8, 8};
+        me_ctx->hme_l0_sa_default_tf.sa_max = (SearchArea){16, 16};
+#else
         me_ctx->hme_l0_sa.sa_min = (SearchArea){8, 8};
         me_ctx->hme_l0_sa.sa_max = (SearchArea){16, 16};
+#endif
         me_ctx->hme_l1_sa        = (SearchArea){16, 16};
         me_ctx->hme_l2_sa        = (SearchArea){16, 16};
         me_ctx->me_sa.sa_min     = (SearchArea){8, 4};
@@ -538,8 +553,13 @@ static void tf_set_me_hme_params_oq(MeContext *me_ctx, PictureParentControlSet *
 
         me_ctx->num_hme_sa_w     = 2;
         me_ctx->num_hme_sa_h     = 2;
+#if MCTF_OPT_HME_LEVEL
+        me_ctx->hme_l0_sa_default_tf.sa_min = (SearchArea){4, 4};
+        me_ctx->hme_l0_sa_default_tf.sa_max = (SearchArea){4, 4};
+#else
         me_ctx->hme_l0_sa.sa_min = (SearchArea){4, 4};
         me_ctx->hme_l0_sa.sa_max = (SearchArea){4, 4};
+#endif
         me_ctx->hme_l1_sa        = (SearchArea){8, 8};
         me_ctx->hme_l2_sa        = (SearchArea){8, 8};
         me_ctx->me_sa.sa_min     = (SearchArea){8, 8};

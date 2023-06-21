@@ -1126,6 +1126,13 @@ typedef struct PictureParentControlSet {
     DGDetectorSeg   *dg_detector; // dg detector segments control struct
     SvtAv1RoiMapEvt *roi_map_evt;
     uint32_t         filt_to_unfilt_diff;
+#if MCTF_ON_THE_FLY_PRUNING
+    uint32_t tf_ahd_error_to_central;
+    uint32_t tf_avg_ahd_error;
+#endif
+#if MCTF_OPT_HME_LEVEL
+    uint32_t tf_active_region_present;
+#endif
 } PictureParentControlSet;
 
 typedef struct TplDispResults {

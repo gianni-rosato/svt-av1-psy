@@ -271,6 +271,42 @@ EbLinkedListNode* svt_aom_split_eb_linked_list(EbLinkedListNode* input, EbLinked
     return ll_true_ptr;
 }
 
+#if OPT_ENABLE_2L_INCOMP
+static const MiniGopStats mini_gop_stats_array[] = {
+    // hierarchical_levels    start_index    end_index    Length
+    {5, 0, 31, 32}, // 0
+    {4, 0, 15, 16}, // 1
+    {3, 0, 7, 8}, // 2
+    {2, 0, 3, 4}, // 3
+    {1, 0, 1, 2}, // 4
+    {1, 2, 3, 2}, // 5
+    {2, 4, 7, 4}, // 6
+    {1, 4, 5, 2}, // 7
+    {1, 6, 7, 2}, // 8
+    {3, 8, 15, 8}, // 9
+    {2, 8, 11, 4}, // 10
+    {1, 8, 9, 2}, // 11
+    {1, 10, 11, 2}, // 12
+    {2, 12, 15, 4}, // 13
+    {1, 12, 13, 2}, // 14
+    {1, 14, 15, 2}, // 15
+    {4, 16, 31, 16}, // 16
+    {3, 16, 23, 8}, // 17
+    {2, 16, 19, 4}, // 18
+    {1, 16, 17, 2}, // 19
+    {1, 18, 19, 2}, // 20
+    {2, 20, 23, 4}, // 21
+    {1, 20, 21, 2}, // 22
+    {1, 22, 23, 2}, // 23
+    {3, 24, 31, 8}, // 24
+    {2, 24, 27, 4}, // 25
+    {1, 24, 25, 2}, // 26
+    {1, 26, 27, 2}, // 27
+    {2, 28, 31, 4}, // 28
+    {1, 28, 29, 2}, // 29
+    {1, 30, 31, 2} // 30
+};
+#else
 static const MiniGopStats mini_gop_stats_array[] = {
     //    hierarchical_levels    start_index    end_index    Lenght    mini_gop_index
     {5, 0, 31, 32}, // 0
@@ -289,7 +325,7 @@ static const MiniGopStats mini_gop_stats_array[] = {
     {2, 24, 27, 4}, // 13
     {2, 28, 31, 4} // 14
 };
-
+#endif
 /**************************************************************
 * Get Mini GOP Statistics
 **************************************************************/

@@ -3996,6 +3996,28 @@ static void convert_64x64_info_to_32x32_info(
         }
     }
 }
+#if MCTF_OPT_HME_LEVEL
+static void set_hme_search_params_mctf(MeContext *ctx, uint8_t hme_search_level) {
+
+    switch (hme_search_level) {
+    case 0:
+        ctx->hme_l0_sa.sa_min.width  = ctx->hme_l0_sa_default_tf.sa_min.width;
+        ctx->hme_l0_sa.sa_min.height = ctx->hme_l0_sa_default_tf.sa_min.height;
+        ctx->hme_l0_sa.sa_max.width  = ctx->hme_l0_sa_default_tf.sa_max.width;
+        ctx->hme_l0_sa.sa_max.height = ctx->hme_l0_sa_default_tf.sa_max.height;
+        break;
+    case 1:
+        ctx->hme_l0_sa.sa_min.width  = ctx->hme_l0_sa_default_tf.sa_min.width  << 1;
+        ctx->hme_l0_sa.sa_min.height = ctx->hme_l0_sa_default_tf.sa_min.height << 1;
+        ctx->hme_l0_sa.sa_max.width  = ctx->hme_l0_sa_default_tf.sa_max.width  << 2;
+        ctx->hme_l0_sa.sa_max.height = ctx->hme_l0_sa_default_tf.sa_max.height << 2;
+        break;
+
+    default: assert(0); break;
+    }
+
+}
+#endif
 // Produce the filtered alt-ref picture
 // - core function
 static EbErrorType produce_temporally_filtered_pic(
@@ -4241,6 +4263,16 @@ static EbErrorType produce_temporally_filtered_pic(
 
             for (int segment_idx = 0; segment_idx < 3; segment_idx++)
                 for (int frame_index = start_frame_index[segment_idx]; frame_index <= end_frame_index[segment_idx]; frame_index = frame_index+ me_context_ptr->me_ctx->tf_ctrls.ref_frame_factor) {
+ #if MCTF_ON_THE_FLY_PRUNING   
+                // Use ahd-error to central/avg to identify/skip outlier ref-frame(s)
+                if (frame_index != index_center) {
+                    uint32_t low_ahd_err = centre_pcs->aligned_width * centre_pcs->aligned_height;
+                    uint8_t th = (centre_pcs->idr_flag || svt_aom_is_delayed_intra(centre_pcs)) ? 10 : 20;
+                    if (pcs_list[frame_index]->tf_ahd_error_to_central > low_ahd_err && // error to central high enough
+                       ((int) (((int) pcs_list[frame_index]->tf_ahd_error_to_central - (int) centre_pcs->tf_avg_ahd_error) * 100)) > (th * (int) centre_pcs->tf_avg_ahd_error)) // ahd_error_to_central higher than tf_avg_ahd_error by x%
+                        continue;
+                }
+#endif
                 // ------------
                 // Step 1: motion estimation + compensation
                 // ------------
@@ -4284,12 +4316,24 @@ static EbErrorType produce_temporally_filtered_pic(
                         centre_pcs->tf_ctrls.subpel_early_exit;
                     // Perform ME - context_ptr will store the outputs (MVs, buffers, etc)
                     // Block-based MC using open-loop HME + refinement
+#if MCTF_OPT_HME_LEVEL
+                    // set default hme search params
+                    set_hme_search_params_mctf(ctx,0);
+                    // Increase HME-Level0 search-area if tf_active_region_present
+                    if (centre_pcs->tf_ctrls.hme_me_level <= 1) {
+                        if (pcs_list[frame_index]->tf_active_region_present) {
+                            set_hme_search_params_mctf(ctx,1);
+                        }
+                    }
+#endif
                     svt_aom_motion_estimation_b64(centre_pcs,
                         (uint32_t)blk_row * blk_cols + blk_col,
                         (uint32_t)blk_col * BW, // x block
                         (uint32_t)blk_row * BH, // y block
                         ctx,
                         input_picture_ptr_central); // source picture
+
+
                     if (ctx->tf_use_pred_64x64_only_th &&
                         (ctx->tf_use_pred_64x64_only_th == (uint8_t)~0 ||
                          tf_use_64x64_pred(ctx))) {
@@ -5241,6 +5285,20 @@ EbErrorType svt_av1_init_temporal_filtering(
                          centre_pcs->future_altref_nframes + 1);
          i++)
         list_input_picture_ptr[i] = pcs_list[i]->enhanced_unscaled_pic;
+
+#if MCTF_ON_THE_FLY_PRUNING
+    // Calc the avg_ahd_error 
+    centre_pcs->tf_avg_ahd_error = 0;
+    if (centre_pcs->past_altref_nframes + centre_pcs->future_altref_nframes) {
+    int tot_err = 0;
+        for (int i = 0; i < (centre_pcs->past_altref_nframes + centre_pcs->future_altref_nframes + 1); i++) {
+            if (i != centre_pcs->past_altref_nframes)
+                tot_err += pcs_list[i]->tf_ahd_error_to_central;
+        }
+
+        centre_pcs->tf_avg_ahd_error = tot_err / (centre_pcs->past_altref_nframes + centre_pcs->future_altref_nframes);
+    }
+#endif
 
     if(centre_pcs->scs->static_config.pred_structure == SVT_AV1_PRED_LOW_DELAY_B)
         produce_temporally_filtered_pic_ld(pcs_list,

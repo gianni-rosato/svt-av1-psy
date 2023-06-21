@@ -129,8 +129,17 @@ typedef struct MrpCtrls {
     bool only_l_bwd;
     // Limit PME to ref index 0 only
     bool pme_ref0_only;
+#if OPT_BEST_REF
+    // Use only best references decided by me in md
+    //0:speed feature off
+    //1:use with high me distortion constraint  fast
+    //2:use with TPL constraint                 faster
+    //3:use with no constraint                  fastest
+    uint8_t use_best_references;
+#else
     // Use only best references
     bool use_best_references;
+#endif
 
 } MrpCtrls;
 typedef struct TfControls {

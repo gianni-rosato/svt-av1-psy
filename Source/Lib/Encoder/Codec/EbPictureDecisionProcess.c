@@ -703,6 +703,83 @@ static void initialize_mini_gop_activity_array(SequenceControlSet* scs, PictureP
         ctx->mini_gop_activity_array[gopindex] = svt_aom_get_mini_gop_stats(gopindex)->hierarchical_levels > MIN_HIERARCHICAL_LEVEL;
     }
 
+#if OPT_ENABLE_2L_INCOMP
+    // Assign the MGs to be used; if the MG is incomplete, the pre-assignment buffer will hold
+    // fewer than (1 << scs->static_config.hierarchical_levels) pics
+    if (enc_ctx->pre_assignment_buffer_count >= 32 &&
+        !(enc_ctx->pre_assignment_buffer_count == 32 && pcs->idr_flag)) {
+        ctx->mini_gop_activity_array[L6_INDEX] = FALSE;
+    }
+    else if (enc_ctx->pre_assignment_buffer_count >= 16 &&
+        !(enc_ctx->pre_assignment_buffer_count == 16 && pcs->idr_flag)) {
+
+        ctx->mini_gop_activity_array[L5_0_INDEX] = FALSE;
+
+        if ((enc_ctx->pre_assignment_buffer_count - 16) >= 8 &&
+            !((enc_ctx->pre_assignment_buffer_count - 16) == 8 && pcs->idr_flag)) {
+            ctx->mini_gop_activity_array[L4_2_INDEX] = FALSE;
+
+            if ((enc_ctx->pre_assignment_buffer_count - 16 - 8) >= 4 &&
+                !((enc_ctx->pre_assignment_buffer_count - 16 - 8) == 4 && pcs->idr_flag)) {
+                ctx->mini_gop_activity_array[L3_6_INDEX] = FALSE;
+
+                if ((enc_ctx->pre_assignment_buffer_count - 16 - 8 - 4) >= 2 &&
+                    !((enc_ctx->pre_assignment_buffer_count - 16 - 8 - 4) == 2 && pcs->idr_flag)) {
+                    ctx->mini_gop_activity_array[L2_14_INDEX] = FALSE;
+                }
+            }
+            else if ((enc_ctx->pre_assignment_buffer_count - 16 - 8) >= 2 &&
+                !((enc_ctx->pre_assignment_buffer_count - 16 - 8) == 2 && pcs->idr_flag)) {
+                ctx->mini_gop_activity_array[L2_12_INDEX] = FALSE;
+            }
+        }
+        else if ((enc_ctx->pre_assignment_buffer_count - 16) >= 4 &&
+            !((enc_ctx->pre_assignment_buffer_count - 16) == 4 && pcs->idr_flag)) {
+            ctx->mini_gop_activity_array[L3_4_INDEX] = FALSE;
+
+            if ((enc_ctx->pre_assignment_buffer_count - 16 - 4) >= 2 &&
+                !((enc_ctx->pre_assignment_buffer_count - 16 - 4) == 2 && pcs->idr_flag)) {
+                ctx->mini_gop_activity_array[L2_10_INDEX] = FALSE;
+            }
+        }
+        else if ((enc_ctx->pre_assignment_buffer_count - 16) >= 2 &&
+            !((enc_ctx->pre_assignment_buffer_count - 16) == 2 && pcs->idr_flag)) {
+            ctx->mini_gop_activity_array[L2_8_INDEX] = FALSE;
+        }
+    }
+    else if (enc_ctx->pre_assignment_buffer_count >= 8 &&
+        !(enc_ctx->pre_assignment_buffer_count == 8 && pcs->idr_flag)) {
+
+        ctx->mini_gop_activity_array[L4_0_INDEX] = FALSE;
+
+        if ((enc_ctx->pre_assignment_buffer_count - 8) >= 4 &&
+            !((enc_ctx->pre_assignment_buffer_count - 8) == 4 && pcs->idr_flag)) {
+            ctx->mini_gop_activity_array[L3_2_INDEX] = FALSE;
+
+            if ((enc_ctx->pre_assignment_buffer_count - 8 - 4) >= 2 &&
+                !((enc_ctx->pre_assignment_buffer_count - 8 - 4) == 2 && pcs->idr_flag)) {
+                ctx->mini_gop_activity_array[L2_6_INDEX] = FALSE;
+            }
+        }
+        else if ((enc_ctx->pre_assignment_buffer_count - 8) >= 2 &&
+            !((enc_ctx->pre_assignment_buffer_count - 8) == 2 && pcs->idr_flag)) {
+            ctx->mini_gop_activity_array[L2_4_INDEX] = FALSE;
+        }
+    }
+    else if (enc_ctx->pre_assignment_buffer_count >= 4 &&
+        !(enc_ctx->pre_assignment_buffer_count == 4 && pcs->idr_flag)) {
+        ctx->mini_gop_activity_array[L3_0_INDEX] = FALSE;
+
+        if ((enc_ctx->pre_assignment_buffer_count - 4) >= 2 &&
+            !((enc_ctx->pre_assignment_buffer_count - 4) == 2 && pcs->idr_flag)) {
+            ctx->mini_gop_activity_array[L2_2_INDEX] = FALSE;
+        }
+    }
+    else if ((enc_ctx->pre_assignment_buffer_count) >= 2 &&
+        !((enc_ctx->pre_assignment_buffer_count) == 2 && pcs->idr_flag)) {
+        ctx->mini_gop_activity_array[L2_0_INDEX] = FALSE;
+    }
+#else
     // Assign the MGs to be used; if the MG is incomplete, the pre-assignment buffer will hold
     // fewer than (1 << scs->static_config.hierarchical_levels) pics
     if (enc_ctx->pre_assignment_buffer_count >= 32 &&
@@ -742,6 +819,7 @@ static void initialize_mini_gop_activity_array(SequenceControlSet* scs, PictureP
         !(enc_ctx->pre_assignment_buffer_count == 4 && pcs->idr_flag)) {
         ctx->mini_gop_activity_array[L3_0_INDEX] = FALSE;
     }
+#endif
 
     // 6L vs. 5L
     if (scs->enable_dg && ctx->mini_gop_activity_array[L6_INDEX] == FALSE)
@@ -773,7 +851,11 @@ static EbErrorType generate_picture_window_split(
         if (svt_aom_get_mini_gop_stats(gopindex)->end_index < enc_ctx->pre_assignment_buffer_count && !pd_ctx->mini_gop_activity_array[gopindex]) {
             pd_ctx->mini_gop_start_index[pd_ctx->total_number_of_mini_gops] = svt_aom_get_mini_gop_stats(gopindex)->start_index;
             pd_ctx->mini_gop_end_index[pd_ctx->total_number_of_mini_gops] = svt_aom_get_mini_gop_stats(gopindex)->end_index;
+#if OPT_ENABLE_2L_INCOMP
+            pd_ctx->mini_gop_length[pd_ctx->total_number_of_mini_gops] = svt_aom_get_mini_gop_stats(gopindex)->length;
+#else
             pd_ctx->mini_gop_length[pd_ctx->total_number_of_mini_gops] = svt_aom_get_mini_gop_stats(gopindex)->lenght;
+#endif
             pd_ctx->mini_gop_hierarchical_levels[pd_ctx->total_number_of_mini_gops] = svt_aom_get_mini_gop_stats(gopindex)->hierarchical_levels;
             pd_ctx->mini_gop_intra_count[pd_ctx->total_number_of_mini_gops] = 0;
             pd_ctx->mini_gop_idr_count[pd_ctx->total_number_of_mini_gops] = 0;
@@ -1339,6 +1421,85 @@ static void  av1_generate_rps_info(
     }
     else if (hierarchical_levels == 1) {
 
+#if OPT_ENABLE_2L_INCOMP
+        uint8_t lay0_toggle = ctx->lay0_toggle;
+        uint8_t lay1_toggle = ctx->lay1_toggle;
+        /* The default toggling assumes that the toggle is updated in decode order for an RA configuration.
+        For low-delay configurations, the decode order is the display order, so instead of having the base
+        toggle updated before all other pictures, it is now updated last.  Hence, we need to adjust the toggle
+        for low-delay configurations to ensure that all indices will still correspond to the proper reference
+        (i.e. newest base, middle base, oldest base, etc.). Lay 1 pics in RA will typically be decoded second
+        (right after base) so all higher level pics will assume that layer 1 was toggled before them.  For low-
+        delay, the first half of the higher level pics will be before the layer 1 toggle, while the second half
+        will come after the toggle.  Hence, the layer 1 toggle only needs to be updated for the first half of
+        the pictures. */
+        if (pcs->pred_struct_ptr->pred_type != SVT_AV1_PRED_RANDOM_ACCESS && temporal_layer) {
+            assert(IMPLIES(scs->static_config.pred_structure == SVT_AV1_PRED_RANDOM_ACCESS, ctx->cut_short_ra_mg));
+            lay0_toggle = circ_inc(3, 1, lay0_toggle);
+            // No layer 1 toggling needed because there's only one non-base frame
+        }
+
+        const uint8_t  base0_idx = lay0_toggle == 0 ? 0 : lay0_toggle == 1 ? 1 : 2; //the oldest L0 picture in the DPB
+        const uint8_t  base1_idx = lay0_toggle == 0 ? 1 : lay0_toggle == 1 ? 2 : 0; //the middle L0 picture in the DPB
+        const uint8_t  base2_idx = lay0_toggle == 0 ? 2 : lay0_toggle == 1 ? 0 : 1; //the newest L0 picture in the DPB
+
+        //const uint8_t  lay1_0_idx = lay1_toggle == 0 ? LAY1_OFF + 0 : LAY1_OFF + 1; //the oldest L1 picture in the DPB
+        const uint8_t  lay1_1_idx = lay1_toggle == 0 ? LAY1_OFF + 1 : LAY1_OFF + 0; //the newest L1 picture in the DPB
+        //const uint8_t  lay2_idx = LAY2_OFF; //the newest L2 picture in the DPB
+
+        switch (temporal_layer) {
+        case 0:
+            //{ 2, 6, 0, 0},  // GOP Index 0 - Ref List 0
+            //{ 2, 4, 0, 0 } // GOP Index 0 - Ref List 1
+            ref_dpb_index[LAST] = base2_idx;
+            ref_dpb_index[LAST2] = base0_idx;
+            ref_dpb_index[LAST3] = ref_dpb_index[LAST];
+            ref_dpb_index[GOLD] = ref_dpb_index[LAST];
+
+            ref_dpb_index[BWD] = base2_idx;
+            ref_dpb_index[ALT2] = base1_idx;
+            ref_dpb_index[ALT] = ref_dpb_index[BWD];
+
+            av1_rps->refresh_frame_mask = 1 << ctx->lay0_toggle;
+            //Layer0 toggle 0->1->2
+            ctx->lay0_toggle = circ_inc(3, 1, ctx->lay0_toggle);
+            break;
+        case 1:
+            if (pcs->is_overlay) {
+                // update RPS for the overlay frame.
+                //{ 0, 0, 0, 0}         // GOP Index 1 - Ref List 0
+                //{ 0, 0, 0, 0 }       // GOP Index 1 - Ref List 1
+                ref_dpb_index[LAST] = base2_idx;
+                ref_dpb_index[LAST2] = base2_idx;
+                ref_dpb_index[LAST3] = base2_idx;
+                ref_dpb_index[GOLD] = base2_idx;
+                ref_dpb_index[BWD] = base2_idx;
+                ref_dpb_index[ALT2] = base2_idx;
+                ref_dpb_index[ALT] = base2_idx;
+                assert(!pcs->is_ref);
+            }
+            else {
+                //{ 1, 2, 3,  0},   // GOP Index 4 - Ref List 0
+                //{-1,  0, 0,  0}     // GOP Index 4 - Ref List 1
+                ref_dpb_index[LAST] = base1_idx;
+                ref_dpb_index[LAST2] = lay1_1_idx;
+                ref_dpb_index[LAST3] = base0_idx;
+                ref_dpb_index[GOLD] = ref_dpb_index[LAST];
+
+                ref_dpb_index[BWD] = base2_idx;
+                ref_dpb_index[ALT2] = ref_dpb_index[BWD];
+                ref_dpb_index[ALT] = ref_dpb_index[BWD];
+
+                //Layer1 toggle 3->4
+                ctx->lay1_toggle = 1 - ctx->lay1_toggle;
+            }
+            av1_rps->refresh_frame_mask = pcs->is_ref ? 1 << (LAY1_OFF + ctx->lay1_toggle) : 0;
+            break;
+        default:
+            SVT_ERROR("unexpected picture mini Gop number\n");
+            break;
+        }
+#else
         uint8_t lay0_toggle = ctx->lay0_toggle;
         uint8_t lay1_toggle = ctx->lay1_toggle;
         if (pcs->pred_struct_ptr->pred_type != SVT_AV1_PRED_RANDOM_ACCESS && temporal_layer) {
@@ -1391,7 +1552,7 @@ static void  av1_generate_rps_info(
             SVT_ERROR("unexpected picture mini Gop number\n");
             break;
         }
-
+#endif
         update_ref_poc_array(ref_dpb_index, ref_poc_array, ctx->dpb);
 
         set_ref_list_counts(pcs);
@@ -1406,7 +1567,11 @@ static void  av1_generate_rps_info(
                 pcs->has_show_existing = TRUE;
 
                 if (pic_idx == 0)
+#if OPT_ENABLE_2L_INCOMP
+                    frm_hdr->show_existing_frame = base2_idx;
+#else
                     frm_hdr->show_existing_frame = base_off0_idx;
+#endif
                 else
                     SVT_LOG("Error in GOP indexing for hierarchical level %d\n", pcs->hierarchical_levels);
             }
@@ -2834,9 +2999,7 @@ static int ref_pics_modulation(
             break;
         case 1:
 #if MCTF_OPT_REFS_MODULATION
-            if (ratio < 50)
-                offset = 4;
-            else if (ratio < 100)
+            if (ratio < 100)
                 offset = 5;
             else
                 offset = 6;
@@ -2854,9 +3017,9 @@ static int ref_pics_modulation(
             if (ratio < 50)
                 offset = 3;
             else if (ratio < 100)
-                offset = 4;
-            else
                 offset = 5;
+            else
+                offset = 6;
 #else
             if (pcs->filt_to_unfilt_diff < 20000)
                 offset = 1;
@@ -2871,11 +3034,11 @@ static int ref_pics_modulation(
         case 3:
 #if MCTF_OPT_REFS_MODULATION
             if (ratio < 50)
-                offset = 0;
+                offset = 3;
             else if (ratio < 100)
-                offset = 1;
+                offset = 4;
             else
-                offset = 2;
+                offset = 5;
 #else
             if (pcs->filt_to_unfilt_diff < 60000)
                 offset = 0;
@@ -2887,6 +3050,16 @@ static int ref_pics_modulation(
                 offset = 2;
 #endif
             break;
+#if MCTF_OPT_REFS_MODULATION
+        case 4:
+            if (ratio < 50)
+                offset = 0;
+            else if (ratio < 100)
+                offset = 1;
+            else
+                offset = 2;
+            break;
+#endif
         default:
             break;
         }
@@ -2938,6 +3111,47 @@ static int ref_pics_modulation(
 
     return offset;
 }
+#if MCTF_ON_THE_FLY_PRUNING
+static uint32_t calc_ahd(
+    SequenceControlSet *scs,
+    PictureParentControlSet *input_pcs,
+    PictureParentControlSet *ref_pcs) {
+    
+    uint32_t ahd = 0;
+
+#if MCTF_OPT_HME_LEVEL
+    ref_pcs->tf_active_region_present = 0;
+
+    uint32_t  region_width = ref_pcs->enhanced_pic->width / scs->picture_analysis_number_of_regions_per_width;
+    uint32_t  region_height = ref_pcs->enhanced_pic->height / scs->picture_analysis_number_of_regions_per_height;
+#endif
+    // Loop over regions inside the picture
+    for (uint32_t region_in_picture_width_index = 0; region_in_picture_width_index < scs->picture_analysis_number_of_regions_per_width; region_in_picture_width_index++) { // loop over horizontal regions
+        for (uint32_t region_in_picture_height_index = 0; region_in_picture_height_index < scs->picture_analysis_number_of_regions_per_height; region_in_picture_height_index++) { // loop over vertical regions
+#if MCTF_OPT_HME_LEVEL
+            uint32_t ahd_per_region = 0;
+#endif
+                for (int bin = 0; bin < HISTOGRAM_NUMBER_OF_BINS; ++bin) {
+
+#if MCTF_OPT_HME_LEVEL
+                ahd_per_region += ABS((int32_t)input_pcs->picture_histogram[region_in_picture_width_index][region_in_picture_height_index][bin] - (int32_t)ref_pcs->picture_histogram[region_in_picture_width_index][region_in_picture_height_index][bin]);
+#else
+                ahd += ABS((int32_t)input_pcs->picture_histogram[region_in_picture_width_index][region_in_picture_height_index][bin] - (int32_t)ref_pcs->picture_histogram[region_in_picture_width_index][region_in_picture_height_index][bin]);
+#endif
+                }
+
+#if MCTF_OPT_HME_LEVEL
+                ahd += ahd_per_region;
+                if(ahd_per_region > (region_width * region_height))
+                    ref_pcs->tf_active_region_present = 1;
+#endif
+
+        }
+    }
+    return ahd;
+}
+
+#endif
 static EbErrorType derive_tf_window_params(
     SequenceControlSet *scs,
     EncodeContext *enc_ctx,
@@ -3183,10 +3397,22 @@ static EbErrorType derive_tf_window_params(
             uint32_t pic_i;
             for (pic_i = 0; pic_i < num_future_pics; pic_i++) {
                 int32_t idx_1 = search_this_pic(pd_ctx->mg_pictures_array, pd_ctx->mg_size, pcs->picture_number + pic_i + 1);
+#if MCTF_ON_THE_FLY_PRUNING
+                if (idx_1 >= 0) {
+                    pcs->temp_filt_pcs_list[pic_i + 1] = pd_ctx->mg_pictures_array[idx_1];
+                    pd_ctx->mg_pictures_array[idx_1]->tf_ahd_error_to_central = calc_ahd(
+                        scs,
+                        pcs,
+                        pd_ctx->mg_pictures_array[idx_1]);
+                } 
+                else
+                    break;
+#else
                 if (idx_1 >= 0)
                     pcs->temp_filt_pcs_list[pic_i + 1] = pd_ctx->mg_pictures_array[idx_1];
                 else
                     break;
+#endif
             }
 
             pcs->past_altref_nframes = 0;
@@ -3211,7 +3437,12 @@ static EbErrorType derive_tf_window_params(
                     if (enc_ctx->picture_decision_reorder_queue[q_index]->ppcs_wrapper != NULL) {
                         PictureParentControlSet* pcs_itr = (PictureParentControlSet *)enc_ctx->picture_decision_reorder_queue[q_index]->ppcs_wrapper->object_ptr;
                         pcs->temp_filt_pcs_list[pic_i + num_past_pics + 1] = pcs_itr;
-
+#if MCTF_ON_THE_FLY_PRUNING
+                        pcs_itr->tf_ahd_error_to_central = calc_ahd(
+                            scs,
+                            pcs,
+                            pcs_itr);
+#endif
                     }
                     else
                         break;
@@ -3238,8 +3469,19 @@ static EbErrorType derive_tf_window_params(
                 // get previous+current pictures from the the pre-assign buffer
                 for (int pic_itr = 0; pic_itr <= num_past_pics; pic_itr++) {
                     int32_t idx = search_this_pic(pd_ctx->mg_pictures_array, pd_ctx->mg_size, pcs->picture_number - num_past_pics + pic_itr);
+#if MCTF_ON_THE_FLY_PRUNING
+                    if (idx >= 0) {
+                        pcs->temp_filt_pcs_list[pic_itr] = pd_ctx->mg_pictures_array[idx];
+                        
+                        pd_ctx->mg_pictures_array[idx]->tf_ahd_error_to_central = calc_ahd(
+                            scs,
+                            pcs,
+                            pd_ctx->mg_pictures_array[idx]);
+                    }
+#else
                     if (idx >= 0)
                         pcs->temp_filt_pcs_list[pic_itr] = pd_ctx->mg_pictures_array[idx];
+#endif
                 }
                 int actual_past_pics = num_past_pics;
                 int actual_future_pics = 0;
@@ -3250,6 +3492,12 @@ static EbErrorType derive_tf_window_params(
                     if (enc_ctx->picture_decision_reorder_queue[q_index]->ppcs_wrapper != NULL) {
                         PictureParentControlSet* pcs_itr = (PictureParentControlSet *)enc_ctx->picture_decision_reorder_queue[q_index]->ppcs_wrapper->object_ptr;
                         pcs->temp_filt_pcs_list[pic_i + num_past_pics + 1] = pcs_itr;
+ #if MCTF_ON_THE_FLY_PRUNING
+                        pcs_itr->tf_ahd_error_to_central = calc_ahd(
+                            scs,
+                            pcs,
+                            pcs_itr);      
+#endif
                         actual_future_pics++;
                     }
                     else
@@ -3269,6 +3517,12 @@ static EbErrorType derive_tf_window_params(
                                 pcs->temp_filt_pcs_list[pic_i_future + pic_i + num_past_pics + 1] = pcs_itr;
 #else
                                 pcs->temp_filt_pcs_list[pic_i_future + num_past_pics + 1] = pcs_itr;
+#endif
+#if MCTF_ON_THE_FLY_PRUNING
+                                pcs_itr->tf_ahd_error_to_central = calc_ahd( 
+                                    scs,
+                                    pcs,
+                                    pcs_itr);      
 #endif
                                 actual_future_pics++;
                                 break; //exist the pre-ass loop, go search the next
@@ -3442,7 +3696,13 @@ static void send_picture_out(
             if (ABS((int)ref_obj_0->avg_luma - (int)pcs->avg_luma) < luma_th &&
                 ABS((int)ref_obj_1->avg_luma - (int)pcs->avg_luma) < luma_th)
             {
+#if OPT_ENABLE_2L_INCOMP
+                // TODO: The ref list counts should not be updated after set_all_ref_frame_type()
+                pcs->ref_list0_count_try = MIN(pcs->ref_list0_count_try, 1);
+                pcs->ref_list1_count_try = MIN(pcs->ref_list1_count_try, 1);
+#else
                 pcs->ref_list0_count_try = pcs->ref_list1_count_try = 1;
+#endif
             }
         }
     }
@@ -3607,7 +3867,13 @@ static void copy_tf_params(SequenceControlSet *scs, PictureParentControlSet *pcs
             pcs->tf_ctrls.enabled = 0;
         return;
    }
+#if OPT_ENABLE_2L_INCOMP
+   if (pcs->is_overlay)
+       pcs->tf_ctrls.enabled = 0;
+   else if (svt_aom_is_delayed_intra(pcs))
+#else
     if (svt_aom_is_delayed_intra(pcs))
+#endif
         pcs->tf_ctrls = scs->tf_params_per_type[0];
     else if (pcs->temporal_layer_index == 0)  // BASE
         pcs->tf_ctrls = scs->tf_params_per_type[1];

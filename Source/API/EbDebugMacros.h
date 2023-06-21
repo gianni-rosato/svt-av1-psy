@@ -54,17 +54,25 @@ extern "C" {
 #define OPT_RPS_40m30                             1 // Optimize rps list. remove ref 30 for pic 40. //applicable for all 4:3 presets
 #define OPT_RPS_ADD                               1 // Optimize rps list. add more pictures on top of 4:3 case
 
-
 #define FIX_NSQ_LVL22                             1 // Fix NSQ lvl22
 #define OPT_HV_NON_HV                             1 // Apply an offset to non_HV_split_rate_th
 #define OPT_MRP                                   1 // Preset tuning for MRP
+
+#define TF_PACKAGE                                1 // tf package
+#if TF_PACKAGE
 #define MCTF_FIX_BUILD                            1 // Fix the build of the MCTF pcs queue
 #define SHUT_MCTF_PEN                             1 // Remove the bias towards MV (0,0) for HME of MCTF
 #define MCTF_FULL_SAD                             1 // FULL_SAD @ HME/ME of MCTF
 #define FIX_LINUX_MISMATCH                        1 // Fix a linux vs windows mimatch
 #define FIX_SCENE_TRANSITION                      1 // Improve the scene-transition
 #define MCTF_OPT_REFS_MODULATION                  1 // Use the filtered-to-unfiltered distortion divided by the noise-level for the ref-frame(s) modulation instead of only filtered-to-unfiltered
+#define MCTF_ON_THE_FLY_PRUNING                   1 // Use ahd-error to central/avg to identify/skip outlier ref-frame(s)
+#define MCTF_OPT_HME_LEVEL                        1 // Increase the HME-Level0 when a high active region is detected
 
+#endif
+
+#define OPT_ENABLE_2L_INCOMP                      1 // Enable 2L RA pred structure for incomplete MGs
+#define OPT_BEST_REF                              1 // Optimize use  best me references for mrp
 
 //FOR DEBUGGING - Do not remove
 #define OPT_LD_LATENCY2         0 // Latency optimization for low delay
