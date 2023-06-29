@@ -68,11 +68,27 @@ extern "C" {
 #define MCTF_OPT_REFS_MODULATION                  1 // Use the filtered-to-unfiltered distortion divided by the noise-level for the ref-frame(s) modulation instead of only filtered-to-unfiltered
 #define MCTF_ON_THE_FLY_PRUNING                   1 // Use ahd-error to central/avg to identify/skip outlier ref-frame(s)
 #define MCTF_OPT_HME_LEVEL                        1 // Increase the HME-Level0 when a high active region is detected
-
+#define MCTF_QDECAY                               1 // Improve q_decay=f(q_index); smoother before the cut-off
+#define MCTF_DECAY_CTRL                           1 // Use a more aggressive decay-ctrl for U/V
+#define MCTF_FRAME_SIZE                           1 // Adjust min frame size
 #endif
 
 #define OPT_ENABLE_2L_INCOMP                      1 // Enable 2L RA pred structure for incomplete MGs
 #define OPT_BEST_REF                              1 // Optimize use  best me references for mrp
+
+#define NSQ_INCOMP_PACKAGE 1
+#if NSQ_INCOMP_PACKAGE
+#define CLN_NSQ                                   1 // Cleanup tracking of tested blocks to avoid setting cost to arbitrary values when testing is skipped
+#define ALLOW_INCOMP_NSQ                          1 // Allow incomplete SBs to use NSQ when SQ is not allowed
+#define REMOVE_TESTED_BLK_FLAG                    1 // Remove tested_blk_flag
+#endif
+
+#define OPT_GM_1REF                               1 // Test only 1 reference per list in GM search
+#define OPT_GM_M6                                 1 // Tune gm in m6 by using regular gm search instead of ref info based search.
+
+#define CLN_TPL_SYNTH_DATA                        1 // Fix scaling done on TPL dispenser data (which is supposed to normalize data when using a different synthesizer block size)
+
+
 
 //FOR DEBUGGING - Do not remove
 #define OPT_LD_LATENCY2         0 // Latency optimization for low delay

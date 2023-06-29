@@ -2167,8 +2167,13 @@ static EbErrorType md_rtime_alloc_palette_info(BlkStruct *md_blk_arr_nsq) {
 // MD data structures should be updated in init_block_data(), not here.
 static void build_cand_block_array(SequenceControlSet *scs, PictureControlSet *pcs, ModeDecisionContext *ctx,
                                    Bool is_complete_sb) {
+#if !REMOVE_TESTED_BLK_FLAG
     memset(ctx->tested_blk_flag, 0, sizeof(uint8_t) * scs->max_block_cnt);
+#endif
     memset(ctx->avail_blk_flag, FALSE, sizeof(uint8_t) * scs->max_block_cnt);
+#if CLN_NSQ
+    memset(ctx->cost_avail, FALSE, sizeof(uint8_t) * scs->max_block_cnt);
+#endif
     MdcSbData *results_ptr       = ctx->mdc_sb_array;
     results_ptr->leaf_count      = 0;
     uint32_t       blk_index     = 0;
@@ -2266,7 +2271,13 @@ void update_pred_th_offset(ModeDecisionContext *ctx, const BlockGeom *blk_geom, 
     uint64_t max_cost = RDCOST(
         full_lambda, 16, ctx->depth_refinement_ctrls.max_cost_multiplier * blk_geom->bwidth * blk_geom->bheight);
 
+#if ALLOW_INCOMP_NSQ
+    // For incomplete blocks, H/V partitions may be allowed, while square is not. In those cases, the selected depth
+    // may not have a valid SQ default_cost, so we need to check that the SQ block is available before using the default_cost
+    if (ctx->avail_blk_flag[blk_geom->sqi_mds] && ctx->md_local_blk_unit[blk_geom->sqi_mds].default_cost <= max_cost) {
+#else
     if (ctx->md_local_blk_unit[blk_geom->sqi_mds].default_cost <= max_cost) {
+#endif
         uint64_t band_size = max_cost / ctx->depth_refinement_ctrls.max_band_cnt;
         uint64_t band_idx  = ctx->md_local_blk_unit[blk_geom->sqi_mds].default_cost / band_size;
         if (ctx->depth_refinement_ctrls.decrement_per_band[band_idx] == MAX_SIGNED_VALUE) {
@@ -2587,8 +2598,13 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs, PictureContro
 // MD data structures should be updated in init_block_data(), not here.
 static EbErrorType build_starting_cand_block_array(SequenceControlSet *scs, PictureControlSet *pcs,
                                                    ModeDecisionContext *ctx) {
+#if !REMOVE_TESTED_BLK_FLAG
     memset(ctx->tested_blk_flag, 0, sizeof(uint8_t) * scs->max_block_cnt);
+#endif
     memset(ctx->avail_blk_flag, FALSE, sizeof(uint8_t) * scs->max_block_cnt);
+#if CLN_NSQ
+    memset(ctx->cost_avail, FALSE, sizeof(uint8_t) * scs->max_block_cnt);
+#endif
     MdcSbData *results_ptr       = ctx->mdc_sb_array;
     results_ptr->leaf_count      = 0;
     uint32_t       blk_index     = 0;

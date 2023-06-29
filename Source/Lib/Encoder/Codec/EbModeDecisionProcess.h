@@ -889,8 +889,13 @@ typedef struct ModeDecisionContext {
     MdBlkStruct                  *md_local_blk_unit;
     BlkStruct                    *md_blk_arr_nsq;
     uint8_t                      *avail_blk_flag;
+#if !REMOVE_TESTED_BLK_FLAG
     // tells whether this CU is tested in MD.
     uint8_t         *tested_blk_flag;
+#endif
+#if CLN_NSQ
+    uint8_t* cost_avail;
+#endif
     MdcSbData       *mdc_sb_array;
     MvReferenceFrame ref_frame_type_arr[MODE_CTX_REF_FRAMES];
     uint8_t          tot_ref_frame_types;

@@ -2181,7 +2181,11 @@ EB_EXTERN void svt_aom_encode_decode(SequenceControlSet *scs, PictureControlSet 
         //And the mds_idx of the parent block is not set properly
         //And it will generate the wrong cdf ctx and influence the MD for the next SB
         blk_ptr->mds_idx = blk_it;
+#if ALLOW_INCOMP_NSQ
+        if (blk_ptr->part == PARTITION_SPLIT) {
+#else
         if (!pcs->ppcs->sb_geom[sb_addr].block_is_allowed[blk_it] || blk_ptr->part == PARTITION_SPLIT) {
+#endif
             blk_it += ctx->blk_geom->d1_depth_offset;
             continue;
         }
@@ -2190,6 +2194,14 @@ EB_EXTERN void svt_aom_encode_decode(SequenceControlSet *scs, PictureControlSet 
         uint32_t d1_start_blk = blk_it + ns_blk_offset[blk_ptr->part];
         uint32_t num_d1_block = ns_blk_num[blk_ptr->part]; // blk_geom->totns;
         for (uint32_t d1_itr = d1_start_blk; d1_itr < (d1_start_blk + num_d1_block); d1_itr++) {
+#if ALLOW_INCOMP_NSQ
+            if (!pcs->ppcs->sb_geom[sb_addr].block_is_allowed[d1_itr]) {
+                // Coded blocks should all be allowable, except for the last partitions
+                // in H/V/H4/V4 may be outside the boundary for incomplete blocks
+                assert(d1_itr == (d1_start_blk + num_d1_block - 1));
+                continue;
+            }
+#endif
             blk_geom = ctx->blk_geom = get_blk_geom_mds(d1_itr);
             blk_ptr = ctx->blk_ptr = &md_ctx->md_blk_arr_nsq[d1_itr];
 
@@ -2316,7 +2328,11 @@ EB_EXTERN EbErrorType svt_aom_encdec_update(SequenceControlSet *scs, PictureCont
         if (blk_it == 0 && sb_org_x == 0 && blk_geom->org_x == 0 && sb_org_y == 0 && blk_geom->org_y == 0) {
             pcs->ppcs->pcs_total_rate = 0;
         }
+#if ALLOW_INCOMP_NSQ
+        if (blk_ptr->part == PARTITION_SPLIT) {
+#else
         if (!pcs->ppcs->sb_geom[sb_addr].block_is_allowed[blk_it] || blk_ptr->part == PARTITION_SPLIT) {
+#endif
             blk_it += ctx->blk_geom->d1_depth_offset;
             continue;
         }
@@ -2325,6 +2341,14 @@ EB_EXTERN EbErrorType svt_aom_encdec_update(SequenceControlSet *scs, PictureCont
         uint32_t d1_start_blk = blk_it + ns_blk_offset[blk_ptr->part];
         uint32_t num_d1_block = ns_blk_num[blk_ptr->part]; // blk_geom->totns;
         for (uint32_t d1_itr = d1_start_blk; d1_itr < (d1_start_blk + num_d1_block); d1_itr++) {
+#if ALLOW_INCOMP_NSQ
+            if (!pcs->ppcs->sb_geom[sb_addr].block_is_allowed[d1_itr]) {
+                // Coded blocks should all be allowable, except for the last partitions
+                // in H/V/H4/V4 may be outside the boundary for incomplete blocks
+                assert(d1_itr == (d1_start_blk + num_d1_block - 1));
+                continue;
+            }
+#endif
             blk_geom = ctx->blk_geom = get_blk_geom_mds(d1_itr);
             blk_ptr = ctx->blk_ptr = &md_ctx->md_blk_arr_nsq[d1_itr];
 

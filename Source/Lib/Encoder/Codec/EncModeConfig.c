@@ -753,8 +753,10 @@ void svt_aom_sig_deriv_me_tf(PictureParentControlSet *pcs, MeContext *me_ctx) {
 /* Wrapper function to compute TPL Synthesizer block size: Used in init memory allocation and TPL Controls*/
 uint8_t svt_aom_get_tpl_synthesizer_block_size(int8_t tpl_level, uint32_t picture_width, uint32_t picture_height) {
     uint8_t blk_size;
+#if !CLN_TPL_SYNTH_DATA
     if (tpl_level <= 5)
         blk_size = AOMMIN(picture_width, picture_height) >= 720 ? 16 : 8;
+#endif
     if (tpl_level <= 6)
         blk_size = 16;
     else
@@ -2360,6 +2362,9 @@ void svt_aom_set_gm_controls(PictureParentControlSet *pcs, uint8_t gm_level) {
         gm_ctrls->use_ref_info = 0;
         gm_ctrls->layer_offset = 0;
         gm_ctrls->pp_enabled   = 0;
+#if OPT_GM_1REF       
+        gm_ctrls->ref_idx0_only = 0;
+#endif
         break;
     case 2:
         gm_ctrls->enabled                      = 1;
@@ -2378,6 +2383,9 @@ void svt_aom_set_gm_controls(PictureParentControlSet *pcs, uint8_t gm_level) {
         gm_ctrls->use_ref_info                 = 0;
         gm_ctrls->layer_offset                 = 0;
         gm_ctrls->pp_enabled                   = 1;
+#if OPT_GM_1REF       
+        gm_ctrls->ref_idx0_only                = 0;
+#endif
         break;
     case 3:
         gm_ctrls->enabled                      = 1;
@@ -2396,6 +2404,9 @@ void svt_aom_set_gm_controls(PictureParentControlSet *pcs, uint8_t gm_level) {
         gm_ctrls->use_ref_info                 = 0;
         gm_ctrls->layer_offset                 = 0;
         gm_ctrls->pp_enabled                   = 1;
+#if OPT_GM_1REF       
+        gm_ctrls->ref_idx0_only                = 0;
+#endif
         break;
     case 4:
         gm_ctrls->enabled                      = 1;
@@ -2414,6 +2425,9 @@ void svt_aom_set_gm_controls(PictureParentControlSet *pcs, uint8_t gm_level) {
         gm_ctrls->use_ref_info                 = 0;
         gm_ctrls->layer_offset                 = 0;
         gm_ctrls->pp_enabled                   = 1;
+#if OPT_GM_1REF       
+        gm_ctrls->ref_idx0_only                = 1;
+#endif
         break;
     case 5:
         gm_ctrls->enabled                      = 1;
@@ -2432,6 +2446,9 @@ void svt_aom_set_gm_controls(PictureParentControlSet *pcs, uint8_t gm_level) {
         gm_ctrls->use_ref_info                 = 0;
         gm_ctrls->layer_offset                 = 0;
         gm_ctrls->pp_enabled                   = 1;
+#if OPT_GM_1REF       
+        gm_ctrls->ref_idx0_only                = 1;
+#endif
         break;
     case 6:
         gm_ctrls->enabled                      = 1;
@@ -2447,9 +2464,16 @@ void svt_aom_set_gm_controls(PictureParentControlSet *pcs, uint8_t gm_level) {
         gm_ctrls->chess_rfn                    = 1;
         gm_ctrls->match_sz                     = 7;
         gm_ctrls->inj_psq_glb                  = TRUE;
+#if OPT_GM_M6
+        gm_ctrls->use_ref_info                 = 0;
+#else
         gm_ctrls->use_ref_info                 = 1;
+#endif
         gm_ctrls->layer_offset                 = 3;
         gm_ctrls->pp_enabled                   = 0;
+#if OPT_GM_1REF       
+        gm_ctrls->ref_idx0_only                = 1;
+#endif
         break;
     case 7:
         gm_ctrls->enabled                      = 1;
@@ -2465,9 +2489,16 @@ void svt_aom_set_gm_controls(PictureParentControlSet *pcs, uint8_t gm_level) {
         gm_ctrls->chess_rfn                    = 1;
         gm_ctrls->match_sz                     = 7;
         gm_ctrls->inj_psq_glb                  = TRUE;
+#if OPT_GM_M6
+        gm_ctrls->use_ref_info                 = 0;  //TODO: clean up ref info method
+#else
         gm_ctrls->use_ref_info                 = 1;
+#endif
         gm_ctrls->layer_offset                 = 3;
         gm_ctrls->pp_enabled                   = 0;
+#if OPT_GM_1REF       
+        gm_ctrls->ref_idx0_only                = 1;
+#endif
         break;
     case 8:
         gm_ctrls->enabled                      = 1;
@@ -2483,9 +2514,16 @@ void svt_aom_set_gm_controls(PictureParentControlSet *pcs, uint8_t gm_level) {
         gm_ctrls->chess_rfn                    = 1;
         gm_ctrls->match_sz                     = 7;
         gm_ctrls->inj_psq_glb                  = TRUE;
+#if OPT_GM_M6
+        gm_ctrls->use_ref_info                 = 0;
+#else
         gm_ctrls->use_ref_info                 = 1;
+#endif
         gm_ctrls->layer_offset                 = 3;
         gm_ctrls->pp_enabled                   = 0;
+#if OPT_GM_1REF       
+        gm_ctrls->ref_idx0_only                = 1;
+#endif
         break;
     default: assert(0); break;
     }

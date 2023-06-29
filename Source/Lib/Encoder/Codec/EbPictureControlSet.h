@@ -578,6 +578,10 @@ typedef struct GmControls {
     bool inj_psq_glb;
     //enable Pre-processor for GM
     bool pp_enabled;
+#if OPT_GM_1REF
+    //limit the search to  ref index = 0 only
+    bool ref_idx0_only;
+#endif
 } GmControls;
 typedef struct CdefControls {
     uint8_t enabled;

@@ -265,11 +265,13 @@ static int rate_estimator(TranLow *qcoeff, int eob, TxSize tx_size) {
 
 static void result_model_store(PictureParentControlSet *pcs, TplStats *tpl_stats_ptr, uint32_t mb_origin_x,
                                uint32_t mb_origin_y, uint32_t size) {
+#if !CLN_TPL_SYNTH_DATA
     //normalize based on the block size 16x16
     tpl_stats_ptr->srcrf_dist = tpl_stats_ptr->srcrf_dist / size;
     tpl_stats_ptr->recrf_dist = tpl_stats_ptr->recrf_dist / size;
     tpl_stats_ptr->srcrf_rate = tpl_stats_ptr->srcrf_rate / size;
     tpl_stats_ptr->recrf_rate = tpl_stats_ptr->recrf_rate / size;
+#endif
 
     tpl_stats_ptr->srcrf_dist = AOMMAX(1, tpl_stats_ptr->srcrf_dist);
     tpl_stats_ptr->recrf_dist = AOMMAX(1, tpl_stats_ptr->recrf_dist);
@@ -279,6 +281,10 @@ static void result_model_store(PictureParentControlSet *pcs, TplStats *tpl_stats
         const int stride  = (((pcs->aligned_width + 31) / 32));
         TplStats *dst_ptr = pcs->pa_me_data->tpl_stats[(mb_origin_y >> 5) * stride + (mb_origin_x >> 5)];
 
+#if CLN_TPL_SYNTH_DATA
+        //write to a 32x32 grid
+        *dst_ptr = *tpl_stats_ptr;
+#else
         //write to a 16x16 grid
         *dst_ptr = *tpl_stats_ptr;
         /*if (size == 32) {
@@ -290,12 +296,20 @@ static void result_model_store(PictureParentControlSet *pcs, TplStats *tpl_stats
             dst_ptr[stride] = *tpl_stats_ptr;
             dst_ptr[stride + 1] = *tpl_stats_ptr;
         }*/
+#endif
     } else if (pcs->tpl_ctrls.synth_blk_size == 16) {
         const int stride  = ((pcs->aligned_width + 15) / 16);
         TplStats *dst_ptr = pcs->pa_me_data->tpl_stats[(mb_origin_y >> 4) * stride + (mb_origin_x >> 4)];
 
         //write to a 16x16 grid
         if (size == 32) {
+#if CLN_TPL_SYNTH_DATA
+            //normalize based on the block size 16x16
+            tpl_stats_ptr->srcrf_dist = AOMMAX(1, tpl_stats_ptr->srcrf_dist / 4);
+            tpl_stats_ptr->recrf_dist = AOMMAX(1, tpl_stats_ptr->recrf_dist / 4);
+            tpl_stats_ptr->srcrf_rate = AOMMAX(1, tpl_stats_ptr->srcrf_rate / 4);
+            tpl_stats_ptr->recrf_rate = AOMMAX(1, tpl_stats_ptr->recrf_rate / 4);
+#endif
             dst_ptr[0]          = *tpl_stats_ptr;
             dst_ptr[1]          = *tpl_stats_ptr;
             dst_ptr[stride]     = *tpl_stats_ptr;
@@ -310,6 +324,13 @@ static void result_model_store(PictureParentControlSet *pcs, TplStats *tpl_stats
 
         //write to a 8x8 grid
         if (size == 32) {
+#if CLN_TPL_SYNTH_DATA
+            //normalize based on the block size 8x8
+            tpl_stats_ptr->srcrf_dist = AOMMAX(1, tpl_stats_ptr->srcrf_dist / 16);
+            tpl_stats_ptr->recrf_dist = AOMMAX(1, tpl_stats_ptr->recrf_dist / 16);
+            tpl_stats_ptr->srcrf_rate = AOMMAX(1, tpl_stats_ptr->srcrf_rate / 16);
+            tpl_stats_ptr->recrf_rate = AOMMAX(1, tpl_stats_ptr->recrf_rate / 16);
+#endif
             dst_ptr[0] = *tpl_stats_ptr;
             dst_ptr[1] = *tpl_stats_ptr;
             dst_ptr[2] = *tpl_stats_ptr;
@@ -331,6 +352,13 @@ static void result_model_store(PictureParentControlSet *pcs, TplStats *tpl_stats
             dst_ptr[(stride * 3) + 3] = *tpl_stats_ptr;
 
         } else if (size == 16) {
+#if CLN_TPL_SYNTH_DATA
+            //normalize based on the block size 8x8
+            tpl_stats_ptr->srcrf_dist = AOMMAX(1, tpl_stats_ptr->srcrf_dist / 4);
+            tpl_stats_ptr->recrf_dist = AOMMAX(1, tpl_stats_ptr->recrf_dist / 4);
+            tpl_stats_ptr->srcrf_rate = AOMMAX(1, tpl_stats_ptr->srcrf_rate / 4);
+            tpl_stats_ptr->recrf_rate = AOMMAX(1, tpl_stats_ptr->recrf_rate / 4);
+#endif
             dst_ptr[0]          = *tpl_stats_ptr;
             dst_ptr[1]          = *tpl_stats_ptr;
             dst_ptr[stride]     = *tpl_stats_ptr;

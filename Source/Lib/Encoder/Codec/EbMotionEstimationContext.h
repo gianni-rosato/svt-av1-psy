@@ -473,7 +473,11 @@ typedef struct MeContext {
     int          tf_block_row;
     int          tf_block_col;
     uint32_t     idx_32x32;
+#if MCTF_FRAME_SIZE
+    uint16_t     tf_mv_dist_th;
+#else
     uint16_t     min_frame_size;
+#endif
     int32_t      prune_me_candidates_th;
     uint8_t      use_best_unipred_cand_only; // Use only the best unipred candidate when MRP is off
     uint8_t      reduce_hme_l0_sr_th_min;

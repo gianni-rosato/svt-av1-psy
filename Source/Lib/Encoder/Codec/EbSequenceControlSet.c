@@ -234,6 +234,31 @@ EbErrorType svt_aom_sb_geom_init(SequenceControlSet *scs) {
         for (md_scan_block_index = 0; md_scan_block_index < max_block_count; md_scan_block_index++) {
             const BlockGeom *blk_geom = get_blk_geom_mds(md_scan_block_index);
             if (scs->over_boundary_block_mode == 1) {
+#if ALLOW_INCOMP_NSQ
+                const BlockGeom* sq_blk_geom = get_blk_geom_mds(blk_geom->sqi_mds);
+                uint8_t has_rows = (scs->sb_geom[sb_index].org_y + sq_blk_geom->org_y + sq_blk_geom->bheight / 2 < scs->max_input_luma_height);
+                uint8_t has_cols = (scs->sb_geom[sb_index].org_x + sq_blk_geom->org_x + sq_blk_geom->bwidth / 2 < scs->max_input_luma_width);
+
+                // See AV1 spec section 5.11.4 for allowable blocks
+                if (has_rows && has_cols &&
+                    (scs->sb_geom[sb_index].org_y + blk_geom->org_y < scs->max_input_luma_height) &&
+                    (scs->sb_geom[sb_index].org_x + blk_geom->org_x < scs->max_input_luma_width)) {
+                    scs->sb_geom[sb_index].block_is_allowed[md_scan_block_index] = 1;
+                }
+                else if (blk_geom->shape == PART_H && has_cols &&
+                    (scs->sb_geom[sb_index].org_y + blk_geom->org_y < scs->max_input_luma_height) &&
+                    (scs->sb_geom[sb_index].org_x + blk_geom->org_x < scs->max_input_luma_width)) {
+                    scs->sb_geom[sb_index].block_is_allowed[md_scan_block_index] = 1;
+                }
+                else if (blk_geom->shape == PART_V && has_rows &&
+                    (scs->sb_geom[sb_index].org_y + blk_geom->org_y < scs->max_input_luma_height) &&
+                    (scs->sb_geom[sb_index].org_x + blk_geom->org_x < scs->max_input_luma_width)) {
+                    scs->sb_geom[sb_index].block_is_allowed[md_scan_block_index] = 1;
+                }
+                else {
+                    scs->sb_geom[sb_index].block_is_allowed[md_scan_block_index] = 0;
+                }
+#else
                 scs->sb_geom[sb_index].block_is_allowed[md_scan_block_index] =
                     ((scs->sb_geom[sb_index].org_x + blk_geom->org_x + blk_geom->bwidth / 2 <
                       scs->max_input_luma_width) &&
@@ -241,6 +266,7 @@ EbErrorType svt_aom_sb_geom_init(SequenceControlSet *scs) {
                       scs->max_input_luma_height))
                     ? TRUE
                     : FALSE;
+#endif
 
             } else {
                 if (blk_geom->shape != PART_N)
