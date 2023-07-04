@@ -911,7 +911,7 @@ typedef struct EbSvtAv1EncConfiguration {
      */
     uint8_t startup_mg_size;
 
-    /* @brief reference scaling events for random access mode (reize-mode = 4)
+    /* @brief reference scaling events for random access mode (resize-mode = 4)
      *
      * evt_num:          total count of events
      * start_frame_nums: array of scaling start frame numbers
