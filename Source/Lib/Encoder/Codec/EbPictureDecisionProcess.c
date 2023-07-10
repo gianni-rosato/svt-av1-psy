@@ -54,6 +54,45 @@ void  svt_aom_get_max_allocated_me_refs(uint8_t ref_count_used_list0, uint8_t re
 void svt_aom_init_resize_picture(SequenceControlSet* scs, PictureParentControlSet* pcs);
 MvReferenceFrame svt_get_ref_frame_type(uint8_t list, uint8_t ref_idx);
 
+#if MCTF_ON_THE_FLY_PRUNING
+static uint32_t calc_ahd(
+    SequenceControlSet* scs,
+    PictureParentControlSet* input_pcs,
+    PictureParentControlSet* ref_pcs,
+    uint8_t *active_region_cnt) {
+
+    uint32_t ahd = 0;
+#if MCTF_OPT_HME_LEVEL
+    uint32_t  region_width = ref_pcs->enhanced_pic->width / scs->picture_analysis_number_of_regions_per_width;
+    uint32_t  region_height = ref_pcs->enhanced_pic->height / scs->picture_analysis_number_of_regions_per_height;
+#endif
+    // Loop over regions inside the picture
+    for (uint32_t region_in_picture_width_index = 0; region_in_picture_width_index < scs->picture_analysis_number_of_regions_per_width; region_in_picture_width_index++) { // loop over horizontal regions
+        for (uint32_t region_in_picture_height_index = 0; region_in_picture_height_index < scs->picture_analysis_number_of_regions_per_height; region_in_picture_height_index++) { // loop over vertical regions
+#if MCTF_OPT_HME_LEVEL
+            uint32_t ahd_per_region = 0;
+#endif
+            for (int bin = 0; bin < HISTOGRAM_NUMBER_OF_BINS; ++bin) {
+
+#if MCTF_OPT_HME_LEVEL
+                ahd_per_region += ABS((int32_t)input_pcs->picture_histogram[region_in_picture_width_index][region_in_picture_height_index][bin] - (int32_t)ref_pcs->picture_histogram[region_in_picture_width_index][region_in_picture_height_index][bin]);
+#else
+                ahd += ABS((int32_t)input_pcs->picture_histogram[region_in_picture_width_index][region_in_picture_height_index][bin] - (int32_t)ref_pcs->picture_histogram[region_in_picture_width_index][region_in_picture_height_index][bin]);
+#endif
+            }
+
+#if MCTF_OPT_HME_LEVEL
+            ahd += ahd_per_region;
+            if (ahd_per_region > (region_width * region_height))
+                (*active_region_cnt) ++;
+#endif
+
+        }
+    }
+    return ahd;
+}
+#endif
+
 static INLINE int get_relative_dist(const OrderHintInfo *oh, int a, int b) {
     if (!oh->enable_order_hint) return 0;
 
@@ -193,7 +232,11 @@ static void picture_decision_context_dctor(EbPtr p)
 EbErrorType svt_aom_picture_decision_context_ctor(
     EbThreadContext     *thread_ctx,
     const EbEncHandle   *enc_handle_ptr,
+#if MCTF_ON_THE_FLY_PRUNING
+    uint8_t calc_hist)
+#else
     uint8_t scene_change_detection)
+#endif
 {
     PictureDecisionContext *pd_ctx;
     EB_CALLOC_ARRAY(pd_ctx, 1);
@@ -206,8 +249,11 @@ EbErrorType svt_aom_picture_decision_context_ctor(
         svt_system_resource_get_consumer_fifo(enc_handle_ptr->picture_analysis_results_resource_ptr, 0);
     pd_ctx->picture_decision_results_output_fifo_ptr =
         svt_system_resource_get_producer_fifo(enc_handle_ptr->picture_decision_results_resource_ptr, 0);
-
+#if MCTF_ON_THE_FLY_PRUNING
+    if (calc_hist) {
+#else
     if (scene_change_detection) {
+#endif
         EB_ALLOC_PTR_ARRAY(pd_ctx->prev_picture_histogram, MAX_NUMBER_OF_REGIONS_IN_WIDTH);
         for (uint32_t region_in_picture_width_index = 0; region_in_picture_width_index < MAX_NUMBER_OF_REGIONS_IN_WIDTH; region_in_picture_width_index++) { // loop over horizontal regions
             EB_ALLOC_PTR_ARRAY(pd_ctx->prev_picture_histogram[region_in_picture_width_index], MAX_NUMBER_OF_REGIONS_IN_HEIGHT);
@@ -823,15 +869,52 @@ static void initialize_mini_gop_activity_array(SequenceControlSet* scs, PictureP
 
     // 6L vs. 5L
     if (scs->enable_dg && ctx->mini_gop_activity_array[L6_INDEX] == FALSE)
+#if OPT_LIST0_ONLY_BASE
+    {
+        PictureParentControlSet* start_pcs = (PictureParentControlSet*)enc_ctx->pre_assignment_buffer[0]->object_ptr;
+        PictureParentControlSet* mid_pcs = (PictureParentControlSet*)enc_ctx->pre_assignment_buffer[((1 << scs->static_config.hierarchical_levels) >> 1) - 1]->object_ptr;
+        PictureParentControlSet* end_pcs = (PictureParentControlSet*)enc_ctx->pre_assignment_buffer[enc_ctx->pre_assignment_buffer_count - 1]->object_ptr;
+#endif
         eval_sub_mini_gop(
             ctx,
             enc_ctx,
             L6_INDEX,
             L5_0_INDEX,
             L5_1_INDEX,
+#if OPT_LIST0_ONLY_BASE
+            start_pcs,
+            mid_pcs,
+            end_pcs);
+#else
             (PictureParentControlSet*)enc_ctx->pre_assignment_buffer[0]->object_ptr,
             (PictureParentControlSet*)enc_ctx->pre_assignment_buffer[15]->object_ptr,
             (PictureParentControlSet*)enc_ctx->pre_assignment_buffer[31]->object_ptr);
+#endif
+#if OPT_LIST0_ONLY_BASE
+    }
+#endif
+#if OPT_LIST0_ONLY_BASE
+    ctx->list0_only = 0;
+    if (scs->list0_only_base_ctrls.enabled) {
+        if (scs->list0_only_base_ctrls.list0_only_base_th >= 100) {
+            ctx->list0_only = 1;
+        } else {
+#if OPT_LIST0_ONLY_BASE
+            PictureParentControlSet* start_pcs = (PictureParentControlSet*)enc_ctx->pre_assignment_buffer[0]->object_ptr;
+            PictureParentControlSet* end_pcs = (PictureParentControlSet*)enc_ctx->pre_assignment_buffer[enc_ctx->pre_assignment_buffer_count - 1]->object_ptr;
+#endif
+            uint8_t active_region_cnt = 0;
+            calc_ahd(
+                scs,
+                end_pcs,
+                start_pcs,
+                &active_region_cnt);
+            uint8_t perc_active_region = active_region_cnt * 100 / (scs->picture_analysis_number_of_regions_per_width * scs->picture_analysis_number_of_regions_per_height);
+            if (perc_active_region <= scs->list0_only_base_ctrls.list0_only_base_th)
+                ctx->list0_only = 1;
+        }
+    }
+#endif
 }
 
 /***************************************************************************************************
@@ -965,7 +1048,7 @@ static void get_pred_struct_for_all_frames(
         }
     }
 }
-
+#if !OPT_LIST0_ONLY_BASE
 static INLINE void update_list0_only_base(SequenceControlSet* scs, PictureParentControlSet* pcs) {
 
     // If noise_variance_th is MAX, then always skip list 1, else compare to the avg variance (if available)
@@ -974,6 +1057,7 @@ static INLINE void update_list0_only_base(SequenceControlSet* scs, PictureParent
         pcs->ref_list1_count_try = 0;
     }
 }
+#endif
 void  svt_aom_get_gm_needed_resolutions(uint8_t ds_lvl, bool *gm_need_full, bool *gm_need_quart, bool *gm_need_sixteen) {
 
     *gm_need_full = (ds_lvl == GM_FULL) || (ds_lvl == GM_ADAPT_0);
@@ -3002,7 +3086,7 @@ static int ref_pics_modulation(
             if (ratio < 100)
                 offset = 5;
             else
-                offset = 6;
+                offset = TF_MAX_EXTENSION;
 #else
             if (pcs->filt_to_unfilt_diff < 20000)
                 offset = 3;
@@ -3019,7 +3103,7 @@ static int ref_pics_modulation(
             else if (ratio < 100)
                 offset = 5;
             else
-                offset = 6;
+                offset = TF_MAX_EXTENSION;
 #else
             if (pcs->filt_to_unfilt_diff < 20000)
                 offset = 1;
@@ -3111,47 +3195,7 @@ static int ref_pics_modulation(
 
     return offset;
 }
-#if MCTF_ON_THE_FLY_PRUNING
-static uint32_t calc_ahd(
-    SequenceControlSet *scs,
-    PictureParentControlSet *input_pcs,
-    PictureParentControlSet *ref_pcs) {
-    
-    uint32_t ahd = 0;
 
-#if MCTF_OPT_HME_LEVEL
-    ref_pcs->tf_active_region_present = 0;
-
-    uint32_t  region_width = ref_pcs->enhanced_pic->width / scs->picture_analysis_number_of_regions_per_width;
-    uint32_t  region_height = ref_pcs->enhanced_pic->height / scs->picture_analysis_number_of_regions_per_height;
-#endif
-    // Loop over regions inside the picture
-    for (uint32_t region_in_picture_width_index = 0; region_in_picture_width_index < scs->picture_analysis_number_of_regions_per_width; region_in_picture_width_index++) { // loop over horizontal regions
-        for (uint32_t region_in_picture_height_index = 0; region_in_picture_height_index < scs->picture_analysis_number_of_regions_per_height; region_in_picture_height_index++) { // loop over vertical regions
-#if MCTF_OPT_HME_LEVEL
-            uint32_t ahd_per_region = 0;
-#endif
-                for (int bin = 0; bin < HISTOGRAM_NUMBER_OF_BINS; ++bin) {
-
-#if MCTF_OPT_HME_LEVEL
-                ahd_per_region += ABS((int32_t)input_pcs->picture_histogram[region_in_picture_width_index][region_in_picture_height_index][bin] - (int32_t)ref_pcs->picture_histogram[region_in_picture_width_index][region_in_picture_height_index][bin]);
-#else
-                ahd += ABS((int32_t)input_pcs->picture_histogram[region_in_picture_width_index][region_in_picture_height_index][bin] - (int32_t)ref_pcs->picture_histogram[region_in_picture_width_index][region_in_picture_height_index][bin]);
-#endif
-                }
-
-#if MCTF_OPT_HME_LEVEL
-                ahd += ahd_per_region;
-                if(ahd_per_region > (region_width * region_height))
-                    ref_pcs->tf_active_region_present = 1;
-#endif
-
-        }
-    }
-    return ahd;
-}
-
-#endif
 static EbErrorType derive_tf_window_params(
     SequenceControlSet *scs,
     EncodeContext *enc_ctx,
@@ -3400,10 +3444,13 @@ static EbErrorType derive_tf_window_params(
 #if MCTF_ON_THE_FLY_PRUNING
                 if (idx_1 >= 0) {
                     pcs->temp_filt_pcs_list[pic_i + 1] = pd_ctx->mg_pictures_array[idx_1];
+                    uint8_t active_region_cnt = 0;
                     pd_ctx->mg_pictures_array[idx_1]->tf_ahd_error_to_central = calc_ahd(
                         scs,
                         pcs,
-                        pd_ctx->mg_pictures_array[idx_1]);
+                        pd_ctx->mg_pictures_array[idx_1],
+                        &active_region_cnt);
+                    pd_ctx->mg_pictures_array[idx_1]->tf_active_region_present = active_region_cnt > 0;
                 } 
                 else
                     break;
@@ -3438,10 +3485,13 @@ static EbErrorType derive_tf_window_params(
                         PictureParentControlSet* pcs_itr = (PictureParentControlSet *)enc_ctx->picture_decision_reorder_queue[q_index]->ppcs_wrapper->object_ptr;
                         pcs->temp_filt_pcs_list[pic_i + num_past_pics + 1] = pcs_itr;
 #if MCTF_ON_THE_FLY_PRUNING
+                        uint8_t active_region_cnt = 0;
                         pcs_itr->tf_ahd_error_to_central = calc_ahd(
                             scs,
                             pcs,
-                            pcs_itr);
+                            pcs_itr,
+                            &active_region_cnt);
+                        pcs_itr-> tf_active_region_present = active_region_cnt > 0;
 #endif
                     }
                     else
@@ -3472,11 +3522,13 @@ static EbErrorType derive_tf_window_params(
 #if MCTF_ON_THE_FLY_PRUNING
                     if (idx >= 0) {
                         pcs->temp_filt_pcs_list[pic_itr] = pd_ctx->mg_pictures_array[idx];
-                        
+                        uint8_t active_region_cnt = 0;
                         pd_ctx->mg_pictures_array[idx]->tf_ahd_error_to_central = calc_ahd(
                             scs,
                             pcs,
-                            pd_ctx->mg_pictures_array[idx]);
+                            pd_ctx->mg_pictures_array[idx],
+                            &active_region_cnt);
+                        pd_ctx->mg_pictures_array[idx]->tf_active_region_present = active_region_cnt > 0;
                     }
 #else
                     if (idx >= 0)
@@ -3493,10 +3545,13 @@ static EbErrorType derive_tf_window_params(
                         PictureParentControlSet* pcs_itr = (PictureParentControlSet *)enc_ctx->picture_decision_reorder_queue[q_index]->ppcs_wrapper->object_ptr;
                         pcs->temp_filt_pcs_list[pic_i + num_past_pics + 1] = pcs_itr;
  #if MCTF_ON_THE_FLY_PRUNING
+                        uint8_t active_region_cnt = 0;
                         pcs_itr->tf_ahd_error_to_central = calc_ahd(
                             scs,
                             pcs,
-                            pcs_itr);      
+                            pcs_itr,
+                            &active_region_cnt);
+                        pcs_itr->tf_active_region_present = active_region_cnt > 0;
 #endif
                         actual_future_pics++;
                     }
@@ -3519,10 +3574,13 @@ static EbErrorType derive_tf_window_params(
                                 pcs->temp_filt_pcs_list[pic_i_future + num_past_pics + 1] = pcs_itr;
 #endif
 #if MCTF_ON_THE_FLY_PRUNING
+                                uint8_t active_region_cnt = 0;
                                 pcs_itr->tf_ahd_error_to_central = calc_ahd( 
                                     scs,
                                     pcs,
-                                    pcs_itr);      
+                                    pcs_itr, 
+                                    &active_region_cnt);
+                                pcs_itr->tf_active_region_present = active_region_cnt > 0;
 #endif
                                 actual_future_pics++;
                                 break; //exist the pre-ass loop, go search the next
@@ -3672,6 +3730,26 @@ static void mctf_frame(
         low_delay_release_tf_pictures(pd_ctx);
 }
 
+#if OPT_SAFE_LIMIT 
+bool get_similar_ref_brightness(PictureParentControlSet *pcs)
+{
+    bool similar_brightness_refs = false;
+    if (pcs->slice_type == B_SLICE && pcs->hierarchical_levels > 0 && pcs->ref_list1_count_try > 0) {
+        EbPaReferenceObject *ref_obj_0 = (EbPaReferenceObject *)pcs->ref_pa_pic_ptr_array[0][0]->object_ptr;
+        EbPaReferenceObject *ref_obj_1 = (EbPaReferenceObject *)pcs->ref_pa_pic_ptr_array[1][0]->object_ptr;
+        if (ref_obj_0->avg_luma != INVALID_LUMA && ref_obj_1->avg_luma != INVALID_LUMA) {
+            const int32_t luma_th = 5;
+            if (ABS((int)ref_obj_0->avg_luma - (int)pcs->avg_luma) < luma_th &&
+                ABS((int)ref_obj_1->avg_luma - (int)pcs->avg_luma) < luma_th)
+            {
+                similar_brightness_refs = true;
+            }
+        }
+    }
+
+    return similar_brightness_refs;
+}
+#endif
 
 static void send_picture_out(
     SequenceControlSet      *scs,
@@ -3685,6 +3763,18 @@ static void send_picture_out(
     //every picture enherits latest motion direction from TF
     pcs->tf_motion_direction = ctx->tf_motion_direction;
     MrpCtrls* mrp_ctrl = &(scs->mrp_ctrls);
+
+#if OPT_SAFE_LIMIT
+    pcs->similar_brightness_refs = get_similar_ref_brightness(pcs);
+    if (scs->mrp_ctrls.safe_limit_nref == 2 && pcs->slice_type == B_SLICE && pcs->hierarchical_levels > 0 &&
+        (pcs->temporal_layer_index >= pcs->hierarchical_levels - 1)) {
+        if (pcs->similar_brightness_refs) {
+            // TODO: The ref list counts should not be updated after set_all_ref_frame_type()
+            pcs->ref_list0_count_try = MIN(pcs->ref_list0_count_try, 1);
+            pcs->ref_list1_count_try = MIN(pcs->ref_list1_count_try, 1);
+        }
+    }
+#else
 
     //limit (1,1) for picture that have very close references.
     if (scs->mrp_ctrls.safe_limit_nref && pcs->slice_type == B_SLICE && pcs->hierarchical_levels>0 &&
@@ -3706,7 +3796,7 @@ static void send_picture_out(
             }
         }
     }
-
+#endif
         //get a new ME data buffer
         if (pcs->me_data_wrapper == NULL) {
             svt_get_empty_object(ctx->me_fifo_ptr, &me_wrapper);
@@ -4038,8 +4128,11 @@ static void check_window_availability(SequenceControlSet* scs, EncodeContext* en
     *window_avail = true;
 
     unsigned int previous_entry_index = QUEUE_GET_PREVIOUS_SPOT(enc_ctx->picture_decision_reorder_queue_head_index);
+#if FIX_LINUX_MISMATCH
+    memset(pcs->pd_window, 0, (2 + scs->scd_delay) * sizeof(PictureParentControlSet*));
+#else
     memset(pcs->pd_window, 0, PD_WINDOW_SIZE * sizeof(PictureParentControlSet*));
-
+#endif
     //for poc 0, ignore previous frame check
     if (queue_entry->picture_number > 0 && enc_ctx->picture_decision_reorder_queue[previous_entry_index]->ppcs_wrapper == NULL)
         *window_avail = false;
@@ -4342,9 +4435,14 @@ static void init_pic_settings(SequenceControlSet* scs, PictureParentControlSet* 
         }
     }
 
+#if OPT_LIST0_ONLY_BASE
+    if (ctx->list0_only && pcs->slice_type == B_SLICE && pcs->temporal_layer_index == 0)
+        pcs->ref_list1_count_try = 0;
+#else
     if (pcs->slice_type == B_SLICE && pcs->temporal_layer_index == 0 && pcs->list0_only_base_ctrls.enabled) {
         update_list0_only_base(scs, pcs);
     }
+#endif
     assert(pcs->ref_list0_count_try <= pcs->ref_list0_count);
     assert(pcs->ref_list1_count_try <= pcs->ref_list1_count);
 
@@ -4871,7 +4969,11 @@ void* svt_aom_picture_decision_kernel(void *input_ptr) {
 
             // Histogram data to be used at the next input (N + 1)
             // TODO: can this be moved to the end of perform_scene_change_detection? Histograms aren't needed if at EOS
+#if MCTF_ON_THE_FLY_PRUNING
+            if (scs->calc_hist) {
+#else
             if (scs->static_config.scene_change_detection || scs->vq_ctrls.sharpness_ctrls.scene_transition) {
+#endif
                 copy_histograms(pcs, ctx);
             }
 

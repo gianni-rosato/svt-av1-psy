@@ -1157,8 +1157,11 @@ static EbErrorType picture_parent_control_set_ctor(PictureParentControlSet *obje
             block_count = 1;
         EB_MALLOC_2D(object_ptr->variance, object_ptr->b64_total_count, block_count);
     }
-
+#if MCTF_ON_THE_FLY_PRUNING
+    if (init_data_ptr->calc_hist) {
+#else
     if (init_data_ptr->scene_change_detection) {
+#endif
         EB_ALLOC_PTR_ARRAY(object_ptr->picture_histogram, MAX_NUMBER_OF_REGIONS_IN_WIDTH);
 
         for (uint32_t region_in_picture_width_index = 0; region_in_picture_width_index < MAX_NUMBER_OF_REGIONS_IN_WIDTH;

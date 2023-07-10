@@ -1007,7 +1007,11 @@ int svt_aom_compute_rd_mult_based_on_qindex(EbBitDepth bit_depth, SvtAv1FrameUpd
 // static const int rd_frame_type_factor[FRAME_UPDATE_TYPES] = { 128, 144, 128,
 //                                                               128, 144, 144,
 //                                                               128 };
+#if OPT_LAMBDA_SCALING
+static const int rd_frame_type_factor[SVT_AV1_FRAME_UPDATE_TYPES] = {140, 180, 128, 140, 164, 164, 140};
+#else
 static const int rd_frame_type_factor[SVT_AV1_FRAME_UPDATE_TYPES] = {128, 164, 128, 128, 164, 164, 128};
+#endif
 /*
  * Set the sse lambda based on the bit_depth, then update based on frame position.
  */
@@ -1019,13 +1023,22 @@ int svt_aom_compute_rd_mult(PictureControlSet *pcs, uint8_t q_index, uint8_t me_
     // Always use q_index for the derivation of the initial rdmult (i.e. don't use me_q_index)
     int64_t rdmult = svt_aom_compute_rd_mult_based_on_qindex(bit_depth, pcs->ppcs->update_type, q_index);
     // Update rdmult based on the frame's position in the miniGOP
+#if OPT_LAMBDA_SCALING
+    uint8_t gf_update_type = frame_type == KEY_FRAME ? SVT_AV1_KF_UPDATE
+        : temporal_layer_index == 0 ? SVT_AV1_ARF_UPDATE
+        : temporal_layer_index < max_temporal_layer    ? SVT_AV1_INTNL_ARF_UPDATE
+                                                        : SVT_AV1_LF_UPDATE;
+    rdmult                 = (rdmult * rd_frame_type_factor[gf_update_type]) >> 7;
+#else
     if (frame_type != KEY_FRAME) {
         uint8_t gf_update_type = temporal_layer_index == 0 ? SVT_AV1_ARF_UPDATE
             : temporal_layer_index < max_temporal_layer    ? SVT_AV1_INTNL_ARF_UPDATE
                                                            : SVT_AV1_LF_UPDATE;
         rdmult                 = (rdmult * rd_frame_type_factor[gf_update_type]) >> 7;
     }
+#endif
     if (pcs->scs->stats_based_sb_lambda_modulation) {
+#if !OPT_LAMBDA_SCALING
         if (pcs->temporal_layer_index > 0) {
             if (pcs->ref_intra_percentage < 15)
                 rdmult = (rdmult * 148) >> 7;
@@ -1034,6 +1047,7 @@ int svt_aom_compute_rd_mult(PictureControlSet *pcs, uint8_t q_index, uint8_t me_
             else
                 rdmult = (rdmult * 138) >> 7;
         }
+#endif
         int factor = 128;
         if (pcs->ppcs->frm_hdr.delta_q_params.delta_q_present) {
             int qdiff = q_index - pcs->ppcs->frm_hdr.quantization_params.base_q_idx;

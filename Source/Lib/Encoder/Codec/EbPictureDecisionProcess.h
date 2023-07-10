@@ -20,8 +20,13 @@
 /***************************************
  * Extern Function Declaration
  ***************************************/
+#if MCTF_ON_THE_FLY_PRUNING
+EbErrorType  svt_aom_picture_decision_context_ctor(EbThreadContext *thread_ctx, const EbEncHandle *enc_handle_ptr,
+                                                   uint8_t calc_hist);
+#else
 EbErrorType  svt_aom_picture_decision_context_ctor(EbThreadContext *thread_ctx, const EbEncHandle *enc_handle_ptr,
                                                    uint8_t scene_change_detection);
+#endif
 extern void *svt_aom_picture_decision_kernel(void *input_ptr);
 
 void svt_aom_downsample_decimation_input_picture(PictureParentControlSet *pcs,
@@ -129,6 +134,9 @@ typedef struct PictureDecisionContext {
     int16_t  mv_in_out_count;
     bool     enable_startup_mg;
     uint32_t filt_to_unfilt_diff;
+#if OPT_LIST0_ONLY_BASE
+    bool list0_only;
+#endif
 } PictureDecisionContext;
 
 #endif // EbPictureDecision_h

@@ -39,12 +39,10 @@ extern "C" {
 #define TASK_FIRST_PASS_ME 2
 #define TASK_SUPERRES_RE_ME 3
 #define TASK_DG_DETECTOR_HME 4
-#if FIX_LINUX_MISMATCH
-#define SCD_LAD 8 //number of future frames
-#else
+#if !FIX_LINUX_MISMATCH
 #define SCD_LAD 6 //number of future frames
-#endif
 #define PD_WINDOW_SIZE (SCD_LAD + 2) //adding previous+current to future
+#endif
 #define MAX_TPL_GROUP_SIZE 512 //enough to cover 6L gop
 
 #define MAX_TPL_EXT_GROUP_SIZE MAX_TPL_GROUP_SIZE
@@ -123,8 +121,16 @@ typedef struct MrpCtrls {
 #if OPT_RPS_ADD
     uint8_t more_5L_refs;      //use few more references in the rps list.
 #endif
+
+#if OPT_SAFE_LIMIT
+    // Limit references to (1,1) if it's safe to do so based on brightness and ME ZZ sad
+    uint8_t safe_limit_nref; //0:off  1:brigthness + ME ZZ sad   2:brightness only. action taken at pic level in PD
+    uint32_t safe_limit_zz_th; // used for mode 1 above. zz sad of closest references is smaller than this th
+                               //0: feature off      non-zero-value: feature on
+#else
     // Limit references to (1,1) if it's safe to do so based on avg luma
     bool safe_limit_nref;
+#endif
     // Limit candidate types to LAST, BWD and LAST-BWD
     bool only_l_bwd;
     // Limit PME to ref index 0 only

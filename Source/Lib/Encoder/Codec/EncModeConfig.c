@@ -320,16 +320,16 @@ static void svt_aom_set_me_hme_ref_prune_ctrls(MeContext *me_ctx, uint8_t prune_
         me_hme_prune_ctrls->prune_ref_if_me_sad_dev_bigger_than_th  = 60;
         me_hme_prune_ctrls->protect_closest_refs                    = 1;
 
-        me_hme_prune_ctrls->zz_sad_th    = 0;
-        me_hme_prune_ctrls->zz_sad_pct   = 0;
-        me_hme_prune_ctrls->phme_sad_th  = 0;
-        me_hme_prune_ctrls->phme_sad_pct = 0;
+        me_hme_prune_ctrls->zz_sad_th                               = 0;
+        me_hme_prune_ctrls->zz_sad_pct                              = 0;
+        me_hme_prune_ctrls->phme_sad_th                             = 0;
+        me_hme_prune_ctrls->phme_sad_pct                            = 0;
         break;
     case 3:
-        me_hme_prune_ctrls->enable_me_hme_ref_pruning               = 1;
+        me_hme_prune_ctrls->enable_me_hme_ref_pruning = 1;
         me_hme_prune_ctrls->prune_ref_if_hme_sad_dev_bigger_than_th = 5;
-        me_hme_prune_ctrls->prune_ref_if_me_sad_dev_bigger_than_th  = 60;
-        me_hme_prune_ctrls->protect_closest_refs                    = 1;
+        me_hme_prune_ctrls->prune_ref_if_me_sad_dev_bigger_than_th = 60;
+        me_hme_prune_ctrls->protect_closest_refs = 1;
 
         me_hme_prune_ctrls->zz_sad_th    = 20 * 64 * 64;
         me_hme_prune_ctrls->zz_sad_pct   = 5;
@@ -686,11 +686,23 @@ void svt_aom_sig_deriv_me(SequenceControlSet *scs, PictureParentControlSet *pcs,
         else
             me_ctx->me_early_exit_th = BLOCK_SIZE_64 * BLOCK_SIZE_64 * 9;
     } else {
+#if TUNE_ME_EXIT
+        if (enc_mode <= ENC_M3)
+#else
         if (enc_mode <= ENC_M4)
+#endif
             me_ctx->me_early_exit_th = 0;
         else
             me_ctx->me_early_exit_th = BLOCK_SIZE_64 * BLOCK_SIZE_64 * 8;
     }
+
+
+#if OPT_SAFE_LIMIT
+    me_ctx->me_safe_limit_zz_th = scs->mrp_ctrls.safe_limit_nref==1 ? scs->mrp_ctrls.safe_limit_zz_th : 0;
+#endif
+
+
+
     me_ctx->skip_frame                  = 0;
     me_ctx->prev_me_stage_based_exit_th = 0;
     if (rtc_tune && pcs->sc_class1) {
@@ -744,6 +756,9 @@ void svt_aom_sig_deriv_me_tf(PictureParentControlSet *pcs, MeContext *me_ctx) {
     svt_aom_set_me_8x8_var_ctrls(me_ctx, 0);
 
     me_ctx->me_early_exit_th            = 0;
+#if OPT_SAFE_LIMIT
+    me_ctx->me_safe_limit_zz_th = 0;   
+#endif
     me_ctx->reduce_hme_l0_sr_th_min     = 0;
     me_ctx->reduce_hme_l0_sr_th_max     = 0;
     me_ctx->skip_frame                  = 0;
@@ -1794,7 +1809,7 @@ static uint8_t svt_aom_get_sg_filter_level(EncMode enc_mode, Bool fast_decode, u
 
     return sg_filter_lvl;
 }
-
+#if !OPT_LIST0_ONLY_BASE
 static void set_list0_only_base(PictureParentControlSet *pcs, uint8_t list0_only_base) {
     List0OnlyBase *ctrls = &pcs->list0_only_base_ctrls;
 
@@ -1814,7 +1829,7 @@ static void set_list0_only_base(PictureParentControlSet *pcs, uint8_t list0_only
     default: assert(0); break;
     }
 }
-
+#endif
 /*
 * return the DLF level
 * Used by svt_aom_sig_deriv_multi_processes and memory allocation
@@ -2230,6 +2245,7 @@ void svt_aom_sig_deriv_multi_processes(SequenceControlSet *scs, PictureParentCon
 #else
     pcs->tune_tpl_for_chroma = 0;
 #endif
+#if !OPT_LIST0_ONLY_BASE
     uint8_t list0_only_base = 0;
     if (enc_mode <= ENC_M3)
         list0_only_base = 0;
@@ -2244,7 +2260,7 @@ void svt_aom_sig_deriv_multi_processes(SequenceControlSet *scs, PictureParentCon
         list0_only_base = 2;
 
     set_list0_only_base(pcs, list0_only_base);
-
+#endif
     if (scs->enable_hbd_mode_decision == DEFAULT)
         if (enc_mode <= ENC_M1)
             pcs->hbd_md = is_ref ? 1 : 2;
@@ -2565,6 +2581,9 @@ static void *set_first_pass_me_hme_params_oq(MeContext *me_ctx, SequenceControlS
         me_ctx->me_sa.sa_min.height = (me_ctx->me_sa.sa_min.height * 3) >> 1;
     }
     me_ctx->me_early_exit_th = 0;
+#if OPT_SAFE_LIMIT
+    me_ctx->me_safe_limit_zz_th = 0;
+#endif
     return NULL;
 };
 /******************************************************

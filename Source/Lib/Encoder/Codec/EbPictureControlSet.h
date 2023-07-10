@@ -620,11 +620,12 @@ typedef struct CdefControls {
     // Shut CDEF at the picture level based on the skip area of the nearest reference frames.
     uint8_t use_skip_detector;
 } CdefControls;
-
+#if !OPT_LIST0_ONLY_BASE
 typedef struct List0OnlyBase {
     uint8_t  enabled;
     uint16_t noise_variance_th;
 } List0OnlyBase;
+#endif
 typedef struct DlfCtrls {
     uint8_t enabled; // if true, perform DLF per SB, not per picture
     // when DLF filter level is selected from QP, if the filter level is less than or equal to this
@@ -766,6 +767,10 @@ typedef struct PictureParentControlSet {
     uint8_t   pred_struct_index;
     uint8_t   temporal_layer_index;
     uint64_t  decode_order;
+
+#if OPT_SAFE_LIMIT  
+    bool similar_brightness_refs; //whether closest references have similar brightness
+#endif
 
     //avg luma intensity of the picture  256: invalid value  0..255 valid value
     uint64_t avg_luma;
@@ -1035,7 +1040,11 @@ typedef struct PictureParentControlSet {
     // size of above buffer
     uint32_t tpl_group_size;
     // stores previous, current, future pictures from pd-reord-queue. empty for first I.
+#if FIX_LINUX_MISMATCH
+    void* pd_window[1 << (MAX_TEMPORAL_LAYERS - 1)];
+#else
     void *pd_window[PD_WINDOW_SIZE];
+#endif
     // stores pcs pictures needed for lad mg based algorithms
     struct PictureParentControlSet *ext_group[MAX_TPL_EXT_GROUP_SIZE];
     // actual size of extended group
@@ -1076,8 +1085,9 @@ typedef struct PictureParentControlSet {
     uint8_t                         first_frame_in_minigop;
     TplControls                     tpl_ctrls;
     uint8_t                         tpl_is_valid;
+#if !OPT_LIST0_ONLY_BASE
     List0OnlyBase                   list0_only_base_ctrls;
-
+#endif
     EbHandle tpl_disp_mutex;
     // uint32_t         input_type;
     int16_t  enc_dec_segment_row;
@@ -1203,8 +1213,11 @@ typedef struct PictureControlSetInitData {
     uint8_t    ref_count_used_list1;
 
     uint8_t enable_adaptive_quantization;
-
+#if MCTF_ON_THE_FLY_PRUNING
+    uint8_t calc_hist;
+#else
     uint8_t scene_change_detection;
+#endif
     uint8_t tpl_lad_mg;
     uint8_t skip_frame_first_pass;
     uint8_t ipp_ds;

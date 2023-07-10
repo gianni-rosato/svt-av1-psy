@@ -87,8 +87,14 @@ extern "C" {
 #define OPT_GM_M6                                 1 // Tune gm in m6 by using regular gm search instead of ref info based search.
 
 #define CLN_TPL_SYNTH_DATA                        1 // Fix scaling done on TPL dispenser data (which is supposed to normalize data when using a different synthesizer block size)
+#define OPT_LAMBDA_SCALING                        1 // Optimize lambda modulation and scaling
 
+#define OPT_SAFE_LIMIT                            1 // Optimize  MRP Safe limit feature for M4/M5
 
+#define OPT_LIST0_ONLY_BASE                       1 // Optimize the classifier of List0 only @ BASE
+
+#define FIX_ZZ_SAD                                1 // normalize ZZ sad calc in ME
+#define TUNE_ME_EXIT                              1 // enable early me exit in M4
 
 //FOR DEBUGGING - Do not remove
 #define OPT_LD_LATENCY2         0 // Latency optimization for low delay

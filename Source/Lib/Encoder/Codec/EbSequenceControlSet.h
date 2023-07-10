@@ -59,6 +59,13 @@ typedef struct BitstreamLevel {
     uint8_t minor;
 } BitstreamLevel;
 
+#if OPT_LIST0_ONLY_BASE
+typedef struct List0OnlyBase {
+    uint8_t enabled;
+    uint8_t list0_only_base_th;
+} List0OnlyBase;
+#endif
+
 /************************************
      * Sequence Control Set
      ************************************/
@@ -249,6 +256,9 @@ typedef struct SequenceControlSet {
     uint8_t          mvrate_set;
     VqCtrls          vq_ctrls;
     MiniGopSizeCtrls mgs_ctls;
+#if MCTF_ON_THE_FLY_PRUNING
+    uint8_t          calc_hist;
+#endif
     TfControls       tf_params_per_type[3]; // [I_SLICE][BASE][L1]
     MrpCtrls         mrp_ctrls;
     /*!< The RC stat generation pass mode (0: The default, 1: optimized)*/
@@ -402,6 +412,9 @@ typedef struct SequenceControlSet {
     ResizePendingParams resize_pending_params;
     // Enable low latency KF coding for RTC
     bool low_latency_kf;
+#if OPT_LIST0_ONLY_BASE
+    List0OnlyBase list0_only_base_ctrls;
+#endif
 } SequenceControlSet;
 typedef struct EbSequenceControlSetInstance {
     EbDctor             dctor;

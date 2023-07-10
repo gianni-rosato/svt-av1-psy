@@ -1571,8 +1571,20 @@ EB_API EbErrorType svt_av1_enc_init(EbComponentType *svt_enc_component)
             input_data.picture_width, input_data.picture_height);
         input_data.enable_adaptive_quantization = enc_handle_ptr->scs_instance_array[instance_index]->scs->static_config.enable_adaptive_quantization;
         input_data.calculate_variance = enc_handle_ptr->scs_instance_array[instance_index]->scs->calculate_variance;
+#if MCTF_ON_THE_FLY_PRUNING
+        input_data.calc_hist = enc_handle_ptr->scs_instance_array[instance_index]->scs->calc_hist =
+#if OPT_LIST0_ONLY_BASE
+            (enc_handle_ptr->scs_instance_array[instance_index]->scs->list0_only_base_ctrls.enabled && enc_handle_ptr->scs_instance_array[instance_index]->scs->list0_only_base_ctrls.list0_only_base_th <= 100) ||
+#endif
+            enc_handle_ptr->scs_instance_array[instance_index]->scs->static_config.scene_change_detection ||
+            enc_handle_ptr->scs_instance_array[instance_index]->scs->vq_ctrls.sharpness_ctrls.scene_transition ||
+            enc_handle_ptr->scs_instance_array[instance_index]->scs->tf_params_per_type[0].enabled ||
+            enc_handle_ptr->scs_instance_array[instance_index]->scs->tf_params_per_type[1].enabled ||
+            enc_handle_ptr->scs_instance_array[instance_index]->scs->tf_params_per_type[2].enabled;
+#else
         input_data.scene_change_detection = enc_handle_ptr->scs_instance_array[instance_index]->scs->static_config.scene_change_detection ||
                                             enc_handle_ptr->scs_instance_array[instance_index]->scs->vq_ctrls.sharpness_ctrls.scene_transition;
+#endif
         input_data.tpl_lad_mg = enc_handle_ptr->scs_instance_array[instance_index]->scs->tpl_lad_mg;
         input_data.input_resolution = enc_handle_ptr->scs_instance_array[instance_index]->scs->input_resolution;
         input_data.is_scale = enc_handle_ptr->scs_instance_array[instance_index]->scs->static_config.superres_mode > SUPERRES_NONE ||
@@ -2125,12 +2137,21 @@ EB_API EbErrorType svt_av1_enc_init(EbComponentType *svt_enc_component)
     {
         // Initialize the various Picture types
         instance_index = 0;
+
+#if MCTF_ON_THE_FLY_PRUNING
+        EB_NEW(
+            enc_handle_ptr->picture_decision_context_ptr,
+            svt_aom_picture_decision_context_ctor,
+            enc_handle_ptr,
+            enc_handle_ptr->scs_instance_array[instance_index]->scs->calc_hist);
+#else
         EB_NEW(
             enc_handle_ptr->picture_decision_context_ptr,
             svt_aom_picture_decision_context_ctor,
             enc_handle_ptr,
             enc_handle_ptr->scs_instance_array[instance_index]->scs->static_config.scene_change_detection ||
             enc_handle_ptr->scs_instance_array[instance_index]->scs->vq_ctrls.sharpness_ctrls.scene_transition);
+#endif
     }
 
     // Motion Analysis Context
@@ -3246,7 +3267,6 @@ static void derive_tf_params(SequenceControlSet *scs) {
         else
             tf_level = scs->static_config.screen_content_mode == 1 ? 0 :
             (enc_mode <= ENC_M9 ) ? 1 : enc_mode <= ENC_M13 && (scs->input_resolution >= INPUT_SIZE_720p_RANGE) ? 2 : 0;
-
         tf_ld_controls(scs, tf_level);
         return;
     }
@@ -3279,6 +3299,39 @@ static void derive_tf_params(SequenceControlSet *scs) {
     }
     tf_controls(scs, tf_level);
 }
+
+
+#if OPT_LIST0_ONLY_BASE
+/*
+ * Derive List0-only @ BASE Params
+ */
+static void set_list0_only_base(SequenceControlSet* scs, uint8_t list0_only_base) {
+    List0OnlyBase* ctrls = &scs->list0_only_base_ctrls;
+
+    switch (list0_only_base) {
+    case 0:
+        ctrls->enabled = 0;
+        break;
+    case 1:
+        ctrls->enabled = 1;
+        ctrls->list0_only_base_th = 35;
+        break;
+    case 2:
+        ctrls->enabled = 1;
+        ctrls->list0_only_base_th = 40;
+        break;
+    case 3:
+        ctrls->enabled = 1;
+        ctrls->list0_only_base_th = 50;
+        break;
+    case 4:
+        ctrls->enabled = 1;
+        ctrls->list0_only_base_th = 100;
+        break;
+    default: assert(0); break;
+    }
+}
+#endif
 /*
  * Set the MRP control
  */
@@ -3302,6 +3355,9 @@ static void set_mrp_ctrl(SequenceControlSet* scs, uint8_t mrp_level) {
         mrp_ctrl->more_5L_refs = 0;
 #endif
         mrp_ctrl->safe_limit_nref = 0;
+#if OPT_SAFE_LIMIT
+        mrp_ctrl->safe_limit_zz_th = 0;
+#endif
         mrp_ctrl->only_l_bwd = 0;
         mrp_ctrl->pme_ref0_only = 0;
         mrp_ctrl->use_best_references = 0;
@@ -3321,6 +3377,9 @@ static void set_mrp_ctrl(SequenceControlSet* scs, uint8_t mrp_level) {
         mrp_ctrl->more_5L_refs = 1;
 #endif
         mrp_ctrl->safe_limit_nref = 0;
+#if OPT_SAFE_LIMIT
+        mrp_ctrl->safe_limit_zz_th = 0;
+#endif
         mrp_ctrl->only_l_bwd = 0;
         mrp_ctrl->pme_ref0_only = 0;
         mrp_ctrl->use_best_references = 0;
@@ -3340,6 +3399,9 @@ static void set_mrp_ctrl(SequenceControlSet* scs, uint8_t mrp_level) {
         mrp_ctrl->more_5L_refs = 1;
 #endif
         mrp_ctrl->safe_limit_nref = 0;
+#if OPT_SAFE_LIMIT
+        mrp_ctrl->safe_limit_zz_th = 0;
+#endif
         mrp_ctrl->only_l_bwd = 1;
         mrp_ctrl->pme_ref0_only = 0;
         mrp_ctrl->use_best_references = 0;
@@ -3359,6 +3421,9 @@ static void set_mrp_ctrl(SequenceControlSet* scs, uint8_t mrp_level) {
         mrp_ctrl->more_5L_refs = 1;
 #endif
         mrp_ctrl->safe_limit_nref = 0;
+#if OPT_SAFE_LIMIT
+        mrp_ctrl->safe_limit_zz_th = 0;
+#endif
         mrp_ctrl->only_l_bwd = 1;
         mrp_ctrl->pme_ref0_only = 0;
         mrp_ctrl->use_best_references = 1;
@@ -3379,6 +3444,9 @@ static void set_mrp_ctrl(SequenceControlSet* scs, uint8_t mrp_level) {
         mrp_ctrl->more_5L_refs = 0;
 #endif
         mrp_ctrl->safe_limit_nref = 0;
+#if OPT_SAFE_LIMIT
+        mrp_ctrl->safe_limit_zz_th = 0;
+#endif
         mrp_ctrl->only_l_bwd = 1;
         mrp_ctrl->pme_ref0_only = 0;
         mrp_ctrl->use_best_references = 1;
@@ -3398,6 +3466,9 @@ static void set_mrp_ctrl(SequenceControlSet* scs, uint8_t mrp_level) {
         mrp_ctrl->more_5L_refs = 0;
 #endif
         mrp_ctrl->safe_limit_nref = 0;
+#if OPT_SAFE_LIMIT
+        mrp_ctrl->safe_limit_zz_th = 0;
+#endif
         mrp_ctrl->only_l_bwd = 1;
         mrp_ctrl->pme_ref0_only = 0;
         mrp_ctrl->use_best_references = 2;
@@ -3416,7 +3487,13 @@ static void set_mrp_ctrl(SequenceControlSet* scs, uint8_t mrp_level) {
 #if OPT_RPS_ADD
         mrp_ctrl->more_5L_refs = 0;
 #endif
+#if OPT_SAFE_LIMIT
+        mrp_ctrl->safe_limit_nref = 1;
+        mrp_ctrl->safe_limit_zz_th = 60000;
+#else
         mrp_ctrl->safe_limit_nref = 0;
+#endif
+
         mrp_ctrl->only_l_bwd = 1;
         mrp_ctrl->pme_ref0_only = 1;
         mrp_ctrl->use_best_references = 3;
@@ -3435,7 +3512,13 @@ static void set_mrp_ctrl(SequenceControlSet* scs, uint8_t mrp_level) {
 #if OPT_RPS_ADD
         mrp_ctrl->more_5L_refs = 0;
 #endif
+#if OPT_SAFE_LIMIT
+        mrp_ctrl->safe_limit_nref = 1;
+        mrp_ctrl->safe_limit_zz_th = 60000;
+#else
         mrp_ctrl->safe_limit_nref = 0;
+#endif
+
         mrp_ctrl->only_l_bwd = 1;
         mrp_ctrl->pme_ref0_only = 1;
         mrp_ctrl->use_best_references = 3;
@@ -3453,7 +3536,14 @@ static void set_mrp_ctrl(SequenceControlSet* scs, uint8_t mrp_level) {
 #if OPT_RPS_ADD
         mrp_ctrl->more_5L_refs = 0;
 #endif
+
+#if OPT_SAFE_LIMIT
+        mrp_ctrl->safe_limit_nref = 2;
+        mrp_ctrl->safe_limit_zz_th = 0;
+#else
         mrp_ctrl->safe_limit_nref = 1;
+#endif
+
         mrp_ctrl->only_l_bwd = 1;
         mrp_ctrl->pme_ref0_only = 1;
         mrp_ctrl->use_best_references = 3;
@@ -3471,7 +3561,13 @@ static void set_mrp_ctrl(SequenceControlSet* scs, uint8_t mrp_level) {
 #if OPT_RPS_ADD
         mrp_ctrl->more_5L_refs = 0;
 #endif
+#if OPT_SAFE_LIMIT
+        mrp_ctrl->safe_limit_nref = 2;
+        mrp_ctrl->safe_limit_zz_th = 0;
+#else
         mrp_ctrl->safe_limit_nref = 1;
+#endif
+
         mrp_ctrl->only_l_bwd = 1;
         mrp_ctrl->pme_ref0_only = 1;
         mrp_ctrl->use_best_references = 3;
@@ -3489,7 +3585,14 @@ static void set_mrp_ctrl(SequenceControlSet* scs, uint8_t mrp_level) {
 #if OPT_RPS_ADD
         mrp_ctrl->more_5L_refs = 0;
 #endif
+
+#if OPT_SAFE_LIMIT
+        mrp_ctrl->safe_limit_nref = 2;
+        mrp_ctrl->safe_limit_zz_th = 0;
+#else
         mrp_ctrl->safe_limit_nref = 1;
+#endif
+
         mrp_ctrl->only_l_bwd = 1;
         mrp_ctrl->pme_ref0_only = 1;
         mrp_ctrl->use_best_references = 3;
@@ -3508,7 +3611,14 @@ static void set_mrp_ctrl(SequenceControlSet* scs, uint8_t mrp_level) {
 #if OPT_RPS_ADD
         mrp_ctrl->more_5L_refs = 0;
 #endif
+
+#if OPT_SAFE_LIMIT
+        mrp_ctrl->safe_limit_nref = 2;
+        mrp_ctrl->safe_limit_zz_th = 0;
+#else
         mrp_ctrl->safe_limit_nref = 1;
+#endif
+
         mrp_ctrl->only_l_bwd = 1;
         mrp_ctrl->pme_ref0_only = 1;
         mrp_ctrl->use_best_references = 3;
@@ -3526,7 +3636,14 @@ static void set_mrp_ctrl(SequenceControlSet* scs, uint8_t mrp_level) {
 #if OPT_RPS_ADD
         mrp_ctrl->more_5L_refs = 0;
 #endif
+
+#if OPT_SAFE_LIMIT
+        mrp_ctrl->safe_limit_nref = 2;
+        mrp_ctrl->safe_limit_zz_th = 0;
+#else
         mrp_ctrl->safe_limit_nref = 1;
+#endif
+
         mrp_ctrl->only_l_bwd = 1;
         mrp_ctrl->pme_ref0_only = 1;
         mrp_ctrl->use_best_references = 3;
@@ -4362,6 +4479,21 @@ static void set_param_based_on_input(SequenceControlSet *scs)
             scs->mfmv_enabled = 0;
     } else
         scs->mfmv_enabled = scs->static_config.enable_mfmv;
+
+#if OPT_LIST0_ONLY_BASE
+    uint8_t list0_only_base_lvl = 0;
+    if (scs->static_config.enc_mode <= ENC_M3)
+        list0_only_base_lvl = 0;
+    else if (scs->static_config.enc_mode <= ENC_M5)
+        list0_only_base_lvl = 1;
+    else if (scs->static_config.enc_mode <= ENC_M6)
+        list0_only_base_lvl = 2;
+    else if (scs->static_config.enc_mode <= ENC_M10)
+        list0_only_base_lvl = 3;
+    else
+        list0_only_base_lvl = 4;
+    set_list0_only_base(scs, list0_only_base_lvl);
+#endif
 
     if (scs->static_config.rate_control_mode == SVT_AV1_RC_MODE_VBR || scs->static_config.rate_control_mode == SVT_AV1_RC_MODE_CBR ||
         scs->input_resolution >= INPUT_SIZE_4K_RANGE ||

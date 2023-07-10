@@ -487,6 +487,9 @@ typedef struct MeContext {
     uint8_t      tf_subpel_early_exit;
     uint32_t     zz_sad[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
     uint32_t     me_early_exit_th;
+#if OPT_SAFE_LIMIT
+    uint32_t     me_safe_limit_zz_th;
+#endif
     uint32_t     tf_tot_vert_blks; //total vertical motion blocks in TF
     uint32_t     tf_tot_horz_blks; //total horizontal motion blocks in TF
     uint8_t      skip_frame;

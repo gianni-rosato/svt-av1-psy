@@ -9817,7 +9817,7 @@ bool update_skip_nsq_based_on_split_rate(PictureControlSet *pcs, ModeDecisionCon
                                                                  TRUE, // Use accurate split cost for early exit
                                                                  ctx->md_rate_est_ctx);
 #if OPT_HV_NON_HV
-        int ratio = ctx->md_local_blk_unit[blk_geom->sqi_mds].cost
+        uint64_t ratio = ctx->md_local_blk_unit[blk_geom->sqi_mds].cost
             ? (MAX(H_rate_cost, V_rate_cost) * 1000) / ctx->md_local_blk_unit[blk_geom->sqi_mds].default_cost
             : 1000;
 
@@ -9860,7 +9860,7 @@ bool update_skip_nsq_based_on_split_rate(PictureControlSet *pcs, ModeDecisionCon
                                                                     ctx->md_rate_est_ctx);
 
 #if OPT_HV_NON_HV
-        int ratio = ctx->md_local_blk_unit[blk_geom->sqi_mds].cost
+        uint64_t ratio = ctx->md_local_blk_unit[blk_geom->sqi_mds].cost
             ? (MAX(part_cost, best_part_cost) * 1000) / ctx->md_local_blk_unit[blk_geom->sqi_mds].default_cost
             : 1000;
 
