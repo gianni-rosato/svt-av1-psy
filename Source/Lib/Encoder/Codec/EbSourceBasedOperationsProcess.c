@@ -2055,6 +2055,114 @@ static void sbo_send_picture_out(SourceBasedOperationsContext *context_ptr, Pict
     svt_post_full_object(out_results_wrapper);
 }
 
+#if TUNE_SSIM_LIBAOM_APPROACH
+// This is used as a reference when computing the source variance for the
+//  purposes of activity masking.
+// Eventually this should be replaced by custom no-reference routines,
+//  which will be faster.
+const uint8_t AV1_VAR_OFFS[MAX_SB_SIZE] = {
+    128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128,
+    128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128,
+    128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128,
+    128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128,
+    128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128,
+    128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128};
+static unsigned int aom_av1_get_perpixel_variance(const uint8_t *buf, uint32_t stride, const int block_size) {
+    unsigned int            var, sse;
+    const AomVarianceFnPtr *fn_ptr = &svt_aom_mefn_ptr[block_size];
+    var                            = fn_ptr->vf(buf, stride, AV1_VAR_OFFS, 0, &sse);
+    return ROUND_POWER_OF_TWO(var, num_pels_log2_lookup[block_size]);
+}
+static void aom_av1_set_mb_ssim_rdmult_scaling(PictureParentControlSet *pcs) {
+    Av1Common *cm       = pcs->av1_cm;
+    const int  y_stride = pcs->enhanced_pic->stride_y;
+    uint8_t   *y_buffer = pcs->enhanced_pic->buffer_y + pcs->enhanced_pic->org_x + pcs->enhanced_pic->org_y * y_stride;
+    const int  block_size = BLOCK_16X16;
+
+    const int num_mi_w = mi_size_wide[block_size];
+    const int num_mi_h = mi_size_high[block_size];
+    const int num_cols = (cm->mi_cols + num_mi_w - 1) / num_mi_w;
+    const int num_rows = (cm->mi_rows + num_mi_h - 1) / num_mi_h;
+    double    log_sum  = 0.0;
+
+    const double factor_a = 67.035434;
+    const double factor_b = pcs->scs->input_resolution < INPUT_SIZE_720p_RANGE ? -0.0004489
+        : pcs->scs->input_resolution < INPUT_SIZE_1080p_RANGE                  ? -0.0011489
+                                                                               : -0.0022489;
+    const double factor_c = pcs->scs->input_resolution < INPUT_SIZE_720p_RANGE ? 17.492222
+        : pcs->scs->input_resolution < INPUT_SIZE_1080p_RANGE                  ? 37.492222
+                                                                               : 35.492222;
+
+    const bool do_print = false;
+    if (do_print) {
+        fprintf(stdout, "16x16 block variance");
+    }
+
+    // Loop through each 16x16 block.
+    for (int row = 0; row < num_rows; ++row) {
+        for (int col = 0; col < num_cols; ++col) {
+            double    var = 0.0, num_of_var = 0.0;
+            const int index = row * num_cols + col;
+
+            // Loop through each 8x8 block.
+            for (int mi_row = row * num_mi_h; mi_row < cm->mi_rows && mi_row < (row + 1) * num_mi_h; mi_row += 2) {
+                for (int mi_col = col * num_mi_w; mi_col < cm->mi_cols && mi_col < (col + 1) * num_mi_w; mi_col += 2) {
+                    const int row_offset_y = mi_row << 2;
+                    const int col_offset_y = mi_col << 2;
+
+                    const uint8_t *buf = y_buffer + row_offset_y * y_stride + col_offset_y;
+
+                    var += aom_av1_get_perpixel_variance(buf, y_stride, BLOCK_8X8);
+                    num_of_var += 1.0;
+                }
+            }
+            var = var / num_of_var;
+
+            // Curve fitting with an exponential model on all 16x16 blocks from the
+            // midres dataset.
+            double var_backup                                   = var;
+            var                                                 = factor_a * (1 - exp(factor_b * var)) + factor_c;
+            pcs->pa_me_data->ssim_rdmult_scaling_factors[index] = var;
+            log_sum += log(var);
+            if (do_print) {
+                if (col == 0) {
+                    fprintf(stdout, "\n");
+                }
+                fprintf(stdout, "%.4f\t", var_backup);
+            }
+        }
+    }
+    log_sum = exp(log_sum / (double)(num_rows * num_cols));
+    if (do_print) {
+        fprintf(stdout, "\nlog_sum %.4f\n", log_sum);
+    }
+
+    if (do_print) {
+        fprintf(stdout, "16x16 block rdmult scaling factors");
+    }
+    double min = 0xfffffff;
+    double max = 0;
+    for (int row = 0; row < num_rows; ++row) {
+        for (int col = 0; col < num_cols; ++col) {
+            const int index = row * num_cols + col;
+            pcs->pa_me_data->ssim_rdmult_scaling_factors[index] /= log_sum;
+            if (pcs->pa_me_data->ssim_rdmult_scaling_factors[index] < min) {
+                min = pcs->pa_me_data->ssim_rdmult_scaling_factors[index];
+            }
+            if (pcs->pa_me_data->ssim_rdmult_scaling_factors[index] > max) {
+                max = pcs->pa_me_data->ssim_rdmult_scaling_factors[index];
+            }
+            if (do_print) {
+                if (col == 0) {
+                    fprintf(stdout, "\n");
+                }
+                fprintf(stdout, "%.4f\t", pcs->pa_me_data->ssim_rdmult_scaling_factors[index]);
+            }
+        }
+    }
+}
+#endif
+
 /************************************************
  * Source Based Operations Kernel
  * Source-based operations process involves a number of analysis algorithms
@@ -2095,6 +2203,11 @@ void *svt_aom_source_based_operations_kernel(void *input_ptr) {
             }
         }
         /*********************************************Picture-based operations**********************************************************/
+#if TUNE_SSIM_LIBAOM_APPROACH
+        if (scs->static_config.tune == 2) {
+            aom_av1_set_mb_ssim_rdmult_scaling(pcs);
+        }
+#endif
         sbo_send_picture_out(context_ptr, pcs, FALSE);
 
         // Release the Input Results

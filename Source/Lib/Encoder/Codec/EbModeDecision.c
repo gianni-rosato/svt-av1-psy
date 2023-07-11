@@ -524,10 +524,17 @@ static void mode_decision_scratch_cand_bf_dctor(EbPtr p) {
 /***************************************
 * Mode Decision Candidate Ctor
 ***************************************/
+#if TUNE_SSIM_FULL_SPACIAL_DIST
+EbErrorType svt_aom_mode_decision_cand_bf_ctor(ModeDecisionCandidateBuffer *buffer_ptr, EbBitDepth max_bitdepth,
+                                               uint8_t sb_size, uint32_t buffer_desc_mask,
+                                               EbPictureBufferDesc *temp_residual, EbPictureBufferDesc *temp_recon_ptr,
+                                               uint64_t *fast_cost, uint64_t *full_cost, uint64_t *full_cost_ssim) {
+#else
 EbErrorType svt_aom_mode_decision_cand_bf_ctor(ModeDecisionCandidateBuffer *buffer_ptr, EbBitDepth max_bitdepth,
                                                uint8_t sb_size, uint32_t buffer_desc_mask,
                                                EbPictureBufferDesc *temp_residual, EbPictureBufferDesc *temp_recon_ptr,
                                                uint64_t *fast_cost, uint64_t *full_cost) {
+#endif
     EbPictureBufferDescInitData picture_buffer_desc_init_data;
 
     EbPictureBufferDescInitData thirty_two_width_picture_buffer_desc_init_data;
@@ -572,6 +579,9 @@ EbErrorType svt_aom_mode_decision_cand_bf_ctor(ModeDecisionCandidateBuffer *buff
     // Costs
     buffer_ptr->fast_cost = fast_cost;
     buffer_ptr->full_cost = full_cost;
+#if TUNE_SSIM_FULL_SPACIAL_DIST
+    buffer_ptr->full_cost_ssim = full_cost_ssim;
+#endif
     return EB_ErrorNone;
 }
 EbErrorType svt_aom_mode_decision_scratch_cand_bf_ctor(ModeDecisionCandidateBuffer *buffer_ptr, uint8_t sb_size,
@@ -4754,6 +4764,11 @@ void svt_aom_product_full_mode_decision_light_pd1(
         ctx->coded_area_sb_uv += bwidth_uv * bheight_uv;
     }
 }
+#if TUNE_SSIM_FULL_SPACIAL_DIST
+static INLINE double derive_ssim_threshold_factor_for_full_md(SequenceControlSet *scs) {
+    return scs->input_resolution >= INPUT_SIZE_1080p_RANGE ? 1.02 : 1.03;
+}
+#endif
 /***************************************
 * Full Mode Decision
 ***************************************/
@@ -4768,10 +4783,68 @@ uint32_t svt_aom_product_full_mode_decision(
 {
     SequenceControlSet *scs = pcs->scs;
     uint32_t lowest_cost_index = best_candidate_index_array[0];
+#if TUNE_SSIM_FULL_SPACIAL_DIST
+    const bool use_ssim_full_cost = ctx->tune_ssim_level > SSIM_LVL_0 ? true : false;
+#endif
 
     // Find the candidate with the lowest cost
     // Only need to sort if have multiple candidates
     if (ctx->md_stage_3_total_count > 1) {
+#if TUNE_SSIM_FULL_SPACIAL_DIST
+        if (use_ssim_full_cost) {
+            // Pass one: find candidate with the lowest SSD cost
+            uint64_t ssd_lowest_cost = 0xFFFFFFFFFFFFFFFFull;
+            for (uint32_t i = 0; i < candidate_total_count; ++i) {
+                uint32_t cand_index = best_candidate_index_array[i];
+                uint64_t cost = *(buffer_ptr_array[cand_index]->full_cost);
+                if (cost < ssd_lowest_cost) {
+                    lowest_cost_index = cand_index;
+                    ssd_lowest_cost = cost;
+                }
+            }
+
+            // Pass two: among the candidates with SSD cost not greater than the threshold, find the one with the lowest SSIM cost
+            const double threshold_factor = derive_ssim_threshold_factor_for_full_md(scs);
+            const uint64_t ssd_cost_threshold = (uint64_t)(threshold_factor * ssd_lowest_cost);
+            uint64_t ssim_lowest_cost = 0xFFFFFFFFFFFFFFFFull;
+            for (uint32_t i = 0; i < candidate_total_count; ++i) {
+                uint32_t cand_index = best_candidate_index_array[i];
+
+                uint64_t ssim_cost = *(buffer_ptr_array[cand_index]->full_cost_ssim);
+                uint64_t ssd_cost = *(buffer_ptr_array[cand_index]->full_cost);
+                if (ssim_cost < ssim_lowest_cost) {
+                    if (ssd_cost <= ssd_cost_threshold) {
+                        lowest_cost_index = cand_index;
+                        ssim_lowest_cost = ssim_cost;
+                        ssd_lowest_cost = ssd_cost;
+                    }
+                } else if (ssim_cost == ssim_lowest_cost) {
+                    // if two candidates have the same ssim cost, choose the one with lower ssd cost
+                    if (ssd_cost < ssd_lowest_cost) {
+                        lowest_cost_index = cand_index;
+                        ssim_lowest_cost = ssim_cost;
+                        ssd_lowest_cost = ssd_cost;
+                    }
+                }
+            }
+        } else {  // fallback to SSD based RD cost
+            uint64_t lowest_cost = 0xFFFFFFFFFFFFFFFFull;
+            for (uint32_t i = 0; i < candidate_total_count; ++i) {
+                uint32_t cand_index = best_candidate_index_array[i];
+
+                uint64_t cost = *(buffer_ptr_array[cand_index]->full_cost);
+                if (scs->vq_ctrls.sharpness_ctrls.unipred_bias && pcs->ppcs->is_noise_level &&
+                    is_inter_singleref_mode(buffer_ptr_array[cand_index]->cand->pred_mode)) {
+                    cost = (cost * uni_psy_bias[pcs->picture_qp]) / 100;
+                }
+
+                if (cost < lowest_cost) {
+                    lowest_cost_index = cand_index;
+                    lowest_cost = cost;
+                }
+            }
+        }
+#else
         uint64_t lowest_cost = 0xFFFFFFFFFFFFFFFFull;
         for (uint32_t i = 0; i < candidate_total_count; ++i) {
             uint32_t cand_index = best_candidate_index_array[i];
@@ -4786,6 +4859,7 @@ uint32_t svt_aom_product_full_mode_decision(
                 lowest_cost = cost;
             }
         }
+#endif
     }
     ModeDecisionCandidateBuffer* cand_bf = buffer_ptr_array[lowest_cost_index];
     ModeDecisionCandidate* cand = cand_bf->cand;
@@ -5031,6 +5105,50 @@ static int get_superblock_tpl_column_end(PictureParentControlSet* ppcs, int mi_c
     return (sb_mi_end + num_mi_w - 1) / num_mi_w;
 }
 
+#if TUNE_SSIM_LIBAOM_APPROACH
+void aom_av1_set_ssim_rdmult(struct ModeDecisionContext *ctx, PictureControlSet *pcs,
+                         const int mi_row, const int mi_col) {
+  const AV1_COMMON *const cm = pcs->ppcs->av1_cm;
+  BlockSize bsize = ctx->blk_geom->bsize;
+
+  const int bsize_base = BLOCK_16X16;
+  const int num_mi_w = mi_size_wide[bsize_base];
+  const int num_mi_h = mi_size_high[bsize_base];
+  const int num_cols = (cm->mi_cols + num_mi_w - 1) / num_mi_w;
+  const int num_rows = (cm->mi_rows + num_mi_h - 1) / num_mi_h;
+  const int num_bcols = (mi_size_wide[bsize] + num_mi_w - 1) / num_mi_w;
+  const int num_brows = (mi_size_high[bsize] + num_mi_h - 1) / num_mi_h;
+  int row, col;
+  double num_of_mi = 0.0;
+  double geom_mean_of_scale = 0.0;
+
+  for (row = mi_row / num_mi_w;
+       row < num_rows && row < mi_row / num_mi_w + num_brows; ++row) {
+    for (col = mi_col / num_mi_h;
+         col < num_cols && col < mi_col / num_mi_h + num_bcols; ++col) {
+      const int index = row * num_cols + col;
+      geom_mean_of_scale += log(pcs->ppcs->pa_me_data->ssim_rdmult_scaling_factors[index]);
+      num_of_mi += 1.0;
+    }
+  }
+  geom_mean_of_scale = exp(geom_mean_of_scale / num_of_mi);
+
+  if (!pcs->ppcs->blk_lambda_tuning) {
+      ctx->full_lambda_md[EB_8_BIT_MD] = (uint32_t)((double)ctx->ed_ctx->pic_full_lambda[EB_8_BIT_MD] * geom_mean_of_scale + 0.5);
+      ctx->full_lambda_md[EB_10_BIT_MD] = (uint32_t)((double)ctx->ed_ctx->pic_full_lambda[EB_10_BIT_MD] * geom_mean_of_scale + 0.5);
+
+      ctx->fast_lambda_md[EB_8_BIT_MD] = (uint32_t)((double)ctx->ed_ctx->pic_fast_lambda[EB_8_BIT_MD] * geom_mean_of_scale + 0.5);
+      ctx->fast_lambda_md[EB_10_BIT_MD] = (uint32_t)((double)ctx->ed_ctx->pic_fast_lambda[EB_10_BIT_MD] * geom_mean_of_scale + 0.5);
+  }else {
+      ctx->full_lambda_md[EB_8_BIT_MD] = (uint32_t)((double)ctx->full_lambda_md[EB_8_BIT_MD] * geom_mean_of_scale + 0.5);
+      ctx->full_lambda_md[EB_10_BIT_MD] = (uint32_t)((double)ctx->full_lambda_md[EB_10_BIT_MD] * geom_mean_of_scale + 0.5);
+
+      ctx->fast_lambda_md[EB_8_BIT_MD] = (uint32_t)((double)ctx->fast_lambda_md[EB_8_BIT_MD] * geom_mean_of_scale + 0.5);
+      ctx->fast_lambda_md[EB_10_BIT_MD] = (uint32_t)((double)ctx->fast_lambda_md[EB_10_BIT_MD] * geom_mean_of_scale + 0.5);
+  }
+}
+#endif
+
 void  svt_aom_set_tuned_blk_lambda(struct ModeDecisionContext *ctx, PictureControlSet *pcs){
     PictureParentControlSet *ppcs = pcs->ppcs;
     Av1Common *cm = ppcs->av1_cm;
@@ -5089,4 +5207,229 @@ void  svt_aom_set_tuned_blk_lambda(struct ModeDecisionContext *ctx, PictureContr
     ctx->fast_lambda_md[EB_8_BIT_MD] = (uint32_t)((double)ctx->ed_ctx->pic_fast_lambda[EB_8_BIT_MD] * geom_mean_of_scale + 0.5);
     ctx->fast_lambda_md[EB_10_BIT_MD] = (uint32_t)((double)ctx->ed_ctx->pic_fast_lambda[EB_10_BIT_MD] * geom_mean_of_scale + 0.5);
 
+#if TUNE_SSIM_LIBAOM_APPROACH
+    if (ppcs->scs->static_config.tune == 2) {
+        aom_av1_set_ssim_rdmult(ctx, pcs, mi_row, mi_col);
+    }
+#endif
 }
+
+#if TUNE_SSIM_FULL_SPACIAL_DIST
+extern double similarity(uint32_t sum_s, uint32_t sum_r, uint32_t sum_sq_s, uint32_t sum_sq_r,
+                  uint32_t sum_sxr, int count, uint32_t bd);
+double svt_ssim_4x4_c(const uint8_t* s, uint32_t sp, const uint8_t* r, uint32_t rp) {
+    const int32_t count = 4 * 4;
+
+    uint32_t sum_s = 0, sum_r = 0, sum_sq_s = 0, sum_sq_r = 0, sum_sxr = 0;
+    uint32_t i, j;
+    for (i = 0; i < 4; i++) {
+        for (j = 0; j < 4; j++) {
+            sum_s += s[j];
+            sum_r += r[j];
+            sum_sq_s += s[j] * s[j];
+            sum_sq_r += r[j] * r[j];
+            sum_sxr += s[j] * r[j];
+        }
+
+        s += sp;
+        r += rp;
+    }
+
+    //
+    // similarity
+    //
+    double score = similarity(sum_s, sum_r, sum_sq_s, sum_sq_r, sum_sxr, count, 8);
+    return score;
+}
+double svt_ssim_8x8_c(const uint8_t* s, uint32_t sp, const uint8_t* r, uint32_t rp) {
+    const int32_t count = 8 * 8;
+
+    //
+    // is similar to svt_aom_ssim_parms_8x8_c, but supports MxN block size
+    //
+    uint32_t sum_s = 0, sum_r = 0, sum_sq_s = 0, sum_sq_r = 0, sum_sxr = 0;
+    uint32_t i, j;
+    for (i = 0; i < 8; i++) {
+        for (j = 0; j < 8; j++) {
+            sum_s += s[j];
+            sum_r += r[j];
+            sum_sq_s += s[j] * s[j];
+            sum_sq_r += r[j] * r[j];
+            sum_sxr += s[j] * r[j];
+        }
+
+        s += sp;
+        r += rp;
+    }
+
+    //
+    // similarity
+    //
+    double score = similarity(sum_s, sum_r, sum_sq_s, sum_sq_r, sum_sxr, count, 8);
+    return score;
+}
+double svt_ssim_4x4_hbd_c(const uint16_t* s, uint32_t sp, const uint16_t* r, uint32_t rp) {
+    const int32_t count = 4 * 4;
+
+    uint32_t sum_s = 0, sum_r = 0, sum_sq_s = 0, sum_sq_r = 0, sum_sxr = 0;
+    uint32_t i, j;
+    for (i = 0; i < 4; i++) {
+        for (j = 0; j < 4; j++) {
+            sum_s += s[j];
+            sum_r += r[j];
+            sum_sq_s += s[j] * s[j];
+            sum_sq_r += r[j] * r[j];
+            sum_sxr += s[j] * r[j];
+        }
+
+        s += sp;
+        r += rp;
+    }
+
+    //
+    // similarity
+    //
+    double score = similarity(sum_s, sum_r, sum_sq_s, sum_sq_r, sum_sxr, count, 10);
+    return score;
+}
+double svt_ssim_8x8_hbd_c(const uint16_t* s, uint32_t sp, const uint16_t* r, uint32_t rp) {
+    const int32_t count = 8 * 8;
+
+    uint32_t sum_s = 0, sum_r = 0, sum_sq_s = 0, sum_sq_r = 0, sum_sxr = 0;
+    uint32_t i, j;
+    for (i = 0; i < 8; i++) {
+        for (j = 0; j < 8; j++) {
+            sum_s += s[j];
+            sum_r += r[j];
+            sum_sq_s += s[j] * s[j];
+            sum_sq_r += r[j] * r[j];
+            sum_sxr += s[j] * r[j];
+        }
+
+        s += sp;
+        r += rp;
+    }
+
+    //
+    // similarity
+    //
+    double score = similarity(sum_s, sum_r, sum_sq_s, sum_sq_r, sum_sxr, count, 10);
+    return score;
+}
+static double ssim_8x8_blocks(const uint8_t* s, uint32_t sp, const uint8_t* r, uint32_t rp,
+                                     uint32_t width, uint32_t height) {
+    uint32_t i, j;
+    int      samples    = 0;
+    double   ssim_total = 0;
+
+    // sample point start with each 4x4 location
+    for (i = 0; i <= height - 8; i += 8, s += sp * 8, r += rp * 8) {
+        for (j = 0; j <= width - 8; j += 8) {
+            double v = svt_ssim_8x8(s + j, sp, r + j, rp);
+            v        = CLIP3(0, 1, v);
+            ssim_total += v;
+            samples++;
+        }
+    }
+    assert(samples > 0);
+    ssim_total /= samples;
+    assert(ssim_total <= 1.0 && ssim_total >= 0);
+    return ssim_total;
+}
+static double ssim_4x4_blocks(const uint8_t* s, uint32_t sp, const uint8_t* r, uint32_t rp,
+                                     uint32_t width, uint32_t height) {
+    uint32_t i, j;
+    int      samples    = 0;
+    double   ssim_total = 0;
+
+    // sample point start with each 2x2 location
+    for (i = 0; i <= height - 4; i += 4, s += sp * 4, r += rp * 4) {
+        for (j = 0; j <= width - 4; j += 4) {
+            double v = svt_ssim_4x4(s + j, sp, r + j, rp);
+            v        = CLIP3(0, 1, v);
+            ssim_total += v;
+            samples++;
+        }
+    }
+    assert(samples > 0);
+    ssim_total /= samples;
+    assert(ssim_total <= 1.0 && ssim_total >= 0);
+    return ssim_total;
+}
+static double ssim(const uint8_t* s, uint32_t sp, const uint8_t* r, uint32_t rp,
+                          uint32_t width, uint32_t height) {
+    assert((width % 4) == 0 && (height % 4) == 0);
+    if ((width % 8) == 0 && (height % 8) == 0) {
+        return ssim_8x8_blocks(s, sp, r, rp, width, height);
+    } else {
+        return ssim_4x4_blocks(s, sp, r, rp, width, height);
+    }
+}
+static double ssim_8x8_blocks_hbd(const uint16_t* s, uint32_t sp, const uint16_t* r, uint32_t rp,
+                                     uint32_t width, uint32_t height) {
+    uint32_t i, j;
+    int      samples    = 0;
+    double   ssim_total = 0;
+
+    // sample point start with each 4x4 location
+    for (i = 0; i <= height - 8; i += 8, s += sp * 8, r += rp * 8) {
+        for (j = 0; j <= width - 8; j += 8) {
+            double v = svt_ssim_8x8_hbd(s + j, sp, r + j, rp);
+            v        = CLIP3(0, 1, v);
+            ssim_total += v;
+            samples++;
+        }
+    }
+    assert(samples > 0);
+    ssim_total /= samples;
+    assert(ssim_total <= 1.0 && ssim_total >= 0);
+    return ssim_total;
+}
+static double ssim_4x4_blocks_hbd(const uint16_t* s, uint32_t sp, const uint16_t* r, uint32_t rp,
+                                     uint32_t width, uint32_t height) {
+    uint32_t i, j;
+    int      samples    = 0;
+    double   ssim_total = 0;
+
+    // sample point start with each 2x2 location
+    for (i = 0; i <= height - 4; i += 4, s += sp * 4, r += rp * 4) {
+        for (j = 0; j <= width - 4; j += 4) {
+            double v = svt_ssim_4x4_hbd(s + j, sp, r + j, rp);
+            v        = CLIP3(0, 1, v);
+            ssim_total += v;
+            samples++;
+        }
+    }
+    assert(samples > 0);
+    ssim_total /= samples;
+    assert(ssim_total <= 1.0 && ssim_total >= 0);
+    return ssim_total;
+}
+static double ssim_hbd(const uint16_t* s, uint32_t sp, const uint16_t* r, uint32_t rp,
+                          uint32_t width, uint32_t height) {
+    assert((width % 4) == 0 && (height % 4) == 0);
+    if ((width % 8) == 0 && (height % 8) == 0) {
+        return ssim_8x8_blocks_hbd(s, sp, r, rp, width, height);
+    } else {
+        return ssim_4x4_blocks_hbd(s, sp, r, rp, width, height);
+    }
+}
+
+uint64_t svt_spatial_full_distortion_ssim_kernel(uint8_t* input, uint32_t input_offset,
+                                                   uint32_t input_stride, uint8_t* recon,
+                                                   int32_t recon_offset, uint32_t recon_stride,
+                                                   uint32_t area_width, uint32_t area_height, bool hbd) {
+    uint64_t spatial_distortion = 0;
+    const uint32_t count = area_width * area_height;
+    double ssim_score;
+    if (!hbd) {
+        ssim_score = ssim(input + input_offset, input_stride, recon + recon_offset, recon_stride, area_width, area_height);
+        spatial_distortion   = (uint64_t)((1 - ssim_score) * count * 100 * 7);
+    } else {
+        ssim_score = ssim_hbd((uint16_t *)input + input_offset, input_stride, (uint16_t *)recon + recon_offset, recon_stride, area_width, area_height);
+        spatial_distortion   = (uint64_t)((1 - ssim_score) * count * 100 * 7 * 8);
+    }
+
+    return spatial_distortion;
+}
+#endif

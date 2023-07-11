@@ -695,8 +695,8 @@ static const int64_t cc2_10 = 3857925; // (64^2*(.03*1023)^2
 static const int64_t cc1_12 = 6868593; // (64^2*(.01*4095)^2
 static const int64_t cc2_12 = 61817334; // (64^2*(.03*4095)^2
 
-static double similarity(uint32_t sum_s, uint32_t sum_r, uint32_t sum_sq_s, uint32_t sum_sq_r, uint32_t sum_sxr,
-                         int count, uint32_t bd) {
+double similarity(uint32_t sum_s, uint32_t sum_r, uint32_t sum_sq_s, uint32_t sum_sq_r, uint32_t sum_sxr, int count,
+                  uint32_t bd) {
     double  ssim_n, ssim_d;
     int64_t c1, c2;
 

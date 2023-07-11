@@ -34,6 +34,15 @@
 extern "C" {
 #endif // __cplusplus
 
+#define TUNE_SSIM                   1
+#if TUNE_SSIM
+#define TUNE_SSIM_LIBAOM_APPROACH   1  // 16x16 block variance based lambda adjustment, ported from libaom
+#define TUNE_SSIM_FULL_SPACIAL_DIST 1  // replace SSD with SSIM based distortion functions
+#else
+#define TUNE_SSIM_LIBAOM_APPROACH   0
+#define TUNE_SSIM_FULL_SPACIAL_DIST 0
+#endif
+
 //FOR DEBUGGING - Do not remove
 #define OPT_LD_LATENCY2         0 // Latency optimization for low delay
 #define LOG_ENC_DONE            0 // log encoder job one

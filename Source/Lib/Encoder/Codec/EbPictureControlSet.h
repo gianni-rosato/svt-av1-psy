@@ -492,6 +492,9 @@ typedef struct MotionEstimationData {
     double *tpl_beta;
     double *tpl_rdmult_scaling_factors;
     double *tpl_sb_rdmult_scaling_factors;
+#if TUNE_SSIM_LIBAOM_APPROACH
+    double *ssim_rdmult_scaling_factors;
+#endif
 } MotionEstimationData;
 typedef struct TplControls {
     uint8_t              enable; // 0: TPL OFF; 1: TPL ON

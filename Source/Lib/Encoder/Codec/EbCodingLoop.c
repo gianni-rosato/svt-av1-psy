@@ -32,6 +32,10 @@
 
 void     svt_aom_get_recon_pic(PictureControlSet *pcs, EbPictureBufferDesc **recon_ptr, Bool is_highbd);
 uint32_t svt_aom_get_tot_1d_blks(struct ModeDecisionContext *ctx, const int32_t sq_size, const uint8_t disallow_nsq);
+#if TUNE_SSIM_LIBAOM_APPROACH
+void aom_av1_set_ssim_rdmult(struct ModeDecisionContext *ctx, PictureControlSet *pcs, const int mi_row,
+                             const int mi_col);
+#endif
 static EbErrorType ec_rtime_alloc_palette_info(EcBlkStruct *md_blk_arr_nsq) {
     EB_MALLOC_ARRAY(md_blk_arr_nsq->palette_info, 1);
     EB_MALLOC_ARRAY(md_blk_arr_nsq->palette_info->color_idx_map, MAX_PALETTE_SQUARE);
@@ -259,6 +263,16 @@ static void av1_encode_loop(PictureControlSet *pcs, EncDecContext *ed_ctx, Super
         //Get the new lambda for current block
         svt_aom_set_tuned_blk_lambda(ed_ctx->md_ctx, pcs);
     }
+#if TUNE_SSIM_LIBAOM_APPROACH
+    else if (pcs->ppcs->scs->static_config.tune == 2) {
+        ed_ctx->md_ctx->blk_geom  = ed_ctx->blk_geom;
+        ed_ctx->md_ctx->blk_org_x = ed_ctx->blk_org_x;
+        ed_ctx->md_ctx->blk_org_y = ed_ctx->blk_org_y;
+        int mi_row                = ed_ctx->blk_org_y / 4;
+        int mi_col                = ed_ctx->blk_org_x / 4;
+        aom_av1_set_ssim_rdmult(ed_ctx->md_ctx, pcs, mi_row, mi_col);
+    }
+#endif
     //**********************************
     // Luma
     //**********************************

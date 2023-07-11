@@ -911,6 +911,9 @@ typedef struct ModeDecisionContext {
 
     uint64_t *fast_cost_array;
     uint64_t *full_cost_array;
+#if TUNE_SSIM_FULL_SPACIAL_DIST
+    uint64_t *full_cost_ssim_array;
+#endif
     // Lambda
     uint32_t fast_lambda_md[2];
     uint32_t full_lambda_md[2];
@@ -1202,6 +1205,12 @@ typedef struct ModeDecisionContext {
     uint8_t high_freq_present;
     // used to signal when the N4 shortcut can be used for rtc, works in conjunction with use_tx_shortcuts_mds3 flag
     uint8_t rtc_use_N4_dct_dct_shortcut;
+#if TUNE_SSIM_FULL_SPACIAL_DIST
+    // SSIM_LVL_0: off
+    // SSIM_LVL_1: use ssim cost to find best candidate in product_full_mode_decision()
+    // SSIM_LVL_2: addition to level 1, also use ssim cost to find best tx type in tx_type_search()
+    SsimLevel tune_ssim_level;
+#endif
 } ModeDecisionContext;
 
 typedef void (*EbAv1LambdaAssignFunc)(PictureControlSet *pcs, uint32_t *fast_lambda, uint32_t *full_lambda,

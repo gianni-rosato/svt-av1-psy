@@ -64,6 +64,7 @@ set(all_files
     sse_avx2.c
     variance_avx2.c
     variance_impl_avx2.c
+    ssim_avx2.c
     )
 
 add_library(ENCODER_ASM_AVX2 OBJECT ${all_files})

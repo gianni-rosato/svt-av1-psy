@@ -129,6 +129,7 @@ set(all_files
     wiener_convolve_test.cc
     ref/TxfmRef.cc
     ref/TxfmRef.h
+    ssim_test.cc
 
     # Decoder sources
     ../Source/Lib/Decoder/Codec/EbDecBitstreamUnit.c

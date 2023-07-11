@@ -1330,6 +1330,10 @@ static void me_dctor(EbPtr p) {
         EB_FREE_ARRAY(obj->tpl_sb_rdmult_scaling_factors);
     if (obj->tpl_src_stats_buffer)
         EB_FREE_ARRAY(obj->tpl_src_stats_buffer);
+#if TUNE_SSIM_LIBAOM_APPROACH
+    if (obj->ssim_rdmult_scaling_factors)
+        EB_FREE_ARRAY(obj->ssim_rdmult_scaling_factors);
+#endif
 }
 static EbErrorType me_ctor(MotionEstimationData *object_ptr, EbPtr object_init_data_ptr) {
     PictureControlSetInitData *init_data_ptr = (PictureControlSetInitData *)object_init_data_ptr;
@@ -1355,6 +1359,14 @@ static EbErrorType me_ctor(MotionEstimationData *object_ptr, EbPtr object_init_d
         const uint16_t picture_height_in_mb          = (uint16_t)((init_data_ptr->picture_height + 15) / 16);
         uint16_t       adaptive_picture_width_in_mb  = (uint16_t)((init_data_ptr->picture_width + 15) / 16);
         uint16_t       adaptive_picture_height_in_mb = (uint16_t)((init_data_ptr->picture_height + 15) / 16);
+#if TUNE_SSIM_LIBAOM_APPROACH
+        if (init_data_ptr->static_config.tune == 2) {
+            EB_MALLOC_ARRAY(object_ptr->ssim_rdmult_scaling_factors,
+                            adaptive_picture_width_in_mb * adaptive_picture_height_in_mb);
+        } else {
+            object_ptr->ssim_rdmult_scaling_factors = NULL;
+        }
+#endif
 
         if (init_data_ptr->tpl_synth_size == 8) {
             adaptive_picture_width_in_mb  = adaptive_picture_width_in_mb << 1;
@@ -1386,6 +1398,9 @@ static EbErrorType me_ctor(MotionEstimationData *object_ptr, EbPtr object_init_d
         object_ptr->tpl_rdmult_scaling_factors    = NULL;
         object_ptr->tpl_sb_rdmult_scaling_factors = NULL;
         object_ptr->tpl_src_stats_buffer          = NULL;
+#if TUNE_SSIM_LIBAOM_APPROACH
+        object_ptr->ssim_rdmult_scaling_factors = NULL;
+#endif
     }
     return return_error;
 }

@@ -101,6 +101,9 @@ static void mode_decision_context_dctor(EbPtr p) {
     EB_DELETE(obj->scratch_prediction_ptr);
     EB_DELETE(obj->temp_residual);
     EB_DELETE(obj->temp_recon_ptr);
+#if TUNE_SSIM_FULL_SPACIAL_DIST
+    EB_FREE_ARRAY(obj->full_cost_ssim_array);
+#endif
 }
 
 void svt_aom_set_nics(NicScalingCtrls *scaling_ctrls, uint32_t mds1_count[CAND_CLASS_TOTAL],
@@ -256,6 +259,9 @@ EbErrorType svt_aom_mode_decision_context_ctor(ModeDecisionContext *ctx, EbColor
     // Cost Arrays
     EB_MALLOC_ARRAY(ctx->fast_cost_array, ctx->max_nics_uv);
     EB_MALLOC_ARRAY(ctx->full_cost_array, ctx->max_nics_uv);
+#if TUNE_SSIM_FULL_SPACIAL_DIST
+    EB_MALLOC_ARRAY(ctx->full_cost_ssim_array, ctx->max_nics_uv);
+#endif
     // Candidate Buffers
     EB_NEW(ctx->cand_bf_tx_depth_1,
            svt_aom_mode_decision_scratch_cand_bf_ctor,
@@ -433,6 +439,18 @@ EbErrorType svt_aom_mode_decision_context_ctor(ModeDecisionContext *ctx, EbColor
     EB_ALLOC_PTR_ARRAY(ctx->cand_bf_ptr_array, ctx->max_nics_uv);
 
     for (buffer_index = 0; buffer_index < ctx->max_nics; ++buffer_index) {
+#if TUNE_SSIM_FULL_SPACIAL_DIST
+        EB_NEW(ctx->cand_bf_ptr_array[buffer_index],
+               svt_aom_mode_decision_cand_bf_ctor,
+               ctx->hbd_md ? EB_TEN_BIT : EB_EIGHT_BIT,
+               sb_size,
+               PICTURE_BUFFER_DESC_FULL_MASK,
+               ctx->temp_residual,
+               ctx->temp_recon_ptr,
+               &(ctx->fast_cost_array[buffer_index]),
+               &(ctx->full_cost_array[buffer_index]),
+               &(ctx->full_cost_ssim_array[buffer_index]));
+#else
         EB_NEW(ctx->cand_bf_ptr_array[buffer_index],
                svt_aom_mode_decision_cand_bf_ctor,
                ctx->hbd_md ? EB_TEN_BIT : EB_EIGHT_BIT,
@@ -442,9 +460,22 @@ EbErrorType svt_aom_mode_decision_context_ctor(ModeDecisionContext *ctx, EbColor
                ctx->temp_recon_ptr,
                &(ctx->fast_cost_array[buffer_index]),
                &(ctx->full_cost_array[buffer_index]));
+#endif
     }
 
     for (buffer_index = max_nics; buffer_index < ctx->max_nics_uv; ++buffer_index) {
+#if TUNE_SSIM_FULL_SPACIAL_DIST
+        EB_NEW(ctx->cand_bf_ptr_array[buffer_index],
+               svt_aom_mode_decision_cand_bf_ctor,
+               ctx->hbd_md ? EB_TEN_BIT : EB_EIGHT_BIT,
+               sb_size,
+               PICTURE_BUFFER_DESC_CHROMA_MASK,
+               ctx->temp_residual,
+               ctx->temp_recon_ptr,
+               &(ctx->fast_cost_array[buffer_index]),
+               &(ctx->full_cost_array[buffer_index]),
+               &(ctx->full_cost_ssim_array[buffer_index]));
+#else
         EB_NEW(ctx->cand_bf_ptr_array[buffer_index],
                svt_aom_mode_decision_cand_bf_ctor,
                ctx->hbd_md ? EB_TEN_BIT : EB_EIGHT_BIT,
@@ -454,7 +485,9 @@ EbErrorType svt_aom_mode_decision_context_ctor(ModeDecisionContext *ctx, EbColor
                ctx->temp_recon_ptr,
                &(ctx->fast_cost_array[buffer_index]),
                &(ctx->full_cost_array[buffer_index]));
+#endif
     }
+
     return EB_ErrorNone;
 }
 
