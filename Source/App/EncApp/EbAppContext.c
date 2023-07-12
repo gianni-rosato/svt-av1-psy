@@ -357,16 +357,18 @@ fail:
 }
 static void deallocate_buffers(EbConfig *app_cfg) {
     // Deallocate input buffers
-    if (app_cfg->buffered_input == -1 && !app_cfg->mmap.enable) {
-        EbSvtIOFormat *input_ptr = (EbSvtIOFormat *)app_cfg->input_buffer_pool->p_buffer;
-        if (input_ptr) {
-            free(input_ptr->luma);
-            free(input_ptr->cb);
-            free(input_ptr->cr);
+    if (app_cfg->input_buffer_pool) {
+        if (app_cfg->buffered_input == -1 && !app_cfg->mmap.enable) {
+            EbSvtIOFormat *input_ptr = (EbSvtIOFormat *)app_cfg->input_buffer_pool->p_buffer;
+            if (input_ptr) {
+                free(input_ptr->luma);
+                free(input_ptr->cb);
+                free(input_ptr->cr);
+            }
         }
+        free(app_cfg->input_buffer_pool->p_buffer);
+        free(app_cfg->input_buffer_pool);
     }
-    free(app_cfg->input_buffer_pool->p_buffer);
-    free(app_cfg->input_buffer_pool);
 
     // Deallocate output recon buffers
     if (app_cfg->recon_buffer) {
