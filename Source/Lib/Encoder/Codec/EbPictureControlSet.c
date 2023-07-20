@@ -1286,7 +1286,11 @@ static EbErrorType picture_parent_control_set_ctor(PictureParentControlSet *obje
     EB_NEW(object_ptr->dg_detector, svt_aom_dg_detector_seg_ctor);
 
     if (svt_aom_need_gm_ref_info(
+#if TUNE_M6
+            init_data_ptr->enc_mode, init_data_ptr->static_config.resize_mode == RESIZE_NONE)) {
+#else
             init_data_ptr->enc_mode, true, init_data_ptr->static_config.resize_mode == RESIZE_NONE)) {
+#endif
         EbPictureBufferDescInitData input_pic_buf_desc_init_data;
         input_pic_buf_desc_init_data.max_width          = init_data_ptr->picture_width >> 1;
         input_pic_buf_desc_init_data.max_height         = init_data_ptr->picture_height >> 1;

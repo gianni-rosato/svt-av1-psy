@@ -3370,14 +3370,18 @@ static EbErrorType derive_tf_window_params(
 
         //search in pre-ass if still short
         if (pic_i < num_future_pics) {
-#if  !MCTF_FIX_BUILD
+#if !MCTF_FIX_BUILD
             actual_future_pics = 0;
 #endif
+#if FIX_DUPL_TF_PIC
+            for (int pic_i_future = pic_i; pic_i_future < num_future_pics; pic_i_future++) {
+#else
             for (int pic_i_future = 0; pic_i_future < num_future_pics; pic_i_future++) {
+#endif
                 for (uint32_t pic_i_pa = 0; pic_i_pa < enc_ctx->pre_assignment_buffer_count; pic_i_pa++) {
                     PictureParentControlSet* pcs_itr = (PictureParentControlSet*)enc_ctx->pre_assignment_buffer[pic_i_pa]->object_ptr;
                     if (pcs_itr->picture_number == pcs->picture_number + pic_i_future + 1) {
-#if  MCTF_FIX_BUILD
+#if MCTF_FIX_BUILD && !FIX_DUPL_TF_PIC
                         pcs->temp_filt_pcs_list[pic_i_future + pic_i + num_past_pics + 1] = pcs_itr;
 #else
                         pcs->temp_filt_pcs_list[pic_i_future + num_past_pics + 1] = pcs_itr;
@@ -3561,14 +3565,18 @@ static EbErrorType derive_tf_window_params(
 
                 //search in pre-ass if still short
                 if (pic_i < num_future_pics) {
-#if  !MCTF_FIX_BUILD
+#if !MCTF_FIX_BUILD
                     actual_future_pics = 0;
 #endif
+#if FIX_DUPL_TF_PIC
+                    for (int pic_i_future = pic_i; pic_i_future < num_future_pics; pic_i_future++) {
+#else
                     for (int pic_i_future = 0; pic_i_future < num_future_pics; pic_i_future++) {
+#endif
                         for (uint32_t pic_i_pa = 0; pic_i_pa < enc_ctx->pre_assignment_buffer_count; pic_i_pa++) {
                             PictureParentControlSet* pcs_itr = (PictureParentControlSet*)enc_ctx->pre_assignment_buffer[pic_i_pa]->object_ptr;
                             if (pcs_itr->picture_number == pcs->picture_number + pic_i_future + 1) {
-#if  MCTF_FIX_BUILD
+#if MCTF_FIX_BUILD && !FIX_DUPL_TF_PIC
                                 pcs->temp_filt_pcs_list[pic_i_future + pic_i + num_past_pics + 1] = pcs_itr;
 #else
                                 pcs->temp_filt_pcs_list[pic_i_future + num_past_pics + 1] = pcs_itr;
@@ -3958,7 +3966,12 @@ static void copy_tf_params(SequenceControlSet *scs, PictureParentControlSet *pcs
         return;
    }
 #if OPT_ENABLE_2L_INCOMP
+#if OPT_NO_TF_LEAF_LAYER
+   // Don't perform TF for overlay pics or pics in the highest layer (relevant for 2L)
+   if (pcs->is_overlay || pcs->temporal_layer_index == pcs->hierarchical_levels)
+#else
    if (pcs->is_overlay)
+#endif
        pcs->tf_ctrls.enabled = 0;
    else if (svt_aom_is_delayed_intra(pcs))
 #else

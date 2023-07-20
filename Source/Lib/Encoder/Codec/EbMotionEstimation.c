@@ -3196,7 +3196,11 @@ EbErrorType svt_aom_motion_estimation_b64(
 
     if (me_ctx->me_type == ME_MCTF &&
         me_ctx->search_results[0][0].hme_sad < me_ctx->tf_me_exit_th) {
+#if FIX_GCC_R2R
+        me_ctx->tf_use_pred_64x64_only_th = (uint32_t)~0;
+#else
         me_ctx->tf_use_pred_64x64_only_th = (uint8_t)~0;
+#endif
         return return_error;
     }
     // prune the refrence frames based on the HME outputs.

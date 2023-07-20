@@ -435,7 +435,12 @@ static EbErrorType load_default_buffer_configuration_settings(
         (scs->super_block_size == 128) ?
         ((scs->max_input_luma_width + 64) / 128) :
         ((scs->max_input_luma_width + 32) / 64);
-
+#if OPT_MULTI_BUFFER_CONFIG
+    me_seg_h = (core_count == SINGLE_CORE_COUNT) ? 1 :
+        (((scs->max_input_luma_height + 32) / BLOCK_SIZE_64) < 6) ? 1 : 8;
+    me_seg_w = (core_count == SINGLE_CORE_COUNT) ? 1 :
+        (((scs->max_input_luma_width + 32) / BLOCK_SIZE_64) < 10) ? 1 : 6;
+#else
     if (scs->static_config.rate_control_mode != SVT_AV1_RC_MODE_CQP_OR_CRF)
     {
         me_seg_h = (core_count == SINGLE_CORE_COUNT) ? 1 :
@@ -450,6 +455,7 @@ static EbErrorType load_default_buffer_configuration_settings(
         me_seg_w = (core_count == SINGLE_CORE_COUNT) ? 1 :
             (((scs->max_input_luma_width + 32) / BLOCK_SIZE_64) < 10) ? 1 : 3;
     }
+#endif
     // ME segments
     scs->me_segment_row_count_array[0] = me_seg_h;
     scs->me_segment_row_count_array[1] = me_seg_h;
@@ -805,7 +811,11 @@ static EbErrorType load_default_buffer_configuration_settings(
             scs->total_process_init_count += (scs->motion_estimation_process_init_count = clamp(50, 1, max_me_proc));
             scs->total_process_init_count += (scs->tpl_disp_process_init_count = clamp(max_tpl_proc, 1, max_tpl_proc));
             scs->total_process_init_count += (scs->mode_decision_configuration_process_init_count = clamp(max_mdc_proc, 1, max_mdc_proc));
+#if OPT_MULTI_BUFFER_CONFIG
+            scs->total_process_init_count += (scs->enc_dec_process_init_count = clamp(50, scs->picture_control_set_pool_init_count_child, max_md_proc));
+#else
             scs->total_process_init_count += (scs->enc_dec_process_init_count = clamp(150, scs->picture_control_set_pool_init_count_child, max_md_proc));
+#endif
             scs->total_process_init_count += (scs->entropy_coding_process_init_count = clamp(max_ec_proc, 1, max_ec_proc));
             scs->total_process_init_count += (scs->dlf_process_init_count = clamp(max_dlf_proc, 1, max_dlf_proc));
             scs->total_process_init_count += (scs->cdef_process_init_count = clamp(max_cdef_proc, 1, max_cdef_proc));
@@ -819,7 +829,11 @@ static EbErrorType load_default_buffer_configuration_settings(
                 scs->total_process_init_count += (scs->motion_estimation_process_init_count = clamp(50, 1, max_me_proc));
                 scs->total_process_init_count += (scs->tpl_disp_process_init_count = clamp(max_tpl_proc, 1, max_tpl_proc));
                 scs->total_process_init_count += (scs->mode_decision_configuration_process_init_count = clamp(max_mdc_proc, 1, max_mdc_proc));
+#if OPT_MULTI_BUFFER_CONFIG
+                scs->total_process_init_count += (scs->enc_dec_process_init_count = clamp(50, scs->picture_control_set_pool_init_count_child, max_md_proc));
+#else
                 scs->total_process_init_count += (scs->enc_dec_process_init_count = clamp(200, scs->picture_control_set_pool_init_count_child, max_md_proc));
+#endif
                 scs->total_process_init_count += (scs->entropy_coding_process_init_count = clamp(max_ec_proc, 1, max_ec_proc));
                 scs->total_process_init_count += (scs->dlf_process_init_count = clamp(max_dlf_proc, 1, max_dlf_proc));
                 scs->total_process_init_count += (scs->cdef_process_init_count = clamp(max_cdef_proc, 1, max_cdef_proc));
@@ -3981,7 +3995,11 @@ static uint8_t get_tpl_level(int8_t enc_mode, int32_t pass, int32_t lap_rc, uint
 #if OPT_NEW_TPL_LVL
     else if (enc_mode <= ENC_M3)
         tpl_level = 1;
+#if TUNE_M6
+    else if (enc_mode <= ENC_M6)
+#else
     else if (enc_mode <= ENC_M5)
+#endif
         tpl_level = 2;
     else if (enc_mode <= ENC_M8)
         tpl_level = 3;
@@ -4525,28 +4543,44 @@ static void set_param_based_on_input(SequenceControlSet *scs)
         }
     }
     else {
+#if TUNE_M1
+        if (scs->static_config.enc_mode <= ENC_M1) {
+            mrp_level = 2;
+        }
+#else
         if (scs->static_config.enc_mode <= ENC_M0) {
             mrp_level = 2;
         }
         else if (scs->static_config.enc_mode <= ENC_M1) {
             mrp_level = 3;
         }
+#endif
         else if (scs->static_config.enc_mode <= ENC_M2) {
+#if TUNE_M2
+            mrp_level = 3;
+#else
             mrp_level = 4;
+#endif
         }
         else if (scs->static_config.enc_mode <= ENC_M3) {
             mrp_level = 5;
         }
+#if TUNE_M6
+        else if (scs->static_config.enc_mode <= ENC_M6) {
+#else
 #if OPT_MRP
         else if (scs->static_config.enc_mode <= ENC_M5) {
 #else
         else if (scs->static_config.enc_mode <= ENC_M4) {
 #endif
+#endif
             mrp_level = 6;
         }       
+#if !OPT_MRP_2
         else if (scs->static_config.enc_mode <= ENC_M7) {
             mrp_level = 8;
         }
+#endif
         else if (scs->static_config.enc_mode <= ENC_M12) {
             mrp_level = 9;
         }

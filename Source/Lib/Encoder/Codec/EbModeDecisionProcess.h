@@ -256,6 +256,12 @@ typedef struct DepthRefinementCtrls {
     // maximum allowed sub-to-current cost deviation beyond which the next depth will not be added
     // to PRED
     int64_t sub_to_current_th;
+#if OPT_DEPTH_REFIN_PARENT_ABS_TH
+    // When enabled, only prune the parent depth when the cost is sufficiently high (i.e. the parent block is
+    // sufficiently complex). The signal is specified as a multiplier to a threshold (the threshold is
+    // an absolute cost).  A higher value is more conservative; 0 is off.
+    uint16_t parent_max_cost_th_mult;
+#endif
     // when 1, a maximum of 2 depth per block (PRED+Parent or PRED+Sub), 0: no restriction(s)
     uint8_t up_to_2_depth;
     // whether to decrement parent_to_current_th and sub_to_current_th based on the cost range of

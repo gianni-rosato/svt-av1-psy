@@ -483,7 +483,11 @@ typedef struct MeContext {
     uint8_t      reduce_hme_l0_sr_th_min;
     uint8_t      reduce_hme_l0_sr_th_max;
     uint16_t     tf_me_exit_th;
+#if FIX_GCC_R2R
+    uint32_t     tf_use_pred_64x64_only_th;
+#else
     uint8_t      tf_use_pred_64x64_only_th;
+#endif
     uint8_t      tf_subpel_early_exit;
     uint32_t     zz_sad[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
     uint32_t     me_early_exit_th;

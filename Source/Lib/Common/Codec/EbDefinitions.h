@@ -213,7 +213,11 @@ typedef struct TfControls {
     // size(s) (32x32 or/ and 16x16) (∞: perform Sub-Pel search for default size(s), else if the
     // deviation between the 64x64 ME distortion and the sum of the 4 32x32 ME distortions is less
     // than use_pred_64x64_only_th then perform Sub - Pel search for only the 64x64 block
+#if FIX_GCC_R2R
+    uint32_t use_pred_64x64_only_th;
+#else
     uint8_t use_pred_64x64_only_th;
+#endif
     // Specifies whether to early exit the Sub-Pel search based on a pred-error-th or not
     uint8_t subpel_early_exit;
     // Specifies whether to skip reference frame e.g. 1 = use all frames, 2 = use every other frame, 4 = use 1/4 frames, etc.

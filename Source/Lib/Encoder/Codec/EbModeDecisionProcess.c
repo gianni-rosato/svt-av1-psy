@@ -225,7 +225,11 @@ EbErrorType svt_aom_mode_decision_context_ctor(ModeDecisionContext *ctx, EbColor
             for (EbInputResolution input_resolution = 0; input_resolution < INPUT_SIZE_COUNT; input_resolution++) {
                 if (obmc_allowed)
                     break;
+#if TUNE_M6
+                obmc_allowed |= svt_aom_get_obmc_level(enc_mode, fast_decode, input_resolution);
+#else
                 obmc_allowed |= svt_aom_get_obmc_level(enc_mode, is_ref, fast_decode, input_resolution);
+#endif
             }
         }
     }

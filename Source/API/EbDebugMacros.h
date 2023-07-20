@@ -92,9 +92,24 @@ extern "C" {
 #define OPT_SAFE_LIMIT                            1 // Optimize  MRP Safe limit feature for M4/M5
 
 #define OPT_LIST0_ONLY_BASE                       1 // Optimize the classifier of List0 only @ BASE
+#define OPT_DEPTH_REFIN_PARENT_ABS_TH             1 // Add absolute threshold to depth refinement to only remove parent depth for complex blocks
 
 #define FIX_ZZ_SAD                                1 // normalize ZZ sad calc in ME
 #define TUNE_ME_EXIT                              1 // enable early me exit in M4
+
+#define TUNE_M1                                   1 // Tune m1 for fast decode
+#define TUNE_M2                                   1 // Tune m2 for fast decode
+#define TUNE_M3                                   1 // Tune m3 for fast decode
+#define TUNE_M4                                   1 // Tune m4 for fast decode
+#define TUNE_M5                                   1 // Tune m5 for fast decode
+#define TUNE_M6                                   1 // Tune m6 for fast decode
+#define OPT_MRP_2                                 1 // Optimize MRP
+
+#define FIX_GCC_R2R                               0 // Fix r2r found when using gcc
+
+#define OPT_MULTI_BUFFER_CONFIG                   1 // optimize buffers for memory when using --lp 16, also increase ME segments
+#define FIX_DUPL_TF_PIC                           1 // Fix memory leak caused by adding the last picture of a sequence to the TF list twice
+#define OPT_NO_TF_LEAF_LAYER                      1 // Do not perform TF for highest-layer pics
 
 //FOR DEBUGGING - Do not remove
 #define OPT_LD_LATENCY2         0 // Latency optimization for low delay
