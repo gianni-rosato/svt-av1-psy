@@ -2060,7 +2060,7 @@ static void sbo_send_picture_out(SourceBasedOperationsContext *context_ptr, Pict
 //  purposes of activity masking.
 // Eventually this should be replaced by custom no-reference routines,
 //  which will be faster.
-const uint8_t AV1_VAR_OFFS[MAX_SB_SIZE] = {
+static const uint8_t AV1_VAR_OFFS[MAX_SB_SIZE] = {
     128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128,
     128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128,
     128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128,
