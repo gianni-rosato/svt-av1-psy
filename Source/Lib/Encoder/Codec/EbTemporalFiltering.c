@@ -5364,20 +5364,6 @@ EbErrorType svt_av1_init_temporal_filtering(
          i++)
         list_input_picture_ptr[i] = pcs_list[i]->enhanced_unscaled_pic;
 
-#if MCTF_ON_THE_FLY_PRUNING
-    // Calc the avg_ahd_error 
-    centre_pcs->tf_avg_ahd_error = 0;
-    if (centre_pcs->past_altref_nframes + centre_pcs->future_altref_nframes) {
-    int tot_err = 0;
-        for (int i = 0; i < (centre_pcs->past_altref_nframes + centre_pcs->future_altref_nframes + 1); i++) {
-            if (i != centre_pcs->past_altref_nframes)
-                tot_err += pcs_list[i]->tf_ahd_error_to_central;
-        }
-
-        centre_pcs->tf_avg_ahd_error = tot_err / (centre_pcs->past_altref_nframes + centre_pcs->future_altref_nframes);
-    }
-#endif
-
     if(centre_pcs->scs->static_config.pred_structure == SVT_AV1_PRED_LOW_DELAY_B)
         produce_temporally_filtered_pic_ld(pcs_list,
                                         list_input_picture_ptr,

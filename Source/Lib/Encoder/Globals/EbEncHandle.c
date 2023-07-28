@@ -435,12 +435,7 @@ static EbErrorType load_default_buffer_configuration_settings(
         (scs->super_block_size == 128) ?
         ((scs->max_input_luma_width + 64) / 128) :
         ((scs->max_input_luma_width + 32) / 64);
-#if OPT_MULTI_BUFFER_CONFIG
-    me_seg_h = (core_count == SINGLE_CORE_COUNT) ? 1 :
-        (((scs->max_input_luma_height + 32) / BLOCK_SIZE_64) < 6) ? 1 : 8;
-    me_seg_w = (core_count == SINGLE_CORE_COUNT) ? 1 :
-        (((scs->max_input_luma_width + 32) / BLOCK_SIZE_64) < 10) ? 1 : 6;
-#else
+
     if (scs->static_config.rate_control_mode != SVT_AV1_RC_MODE_CQP_OR_CRF)
     {
         me_seg_h = (core_count == SINGLE_CORE_COUNT) ? 1 :
@@ -455,7 +450,6 @@ static EbErrorType load_default_buffer_configuration_settings(
         me_seg_w = (core_count == SINGLE_CORE_COUNT) ? 1 :
             (((scs->max_input_luma_width + 32) / BLOCK_SIZE_64) < 10) ? 1 : 3;
     }
-#endif
     // ME segments
     scs->me_segment_row_count_array[0] = me_seg_h;
     scs->me_segment_row_count_array[1] = me_seg_h;
@@ -3269,7 +3263,9 @@ static void derive_vq_params(SequenceControlSet* scs) {
  * Derive TF Params
  */
 static void derive_tf_params(SequenceControlSet *scs) {
-
+#if OPT_TF
+    const EbInputResolution resolution = scs->input_resolution;
+#endif
     // Do not perform TF if LD or 1 Layer or 1st pass
     Bool do_tf = scs->static_config.enable_tf && scs->static_config.hierarchical_levels >= 1 && scs->static_config.pass != ENC_FIRST_PASS;
     const EncMode enc_mode = scs->static_config.enc_mode;
@@ -3287,12 +3283,24 @@ static void derive_tf_params(SequenceControlSet *scs) {
     if (do_tf == 0) {
         tf_level = 0;
     }
+#if TUNE_M2_M4_M10
+    else if (enc_mode <= ENC_M1) {
+#else
     else if (enc_mode <= ENC_M2) {
+#endif
         tf_level = 1;
     }
     else if (enc_mode <= ENC_M5) {
         tf_level = 2;
     }
+#if OPT_TF
+    else if (enc_mode <= ENC_M6) {
+        tf_level = 4;
+    }
+    else if (enc_mode <= ENC_M8) {
+        tf_level = resolution <= INPUT_SIZE_720p_RANGE && hierarchical_levels <= 4 ? 4 : 5;
+    }
+#else
     else if (enc_mode <= ENC_M7) {
         tf_level = 4;
     }
@@ -3302,6 +3310,7 @@ static void derive_tf_params(SequenceControlSet *scs) {
         else
             tf_level = 5;
     }
+#endif
     else if (enc_mode <= ENC_M10) {
         tf_level = 6;
     }
@@ -4500,7 +4509,11 @@ static void set_param_based_on_input(SequenceControlSet *scs)
 
 #if OPT_LIST0_ONLY_BASE
     uint8_t list0_only_base_lvl = 0;
+#if TUNE_M2_M4_M10
+    if (scs->static_config.enc_mode <= ENC_M4)
+#else
     if (scs->static_config.enc_mode <= ENC_M3)
+#endif
         list0_only_base_lvl = 0;
     else if (scs->static_config.enc_mode <= ENC_M5)
         list0_only_base_lvl = 1;
@@ -4543,6 +4556,11 @@ static void set_param_based_on_input(SequenceControlSet *scs)
         }
     }
     else {
+#if TUNE_M2_M4_M10
+        if (scs->static_config.enc_mode <= ENC_M2) {
+            mrp_level = 2;
+        }
+#else
 #if TUNE_M1
         if (scs->static_config.enc_mode <= ENC_M1) {
             mrp_level = 2;
@@ -4562,6 +4580,7 @@ static void set_param_based_on_input(SequenceControlSet *scs)
             mrp_level = 4;
 #endif
         }
+#endif
         else if (scs->static_config.enc_mode <= ENC_M3) {
             mrp_level = 5;
         }
@@ -4641,7 +4660,11 @@ static void set_param_based_on_input(SequenceControlSet *scs)
         scs->static_config.scene_change_detection == 1       ||
         scs->vq_ctrls.sharpness_ctrls.tf == 1)
         scs->calculate_variance = 1;
+#if TUNE_M2_M4_M10
+    else if (scs->static_config.enc_mode <= ENC_M9)
+#else
     else if (scs->static_config.enc_mode <= ENC_M10)
+#endif
         scs->calculate_variance = 1;
     else
         scs->calculate_variance = 0;

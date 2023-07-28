@@ -104,6 +104,9 @@ extern "C" {
 #define TUNE_M5                                   1 // Tune m5 for fast decode
 #define TUNE_M6                                   1 // Tune m6 for fast decode
 #define OPT_MRP_2                                 1 // Optimize MRP
+#define TUNE_M2_M4_M10                            1 // Tune m2/m4/m10 for fast decode
+#define OPT_TF                                    1 // tf tuninig towards better tradeoffs for M7-M13.
+#define TUNE_M7                                   1 // Tune m7
 
 #define FIX_GCC_R2R                               0 // Fix r2r found when using gcc
 
