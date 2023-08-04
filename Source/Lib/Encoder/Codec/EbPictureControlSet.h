@@ -505,13 +505,13 @@ typedef struct TplControls {
     EB_TRANS_COEFF_SHAPE pf_shape;
 #if FIX_TPL_LVLS
     // Use SAD as a distortion metric when searching the best mode (based on src pic). If false, will use SATD
-    uint8_t              use_sad_in_src_search;
+    uint8_t use_sad_in_src_search;
 #else
-    uint8_t              use_pred_sad_in_intra_search;
-    uint8_t              use_pred_sad_in_inter_search;
+    uint8_t use_pred_sad_in_intra_search;
+    uint8_t use_pred_sad_in_inter_search;
 #endif
-    int8_t               reduced_tpl_group;
-    double               r0_adjust_factor;
+    int8_t reduced_tpl_group;
+    double r0_adjust_factor;
     // 0: use 16x16 block(s), 1: use 32x32 block(s), 2: use 64x64 block(s)  (for incomplete 64x64,
     // dispenser_search_level is set to 0)
     uint8_t dispenser_search_level;
@@ -768,7 +768,7 @@ typedef struct PictureParentControlSet {
     uint8_t   temporal_layer_index;
     uint64_t  decode_order;
 
-#if OPT_SAFE_LIMIT  
+#if OPT_SAFE_LIMIT
     bool similar_brightness_refs; //whether closest references have similar brightness
 #endif
 
@@ -1041,9 +1041,9 @@ typedef struct PictureParentControlSet {
     uint32_t tpl_group_size;
     // stores previous, current, future pictures from pd-reord-queue. empty for first I.
 #if FIX_LINUX_MISMATCH
-    void* pd_window[1 << (MAX_TEMPORAL_LAYERS - 1)];
+    void *pd_window[2 + TF_MAX_BASE_REF_PICS];
 #else
-    void *pd_window[PD_WINDOW_SIZE];
+    void   *pd_window[PD_WINDOW_SIZE];
 #endif
     // stores pcs pictures needed for lad mg based algorithms
     struct PictureParentControlSet *ext_group[MAX_TPL_EXT_GROUP_SIZE];
@@ -1086,7 +1086,7 @@ typedef struct PictureParentControlSet {
     TplControls                     tpl_ctrls;
     uint8_t                         tpl_is_valid;
 #if !OPT_LIST0_ONLY_BASE
-    List0OnlyBase                   list0_only_base_ctrls;
+    List0OnlyBase list0_only_base_ctrls;
 #endif
     EbHandle tpl_disp_mutex;
     // uint32_t         input_type;
@@ -1141,11 +1141,13 @@ typedef struct PictureParentControlSet {
     SvtAv1RoiMapEvt *roi_map_evt;
     uint32_t         filt_to_unfilt_diff;
 #if MCTF_ON_THE_FLY_PRUNING
+    // Absolute histogram deviation of the frame to the central TF frame (i.e. sum of absolute deviation of all bins)
     uint32_t tf_ahd_error_to_central;
+    // Average absolute histogram deviation of all frames in the TF window to the current (central) frame
     uint32_t tf_avg_ahd_error;
 #endif
 #if MCTF_OPT_HME_LEVEL
-    uint32_t tf_active_region_present;
+    bool tf_active_region_present;
 #endif
 } PictureParentControlSet;
 

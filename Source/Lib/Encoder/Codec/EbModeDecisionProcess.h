@@ -260,6 +260,7 @@ typedef struct DepthRefinementCtrls {
     // When enabled, only prune the parent depth when the cost is sufficiently high (i.e. the parent block is
     // sufficiently complex). The signal is specified as a multiplier to a threshold (the threshold is
     // an absolute cost).  A higher value is more conservative; 0 is off.
+    // parent_max_cost_th_mult not relevant when parent is never skipped by parent_to_current_th
     uint16_t parent_max_cost_th_mult;
 #endif
     // when 1, a maximum of 2 depth per block (PRED+Parent or PRED+Sub), 0: no restriction(s)
@@ -601,10 +602,8 @@ typedef struct NsqCtrls {
     // best partition.  Specified as a percentage TH. 0 is off, higher is more aggressive.
     uint32_t non_HV_split_rate_th;
 #if OPT_HV_NON_HV
-    // Apply an offset to H_vs_V_split_rate_th
-    uint8_t H_vs_V_split_rate_moulation;
     // Apply an offset to non_HV_split_rate_th
-    uint32_t non_HV_split_rate_moulation;
+    bool non_HV_split_rate_modulation;
 #endif
     // If the distortion (or rate) component of the SQ cost is more than component_multiple_th times the rate (or distortion) component, skip the NSQ shapes
     // 0: off, higher is safer
@@ -614,10 +613,6 @@ typedef struct NsqCtrls {
     uint8_t psq_pred_lvl;
     // Whether to use the default or aggressive settings for the sub-Pred_depth block(s) (i.e. not applicable when PRED only)
     uint8_t sub_depth_block_lvl;
-#if CHECK_PARENT_COST_MDS3
-    uint32_t sq_mds1_cost_th;
-    uint32_t sq_mds3_cost_th;
-#endif
 } NsqCtrls;
 typedef struct DepthEarlyExitCtrls {
     // If the rate cost of splitting into lower depths is greater than the percentage threshold of the cost of the parent block, skip testing the lower depth.
@@ -897,10 +892,10 @@ typedef struct ModeDecisionContext {
     uint8_t                      *avail_blk_flag;
 #if !REMOVE_TESTED_BLK_FLAG
     // tells whether this CU is tested in MD.
-    uint8_t         *tested_blk_flag;
+    uint8_t *tested_blk_flag;
 #endif
 #if CLN_NSQ
-    uint8_t* cost_avail;
+    uint8_t *cost_avail;
 #endif
     MdcSbData       *mdc_sb_array;
     MvReferenceFrame ref_frame_type_arr[MODE_CTX_REF_FRAMES];

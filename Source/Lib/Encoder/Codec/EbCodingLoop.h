@@ -24,6 +24,14 @@ extern "C" {
      * ModeDecisionSb
      *   performs CL (SB)
      *******************************************/
+#if CLN_SB_ARG_PASSING
+void svt_aom_mode_decision_sb_light_pd0(SequenceControlSet *scs, PictureControlSet *pcs, ModeDecisionContext *ctx,
+                                        const MdcSbData *const mdcResultTbPtr);
+void svt_aom_mode_decision_sb_light_pd1(SequenceControlSet *scs, PictureControlSet *pcs, ModeDecisionContext *ctx,
+                                        const MdcSbData *const mdcResultTbPtr);
+void svt_aom_mode_decision_sb(SequenceControlSet *scs, PictureControlSet *pcs, ModeDecisionContext *ctx,
+                              const MdcSbData *const mdcResultTbPtr);
+#else
 extern EbErrorType svt_aom_mode_decision_sb_light_pd0(SequenceControlSet *scs, PictureControlSet *pcs,
                                                       const MdcSbData *const mdcResultTbPtr, SuperBlock *sb_ptr,
                                                       uint16_t sb_origin_x, uint16_t sb_origin_y, uint32_t sb_addr,
@@ -36,6 +44,7 @@ extern EbErrorType svt_aom_mode_decision_sb(SequenceControlSet *scs, PictureCont
                                             const MdcSbData *const mdcResultTbPtr, SuperBlock *sb_ptr,
                                             uint16_t sb_origin_x, uint16_t sb_origin_y, uint32_t sb_addr,
                                             ModeDecisionContext *ctx);
+#endif
 extern void svt_aom_encode_decode(SequenceControlSet *scs, PictureControlSet *pcs, SuperBlock *sb_ptr, uint32_t sb_addr,
                                   uint32_t sb_origin_x, uint32_t sb_origin_y, EncDecContext *ed_ctx);
 extern EbErrorType svt_aom_encdec_update(SequenceControlSet *scs, PictureControlSet *pcs, SuperBlock *sb_ptr,

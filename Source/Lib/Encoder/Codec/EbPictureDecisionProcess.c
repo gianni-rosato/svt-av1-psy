@@ -84,7 +84,7 @@ static uint32_t calc_ahd(
 #if MCTF_OPT_HME_LEVEL
             ahd += ahd_per_region;
             if (ahd_per_region > (region_width * region_height))
-                (*active_region_cnt) ++;
+                (*active_region_cnt)++;
 #endif
 
         }
@@ -3455,7 +3455,7 @@ static EbErrorType derive_tf_window_params(
                         pd_ctx->mg_pictures_array[idx_1],
                         &active_region_cnt);
                     pd_ctx->mg_pictures_array[idx_1]->tf_active_region_present = active_region_cnt > 0;
-                } 
+                }
                 else
                     break;
 #else
@@ -3495,7 +3495,7 @@ static EbErrorType derive_tf_window_params(
                             pcs,
                             pcs_itr,
                             &active_region_cnt);
-                        pcs_itr-> tf_active_region_present = active_region_cnt > 0;
+                        pcs_itr->tf_active_region_present = active_region_cnt > 0;
 #endif
                     }
                     else
@@ -3583,10 +3583,10 @@ static EbErrorType derive_tf_window_params(
 #endif
 #if MCTF_ON_THE_FLY_PRUNING
                                 uint8_t active_region_cnt = 0;
-                                pcs_itr->tf_ahd_error_to_central = calc_ahd( 
+                                pcs_itr->tf_ahd_error_to_central = calc_ahd(
                                     scs,
                                     pcs,
-                                    pcs_itr, 
+                                    pcs_itr,
                                     &active_region_cnt);
                                 pcs_itr->tf_active_region_present = active_region_cnt > 0;
 #endif
@@ -3752,7 +3752,7 @@ static void mctf_frame(
         low_delay_release_tf_pictures(pd_ctx);
 }
 
-#if OPT_SAFE_LIMIT 
+#if OPT_SAFE_LIMIT
 bool get_similar_ref_brightness(PictureParentControlSet *pcs)
 {
     bool similar_brightness_refs = false;

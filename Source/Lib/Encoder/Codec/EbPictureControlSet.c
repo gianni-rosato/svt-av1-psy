@@ -1509,23 +1509,23 @@ EbErrorType sb_geom_init_pcs(SequenceControlSet *scs, PictureParentControlSet *p
             const BlockGeom *blk_geom = get_blk_geom_mds(md_scan_block_index);
             if (scs->over_boundary_block_mode == 1) {
 #if ALLOW_INCOMP_NSQ
-                const BlockGeom* sq_blk_geom = get_blk_geom_mds(blk_geom->sqi_mds);
-                uint8_t has_rows = (pcs->sb_geom[sb_index].org_y + sq_blk_geom->org_y + sq_blk_geom->bheight / 2 < encoding_height);
-                uint8_t has_cols = (pcs->sb_geom[sb_index].org_x + sq_blk_geom->org_x + sq_blk_geom->bwidth / 2 < encoding_width);
+                const BlockGeom *sq_blk_geom = get_blk_geom_mds(blk_geom->sqi_mds);
+                uint8_t has_rows = (pcs->sb_geom[sb_index].org_y + sq_blk_geom->org_y + sq_blk_geom->bheight / 2 <
+                                    encoding_height);
+                uint8_t has_cols = (pcs->sb_geom[sb_index].org_x + sq_blk_geom->org_x + sq_blk_geom->bwidth / 2 <
+                                    encoding_width);
 
                 // See AV1 spec section 5.11.4 for allowable blocks
-                if (has_rows && has_cols &&
-                    (pcs->sb_geom[sb_index].org_y + blk_geom->org_y < encoding_height) &&
+                if (has_rows && has_cols && (pcs->sb_geom[sb_index].org_y + blk_geom->org_y < encoding_height) &&
                     (pcs->sb_geom[sb_index].org_x + blk_geom->org_x < encoding_width)) {
                     pcs->sb_geom[sb_index].block_is_allowed[md_scan_block_index] = 1;
-                }
-                else if (blk_geom->shape == PART_H && has_cols && (pcs->sb_geom[sb_index].org_y + blk_geom->org_y < encoding_height)) {
+                } else if (blk_geom->shape == PART_H && has_cols &&
+                           (pcs->sb_geom[sb_index].org_y + blk_geom->org_y < encoding_height)) {
                     pcs->sb_geom[sb_index].block_is_allowed[md_scan_block_index] = 1;
-                }
-                else if (blk_geom->shape == PART_V && has_rows && (pcs->sb_geom[sb_index].org_x + blk_geom->org_x < encoding_width)) {
+                } else if (blk_geom->shape == PART_V && has_rows &&
+                           (pcs->sb_geom[sb_index].org_x + blk_geom->org_x < encoding_width)) {
                     pcs->sb_geom[sb_index].block_is_allowed[md_scan_block_index] = 1;
-                }
-                else {
+                } else {
                     pcs->sb_geom[sb_index].block_is_allowed[md_scan_block_index] = 0;
                 }
 #else

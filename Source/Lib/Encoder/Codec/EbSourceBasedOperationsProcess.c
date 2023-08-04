@@ -591,10 +591,9 @@ static void tpl_mc_flow_dispenser_sb_generic(EncodeContext *enc_ctx, SequenceCon
 
     const uint8_t disable_intra_pred = (pcs->tpl_ctrls.disable_intra_pred_nref && (pcs->tpl_data.is_ref == 0));
 #if FIX_TPL_LVLS
-    const uint8_t intra_dc_sad_path  = pcs->tpl_ctrls.use_sad_in_src_search &&
-                                        pcs->tpl_ctrls.intra_mode_end == DC_PRED;
+    const uint8_t intra_dc_sad_path = pcs->tpl_ctrls.use_sad_in_src_search && pcs->tpl_ctrls.intra_mode_end == DC_PRED;
 #else
-    const uint8_t intra_dc_sad_path  = pcs->tpl_ctrls.use_pred_sad_in_intra_search;
+    const uint8_t intra_dc_sad_path = pcs->tpl_ctrls.use_pred_sad_in_intra_search;
 #endif
 
     for (uint32_t blk_index = blk_start; blk_index <= blk_end; blk_index++) {
@@ -869,7 +868,7 @@ static void tpl_mc_flow_dispenser_sb_generic(EncodeContext *enc_ctx, SequenceCon
                     uint8_t subpel_mv = (best_mv.col & 0x7 || best_mv.row & 0x7);
                     if (subpel_mv) {
 #else
-                    if (pcs->tpl_ctrls.subpel_depth != FULL_PEL) {
+                if (pcs->tpl_ctrls.subpel_depth != FULL_PEL) {
 #endif
                         DECLARE_ALIGNED(32, uint16_t, tmp_dst_y[MAX_TPL_SAMPLES_PER_BLOCK]);
                         DECLARE_ALIGNED(16, uint8_t, seg_mask[2 * MAX_TPL_SAMPLES_PER_BLOCK]);
@@ -877,8 +876,8 @@ static void tpl_mc_flow_dispenser_sb_generic(EncodeContext *enc_ctx, SequenceCon
                         ConvolveParams conv_params_y = get_conv_params_no_round(
                             0, 0, 0, tmp_dst_y, MAX_TPL_SIZE, 0 /*is_compound*/, 8 /*bit_depth*/);
 #else
-                        ConvolveParams conv_params_y = get_conv_params_no_round(
-                            0, 0, 0, tmp_dst_y, 128, 0 /*is_compound*/, 8 /*bit_depth*/);
+                    ConvolveParams conv_params_y = get_conv_params_no_round(
+                        0, 0, 0, tmp_dst_y, 128, 0 /*is_compound*/, 8 /*bit_depth*/);
 #endif
 
                         svt_aom_enc_make_inter_predictor(
@@ -916,270 +915,293 @@ static void tpl_mc_flow_dispenser_sb_generic(EncodeContext *enc_ctx, SequenceCon
                         inter_cost = svt_nxm_sad_kernel_sub_sampled(
                             src_mb,
                             input_pic->stride_y,
-                            subpel_mv
-                            ? compensated_blk
-                            : ref_pic_ptr->buffer_y + ref_origin_index,
+                            subpel_mv ? compensated_blk : ref_pic_ptr->buffer_y + ref_origin_index,
                             subpel_mv ? size : ref_pic_ptr->stride_y,
                             size,
                             size);
-                    }
-                    else {
+                    } else {
 #endif
-                    svt_aom_subtract_block(size >> tpl_ctrls->subsample_tx,
-                                           size,
-                                           src_diff,
-                                           size << tpl_ctrls->subsample_tx,
-                                           src_mb,
-                                           input_pic->stride_y << tpl_ctrls->subsample_tx,
+                        svt_aom_subtract_block(size >> tpl_ctrls->subsample_tx,
+                                               size,
+                                               src_diff,
+                                               size << tpl_ctrls->subsample_tx,
+                                               src_mb,
+                                               input_pic->stride_y << tpl_ctrls->subsample_tx,
 #if FIX_TPL_LVLS
-                                           subpel_mv
+                                               subpel_mv
 #else
-                                           pcs->tpl_ctrls.subpel_depth != FULL_PEL
+                                       pcs->tpl_ctrls.subpel_depth != FULL_PEL
 #endif
-                                               ? compensated_blk
-                                               : ref_pic_ptr->buffer_y + ref_origin_index,
+                                                   ? compensated_blk
+                                                   : ref_pic_ptr->buffer_y + ref_origin_index,
 #if FIX_TPL_LVLS
-                                           (subpel_mv ? size : ref_pic_ptr->stride_y) << tpl_ctrls->subsample_tx);
+                                               (subpel_mv ? size : ref_pic_ptr->stride_y) << tpl_ctrls->subsample_tx);
 #else
-                                           (pcs->tpl_ctrls.subpel_depth != FULL_PEL ? size : ref_pic_ptr->stride_y)
-                                               << tpl_ctrls->subsample_tx);
+                                       (pcs->tpl_ctrls.subpel_depth != FULL_PEL ? size : ref_pic_ptr->stride_y)
+                                           << tpl_ctrls->subsample_tx);
 #endif
-                    EB_TRANS_COEFF_SHAPE pf_shape = pcs->tpl_ctrls.pf_shape;
-                    svt_av1_wht_fwd_txfm(src_diff, size << tpl_ctrls->subsample_tx, coeff, tx_size, pf_shape, 8, 0);
+                        EB_TRANS_COEFF_SHAPE pf_shape = pcs->tpl_ctrls.pf_shape;
+                        svt_av1_wht_fwd_txfm(src_diff, size << tpl_ctrls->subsample_tx, coeff, tx_size, pf_shape, 8, 0);
 
-                    inter_cost = svt_aom_satd(coeff, (size * size) >> tpl_ctrls->subsample_tx)
-                        << tpl_ctrls->subsample_tx;
-                }
-
-                if (inter_cost < best_inter_cost) {
-#if FIX_TPL_LVLS
-                    if (!pcs->tpl_ctrls.use_sad_in_src_search)
-                        EB_MEMCPY(best_coeff, coeff, sizeof(best_coeff));
-#else
-                    if (!pcs->tpl_ctrls.use_pred_sad_in_inter_search)
-                        EB_MEMCPY(best_coeff, coeff, sizeof(best_coeff));
-#endif
-
-                    best_ref_poc    = pcs->tpl_data.tpl_ref_ds_ptr_array[list_index][ref_pic_index].picture_number;
-                    best_rf_idx     = rf_idx;
-                    best_inter_cost = inter_cost;
-                    final_best_mv   = best_mv;
-                }
-            } // rf_idx
-
-            if (best_inter_cost < best_intra_cost)
-                best_mode = NEWMV;
-
-            if (best_mode == NEWMV) {
-                uint16_t eob = 0;
-
-#if FIX_TPL_LVLS
-                if (pcs->tpl_ctrls.use_sad_in_src_search) {
-#else
-                if (pcs->tpl_ctrls.use_pred_sad_in_inter_search) {
-#endif
-                    uint32_t list_index    = best_rf_idx < 4 ? 0 : 1;
-                    uint32_t ref_pic_index = best_rf_idx >= 4 ? (best_rf_idx - 4) : best_rf_idx;
-                    ref_pic_ptr            = pcs->tpl_data.tpl_ref_ds_ptr_array[list_index][ref_pic_index].picture_ptr;
-                    int32_t ref_origin_index = (int32_t)ref_pic_ptr->org_x +
-                        ((int32_t)mb_origin_x + (final_best_mv.col >> 3)) +
-                        ((int32_t)mb_origin_y + (final_best_mv.row >> 3) + (int32_t)ref_pic_ptr->org_y) *
-                            (int32_t)ref_pic_ptr->stride_y;
-#if FIX_TPL_LVLS
-                    // Need to do compensation for subpel, otherwise, can get pixels directly from REF picture
-                    uint8_t subpel_mv = (final_best_mv.col & 0x7 || final_best_mv.row & 0x7);
-                    if (subpel_mv) {
-                        DECLARE_ALIGNED(32, uint16_t, tmp_dst_y[MAX_TPL_SAMPLES_PER_BLOCK]);
-                        DECLARE_ALIGNED(16, uint8_t, seg_mask[2 * MAX_TPL_SAMPLES_PER_BLOCK]);
-                        ConvolveParams conv_params_y = get_conv_params_no_round(
-                            0, 0, 0, tmp_dst_y, MAX_TPL_SIZE, 0 /*is_compound*/, 8 /*bit_depth*/);
-
-                        svt_aom_enc_make_inter_predictor(
-                            scs,
-                            ref_pic_ptr->buffer_y + ref_pic_ptr->org_x +
-                            (ref_pic_ptr->org_y * ref_pic_ptr->stride_y),
-                            NULL, // src_ptr_2b,
-                            compensated_blk,
-                            (int16_t)mb_origin_y,
-                            (int16_t)mb_origin_x,
-                            final_best_mv,//best_mv,
-                            &scs->sf_identity,
-                            &conv_params_y,
-                            0, // interp_filters
-                            0, // interinter_comp
-                            seg_mask,
-                            ref_pic_ptr->width,
-                            ref_pic_ptr->height,
-                            bsize, // bwidth
-                            bsize, // bheight
-                            block_size,
-                            &xd,
-                            ref_pic_ptr->stride_y,
-                            size,
-                            0,
-                            0, // ss_y,
-                            0, // ss_x,
-                            8, // Always use 8bit for now
-                            0, // use_intrabc,
-                            0,
-                            0); // is16bit
+                        inter_cost = svt_aom_satd(coeff, (size * size) >> tpl_ctrls->subsample_tx)
+                            << tpl_ctrls->subsample_tx;
                     }
 
-                    svt_aom_subtract_block(size >> tpl_ctrls->subsample_tx,
-                        size,
-                        src_diff,
-                        size << tpl_ctrls->subsample_tx,
-                        src_mb,
-                        input_pic->stride_y << tpl_ctrls->subsample_tx,
-                        subpel_mv ? compensated_blk : ref_pic_ptr->buffer_y + ref_origin_index,
-                        (subpel_mv ? size : ref_pic_ptr->stride_y) << tpl_ctrls->subsample_tx);
+                    if (inter_cost < best_inter_cost) {
+#if FIX_TPL_LVLS
+                        if (!pcs->tpl_ctrls.use_sad_in_src_search)
+                            EB_MEMCPY(best_coeff, coeff, sizeof(best_coeff));
 #else
-                    svt_aom_subtract_block(size >> tpl_ctrls->subsample_tx,
-                                           size,
-                                           src_diff,
-                                           size << tpl_ctrls->subsample_tx,
-                                           src_mb,
-                                           input_pic->stride_y << tpl_ctrls->subsample_tx,
-                                           ref_pic_ptr->buffer_y + ref_origin_index,
-                                           ref_pic_ptr->stride_y << tpl_ctrls->subsample_tx);
+                if (!pcs->tpl_ctrls.use_pred_sad_in_inter_search)
+                    EB_MEMCPY(best_coeff, coeff, sizeof(best_coeff));
 #endif
-                    EB_TRANS_COEFF_SHAPE pf_shape = pcs->tpl_ctrls.pf_shape;
 
-                    svt_av1_wht_fwd_txfm(
-                        src_diff, size << tpl_ctrls->subsample_tx, best_coeff, tx_size, pf_shape, 8, 0);
+                        best_ref_poc    = pcs->tpl_data.tpl_ref_ds_ptr_array[list_index][ref_pic_index].picture_number;
+                        best_rf_idx     = rf_idx;
+                        best_inter_cost = inter_cost;
+                        final_best_mv   = best_mv;
+                    }
+                } // rf_idx
+
+                if (best_inter_cost < best_intra_cost)
+                    best_mode = NEWMV;
+
+                if (best_mode == NEWMV) {
+                    uint16_t eob = 0;
+
+#if FIX_TPL_LVLS
+                    if (pcs->tpl_ctrls.use_sad_in_src_search) {
+#else
+            if (pcs->tpl_ctrls.use_pred_sad_in_inter_search) {
+#endif
+                        uint32_t list_index    = best_rf_idx < 4 ? 0 : 1;
+                        uint32_t ref_pic_index = best_rf_idx >= 4 ? (best_rf_idx - 4) : best_rf_idx;
+                        ref_pic_ptr = pcs->tpl_data.tpl_ref_ds_ptr_array[list_index][ref_pic_index].picture_ptr;
+                        int32_t ref_origin_index = (int32_t)ref_pic_ptr->org_x +
+                            ((int32_t)mb_origin_x + (final_best_mv.col >> 3)) +
+                            ((int32_t)mb_origin_y + (final_best_mv.row >> 3) + (int32_t)ref_pic_ptr->org_y) *
+                                (int32_t)ref_pic_ptr->stride_y;
+#if FIX_TPL_LVLS
+                        // Need to do compensation for subpel, otherwise, can get pixels directly from REF picture
+                        uint8_t subpel_mv = (final_best_mv.col & 0x7 || final_best_mv.row & 0x7);
+                        if (subpel_mv) {
+                            DECLARE_ALIGNED(32, uint16_t, tmp_dst_y[MAX_TPL_SAMPLES_PER_BLOCK]);
+                            DECLARE_ALIGNED(16, uint8_t, seg_mask[2 * MAX_TPL_SAMPLES_PER_BLOCK]);
+                            ConvolveParams conv_params_y = get_conv_params_no_round(
+                                0, 0, 0, tmp_dst_y, MAX_TPL_SIZE, 0 /*is_compound*/, 8 /*bit_depth*/);
+
+                            svt_aom_enc_make_inter_predictor(scs,
+                                                             ref_pic_ptr->buffer_y + ref_pic_ptr->org_x +
+                                                                 (ref_pic_ptr->org_y * ref_pic_ptr->stride_y),
+                                                             NULL, // src_ptr_2b,
+                                                             compensated_blk,
+                                                             (int16_t)mb_origin_y,
+                                                             (int16_t)mb_origin_x,
+                                                             final_best_mv, //best_mv,
+                                                             &scs->sf_identity,
+                                                             &conv_params_y,
+                                                             0, // interp_filters
+                                                             0, // interinter_comp
+                                                             seg_mask,
+                                                             ref_pic_ptr->width,
+                                                             ref_pic_ptr->height,
+                                                             bsize, // bwidth
+                                                             bsize, // bheight
+                                                             block_size,
+                                                             &xd,
+                                                             ref_pic_ptr->stride_y,
+                                                             size,
+                                                             0,
+                                                             0, // ss_y,
+                                                             0, // ss_x,
+                                                             8, // Always use 8bit for now
+                                                             0, // use_intrabc,
+                                                             0,
+                                                             0); // is16bit
+                        }
+
+                        svt_aom_subtract_block(size >> tpl_ctrls->subsample_tx,
+                                               size,
+                                               src_diff,
+                                               size << tpl_ctrls->subsample_tx,
+                                               src_mb,
+                                               input_pic->stride_y << tpl_ctrls->subsample_tx,
+                                               subpel_mv ? compensated_blk : ref_pic_ptr->buffer_y + ref_origin_index,
+                                               (subpel_mv ? size : ref_pic_ptr->stride_y) << tpl_ctrls->subsample_tx);
+#else
+                svt_aom_subtract_block(size >> tpl_ctrls->subsample_tx,
+                                       size,
+                                       src_diff,
+                                       size << tpl_ctrls->subsample_tx,
+                                       src_mb,
+                                       input_pic->stride_y << tpl_ctrls->subsample_tx,
+                                       ref_pic_ptr->buffer_y + ref_origin_index,
+                                       ref_pic_ptr->stride_y << tpl_ctrls->subsample_tx);
+#endif
+                        EB_TRANS_COEFF_SHAPE pf_shape = pcs->tpl_ctrls.pf_shape;
+
+                        svt_av1_wht_fwd_txfm(
+                            src_diff, size << tpl_ctrls->subsample_tx, best_coeff, tx_size, pf_shape, 8, 0);
+                    }
+
+                    get_quantize_error(&mb_plane, best_coeff, qcoeff, dqcoeff, tx_size, &eob, &recon_error, &sse);
+
+                    int rate_cost        = pcs->tpl_ctrls.compute_rate ? rate_estimator(qcoeff, eob, tx_size) : 0;
+                    tpl_stats.srcrf_rate = (rate_cost << TPL_DEP_COST_SCALE_LOG2) << tpl_ctrls->subsample_tx;
+                    tpl_stats.srcrf_dist = (recon_error << (TPL_DEP_COST_SCALE_LOG2)) << tpl_ctrls->subsample_tx;
                 }
-
-                get_quantize_error(&mb_plane, best_coeff, qcoeff, dqcoeff, tx_size, &eob, &recon_error, &sse);
-
-                int rate_cost        = pcs->tpl_ctrls.compute_rate ? rate_estimator(qcoeff, eob, tx_size) : 0;
-                tpl_stats.srcrf_rate = (rate_cost << TPL_DEP_COST_SCALE_LOG2) << tpl_ctrls->subsample_tx;
-                tpl_stats.srcrf_dist = (recon_error << (TPL_DEP_COST_SCALE_LOG2)) << tpl_ctrls->subsample_tx;
+                if (scs->tpl_lad_mg > 0) {
+                    //store src based stats
+                    tpl_src_stats_buffer->srcrf_dist      = tpl_stats.srcrf_dist;
+                    tpl_src_stats_buffer->srcrf_rate      = tpl_stats.srcrf_rate;
+                    tpl_src_stats_buffer->mv              = final_best_mv;
+                    tpl_src_stats_buffer->best_rf_idx     = best_rf_idx;
+                    tpl_src_stats_buffer->ref_frame_poc   = best_ref_poc;
+                    tpl_src_stats_buffer->best_mode       = best_mode;
+                    tpl_src_stats_buffer->best_intra_mode = best_intra_mode;
+                }
             }
-            if (scs->tpl_lad_mg > 0) {
-                //store src based stats
-                tpl_src_stats_buffer->srcrf_dist      = tpl_stats.srcrf_dist;
-                tpl_src_stats_buffer->srcrf_rate      = tpl_stats.srcrf_rate;
-                tpl_src_stats_buffer->mv              = final_best_mv;
-                tpl_src_stats_buffer->best_rf_idx     = best_rf_idx;
-                tpl_src_stats_buffer->ref_frame_poc   = best_ref_poc;
-                tpl_src_stats_buffer->best_mode       = best_mode;
-                tpl_src_stats_buffer->best_intra_mode = best_intra_mode;
-            }
-        } else {
-            // get src based stats from previously computed data
-            tpl_stats.srcrf_dist = tpl_src_stats_buffer->srcrf_dist;
-            tpl_stats.srcrf_rate = tpl_src_stats_buffer->srcrf_rate;
-            final_best_mv        = tpl_src_stats_buffer->mv;
-            best_rf_idx          = tpl_src_stats_buffer->best_rf_idx;
-            best_ref_poc         = tpl_src_stats_buffer->ref_frame_poc;
-            best_mode            = tpl_src_stats_buffer->best_mode;
-            best_intra_mode      = tpl_src_stats_buffer->best_intra_mode;
-        }
-
-        //Recon path
-        if (best_mode == NEWMV) {
-            // inter recon with rec_picture as reference pic
-            uint64_t ref_poc       = best_ref_poc;
-            uint32_t list_index    = best_rf_idx < 4 ? 0 : 1;
-            uint32_t ref_pic_index = best_rf_idx >= 4 ? (best_rf_idx - 4) : best_rf_idx;
-
-            if (pcs->tpl_data.ref_in_slide_window[list_index][ref_pic_index]) {
-                uint32_t ref_frame_idx = 0;
-                while (ref_frame_idx < MAX_TPL_LA_SW && enc_ctx->poc_map_idx[ref_frame_idx] != ref_poc) ref_frame_idx++;
-                assert(ref_frame_idx != MAX_TPL_LA_SW);
-                ref_pic_ptr = enc_ctx->mc_flow_rec_picture_buffer[ref_frame_idx];
-            } else
-                ref_pic_ptr =
-                    (EbPictureBufferDesc *)pcs->tpl_data.tpl_ref_ds_ptr_array[list_index][ref_pic_index].picture_ptr;
-
-            int32_t ref_origin_index = (int32_t)ref_pic_ptr->org_x + ((int32_t)mb_origin_x + (final_best_mv.col >> 3)) +
-                ((int32_t)mb_origin_y + (final_best_mv.row >> 3) + (int32_t)ref_pic_ptr->org_y) *
-                    (int32_t)ref_pic_ptr->stride_y;
-#if !FIX_TPL_LVLS
-            for (int i = 0; i < (int)size; ++i)
-                EB_MEMCPY(dst_buffer + i * dst_buffer_stride,
-                          ref_pic_ptr->buffer_y + ref_origin_index + i * ref_pic_ptr->stride_y,
-                          sizeof(uint8_t) * (size));
-#endif
-            // REDO COMPENSATION WITH REF PIC (INSTEAD OF REF BEING THE SRC PIC)
-            // Need to do compensation for subpel, otherwise, can get pixels directly from RECON picture
-#if FIX_TPL_LVLS
-            uint8_t subpel_mv = (final_best_mv.col & 0x7 || final_best_mv.row & 0x7);
-            if (subpel_mv) {
-#else
-            if (pcs->tpl_ctrls.subpel_depth != FULL_PEL) {
-#endif
-                DECLARE_ALIGNED(32, uint16_t, tmp_dst_y[MAX_TPL_SAMPLES_PER_BLOCK]);
-                DECLARE_ALIGNED(16, uint8_t, seg_mask[2 * MAX_TPL_SAMPLES_PER_BLOCK]);
-#if FIX_TPL_LVLS
-                ConvolveParams conv_params_y = get_conv_params_no_round(
-                    0, 0, 0, tmp_dst_y, MAX_TPL_SIZE, 0 /*is_compound*/, 8 /*bit_depth*/);
-#else
-                ConvolveParams conv_params_y = get_conv_params_no_round(
-                    0, 0, 0, tmp_dst_y, 128, 0 /*is_compound*/, 8 /*bit_depth*/);
-#endif
-
-                svt_aom_enc_make_inter_predictor(
-                    scs,
-                    ref_pic_ptr->buffer_y + ref_pic_ptr->org_x + (ref_pic_ptr->org_y * ref_pic_ptr->stride_y),
-                    NULL, // src_ptr_2b,
-                    dst_buffer,
-                    (int16_t)mb_origin_y,
-                    (int16_t)mb_origin_x,
-                    final_best_mv,
-                    &scs->sf_identity,
-                    &conv_params_y,
-                    0, // interp_filters
-                    0, // interinter_comp
-                    seg_mask,
-                    ref_pic_ptr->width,
-                    ref_pic_ptr->height,
-                    bsize, // bwidth
-                    bsize, // bheight
-                    block_size,
-                    &xd,
-                    ref_pic_ptr->stride_y,
-                    dst_buffer_stride,
-                    0,
-                    0, // ss_y,
-                    0, // ss_x,
-                    8, // Always 8bit,
-                    0, // use_intrabc,
-                    0,
-                    0); // is16bit
-            }
-#if FIX_TPL_LVLS
             else {
+                // get src based stats from previously computed data
+                tpl_stats.srcrf_dist = tpl_src_stats_buffer->srcrf_dist;
+                tpl_stats.srcrf_rate = tpl_src_stats_buffer->srcrf_rate;
+                final_best_mv        = tpl_src_stats_buffer->mv;
+                best_rf_idx          = tpl_src_stats_buffer->best_rf_idx;
+                best_ref_poc         = tpl_src_stats_buffer->ref_frame_poc;
+                best_mode            = tpl_src_stats_buffer->best_mode;
+                best_intra_mode      = tpl_src_stats_buffer->best_intra_mode;
+            }
+
+            //Recon path
+            if (best_mode == NEWMV) {
+                // inter recon with rec_picture as reference pic
+                uint64_t ref_poc       = best_ref_poc;
+                uint32_t list_index    = best_rf_idx < 4 ? 0 : 1;
+                uint32_t ref_pic_index = best_rf_idx >= 4 ? (best_rf_idx - 4) : best_rf_idx;
+
+                if (pcs->tpl_data.ref_in_slide_window[list_index][ref_pic_index]) {
+                    uint32_t ref_frame_idx = 0;
+                    while (ref_frame_idx < MAX_TPL_LA_SW && enc_ctx->poc_map_idx[ref_frame_idx] != ref_poc)
+                        ref_frame_idx++;
+                    assert(ref_frame_idx != MAX_TPL_LA_SW);
+                    ref_pic_ptr = enc_ctx->mc_flow_rec_picture_buffer[ref_frame_idx];
+                } else
+                    ref_pic_ptr = (EbPictureBufferDesc *)pcs->tpl_data.tpl_ref_ds_ptr_array[list_index][ref_pic_index]
+                                      .picture_ptr;
+
+                int32_t ref_origin_index = (int32_t)ref_pic_ptr->org_x +
+                    ((int32_t)mb_origin_x + (final_best_mv.col >> 3)) +
+                    ((int32_t)mb_origin_y + (final_best_mv.row >> 3) + (int32_t)ref_pic_ptr->org_y) *
+                        (int32_t)ref_pic_ptr->stride_y;
+#if !FIX_TPL_LVLS
                 for (int i = 0; i < (int)size; ++i)
                     EB_MEMCPY(dst_buffer + i * dst_buffer_stride,
-                        ref_pic_ptr->buffer_y + ref_origin_index + i * ref_pic_ptr->stride_y,
-                        sizeof(uint8_t) * (size));
-
-            }
+                              ref_pic_ptr->buffer_y + ref_origin_index + i * ref_pic_ptr->stride_y,
+                              sizeof(uint8_t) * (size));
 #endif
-        } else {
-            // intra recon
+                    // REDO COMPENSATION WITH REF PIC (INSTEAD OF REF BEING THE SRC PIC)
+                    // Need to do compensation for subpel, otherwise, can get pixels directly from RECON picture
+#if FIX_TPL_LVLS
+                uint8_t subpel_mv = (final_best_mv.col & 0x7 || final_best_mv.row & 0x7);
+                if (subpel_mv) {
+#else
+        if (pcs->tpl_ctrls.subpel_depth != FULL_PEL) {
+#endif
+                    DECLARE_ALIGNED(32, uint16_t, tmp_dst_y[MAX_TPL_SAMPLES_PER_BLOCK]);
+                    DECLARE_ALIGNED(16, uint8_t, seg_mask[2 * MAX_TPL_SAMPLES_PER_BLOCK]);
+#if FIX_TPL_LVLS
+                    ConvolveParams conv_params_y = get_conv_params_no_round(
+                        0, 0, 0, tmp_dst_y, MAX_TPL_SIZE, 0 /*is_compound*/, 8 /*bit_depth*/);
+#else
+            ConvolveParams conv_params_y = get_conv_params_no_round(
+                0, 0, 0, tmp_dst_y, 128, 0 /*is_compound*/, 8 /*bit_depth*/);
+#endif
 
-            uint8_t *above_row;
-            uint8_t *left_col;
-            DECLARE_ALIGNED(MAX_TPL_SIZE, uint8_t, left_data[MAX_TX_SIZE * 2 + MAX_TPL_SIZE * 2]);
-            DECLARE_ALIGNED(MAX_TPL_SIZE, uint8_t, above_data[MAX_TX_SIZE * 2 + MAX_TPL_SIZE * 2]);
+                    svt_aom_enc_make_inter_predictor(
+                        scs,
+                        ref_pic_ptr->buffer_y + ref_pic_ptr->org_x + (ref_pic_ptr->org_y * ref_pic_ptr->stride_y),
+                        NULL, // src_ptr_2b,
+                        dst_buffer,
+                        (int16_t)mb_origin_y,
+                        (int16_t)mb_origin_x,
+                        final_best_mv,
+                        &scs->sf_identity,
+                        &conv_params_y,
+                        0, // interp_filters
+                        0, // interinter_comp
+                        seg_mask,
+                        ref_pic_ptr->width,
+                        ref_pic_ptr->height,
+                        bsize, // bwidth
+                        bsize, // bheight
+                        block_size,
+                        &xd,
+                        ref_pic_ptr->stride_y,
+                        dst_buffer_stride,
+                        0,
+                        0, // ss_y,
+                        0, // ss_x,
+                        8, // Always 8bit,
+                        0, // use_intrabc,
+                        0,
+                        0); // is16bit
+                }
+#if FIX_TPL_LVLS
+                else {
+                    for (int i = 0; i < (int)size; ++i)
+                        EB_MEMCPY(dst_buffer + i * dst_buffer_stride,
+                                  ref_pic_ptr->buffer_y + ref_origin_index + i * ref_pic_ptr->stride_y,
+                                  sizeof(uint8_t) * (size));
+                }
+#endif
+            } else {
+                // intra recon
 
-            above_row = above_data + MAX_TPL_SIZE;
-            left_col  = left_data + MAX_TPL_SIZE;
+                uint8_t *above_row;
+                uint8_t *left_col;
+                DECLARE_ALIGNED(MAX_TPL_SIZE, uint8_t, left_data[MAX_TX_SIZE * 2 + MAX_TPL_SIZE * 2]);
+                DECLARE_ALIGNED(MAX_TPL_SIZE, uint8_t, above_data[MAX_TX_SIZE * 2 + MAX_TPL_SIZE * 2]);
 
-            uint8_t *recon_buffer = recon_pic->buffer_y + dst_basic_offset;
+                above_row = above_data + MAX_TPL_SIZE;
+                left_col  = left_data + MAX_TPL_SIZE;
 
-            if (intra_dc_sad_path) {
-                const uint8_t mb_inside = (mb_origin_x + size <= pcs->enhanced_pic->width) &&
-                    (mb_origin_y + size <= pcs->enhanced_pic->height);
-                if (mb_origin_x > 0 && mb_origin_y > 0 && mb_inside)
-                    get_neighbor_samples_dc(recon_buffer + mb_origin_x + mb_origin_y * dst_buffer_stride,
-                                            dst_buffer_stride,
-                                            above_row,
-                                            left_col,
-                                            bsize);
-                else
+                uint8_t *recon_buffer = recon_pic->buffer_y + dst_basic_offset;
+
+                if (intra_dc_sad_path) {
+                    const uint8_t mb_inside = (mb_origin_x + size <= pcs->enhanced_pic->width) &&
+                        (mb_origin_y + size <= pcs->enhanced_pic->height);
+                    if (mb_origin_x > 0 && mb_origin_y > 0 && mb_inside)
+                        get_neighbor_samples_dc(recon_buffer + mb_origin_x + mb_origin_y * dst_buffer_stride,
+                                                dst_buffer_stride,
+                                                above_row,
+                                                left_col,
+                                                bsize);
+                    else
+                        svt_aom_update_neighbor_samples_array_open_loop_mb_recon(1, // use_top_righ_bottom_left
+                                                                                 1, // update_top_neighbor
+                                                                                 above_row - 1,
+                                                                                 left_col - 1,
+                                                                                 recon_buffer,
+                                                                                 dst_buffer_stride,
+                                                                                 mb_origin_x,
+                                                                                 mb_origin_y,
+                                                                                 size,
+                                                                                 size,
+                                                                                 input_pic->width,
+                                                                                 input_pic->height);
+
+                    svt_aom_intra_prediction_open_loop_mb(
+                        0,
+                        DC_PRED,
+                        mb_origin_x,
+                        mb_origin_y,
+                        tx_size_array[dispenser_search_level], // use full block for prediction
+                        above_row,
+                        left_col,
+                        dst_buffer,
+                        dst_buffer_stride);
+
+                } else {
                     svt_aom_update_neighbor_samples_array_open_loop_mb_recon(1, // use_top_righ_bottom_left
                                                                              1, // update_top_neighbor
                                                                              above_row - 1,
@@ -1192,131 +1214,106 @@ static void tpl_mc_flow_dispenser_sb_generic(EncodeContext *enc_ctx, SequenceCon
                                                                              size,
                                                                              input_pic->width,
                                                                              input_pic->height);
-
-                svt_aom_intra_prediction_open_loop_mb(
-                    0,
-                    DC_PRED,
-                    mb_origin_x,
-                    mb_origin_y,
-                    tx_size_array[dispenser_search_level], // use full block for prediction
-                    above_row,
-                    left_col,
-                    dst_buffer,
-                    dst_buffer_stride);
-
-            } else {
-                svt_aom_update_neighbor_samples_array_open_loop_mb_recon(1, // use_top_righ_bottom_left
-                                                                         1, // update_top_neighbor
-                                                                         above_row - 1,
-                                                                         left_col - 1,
-                                                                         recon_buffer,
-                                                                         dst_buffer_stride,
-                                                                         mb_origin_x,
-                                                                         mb_origin_y,
-                                                                         size,
-                                                                         size,
-                                                                         input_pic->width,
-                                                                         input_pic->height);
-                uint8_t ois_intra_mode = best_intra_mode;
-                int32_t p_angle        = av1_is_directional_mode((PredictionMode)ois_intra_mode)
-                           ? mode_to_angle_map[(PredictionMode)ois_intra_mode]
-                           : 0;
-                // Edge filter
-                if (av1_is_directional_mode((PredictionMode)ois_intra_mode)) {
-                    filter_intra_edge(NULL,
-                                      ois_intra_mode,
-                                      scs->max_input_luma_width,
-                                      scs->max_input_luma_height,
-                                      p_angle,
-                                      mb_origin_x,
-                                      mb_origin_y,
-                                      above_row,
-                                      left_col);
-                }
-                // PRED
-                svt_aom_intra_prediction_open_loop_mb(
-                    p_angle,
-                    ois_intra_mode,
-                    mb_origin_x,
-                    mb_origin_y,
-                    tx_size_array[dispenser_search_level], // use full block for prediction
-                    above_row,
-                    left_col,
-                    dst_buffer,
-                    dst_buffer_stride);
-            }
-        }
-
-        svt_aom_subtract_block(size >> tpl_ctrls->subsample_tx,
-                               size,
-                               src_diff,
-                               size << tpl_ctrls->subsample_tx,
-                               src_mb,
-                               input_pic->stride_y << tpl_ctrls->subsample_tx,
-                               dst_buffer,
-                               dst_buffer_stride << tpl_ctrls->subsample_tx);
-        EB_TRANS_COEFF_SHAPE pf_shape = pcs->tpl_ctrls.pf_shape;
-        svt_av1_wht_fwd_txfm(src_diff, size << tpl_ctrls->subsample_tx, coeff, tx_size, pf_shape, 8, 0);
-
-        uint16_t eob = 0;
-
-        get_quantize_error(&mb_plane, coeff, qcoeff, dqcoeff, tx_size, &eob, &recon_error, &sse);
-        int rate_cost = pcs->tpl_ctrls.compute_rate ? rate_estimator(qcoeff, eob, tx_size) : 0;
-
-        if (!disable_intra_pred || (pcs->tpl_data.is_ref)) {
-            if (eob) {
-                svt_aom_inv_transform_recon8bit((int32_t *)dqcoeff,
-                                                dst_buffer,
-                                                dst_buffer_stride << tpl_ctrls->subsample_tx,
-                                                dst_buffer,
-                                                dst_buffer_stride << tpl_ctrls->subsample_tx,
-                                                tx_size,
-                                                DCT_DCT,
-                                                PLANE_TYPE_Y,
-                                                eob,
-                                                0);
-
-                // If subsampling is used for the TX, need to populate the missing rows in recon with a copy of the neighbouring rows
-                if (tpl_ctrls->subsample_tx == 2) {
-                    for (int i = 0; i < (int)size; i += 4) {
-                        EB_MEMCPY(dst_buffer + (i + 1) * dst_buffer_stride,
-                                  dst_buffer + i * dst_buffer_stride,
-                                  sizeof(uint8_t) * (size));
-                        EB_MEMCPY(dst_buffer + (i + 2) * dst_buffer_stride,
-                                  dst_buffer + i * dst_buffer_stride,
-                                  sizeof(uint8_t) * (size));
-                        EB_MEMCPY(dst_buffer + (i + 3) * dst_buffer_stride,
-                                  dst_buffer + i * dst_buffer_stride,
-                                  sizeof(uint8_t) * (size));
+                    uint8_t ois_intra_mode = best_intra_mode;
+                    int32_t p_angle        = av1_is_directional_mode((PredictionMode)ois_intra_mode)
+                               ? mode_to_angle_map[(PredictionMode)ois_intra_mode]
+                               : 0;
+                    // Edge filter
+                    if (av1_is_directional_mode((PredictionMode)ois_intra_mode)) {
+                        filter_intra_edge(NULL,
+                                          ois_intra_mode,
+                                          scs->max_input_luma_width,
+                                          scs->max_input_luma_height,
+                                          p_angle,
+                                          mb_origin_x,
+                                          mb_origin_y,
+                                          above_row,
+                                          left_col);
                     }
-                } else if (tpl_ctrls->subsample_tx == 1) {
-                    for (int i = 0; i < (int)size; i += 2) {
-                        EB_MEMCPY(dst_buffer + (i + 1) * dst_buffer_stride,
-                                  dst_buffer + i * dst_buffer_stride,
-                                  sizeof(uint8_t) * (size));
+                    // PRED
+                    svt_aom_intra_prediction_open_loop_mb(
+                        p_angle,
+                        ois_intra_mode,
+                        mb_origin_x,
+                        mb_origin_y,
+                        tx_size_array[dispenser_search_level], // use full block for prediction
+                        above_row,
+                        left_col,
+                        dst_buffer,
+                        dst_buffer_stride);
+                }
+            }
+
+            svt_aom_subtract_block(size >> tpl_ctrls->subsample_tx,
+                                   size,
+                                   src_diff,
+                                   size << tpl_ctrls->subsample_tx,
+                                   src_mb,
+                                   input_pic->stride_y << tpl_ctrls->subsample_tx,
+                                   dst_buffer,
+                                   dst_buffer_stride << tpl_ctrls->subsample_tx);
+            EB_TRANS_COEFF_SHAPE pf_shape = pcs->tpl_ctrls.pf_shape;
+            svt_av1_wht_fwd_txfm(src_diff, size << tpl_ctrls->subsample_tx, coeff, tx_size, pf_shape, 8, 0);
+
+            uint16_t eob = 0;
+
+            get_quantize_error(&mb_plane, coeff, qcoeff, dqcoeff, tx_size, &eob, &recon_error, &sse);
+            int rate_cost = pcs->tpl_ctrls.compute_rate ? rate_estimator(qcoeff, eob, tx_size) : 0;
+
+            if (!disable_intra_pred || (pcs->tpl_data.is_ref)) {
+                if (eob) {
+                    svt_aom_inv_transform_recon8bit((int32_t *)dqcoeff,
+                                                    dst_buffer,
+                                                    dst_buffer_stride << tpl_ctrls->subsample_tx,
+                                                    dst_buffer,
+                                                    dst_buffer_stride << tpl_ctrls->subsample_tx,
+                                                    tx_size,
+                                                    DCT_DCT,
+                                                    PLANE_TYPE_Y,
+                                                    eob,
+                                                    0);
+
+                    // If subsampling is used for the TX, need to populate the missing rows in recon with a copy of the neighbouring rows
+                    if (tpl_ctrls->subsample_tx == 2) {
+                        for (int i = 0; i < (int)size; i += 4) {
+                            EB_MEMCPY(dst_buffer + (i + 1) * dst_buffer_stride,
+                                      dst_buffer + i * dst_buffer_stride,
+                                      sizeof(uint8_t) * (size));
+                            EB_MEMCPY(dst_buffer + (i + 2) * dst_buffer_stride,
+                                      dst_buffer + i * dst_buffer_stride,
+                                      sizeof(uint8_t) * (size));
+                            EB_MEMCPY(dst_buffer + (i + 3) * dst_buffer_stride,
+                                      dst_buffer + i * dst_buffer_stride,
+                                      sizeof(uint8_t) * (size));
+                        }
+                    } else if (tpl_ctrls->subsample_tx == 1) {
+                        for (int i = 0; i < (int)size; i += 2) {
+                            EB_MEMCPY(dst_buffer + (i + 1) * dst_buffer_stride,
+                                      dst_buffer + i * dst_buffer_stride,
+                                      sizeof(uint8_t) * (size));
+                        }
                     }
                 }
             }
-        }
 
-        tpl_stats.recrf_dist = (recon_error << (TPL_DEP_COST_SCALE_LOG2)) << tpl_ctrls->subsample_tx;
-        tpl_stats.recrf_rate = (rate_cost << TPL_DEP_COST_SCALE_LOG2) << tpl_ctrls->subsample_tx;
-        if (best_mode != NEWMV) {
-            tpl_stats.srcrf_dist = (recon_error << (TPL_DEP_COST_SCALE_LOG2)) << tpl_ctrls->subsample_tx;
-            tpl_stats.srcrf_rate = (rate_cost << TPL_DEP_COST_SCALE_LOG2) << tpl_ctrls->subsample_tx;
-        }
+            tpl_stats.recrf_dist = (recon_error << (TPL_DEP_COST_SCALE_LOG2)) << tpl_ctrls->subsample_tx;
+            tpl_stats.recrf_rate = (rate_cost << TPL_DEP_COST_SCALE_LOG2) << tpl_ctrls->subsample_tx;
+            if (best_mode != NEWMV) {
+                tpl_stats.srcrf_dist = (recon_error << (TPL_DEP_COST_SCALE_LOG2)) << tpl_ctrls->subsample_tx;
+                tpl_stats.srcrf_rate = (rate_cost << TPL_DEP_COST_SCALE_LOG2) << tpl_ctrls->subsample_tx;
+            }
 
-        tpl_stats.recrf_dist = AOMMAX(tpl_stats.srcrf_dist, tpl_stats.recrf_dist);
-        tpl_stats.recrf_rate = AOMMAX(tpl_stats.srcrf_rate, tpl_stats.recrf_rate);
-        if (pcs->tpl_data.tpl_slice_type != I_SLICE && best_rf_idx != -1) {
-            tpl_stats.mv            = final_best_mv;
-            tpl_stats.ref_frame_poc = best_ref_poc;
-        }
+            tpl_stats.recrf_dist = AOMMAX(tpl_stats.srcrf_dist, tpl_stats.recrf_dist);
+            tpl_stats.recrf_rate = AOMMAX(tpl_stats.srcrf_rate, tpl_stats.recrf_rate);
+            if (pcs->tpl_data.tpl_slice_type != I_SLICE && best_rf_idx != -1) {
+                tpl_stats.mv            = final_best_mv;
+                tpl_stats.ref_frame_poc = best_ref_poc;
+            }
 
-        // Motion flow dependency dispenser.
-        result_model_store(pcs, &tpl_stats, mb_origin_x, mb_origin_y, size);
+            // Motion flow dependency dispenser.
+            result_model_store(pcs, &tpl_stats, mb_origin_x, mb_origin_y, size);
+        }
     }
-}
 
 #define TPL_TASKS_MDC_INPUT 0
 #define TPL_TASKS_ENCDEC_INPUT 1
@@ -1568,14 +1565,13 @@ static int round_floor(int ref_pos, int bsize_pix) {
 
 static int64_t delta_rate_cost(int64_t delta_rate, int64_t recrf_dist, int64_t srcrf_dist, int pix_num) {
 #if CLN_TPL_FUNCS
-    double beta = (double)srcrf_dist / recrf_dist;
+    double  beta      = (double)srcrf_dist / recrf_dist;
     int64_t rate_cost = delta_rate;
 
-    if (srcrf_dist <= 128) return rate_cost;
+    if (srcrf_dist <= 128)
+        return rate_cost;
 
-    double dr =
-        (double)(delta_rate >> (TPL_DEP_COST_SCALE_LOG2 + AV1_PROB_COST_SHIFT)) /
-        pix_num;
+    double dr = (double)(delta_rate >> (TPL_DEP_COST_SCALE_LOG2 + AV1_PROB_COST_SHIFT)) / pix_num;
 
     double log_den = log(beta) / log(2.0) + 2.0 * dr;
 
@@ -1745,7 +1741,7 @@ void svt_aom_generate_r0beta(PictureParentControlSet *pcs) {
     const int32_t mi_cols_sr = ((pcs->enhanced_unscaled_pic->width + 15) / 16) << 2; // picture column boundary
     const int32_t mi_rows    = ((pcs->enhanced_unscaled_pic->height + 15) / 16) << 2; // picture row boundary
 #if OPT_ENABLE_2L_INCOMP
-    int64_t count = 0;
+    int64_t count    = 0;
     int64_t max_dist = 0;
 #endif
 
@@ -1767,10 +1763,10 @@ void svt_aom_generate_r0beta(PictureParentControlSet *pcs) {
 
     mc_dep_cost_base = (recrf_dist_base_sum << RDDIV_BITS) + mc_dep_delta_base_sum;
     if (mc_dep_cost_base != 0) {
-        pcs->r0           = ((double)(recrf_dist_base_sum << (RDDIV_BITS))) / mc_dep_cost_base;
+        pcs->r0 = ((double)(recrf_dist_base_sum << (RDDIV_BITS))) / mc_dep_cost_base;
 #if OPT_ENABLE_2L_INCOMP
-        // If there are outlier blocks responsible for most of the propagation, disable QPS as the result may
-        // not be reliable.
+        // If there are outlier blocks responsible for most of the propagation, set r0 to 1.0 to indicate
+        // no error propagation, as the result may not be reliable.
         if (max_dist > (mc_dep_delta_base_sum / count) * 100 && max_dist > (mc_dep_delta_base_sum * 9 / 10))
             pcs->r0 = 1.0;
 #endif

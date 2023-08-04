@@ -49,12 +49,12 @@ void svt_aom_inv_transform_recon_wrapper(uint8_t *pred_buffer, uint32_t pred_off
                                          TxType transform_type, PlaneType component_type, uint32_t eob);
 
 #if CLN_NSQ
-uint32_t svt_aom_d2_inter_depth_block_decision(PictureControlSet* pcs,
+uint32_t svt_aom_d2_inter_depth_block_decision(PictureControlSet *pcs,
 #else
 extern uint32_t svt_aom_d2_inter_depth_block_decision(SequenceControlSet *scs, PictureControlSet *pcs,
 #endif
 #if ALLOW_INCOMP_NSQ
-                                                      ModeDecisionContext *ctx, uint32_t blk_mds);
+                                               ModeDecisionContext *ctx, uint32_t blk_mds);
 #else
                                                       ModeDecisionContext *ctx, uint32_t blk_mds, uint32_t sb_addr);
 #endif
@@ -66,9 +66,9 @@ void        svt_aom_compute_depth_costs_md_skip_light_pd0(PictureParentControlSe
                                                           uint32_t above_depth_mds, uint32_t step, uint64_t *above_depth_cost,
                                                           uint64_t *curr_depth_cost);
 #if ALLOW_INCOMP_NSQ
-uint64_t    svt_aom_d1_non_square_block_decision(PictureControlSet* pcs, ModeDecisionContext* ctx, uint32_t d1_block_itr);
+uint64_t svt_aom_d1_non_square_block_decision(PictureControlSet *pcs, ModeDecisionContext *ctx, uint32_t d1_block_itr);
 #else
-uint64_t    svt_aom_d1_non_square_block_decision(ModeDecisionContext *ctx, uint32_t d1_block_itr);
+uint64_t        svt_aom_d1_non_square_block_decision(ModeDecisionContext *ctx, uint32_t d1_block_itr);
 #endif
 
 static const int av1_get_tx_scale_tab[TX_SIZES_ALL] = {0, 0, 0, 1, 2, 0, 0, 0, 0, 1, 1, 2, 2, 0, 0, 0, 0, 1, 1};

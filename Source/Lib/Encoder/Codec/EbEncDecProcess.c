@@ -1792,8 +1792,7 @@ void set_block_based_depth_refinement_controls(ModeDecisionContext *ctx, uint8_t
         depth_refinement_ctrls->parent_to_current_th            = MAX_SIGNED_VALUE;
         depth_refinement_ctrls->sub_to_current_th               = MAX_SIGNED_VALUE;
 #if OPT_DEPTH_REFIN_PARENT_ABS_TH
-        // parent_max_cost_th_mult not relevant when parent is never skipped by parent_to_current_th
-        depth_refinement_ctrls->parent_max_cost_th_mult         = 10;
+        depth_refinement_ctrls->parent_max_cost_th_mult = 10;
 #endif
         depth_refinement_ctrls->cost_band_based_modulation      = 0;
         depth_refinement_ctrls->up_to_2_depth                   = 0;
@@ -1807,7 +1806,7 @@ void set_block_based_depth_refinement_controls(ModeDecisionContext *ctx, uint8_t
         depth_refinement_ctrls->parent_to_current_th            = 50;
         depth_refinement_ctrls->sub_to_current_th               = 50;
 #if OPT_DEPTH_REFIN_PARENT_ABS_TH
-        depth_refinement_ctrls->parent_max_cost_th_mult         = 10;
+        depth_refinement_ctrls->parent_max_cost_th_mult = 10;
 #endif
         depth_refinement_ctrls->cost_band_based_modulation      = 0;
         depth_refinement_ctrls->up_to_2_depth                   = 0;
@@ -1822,7 +1821,7 @@ void set_block_based_depth_refinement_controls(ModeDecisionContext *ctx, uint8_t
         depth_refinement_ctrls->parent_to_current_th            = 50;
         depth_refinement_ctrls->sub_to_current_th               = 50;
 #if OPT_DEPTH_REFIN_PARENT_ABS_TH
-        depth_refinement_ctrls->parent_max_cost_th_mult         = 10;
+        depth_refinement_ctrls->parent_max_cost_th_mult = 10;
 #endif
         depth_refinement_ctrls->cost_band_based_modulation      = 1;
         depth_refinement_ctrls->max_cost_multiplier             = 400;
@@ -1842,7 +1841,7 @@ void set_block_based_depth_refinement_controls(ModeDecisionContext *ctx, uint8_t
         depth_refinement_ctrls->parent_to_current_th            = 50;
         depth_refinement_ctrls->sub_to_current_th               = 50;
 #if OPT_DEPTH_REFIN_PARENT_ABS_TH
-        depth_refinement_ctrls->parent_max_cost_th_mult         = 10;
+        depth_refinement_ctrls->parent_max_cost_th_mult = 10;
 #endif
         depth_refinement_ctrls->cost_band_based_modulation      = 1;
         depth_refinement_ctrls->max_cost_multiplier             = 400;
@@ -1862,7 +1861,7 @@ void set_block_based_depth_refinement_controls(ModeDecisionContext *ctx, uint8_t
         depth_refinement_ctrls->parent_to_current_th            = 25;
         depth_refinement_ctrls->sub_to_current_th               = 25;
 #if OPT_DEPTH_REFIN_PARENT_ABS_TH
-        depth_refinement_ctrls->parent_max_cost_th_mult         = 10;
+        depth_refinement_ctrls->parent_max_cost_th_mult = 10;
 #endif
         depth_refinement_ctrls->cost_band_based_modulation      = 1;
         depth_refinement_ctrls->max_cost_multiplier             = 400;
@@ -1882,7 +1881,7 @@ void set_block_based_depth_refinement_controls(ModeDecisionContext *ctx, uint8_t
         depth_refinement_ctrls->parent_to_current_th            = 20;
         depth_refinement_ctrls->sub_to_current_th               = 20;
 #if OPT_DEPTH_REFIN_PARENT_ABS_TH
-        depth_refinement_ctrls->parent_max_cost_th_mult         = 10;
+        depth_refinement_ctrls->parent_max_cost_th_mult = 10;
 #endif
         depth_refinement_ctrls->cost_band_based_modulation      = 1;
         depth_refinement_ctrls->max_cost_multiplier             = 400;
@@ -1902,7 +1901,7 @@ void set_block_based_depth_refinement_controls(ModeDecisionContext *ctx, uint8_t
         depth_refinement_ctrls->parent_to_current_th            = 15;
         depth_refinement_ctrls->sub_to_current_th               = 15;
 #if OPT_DEPTH_REFIN_PARENT_ABS_TH
-        depth_refinement_ctrls->parent_max_cost_th_mult         = 0;
+        depth_refinement_ctrls->parent_max_cost_th_mult = 0;
 #endif
         depth_refinement_ctrls->cost_band_based_modulation      = 1;
         depth_refinement_ctrls->max_cost_multiplier             = 400;
@@ -1922,7 +1921,7 @@ void set_block_based_depth_refinement_controls(ModeDecisionContext *ctx, uint8_t
         depth_refinement_ctrls->parent_to_current_th            = 10;
         depth_refinement_ctrls->sub_to_current_th               = 10;
 #if OPT_DEPTH_REFIN_PARENT_ABS_TH
-        depth_refinement_ctrls->parent_max_cost_th_mult         = 0;
+        depth_refinement_ctrls->parent_max_cost_th_mult = 0;
 #endif
         depth_refinement_ctrls->cost_band_based_modulation      = 1;
         depth_refinement_ctrls->max_cost_multiplier             = 400;
@@ -1942,7 +1941,7 @@ void set_block_based_depth_refinement_controls(ModeDecisionContext *ctx, uint8_t
         depth_refinement_ctrls->parent_to_current_th            = 5;
         depth_refinement_ctrls->sub_to_current_th               = 5;
 #if OPT_DEPTH_REFIN_PARENT_ABS_TH
-        depth_refinement_ctrls->parent_max_cost_th_mult         = 0;
+        depth_refinement_ctrls->parent_max_cost_th_mult = 0;
 #endif
         depth_refinement_ctrls->cost_band_based_modulation      = 1;
         depth_refinement_ctrls->max_cost_multiplier             = 400;
@@ -1962,7 +1961,7 @@ void set_block_based_depth_refinement_controls(ModeDecisionContext *ctx, uint8_t
         depth_refinement_ctrls->parent_to_current_th            = 5;
         depth_refinement_ctrls->sub_to_current_th               = 5;
 #if OPT_DEPTH_REFIN_PARENT_ABS_TH
-        depth_refinement_ctrls->parent_max_cost_th_mult         = 0;
+        depth_refinement_ctrls->parent_max_cost_th_mult = 0;
 #endif
         depth_refinement_ctrls->cost_band_based_modulation      = 1;
         depth_refinement_ctrls->max_cost_multiplier             = 800;
@@ -1982,7 +1981,7 @@ void set_block_based_depth_refinement_controls(ModeDecisionContext *ctx, uint8_t
         depth_refinement_ctrls->parent_to_current_th            = 5;
         depth_refinement_ctrls->sub_to_current_th               = -50;
 #if OPT_DEPTH_REFIN_PARENT_ABS_TH
-        depth_refinement_ctrls->parent_max_cost_th_mult         = 0;
+        depth_refinement_ctrls->parent_max_cost_th_mult = 0;
 #endif
         depth_refinement_ctrls->cost_band_based_modulation      = 1;
         depth_refinement_ctrls->max_cost_multiplier             = 800;
@@ -2002,7 +2001,7 @@ void set_block_based_depth_refinement_controls(ModeDecisionContext *ctx, uint8_t
         depth_refinement_ctrls->parent_to_current_th            = -25;
         depth_refinement_ctrls->sub_to_current_th               = -50;
 #if OPT_DEPTH_REFIN_PARENT_ABS_TH
-        depth_refinement_ctrls->parent_max_cost_th_mult         = 0;
+        depth_refinement_ctrls->parent_max_cost_th_mult = 0;
 #endif
         depth_refinement_ctrls->cost_band_based_modulation      = 1;
         depth_refinement_ctrls->max_cost_multiplier             = 800;
@@ -2024,8 +2023,7 @@ void set_block_based_depth_refinement_controls(ModeDecisionContext *ctx, uint8_t
         depth_refinement_ctrls->parent_to_current_th            = MIN_SIGNED_VALUE;
         depth_refinement_ctrls->sub_to_current_th               = MIN_SIGNED_VALUE;
 #if OPT_DEPTH_REFIN_PARENT_ABS_TH
-        // parent_max_cost_th_mult not relevant when parent is always skipped by parent_to_current_th
-        depth_refinement_ctrls->parent_max_cost_th_mult         = 0;
+        depth_refinement_ctrls->parent_max_cost_th_mult = 0;
 #endif
         depth_refinement_ctrls->cost_band_based_modulation      = 0;
         depth_refinement_ctrls->up_to_2_depth                   = 0;
@@ -2046,8 +2044,13 @@ static void copy_neighbour_arrays_light_pd0(PictureControlSet *pcs, ModeDecision
                            64,
                            NEIGHBOR_ARRAY_UNIT_FULL_MASK);
 }
+#if CLN_SB_ARG_PASSING
+void svt_aom_copy_neighbour_arrays(PictureControlSet *pcs, ModeDecisionContext *ctx, uint32_t src_idx, uint32_t dst_idx,
+                                   uint32_t blk_mds);
+#else
 void svt_aom_copy_neighbour_arrays(PictureControlSet *pcs, ModeDecisionContext *ctx, uint32_t src_idx, uint32_t dst_idx,
                                    uint32_t blk_mds, uint32_t sb_org_x, uint32_t sb_org_y);
+#endif
 uint32_t svt_aom_get_tot_1d_blks(struct ModeDecisionContext *ctx, const int32_t sq_size, const uint8_t disallow_nsq);
 static INLINE uint32_t get_default_tot_d1_blocks(ModeDecisionContext *ctx, const BlockGeom *blk_geom,
                                                  const uint8_t disallow_nsq) {
@@ -2465,7 +2468,7 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs, PictureContro
 
     blk_index = 0;
     while (blk_index < scs->max_block_cnt) {
-        const BlockGeom* blk_geom = get_blk_geom_mds(blk_index);
+        const BlockGeom *blk_geom = get_blk_geom_mds(blk_index);
         // if the parent square is inside inject this block
         const uint8_t is_blk_allowed = pcs->slice_type != I_SLICE ? 1 : (blk_geom->sq_size < 128) ? 1 : 0;
 
@@ -3466,8 +3469,12 @@ void *svt_aom_mode_decision_kernel(void *input_ptr) {
 
                                 // Build the t=0 cand_block_array
                                 build_starting_cand_block_array(scs, pcs, ed_ctx->md_ctx);
+#if CLN_SB_ARG_PASSING
+                                svt_aom_mode_decision_sb_light_pd0(scs, pcs, ed_ctx->md_ctx, mdc_ptr);
+#else
                                 svt_aom_mode_decision_sb_light_pd0(
                                     scs, pcs, mdc_ptr, sb_ptr, sb_origin_x, sb_origin_y, sb_index, ed_ctx->md_ctx);
+#endif
                                 // Re-build mdc_blk_ptr for the 2nd PD Pass [PD_PASS_1]
                                 // Reset neighnor information to current SB @ position (0,0)
                                 if (!ed_ctx->md_ctx->skip_intra)
@@ -3486,25 +3493,37 @@ void *svt_aom_mode_decision_kernel(void *input_ptr) {
                                                               ed_ctx->md_ctx,
                                                               MD_NEIGHBOR_ARRAY_INDEX,
                                                               MULTI_STAGE_PD_NEIGHBOR_ARRAY_INDEX,
+#if CLN_SB_ARG_PASSING
+                                                              0);
+#else
                                                               0,
                                                               sb_origin_x,
                                                               sb_origin_y);
+#endif
 
                                 // Build the t=0 cand_block_array
                                 build_starting_cand_block_array(scs, pcs, ed_ctx->md_ctx);
                                 // PD0 MD Tool(s) : ME_MV(s) as INTER candidate(s), DC as INTRA candidate, luma only, Frequency domain SSE,
                                 // no fast rate (no MVP table generation), MDS0 then MDS3, reduced NIC(s), 1 ref per list,..
+#if CLN_SB_ARG_PASSING
+                                svt_aom_mode_decision_sb(scs, pcs, ed_ctx->md_ctx, mdc_ptr);
+#else
                                 svt_aom_mode_decision_sb(
                                     scs, pcs, mdc_ptr, sb_ptr, sb_origin_x, sb_origin_y, sb_index, ed_ctx->md_ctx);
+#endif
                                 // Re-build mdc_blk_ptr for the 2nd PD Pass [PD_PASS_1]
                                 // Reset neighnor information to current SB @ position (0,0)
                                 svt_aom_copy_neighbour_arrays(pcs,
                                                               ed_ctx->md_ctx,
                                                               MULTI_STAGE_PD_NEIGHBOR_ARRAY_INDEX,
                                                               MD_NEIGHBOR_ARRAY_INDEX,
+#if CLN_SB_ARG_PASSING
+                                                              0);
+#else
                                                               0,
                                                               sb_origin_x,
                                                               sb_origin_y);
+#endif
                             }
                             // This classifier is used for only pd0_level 0 and pd0_level 1
                             // where the cnt_nz_coeff is derived @ PD0
@@ -3542,18 +3561,25 @@ void *svt_aom_mode_decision_kernel(void *input_ptr) {
                         else
                             // Build the t=0 cand_block_array
                             build_starting_cand_block_array(scs, pcs, ed_ctx->md_ctx);
-                        // [PD_PASS_1] Mode Decision - Obtain the final partitioning decision using more accurate info
-                        // than previous stages.  Reduce the total number of partitions to 1.
-                        // Input : mdc_blk_ptr built @ PD0 refinement
-                        // Output: md_blk_arr_nsq reduced set of block(s)
+                            // [PD_PASS_1] Mode Decision - Obtain the final partitioning decision using more accurate info
+                            // than previous stages.  Reduce the total number of partitions to 1.
+                            // Input : mdc_blk_ptr built @ PD0 refinement
+                            // Output: md_blk_arr_nsq reduced set of block(s)
 
-                        // PD1 MD Tool(s): default MD Tool(s)
+                            // PD1 MD Tool(s): default MD Tool(s)
+#if CLN_SB_ARG_PASSING
+                        if (md_ctx->lpd1_ctrls.pd1_level > REGULAR_PD1)
+                            svt_aom_mode_decision_sb_light_pd1(scs, pcs, ed_ctx->md_ctx, mdc_ptr);
+                        else
+                            svt_aom_mode_decision_sb(scs, pcs, ed_ctx->md_ctx, mdc_ptr);
+#else
                         if (md_ctx->lpd1_ctrls.pd1_level > REGULAR_PD1)
                             svt_aom_mode_decision_sb_light_pd1(
                                 scs, pcs, mdc_ptr, sb_ptr, sb_origin_x, sb_origin_y, sb_index, ed_ctx->md_ctx);
                         else
                             svt_aom_mode_decision_sb(
                                 scs, pcs, mdc_ptr, sb_ptr, sb_origin_x, sb_origin_y, sb_index, ed_ctx->md_ctx);
+#endif
                         // if (/*ppcs->is_ref &&*/ md_ctx->hbd_md == 0 &&
                         // scs->static_config.encoder_bit_depth > EB_EIGHT_BIT)
                         //     md_ctx->bypass_encdec = 0;

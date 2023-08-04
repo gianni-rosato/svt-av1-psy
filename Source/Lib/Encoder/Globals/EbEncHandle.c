@@ -436,6 +436,12 @@ static EbErrorType load_default_buffer_configuration_settings(
         ((scs->max_input_luma_width + 64) / 128) :
         ((scs->max_input_luma_width + 32) / 64);
 
+#if OPT_MULTI_BUFFER_CONFIG
+    me_seg_h = (core_count == SINGLE_CORE_COUNT) ? 1 :
+        (((scs->max_input_luma_height + 32) / BLOCK_SIZE_64) < 6) ? 1 : 8;
+    me_seg_w = (core_count == SINGLE_CORE_COUNT) ? 1 :
+        (((scs->max_input_luma_width + 32) / BLOCK_SIZE_64) < 10) ? 1 : 6;
+#else
     if (scs->static_config.rate_control_mode != SVT_AV1_RC_MODE_CQP_OR_CRF)
     {
         me_seg_h = (core_count == SINGLE_CORE_COUNT) ? 1 :
@@ -450,6 +456,7 @@ static EbErrorType load_default_buffer_configuration_settings(
         me_seg_w = (core_count == SINGLE_CORE_COUNT) ? 1 :
             (((scs->max_input_luma_width + 32) / BLOCK_SIZE_64) < 10) ? 1 : 3;
     }
+#endif
     // ME segments
     scs->me_segment_row_count_array[0] = me_seg_h;
     scs->me_segment_row_count_array[1] = me_seg_h;
@@ -511,8 +518,15 @@ static EbErrorType load_default_buffer_configuration_settings(
     scs->tpl_segment_row_count_array = tpl_seg_h;
     scs->tpl_segment_col_count_array = tpl_seg_w;
 
+#if OPT_MULTI_BUFFER_CONFIG
+    scs->cdef_segment_row_count = (core_count == SINGLE_CORE_COUNT) ? 1 :
+        (((scs->max_input_luma_height + 32) / BLOCK_SIZE_64) < 6) ? 1 : 2;
+    scs->cdef_segment_column_count = (core_count == SINGLE_CORE_COUNT) ? 1 :
+        (((scs->max_input_luma_width + 32) / BLOCK_SIZE_64) < 10) ? 1 : 3;
+#else
     scs->cdef_segment_column_count = me_seg_w;
     scs->cdef_segment_row_count    = me_seg_h;
+#endif
 
     //since restoration unit size is same for Luma and Chroma, Luma segments and chroma segments do not correspond to the same area!
     //to keep proper processing, segments have to be configured based on chroma resolution.
@@ -2615,9 +2629,13 @@ uint8_t svt_aom_tf_max_ref_per_struct(uint32_t hierarchical_levels, uint8_t type
     if (type == 0) // I_SLICE
         max_ref_per = 1 << hierarchical_levels;
     else if (type == 1) // BASE
+#if MCTF_OPT_REFS_MODULATION
+        max_ref_per = TF_MAX_BASE_REF_PICS;
+#else
         max_ref_per = hierarchical_levels < 5
         ? TF_MAX_BASE_REF_PICS_SUB_6L
         : TF_MAX_BASE_REF_PICS_6L;
+#endif
     else // L1
         max_ref_per = hierarchical_levels < 5
         ? TF_MAX_L1_REF_PICS_SUB_6L
@@ -3497,7 +3515,7 @@ static void set_mrp_ctrl(SequenceControlSet* scs, uint8_t mrp_level) {
         mrp_ctrl->use_best_references = 2;
         break;
 
-    case 6: 
+    case 6:
         mrp_ctrl->referencing_scheme = 1;
         mrp_ctrl->sc_base_ref_list0_count = 2;
         mrp_ctrl->sc_base_ref_list1_count = 2;
@@ -3522,7 +3540,7 @@ static void set_mrp_ctrl(SequenceControlSet* scs, uint8_t mrp_level) {
         mrp_ctrl->use_best_references = 3;
         break;
 
-    case 7: 
+    case 7:
         mrp_ctrl->referencing_scheme = 1;
         mrp_ctrl->sc_base_ref_list0_count = 2;
         mrp_ctrl->sc_base_ref_list1_count = 2;
@@ -3546,7 +3564,7 @@ static void set_mrp_ctrl(SequenceControlSet* scs, uint8_t mrp_level) {
         mrp_ctrl->pme_ref0_only = 1;
         mrp_ctrl->use_best_references = 3;
         break;
-    case 8: 
+    case 8:
         mrp_ctrl->referencing_scheme = 1;
         mrp_ctrl->sc_base_ref_list0_count = 2;
         mrp_ctrl->sc_base_ref_list1_count = 2;
@@ -4594,7 +4612,7 @@ static void set_param_based_on_input(SequenceControlSet *scs)
 #endif
 #endif
             mrp_level = 6;
-        }       
+        }
 #if !OPT_MRP_2
         else if (scs->static_config.enc_mode <= ENC_M7) {
             mrp_level = 8;
@@ -4958,6 +4976,9 @@ static void copy_api_from_app(
             2 :
             scs->static_config.fast_decode == 1 ||
             scs->static_config.rate_control_mode == SVT_AV1_RC_MODE_VBR || scs->static_config.rate_control_mode == SVT_AV1_RC_MODE_CBR ||
+#if OPT_PRED_STRUC
+            (input_resolution >= INPUT_SIZE_1080p_RANGE && scs->static_config.enc_mode >= ENC_M9) ||
+#endif
             !(scs->static_config.enc_mode <= ENC_M12) || input_resolution >= INPUT_SIZE_4K_RANGE
                 ? 4
                 : 5;

@@ -40,8 +40,6 @@ include:
 
 Style check:
   rules:
-    # Remove "- when: never" to re-enable style check
-    - when: never
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
       when: never
     - if: $NIGHTLY == null && $WEEKEND == null

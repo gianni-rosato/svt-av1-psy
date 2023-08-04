@@ -2127,19 +2127,11 @@ static void tf_64x64_sub_pel_search(PictureParentControlSet *pcs, MeContext *me_
     blk_struct.av1xd->mb_to_right_edge  = ((pcs->av1_cm->mi_cols - bh - micol) * MI_SIZE) * 8;
     me_ctx->tf_64x64_block_error   = INT_MAX;
 
-#if FIX_GCC_R2R
-    signed short mv_x = mv_unit.mv->x = (me_ctx->tf_use_pred_64x64_only_th == (uint32_t)~0)
-        ? me_ctx->search_results[0][0].hme_sc_x << 3 : (_MVXT(me_ctx->p_best_mv64x64[0])) << 1;
-
-    signed short mv_y = mv_unit.mv->y = (me_ctx->tf_use_pred_64x64_only_th == (uint32_t)~0)
-        ? me_ctx->search_results[0][0].hme_sc_y << 3 : (_MVYT(me_ctx->p_best_mv64x64[0])) << 1;
-#else
     signed short mv_x = mv_unit.mv->x = (me_ctx->tf_use_pred_64x64_only_th == (uint8_t)~0)
         ? me_ctx->search_results[0][0].hme_sc_x << 3 : (_MVXT(me_ctx->p_best_mv64x64[0])) << 1;
 
     signed short mv_y = mv_unit.mv->y = (me_ctx->tf_use_pred_64x64_only_th == (uint8_t)~0)
         ? me_ctx->search_results[0][0].hme_sc_y << 3 : (_MVYT(me_ctx->p_best_mv64x64[0])) << 1;
-#endif
 
     BlkStruct *blk_ptr = &blk_struct;
     signed short            best_mv_x = mv_x;
@@ -4333,7 +4325,7 @@ static EbErrorType produce_temporally_filtered_pic(
 
             for (int segment_idx = 0; segment_idx < 3; segment_idx++)
                 for (int frame_index = start_frame_index[segment_idx]; frame_index <= end_frame_index[segment_idx]; frame_index = frame_index+ me_context_ptr->me_ctx->tf_ctrls.ref_frame_factor) {
- #if MCTF_ON_THE_FLY_PRUNING   
+ #if MCTF_ON_THE_FLY_PRUNING
                 // Use ahd-error to central/avg to identify/skip outlier ref-frame(s)
                 if (frame_index != index_center) {
                     uint32_t low_ahd_err = centre_pcs->aligned_width * centre_pcs->aligned_height;
@@ -4405,11 +4397,7 @@ static EbErrorType produce_temporally_filtered_pic(
 
 
                     if (ctx->tf_use_pred_64x64_only_th &&
-#if FIX_GCC_R2R
-                        (ctx->tf_use_pred_64x64_only_th == (uint32_t)~0 ||
-#else
                         (ctx->tf_use_pred_64x64_only_th == (uint8_t)~0 ||
-#endif
                          tf_use_64x64_pred(ctx))) {
                         tf_64x64_sub_pel_search(
                             centre_pcs,

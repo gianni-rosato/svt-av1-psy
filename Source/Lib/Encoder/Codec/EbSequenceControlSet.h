@@ -257,10 +257,10 @@ typedef struct SequenceControlSet {
     VqCtrls          vq_ctrls;
     MiniGopSizeCtrls mgs_ctls;
 #if MCTF_ON_THE_FLY_PRUNING
-    uint8_t          calc_hist;
+    uint8_t calc_hist;
 #endif
-    TfControls       tf_params_per_type[3]; // [I_SLICE][BASE][L1]
-    MrpCtrls         mrp_ctrls;
+    TfControls tf_params_per_type[3]; // [I_SLICE][BASE][L1]
+    MrpCtrls   mrp_ctrls;
     /*!< The RC stat generation pass mode (0: The default, 1: optimized)*/
     uint8_t rc_stat_gen_pass_mode;
     int     cqp_base_q_tf;

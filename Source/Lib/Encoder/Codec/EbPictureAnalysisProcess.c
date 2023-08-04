@@ -1504,9 +1504,7 @@ static void sub_sample_luma_generate_pixel_intensity_histogram_bins(SequenceCont
                 ? input_pic->height - (scs->picture_analysis_number_of_regions_per_height * region_height)
                 : 0;
 #if MCTF_ON_THE_FLY_PRUNING
-            uint8_t decim_step = scs->static_config.scene_change_detection
-                ? 1
-                : 4;
+            uint8_t decim_step = scs->static_config.scene_change_detection ? 1 : 4;
 #else
             uint8_t decim_step = scs->static_config.scene_change_detection
                 ? 1

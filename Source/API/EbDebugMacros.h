@@ -108,11 +108,13 @@ extern "C" {
 #define OPT_TF                                    1 // tf tuninig towards better tradeoffs for M7-M13.
 #define TUNE_M7                                   1 // Tune m7
 
-#define FIX_GCC_R2R                               0 // Fix r2r found when using gcc
-
 #define OPT_MULTI_BUFFER_CONFIG                   1 // optimize buffers for memory when using --lp 16, also increase ME segments
 #define FIX_DUPL_TF_PIC                           1 // Fix memory leak caused by adding the last picture of a sequence to the TF list twice
 #define OPT_NO_TF_LEAF_LAYER                      1 // Do not perform TF for highest-layer pics
+#define OPT_PRED_STRUC                            1 // use HL4 for 1080P in M9+
+#define CLN_SB_ARG_PASSING                        1 // cleanup passing of sb_orgx/y arguments
+
+#define TUNE_M9                                   1 // Tune m9 for fast decode
 
 //FOR DEBUGGING - Do not remove
 #define OPT_LD_LATENCY2         0 // Latency optimization for low delay

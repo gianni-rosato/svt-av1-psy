@@ -2493,7 +2493,7 @@ void svt_aom_full_loop_uv(PictureControlSet *pcs, ModeDecisionContext *ctx, Mode
     } while (txb_itr < tu_count);
 }
 #if ALLOW_INCOMP_NSQ
-uint64_t svt_aom_d1_non_square_block_decision(PictureControlSet* pcs, ModeDecisionContext* ctx, uint32_t d1_block_itr) {
+uint64_t svt_aom_d1_non_square_block_decision(PictureControlSet *pcs, ModeDecisionContext *ctx, uint32_t d1_block_itr) {
 #else
 uint64_t svt_aom_d1_non_square_block_decision(ModeDecisionContext *ctx, uint32_t d1_block_itr) {
 #endif
@@ -2530,7 +2530,9 @@ uint64_t svt_aom_d1_non_square_block_decision(ModeDecisionContext *ctx, uint32_t
 
     tot_cost += split_cost;
 #if CLN_NSQ
-    if (nsq_cost_avail && (d1_block_itr == 0 || !ctx->cost_avail[ctx->blk_geom->sqi_mds] || (tot_cost < ctx->md_local_blk_unit[ctx->blk_geom->sqi_mds].cost))) {
+    if (nsq_cost_avail &&
+        (d1_block_itr == 0 || !ctx->cost_avail[ctx->blk_geom->sqi_mds] ||
+         (tot_cost < ctx->md_local_blk_unit[ctx->blk_geom->sqi_mds].cost))) {
         ctx->cost_avail[ctx->blk_geom->sqi_mds] = 1;
 #else
     if ((d1_block_itr == 0) || (tot_cost < ctx->md_local_blk_unit[ctx->blk_geom->sqi_mds].cost)) {
@@ -2579,31 +2581,33 @@ static void compute_depth_costs(ModeDecisionContext *ctx, PictureParentControlSe
     * anyway (as they are completely outside the picture).  If the block does have area inside the picture, it will have
     * a cost, and if the cost is not valid, that partition scheme cannot be selected.
     */
-    const BlockGeom* curr_blk_geom = get_blk_geom_mds(curr_depth_blk0_mds);
-    const bool blk0_within_pic = (pcs->sb_geom[ctx->sb_index].org_x + curr_blk_geom->org_x < pcs->aligned_width) &&
-                                 (pcs->sb_geom[ctx->sb_index].org_y + curr_blk_geom->org_y < pcs->aligned_height);
-    curr_blk_geom = get_blk_geom_mds(curr_depth_blk1_mds);
+    const BlockGeom *curr_blk_geom = get_blk_geom_mds(curr_depth_blk0_mds);
+    const bool blk0_within_pic     = (pcs->sb_geom[ctx->sb_index].org_x + curr_blk_geom->org_x < pcs->aligned_width) &&
+        (pcs->sb_geom[ctx->sb_index].org_y + curr_blk_geom->org_y < pcs->aligned_height);
+    curr_blk_geom              = get_blk_geom_mds(curr_depth_blk1_mds);
     const bool blk1_within_pic = (pcs->sb_geom[ctx->sb_index].org_x + curr_blk_geom->org_x < pcs->aligned_width) &&
-                                 (pcs->sb_geom[ctx->sb_index].org_y + curr_blk_geom->org_y < pcs->aligned_height);
-    curr_blk_geom = get_blk_geom_mds(curr_depth_blk2_mds);
+        (pcs->sb_geom[ctx->sb_index].org_y + curr_blk_geom->org_y < pcs->aligned_height);
+    curr_blk_geom              = get_blk_geom_mds(curr_depth_blk2_mds);
     const bool blk2_within_pic = (pcs->sb_geom[ctx->sb_index].org_x + curr_blk_geom->org_x < pcs->aligned_width) &&
-                                 (pcs->sb_geom[ctx->sb_index].org_y + curr_blk_geom->org_y < pcs->aligned_height);
-    curr_blk_geom = get_blk_geom_mds(curr_depth_blk3_mds);
+        (pcs->sb_geom[ctx->sb_index].org_y + curr_blk_geom->org_y < pcs->aligned_height);
+    curr_blk_geom              = get_blk_geom_mds(curr_depth_blk3_mds);
     const bool blk3_within_pic = (pcs->sb_geom[ctx->sb_index].org_x + curr_blk_geom->org_x < pcs->aligned_width) &&
-                                 (pcs->sb_geom[ctx->sb_index].org_y + curr_blk_geom->org_y < pcs->aligned_height);
+        (pcs->sb_geom[ctx->sb_index].org_y + curr_blk_geom->org_y < pcs->aligned_height);
 
     if ((ctx->cost_avail[curr_depth_blk0_mds] || !blk0_within_pic) &&
         (ctx->cost_avail[curr_depth_blk1_mds] || !blk1_within_pic) &&
         (ctx->cost_avail[curr_depth_blk2_mds] || !blk2_within_pic) &&
         (ctx->cost_avail[curr_depth_blk3_mds] || !blk3_within_pic)) {
-        uint64_t blk0_cost = ctx->cost_avail[curr_depth_blk0_mds] ? ctx->md_local_blk_unit[curr_depth_blk0_mds].cost : 0;
-        uint64_t blk1_cost = ctx->cost_avail[curr_depth_blk1_mds] ? ctx->md_local_blk_unit[curr_depth_blk1_mds].cost : 0;
-        uint64_t blk2_cost = ctx->cost_avail[curr_depth_blk2_mds] ? ctx->md_local_blk_unit[curr_depth_blk2_mds].cost : 0;
-        uint64_t blk3_cost = ctx->cost_avail[curr_depth_blk3_mds] ? ctx->md_local_blk_unit[curr_depth_blk3_mds].cost : 0;
-        *curr_depth_cost = blk0_cost + blk1_cost + blk2_cost + blk3_cost + above_split_rate;
-    }
-    else {
-        //assert(ctx->tested_blk_flag[above_depth_mds] && ctx->cost_avail[above_depth_mds]);
+        uint64_t blk0_cost = ctx->cost_avail[curr_depth_blk0_mds] ? ctx->md_local_blk_unit[curr_depth_blk0_mds].cost
+                                                                  : 0;
+        uint64_t blk1_cost = ctx->cost_avail[curr_depth_blk1_mds] ? ctx->md_local_blk_unit[curr_depth_blk1_mds].cost
+                                                                  : 0;
+        uint64_t blk2_cost = ctx->cost_avail[curr_depth_blk2_mds] ? ctx->md_local_blk_unit[curr_depth_blk2_mds].cost
+                                                                  : 0;
+        uint64_t blk3_cost = ctx->cost_avail[curr_depth_blk3_mds] ? ctx->md_local_blk_unit[curr_depth_blk3_mds].cost
+                                                                  : 0;
+        *curr_depth_cost   = blk0_cost + blk1_cost + blk2_cost + blk3_cost + above_split_rate;
+    } else {
         *curr_depth_cost = MAX_MODE_COST;
     }
 #else
@@ -2613,7 +2617,7 @@ static void compute_depth_costs(ModeDecisionContext *ctx, PictureParentControlSe
 #endif
 
     // Compute above depth cost
-#if CLN_NSQ // TODO: remove tested_blk_flag
+#if CLN_NSQ
     *above_depth_cost =
 #if REMOVE_TESTED_BLK_FLAG
         ctx->cost_avail[above_depth_mds]
@@ -2623,7 +2627,9 @@ static void compute_depth_costs(ModeDecisionContext *ctx, PictureParentControlSe
         ? ctx->md_local_blk_unit[above_depth_mds].cost
         : MAX_MODE_COST;
     // 128x128 in ISLICE should not have a cost available
-    assert(IMPLIES((pcs->slice_type == I_SLICE && above_depth_mds == 0 && pcs->scs->seq_header.sb_size == BLOCK_128X128), *above_depth_cost == MAX_MODE_COST));
+    assert(
+        IMPLIES((pcs->slice_type == I_SLICE && above_depth_mds == 0 && pcs->scs->seq_header.sb_size == BLOCK_128X128),
+                *above_depth_cost == MAX_MODE_COST));
 #else
     *above_depth_cost = ctx->tested_blk_flag[above_depth_mds] ? ctx->md_local_blk_unit[above_depth_mds].cost
                                                               : MAX_MODE_COST;
@@ -2636,7 +2642,7 @@ static void compute_depth_costs(ModeDecisionContext *ctx, PictureParentControlSe
  * of a given depth have been evaluted.
  */
 #if CLN_NSQ
-uint32_t svt_aom_d2_inter_depth_block_decision(PictureControlSet* pcs,
+uint32_t svt_aom_d2_inter_depth_block_decision(PictureControlSet *pcs,
 #else
 uint32_t svt_aom_d2_inter_depth_block_decision(SequenceControlSet *scs, PictureControlSet *pcs,
 #endif
@@ -2677,13 +2683,12 @@ uint32_t svt_aom_d2_inter_depth_block_decision(SequenceControlSet *scs, PictureC
                 current_depth_cost = (current_depth_cost * ctx->inter_depth_bias) / 1000;
             }
             int parent_bias = parent_depth_cost != MAX_MODE_COST ? ctx->d2_parent_bias : 1000;
-#if CLN_NSQ // TODO: clean this up
+#if CLN_NSQ
             if (parent_depth_cost == MAX_MODE_COST && current_depth_cost == MAX_MODE_COST) {
-                //ctx->md_local_blk_unit[parent_depth_idx_mds].cost    = current_depth_cost;
+                // If parent and current depth are both invalid, don't update the cost
                 ctx->md_blk_arr_nsq[parent_depth_idx_mds].part       = PARTITION_SPLIT;
                 ctx->md_blk_arr_nsq[parent_depth_idx_mds].split_flag = TRUE;
-            }
-            else if (((parent_bias * parent_depth_cost) / 1000) <= current_depth_cost) {
+            } else if (((parent_bias * parent_depth_cost) / 1000) <= current_depth_cost) {
 #else
             if (((parent_bias * parent_depth_cost) / 1000) <= current_depth_cost) {
 #endif
@@ -2716,7 +2721,7 @@ void svt_aom_compute_depth_costs_md_skip_light_pd0(PictureParentControlSet *pcs,
                                                    uint32_t above_depth_mds, uint32_t step, uint64_t *above_depth_cost,
                                                    uint64_t *curr_depth_cost) {
     // If the parent depth is not available, no need to compare costs
-#if ALLOW_INCOMP_NSQ // replace with cost_avail
+#if ALLOW_INCOMP_NSQ
     if (!ctx->cost_avail[above_depth_mds]) {
 #else
     if (!ctx->avail_blk_flag[above_depth_mds]) {
@@ -2732,7 +2737,8 @@ void svt_aom_compute_depth_costs_md_skip_light_pd0(PictureParentControlSet *pcs,
     for (int i = 1; i < ctx->blk_geom->quadi + 1; i++) {
         uint32_t curr_depth_cur_blk_mds = ctx->blk_geom->sqi_mds - i * step;
 #if CLN_NSQ
-        if (!ctx->cost_avail[curr_depth_cur_blk_mds]) continue;
+        if (!ctx->cost_avail[curr_depth_cur_blk_mds])
+            continue;
 #endif
         *curr_depth_cost += ctx->md_local_blk_unit[curr_depth_cur_blk_mds].cost;
     }
@@ -2753,7 +2759,7 @@ void svt_aom_compute_depth_costs_md_skip(ModeDecisionContext *ctx, PictureParent
                                          uint32_t above_depth_mds, uint32_t step, uint64_t *above_depth_cost,
                                          uint64_t *curr_depth_cost) {
     // If the parent depth is not available, no need to compare costs
-#if ALLOW_INCOMP_NSQ // replace with cost_avail
+#if ALLOW_INCOMP_NSQ
     if (!ctx->cost_avail[above_depth_mds]) {
 #else
     if (!ctx->avail_blk_flag[above_depth_mds]) {
@@ -2771,7 +2777,8 @@ void svt_aom_compute_depth_costs_md_skip(ModeDecisionContext *ctx, PictureParent
         uint32_t curr_depth_cur_blk_mds = ctx->blk_geom->sqi_mds - i * step;
 
 #if CLN_NSQ
-        if (!ctx->cost_avail[curr_depth_cur_blk_mds]) continue;
+        if (!ctx->cost_avail[curr_depth_cur_blk_mds])
+            continue;
 #endif
         *curr_depth_cost += ctx->md_local_blk_unit[curr_depth_cur_blk_mds].cost;
     }

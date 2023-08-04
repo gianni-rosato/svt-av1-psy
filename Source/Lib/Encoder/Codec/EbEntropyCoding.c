@@ -5316,10 +5316,10 @@ EB_EXTERN EbErrorType svt_aom_write_sb(EntropyCodingContext *ec_ctx, SuperBlock 
     uint32_t blk_index       = 0;
     uint32_t final_blk_index = 0;
 
-    ec_ctx->coded_area_sb       = 0;
-    ec_ctx->coded_area_sb_uv    = 0;
+    ec_ctx->coded_area_sb    = 0;
+    ec_ctx->coded_area_sb_uv = 0;
 #if ALLOW_INCOMP_NSQ
-    SbGeom* sb_geom = &pcs->ppcs->sb_geom[tb_ptr->index];
+    SbGeom    *sb_geom                = &pcs->ppcs->sb_geom[tb_ptr->index];
     const bool check_blk_out_of_bound = !(sb_geom->is_complete_sb);
 #else
     Bool check_blk_out_of_bound = FALSE;
@@ -5335,19 +5335,18 @@ EB_EXTERN EbErrorType svt_aom_write_sb(EntropyCodingContext *ec_ctx, SuperBlock 
         const BlockGeom *blk_geom      = get_blk_geom_mds(blk_index);
 
 #if ALLOW_INCOMP_NSQ
-        const BlockSize bsize = blk_geom->bsize;
-        const uint32_t blk_org_x = ec_ctx->sb_origin_x + blk_geom->org_x;
-        const uint32_t blk_org_y = ec_ctx->sb_origin_y + blk_geom->org_y;
+        const BlockSize bsize     = blk_geom->bsize;
+        const uint32_t  blk_org_x = ec_ctx->sb_origin_x + blk_geom->org_x;
+        const uint32_t  blk_org_y = ec_ctx->sb_origin_y + blk_geom->org_y;
         assert(bsize < BlockSizeS_ALL);
         assert(blk_geom->shape == PART_N);
         if (check_blk_out_of_bound) {
-            code_blk_cond =
-                ((blk_org_x + blk_geom->bwidth / 2 < pcs->ppcs->aligned_width) ||
-                    (blk_org_y + blk_geom->bheight / 2 < pcs->ppcs->aligned_height)) &&
-                    (blk_org_x < pcs->ppcs->aligned_width && blk_org_y < pcs->ppcs->aligned_height);
+            code_blk_cond = ((blk_org_x + blk_geom->bwidth / 2 < pcs->ppcs->aligned_width) ||
+                             (blk_org_y + blk_geom->bheight / 2 < pcs->ppcs->aligned_height)) &&
+                (blk_org_x < pcs->ppcs->aligned_width && blk_org_y < pcs->ppcs->aligned_height);
         }
 #else
-        BlockSize bsize = blk_geom->bsize;
+        BlockSize bsize        = blk_geom->bsize;
         assert(bsize < BlockSizeS_ALL);
         uint32_t blk_org_x = ec_ctx->sb_origin_x + blk_geom->org_x;
         uint32_t blk_org_y = ec_ctx->sb_origin_y + blk_geom->org_y;
@@ -5529,8 +5528,7 @@ EB_EXTERN EbErrorType svt_aom_write_sb(EntropyCodingContext *ec_ctx, SuperBlock 
                 blk_index += blk_geom->ns_depth_offset;
             } else
                 blk_index += blk_geom->d1_depth_offset;
-        }
-        else {
+        } else {
 #if ALLOW_INCOMP_NSQ
             blk_index += blk_geom->d1_depth_offset;
 #else

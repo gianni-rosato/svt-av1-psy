@@ -7,10 +7,6 @@
 #include "EbPictureDecisionProcess.h"
 #include "EbPictureBufferDesc.h"
 
-#if OPT_P_CPLX
-#define PSQ_L3p5  35  //level 3.5 for parent sq complexity
-#endif
-
 uint16_t svt_aom_get_max_can_count(EncMode enc_mode);
 void     svt_aom_md_pme_search_controls(ModeDecisionContext *ctx, uint8_t md_pme_level);
 void     svt_aom_set_inter_intra_ctrls(ModeDecisionContext *ctx, uint8_t inter_intra_level);
@@ -74,8 +70,7 @@ uint8_t get_inter_compound_level(EncMode enc_mode);
 uint8_t get_filter_intra_level(EncMode enc_mode);
 uint8_t svt_aom_get_inter_intra_level(EncMode enc_mode, uint8_t is_base, uint8_t transition_present);
 #if TUNE_M6
-uint8_t svt_aom_get_obmc_level(EncMode enc_mode, uint8_t fast_decode,
-                               EbInputResolution input_resolution);
+uint8_t svt_aom_get_obmc_level(EncMode enc_mode, uint8_t fast_decode, EbInputResolution input_resolution);
 #else
 uint8_t svt_aom_get_obmc_level(EncMode enc_mode, uint8_t is_ref, uint8_t fast_decode,
                                EbInputResolution input_resolution);

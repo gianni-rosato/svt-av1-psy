@@ -2486,7 +2486,7 @@ static void init_zz_sad(MeContext *me_ctx, uint32_t org_x, uint32_t org_y) {
             for (uint8_t ref_i = 0; ref_i < me_ctx->num_of_ref_pic_to_search[list_i]; ++ref_i) {
 
                 if (ref_i == 0) continue;
-                                              
+
                 const uint32_t zz_sad_pct = me_ctx->me_hme_prune_ctrls.zz_sad_pct;
                 if ((me_ctx->zz_sad[list_i][ref_i] - best_zz_sad) * 100 > (zz_sad_pct * best_zz_sad)) {
                        me_ctx->search_results[list_i][ref_i].do_ref = 0;
@@ -2494,9 +2494,8 @@ static void init_zz_sad(MeContext *me_ctx, uint32_t org_x, uint32_t org_y) {
             }
         }
     }
-    
- 
-#if OPT_SAFE_LIMIT   
+
+#if OPT_SAFE_LIMIT
     const uint32_t safe_limit_zz_th = me_ctx->me_safe_limit_zz_th;
     if (safe_limit_zz_th) {
         bool me_safe_limit_refs = false;
@@ -2505,7 +2504,6 @@ static void init_zz_sad(MeContext *me_ctx, uint32_t org_x, uint32_t org_y) {
             me_ctx->zz_sad[0][0] < safe_limit_zz_th &&  me_ctx->zz_sad[1][0] < safe_limit_zz_th
             ) {
             me_safe_limit_refs = true;
-            // printf("pic: %lld    sb: %i,%i   sads: %i %i \n", pcs->picture_number, org_x, org_y, me_ctx->zz_sad[0][0], me_ctx->zz_sad[1][0]);
         }
 
         for (int list_i = REF_LIST_0; list_i < me_ctx->num_of_list_to_search; ++list_i) {
@@ -2513,7 +2511,6 @@ static void init_zz_sad(MeContext *me_ctx, uint32_t org_x, uint32_t org_y) {
 
                 if (me_safe_limit_refs && ref_i > 0) {
                     me_ctx->search_results[list_i][ref_i].do_ref = 0;
-                    // printf("pic: %lld    sb: %i,%i   sads: %i %i \n", pcs->picture_number, org_x, org_y, me_ctx->zz_sad[0][0], me_ctx->zz_sad[1][0]);
                 }
             }
         }
@@ -2566,7 +2563,7 @@ static void hme_b64(PictureParentControlSet *pcs, uint32_t org_x, uint32_t org_y
     }
 }
 
-static void hme_prune_ref_and_adjust_sr( MeContext *me_ctx) {
+static void hme_prune_ref_and_adjust_sr(MeContext *me_ctx) {
     uint64_t best = (uint64_t)~0;
     for (int i = 0; i < MAX_NUM_OF_REF_PIC_LIST; ++i) {
         for (int j = 0; j < REF_LIST_MAX_DEPTH; ++j) {
@@ -3196,18 +3193,14 @@ EbErrorType svt_aom_motion_estimation_b64(
 
     if (me_ctx->me_type == ME_MCTF &&
         me_ctx->search_results[0][0].hme_sad < me_ctx->tf_me_exit_th) {
-#if FIX_GCC_R2R
-        me_ctx->tf_use_pred_64x64_only_th = (uint32_t)~0;
-#else
         me_ctx->tf_use_pred_64x64_only_th = (uint8_t)~0;
-#endif
         return return_error;
     }
     // prune the refrence frames based on the HME outputs.
     if (prune_ref &&
         (me_ctx->me_sr_adjustment_ctrls.enable_me_sr_adjustment ||
          me_ctx->me_hme_prune_ctrls.enable_me_hme_ref_pruning)) {
-        hme_prune_ref_and_adjust_sr( me_ctx);
+        hme_prune_ref_and_adjust_sr(me_ctx);
     }
     // Full pel: Perform the Integer Motion Estimation on the allowed refrence frames.
     integer_search_b64(pcs, b64_index, b64_origin_x, b64_origin_y, me_ctx, input_ptr);

@@ -287,7 +287,7 @@ void *svt_aom_motion_estimation_kernel(void *input_ptr) {
                                 if (pcs->me_processed_b64_count == pcs->b64_total_count) {
 
 #if OPT_GM_M6
-                                    if (pcs->gm_ctrls.enabled && ( (pcs->gm_ctrls.pp_enabled && pcs->gm_pp_detected) || !pcs->gm_ctrls.pp_enabled)){
+                                    if (pcs->gm_ctrls.enabled && (!pcs->gm_ctrls.pp_enabled || pcs->gm_pp_detected)){
 #else
                                     if (pcs->gm_ctrls.enabled && !pcs->gm_ctrls.use_ref_info && pcs->gm_pp_detected) {
 #endif

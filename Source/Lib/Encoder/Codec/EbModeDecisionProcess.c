@@ -536,7 +536,11 @@ void svt_aom_reset_mode_decision_neighbor_arrays(PictureControlSet *pcs, uint16_
 
     return;
 }
-
+#if OPT_LAMBDA_SCALING
+// If the ref intra percentage is below the TH, applying modulation to the MD lambda
+#define LAMBDA_MOD_INTRA_TH 65
+#define LAMBDA_MOD_SCALING_FACTOR 138
+#endif
 // Set the lambda for each sb.
 // When lambda tuning is on (blk_lambda_tuning), lambda of each block is set separately (full_lambda_md/fast_lambda_md)
 // later in svt_aom_set_tuned_blk_lambda
@@ -550,11 +554,11 @@ static void av1_lambda_assign_md(PictureControlSet *pcs, ModeDecisionContext *ct
 #if OPT_LAMBDA_SCALING
     if (pcs->scs->stats_based_sb_lambda_modulation) {
         if (pcs->temporal_layer_index > 0) {
-            if (pcs->ref_intra_percentage < 65) {
-                ctx->full_lambda_md[0] = (ctx->full_lambda_md[0] * 138) >> 7;
-                ctx->fast_lambda_md[0] = (ctx->fast_lambda_md[0] * 138) >> 7;
-                ctx->full_lambda_md[1] = (ctx->full_lambda_md[1] * 138) >> 7;
-                ctx->fast_lambda_md[1] = (ctx->fast_lambda_md[1] * 138) >> 7;
+            if (pcs->ref_intra_percentage < LAMBDA_MOD_INTRA_TH) {
+                ctx->full_lambda_md[0] = (ctx->full_lambda_md[0] * LAMBDA_MOD_SCALING_FACTOR) >> 7;
+                ctx->fast_lambda_md[0] = (ctx->fast_lambda_md[0] * LAMBDA_MOD_SCALING_FACTOR) >> 7;
+                ctx->full_lambda_md[1] = (ctx->full_lambda_md[1] * LAMBDA_MOD_SCALING_FACTOR) >> 7;
+                ctx->fast_lambda_md[1] = (ctx->fast_lambda_md[1] * LAMBDA_MOD_SCALING_FACTOR) >> 7;
             }
         }
     }
