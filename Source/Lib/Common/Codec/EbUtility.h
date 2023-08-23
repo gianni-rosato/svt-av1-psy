@@ -271,7 +271,6 @@ EbLinkedListNode* svt_aom_concat_eb_linked_list(EbLinkedListNode* a, EbLinkedLis
 EbLinkedListNode* svt_aom_split_eb_linked_list(EbLinkedListNode* input, EbLinkedListNode** restLL,
                                                Bool (*predicate_func)(EbLinkedListNode*));
 
-#if OPT_ENABLE_2L_INCOMP
 #define MINI_GOP_MAX_COUNT 31
 #define MINI_GOP_WINDOW_MAX_COUNT 16 // window subdivision: 16 x 2L
 
@@ -318,38 +317,6 @@ typedef enum MinigopIndex {
     L2_14_INDEX = 29,
     L2_15_INDEX = 30
 } MinigopIndex;
-#else
-#define MINI_GOP_MAX_COUNT 15
-#define MINI_GOP_WINDOW_MAX_COUNT 8 // widow subdivision: 8 x 3L
-
-#define MIN_HIERARCHICAL_LEVEL 2
-static const uint32_t mini_gop_offset[4] = {1, 3, 7, 31};
-
-typedef struct MiniGopStats {
-    uint32_t hierarchical_levels;
-    uint32_t start_index;
-    uint32_t end_index;
-    uint32_t lenght;
-} MiniGopStats;
-extern const MiniGopStats* svt_aom_get_mini_gop_stats(const uint32_t mini_gop_index);
-typedef enum MinigopIndex {
-    L6_INDEX   = 0,
-    L5_0_INDEX = 1,
-    L4_0_INDEX = 2,
-    L3_0_INDEX = 3,
-    L3_1_INDEX = 4,
-    L4_1_INDEX = 5,
-    L3_2_INDEX = 6,
-    L3_3_INDEX = 7,
-    L5_1_INDEX = 8,
-    L4_2_INDEX = 9,
-    L3_4_INDEX = 10,
-    L3_5_INDEX = 11,
-    L4_3_INDEX = 12,
-    L3_6_INDEX = 13,
-    L3_7_INDEX = 14
-} MinigopIndex;
-#endif
 // Right shift that replicates gcc's implementation
 
 static inline int gcc_right_shift(int a, unsigned shift) {

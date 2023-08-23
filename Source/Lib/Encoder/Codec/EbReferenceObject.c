@@ -124,12 +124,8 @@ EbErrorType svt_reference_object_ctor(EbReferenceObject *ref_object, EbPtr objec
             ref_object, picture_buffer_desc_init_data_ptr, picture_buffer_desc_init_data_16bit_ptr.bit_depth);
     }
     ref_object->input_picture = NULL;
-    const bool gm_ref_info    = svt_aom_need_gm_ref_info(
-#if TUNE_M6
-        ref_init_ptr->static_config->enc_mode, ref_init_ptr->static_config->resize_mode == RESIZE_NONE);
-#else
-        ref_init_ptr->static_config->enc_mode, true, ref_init_ptr->static_config->resize_mode == RESIZE_NONE);
-#endif
+    const bool gm_ref_info    = svt_aom_need_gm_ref_info(ref_init_ptr->static_config->enc_mode,
+                                                      ref_init_ptr->static_config->resize_mode == RESIZE_NONE);
     if (gm_ref_info)
         EB_NEW(ref_object->input_picture, svt_picture_buffer_desc_ctor, (EbPtr)picture_buffer_desc_init_data_ptr);
     uint32_t mi_rows = ref_object->reference_picture->height >> MI_SIZE_LOG2;

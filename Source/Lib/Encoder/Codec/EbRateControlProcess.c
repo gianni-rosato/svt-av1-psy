@@ -43,14 +43,9 @@
 // Specifies the weights of the ref frame in calculating qindex of non base layer frames
 static const int non_base_qindex_weight_ref[EB_MAX_TEMPORAL_LAYERS] = {100, 100, 100, 100, 100, 100};
 // Specifies the weights of the worst quality in calculating qindex of non base layer frames
-static const int non_base_qindex_weight_wq[EB_MAX_TEMPORAL_LAYERS] = {100, 100, 300, 100, 100, 100};
-#if OPT_ENABLE_2L_INCOMP
+static const int    non_base_qindex_weight_wq[EB_MAX_TEMPORAL_LAYERS]    = {100, 100, 300, 100, 100, 100};
 static const double tpl_hl_islice_div_factor[EB_MAX_TEMPORAL_LAYERS]     = {1, 2, 2, 1, 1, 0.7};
 static const double tpl_hl_base_frame_div_factor[EB_MAX_TEMPORAL_LAYERS] = {1, 3, 3, 2, 1, 1};
-#else
-static const double tpl_hl_islice_div_factor[EB_MAX_TEMPORAL_LAYERS]     = {1, 1, 2, 1, 1, 0.7};
-static const double tpl_hl_base_frame_div_factor[EB_MAX_TEMPORAL_LAYERS] = {1, 1, 3, 2, 1, 1};
-#endif
 #define KB 400
 // intra_perc will be set to the % of intra area in two nearest ref frames
 static void get_ref_intra_percentage(PictureControlSet *pcs, uint8_t *intra_perc) {
@@ -734,7 +729,6 @@ static int svt_av1_get_q_index_from_qstep_ratio(int leaf_qindex, double qstep_ra
     const double leaf_qstep   = svt_aom_dc_quant_qtx(leaf_qindex, 0, bit_depth);
     const double target_qstep = leaf_qstep * qstep_ratio;
     int          qindex;
-#if CLN_TPL_FUNCS
     if (qstep_ratio < 1.0) {
         for (qindex = leaf_qindex; qindex > 0; --qindex) {
             const double qstep = svt_aom_dc_quant_qtx(qindex, 0, bit_depth);
@@ -748,13 +742,6 @@ static int svt_av1_get_q_index_from_qstep_ratio(int leaf_qindex, double qstep_ra
                 break;
         }
     }
-#else
-    for (qindex = leaf_qindex; qindex > 0; --qindex) {
-        const double qstep = svt_aom_dc_quant_qtx(qindex, 0, bit_depth);
-        if (qstep + 0.1 <= target_qstep)
-            break;
-    }
-#endif
     return qindex;
 }
 static const double r0_weight[3] = {0.75 /* I_SLICE */, 0.9 /* BASE */, 1 /* NON-BASE */};
@@ -1008,12 +995,8 @@ int svt_aom_compute_rd_mult_based_on_qindex(EbBitDepth bit_depth, SvtAv1FrameUpd
 // static const int rd_frame_type_factor[FRAME_UPDATE_TYPES] = { 128, 144, 128,
 //                                                               128, 144, 144,
 //                                                               128 };
-#if OPT_LAMBDA_SCALING
 static const int rd_frame_type_factor[SVT_AV1_FRAME_UPDATE_TYPES]    = {140, 180, 128, 140, 164, 164, 140};
 static const int rd_frame_type_factor_ld[SVT_AV1_FRAME_UPDATE_TYPES] = {128, 164, 128, 128, 164, 164, 128};
-#else
-static const int rd_frame_type_factor[SVT_AV1_FRAME_UPDATE_TYPES] = {128, 164, 128, 128, 164, 164, 128};
-#endif
 /*
  * Set the sse lambda based on the bit_depth, then update based on frame position.
  */
@@ -1025,7 +1008,6 @@ int svt_aom_compute_rd_mult(PictureControlSet *pcs, uint8_t q_index, uint8_t me_
     // Always use q_index for the derivation of the initial rdmult (i.e. don't use me_q_index)
     int64_t rdmult = svt_aom_compute_rd_mult_based_on_qindex(bit_depth, pcs->ppcs->update_type, q_index);
     // Update rdmult based on the frame's position in the miniGOP
-#if OPT_LAMBDA_SCALING
     uint8_t gf_update_type = frame_type == KEY_FRAME ? SVT_AV1_KF_UPDATE
         : temporal_layer_index == 0                  ? SVT_AV1_ARF_UPDATE
         : temporal_layer_index < max_temporal_layer  ? SVT_AV1_INTNL_ARF_UPDATE
@@ -1034,25 +1016,7 @@ int svt_aom_compute_rd_mult(PictureControlSet *pcs, uint8_t q_index, uint8_t me_
         rdmult = (rdmult * rd_frame_type_factor_ld[gf_update_type]) >> 7;
     else
         rdmult = (rdmult * rd_frame_type_factor[gf_update_type]) >> 7;
-#else
-    if (frame_type != KEY_FRAME) {
-        uint8_t gf_update_type = temporal_layer_index == 0 ? SVT_AV1_ARF_UPDATE
-            : temporal_layer_index < max_temporal_layer    ? SVT_AV1_INTNL_ARF_UPDATE
-                                                           : SVT_AV1_LF_UPDATE;
-        rdmult                 = (rdmult * rd_frame_type_factor[gf_update_type]) >> 7;
-    }
-#endif
     if (pcs->scs->stats_based_sb_lambda_modulation) {
-#if !OPT_LAMBDA_SCALING
-        if (pcs->temporal_layer_index > 0) {
-            if (pcs->ref_intra_percentage < 15)
-                rdmult = (rdmult * 148) >> 7;
-            else if (pcs->ref_intra_percentage > 65)
-                rdmult = (rdmult * 118) >> 7;
-            else
-                rdmult = (rdmult * 138) >> 7;
-        }
-#endif
         int factor = 128;
         if (pcs->ppcs->frm_hdr.delta_q_params.delta_q_present) {
             int qdiff = q_index - pcs->ppcs->frm_hdr.quantization_params.base_q_idx;
@@ -1340,31 +1304,17 @@ void svt_aom_sb_qp_derivation_tpl_la(PictureControlSet *pcs) {
         sb_cnt = ppcs_ptr->b64_total_count;
     if ((pcs->ppcs->frm_hdr.delta_q_params.delta_q_present) && (pcs->ppcs->tpl_is_valid == 1)) {
         for (sb_addr = 0; sb_addr < sb_cnt; ++sb_addr) {
-            sb_ptr      = pcs->sb_ptr_array[sb_addr];
-            double beta = ppcs_ptr->pa_me_data->tpl_beta[sb_addr];
-#if FIX_SCENE_TRANSITION
-            int offset = svt_av1_get_deltaq_offset(scs->static_config.encoder_bit_depth,
+            sb_ptr         = pcs->sb_ptr_array[sb_addr];
+            double beta    = ppcs_ptr->pa_me_data->tpl_beta[sb_addr];
+            int    offset  = svt_av1_get_deltaq_offset(scs->static_config.encoder_bit_depth,
                                                    ppcs_ptr->frm_hdr.quantization_params.base_q_idx,
                                                    beta,
                                                    pcs->ppcs->slice_type == I_SLICE);
-#else
-            int offset = svt_av1_get_deltaq_offset(
-                scs->static_config.encoder_bit_depth,
-                ppcs_ptr->frm_hdr.quantization_params.base_q_idx,
-                beta,
-                pcs->ppcs->slice_type == I_SLICE || pcs->ppcs->transition_present == 1);
-#endif
-            offset = AOMMIN(offset, pcs->ppcs->frm_hdr.delta_q_params.delta_q_res * 9 * 4 - 1);
-            offset = AOMMAX(offset, -pcs->ppcs->frm_hdr.delta_q_params.delta_q_res * 9 * 4 + 1);
-#if CLN_TPL_FUNCS
+            offset         = AOMMIN(offset, pcs->ppcs->frm_hdr.delta_q_params.delta_q_res * 9 * 4 - 1);
+            offset         = AOMMAX(offset, -pcs->ppcs->frm_hdr.delta_q_params.delta_q_res * 9 * 4 + 1);
             sb_ptr->qindex = CLIP3(1, // q_index 0 is lossless, and is currently not supported in SVT-AV1
                                    MAXQ,
                                    ((int16_t)ppcs_ptr->frm_hdr.quantization_params.base_q_idx + (int16_t)offset));
-#else
-            sb_ptr->qindex = CLIP3(pcs->ppcs->frm_hdr.delta_q_params.delta_q_res,
-                                   255 - pcs->ppcs->frm_hdr.delta_q_params.delta_q_res,
-                                   ((int16_t)ppcs_ptr->frm_hdr.quantization_params.base_q_idx + (int16_t)offset));
-#endif
 
             sb_setup_lambda(pcs, sb_ptr);
         }
@@ -3194,17 +3144,7 @@ void *svt_aom_rate_control_kernel(void *input_ptr) {
                 }
                 if (pcs->ppcs->slice_type == I_SLICE) {
                     pcs->ppcs->rate_control_param_ptr->last_i_qp = pcs->picture_qp;
-#if FIX_SCENE_TRANSITION
                 }
-#else
-                } else if (pcs->ppcs->transition_present == 1 && pcs->ppcs->slice_type != P_SLICE) {
-                    pcs->picture_qp = (uint8_t)CLIP3(
-                        scs->static_config.min_qp_allowed,
-                        scs->static_config.max_qp_allowed,
-                        (uint32_t)((pcs->picture_qp + pcs->ppcs->rate_control_param_ptr->last_i_qp) / 2));
-                    frm_hdr->quantization_params.base_q_idx = quantizer_to_qindex[pcs->picture_qp];
-                }
-#endif
             }
             pcs->ppcs->picture_qp = pcs->picture_qp;
 
@@ -3294,12 +3234,10 @@ void *svt_aom_rate_control_kernel(void *input_ptr) {
                     sb_ptr->qindex     = frm_hdr->quantization_params.base_q_idx;
                 }
             }
-#if TUNE_SSIM_LIBAOM_APPROACH
             if (pcs->scs->static_config.tune == 2 && !pcs->ppcs->frm_hdr.delta_q_params.delta_q_present) {
                 // enable sb level qindex when tune 2
                 pcs->ppcs->frm_hdr.delta_q_params.delta_q_present = 1;
             }
-#endif
             if (scs->static_config.rate_control_mode && !is_superres_recode_task) {
                 svt_aom_update_rc_counts(pcs->ppcs);
             }

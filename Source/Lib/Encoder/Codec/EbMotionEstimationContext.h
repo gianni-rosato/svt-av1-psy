@@ -412,9 +412,7 @@ typedef struct MeContext {
     uint16_t         num_hme_sa_w;
     uint16_t         num_hme_sa_h;
     SearchAreaMinMax hme_l0_sa; // Total HME Level-0 search area
-#if MCTF_OPT_HME_LEVEL
     SearchAreaMinMax hme_l0_sa_default_tf; // Total HME Level-0 search area TF
-#endif
     SearchArea       hme_l1_sa; // HME Level-1 search area per HME-L0 search centre
     SearchArea       hme_l2_sa; // HME Level-2 search area per HME-L1 search centre
     SearchResults    search_results[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
@@ -473,23 +471,17 @@ typedef struct MeContext {
     int          tf_block_row;
     int          tf_block_col;
     uint32_t     idx_32x32;
-#if MCTF_FRAME_SIZE
-    uint16_t tf_mv_dist_th;
-#else
-    uint16_t min_frame_size;
-#endif
-    int32_t  prune_me_candidates_th;
-    uint8_t  use_best_unipred_cand_only; // Use only the best unipred candidate when MRP is off
-    uint8_t  reduce_hme_l0_sr_th_min;
-    uint8_t  reduce_hme_l0_sr_th_max;
-    uint16_t tf_me_exit_th;
-    uint8_t  tf_use_pred_64x64_only_th;
-    uint8_t  tf_subpel_early_exit;
-    uint32_t zz_sad[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
-    uint32_t me_early_exit_th;
-#if OPT_SAFE_LIMIT
-    uint32_t me_safe_limit_zz_th;
-#endif
+    uint16_t     tf_mv_dist_th;
+    int32_t      prune_me_candidates_th;
+    uint8_t      use_best_unipred_cand_only; // Use only the best unipred candidate when MRP is off
+    uint8_t      reduce_hme_l0_sr_th_min;
+    uint8_t      reduce_hme_l0_sr_th_max;
+    uint16_t     tf_me_exit_th;
+    uint8_t      tf_use_pred_64x64_only_th;
+    uint8_t      tf_subpel_early_exit;
+    uint32_t     zz_sad[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
+    uint32_t     me_early_exit_th;
+    uint32_t     me_safe_limit_zz_th;
     uint32_t     tf_tot_vert_blks; //total vertical motion blocks in TF
     uint32_t     tf_tot_horz_blks; //total horizontal motion blocks in TF
     uint8_t      skip_frame;

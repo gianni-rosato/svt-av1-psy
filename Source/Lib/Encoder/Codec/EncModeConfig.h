@@ -46,12 +46,8 @@ void svt_aom_sig_deriv_enc_dec_common(SequenceControlSet *scs, PictureControlSet
 
 void svt_aom_sig_deriv_me(SequenceControlSet *scs, PictureParentControlSet *pcs, MeContext *me_ctx);
 
-void svt_aom_sig_deriv_enc_dec(SequenceControlSet *scs, PictureControlSet *pcs, ModeDecisionContext *ctx);
-#if TUNE_M6
-bool svt_aom_need_gm_ref_info(EncMode enc_mode, bool super_res_off);
-#else
-bool    svt_aom_need_gm_ref_info(EncMode enc_mode, uint8_t is_base, bool super_res_off);
-#endif
+void    svt_aom_sig_deriv_enc_dec(SequenceControlSet *scs, PictureControlSet *pcs, ModeDecisionContext *ctx);
+bool    svt_aom_need_gm_ref_info(EncMode enc_mode, bool super_res_off);
 uint8_t svt_aom_derive_gm_level(PictureParentControlSet *pcs, bool super_res_off);
 
 void svt_aom_set_gm_controls(PictureParentControlSet *pcs, uint8_t gm_level);
@@ -69,12 +65,7 @@ uint8_t svt_aom_get_nsq_level(EncMode enc_mode, uint8_t is_islice, uint8_t is_ba
 uint8_t get_inter_compound_level(EncMode enc_mode);
 uint8_t get_filter_intra_level(EncMode enc_mode);
 uint8_t svt_aom_get_inter_intra_level(EncMode enc_mode, uint8_t is_base, uint8_t transition_present);
-#if TUNE_M6
 uint8_t svt_aom_get_obmc_level(EncMode enc_mode, uint8_t fast_decode, EbInputResolution input_resolution);
-#else
-uint8_t svt_aom_get_obmc_level(EncMode enc_mode, uint8_t is_ref, uint8_t fast_decode,
-                               EbInputResolution input_resolution);
-#endif
 
 void    svt_aom_set_nsq_ctrls(ModeDecisionContext *ctx, uint8_t nsq_level, uint8_t *allow_HVA_HVB, uint8_t *allow_HV4,
                               uint8_t *min_nsq_bsize);

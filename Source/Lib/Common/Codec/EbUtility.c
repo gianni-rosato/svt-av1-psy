@@ -271,7 +271,6 @@ EbLinkedListNode* svt_aom_split_eb_linked_list(EbLinkedListNode* input, EbLinked
     return ll_true_ptr;
 }
 
-#if OPT_ENABLE_2L_INCOMP
 static const MiniGopStats mini_gop_stats_array[] = {
     // hierarchical_levels    start_index    end_index    Length
     {5, 0, 31, 32}, // 0
@@ -306,26 +305,6 @@ static const MiniGopStats mini_gop_stats_array[] = {
     {1, 28, 29, 2}, // 29
     {1, 30, 31, 2} // 30
 };
-#else
-static const MiniGopStats mini_gop_stats_array[] = {
-    //    hierarchical_levels    start_index    end_index    Lenght    mini_gop_index
-    {5, 0, 31, 32}, // 0
-    {4, 0, 15, 16}, // 1
-    {3, 0, 7, 8}, // 2
-    {2, 0, 3, 4}, // 3
-    {2, 4, 7, 4}, // 4
-    {3, 8, 15, 8}, // 5
-    {2, 8, 11, 4}, // 6
-    {2, 12, 15, 4}, // 7
-    {4, 16, 31, 16}, // 8
-    {3, 16, 23, 8}, // 9
-    {2, 16, 19, 4}, // 10
-    {2, 20, 23, 4}, // 11
-    {3, 24, 31, 8}, // 12
-    {2, 24, 27, 4}, // 13
-    {2, 28, 31, 4} // 14
-};
-#endif
 /**************************************************************
 * Get Mini GOP Statistics
 **************************************************************/

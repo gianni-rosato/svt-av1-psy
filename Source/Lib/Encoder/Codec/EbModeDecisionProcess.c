@@ -66,12 +66,7 @@ static void mode_decision_context_dctor(EbPtr p) {
         EB_FREE_ARRAY(obj->md_blk_arr_nsq[0].av1xd);
     }
     EB_FREE_ARRAY(obj->avail_blk_flag);
-#if !REMOVE_TESTED_BLK_FLAG
-    EB_FREE_ARRAY(obj->tested_blk_flag);
-#endif
-#if CLN_NSQ
     EB_FREE_ARRAY(obj->cost_avail);
-#endif
     EB_FREE_ARRAY(obj->md_local_blk_unit);
     EB_FREE_ARRAY(obj->md_blk_arr_nsq);
     if (obj->rate_est_table)
@@ -106,9 +101,7 @@ static void mode_decision_context_dctor(EbPtr p) {
     EB_DELETE(obj->scratch_prediction_ptr);
     EB_DELETE(obj->temp_residual);
     EB_DELETE(obj->temp_recon_ptr);
-#if TUNE_SSIM_FULL_SPACIAL_DIST
     EB_FREE_ARRAY(obj->full_cost_ssim_array);
-#endif
 }
 
 void svt_aom_set_nics(NicScalingCtrls *scaling_ctrls, uint32_t mds1_count[CAND_CLASS_TOTAL],
@@ -225,11 +218,7 @@ EbErrorType svt_aom_mode_decision_context_ctor(ModeDecisionContext *ctx, EbColor
             for (EbInputResolution input_resolution = 0; input_resolution < INPUT_SIZE_COUNT; input_resolution++) {
                 if (obmc_allowed)
                     break;
-#if TUNE_M6
                 obmc_allowed |= svt_aom_get_obmc_level(enc_mode, fast_decode, input_resolution);
-#else
-                obmc_allowed |= svt_aom_get_obmc_level(enc_mode, is_ref, fast_decode, input_resolution);
-#endif
             }
         }
     }
@@ -268,9 +257,7 @@ EbErrorType svt_aom_mode_decision_context_ctor(ModeDecisionContext *ctx, EbColor
     // Cost Arrays
     EB_MALLOC_ARRAY(ctx->fast_cost_array, ctx->max_nics_uv);
     EB_MALLOC_ARRAY(ctx->full_cost_array, ctx->max_nics_uv);
-#if TUNE_SSIM_FULL_SPACIAL_DIST
     EB_MALLOC_ARRAY(ctx->full_cost_ssim_array, ctx->max_nics_uv);
-#endif
     // Candidate Buffers
     EB_NEW(ctx->cand_bf_tx_depth_1,
            svt_aom_mode_decision_scratch_cand_bf_ctor,
@@ -342,12 +329,7 @@ EbErrorType svt_aom_mode_decision_context_ctor(ModeDecisionContext *ctx, EbColor
     ctx->md_blk_arr_nsq[0].av1xd = NULL;
     EB_MALLOC_ARRAY(ctx->md_blk_arr_nsq[0].av1xd, block_max_count_sb);
     EB_MALLOC_ARRAY(ctx->avail_blk_flag, block_max_count_sb);
-#if !REMOVE_TESTED_BLK_FLAG
-    EB_MALLOC_ARRAY(ctx->tested_blk_flag, block_max_count_sb);
-#endif
-#if CLN_NSQ
     EB_MALLOC_ARRAY(ctx->cost_avail, block_max_count_sb);
-#endif
     EB_MALLOC_ARRAY(ctx->mdc_sb_array, 1);
     for (coded_leaf_index = 0; coded_leaf_index < block_max_count_sb; ++coded_leaf_index) {
         ctx->md_blk_arr_nsq[coded_leaf_index].av1xd      = ctx->md_blk_arr_nsq[0].av1xd + coded_leaf_index;
@@ -453,7 +435,6 @@ EbErrorType svt_aom_mode_decision_context_ctor(ModeDecisionContext *ctx, EbColor
     EB_ALLOC_PTR_ARRAY(ctx->cand_bf_ptr_array, ctx->max_nics_uv);
 
     for (buffer_index = 0; buffer_index < ctx->max_nics; ++buffer_index) {
-#if TUNE_SSIM_FULL_SPACIAL_DIST
         EB_NEW(ctx->cand_bf_ptr_array[buffer_index],
                svt_aom_mode_decision_cand_bf_ctor,
                ctx->hbd_md ? EB_TEN_BIT : EB_EIGHT_BIT,
@@ -464,21 +445,9 @@ EbErrorType svt_aom_mode_decision_context_ctor(ModeDecisionContext *ctx, EbColor
                &(ctx->fast_cost_array[buffer_index]),
                &(ctx->full_cost_array[buffer_index]),
                &(ctx->full_cost_ssim_array[buffer_index]));
-#else
-        EB_NEW(ctx->cand_bf_ptr_array[buffer_index],
-               svt_aom_mode_decision_cand_bf_ctor,
-               ctx->hbd_md ? EB_TEN_BIT : EB_EIGHT_BIT,
-               sb_size,
-               PICTURE_BUFFER_DESC_FULL_MASK,
-               ctx->temp_residual,
-               ctx->temp_recon_ptr,
-               &(ctx->fast_cost_array[buffer_index]),
-               &(ctx->full_cost_array[buffer_index]));
-#endif
     }
 
     for (buffer_index = max_nics; buffer_index < ctx->max_nics_uv; ++buffer_index) {
-#if TUNE_SSIM_FULL_SPACIAL_DIST
         EB_NEW(ctx->cand_bf_ptr_array[buffer_index],
                svt_aom_mode_decision_cand_bf_ctor,
                ctx->hbd_md ? EB_TEN_BIT : EB_EIGHT_BIT,
@@ -489,17 +458,6 @@ EbErrorType svt_aom_mode_decision_context_ctor(ModeDecisionContext *ctx, EbColor
                &(ctx->fast_cost_array[buffer_index]),
                &(ctx->full_cost_array[buffer_index]),
                &(ctx->full_cost_ssim_array[buffer_index]));
-#else
-        EB_NEW(ctx->cand_bf_ptr_array[buffer_index],
-               svt_aom_mode_decision_cand_bf_ctor,
-               ctx->hbd_md ? EB_TEN_BIT : EB_EIGHT_BIT,
-               sb_size,
-               PICTURE_BUFFER_DESC_CHROMA_MASK,
-               ctx->temp_residual,
-               ctx->temp_recon_ptr,
-               &(ctx->fast_cost_array[buffer_index]),
-               &(ctx->full_cost_array[buffer_index]));
-#endif
     }
 
     return EB_ErrorNone;
@@ -536,11 +494,9 @@ void svt_aom_reset_mode_decision_neighbor_arrays(PictureControlSet *pcs, uint16_
 
     return;
 }
-#if OPT_LAMBDA_SCALING
 // If the ref intra percentage is below the TH, applying modulation to the MD lambda
 #define LAMBDA_MOD_INTRA_TH 65
 #define LAMBDA_MOD_SCALING_FACTOR 138
-#endif
 // Set the lambda for each sb.
 // When lambda tuning is on (blk_lambda_tuning), lambda of each block is set separately (full_lambda_md/fast_lambda_md)
 // later in svt_aom_set_tuned_blk_lambda
@@ -551,7 +507,6 @@ static void av1_lambda_assign_md(PictureControlSet *pcs, ModeDecisionContext *ct
     ctx->full_lambda_md[1] = (uint32_t)svt_aom_compute_rd_mult(pcs, ctx->qp_index, ctx->me_q_index, 10);
     ctx->fast_lambda_md[1] = av1lambda_mode_decision10_bit_sad[ctx->qp_index];
 
-#if OPT_LAMBDA_SCALING
     if (pcs->scs->stats_based_sb_lambda_modulation) {
         if (pcs->temporal_layer_index > 0) {
             if (pcs->ref_intra_percentage < LAMBDA_MOD_INTRA_TH) {
@@ -562,7 +517,6 @@ static void av1_lambda_assign_md(PictureControlSet *pcs, ModeDecisionContext *ct
             }
         }
     }
-#endif
 
     ctx->full_lambda_md[1] *= 16;
     ctx->fast_lambda_md[1] *= 4;

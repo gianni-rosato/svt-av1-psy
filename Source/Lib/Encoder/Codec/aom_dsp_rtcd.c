@@ -454,11 +454,9 @@ void svt_aom_setup_rtcd_internal(EbCpuFlags flags) {
     SET_AVX2(svt_av1_highbd_resize_plane, svt_av1_highbd_resize_plane_c, svt_av1_highbd_resize_plane_avx2);
     SET_AVX2(svt_av1_resize_plane, svt_av1_resize_plane_c, svt_av1_resize_plane_avx2);
     SET_AVX2(svt_av1_compute_cul_level, svt_av1_compute_cul_level_c, svt_av1_compute_cul_level_avx2);
-#if TUNE_SSIM_FULL_SPACIAL_DIST
     SET_AVX2(svt_ssim_8x8, svt_ssim_8x8_c, svt_ssim_8x8_avx2);
     SET_AVX2(svt_ssim_4x4, svt_ssim_4x4_c, svt_ssim_4x4_avx2);
     SET_AVX2(svt_ssim_8x8_hbd, svt_ssim_8x8_hbd_c, svt_ssim_8x8_hbd_avx2);
     SET_AVX2(svt_ssim_4x4_hbd, svt_ssim_4x4_hbd_c, svt_ssim_4x4_hbd_avx2);
-#endif
 }
 // clang-format on

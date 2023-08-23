@@ -252,10 +252,8 @@ void svt_aom_global_motion_estimation(PictureParentControlSet *pcs, EbPictureBuf
             else if (global_motion_estimation_level == 2)
                 num_of_ref_pic_to_search = MIN(num_of_ref_pic_to_search, 2);
 
-#if OPT_GM_1REF
             if (pcs->temporal_layer_index > 0 && pcs->gm_ctrls.ref_idx0_only)
                 num_of_ref_pic_to_search = MIN(num_of_ref_pic_to_search, 1);
-#endif
 
             // Ref Picture Loop
             for (uint32_t ref_pic_index = 0; ref_pic_index < num_of_ref_pic_to_search; ++ref_pic_index) {

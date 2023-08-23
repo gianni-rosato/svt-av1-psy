@@ -492,9 +492,7 @@ typedef struct MotionEstimationData {
     double *tpl_beta;
     double *tpl_rdmult_scaling_factors;
     double *tpl_sb_rdmult_scaling_factors;
-#if TUNE_SSIM_LIBAOM_APPROACH
     double *ssim_rdmult_scaling_factors;
-#endif
 } MotionEstimationData;
 typedef struct TplControls {
     uint8_t              enable; // 0: TPL OFF; 1: TPL ON
@@ -503,15 +501,10 @@ typedef struct TplControls {
     uint8_t              disable_intra_pred_nref; // 0:OFF 1:ON - Disable intra prediction in NREF
     PredictionMode       intra_mode_end; // The MAX intra mode to be tested in TPL
     EB_TRANS_COEFF_SHAPE pf_shape;
-#if FIX_TPL_LVLS
     // Use SAD as a distortion metric when searching the best mode (based on src pic). If false, will use SATD
     uint8_t use_sad_in_src_search;
-#else
-    uint8_t use_pred_sad_in_intra_search;
-    uint8_t use_pred_sad_in_inter_search;
-#endif
-    int8_t reduced_tpl_group;
-    double r0_adjust_factor;
+    int8_t  reduced_tpl_group;
+    double  r0_adjust_factor;
     // 0: use 16x16 block(s), 1: use 32x32 block(s), 2: use 64x64 block(s)  (for incomplete 64x64,
     // dispenser_search_level is set to 0)
     uint8_t dispenser_search_level;
@@ -578,10 +571,8 @@ typedef struct GmControls {
     bool inj_psq_glb;
     //enable Pre-processor for GM
     bool pp_enabled;
-#if OPT_GM_1REF
     //limit the search to  ref index = 0 only
     bool ref_idx0_only;
-#endif
 } GmControls;
 typedef struct CdefControls {
     uint8_t enabled;
@@ -620,12 +611,6 @@ typedef struct CdefControls {
     // Shut CDEF at the picture level based on the skip area of the nearest reference frames.
     uint8_t use_skip_detector;
 } CdefControls;
-#if !OPT_LIST0_ONLY_BASE
-typedef struct List0OnlyBase {
-    uint8_t  enabled;
-    uint16_t noise_variance_th;
-} List0OnlyBase;
-#endif
 typedef struct DlfCtrls {
     uint8_t enabled; // if true, perform DLF per SB, not per picture
     // when DLF filter level is selected from QP, if the filter level is less than or equal to this
@@ -768,9 +753,7 @@ typedef struct PictureParentControlSet {
     uint8_t   temporal_layer_index;
     uint64_t  decode_order;
 
-#if OPT_SAFE_LIMIT
     bool similar_brightness_refs; //whether closest references have similar brightness
-#endif
 
     //avg luma intensity of the picture  256: invalid value  0..255 valid value
     uint64_t avg_luma;
@@ -1040,11 +1023,7 @@ typedef struct PictureParentControlSet {
     // size of above buffer
     uint32_t tpl_group_size;
     // stores previous, current, future pictures from pd-reord-queue. empty for first I.
-#if FIX_LINUX_MISMATCH
     void *pd_window[2 + TF_MAX_BASE_REF_PICS];
-#else
-    void   *pd_window[PD_WINDOW_SIZE];
-#endif
     // stores pcs pictures needed for lad mg based algorithms
     struct PictureParentControlSet *ext_group[MAX_TPL_EXT_GROUP_SIZE];
     // actual size of extended group
@@ -1085,10 +1064,7 @@ typedef struct PictureParentControlSet {
     uint8_t                         first_frame_in_minigop;
     TplControls                     tpl_ctrls;
     uint8_t                         tpl_is_valid;
-#if !OPT_LIST0_ONLY_BASE
-    List0OnlyBase list0_only_base_ctrls;
-#endif
-    EbHandle tpl_disp_mutex;
+    EbHandle                        tpl_disp_mutex;
     // uint32_t         input_type;
     int16_t  enc_dec_segment_row;
     uint16_t tile_group_index;
@@ -1140,15 +1116,11 @@ typedef struct PictureParentControlSet {
     DGDetectorSeg   *dg_detector; // dg detector segments control struct
     SvtAv1RoiMapEvt *roi_map_evt;
     uint32_t         filt_to_unfilt_diff;
-#if MCTF_ON_THE_FLY_PRUNING
     // Absolute histogram deviation of the frame to the central TF frame (i.e. sum of absolute deviation of all bins)
     uint32_t tf_ahd_error_to_central;
     // Average absolute histogram deviation of all frames in the TF window to the current (central) frame
     uint32_t tf_avg_ahd_error;
-#endif
-#if MCTF_OPT_HME_LEVEL
-    bool tf_active_region_present;
-#endif
+    bool     tf_active_region_present;
 } PictureParentControlSet;
 
 typedef struct TplDispResults {
@@ -1215,11 +1187,7 @@ typedef struct PictureControlSetInitData {
     uint8_t    ref_count_used_list1;
 
     uint8_t enable_adaptive_quantization;
-#if MCTF_ON_THE_FLY_PRUNING
     uint8_t calc_hist;
-#else
-    uint8_t scene_change_detection;
-#endif
     uint8_t tpl_lad_mg;
     uint8_t skip_frame_first_pass;
     uint8_t ipp_ds;

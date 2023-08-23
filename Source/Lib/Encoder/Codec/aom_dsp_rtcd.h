@@ -900,7 +900,6 @@ extern "C" {
     EbErrorType svt_av1_resize_plane_c(const uint8_t *const input, int height, int width, int in_stride, uint8_t *output, int height2, int width2, int out_stride);
     RTCD_EXTERN int(*svt_av1_compute_cul_level)(const int16_t *const scan, const int32_t *const quant_coeff, uint16_t *eob);
     int svt_av1_compute_cul_level_c(const int16_t *const scan, const int32_t *const quant_coeff, uint16_t *eob);
-#if TUNE_SSIM_FULL_SPACIAL_DIST
     RTCD_EXTERN double (*svt_ssim_8x8)(const uint8_t* s, uint32_t sp, const uint8_t* r, uint32_t rp);
     double svt_ssim_8x8_c(const uint8_t* s, uint32_t sp, const uint8_t* r, uint32_t rp);
     RTCD_EXTERN double (*svt_ssim_4x4)(const uint8_t* s, uint32_t sp, const uint8_t* r, uint32_t rp);
@@ -909,7 +908,6 @@ extern "C" {
     double svt_ssim_8x8_hbd_c(const uint16_t* s, uint32_t sp, const uint16_t* r, uint32_t rp);
     RTCD_EXTERN double (*svt_ssim_4x4_hbd)(const uint16_t* s, uint32_t sp, const uint16_t* r, uint32_t rp);
     double svt_ssim_4x4_hbd_c(const uint16_t* s, uint32_t sp, const uint16_t* r, uint32_t rp);
-#endif
 #ifdef ARCH_X86_64
     int64_t svt_aom_sse_avx2(const uint8_t *a, int a_stride, const uint8_t *b, int b_stride, int width, int height);
     int64_t svt_aom_highbd_sse_avx2(const uint8_t *a8, int a_stride, const uint8_t *b8, int b_stride, int width, int height);
@@ -1742,12 +1740,10 @@ extern "C" {
     EbErrorType svt_av1_highbd_resize_plane_avx2(const uint16_t *const input, int height, int width, int in_stride, uint16_t *output, int height2, int width2, int out_stride, int bd);
     EbErrorType svt_av1_resize_plane_avx2(const uint8_t *const input, int height, int width, int in_stride, uint8_t *output, int height2, int width2, int out_stride);
     int svt_av1_compute_cul_level_avx2(const int16_t *const scan, const int32_t *const quant_coeff, uint16_t *eob);
-#if TUNE_SSIM_FULL_SPACIAL_DIST
     double svt_ssim_8x8_avx2(const uint8_t* s, uint32_t sp, const uint8_t* r, uint32_t rp);
     double svt_ssim_4x4_avx2(const uint8_t* s, uint32_t sp, const uint8_t* r, uint32_t rp);
     double svt_ssim_8x8_hbd_avx2(const uint16_t* s, uint32_t sp, const uint16_t* r, uint32_t rp);
     double svt_ssim_4x4_hbd_avx2(const uint16_t* s, uint32_t sp, const uint16_t* r, uint32_t rp);
-#endif
 #endif
 
     /* Moved to aom_dsp_rtcd.c file:

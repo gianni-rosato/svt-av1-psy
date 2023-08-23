@@ -972,11 +972,7 @@ static void svt_av1_apply_temporal_filter_planewise_medium_partial_c(
     int32_t idx_32x32 = me_ctx->tf_block_col + me_ctx->tf_block_row * 2;
 
     //double distance_threshold = (double)AOMMAX(me_ctx->tf_mv_dist_th * TF_SEARCH_DISTANCE_THRESHOLD, 1);
-#if MCTF_FRAME_SIZE
     uint32_t distance_threshold_fp16 = AOMMAX((me_ctx->tf_mv_dist_th << 16) / 10, 1 << 16);
-#else
-    uint32_t distance_threshold_fp16 = AOMMAX((me_ctx->min_frame_size << 16) / 10, 1 << 16);
-#endif
 
     //Calculation for every quarter
     uint32_t  d_factor_fp8[4];
@@ -1160,11 +1156,7 @@ static void svt_av1_apply_temporal_filter_planewise_medium_hbd_partial_c(
     int idx_32x32    = me_ctx->tf_block_col + me_ctx->tf_block_row * 2;
     int shift_factor = ((encoder_bit_depth - 8) * 2);
     //const double distance_threshold = (double)AOMMAX(me_ctx->tf_mv_dist_th * TF_SEARCH_DISTANCE_THRESHOLD, 1);
-#if MCTF_FRAME_SIZE
     uint32_t distance_threshold_fp16 = AOMMAX((me_ctx->tf_mv_dist_th << 16) / 10, 1 << 16);
-#else
-    uint32_t distance_threshold_fp16 = AOMMAX((me_ctx->min_frame_size << 16) / 10, 1 << 16);
-#endif
 
     //Calculation for every quarter
     uint32_t  d_factor_fp8[4];
@@ -4004,7 +3996,6 @@ static void convert_64x64_info_to_32x32_info(
         }
     }
 }
-#if MCTF_OPT_HME_LEVEL
 static void set_hme_search_params_mctf(MeContext *ctx, uint8_t hme_search_level) {
 
     switch (hme_search_level) {
@@ -4025,7 +4016,6 @@ static void set_hme_search_params_mctf(MeContext *ctx, uint8_t hme_search_level)
     }
 
 }
-#endif
 // Produce the filtered alt-ref picture
 // - core function
 static EbErrorType produce_temporally_filtered_pic(
@@ -4117,7 +4107,6 @@ static EbErrorType produce_temporally_filtered_pic(
                 input_picture_ptr_central->stride_bit_inc_cr +
             (input_picture_ptr_central->org_x >> ss_x),
     };
-#if MCTF_DECAY_CTRL
     int decay_control[COLOR_CHANNELS];
     if (scs->vq_ctrls.sharpness_ctrls.tf && centre_pcs->is_noise_level && scs->calculate_variance && centre_pcs->pic_avg_variance < VQ_PIC_AVG_VARIANCE_TH) {
 
@@ -4142,19 +4131,6 @@ static EbErrorType produce_temporally_filtered_pic(
             }
         }
     }
-#else
-    int decay_control;
-    if (scs->vq_ctrls.sharpness_ctrls.tf && centre_pcs->is_noise_level && scs->calculate_variance && centre_pcs->pic_avg_variance < VQ_PIC_AVG_VARIANCE_TH) {
-        decay_control = 1;
-    }
-    else {
-        // Hyper-parameter for filter weight adjustment.
-        decay_control =  3;
-        // Decrease the filter strength for low QPs
-        if (scs->static_config.qp <= ALT_REF_QP_THRESH)
-            decay_control--;
-    }
-#endif
     // Adjust filtering based on q.
     // Larger q -> stronger filtering -> larger weight.
     // Smaller q -> weaker filtering -> smaller weight.
@@ -4195,64 +4171,32 @@ static EbErrorType produce_temporally_filtered_pic(
         q = active_best_quality;
 
         FP_ASSERT(q < (1 << 20));
-#if MCTF_QDECAY
         // Max q_factor is 255, therefore the upper bound of q_decay is 8.
         // We do not need a clip here.
         //q_decay = 0.5 * pow((double)q / 64, 2);
         FP_ASSERT(q < (1 << 15));
         uint32_t q_decay_fp8 = 256;
-#else
-        //double q_decay = pow((double)q / TF_Q_DECAY_THRESHOLD, 2);
-
-        //TODO: FIX1 uint32_t???
-        int32_t  q_treshold_fp8 = (q * ((int32_t)1 << 8)) / TF_Q_DECAY_THRESHOLD;
-        uint32_t q_decay_fp8 = (q_treshold_fp8 * q_treshold_fp8) >> 8;
-
-        //  q_decay_fp8 = ((q_decay_fp8) < (1) ? (1) : (q_decay_fp8) > (1<<8) ? (1<<8) : (q_decay_fp8));
-        q_decay_fp8 = CLIP(q_decay_fp8, 1, 1 << 8);
-#endif
         if (q >= TF_QINDEX_CUTOFF) {
-#if !MCTF_QDECAY
-            // Max q_factor is 255, therefore the upper bound of q_decay is 8.
-            // We do not need a clip here.
-            //q_decay = 0.5 * pow((double)q / 64, 2);
-            FP_ASSERT(q < (1 << 15));
-#endif
             q_decay_fp8 = (q * q) >> 5;
         }
-#if MCTF_QDECAY
         else {
             q_decay_fp8 = MAX(q << 2, 1);
         }
-#endif
         const int32_t const_0dot7_fp16 = 45875; //0.7
         /*Calculation of log and dceay_factor possible to move to estimate_noise() and calculate one time for GOP*/
         //decay_control * (0.7 + log1p(noise_levels[C_Y]))
-#if MCTF_DECAY_CTRL
         int32_t n_decay_fp10 = (decay_control[C_Y] * (const_0dot7_fp16 + noise_levels_log1p_fp16[C_Y])) /
             ((int32_t)1 << 6);
-#else
-        int32_t n_decay_fp10 = (decay_control * (const_0dot7_fp16 + noise_levels_log1p_fp16[C_Y])) /
-            ((int32_t)1 << 6);
-#endif
         //2 * n_decay * n_decay * q_decay * (s_decay always is 1);
         ctx->tf_decay_factor_fp16[C_Y] = (uint32_t)(
             (((((int64_t)n_decay_fp10) * ((int64_t)n_decay_fp10))) * q_decay_fp8) >> 11);
 
         if (ctx->tf_chroma) {
-#if MCTF_DECAY_CTRL
             n_decay_fp10 = (decay_control[C_U] * (const_0dot7_fp16 + noise_levels_log1p_fp16[C_U])) /
-#else
-            n_decay_fp10 = (decay_control * (const_0dot7_fp16 + noise_levels_log1p_fp16[C_U])) /
-#endif
                 ((int32_t)1 << 6);
             ctx->tf_decay_factor_fp16[C_U] = (uint32_t)(
                 (((((int64_t)n_decay_fp10) * ((int64_t)n_decay_fp10))) * q_decay_fp8) >> 11);
-#if MCTF_DECAY_CTRL
             n_decay_fp10 = (decay_control[C_V] * (const_0dot7_fp16 + noise_levels_log1p_fp16[C_V])) /
-#else
-            n_decay_fp10 = (decay_control * (const_0dot7_fp16 + noise_levels_log1p_fp16[C_V])) /
-#endif
                 ((int32_t)1 << 6);
             ctx->tf_decay_factor_fp16[C_V] = (uint32_t)(
                 (((((int64_t)n_decay_fp10) * ((int64_t)n_decay_fp10))) * q_decay_fp8) >> 11);
@@ -4325,7 +4269,6 @@ static EbErrorType produce_temporally_filtered_pic(
 
             for (int segment_idx = 0; segment_idx < 3; segment_idx++)
                 for (int frame_index = start_frame_index[segment_idx]; frame_index <= end_frame_index[segment_idx]; frame_index = frame_index+ me_context_ptr->me_ctx->tf_ctrls.ref_frame_factor) {
- #if MCTF_ON_THE_FLY_PRUNING
                 // Use ahd-error to central/avg to identify/skip outlier ref-frame(s)
                 if (frame_index != index_center) {
                     uint32_t low_ahd_err = centre_pcs->aligned_width * centre_pcs->aligned_height;
@@ -4334,7 +4277,6 @@ static EbErrorType produce_temporally_filtered_pic(
                        ((int) (((int) pcs_list[frame_index]->tf_ahd_error_to_central - (int) centre_pcs->tf_avg_ahd_error) * 100)) > (th * (int) centre_pcs->tf_avg_ahd_error)) // ahd_error_to_central higher than tf_avg_ahd_error by x%
                         continue;
                 }
-#endif
                 // ------------
                 // Step 1: motion estimation + compensation
                 // ------------
@@ -4378,7 +4320,6 @@ static EbErrorType produce_temporally_filtered_pic(
                         centre_pcs->tf_ctrls.subpel_early_exit;
                     // Perform ME - context_ptr will store the outputs (MVs, buffers, etc)
                     // Block-based MC using open-loop HME + refinement
-#if MCTF_OPT_HME_LEVEL
                     // set default hme search params
                     set_hme_search_params_mctf(ctx,0);
                     // Increase HME-Level0 search-area if tf_active_region_present
@@ -4387,7 +4328,6 @@ static EbErrorType produce_temporally_filtered_pic(
                             set_hme_search_params_mctf(ctx,1);
                         }
                     }
-#endif
                     svt_aom_motion_estimation_b64(centre_pcs,
                         (uint32_t)blk_row * blk_cols + blk_col,
                         (uint32_t)blk_col * BW, // x block
@@ -5336,13 +5276,7 @@ EbErrorType svt_av1_init_temporal_filtering(
         }
     }
     svt_release_mutex(centre_pcs->temp_filt_mutex);
-#if MCTF_FRAME_SIZE
     me_context_ptr->me_ctx->tf_mv_dist_th = CLIP3(64, 450, (int)((int) MIN(centre_pcs->aligned_height,centre_pcs->aligned_width) - 150));
-#else
-    me_context_ptr->me_ctx->min_frame_size = MIN(
-        centre_pcs->aligned_height,
-        centre_pcs->aligned_width);
-#endif
     // index of the central source frame
     // index_center = centre_pcs->past_altref_nframes;
     // populate source frames picture buffer list

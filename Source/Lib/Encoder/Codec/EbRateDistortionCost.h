@@ -51,17 +51,11 @@ uint64_t        svt_aom_inter_fast_cost(PictureControlSet *pcs, struct ModeDecis
                                         uint64_t chroma_distortion);
 EbErrorType     svt_aom_full_cost_light_pd0(ModeDecisionContext *ctx, struct ModeDecisionCandidateBuffer *cand_bf,
                                             uint64_t *y_distortion, uint64_t lambda, uint64_t *y_coeff_bits);
-#if TUNE_SSIM_FULL_SPACIAL_DIST
 void svt_aom_full_cost(PictureControlSet *pcs, ModeDecisionContext *ctx, struct ModeDecisionCandidateBuffer *cand_bf,
                        uint64_t lambda, uint64_t y_distortion[DIST_TOTAL][DIST_CALC_TOTAL],
                        uint64_t cb_distortion[DIST_TOTAL][DIST_CALC_TOTAL],
                        uint64_t cr_distortion[DIST_TOTAL][DIST_CALC_TOTAL], uint64_t *y_coeff_bits,
                        uint64_t *cb_coeff_bits, uint64_t *cr_coeff_bits);
-#else
-void svt_aom_full_cost(PictureControlSet *pcs, ModeDecisionContext *ctx, struct ModeDecisionCandidateBuffer *cand_bf,
-                       uint64_t lambda, uint64_t *y_distortion, uint64_t *cb_distortion, uint64_t *cr_distortion,
-                       uint64_t *y_coeff_bits, uint64_t *cb_coeff_bits, uint64_t *cr_coeff_bits);
-#endif
 
 uint64_t svt_aom_tx_size_bits(MdRateEstimationContext *md_rate_est_ctx, MacroBlockD *xd, const MbModeInfo *mbmi,
                               TxSize tx_size, TxMode tx_mode, BlockSize bsize, uint8_t skip, FRAME_CONTEXT *ec_ctx,

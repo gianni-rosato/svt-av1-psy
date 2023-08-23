@@ -122,11 +122,7 @@ static void TemporalFilterFillMeContexts(MeContext *cnt1, MeContext *cnt2) {
     cnt1->tf_32x32_mv_y[1] = -436;
     cnt1->tf_32x32_mv_y[2] = -436;
     cnt1->tf_32x32_mv_y[3] = -420;
-#if MCTF_FRAME_SIZE
     cnt1->tf_mv_dist_th = 1080;
-#else
-    cnt1->min_frame_size = 1080;
-#endif
     cnt1->tf_chroma = 1;
     *cnt2 = *cnt1;
     cnt2->tf_block_col = 1;

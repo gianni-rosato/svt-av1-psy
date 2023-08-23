@@ -524,17 +524,10 @@ static void mode_decision_scratch_cand_bf_dctor(EbPtr p) {
 /***************************************
 * Mode Decision Candidate Ctor
 ***************************************/
-#if TUNE_SSIM_FULL_SPACIAL_DIST
 EbErrorType svt_aom_mode_decision_cand_bf_ctor(ModeDecisionCandidateBuffer *buffer_ptr, EbBitDepth max_bitdepth,
                                                uint8_t sb_size, uint32_t buffer_desc_mask,
                                                EbPictureBufferDesc *temp_residual, EbPictureBufferDesc *temp_recon_ptr,
                                                uint64_t *fast_cost, uint64_t *full_cost, uint64_t *full_cost_ssim) {
-#else
-EbErrorType svt_aom_mode_decision_cand_bf_ctor(ModeDecisionCandidateBuffer *buffer_ptr, EbBitDepth max_bitdepth,
-                                               uint8_t sb_size, uint32_t buffer_desc_mask,
-                                               EbPictureBufferDesc *temp_residual, EbPictureBufferDesc *temp_recon_ptr,
-                                               uint64_t *fast_cost, uint64_t *full_cost) {
-#endif
     EbPictureBufferDescInitData picture_buffer_desc_init_data;
 
     EbPictureBufferDescInitData thirty_two_width_picture_buffer_desc_init_data;
@@ -577,11 +570,9 @@ EbErrorType svt_aom_mode_decision_cand_bf_ctor(ModeDecisionCandidateBuffer *buff
     buffer_ptr->recon = temp_recon_ptr;
 
     // Costs
-    buffer_ptr->fast_cost = fast_cost;
-    buffer_ptr->full_cost = full_cost;
-#if TUNE_SSIM_FULL_SPACIAL_DIST
+    buffer_ptr->fast_cost      = fast_cost;
+    buffer_ptr->full_cost      = full_cost;
     buffer_ptr->full_cost_ssim = full_cost_ssim;
-#endif
     return EB_ErrorNone;
 }
 EbErrorType svt_aom_mode_decision_scratch_cand_bf_ctor(ModeDecisionCandidateBuffer *buffer_ptr, uint8_t sb_size,
@@ -4764,11 +4755,9 @@ void svt_aom_product_full_mode_decision_light_pd1(
         ctx->coded_area_sb_uv += bwidth_uv * bheight_uv;
     }
 }
-#if TUNE_SSIM_FULL_SPACIAL_DIST
 static INLINE double derive_ssim_threshold_factor_for_full_md(SequenceControlSet *scs) {
     return scs->input_resolution >= INPUT_SIZE_1080p_RANGE ? 1.02 : 1.03;
 }
-#endif
 /***************************************
 * Full Mode Decision
 ***************************************/
@@ -4783,14 +4772,11 @@ uint32_t svt_aom_product_full_mode_decision(
 {
     SequenceControlSet *scs = pcs->scs;
     uint32_t lowest_cost_index = best_candidate_index_array[0];
-#if TUNE_SSIM_FULL_SPACIAL_DIST
     const bool use_ssim_full_cost = ctx->tune_ssim_level > SSIM_LVL_0 ? true : false;
-#endif
 
     // Find the candidate with the lowest cost
     // Only need to sort if have multiple candidates
     if (ctx->md_stage_3_total_count > 1) {
-#if TUNE_SSIM_FULL_SPACIAL_DIST
         if (use_ssim_full_cost) {
             // Pass one: find candidate with the lowest SSD cost
             uint64_t ssd_lowest_cost = 0xFFFFFFFFFFFFFFFFull;
@@ -4844,22 +4830,6 @@ uint32_t svt_aom_product_full_mode_decision(
                 }
             }
         }
-#else
-        uint64_t lowest_cost = 0xFFFFFFFFFFFFFFFFull;
-        for (uint32_t i = 0; i < candidate_total_count; ++i) {
-            uint32_t cand_index = best_candidate_index_array[i];
-            uint64_t cost = *(buffer_ptr_array[cand_index]->full_cost);
-            if (scs->vq_ctrls.sharpness_ctrls.unipred_bias && pcs->ppcs->is_noise_level &&
-                is_inter_singleref_mode(buffer_ptr_array[cand_index]->cand->pred_mode)) {
-                cost = (cost * uni_psy_bias[pcs->picture_qp]) / 100;
-            }
-
-            if (cost < lowest_cost) {
-                lowest_cost_index = cand_index;
-                lowest_cost = cost;
-            }
-        }
-#endif
     }
     ModeDecisionCandidateBuffer* cand_bf = buffer_ptr_array[lowest_cost_index];
     ModeDecisionCandidate* cand = cand_bf->cand;
@@ -5105,7 +5075,6 @@ static int get_superblock_tpl_column_end(PictureParentControlSet* ppcs, int mi_c
     return (sb_mi_end + num_mi_w - 1) / num_mi_w;
 }
 
-#if TUNE_SSIM_LIBAOM_APPROACH
 void aom_av1_set_ssim_rdmult(struct ModeDecisionContext *ctx, PictureControlSet *pcs,
                          const int mi_row, const int mi_col) {
   const AV1_COMMON *const cm = pcs->ppcs->av1_cm;
@@ -5147,7 +5116,6 @@ void aom_av1_set_ssim_rdmult(struct ModeDecisionContext *ctx, PictureControlSet 
       ctx->fast_lambda_md[EB_10_BIT_MD] = (uint32_t)((double)ctx->fast_lambda_md[EB_10_BIT_MD] * geom_mean_of_scale + 0.5);
   }
 }
-#endif
 
 void  svt_aom_set_tuned_blk_lambda(struct ModeDecisionContext *ctx, PictureControlSet *pcs){
     PictureParentControlSet *ppcs = pcs->ppcs;
@@ -5207,14 +5175,11 @@ void  svt_aom_set_tuned_blk_lambda(struct ModeDecisionContext *ctx, PictureContr
     ctx->fast_lambda_md[EB_8_BIT_MD] = (uint32_t)((double)ctx->ed_ctx->pic_fast_lambda[EB_8_BIT_MD] * geom_mean_of_scale + 0.5);
     ctx->fast_lambda_md[EB_10_BIT_MD] = (uint32_t)((double)ctx->ed_ctx->pic_fast_lambda[EB_10_BIT_MD] * geom_mean_of_scale + 0.5);
 
-#if TUNE_SSIM_LIBAOM_APPROACH
     if (ppcs->scs->static_config.tune == 2) {
         aom_av1_set_ssim_rdmult(ctx, pcs, mi_row, mi_col);
     }
-#endif
 }
 
-#if TUNE_SSIM_FULL_SPACIAL_DIST
 extern double similarity(uint32_t sum_s, uint32_t sum_r, uint32_t sum_sq_s, uint32_t sum_sq_r,
                   uint32_t sum_sxr, int count, uint32_t bd);
 double svt_ssim_4x4_c(const uint8_t* s, uint32_t sp, const uint8_t* r, uint32_t rp) {
@@ -5432,4 +5397,3 @@ uint64_t svt_spatial_full_distortion_ssim_kernel(uint8_t* input, uint32_t input_
 
     return spatial_distortion;
 }
-#endif

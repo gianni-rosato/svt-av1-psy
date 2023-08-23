@@ -1043,12 +1043,7 @@ static EbErrorType first_pass_me(PictureParentControlSet *  ppcs,
 ************************************************************************************/
 void open_loop_first_pass(PictureParentControlSet *  ppcs,
                           MotionEstimationContext_t *me_context_ptr, int32_t segment_index) {
-#if MCTF_FRAME_SIZE
     me_context_ptr->me_ctx->tf_mv_dist_th = CLIP3(64, 450, (int)((int) MIN(ppcs->aligned_height,ppcs->aligned_width) - 150));
-#else
-    me_context_ptr->me_ctx->min_frame_size = MIN(ppcs->aligned_height,
-                                                         ppcs->aligned_width);
-#endif
     // Perform the me for the first pass for each segment
 
     me_context_ptr->me_ctx->bypass_blk_step =

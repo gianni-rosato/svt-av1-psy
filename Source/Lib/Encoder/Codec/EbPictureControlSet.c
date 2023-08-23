@@ -1157,11 +1157,7 @@ static EbErrorType picture_parent_control_set_ctor(PictureParentControlSet *obje
             block_count = 1;
         EB_MALLOC_2D(object_ptr->variance, object_ptr->b64_total_count, block_count);
     }
-#if MCTF_ON_THE_FLY_PRUNING
     if (init_data_ptr->calc_hist) {
-#else
-    if (init_data_ptr->scene_change_detection) {
-#endif
         EB_ALLOC_PTR_ARRAY(object_ptr->picture_histogram, MAX_NUMBER_OF_REGIONS_IN_WIDTH);
 
         for (uint32_t region_in_picture_width_index = 0; region_in_picture_width_index < MAX_NUMBER_OF_REGIONS_IN_WIDTH;
@@ -1285,12 +1281,7 @@ static EbErrorType picture_parent_control_set_ctor(PictureParentControlSet *obje
         : 0;
     EB_NEW(object_ptr->dg_detector, svt_aom_dg_detector_seg_ctor);
 
-    if (svt_aom_need_gm_ref_info(
-#if TUNE_M6
-            init_data_ptr->enc_mode, init_data_ptr->static_config.resize_mode == RESIZE_NONE)) {
-#else
-            init_data_ptr->enc_mode, true, init_data_ptr->static_config.resize_mode == RESIZE_NONE)) {
-#endif
+    if (svt_aom_need_gm_ref_info(init_data_ptr->enc_mode, init_data_ptr->static_config.resize_mode == RESIZE_NONE)) {
         EbPictureBufferDescInitData input_pic_buf_desc_init_data;
         input_pic_buf_desc_init_data.max_width          = init_data_ptr->picture_width >> 1;
         input_pic_buf_desc_init_data.max_height         = init_data_ptr->picture_height >> 1;
@@ -1337,10 +1328,8 @@ static void me_dctor(EbPtr p) {
         EB_FREE_ARRAY(obj->tpl_sb_rdmult_scaling_factors);
     if (obj->tpl_src_stats_buffer)
         EB_FREE_ARRAY(obj->tpl_src_stats_buffer);
-#if TUNE_SSIM_LIBAOM_APPROACH
     if (obj->ssim_rdmult_scaling_factors)
         EB_FREE_ARRAY(obj->ssim_rdmult_scaling_factors);
-#endif
 }
 static EbErrorType me_ctor(MotionEstimationData *object_ptr, EbPtr object_init_data_ptr) {
     PictureControlSetInitData *init_data_ptr = (PictureControlSetInitData *)object_init_data_ptr;
@@ -1366,14 +1355,12 @@ static EbErrorType me_ctor(MotionEstimationData *object_ptr, EbPtr object_init_d
         const uint16_t picture_height_in_mb          = (uint16_t)((init_data_ptr->picture_height + 15) / 16);
         uint16_t       adaptive_picture_width_in_mb  = (uint16_t)((init_data_ptr->picture_width + 15) / 16);
         uint16_t       adaptive_picture_height_in_mb = (uint16_t)((init_data_ptr->picture_height + 15) / 16);
-#if TUNE_SSIM_LIBAOM_APPROACH
         if (init_data_ptr->static_config.tune == 2) {
             EB_MALLOC_ARRAY(object_ptr->ssim_rdmult_scaling_factors,
                             adaptive_picture_width_in_mb * adaptive_picture_height_in_mb);
         } else {
             object_ptr->ssim_rdmult_scaling_factors = NULL;
         }
-#endif
 
         if (init_data_ptr->tpl_synth_size == 8) {
             adaptive_picture_width_in_mb  = adaptive_picture_width_in_mb << 1;
@@ -1405,9 +1392,7 @@ static EbErrorType me_ctor(MotionEstimationData *object_ptr, EbPtr object_init_d
         object_ptr->tpl_rdmult_scaling_factors    = NULL;
         object_ptr->tpl_sb_rdmult_scaling_factors = NULL;
         object_ptr->tpl_src_stats_buffer          = NULL;
-#if TUNE_SSIM_LIBAOM_APPROACH
-        object_ptr->ssim_rdmult_scaling_factors = NULL;
-#endif
+        object_ptr->ssim_rdmult_scaling_factors   = NULL;
     }
     return return_error;
 }
@@ -1508,7 +1493,6 @@ EbErrorType sb_geom_init_pcs(SequenceControlSet *scs, PictureParentControlSet *p
         for (md_scan_block_index = 0; md_scan_block_index < max_block_count; md_scan_block_index++) {
             const BlockGeom *blk_geom = get_blk_geom_mds(md_scan_block_index);
             if (scs->over_boundary_block_mode == 1) {
-#if ALLOW_INCOMP_NSQ
                 const BlockGeom *sq_blk_geom = get_blk_geom_mds(blk_geom->sqi_mds);
                 uint8_t has_rows = (pcs->sb_geom[sb_index].org_y + sq_blk_geom->org_y + sq_blk_geom->bheight / 2 <
                                     encoding_height);
@@ -1528,13 +1512,6 @@ EbErrorType sb_geom_init_pcs(SequenceControlSet *scs, PictureParentControlSet *p
                 } else {
                     pcs->sb_geom[sb_index].block_is_allowed[md_scan_block_index] = 0;
                 }
-#else
-                pcs->sb_geom[sb_index].block_is_allowed[md_scan_block_index] =
-                    ((pcs->sb_geom[sb_index].org_x + blk_geom->org_x + blk_geom->bwidth / 2 < encoding_width) &&
-                     (pcs->sb_geom[sb_index].org_y + blk_geom->org_y + blk_geom->bheight / 2 < encoding_height))
-                    ? TRUE
-                    : FALSE;
-#endif
             } else {
                 if (blk_geom->shape != PART_N)
                     blk_geom = get_blk_geom_mds(blk_geom->sqi_mds);

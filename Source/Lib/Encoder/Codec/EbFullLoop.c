@@ -15,14 +15,12 @@
 #include "EbRateDistortionCost.h"
 #include "aom_dsp_rtcd.h"
 
-void svt_aom_residual_kernel(uint8_t *input, uint32_t input_offset, uint32_t input_stride, uint8_t *pred,
-                             uint32_t pred_offset, uint32_t pred_stride, int16_t *residual, uint32_t residual_offset,
-                             uint32_t residual_stride, Bool hbd, uint32_t area_width, uint32_t area_height);
-#if TUNE_SSIM_FULL_SPACIAL_DIST
+void     svt_aom_residual_kernel(uint8_t *input, uint32_t input_offset, uint32_t input_stride, uint8_t *pred,
+                                 uint32_t pred_offset, uint32_t pred_stride, int16_t *residual, uint32_t residual_offset,
+                                 uint32_t residual_stride, Bool hbd, uint32_t area_width, uint32_t area_height);
 uint64_t svt_spatial_full_distortion_ssim_kernel(uint8_t *input, uint32_t input_offset, uint32_t input_stride,
                                                  uint8_t *recon, int32_t recon_offset, uint32_t recon_stride,
                                                  uint32_t area_width, uint32_t area_height, bool hbd);
-#endif
 
 void svt_aom_quantize_b_c_ii(const TranLow *coeff_ptr, intptr_t n_coeffs, const int16_t *zbin_ptr,
                              const int16_t *round_ptr, const int16_t *quant_ptr, const int16_t *quant_shift_ptr,
@@ -1934,34 +1932,22 @@ void svt_aom_full_loop_chroma_light_pd1(PictureControlSet *pcs, ModeDecisionCont
 /****************************************
  ************  Full loop ****************
 ****************************************/
-#if TUNE_SSIM_FULL_SPACIAL_DIST
 void svt_aom_full_loop_uv(PictureControlSet *pcs, ModeDecisionContext *ctx, ModeDecisionCandidateBuffer *cand_bf,
                           EbPictureBufferDesc *input_pic, COMPONENT_TYPE component_type, uint32_t chroma_qindex,
                           uint32_t cnt_nz_coeff[3][MAX_NUM_OF_TU_PER_CU],
                           uint64_t cb_full_distortion[DIST_TOTAL][DIST_CALC_TOTAL],
                           uint64_t cr_full_distortion[DIST_TOTAL][DIST_CALC_TOTAL], uint64_t *cb_coeff_bits,
                           uint64_t *cr_coeff_bits, Bool is_full_loop) {
-#else
-void svt_aom_full_loop_uv(PictureControlSet *pcs, ModeDecisionContext *ctx, ModeDecisionCandidateBuffer *cand_bf,
-                          EbPictureBufferDesc *input_pic, COMPONENT_TYPE component_type, uint32_t chroma_qindex,
-                          uint32_t cnt_nz_coeff[3][MAX_NUM_OF_TU_PER_CU], uint64_t cb_full_distortion[DIST_CALC_TOTAL],
-                          uint64_t cr_full_distortion[DIST_CALC_TOTAL], uint64_t *cb_coeff_bits,
-                          uint64_t *cr_coeff_bits, Bool is_full_loop) {
-#endif
     EbSpatialFullDistType spatial_full_dist_type_fun = ctx->hbd_md ? svt_full_distortion_kernel16_bits
                                                                    : svt_spatial_full_distortion_kernel;
     uint32_t             *cb_count_non_zero_coeffs   = cnt_nz_coeff[1];
     uint32_t             *cr_count_non_zero_coeffs   = cnt_nz_coeff[2];
-#if TUNE_SSIM_FULL_SPACIAL_DIST
     EB_ALIGN(16) uint64_t txb_full_distortion[DIST_TOTAL][3][DIST_CALC_TOTAL];
     const SsimLevel       ssim_level = ctx->tune_ssim_level;
     if (ssim_level > SSIM_LVL_0) {
         assert(ctx->pd_pass == PD_PASS_1);
         assert(ctx->md_stage == MD_STAGE_3);
     }
-#else
-    EB_ALIGN(16) uint64_t txb_full_distortion[3][DIST_CALC_TOTAL];
-#endif
     cand_bf->u_has_coeff = 0;
     cand_bf->v_has_coeff = 0;
     int16_t *chroma_residual_ptr;
@@ -2110,7 +2096,6 @@ void svt_aom_full_loop_uv(PictureControlSet *pcs, ModeDecisionContext *ctx, Mode
                                                (((txb_origin_y >> 3) << 3) * cand_bf->quant->stride_cb)) >>
                     1;
 
-#if TUNE_SSIM_FULL_SPACIAL_DIST
                 if (ssim_level == SSIM_LVL_1 || ssim_level == SSIM_LVL_3) {
                     txb_full_distortion[DIST_SSIM][1][DIST_CALC_PREDICTION] = svt_spatial_full_distortion_ssim_kernel(
                         input_pic->buffer_cb,
@@ -2159,28 +2144,6 @@ void svt_aom_full_loop_uv(PictureControlSet *pcs, ModeDecisionContext *ctx, Mode
 
                 txb_full_distortion[DIST_SSD][1][DIST_CALC_PREDICTION] <<= 4;
                 txb_full_distortion[DIST_SSD][1][DIST_CALC_RESIDUAL] <<= 4;
-#else
-                txb_full_distortion[1][DIST_CALC_PREDICTION] = spatial_full_dist_type_fun(input_pic->buffer_cb,
-                                                                                          input_chroma_txb_origin_index,
-                                                                                          input_pic->stride_cb,
-                                                                                          cand_bf->pred->buffer_cb,
-                                                                                          txb_uv_origin_index,
-                                                                                          cand_bf->pred->stride_cb,
-                                                                                          cropped_tx_width_uv,
-                                                                                          cropped_tx_height_uv);
-
-                txb_full_distortion[1][DIST_CALC_RESIDUAL] = spatial_full_dist_type_fun(input_pic->buffer_cb,
-                                                                                        input_chroma_txb_origin_index,
-                                                                                        input_pic->stride_cb,
-                                                                                        cand_bf->recon->buffer_cb,
-                                                                                        txb_uv_origin_index,
-                                                                                        cand_bf->recon->stride_cb,
-                                                                                        cropped_tx_width_uv,
-                                                                                        cropped_tx_height_uv);
-
-                txb_full_distortion[1][DIST_CALC_PREDICTION] <<= 4;
-                txb_full_distortion[1][DIST_CALC_RESIDUAL] <<= 4;
-#endif
             } else {
                 // *Full Distortion (SSE)
                 // *Note - there are known issues with how this distortion metric is currently
@@ -2199,29 +2162,17 @@ void svt_aom_full_loop_uv(PictureControlSet *pcs, ModeDecisionContext *ctx, Mode
                     ctx->blk_geom->tx_width_uv[tx_depth],
                     bwidth,
                     bheight,
-#if TUNE_SSIM_FULL_SPACIAL_DIST
                     txb_full_distortion[DIST_SSD][1],
-#else
-                    txb_full_distortion[1],
-#endif
                     cb_count_non_zero_coeffs[txb_itr]);
 
                 TxSize        tx_size      = ctx->blk_geom->txsize_uv[tx_depth];
                 const int32_t chroma_shift = (MAX_TX_SCALE - av1_get_tx_scale_tab[tx_size]) * 2;
-#if TUNE_SSIM_FULL_SPACIAL_DIST
                 txb_full_distortion[DIST_SSD][1][DIST_CALC_RESIDUAL] = RIGHT_SIGNED_SHIFT(
                     txb_full_distortion[DIST_SSD][1][DIST_CALC_RESIDUAL], chroma_shift);
                 txb_full_distortion[DIST_SSD][1][DIST_CALC_PREDICTION] = RIGHT_SIGNED_SHIFT(
                     txb_full_distortion[DIST_SSD][1][DIST_CALC_PREDICTION], chroma_shift);
-#else
-                txb_full_distortion[1][DIST_CALC_RESIDUAL] = RIGHT_SIGNED_SHIFT(
-                    txb_full_distortion[1][DIST_CALC_RESIDUAL], chroma_shift);
-                txb_full_distortion[1][DIST_CALC_PREDICTION] = RIGHT_SIGNED_SHIFT(
-                    txb_full_distortion[1][DIST_CALC_PREDICTION], chroma_shift);
-#endif
             }
             cand_bf->u_has_coeff |= ((cb_count_non_zero_coeffs[txb_itr] != 0) << txb_itr);
-#if TUNE_SSIM_FULL_SPACIAL_DIST
             cb_full_distortion[DIST_SSIM][DIST_CALC_RESIDUAL] += txb_full_distortion[DIST_SSIM][1][DIST_CALC_RESIDUAL];
             cb_full_distortion[DIST_SSIM][DIST_CALC_PREDICTION] +=
                 txb_full_distortion[DIST_SSIM][1][DIST_CALC_PREDICTION];
@@ -2229,10 +2180,6 @@ void svt_aom_full_loop_uv(PictureControlSet *pcs, ModeDecisionContext *ctx, Mode
             cb_full_distortion[DIST_SSD][DIST_CALC_RESIDUAL] += txb_full_distortion[DIST_SSD][1][DIST_CALC_RESIDUAL];
             cb_full_distortion[DIST_SSD][DIST_CALC_PREDICTION] +=
                 txb_full_distortion[DIST_SSD][1][DIST_CALC_PREDICTION];
-#else
-            cb_full_distortion[DIST_CALC_RESIDUAL] += txb_full_distortion[1][DIST_CALC_RESIDUAL];
-            cb_full_distortion[DIST_CALC_PREDICTION] += txb_full_distortion[1][DIST_CALC_PREDICTION];
-#endif
         }
 
         if (component_type == COMPONENT_CHROMA_CR || component_type == COMPONENT_CHROMA ||
@@ -2332,7 +2279,6 @@ void svt_aom_full_loop_uv(PictureControlSet *pcs, ModeDecisionContext *ctx, Mode
                                                (((txb_origin_y >> 3) << 3) * cand_bf->quant->stride_cb)) >>
                     1;
 
-#if TUNE_SSIM_FULL_SPACIAL_DIST
                 if (ssim_level == SSIM_LVL_1 || ssim_level == SSIM_LVL_3) {
                     txb_full_distortion[DIST_SSIM][2][DIST_CALC_PREDICTION] = svt_spatial_full_distortion_ssim_kernel(
                         input_pic->buffer_cr,
@@ -2381,28 +2327,6 @@ void svt_aom_full_loop_uv(PictureControlSet *pcs, ModeDecisionContext *ctx, Mode
 
                 txb_full_distortion[DIST_SSD][2][DIST_CALC_PREDICTION] <<= 4;
                 txb_full_distortion[DIST_SSD][2][DIST_CALC_RESIDUAL] <<= 4;
-#else
-                txb_full_distortion[2][DIST_CALC_PREDICTION] = spatial_full_dist_type_fun(input_pic->buffer_cr,
-                                                                                          input_chroma_txb_origin_index,
-                                                                                          input_pic->stride_cr,
-                                                                                          cand_bf->pred->buffer_cr,
-                                                                                          txb_uv_origin_index,
-                                                                                          cand_bf->pred->stride_cr,
-                                                                                          cropped_tx_width_uv,
-                                                                                          cropped_tx_height_uv);
-
-                txb_full_distortion[2][DIST_CALC_RESIDUAL] = spatial_full_dist_type_fun(input_pic->buffer_cr,
-                                                                                        input_chroma_txb_origin_index,
-                                                                                        input_pic->stride_cr,
-                                                                                        cand_bf->recon->buffer_cr,
-                                                                                        txb_uv_origin_index,
-                                                                                        cand_bf->recon->stride_cr,
-                                                                                        cropped_tx_width_uv,
-                                                                                        cropped_tx_height_uv);
-
-                txb_full_distortion[2][DIST_CALC_PREDICTION] <<= 4;
-                txb_full_distortion[2][DIST_CALC_RESIDUAL] <<= 4;
-#endif
             } else {
                 // *Full Distortion (SSE)
                 // *Note - there are known issues with how this distortion metric is currently
@@ -2421,29 +2345,17 @@ void svt_aom_full_loop_uv(PictureControlSet *pcs, ModeDecisionContext *ctx, Mode
                     ctx->blk_geom->tx_width_uv[tx_depth],
                     bwidth,
                     bheight,
-#if TUNE_SSIM_FULL_SPACIAL_DIST
                     txb_full_distortion[DIST_SSD][2],
-#else
-                    txb_full_distortion[2],
-#endif
                     cr_count_non_zero_coeffs[txb_itr]);
 
                 TxSize        tx_size      = ctx->blk_geom->txsize_uv[tx_depth];
                 const int32_t chroma_shift = (MAX_TX_SCALE - av1_get_tx_scale_tab[tx_size]) * 2;
-#if TUNE_SSIM_FULL_SPACIAL_DIST
                 txb_full_distortion[DIST_SSD][2][DIST_CALC_RESIDUAL] = RIGHT_SIGNED_SHIFT(
                     txb_full_distortion[DIST_SSD][2][DIST_CALC_RESIDUAL], chroma_shift);
                 txb_full_distortion[DIST_SSD][2][DIST_CALC_PREDICTION] = RIGHT_SIGNED_SHIFT(
                     txb_full_distortion[DIST_SSD][2][DIST_CALC_PREDICTION], chroma_shift);
-#else
-                txb_full_distortion[2][DIST_CALC_RESIDUAL] = RIGHT_SIGNED_SHIFT(
-                    txb_full_distortion[2][DIST_CALC_RESIDUAL], chroma_shift);
-                txb_full_distortion[2][DIST_CALC_PREDICTION] = RIGHT_SIGNED_SHIFT(
-                    txb_full_distortion[2][DIST_CALC_PREDICTION], chroma_shift);
-#endif
             }
             cand_bf->v_has_coeff |= ((cr_count_non_zero_coeffs[txb_itr] != 0) << txb_itr);
-#if TUNE_SSIM_FULL_SPACIAL_DIST
             cr_full_distortion[DIST_SSIM][DIST_CALC_RESIDUAL] += txb_full_distortion[DIST_SSIM][2][DIST_CALC_RESIDUAL];
             cr_full_distortion[DIST_SSIM][DIST_CALC_PREDICTION] +=
                 txb_full_distortion[DIST_SSIM][2][DIST_CALC_PREDICTION];
@@ -2451,10 +2363,6 @@ void svt_aom_full_loop_uv(PictureControlSet *pcs, ModeDecisionContext *ctx, Mode
             cr_full_distortion[DIST_SSD][DIST_CALC_RESIDUAL] += txb_full_distortion[DIST_SSD][2][DIST_CALC_RESIDUAL];
             cr_full_distortion[DIST_SSD][DIST_CALC_PREDICTION] +=
                 txb_full_distortion[DIST_SSD][2][DIST_CALC_PREDICTION];
-#else
-            cr_full_distortion[DIST_CALC_RESIDUAL] += txb_full_distortion[2][DIST_CALC_RESIDUAL];
-            cr_full_distortion[DIST_CALC_PREDICTION] += txb_full_distortion[2][DIST_CALC_PREDICTION];
-#endif
         }
 
         const uint32_t txb_origin_index = txb_origin_x + txb_origin_y * cand_bf->quant->stride_y;
@@ -2492,34 +2400,22 @@ void svt_aom_full_loop_uv(PictureControlSet *pcs, ModeDecisionContext *ctx, Mode
         ++txb_itr;
     } while (txb_itr < tu_count);
 }
-#if ALLOW_INCOMP_NSQ
 uint64_t svt_aom_d1_non_square_block_decision(PictureControlSet *pcs, ModeDecisionContext *ctx, uint32_t d1_block_itr) {
-#else
-uint64_t svt_aom_d1_non_square_block_decision(ModeDecisionContext *ctx, uint32_t d1_block_itr) {
-#endif
     //compute total cost for the whole block partition
     uint64_t tot_cost      = 0;
     uint32_t first_blk_idx = ctx->blk_ptr->mds_idx -
         (ctx->blk_geom->totns - 1); //index of first block in this partition
     uint32_t blk_it;
-    uint32_t full_lambda = ctx->hbd_md ? ctx->full_sb_lambda_md[EB_10_BIT_MD] : ctx->full_sb_lambda_md[EB_8_BIT_MD];
-#if CLN_NSQ
-    uint8_t nsq_cost_avail = 1;
+    uint32_t full_lambda    = ctx->hbd_md ? ctx->full_sb_lambda_md[EB_10_BIT_MD] : ctx->full_sb_lambda_md[EB_8_BIT_MD];
+    uint8_t  nsq_cost_avail = 1;
     for (blk_it = 0; blk_it < ctx->blk_geom->totns; blk_it++) {
-#if ALLOW_INCOMP_NSQ
         // Don't apply check to first block because nsq_cost_avail must be set to 0 for disallowed blocks
         if (!pcs->ppcs->sb_geom[ctx->sb_index].block_is_allowed[first_blk_idx + blk_it] && blk_it)
             continue;
-#endif
         tot_cost += ctx->md_local_blk_unit[first_blk_idx + blk_it].cost;
         assert(IMPLIES(ctx->avail_blk_flag[first_blk_idx + blk_it], ctx->cost_avail[first_blk_idx + blk_it]));
         nsq_cost_avail &= ctx->cost_avail[first_blk_idx + blk_it];
     }
-#else
-    for (blk_it = 0; blk_it < ctx->blk_geom->totns; blk_it++) {
-        tot_cost += ctx->md_local_blk_unit[first_blk_idx + blk_it].cost;
-    }
-#endif
     uint64_t split_cost = svt_aom_partition_rate_cost(ctx->sb_ptr->pcs->ppcs,
                                                       ctx,
                                                       ctx->blk_geom->sqi_mds,
@@ -2529,14 +2425,10 @@ uint64_t svt_aom_d1_non_square_block_decision(ModeDecisionContext *ctx, uint32_t
                                                       ctx->md_rate_est_ctx);
 
     tot_cost += split_cost;
-#if CLN_NSQ
     if (nsq_cost_avail &&
         (d1_block_itr == 0 || !ctx->cost_avail[ctx->blk_geom->sqi_mds] ||
          (tot_cost < ctx->md_local_blk_unit[ctx->blk_geom->sqi_mds].cost))) {
         ctx->cost_avail[ctx->blk_geom->sqi_mds] = 1;
-#else
-    if ((d1_block_itr == 0) || (tot_cost < ctx->md_local_blk_unit[ctx->blk_geom->sqi_mds].cost)) {
-#endif
         //store best partition cost in parent square
         ctx->md_local_blk_unit[ctx->blk_geom->sqi_mds].cost     = tot_cost;
         ctx->md_blk_arr_nsq[ctx->blk_geom->sqi_mds].part        = from_shape_to_part[ctx->blk_geom->shape];
@@ -2576,7 +2468,6 @@ static void compute_depth_costs(ModeDecisionContext *ctx, PictureParentControlSe
         pcs, ctx, above_depth_mds, PARTITION_SPLIT, full_lambda, pcs->use_accurate_part_ctx, ctx->md_rate_est_ctx);
 
     // Compute current depth cost
-#if CLN_NSQ
     /* Blocks that have no area within the picture will never have a valid cost, but they will not contribute to the cost
     * anyway (as they are completely outside the picture).  If the block does have area inside the picture, it will have
     * a cost, and if the cost is not valid, that partition scheme cannot be selected.
@@ -2610,30 +2501,13 @@ static void compute_depth_costs(ModeDecisionContext *ctx, PictureParentControlSe
     } else {
         *curr_depth_cost = MAX_MODE_COST;
     }
-#else
-    *curr_depth_cost = ctx->md_local_blk_unit[curr_depth_blk0_mds].cost +
-        ctx->md_local_blk_unit[curr_depth_blk1_mds].cost + ctx->md_local_blk_unit[curr_depth_blk2_mds].cost +
-        ctx->md_local_blk_unit[curr_depth_blk3_mds].cost + above_split_rate;
-#endif
 
     // Compute above depth cost
-#if CLN_NSQ
-    *above_depth_cost =
-#if REMOVE_TESTED_BLK_FLAG
-        ctx->cost_avail[above_depth_mds]
-#else
-        ctx->tested_blk_flag[above_depth_mds] && ctx->cost_avail[above_depth_mds]
-#endif
-        ? ctx->md_local_blk_unit[above_depth_mds].cost
-        : MAX_MODE_COST;
+    *above_depth_cost = ctx->cost_avail[above_depth_mds] ? ctx->md_local_blk_unit[above_depth_mds].cost : MAX_MODE_COST;
     // 128x128 in ISLICE should not have a cost available
     assert(
         IMPLIES((pcs->slice_type == I_SLICE && above_depth_mds == 0 && pcs->scs->seq_header.sb_size == BLOCK_128X128),
                 *above_depth_cost == MAX_MODE_COST));
-#else
-    *above_depth_cost = ctx->tested_blk_flag[above_depth_mds] ? ctx->md_local_blk_unit[above_depth_mds].cost
-                                                              : MAX_MODE_COST;
-#endif
 }
 
 /*
@@ -2641,16 +2515,7 @@ static void compute_depth_costs(ModeDecisionContext *ctx, PictureParentControlSe
  * to reflect chosen partition.  Cost comparison only performed when the all quadrants
  * of a given depth have been evaluted.
  */
-#if CLN_NSQ
-uint32_t svt_aom_d2_inter_depth_block_decision(PictureControlSet *pcs,
-#else
-uint32_t svt_aom_d2_inter_depth_block_decision(SequenceControlSet *scs, PictureControlSet *pcs,
-#endif
-#if ALLOW_INCOMP_NSQ
-                                               ModeDecisionContext *ctx, uint32_t blk_mds) {
-#else
-                                               ModeDecisionContext *ctx, uint32_t blk_mds, uint32_t sb_addr) {
-#endif
+uint32_t svt_aom_d2_inter_depth_block_decision(PictureControlSet *pcs, ModeDecisionContext *ctx, uint32_t blk_mds) {
     uint64_t         parent_depth_cost = 0, current_depth_cost = 0;
     Bool             last_depth_flag = (ctx->md_blk_arr_nsq[blk_mds].split_flag == FALSE);
     uint32_t         last_blk_index = blk_mds, current_depth_idx_mds = blk_mds;
@@ -2659,54 +2524,33 @@ uint32_t svt_aom_d2_inter_depth_block_decision(SequenceControlSet *scs, PictureC
         while (blk_geom->is_last_quadrant) {
             //get parent idx
             uint32_t parent_depth_idx_mds = blk_geom->parent_depth_idx_mds;
-#if !CLN_NSQ // 128x128 in ISLICE should not have a cost available
-            if (pcs->slice_type == I_SLICE && parent_depth_idx_mds == 0 && scs->seq_header.sb_size == BLOCK_128X128)
-                parent_depth_cost = MAX_MODE_COST;
-            else
-#endif
-                compute_depth_costs(ctx,
-                                    pcs->ppcs,
-                                    current_depth_idx_mds,
-                                    parent_depth_idx_mds,
-                                    blk_geom->ns_depth_offset,
-                                    &parent_depth_cost,
-                                    &current_depth_cost);
-#if !ALLOW_INCOMP_NSQ
-            if (!pcs->ppcs->sb_geom[sb_addr].block_is_allowed[parent_depth_idx_mds])
-                parent_depth_cost = MAX_MODE_COST;
-#endif
-#if CLN_NSQ
+            compute_depth_costs(ctx,
+                                pcs->ppcs,
+                                current_depth_idx_mds,
+                                parent_depth_idx_mds,
+                                blk_geom->ns_depth_offset,
+                                &parent_depth_cost,
+                                &current_depth_cost);
             if (ctx->inter_depth_bias && current_depth_cost != MAX_MODE_COST) {
-#else
-            if (ctx->inter_depth_bias) {
-#endif
                 current_depth_cost = (current_depth_cost * ctx->inter_depth_bias) / 1000;
             }
             int parent_bias = parent_depth_cost != MAX_MODE_COST ? ctx->d2_parent_bias : 1000;
-#if CLN_NSQ
             if (parent_depth_cost == MAX_MODE_COST && current_depth_cost == MAX_MODE_COST) {
                 // If parent and current depth are both invalid, don't update the cost
                 ctx->md_blk_arr_nsq[parent_depth_idx_mds].part       = PARTITION_SPLIT;
                 ctx->md_blk_arr_nsq[parent_depth_idx_mds].split_flag = TRUE;
             } else if (((parent_bias * parent_depth_cost) / 1000) <= current_depth_cost) {
-#else
-            if (((parent_bias * parent_depth_cost) / 1000) <= current_depth_cost) {
-#endif
                 ctx->md_blk_arr_nsq[parent_depth_idx_mds].split_flag = FALSE;
                 ctx->md_local_blk_unit[parent_depth_idx_mds].cost    = parent_depth_cost;
                 last_blk_index                                       = parent_depth_idx_mds;
-#if CLN_NSQ
-                ctx->cost_avail[parent_depth_idx_mds] = 1;
+                ctx->cost_avail[parent_depth_idx_mds]                = 1;
                 assert(parent_depth_cost != MAX_MODE_COST);
-#endif
             } else {
                 ctx->md_local_blk_unit[parent_depth_idx_mds].cost    = current_depth_cost;
                 ctx->md_blk_arr_nsq[parent_depth_idx_mds].part       = PARTITION_SPLIT;
                 ctx->md_blk_arr_nsq[parent_depth_idx_mds].split_flag = TRUE;
-#if CLN_NSQ
-                ctx->cost_avail[parent_depth_idx_mds] = 1;
+                ctx->cost_avail[parent_depth_idx_mds]                = 1;
                 assert(current_depth_cost != MAX_MODE_COST);
-#endif
             }
 
             //setup next parent inter depth
@@ -2721,11 +2565,7 @@ void svt_aom_compute_depth_costs_md_skip_light_pd0(PictureParentControlSet *pcs,
                                                    uint32_t above_depth_mds, uint32_t step, uint64_t *above_depth_cost,
                                                    uint64_t *curr_depth_cost) {
     // If the parent depth is not available, no need to compare costs
-#if ALLOW_INCOMP_NSQ
     if (!ctx->cost_avail[above_depth_mds]) {
-#else
-    if (!ctx->avail_blk_flag[above_depth_mds]) {
-#endif
         *above_depth_cost = MAX_MODE_COST;
         *curr_depth_cost  = 0;
         return;
@@ -2736,10 +2576,8 @@ void svt_aom_compute_depth_costs_md_skip_light_pd0(PictureParentControlSet *pcs,
     // sum the previous ones
     for (int i = 1; i < ctx->blk_geom->quadi + 1; i++) {
         uint32_t curr_depth_cur_blk_mds = ctx->blk_geom->sqi_mds - i * step;
-#if CLN_NSQ
         if (!ctx->cost_avail[curr_depth_cur_blk_mds])
             continue;
-#endif
         *curr_depth_cost += ctx->md_local_blk_unit[curr_depth_cur_blk_mds].cost;
     }
     // Parent neighbour arrays should be set in case parent depth was not allowed
@@ -2759,11 +2597,7 @@ void svt_aom_compute_depth_costs_md_skip(ModeDecisionContext *ctx, PictureParent
                                          uint32_t above_depth_mds, uint32_t step, uint64_t *above_depth_cost,
                                          uint64_t *curr_depth_cost) {
     // If the parent depth is not available, no need to compare costs
-#if ALLOW_INCOMP_NSQ
     if (!ctx->cost_avail[above_depth_mds]) {
-#else
-    if (!ctx->avail_blk_flag[above_depth_mds]) {
-#endif
         *above_depth_cost = MAX_MODE_COST;
         *curr_depth_cost  = 0;
         return;
@@ -2776,10 +2610,8 @@ void svt_aom_compute_depth_costs_md_skip(ModeDecisionContext *ctx, PictureParent
     for (int i = 1; i < ctx->blk_geom->quadi + 1; i++) {
         uint32_t curr_depth_cur_blk_mds = ctx->blk_geom->sqi_mds - i * step;
 
-#if CLN_NSQ
         if (!ctx->cost_avail[curr_depth_cur_blk_mds])
             continue;
-#endif
         *curr_depth_cost += ctx->md_local_blk_unit[curr_depth_cur_blk_mds].cost;
     }
     /*
