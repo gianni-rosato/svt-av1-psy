@@ -1,5 +1,23 @@
 # Changelog
 
+## [1.7.0] - 2023-08-23
+
+Encoder
+- Improve the tradeoffs for the random access mode across presets MR-M13:
+ - Quality improvements across all presets and metrics ranging from 0.3% to 4.5% in BD-rate (!2129)
+ - Spacing between presets [M1-M6] has been adjusted to account for the tradeoff improvements achieved
+  - As a user guidance when comparing v1.7 vs v1.6 in a convexhull encoding setup:
+   - v1.7.0 M2 is now at similar quality levels as v1.6.0 M1 while being ~50% faster
+   - v1.7.0 M3 is now at similar quality levels as v1.6.0 M2 while being ~50% faster
+   - v1.7.0 M4 is now at similar quality levels as v1.6.0 M3 while being ~40% faster
+   - v1.7.0 M5 is now at similar quality levels as v1.6.0 M4 while being ~30% faster
+   - v1.7.0 M6 is now at similar quality levels as v1.6.0 M5 while being ~25% faster
+- Added an experimental tune SSIM mode yielding ~3-4% additional SSIM BD-rate gains (!2109)
+
+Build, cleanup and bug fixes
+- Various cleanups and functional bug fixes
+- Fix build conflict with libaom
+
 ## [1.6.0] - 2023-06-18
 
 Encoder

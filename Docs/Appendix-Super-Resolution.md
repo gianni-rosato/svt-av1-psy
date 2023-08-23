@@ -205,7 +205,7 @@ on the frame QP (Qthreshold mode) and rate-distortion cost (Auto mode).
 
 ## 5. Notes
 The feature settings that are described in this document were compiled at
-v1.6.0 of the code and may not reflect the current status of the code. The
+v1.7.0 of the code and may not reflect the current status of the code. The
 description in this document represents an example showing how features would
 interact with the SVT architecture. For the most up-to-date settings, it's
 recommended to review the section of the code implementing this feature.
