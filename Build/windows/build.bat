@@ -137,6 +137,9 @@ if -%1-==-- (
 ) else if /I "%1"=="debug" (
     set "buildtype=Debug"
     shift
+) else if /I "%1"=="RelWithDebInfo" (
+    set "buildtype=RelWithDebInfo"
+    shift
 ) else if /I "%1"=="test" (
     set "unittest=ON"
     shift
