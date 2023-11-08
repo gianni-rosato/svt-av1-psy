@@ -1494,6 +1494,7 @@ static EbErrorType str_to_asm(const char *nptr, EbCpuFlags *out) {
     } simds[] = {
         {"c", 0},
         {"0", 0},
+#ifdef ARCH_X86_64
         {"mmx", (EB_CPU_FLAGS_MMX << 1) - 1},
         {"1", (EB_CPU_FLAGS_MMX << 1) - 1},
         {"sse", (EB_CPU_FLAGS_SSE << 1) - 1},
@@ -1514,8 +1515,12 @@ static EbErrorType str_to_asm(const char *nptr, EbCpuFlags *out) {
         {"9", (EB_CPU_FLAGS_AVX2 << 1) - 1},
         {"avx512", (EB_CPU_FLAGS_AVX512VL << 1) - 1},
         {"10", (EB_CPU_FLAGS_AVX512VL << 1) - 1},
+#elif defined(ARCH_AARCH64)
+        {"neon", (EB_CPU_FLAGS_NEON << 1) - 1},
+        {"1", (EB_CPU_FLAGS_NEON << 1) - 1},
+#endif
         {"max", EB_CPU_FLAGS_ALL},
-        {"11", EB_CPU_FLAGS_ALL},
+        {"100", EB_CPU_FLAGS_ALL},
     };
     const size_t simds_size = sizeof(simds) / sizeof(simds[0]);
 

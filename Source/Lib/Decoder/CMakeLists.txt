@@ -59,6 +59,9 @@ if(NOT COMPILE_C_ONLY AND HAVE_X86_PLATFORM)
         ${PROJECT_SOURCE_DIR}/Source/Lib/Common/ASM_SSE4_1/
         ${PROJECT_SOURCE_DIR}/Source/Lib/Common/ASM_AVX2/
         ${PROJECT_SOURCE_DIR}/Source/Lib/Common/ASM_AVX512/)
+elseif(NOT COMPILE_C_ONLY AND HAVE_ARM_PLATFORM)
+    include_directories(${PROJECT_SOURCE_DIR}/Source/Lib/Common/ASM_NEON/)
+    link_directories(${PROJECT_SOURCE_DIR}/Source/Lib/Common/ASM_NEON/)
 endif()
 
 # Required for cmake to be able to tell Xcode how to link all of the object files
@@ -134,6 +137,13 @@ if(NOT COMPILE_C_ONLY AND HAVE_X86_PLATFORM)
         $<TARGET_OBJECTS:COMMON_ASM_SSE4_1>
         $<TARGET_OBJECTS:COMMON_ASM_AVX2>
         $<TARGET_OBJECTS:COMMON_ASM_AVX512>)
+elseif(NOT COMPILE_C_ONLY AND HAVE_ARM_PLATFORM)
+    add_library(SvtAv1Dec
+        ${all_files}
+        $<TARGET_OBJECTS:COMMON_CODEC>
+        $<TARGET_OBJECTS:FASTFEAT>
+        $<TARGET_OBJECTS:COMMON_C_DEFAULT>
+        $<TARGET_OBJECTS:COMMON_ASM_NEON>)
 else()
     add_library(SvtAv1Dec
         ${all_files}

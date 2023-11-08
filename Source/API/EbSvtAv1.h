@@ -325,6 +325,7 @@ typedef struct SvtAv1RoiMap {
 CPU FLAGS
 */
 typedef uint64_t EbCpuFlags;
+#ifdef ARCH_X86_64
 #define EB_CPU_FLAGS_MMX (1 << 0)
 #define EB_CPU_FLAGS_SSE (1 << 1)
 #define EB_CPU_FLAGS_SSE2 (1 << 2)
@@ -341,8 +342,11 @@ typedef uint64_t EbCpuFlags;
 #define EB_CPU_FLAGS_AVX512PF (1 << 13)
 #define EB_CPU_FLAGS_AVX512BW (1 << 14)
 #define EB_CPU_FLAGS_AVX512VL (1 << 15)
-#define EB_CPU_FLAGS_ALL ((EB_CPU_FLAGS_AVX512VL << 1) - 1)
+#elif defined(ARCH_AARCH64)
+#define EB_CPU_FLAGS_NEON (1 << 0)
+#endif
 #define EB_CPU_FLAGS_INVALID (1ULL << (sizeof(EbCpuFlags) * 8ULL - 1ULL))
+#define EB_CPU_FLAGS_ALL ((EB_CPU_FLAGS_INVALID >> 1) - 1)
 
 #ifdef __cplusplus
 }

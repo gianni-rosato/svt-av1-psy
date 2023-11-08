@@ -31,6 +31,7 @@ License 1.0. See [LICENSE](LICENSE.md) and [PATENTS](PATENTS.md) for details.
 - [Decoder Usage](Docs/svt-av1_decoder_user_guide.md)
 - [List of All Parameters](Docs/Parameters.md)
 - [Build Guide](Docs/Build-Guide.md)
+- [ARM Build Guide](Docs/ARM-Build-Guide.md)
 
 **Common Questions/Issues**
 - [What presets do](Docs/CommonQuestions.md#what-presets-do)

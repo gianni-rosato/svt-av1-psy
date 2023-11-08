@@ -507,7 +507,7 @@ EB_API EbErrorType svt_av1_dec_init(EbComponentType *svt_dec_component) {
         return EB_ErrorBadParameter;
 
     EbDecHandle *dec_handle_ptr = (EbDecHandle *)svt_dec_component->p_component_private;
-#ifdef ARCH_X86_64
+#if defined ARCH_X86_64 || defined ARCH_AARCH64
     EbCpuFlags cpu_flags = svt_aom_get_cpu_flags_to_use();
 #else
     EbCpuFlags cpu_flags = 0;

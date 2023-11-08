@@ -24,7 +24,7 @@
 #include "EbPackUnPack_C.h"
 #include "EbAvcStyleMcp.h"
 
-#ifdef ARCH_X86_64
+#if defined ARCH_X86_64
 // for svt_aom_get_cpu_flags
 #include "cpuinfo.h"
 #endif
@@ -48,6 +48,7 @@
 #define HAS_AVX512PF EB_CPU_FLAGS_AVX512PF
 #define HAS_AVX512BW EB_CPU_FLAGS_AVX512BW
 #define HAS_AVX512VL EB_CPU_FLAGS_AVX512VL
+#define HAS_NEON EB_CPU_FLAGS_NEON
 
 // coeff: 16 bits, dynamic range [-32640, 32640].
 // length: value range {16, 64, 256, 1024}.
@@ -114,7 +115,28 @@ EbCpuFlags svt_aom_get_cpu_flags_to_use() {
 #endif
     return flags;
 }
-#endif /*ARCH_X86_64*/
+#else
+#if defined ARCH_AARCH64
+EbCpuFlags svt_aom_get_cpu_flags() {
+    EbCpuFlags flags = 0;
+
+    // safe to call multiple times, and threadsafe
+
+    flags |= EB_CPU_FLAGS_NEON;
+
+    return flags;
+}
+
+EbCpuFlags svt_aom_get_cpu_flags_to_use() {
+    EbCpuFlags flags = svt_aom_get_cpu_flags();
+    return flags;
+}
+#else
+EbCpuFlags svt_aom_get_cpu_flags_to_use() {
+  return 0;
+}
+#endif
+#endif
 
 #ifdef ARCH_X86_64
 #if EN_AVX512_SUPPORT
@@ -135,10 +157,12 @@ EbCpuFlags svt_aom_get_cpu_flags_to_use() {
     if (((uintptr_t)NULL != (uintptr_t)avx)    && (flags & HAS_AVX))    ptr = avx;                \
     if (((uintptr_t)NULL != (uintptr_t)avx2)   && (flags & HAS_AVX2))   ptr = avx2;               \
     SET_FUNCTIONS_AVX512(ptr, avx512)
-#else /* ARCH_X86_64 */
-#define SET_FUNCTIONS_X86(ptr, c, mmx, sse, sse2, sse3, ssse3, sse4_1, sse4_2, avx, avx2, avx512)
-#endif /* ARCH_X86_64 */
+#elif defined ARCH_AARCH64
+#define SET_FUNCTIONS_AARCH64(ptr, c, neon) \
+    if (((uintptr_t)NULL != (uintptr_t)neon)   && (flags & HAS_NEON))   ptr = neon;
+#endif
 
+#ifdef ARCH_X86_64
 #if EXCLUDE_HASH
 #define SET_FUNCTIONS(ptr, c, mmx, sse, sse2, sse3, ssse3, sse4_1, sse4_2, avx, avx2, avx512)     \
     do {                                                                                          \
@@ -168,37 +192,103 @@ EbCpuFlags svt_aom_get_cpu_flags_to_use() {
         SET_FUNCTIONS_X86(ptr, c, mmx, sse, sse2, sse3, ssse3, sse4_1, sse4_2, avx, avx2, avx512) \
     } while (0)
 #endif
+#elif defined ARCH_AARCH64
+#if EXCLUDE_HASH
+#define SET_FUNCTIONS(ptr, c, neon)     \
+    do {                                                                                          \
+        if (check_pointer_was_set && ptr != 0) {                                                                           \
+            printf("Error: %s:%i: Pointer \"%s\" is set before!\n", __FILE__, 0, #ptr);    \
+            assert(0);                                                                            \
+        }                                                                                         \
+        if ((uintptr_t)NULL == (uintptr_t)c) {                                                    \
+            printf("Error: %s:%i: Pointer \"%s\" on C is NULL!\n", __FILE__, 0, #ptr);     \
+            assert(0);                                                                            \
+        }                                                                                         \
+        ptr = c;                                                                                  \
+        SET_FUNCTIONS_AARCH64(ptr, c, neon) \
+    } while (0)
+#else
+#define SET_FUNCTIONS(ptr, c, neon)     \
+    do {                                                                                          \
+        if (check_pointer_was_set && ptr != 0) {                                                                           \
+            printf("Error: %s:%i: Pointer \"%s\" is set before!\n", __FILE__, __LINE__, #ptr);    \
+            assert(0);                                                                            \
+        }                                                                                         \
+        if ((uintptr_t)NULL == (uintptr_t)c) {                                                    \
+            printf("Error: %s:%i: Pointer \"%s\" on C is NULL!\n", __FILE__, __LINE__, #ptr);     \
+            assert(0);                                                                            \
+        }                                                                                         \
+        ptr = c;                                                                                  \
+        SET_FUNCTIONS_AARCH64(ptr, c, neon) \
+    } while (0)
+#endif
+#else
+#if EXCLUDE_HASH
+#define SET_FUNCTIONS(ptr, c)     \
+    do {                                                                                          \
+        if (check_pointer_was_set && ptr != 0) {                                                                           \
+            printf("Error: %s:%i: Pointer \"%s\" is set before!\n", __FILE__, 0, #ptr);    \
+            assert(0);                                                                            \
+        }                                                                                         \
+        if ((uintptr_t)NULL == (uintptr_t)c) {                                                    \
+            printf("Error: %s:%i: Pointer \"%s\" on C is NULL!\n", __FILE__, 0, #ptr);     \
+            assert(0);                                                                            \
+        }                                                                                         \
+        ptr = c;                                                                                  \
+    } while (0)
+#else
+#define SET_FUNCTIONS(ptr, c)     \
+    do {                                                                                          \
+        if (check_pointer_was_set && ptr != 0) {                                                                           \
+            printf("Error: %s:%i: Pointer \"%s\" is set before!\n", __FILE__, __LINE__, #ptr);    \
+            assert(0);                                                                            \
+        }                                                                                         \
+        if ((uintptr_t)NULL == (uintptr_t)c) {                                                    \
+            printf("Error: %s:%i: Pointer \"%s\" on C is NULL!\n", __FILE__, __LINE__, #ptr);     \
+            assert(0);                                                                            \
+        }                                                                                         \
+        ptr = c;                                                                                  \
+    } while (0)
+#endif
+#endif
 
 /* Macros SET_* use local variable EbCpuFlags flags and Bool check_pointer_was_set */
-#define SET_ONLY_C(ptr, c)                                  SET_FUNCTIONS(ptr, c, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
-#define SET_SSE2(ptr, c, sse2)                              SET_FUNCTIONS(ptr, c, 0, 0, sse2, 0, 0, 0, 0, 0, 0, 0)
-#define SET_SSE2_AVX2(ptr, c, sse2, avx2)                   SET_FUNCTIONS(ptr, c, 0, 0, sse2, 0, 0, 0, 0, 0, avx2, 0)
-#define SET_SSE2_AVX512(ptr, c, sse2, avx512)               SET_FUNCTIONS(ptr, c, 0, 0, sse2, 0, 0, 0, 0, 0, 0, avx512)
-#define SET_SSSE3(ptr, c, ssse3)                            SET_FUNCTIONS(ptr, c, 0, 0, 0, 0, ssse3, 0, 0, 0, 0, 0)
-#define SET_SSE41(ptr, c, sse4_1)                           SET_FUNCTIONS(ptr, c, 0, 0, 0, 0, 0, sse4_1, 0, 0, 0, 0)
-#define SET_SSE41_AVX2(ptr, c, sse4_1, avx2)                SET_FUNCTIONS(ptr, c, 0, 0, 0, 0, 0, sse4_1, 0, 0, avx2, 0)
-#define SET_SSE41_AVX2_AVX512(ptr, c, sse4_1, avx2, avx512) SET_FUNCTIONS(ptr, c, 0, 0, 0, 0, 0, sse4_1, 0, 0, avx2, avx512)
-#define SET_AVX2(ptr, c, avx2)                              SET_FUNCTIONS(ptr, c, 0, 0, 0, 0, 0, 0, 0, 0, avx2, 0)
-#define SET_AVX2_AVX512(ptr, c, avx2, avx512)               SET_FUNCTIONS(ptr, c, 0, 0, 0, 0, 0, 0, 0, 0, avx2, avx512)
-#define SET_SSE2_AVX2_AVX512(ptr, c, sse2, avx2, avx512)    SET_FUNCTIONS(ptr, c, 0, 0, sse2, 0, 0, 0, 0, 0, avx2, avx512)
-#define SET_SSE2_SSSE3_AVX2_AVX512(ptr, c, sse2, ssse3, avx2, avx512)    SET_FUNCTIONS(ptr, c, 0, 0, sse2, 0, ssse3, 0, 0, 0, avx2, avx512)
-#define SET_SSSE3_AVX2(ptr, c,ssse3, avx2)                  SET_FUNCTIONS(ptr, c, 0, 0, 0, 0, ssse3, 0, 0, 0, avx2, 0)
-
+#ifdef ARCH_X86_64
+    #define SET_ONLY_C(ptr, c)                                      SET_FUNCTIONS(ptr, c, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+    #define SET_SSE2(ptr, c, sse2)                                  SET_FUNCTIONS(ptr, c, 0, 0, sse2, 0, 0, 0, 0, 0, 0, 0)
+    #define SET_SSE2_AVX2(ptr, c, sse2, avx2)                       SET_FUNCTIONS(ptr, c, 0, 0, sse2, 0, 0, 0, 0, 0, avx2, 0)
+    #define SET_SSE2_AVX512(ptr, c, sse2, avx512)                   SET_FUNCTIONS(ptr, c, 0, 0, sse2, 0, 0, 0, 0, 0, 0, avx512)
+    #define SET_SSSE3(ptr, c, ssse3)                                SET_FUNCTIONS(ptr, c, 0, 0, 0, 0, ssse3, 0, 0, 0, 0, 0)
+    #define SET_SSE41(ptr, c, sse4_1)                               SET_FUNCTIONS(ptr, c, 0, 0, 0, 0, 0, sse4_1, 0, 0, 0, 0)
+    #define SET_SSE41_AVX2(ptr, c, sse4_1, avx2)                    SET_FUNCTIONS(ptr, c, 0, 0, 0, 0, 0, sse4_1, 0, 0, avx2, 0)
+    #define SET_SSE41_AVX2_AVX512(ptr, c, sse4_1, avx2, avx512)     SET_FUNCTIONS(ptr, c, 0, 0, 0, 0, 0, sse4_1, 0, 0, avx2, avx512)
+    #define SET_AVX2(ptr, c, avx2)                                  SET_FUNCTIONS(ptr, c, 0, 0, 0, 0, 0, 0, 0, 0, avx2, 0)
+    #define SET_AVX2_AVX512(ptr, c, avx2, avx512)                   SET_FUNCTIONS(ptr, c, 0, 0, 0, 0, 0, 0, 0, 0, avx2, avx512)
+    #define SET_SSE2_AVX2_AVX512(ptr, c, sse2, avx2, avx512)        SET_FUNCTIONS(ptr, c, 0, 0, sse2, 0, 0, 0, 0, 0, avx2, avx512)
+    #define SET_SSE2_SSSE3_AVX2_AVX512(ptr, c, sse2, ssse3, avx2, avx512) SET_FUNCTIONS(ptr, c, 0, 0, sse2, 0, ssse3, 0, 0, 0, avx2, avx512)
+    #define SET_SSSE3_AVX2(ptr, c, ssse3, avx2)                     SET_FUNCTIONS(ptr, c, 0, 0, 0, 0, ssse3, 0, 0, 0, avx2, 0)
+#elif defined ARCH_AARCH64
+    #define SET_ONLY_C(ptr, c)                                      SET_FUNCTIONS(ptr, c, 0)
+    #define SET_NEON(ptr, c, neon)                                  SET_FUNCTIONS(ptr, c, neon)
+#else
+    #define SET_ONLY_C(ptr, c)                                      SET_FUNCTIONS(ptr, c)
+#endif
 
 void svt_aom_setup_common_rtcd_internal(EbCpuFlags flags) {
     /* Avoid check that pointer is set double, after first  setup. */
-    static Bool first_call_setup      = TRUE;
+    static Bool first_call_setup = TRUE;
     Bool        check_pointer_was_set = first_call_setup;
-    first_call_setup                    = FALSE;
-#ifdef ARCH_X86_64
+    first_call_setup = FALSE;
     /** Should be done during library initialization,
         but for safe limiting cpu flags again. */
+#if defined ARCH_X86_64 || defined ARCH_AARCH64
     flags &= svt_aom_get_cpu_flags_to_use();
-    //to use C: flags=0
 #else
-    (void)flags;
+    flags = 0;
+    //to use C: flags=0
 #endif
 
+#ifdef ARCH_X86_64
     SET_SSE41_AVX2(svt_aom_blend_a64_mask, svt_aom_blend_a64_mask_c, svt_aom_blend_a64_mask_sse4_1, svt_aom_blend_a64_mask_avx2);
     SET_SSE41_AVX2(svt_aom_blend_a64_hmask, svt_aom_blend_a64_hmask_c, svt_aom_blend_a64_hmask_sse4_1, svt_av1_blend_a64_hmask_avx2);
     SET_SSE41_AVX2(svt_aom_blend_a64_vmask, svt_aom_blend_a64_vmask_c, svt_aom_blend_a64_vmask_sse4_1, svt_av1_blend_a64_vmask_avx2);
@@ -537,11 +627,9 @@ void svt_aom_setup_common_rtcd_internal(EbCpuFlags flags) {
     SET_SSE41_AVX2(svt_aom_cdef_find_dir_dual, svt_aom_cdef_find_dir_dual_c, svt_aom_cdef_find_dir_dual_sse4_1, svt_aom_cdef_find_dir_dual_avx2);
     SET_SSE41_AVX2(svt_cdef_filter_block, svt_cdef_filter_block_c, svt_av1_cdef_filter_block_sse4_1, svt_cdef_filter_block_avx2);
     /* No C version, use only internal in kerneal: svt_cdef_filter_block_avx2() */
-#ifdef ARCH_X86_64
     if (flags & HAS_AVX2)    svt_cdef_filter_block_8xn_16 = svt_cdef_filter_block_8xn_16_avx2;
 #if EN_AVX512_SUPPORT
     if (flags & HAS_AVX512F) svt_cdef_filter_block_8xn_16 = svt_cdef_filter_block_8xn_16_avx512;
-#endif
 #endif
     SET_SSE41_AVX2(svt_aom_copy_rect8_8bit_to_16bit, svt_aom_copy_rect8_8bit_to_16bit_c, svt_aom_copy_rect8_8bit_to_16bit_sse4_1, svt_aom_copy_rect8_8bit_to_16bit_avx2);
     SET_SSE41_AVX2(svt_av1_highbd_warp_affine, svt_av1_highbd_warp_affine_c, svt_av1_highbd_warp_affine_sse4_1, svt_av1_highbd_warp_affine_avx2);
@@ -736,5 +824,1064 @@ void svt_aom_setup_common_rtcd_internal(EbCpuFlags flags) {
     SET_AVX2(svt_aom_hadamard_32x32, svt_aom_hadamard_32x32_c, svt_aom_hadamard_32x32_avx2);
     SET_AVX2(svt_aom_hadamard_16x16, svt_aom_hadamard_16x16_c, svt_aom_hadamard_16x16_avx2);
     SET_SSE2(svt_aom_hadamard_8x8, svt_aom_hadamard_8x8_c, svt_aom_hadamard_8x8_sse2);
+#elif defined ARCH_AARCH64
+    SET_ONLY_C(svt_aom_blend_a64_mask, svt_aom_blend_a64_mask_c);
+    SET_ONLY_C(svt_aom_blend_a64_hmask, svt_aom_blend_a64_hmask_c);
+    SET_ONLY_C(svt_aom_blend_a64_vmask, svt_aom_blend_a64_vmask_c);
+    SET_ONLY_C(svt_aom_lowbd_blend_a64_d16_mask, svt_aom_lowbd_blend_a64_d16_mask_c);
+    SET_ONLY_C(svt_aom_highbd_blend_a64_mask, svt_aom_highbd_blend_a64_mask_c);
+    SET_ONLY_C(svt_aom_highbd_blend_a64_hmask_8bit, svt_aom_highbd_blend_a64_hmask_8bit_c);
+    SET_ONLY_C(svt_aom_highbd_blend_a64_vmask_8bit, svt_aom_highbd_blend_a64_vmask_8bit_c);
+    SET_ONLY_C(svt_aom_highbd_blend_a64_vmask_16bit, svt_aom_highbd_blend_a64_vmask_16bit_c);
+    SET_ONLY_C(svt_aom_highbd_blend_a64_hmask_16bit, svt_aom_highbd_blend_a64_hmask_16bit_c);
+    SET_ONLY_C(svt_aom_highbd_blend_a64_d16_mask, svt_aom_highbd_blend_a64_d16_mask_c);
+    SET_ONLY_C(svt_cfl_predict_lbd, svt_cfl_predict_lbd_c);
+    SET_ONLY_C(svt_cfl_predict_hbd, svt_cfl_predict_hbd_c);
+    SET_ONLY_C(svt_av1_filter_intra_predictor, svt_av1_filter_intra_predictor_c);
+    SET_ONLY_C(svt_av1_filter_intra_edge_high, svt_av1_filter_intra_edge_high_c);
+    SET_ONLY_C(svt_av1_filter_intra_edge, svt_av1_filter_intra_edge_c);
+    SET_ONLY_C(svt_av1_upsample_intra_edge, svt_av1_upsample_intra_edge_c);
+    SET_ONLY_C(svt_av1_build_compound_diffwtd_mask_d16, svt_av1_build_compound_diffwtd_mask_d16_c);
+    SET_ONLY_C(svt_av1_highbd_wiener_convolve_add_src, svt_av1_highbd_wiener_convolve_add_src_c);
+    SET_ONLY_C(svt_apply_selfguided_restoration, svt_apply_selfguided_restoration_c);
+    SET_ONLY_C(svt_av1_selfguided_restoration, svt_av1_selfguided_restoration_c);
+    SET_ONLY_C(svt_av1_inv_txfm2d_add_4x4, svt_av1_inv_txfm2d_add_4x4_c);
+    SET_ONLY_C(svt_av1_inv_txfm2d_add_4x8, svt_av1_inv_txfm2d_add_4x8_c);
+    SET_ONLY_C(svt_av1_inv_txfm2d_add_4x16, svt_av1_inv_txfm2d_add_4x16_c);
+    SET_ONLY_C(svt_av1_inv_txfm2d_add_8x4, svt_av1_inv_txfm2d_add_8x4_c);
+    SET_ONLY_C(svt_av1_inv_txfm2d_add_8x8, svt_av1_inv_txfm2d_add_8x8_c);
+    SET_ONLY_C(svt_av1_inv_txfm2d_add_8x16, svt_av1_inv_txfm2d_add_8x16_c);
+    SET_ONLY_C(svt_av1_inv_txfm2d_add_8x32, svt_av1_inv_txfm2d_add_8x32_c);
+    SET_ONLY_C(svt_av1_inv_txfm2d_add_16x4, svt_av1_inv_txfm2d_add_16x4_c);
+    SET_ONLY_C(svt_av1_inv_txfm2d_add_16x8, svt_av1_inv_txfm2d_add_16x8_c);
+    SET_ONLY_C(svt_av1_inv_txfm2d_add_16x16, svt_av1_inv_txfm2d_add_16x16_c);
+    SET_ONLY_C(svt_av1_inv_txfm2d_add_16x32, svt_av1_inv_txfm2d_add_16x32_c);
+    SET_ONLY_C(svt_av1_inv_txfm2d_add_16x64, svt_av1_inv_txfm2d_add_16x64_c);
+    SET_ONLY_C(svt_av1_inv_txfm2d_add_32x8, svt_av1_inv_txfm2d_add_32x8_c);
+    SET_ONLY_C(svt_av1_inv_txfm2d_add_32x16, svt_av1_inv_txfm2d_add_32x16_c);
+    SET_ONLY_C(svt_av1_inv_txfm2d_add_32x32, svt_av1_inv_txfm2d_add_32x32_c);
+    SET_ONLY_C(svt_av1_inv_txfm2d_add_32x64, svt_av1_inv_txfm2d_add_32x64_c);
+    SET_ONLY_C(svt_av1_inv_txfm2d_add_64x16, svt_av1_inv_txfm2d_add_64x16_c);
+    SET_ONLY_C(svt_av1_inv_txfm2d_add_64x32, svt_av1_inv_txfm2d_add_64x32_c);
+    SET_ONLY_C(svt_av1_inv_txfm2d_add_64x64, svt_av1_inv_txfm2d_add_64x64_c);
+    SET_ONLY_C(svt_av1_inv_txfm_add, svt_av1_inv_txfm_add_c);
+    SET_ONLY_C(svt_compressed_packmsb, svt_compressed_packmsb_c);
+    SET_ONLY_C(svt_c_pack, svt_c_pack_c);
+    SET_ONLY_C(svt_unpack_avg, svt_unpack_avg_c);
+    SET_ONLY_C(svt_unpack_avg_safe_sub, svt_unpack_avg_safe_sub_c);
+    SET_ONLY_C(svt_un_pack8_bit_data, svt_un_pack8_bit_data_c);
+    SET_ONLY_C(svt_cfl_luma_subsampling_420_lbd, svt_cfl_luma_subsampling_420_lbd_c);
+    SET_ONLY_C(svt_cfl_luma_subsampling_420_hbd, svt_cfl_luma_subsampling_420_hbd_c);
+    SET_ONLY_C(svt_convert_8bit_to_16bit, svt_convert_8bit_to_16bit_c);
+    SET_ONLY_C(svt_convert_16bit_to_8bit, svt_convert_16bit_to_8bit_c);
+    SET_ONLY_C(svt_pack2d_16_bit_src_mul4, svt_enc_msb_pack2_d);
+    SET_ONLY_C(svt_aom_un_pack2d_16_bit_src_mul4, svt_enc_msb_un_pack2_d);
+    SET_ONLY_C(svt_full_distortion_kernel_cbf_zero32_bits, svt_full_distortion_kernel_cbf_zero32_bits_c);
+    SET_ONLY_C(svt_full_distortion_kernel32_bits, svt_full_distortion_kernel32_bits_c);
+    SET_NEON(svt_spatial_full_distortion_kernel, svt_spatial_full_distortion_kernel_c, svt_spatial_full_distortion_kernel_neon);
+    SET_ONLY_C(svt_full_distortion_kernel16_bits, svt_full_distortion_kernel16_bits_c);
+    SET_ONLY_C(svt_residual_kernel8bit, svt_residual_kernel8bit_c);
+    SET_ONLY_C(svt_residual_kernel16bit, svt_residual_kernel16bit_c);
+    SET_ONLY_C(svt_picture_average_kernel, svt_picture_average_kernel_c);
+    SET_ONLY_C(svt_picture_average_kernel1_line, svt_picture_average_kernel1_line_c);
+    SET_NEON(svt_av1_wiener_convolve_add_src, svt_av1_wiener_convolve_add_src_c, svt_av1_wiener_convolve_add_src_neon);
+    SET_ONLY_C(svt_av1_convolve_2d_scale, svt_av1_convolve_2d_scale_c);
+    SET_ONLY_C(svt_av1_highbd_convolve_y_sr, svt_av1_highbd_convolve_y_sr_c);
+    SET_ONLY_C(svt_av1_highbd_convolve_2d_sr, svt_av1_highbd_convolve_2d_sr_c);
+    SET_ONLY_C(svt_av1_highbd_convolve_2d_scale, svt_av1_highbd_convolve_2d_scale_c);
+    SET_ONLY_C(svt_av1_highbd_convolve_2d_copy_sr, svt_av1_highbd_convolve_2d_copy_sr_c);
+    SET_ONLY_C(svt_av1_highbd_jnt_convolve_2d, svt_av1_highbd_jnt_convolve_2d_c);
+    SET_ONLY_C(svt_av1_highbd_jnt_convolve_2d_copy, svt_av1_highbd_jnt_convolve_2d_copy_c);
+    SET_ONLY_C(svt_av1_highbd_jnt_convolve_x, svt_av1_highbd_jnt_convolve_x_c);
+    SET_ONLY_C(svt_av1_highbd_jnt_convolve_y, svt_av1_highbd_jnt_convolve_y_c);
+    SET_ONLY_C(svt_av1_highbd_convolve_x_sr, svt_av1_highbd_convolve_x_sr_c);
+    SET_NEON(svt_av1_convolve_2d_sr, svt_av1_convolve_2d_sr_c, svt_av1_convolve_2d_sr_neon);
+    SET_NEON(svt_av1_convolve_2d_copy_sr, svt_av1_convolve_2d_copy_sr_c, svt_av1_convolve_2d_copy_sr_neon);
+    SET_NEON(svt_av1_convolve_x_sr, svt_av1_convolve_x_sr_c, svt_av1_convolve_x_sr_neon);
+    SET_NEON(svt_av1_convolve_y_sr, svt_av1_convolve_y_sr_c, svt_av1_convolve_y_sr_neon);
+    SET_NEON(svt_av1_jnt_convolve_2d, svt_av1_jnt_convolve_2d_c, svt_av1_jnt_convolve_2d_neon);
+    SET_NEON(svt_av1_jnt_convolve_2d_copy, svt_av1_jnt_convolve_2d_copy_c, svt_av1_jnt_convolve_2d_copy_neon);
+    SET_NEON(svt_av1_jnt_convolve_x, svt_av1_jnt_convolve_x_c, svt_av1_jnt_convolve_x_neon);
+    SET_NEON(svt_av1_jnt_convolve_y, svt_av1_jnt_convolve_y_c, svt_av1_jnt_convolve_y_neon);
+    SET_NEON(svt_aom_convolve8_horiz, svt_aom_convolve8_horiz_c, svt_aom_convolve8_horiz_neon);
+    SET_NEON(svt_aom_convolve8_vert, svt_aom_convolve8_vert_c, svt_aom_convolve8_vert_neon);
+    SET_ONLY_C(svt_av1_build_compound_diffwtd_mask, svt_av1_build_compound_diffwtd_mask_c);
+    SET_ONLY_C(svt_av1_build_compound_diffwtd_mask_highbd, svt_av1_build_compound_diffwtd_mask_highbd_c);
+    SET_ONLY_C(svt_av1_wedge_sse_from_residuals, svt_av1_wedge_sse_from_residuals_c);
+    SET_ONLY_C(svt_aom_subtract_block, svt_aom_subtract_block_c);
+    SET_ONLY_C(svt_aom_highbd_subtract_block, svt_aom_highbd_subtract_block_c);
+    SET_ONLY_C(svt_aom_highbd_smooth_v_predictor_4x4, svt_aom_highbd_smooth_v_predictor_4x4_c);
+    SET_ONLY_C(svt_aom_highbd_smooth_v_predictor_4x8, svt_aom_highbd_smooth_v_predictor_4x8_c);
+    SET_ONLY_C(svt_aom_highbd_smooth_v_predictor_4x16, svt_aom_highbd_smooth_v_predictor_4x16_c);
+    SET_ONLY_C(svt_aom_highbd_smooth_v_predictor_8x4, svt_aom_highbd_smooth_v_predictor_8x4_c);
+    SET_ONLY_C(svt_aom_highbd_smooth_v_predictor_8x8, svt_aom_highbd_smooth_v_predictor_8x8_c);
+    SET_ONLY_C(svt_aom_highbd_smooth_v_predictor_8x16, svt_aom_highbd_smooth_v_predictor_8x16_c);
+    SET_ONLY_C(svt_aom_highbd_smooth_v_predictor_8x32, svt_aom_highbd_smooth_v_predictor_8x32_c);
+    SET_ONLY_C(svt_aom_highbd_smooth_v_predictor_16x4, svt_aom_highbd_smooth_v_predictor_16x4_c);
+    SET_ONLY_C(svt_aom_highbd_smooth_v_predictor_16x8, svt_aom_highbd_smooth_v_predictor_16x8_c);
+    SET_ONLY_C(svt_aom_highbd_smooth_v_predictor_16x16, svt_aom_highbd_smooth_v_predictor_16x16_c);
+    SET_ONLY_C(svt_aom_highbd_smooth_v_predictor_16x32, svt_aom_highbd_smooth_v_predictor_16x32_c);
+    SET_ONLY_C(svt_aom_highbd_smooth_v_predictor_16x64, svt_aom_highbd_smooth_v_predictor_16x64_c);
+    SET_ONLY_C(svt_aom_highbd_smooth_v_predictor_32x8, svt_aom_highbd_smooth_v_predictor_32x8_c);
+    SET_ONLY_C(svt_aom_highbd_smooth_v_predictor_32x16, svt_aom_highbd_smooth_v_predictor_32x16_c);
+    SET_ONLY_C(svt_aom_highbd_smooth_v_predictor_32x32, svt_aom_highbd_smooth_v_predictor_32x32_c);
+    SET_ONLY_C(svt_aom_highbd_smooth_v_predictor_32x64, svt_aom_highbd_smooth_v_predictor_32x64_c);
+    SET_ONLY_C(svt_aom_highbd_smooth_v_predictor_64x16, svt_aom_highbd_smooth_v_predictor_64x16_c);
+    SET_ONLY_C(svt_aom_highbd_smooth_v_predictor_64x32, svt_aom_highbd_smooth_v_predictor_64x32_c);
+    SET_ONLY_C(svt_aom_highbd_smooth_v_predictor_64x64, svt_aom_highbd_smooth_v_predictor_64x64_c);
+    SET_ONLY_C(svt_av1_dr_prediction_z1, svt_av1_dr_prediction_z1_c);
+    SET_ONLY_C(svt_av1_dr_prediction_z2, svt_av1_dr_prediction_z2_c);
+    SET_ONLY_C(svt_av1_dr_prediction_z3, svt_av1_dr_prediction_z3_c);
+    SET_ONLY_C(svt_av1_highbd_dr_prediction_z1, svt_av1_highbd_dr_prediction_z1_c);
+    SET_ONLY_C(svt_av1_highbd_dr_prediction_z2, svt_av1_highbd_dr_prediction_z2_c);
+    SET_ONLY_C(svt_av1_highbd_dr_prediction_z3, svt_av1_highbd_dr_prediction_z3_c);
+    SET_ONLY_C(svt_aom_paeth_predictor_4x4, svt_aom_paeth_predictor_4x4_c);
+    SET_ONLY_C(svt_aom_paeth_predictor_4x8, svt_aom_paeth_predictor_4x8_c);
+    SET_ONLY_C(svt_aom_paeth_predictor_4x16, svt_aom_paeth_predictor_4x16_c);
+    SET_ONLY_C(svt_aom_paeth_predictor_8x4, svt_aom_paeth_predictor_8x4_c);
+    SET_ONLY_C(svt_aom_paeth_predictor_8x8, svt_aom_paeth_predictor_8x8_c);
+    SET_ONLY_C(svt_aom_paeth_predictor_8x16, svt_aom_paeth_predictor_8x16_c);
+    SET_ONLY_C(svt_aom_paeth_predictor_8x32, svt_aom_paeth_predictor_8x32_c);
+    SET_ONLY_C(svt_aom_paeth_predictor_16x4, svt_aom_paeth_predictor_16x4_c);
+    SET_ONLY_C(svt_aom_paeth_predictor_16x8, svt_aom_paeth_predictor_16x8_c);
+    SET_ONLY_C(svt_aom_paeth_predictor_16x16, svt_aom_paeth_predictor_16x16_c);
+    SET_ONLY_C(svt_aom_paeth_predictor_16x32, svt_aom_paeth_predictor_16x32_c);
+    SET_ONLY_C(svt_aom_paeth_predictor_16x64, svt_aom_paeth_predictor_16x64_c);
+    SET_ONLY_C(svt_aom_paeth_predictor_32x8, svt_aom_paeth_predictor_32x8_c);
+    SET_ONLY_C(svt_aom_paeth_predictor_32x16, svt_aom_paeth_predictor_32x16_c);
+    SET_ONLY_C(svt_aom_paeth_predictor_32x32, svt_aom_paeth_predictor_32x32_c);
+    SET_ONLY_C(svt_aom_paeth_predictor_32x64, svt_aom_paeth_predictor_32x64_c);
+    SET_ONLY_C(svt_aom_paeth_predictor_64x16, svt_aom_paeth_predictor_64x16_c);
+    SET_ONLY_C(svt_aom_paeth_predictor_64x32, svt_aom_paeth_predictor_64x32_c);
+    SET_ONLY_C(svt_aom_paeth_predictor_64x64, svt_aom_paeth_predictor_64x64_c);
+    SET_ONLY_C(svt_aom_highbd_paeth_predictor_4x4, svt_aom_highbd_paeth_predictor_4x4_c);
+    SET_ONLY_C(svt_aom_highbd_paeth_predictor_4x8, svt_aom_highbd_paeth_predictor_4x8_c);
+    SET_ONLY_C(svt_aom_highbd_paeth_predictor_4x16, svt_aom_highbd_paeth_predictor_4x16_c);
+    SET_ONLY_C(svt_aom_highbd_paeth_predictor_8x4, svt_aom_highbd_paeth_predictor_8x4_c);
+    SET_ONLY_C(svt_aom_highbd_paeth_predictor_8x8, svt_aom_highbd_paeth_predictor_8x8_c);
+    SET_ONLY_C(svt_aom_highbd_paeth_predictor_8x16, svt_aom_highbd_paeth_predictor_8x16_c);
+    SET_ONLY_C(svt_aom_highbd_paeth_predictor_8x32, svt_aom_highbd_paeth_predictor_8x32_c);
+    SET_ONLY_C(svt_aom_highbd_paeth_predictor_16x4, svt_aom_highbd_paeth_predictor_16x4_c);
+    SET_ONLY_C(svt_aom_highbd_paeth_predictor_16x8, svt_aom_highbd_paeth_predictor_16x8_c);
+    SET_ONLY_C(svt_aom_highbd_paeth_predictor_16x16, svt_aom_highbd_paeth_predictor_16x16_c);
+    SET_ONLY_C(svt_aom_highbd_paeth_predictor_16x32, svt_aom_highbd_paeth_predictor_16x32_c);
+    SET_ONLY_C(svt_aom_highbd_paeth_predictor_16x64, svt_aom_highbd_paeth_predictor_16x64_c);
+    SET_ONLY_C(svt_aom_highbd_paeth_predictor_32x8, svt_aom_highbd_paeth_predictor_32x8_c);
+    SET_ONLY_C(svt_aom_highbd_paeth_predictor_32x16, svt_aom_highbd_paeth_predictor_32x16_c);
+    SET_ONLY_C(svt_aom_highbd_paeth_predictor_32x32, svt_aom_highbd_paeth_predictor_32x32_c);
+    SET_ONLY_C(svt_aom_highbd_paeth_predictor_32x64, svt_aom_highbd_paeth_predictor_32x64_c);
+    SET_ONLY_C(svt_aom_highbd_paeth_predictor_64x16, svt_aom_highbd_paeth_predictor_64x16_c);
+    SET_ONLY_C(svt_aom_highbd_paeth_predictor_64x32, svt_aom_highbd_paeth_predictor_64x32_c);
+    SET_ONLY_C(svt_aom_highbd_paeth_predictor_64x64, svt_aom_highbd_paeth_predictor_64x64_c);
+    SET_ONLY_C(svt_aom_sum_squares_i16, svt_aom_sum_squares_i16_c);
+    SET_ONLY_C(svt_aom_dc_predictor_4x4, svt_aom_dc_predictor_4x4_c);
+    SET_ONLY_C(svt_aom_dc_predictor_4x8, svt_aom_dc_predictor_4x8_c);
+    SET_ONLY_C(svt_aom_dc_predictor_4x16, svt_aom_dc_predictor_4x16_c);
+    SET_ONLY_C(svt_aom_dc_predictor_8x4, svt_aom_dc_predictor_8x4_c);
+    SET_ONLY_C(svt_aom_dc_predictor_8x8, svt_aom_dc_predictor_8x8_c);
+    SET_ONLY_C(svt_aom_dc_predictor_8x16, svt_aom_dc_predictor_8x16_c);
+    SET_ONLY_C(svt_aom_dc_predictor_8x32, svt_aom_dc_predictor_8x32_c);
+    SET_ONLY_C(svt_aom_dc_predictor_16x4, svt_aom_dc_predictor_16x4_c);
+    SET_ONLY_C(svt_aom_dc_predictor_16x8, svt_aom_dc_predictor_16x8_c);
+    SET_ONLY_C(svt_aom_dc_predictor_16x16, svt_aom_dc_predictor_16x16_c);
+    SET_ONLY_C(svt_aom_dc_predictor_16x32, svt_aom_dc_predictor_16x32_c);
+    SET_ONLY_C(svt_aom_dc_predictor_16x64, svt_aom_dc_predictor_16x64_c);
+    SET_ONLY_C(svt_aom_dc_predictor_32x8, svt_aom_dc_predictor_32x8_c);
+    SET_ONLY_C(svt_aom_dc_predictor_32x16, svt_aom_dc_predictor_32x16_c);
+    SET_ONLY_C(svt_aom_dc_predictor_32x32, svt_aom_dc_predictor_32x32_c);
+    SET_ONLY_C(svt_aom_dc_predictor_32x64, svt_aom_dc_predictor_32x64_c);
+    SET_ONLY_C(svt_aom_dc_predictor_64x16, svt_aom_dc_predictor_64x16_c);
+    SET_ONLY_C(svt_aom_dc_predictor_64x32, svt_aom_dc_predictor_64x32_c);
+    SET_ONLY_C(svt_aom_dc_predictor_64x64, svt_aom_dc_predictor_64x64_c);
+
+    SET_ONLY_C(svt_aom_dc_top_predictor_4x4, svt_aom_dc_top_predictor_4x4_c);
+    SET_ONLY_C(svt_aom_dc_top_predictor_4x8, svt_aom_dc_top_predictor_4x8_c);
+    SET_ONLY_C(svt_aom_dc_top_predictor_4x16, svt_aom_dc_top_predictor_4x16_c);
+    SET_ONLY_C(svt_aom_dc_top_predictor_8x4, svt_aom_dc_top_predictor_8x4_c);
+    SET_ONLY_C(svt_aom_dc_top_predictor_8x8, svt_aom_dc_top_predictor_8x8_c);
+    SET_ONLY_C(svt_aom_dc_top_predictor_8x16, svt_aom_dc_top_predictor_8x16_c);
+    SET_ONLY_C(svt_aom_dc_top_predictor_8x32, svt_aom_dc_top_predictor_8x32_c);
+    SET_ONLY_C(svt_aom_dc_top_predictor_16x4, svt_aom_dc_top_predictor_16x4_c);
+    SET_ONLY_C(svt_aom_dc_top_predictor_16x8, svt_aom_dc_top_predictor_16x8_c);
+    SET_ONLY_C(svt_aom_dc_top_predictor_16x16, svt_aom_dc_top_predictor_16x16_c);
+    SET_ONLY_C(svt_aom_dc_top_predictor_16x32, svt_aom_dc_top_predictor_16x32_c);
+    SET_ONLY_C(svt_aom_dc_top_predictor_16x64, svt_aom_dc_top_predictor_16x64_c);
+    SET_ONLY_C(svt_aom_dc_top_predictor_32x8, svt_aom_dc_top_predictor_32x8_c);
+    SET_ONLY_C(svt_aom_dc_top_predictor_32x16, svt_aom_dc_top_predictor_32x16_c);
+    SET_ONLY_C(svt_aom_dc_top_predictor_32x32, svt_aom_dc_top_predictor_32x32_c);
+    SET_ONLY_C(svt_aom_dc_top_predictor_32x64, svt_aom_dc_top_predictor_32x64_c);
+    SET_ONLY_C(svt_aom_dc_top_predictor_64x16, svt_aom_dc_top_predictor_64x16_c);
+    SET_ONLY_C(svt_aom_dc_top_predictor_64x32, svt_aom_dc_top_predictor_64x32_c);
+    SET_ONLY_C(svt_aom_dc_top_predictor_64x64, svt_aom_dc_top_predictor_64x64_c);
+
+    SET_ONLY_C(svt_aom_dc_left_predictor_4x4, svt_aom_dc_left_predictor_4x4_c);
+    SET_ONLY_C(svt_aom_dc_left_predictor_4x8, svt_aom_dc_left_predictor_4x8_c);
+    SET_ONLY_C(svt_aom_dc_left_predictor_4x16, svt_aom_dc_left_predictor_4x16_c);
+    SET_ONLY_C(svt_aom_dc_left_predictor_8x4, svt_aom_dc_left_predictor_8x4_c);
+    SET_ONLY_C(svt_aom_dc_left_predictor_8x8, svt_aom_dc_left_predictor_8x8_c);
+    SET_ONLY_C(svt_aom_dc_left_predictor_8x16, svt_aom_dc_left_predictor_8x16_c);
+    SET_ONLY_C(svt_aom_dc_left_predictor_8x32, svt_aom_dc_left_predictor_8x32_c);
+    SET_ONLY_C(svt_aom_dc_left_predictor_16x4, svt_aom_dc_left_predictor_16x4_c);
+    SET_ONLY_C(svt_aom_dc_left_predictor_16x8, svt_aom_dc_left_predictor_16x8_c);
+    SET_ONLY_C(svt_aom_dc_left_predictor_16x16, svt_aom_dc_left_predictor_16x16_c);
+    SET_ONLY_C(svt_aom_dc_left_predictor_16x32, svt_aom_dc_left_predictor_16x32_c);
+    SET_ONLY_C(svt_aom_dc_left_predictor_16x64, svt_aom_dc_left_predictor_16x64_c);
+    SET_ONLY_C(svt_aom_dc_left_predictor_32x8, svt_aom_dc_left_predictor_32x8_c);
+    SET_ONLY_C(svt_aom_dc_left_predictor_32x16, svt_aom_dc_left_predictor_32x16_c);
+    SET_ONLY_C(svt_aom_dc_left_predictor_32x32, svt_aom_dc_left_predictor_32x32_c);
+    SET_ONLY_C(svt_aom_dc_left_predictor_32x64, svt_aom_dc_left_predictor_32x64_c);
+    SET_ONLY_C(svt_aom_dc_left_predictor_64x16, svt_aom_dc_left_predictor_64x16_c);
+    SET_ONLY_C(svt_aom_dc_left_predictor_64x32, svt_aom_dc_left_predictor_64x32_c);
+    SET_ONLY_C(svt_aom_dc_left_predictor_64x64, svt_aom_dc_left_predictor_64x64_c);
+
+    SET_ONLY_C(svt_aom_dc_128_predictor_4x4, svt_aom_dc_128_predictor_4x4_c);
+    SET_ONLY_C(svt_aom_dc_128_predictor_4x8, svt_aom_dc_128_predictor_4x8_c);
+    SET_ONLY_C(svt_aom_dc_128_predictor_4x16, svt_aom_dc_128_predictor_4x16_c);
+    SET_ONLY_C(svt_aom_dc_128_predictor_8x4, svt_aom_dc_128_predictor_8x4_c);
+    SET_ONLY_C(svt_aom_dc_128_predictor_8x8, svt_aom_dc_128_predictor_8x8_c);
+    SET_ONLY_C(svt_aom_dc_128_predictor_8x16, svt_aom_dc_128_predictor_8x16_c);
+    SET_ONLY_C(svt_aom_dc_128_predictor_8x32, svt_aom_dc_128_predictor_8x32_c);
+    SET_ONLY_C(svt_aom_dc_128_predictor_16x4, svt_aom_dc_128_predictor_16x4_c);
+    SET_ONLY_C(svt_aom_dc_128_predictor_16x8, svt_aom_dc_128_predictor_16x8_c);
+    SET_ONLY_C(svt_aom_dc_128_predictor_16x16, svt_aom_dc_128_predictor_16x16_c);
+    SET_ONLY_C(svt_aom_dc_128_predictor_16x32, svt_aom_dc_128_predictor_16x32_c);
+    SET_ONLY_C(svt_aom_dc_128_predictor_16x64, svt_aom_dc_128_predictor_16x64_c);
+    SET_ONLY_C(svt_aom_dc_128_predictor_32x8, svt_aom_dc_128_predictor_32x8_c);
+    SET_ONLY_C(svt_aom_dc_128_predictor_32x16, svt_aom_dc_128_predictor_32x16_c);
+    SET_ONLY_C(svt_aom_dc_128_predictor_32x32, svt_aom_dc_128_predictor_32x32_c);
+    SET_ONLY_C(svt_aom_dc_128_predictor_32x64, svt_aom_dc_128_predictor_32x64_c);
+    SET_ONLY_C(svt_aom_dc_128_predictor_64x16, svt_aom_dc_128_predictor_64x16_c);
+    SET_ONLY_C(svt_aom_dc_128_predictor_64x32, svt_aom_dc_128_predictor_64x32_c);
+    SET_ONLY_C(svt_aom_dc_128_predictor_64x64, svt_aom_dc_128_predictor_64x64_c);
+
+    SET_ONLY_C(svt_aom_smooth_h_predictor_4x4, svt_aom_smooth_h_predictor_4x4_c);
+    SET_ONLY_C(svt_aom_smooth_h_predictor_4x8, svt_aom_smooth_h_predictor_4x8_c);
+    SET_ONLY_C(svt_aom_smooth_h_predictor_4x16, svt_aom_smooth_h_predictor_4x16_c);
+    SET_ONLY_C(svt_aom_smooth_h_predictor_8x4, svt_aom_smooth_h_predictor_8x4_c);
+    SET_ONLY_C(svt_aom_smooth_h_predictor_8x8, svt_aom_smooth_h_predictor_8x8_c);
+    SET_ONLY_C(svt_aom_smooth_h_predictor_8x16, svt_aom_smooth_h_predictor_8x16_c);
+    SET_ONLY_C(svt_aom_smooth_h_predictor_8x32, svt_aom_smooth_h_predictor_8x32_c);
+    SET_ONLY_C(svt_aom_smooth_h_predictor_16x4, svt_aom_smooth_h_predictor_16x4_c);
+    SET_ONLY_C(svt_aom_smooth_h_predictor_16x8, svt_aom_smooth_h_predictor_16x8_c);
+    SET_ONLY_C(svt_aom_smooth_h_predictor_16x16, svt_aom_smooth_h_predictor_16x16_c);
+    SET_ONLY_C(svt_aom_smooth_h_predictor_16x32, svt_aom_smooth_h_predictor_16x32_c);
+    SET_ONLY_C(svt_aom_smooth_h_predictor_16x64, svt_aom_smooth_h_predictor_16x64_c);
+    SET_ONLY_C(svt_aom_smooth_h_predictor_32x8, svt_aom_smooth_h_predictor_32x8_c);
+    SET_ONLY_C(svt_aom_smooth_h_predictor_32x16, svt_aom_smooth_h_predictor_32x16_c);
+    SET_ONLY_C(svt_aom_smooth_h_predictor_32x32, svt_aom_smooth_h_predictor_32x32_c);
+    SET_ONLY_C(svt_aom_smooth_h_predictor_32x64, svt_aom_smooth_h_predictor_32x64_c);
+    SET_ONLY_C(svt_aom_smooth_h_predictor_64x16, svt_aom_smooth_h_predictor_64x16_c);
+    SET_ONLY_C(svt_aom_smooth_h_predictor_64x32, svt_aom_smooth_h_predictor_64x32_c);
+    SET_ONLY_C(svt_aom_smooth_h_predictor_64x64, svt_aom_smooth_h_predictor_64x64_c);
+
+    SET_ONLY_C(svt_aom_smooth_v_predictor_4x4, svt_aom_smooth_v_predictor_4x4_c);
+    SET_ONLY_C(svt_aom_smooth_v_predictor_4x8, svt_aom_smooth_v_predictor_4x8_c);
+    SET_ONLY_C(svt_aom_smooth_v_predictor_4x16, svt_aom_smooth_v_predictor_4x16_c);
+    SET_ONLY_C(svt_aom_smooth_v_predictor_8x4, svt_aom_smooth_v_predictor_8x4_c);
+    SET_ONLY_C(svt_aom_smooth_v_predictor_8x8, svt_aom_smooth_v_predictor_8x8_c);
+    SET_ONLY_C(svt_aom_smooth_v_predictor_8x16, svt_aom_smooth_v_predictor_8x16_c);
+    SET_ONLY_C(svt_aom_smooth_v_predictor_8x32, svt_aom_smooth_v_predictor_8x32_c);
+    SET_ONLY_C(svt_aom_smooth_v_predictor_16x4, svt_aom_smooth_v_predictor_16x4_c);
+    SET_ONLY_C(svt_aom_smooth_v_predictor_16x8, svt_aom_smooth_v_predictor_16x8_c);
+    SET_ONLY_C(svt_aom_smooth_v_predictor_16x16, svt_aom_smooth_v_predictor_16x16_c);
+    SET_ONLY_C(svt_aom_smooth_v_predictor_16x32, svt_aom_smooth_v_predictor_16x32_c);
+    SET_ONLY_C(svt_aom_smooth_v_predictor_16x64, svt_aom_smooth_v_predictor_16x64_c);
+    SET_ONLY_C(svt_aom_smooth_v_predictor_32x8, svt_aom_smooth_v_predictor_32x8_c);
+    SET_ONLY_C(svt_aom_smooth_v_predictor_32x16, svt_aom_smooth_v_predictor_32x16_c);
+    SET_ONLY_C(svt_aom_smooth_v_predictor_32x32, svt_aom_smooth_v_predictor_32x32_c);
+    SET_ONLY_C(svt_aom_smooth_v_predictor_32x64, svt_aom_smooth_v_predictor_32x64_c);
+    SET_ONLY_C(svt_aom_smooth_v_predictor_64x16, svt_aom_smooth_v_predictor_64x16_c);
+    SET_ONLY_C(svt_aom_smooth_v_predictor_64x32, svt_aom_smooth_v_predictor_64x32_c);
+    SET_ONLY_C(svt_aom_smooth_v_predictor_64x64, svt_aom_smooth_v_predictor_64x64_c);
+
+    SET_ONLY_C(svt_aom_smooth_predictor_4x4, svt_aom_smooth_predictor_4x4_c);
+    SET_ONLY_C(svt_aom_smooth_predictor_4x8, svt_aom_smooth_predictor_4x8_c);
+    SET_ONLY_C(svt_aom_smooth_predictor_4x16, svt_aom_smooth_predictor_4x16_c);
+    SET_ONLY_C(svt_aom_smooth_predictor_8x4, svt_aom_smooth_predictor_8x4_c);
+    SET_ONLY_C(svt_aom_smooth_predictor_8x8, svt_aom_smooth_predictor_8x8_c);
+    SET_ONLY_C(svt_aom_smooth_predictor_8x16, svt_aom_smooth_predictor_8x16_c);
+    SET_ONLY_C(svt_aom_smooth_predictor_8x32, svt_aom_smooth_predictor_8x32_c);
+    SET_ONLY_C(svt_aom_smooth_predictor_16x4, svt_aom_smooth_predictor_16x4_c);
+    SET_ONLY_C(svt_aom_smooth_predictor_16x8, svt_aom_smooth_predictor_16x8_c);
+    SET_ONLY_C(svt_aom_smooth_predictor_16x16, svt_aom_smooth_predictor_16x16_c);
+    SET_ONLY_C(svt_aom_smooth_predictor_16x32, svt_aom_smooth_predictor_16x32_c);
+    SET_ONLY_C(svt_aom_smooth_predictor_16x64, svt_aom_smooth_predictor_16x64_c);
+    SET_ONLY_C(svt_aom_smooth_predictor_32x8, svt_aom_smooth_predictor_32x8_c);
+    SET_ONLY_C(svt_aom_smooth_predictor_32x16, svt_aom_smooth_predictor_32x16_c);
+    SET_ONLY_C(svt_aom_smooth_predictor_32x32, svt_aom_smooth_predictor_32x32_c);
+    SET_ONLY_C(svt_aom_smooth_predictor_32x64, svt_aom_smooth_predictor_32x64_c);
+    SET_ONLY_C(svt_aom_smooth_predictor_64x16, svt_aom_smooth_predictor_64x16_c);
+    SET_ONLY_C(svt_aom_smooth_predictor_64x32, svt_aom_smooth_predictor_64x32_c);
+    SET_ONLY_C(svt_aom_smooth_predictor_64x64, svt_aom_smooth_predictor_64x64_c);
+
+    SET_ONLY_C(svt_aom_v_predictor_4x4, svt_aom_v_predictor_4x4_c);
+    SET_ONLY_C(svt_aom_v_predictor_4x8, svt_aom_v_predictor_4x8_c);
+    SET_ONLY_C(svt_aom_v_predictor_4x16, svt_aom_v_predictor_4x16_c);
+    SET_ONLY_C(svt_aom_v_predictor_8x4, svt_aom_v_predictor_8x4_c);
+    SET_ONLY_C(svt_aom_v_predictor_8x8, svt_aom_v_predictor_8x8_c);
+    SET_ONLY_C(svt_aom_v_predictor_8x16, svt_aom_v_predictor_8x16_c);
+    SET_ONLY_C(svt_aom_v_predictor_8x32, svt_aom_v_predictor_8x32_c);
+    SET_ONLY_C(svt_aom_v_predictor_16x4, svt_aom_v_predictor_16x4_c);
+    SET_ONLY_C(svt_aom_v_predictor_16x8, svt_aom_v_predictor_16x8_c);
+    SET_ONLY_C(svt_aom_v_predictor_16x16, svt_aom_v_predictor_16x16_c);
+    SET_ONLY_C(svt_aom_v_predictor_16x32, svt_aom_v_predictor_16x32_c);
+    SET_ONLY_C(svt_aom_v_predictor_16x64, svt_aom_v_predictor_16x64_c);
+    SET_ONLY_C(svt_aom_v_predictor_32x8, svt_aom_v_predictor_32x8_c);
+    SET_ONLY_C(svt_aom_v_predictor_32x16, svt_aom_v_predictor_32x16_c);
+    SET_ONLY_C(svt_aom_v_predictor_32x32, svt_aom_v_predictor_32x32_c);
+    SET_ONLY_C(svt_aom_v_predictor_32x64, svt_aom_v_predictor_32x64_c);
+    SET_ONLY_C(svt_aom_v_predictor_64x16, svt_aom_v_predictor_64x16_c);
+    SET_ONLY_C(svt_aom_v_predictor_64x32, svt_aom_v_predictor_64x32_c);
+    SET_ONLY_C(svt_aom_v_predictor_64x64, svt_aom_v_predictor_64x64_c);
+
+    SET_ONLY_C(svt_aom_h_predictor_4x4, svt_aom_h_predictor_4x4_c);
+    SET_ONLY_C(svt_aom_h_predictor_4x8, svt_aom_h_predictor_4x8_c);
+    SET_ONLY_C(svt_aom_h_predictor_4x16, svt_aom_h_predictor_4x16_c);
+    SET_ONLY_C(svt_aom_h_predictor_8x4, svt_aom_h_predictor_8x4_c);
+    SET_ONLY_C(svt_aom_h_predictor_8x8, svt_aom_h_predictor_8x8_c);
+    SET_ONLY_C(svt_aom_h_predictor_8x16, svt_aom_h_predictor_8x16_c);
+    SET_ONLY_C(svt_aom_h_predictor_8x32, svt_aom_h_predictor_8x32_c);
+    SET_ONLY_C(svt_aom_h_predictor_16x4, svt_aom_h_predictor_16x4_c);
+    SET_ONLY_C(svt_aom_h_predictor_16x8, svt_aom_h_predictor_16x8_c);
+    SET_ONLY_C(svt_aom_h_predictor_16x16, svt_aom_h_predictor_16x16_c);
+    SET_ONLY_C(svt_aom_h_predictor_16x32, svt_aom_h_predictor_16x32_c);
+    SET_ONLY_C(svt_aom_h_predictor_16x64, svt_aom_h_predictor_16x64_c);
+    SET_ONLY_C(svt_aom_h_predictor_32x8, svt_aom_h_predictor_32x8_c);
+    SET_ONLY_C(svt_aom_h_predictor_32x16, svt_aom_h_predictor_32x16_c);
+    SET_ONLY_C(svt_aom_h_predictor_32x32, svt_aom_h_predictor_32x32_c);
+    SET_ONLY_C(svt_aom_h_predictor_32x64, svt_aom_h_predictor_32x64_c);
+    SET_ONLY_C(svt_aom_h_predictor_64x16, svt_aom_h_predictor_64x16_c);
+    SET_ONLY_C(svt_aom_h_predictor_64x32, svt_aom_h_predictor_64x32_c);
+    SET_ONLY_C(svt_aom_h_predictor_64x64, svt_aom_h_predictor_64x64_c);
+    SET_ONLY_C(svt_aom_cdef_find_dir, svt_aom_cdef_find_dir_c);
+    SET_ONLY_C(svt_aom_cdef_find_dir_dual, svt_aom_cdef_find_dir_dual_c);
+    SET_ONLY_C(svt_cdef_filter_block, svt_cdef_filter_block_c);
+    SET_ONLY_C(svt_aom_copy_rect8_8bit_to_16bit, svt_aom_copy_rect8_8bit_to_16bit_c);
+    SET_ONLY_C(svt_av1_highbd_warp_affine, svt_av1_highbd_warp_affine_c);
+    SET_ONLY_C(dec_svt_av1_highbd_warp_affine, svt_aom_dec_svt_av1_highbd_warp_affine_c);
+    SET_NEON(svt_av1_warp_affine, svt_av1_warp_affine_c, svt_av1_warp_affine_neon);
+
+    SET_ONLY_C(svt_aom_highbd_lpf_horizontal_4, svt_aom_highbd_lpf_horizontal_4_c);
+    SET_ONLY_C(svt_aom_highbd_lpf_horizontal_6, svt_aom_highbd_lpf_horizontal_6_c);
+    SET_ONLY_C(svt_aom_highbd_lpf_horizontal_8, svt_aom_highbd_lpf_horizontal_8_c);
+    SET_ONLY_C(svt_aom_highbd_lpf_horizontal_14, svt_aom_highbd_lpf_horizontal_14_c);
+    SET_ONLY_C(svt_aom_highbd_lpf_vertical_4, svt_aom_highbd_lpf_vertical_4_c);
+    SET_ONLY_C(svt_aom_highbd_lpf_vertical_6, svt_aom_highbd_lpf_vertical_6_c);
+    SET_ONLY_C(svt_aom_highbd_lpf_vertical_8, svt_aom_highbd_lpf_vertical_8_c);
+    SET_ONLY_C(svt_aom_highbd_lpf_vertical_14, svt_aom_highbd_lpf_vertical_14_c);
+    SET_ONLY_C(svt_aom_lpf_horizontal_4, svt_aom_lpf_horizontal_4_c);
+    SET_ONLY_C(svt_aom_lpf_horizontal_6, svt_aom_lpf_horizontal_6_c);
+    SET_ONLY_C(svt_aom_lpf_horizontal_8, svt_aom_lpf_horizontal_8_c);
+    SET_ONLY_C(svt_aom_lpf_horizontal_14, svt_aom_lpf_horizontal_14_c);
+    SET_ONLY_C(svt_aom_lpf_vertical_4, svt_aom_lpf_vertical_4_c);
+    SET_ONLY_C(svt_aom_lpf_vertical_6, svt_aom_lpf_vertical_6_c);
+    SET_ONLY_C(svt_aom_lpf_vertical_8, svt_aom_lpf_vertical_8_c);
+    SET_ONLY_C(svt_aom_lpf_vertical_14, svt_aom_lpf_vertical_14_c);
+
+    // svt_aom_highbd_v_predictor
+    SET_ONLY_C(svt_aom_highbd_v_predictor_4x4, svt_aom_highbd_v_predictor_4x4_c);
+    SET_ONLY_C(svt_aom_highbd_v_predictor_4x8, svt_aom_highbd_v_predictor_4x8_c);
+    SET_ONLY_C(svt_aom_highbd_v_predictor_4x16, svt_aom_highbd_v_predictor_4x16_c);
+    SET_ONLY_C(svt_aom_highbd_v_predictor_8x4, svt_aom_highbd_v_predictor_8x4_c);
+    SET_ONLY_C(svt_aom_highbd_v_predictor_8x8, svt_aom_highbd_v_predictor_8x8_c);
+    SET_ONLY_C(svt_aom_highbd_v_predictor_8x16, svt_aom_highbd_v_predictor_8x16_c);
+    SET_ONLY_C(svt_aom_highbd_v_predictor_8x32, svt_aom_highbd_v_predictor_8x32_c);
+    SET_ONLY_C(svt_aom_highbd_v_predictor_16x4, svt_aom_highbd_v_predictor_16x4_c);
+    SET_ONLY_C(svt_aom_highbd_v_predictor_16x8, svt_aom_highbd_v_predictor_16x8_c);
+    SET_ONLY_C(svt_aom_highbd_v_predictor_16x16, svt_aom_highbd_v_predictor_16x16_c);
+    SET_ONLY_C(svt_aom_highbd_v_predictor_16x32, svt_aom_highbd_v_predictor_16x32_c);
+    SET_ONLY_C(svt_aom_highbd_v_predictor_16x64, svt_aom_highbd_v_predictor_16x64_c);
+    SET_ONLY_C(svt_aom_highbd_v_predictor_32x8, svt_aom_highbd_v_predictor_32x8_c);
+    SET_ONLY_C(svt_aom_highbd_v_predictor_32x16, svt_aom_highbd_v_predictor_32x16_c);
+    SET_ONLY_C(svt_aom_highbd_v_predictor_32x32, svt_aom_highbd_v_predictor_32x32_c);
+    SET_ONLY_C(svt_aom_highbd_v_predictor_32x64, svt_aom_highbd_v_predictor_32x64_c);
+    SET_ONLY_C(svt_aom_highbd_v_predictor_64x16, svt_aom_highbd_v_predictor_64x16_c);
+    SET_ONLY_C(svt_aom_highbd_v_predictor_64x32, svt_aom_highbd_v_predictor_64x32_c);
+    SET_ONLY_C(svt_aom_highbd_v_predictor_64x64, svt_aom_highbd_v_predictor_64x64_c);
+
+    //aom_highbd_smooth_predictor
+    SET_ONLY_C(svt_aom_highbd_smooth_predictor_4x4, svt_aom_highbd_smooth_predictor_4x4_c);
+    SET_ONLY_C(svt_aom_highbd_smooth_predictor_4x8, svt_aom_highbd_smooth_predictor_4x8_c);
+    SET_ONLY_C(svt_aom_highbd_smooth_predictor_4x16, svt_aom_highbd_smooth_predictor_4x16_c);
+    SET_ONLY_C(svt_aom_highbd_smooth_predictor_8x4, svt_aom_highbd_smooth_predictor_8x4_c);
+    SET_ONLY_C(svt_aom_highbd_smooth_predictor_8x8, svt_aom_highbd_smooth_predictor_8x8_c);
+    SET_ONLY_C(svt_aom_highbd_smooth_predictor_8x16, svt_aom_highbd_smooth_predictor_8x16_c);
+    SET_ONLY_C(svt_aom_highbd_smooth_predictor_8x32, svt_aom_highbd_smooth_predictor_8x32_c);
+    SET_ONLY_C(svt_aom_highbd_smooth_predictor_16x4, svt_aom_highbd_smooth_predictor_16x4_c);
+    SET_ONLY_C(svt_aom_highbd_smooth_predictor_16x8, svt_aom_highbd_smooth_predictor_16x8_c);
+    SET_ONLY_C(svt_aom_highbd_smooth_predictor_16x16, svt_aom_highbd_smooth_predictor_16x16_c);
+    SET_ONLY_C(svt_aom_highbd_smooth_predictor_16x32, svt_aom_highbd_smooth_predictor_16x32_c);
+    SET_ONLY_C(svt_aom_highbd_smooth_predictor_16x64, svt_aom_highbd_smooth_predictor_16x64_c);
+    SET_ONLY_C(svt_aom_highbd_smooth_predictor_32x8, svt_aom_highbd_smooth_predictor_32x8_c);
+    SET_ONLY_C(svt_aom_highbd_smooth_predictor_32x16, svt_aom_highbd_smooth_predictor_32x16_c);
+    SET_ONLY_C(svt_aom_highbd_smooth_predictor_32x32, svt_aom_highbd_smooth_predictor_32x32_c);
+    SET_ONLY_C(svt_aom_highbd_smooth_predictor_32x64, svt_aom_highbd_smooth_predictor_32x64_c);
+    SET_ONLY_C(svt_aom_highbd_smooth_predictor_64x16, svt_aom_highbd_smooth_predictor_64x16_c);
+    SET_ONLY_C(svt_aom_highbd_smooth_predictor_64x32, svt_aom_highbd_smooth_predictor_64x32_c);
+    SET_ONLY_C(svt_aom_highbd_smooth_predictor_64x64, svt_aom_highbd_smooth_predictor_64x64_c);
+
+    //aom_highbd_smooth_h_predictor
+    SET_ONLY_C(svt_aom_highbd_smooth_h_predictor_4x4, svt_aom_highbd_smooth_h_predictor_4x4_c);
+    SET_ONLY_C(svt_aom_highbd_smooth_h_predictor_4x8, svt_aom_highbd_smooth_h_predictor_4x8_c);
+    SET_ONLY_C(svt_aom_highbd_smooth_h_predictor_4x16, svt_aom_highbd_smooth_h_predictor_4x16_c);
+    SET_ONLY_C(svt_aom_highbd_smooth_h_predictor_8x4, svt_aom_highbd_smooth_h_predictor_8x4_c);
+    SET_ONLY_C(svt_aom_highbd_smooth_h_predictor_8x8, svt_aom_highbd_smooth_h_predictor_8x8_c);
+    SET_ONLY_C(svt_aom_highbd_smooth_h_predictor_8x16, svt_aom_highbd_smooth_h_predictor_8x16_c);
+    SET_ONLY_C(svt_aom_highbd_smooth_h_predictor_8x32, svt_aom_highbd_smooth_h_predictor_8x32_c);
+    SET_ONLY_C(svt_aom_highbd_smooth_h_predictor_16x4, svt_aom_highbd_smooth_h_predictor_16x4_c);
+    SET_ONLY_C(svt_aom_highbd_smooth_h_predictor_16x8, svt_aom_highbd_smooth_h_predictor_16x8_c);
+    SET_ONLY_C(svt_aom_highbd_smooth_h_predictor_16x16, svt_aom_highbd_smooth_h_predictor_16x16_c);
+    SET_ONLY_C(svt_aom_highbd_smooth_h_predictor_16x32, svt_aom_highbd_smooth_h_predictor_16x32_c);
+    SET_ONLY_C(svt_aom_highbd_smooth_h_predictor_16x64, svt_aom_highbd_smooth_h_predictor_16x64_c);
+    SET_ONLY_C(svt_aom_highbd_smooth_h_predictor_32x8, svt_aom_highbd_smooth_h_predictor_32x8_c);
+    SET_ONLY_C(svt_aom_highbd_smooth_h_predictor_32x16, svt_aom_highbd_smooth_h_predictor_32x16_c);
+    SET_ONLY_C(svt_aom_highbd_smooth_h_predictor_32x32, svt_aom_highbd_smooth_h_predictor_32x32_c);
+    SET_ONLY_C(svt_aom_highbd_smooth_h_predictor_32x64, svt_aom_highbd_smooth_h_predictor_32x64_c);
+    SET_ONLY_C(svt_aom_highbd_smooth_h_predictor_64x16, svt_aom_highbd_smooth_h_predictor_64x16_c);
+    SET_ONLY_C(svt_aom_highbd_smooth_h_predictor_64x32, svt_aom_highbd_smooth_h_predictor_64x32_c);
+    SET_ONLY_C(svt_aom_highbd_smooth_h_predictor_64x64, svt_aom_highbd_smooth_h_predictor_64x64_c);
+
+    //aom_highbd_dc_128_predictor
+    SET_ONLY_C(svt_aom_highbd_dc_128_predictor_4x4, svt_aom_highbd_dc_128_predictor_4x4_c);
+    SET_ONLY_C(svt_aom_highbd_dc_128_predictor_4x8, svt_aom_highbd_dc_128_predictor_4x8_c);
+    SET_ONLY_C(svt_aom_highbd_dc_128_predictor_4x16, svt_aom_highbd_dc_128_predictor_4x16_c);
+    SET_ONLY_C(svt_aom_highbd_dc_128_predictor_8x4, svt_aom_highbd_dc_128_predictor_8x4_c);
+    SET_ONLY_C(svt_aom_highbd_dc_128_predictor_8x8, svt_aom_highbd_dc_128_predictor_8x8_c);
+    SET_ONLY_C(svt_aom_highbd_dc_128_predictor_8x16, svt_aom_highbd_dc_128_predictor_8x16_c);
+    SET_ONLY_C(svt_aom_highbd_dc_128_predictor_8x32, svt_aom_highbd_dc_128_predictor_8x32_c);
+    SET_ONLY_C(svt_aom_highbd_dc_128_predictor_16x4, svt_aom_highbd_dc_128_predictor_16x4_c);
+    SET_ONLY_C(svt_aom_highbd_dc_128_predictor_16x8, svt_aom_highbd_dc_128_predictor_16x8_c);
+    SET_ONLY_C(svt_aom_highbd_dc_128_predictor_16x16, svt_aom_highbd_dc_128_predictor_16x16_c);
+    SET_ONLY_C(svt_aom_highbd_dc_128_predictor_16x32, svt_aom_highbd_dc_128_predictor_16x32_c);
+    SET_ONLY_C(svt_aom_highbd_dc_128_predictor_16x64, svt_aom_highbd_dc_128_predictor_16x64_c);
+    SET_ONLY_C(svt_aom_highbd_dc_128_predictor_32x8, svt_aom_highbd_dc_128_predictor_32x8_c);
+    SET_ONLY_C(svt_aom_highbd_dc_128_predictor_32x16, svt_aom_highbd_dc_128_predictor_32x16_c);
+    SET_ONLY_C(svt_aom_highbd_dc_128_predictor_32x32, svt_aom_highbd_dc_128_predictor_32x32_c);
+    SET_ONLY_C(svt_aom_highbd_dc_128_predictor_32x64, svt_aom_highbd_dc_128_predictor_32x64_c);
+    SET_ONLY_C(svt_aom_highbd_dc_128_predictor_64x16, svt_aom_highbd_dc_128_predictor_64x16_c);
+    SET_ONLY_C(svt_aom_highbd_dc_128_predictor_64x32, svt_aom_highbd_dc_128_predictor_64x32_c);
+    SET_ONLY_C(svt_aom_highbd_dc_128_predictor_64x64, svt_aom_highbd_dc_128_predictor_64x64_c);
+
+    //aom_highbd_dc_left_predictor
+    SET_ONLY_C(svt_aom_highbd_dc_left_predictor_4x4, svt_aom_highbd_dc_left_predictor_4x4_c);
+    SET_ONLY_C(svt_aom_highbd_dc_left_predictor_4x8, svt_aom_highbd_dc_left_predictor_4x8_c);
+    SET_ONLY_C(svt_aom_highbd_dc_left_predictor_4x16, svt_aom_highbd_dc_left_predictor_4x16_c);
+    SET_ONLY_C(svt_aom_highbd_dc_left_predictor_8x4, svt_aom_highbd_dc_left_predictor_8x4_c);
+    SET_ONLY_C(svt_aom_highbd_dc_left_predictor_8x8, svt_aom_highbd_dc_left_predictor_8x8_c);
+    SET_ONLY_C(svt_aom_highbd_dc_left_predictor_8x16, svt_aom_highbd_dc_left_predictor_8x16_c);
+    SET_ONLY_C(svt_aom_highbd_dc_left_predictor_8x32, svt_aom_highbd_dc_left_predictor_8x32_c);
+    SET_ONLY_C(svt_aom_highbd_dc_left_predictor_16x4, svt_aom_highbd_dc_left_predictor_16x4_c);
+    SET_ONLY_C(svt_aom_highbd_dc_left_predictor_16x8, svt_aom_highbd_dc_left_predictor_16x8_c);
+    SET_ONLY_C(svt_aom_highbd_dc_left_predictor_16x16, svt_aom_highbd_dc_left_predictor_16x16_c);
+    SET_ONLY_C(svt_aom_highbd_dc_left_predictor_16x32, svt_aom_highbd_dc_left_predictor_16x32_c);
+    SET_ONLY_C(svt_aom_highbd_dc_left_predictor_16x64, svt_aom_highbd_dc_left_predictor_16x64_c);
+    SET_ONLY_C(svt_aom_highbd_dc_left_predictor_32x8, svt_aom_highbd_dc_left_predictor_32x8_c);
+    SET_ONLY_C(svt_aom_highbd_dc_left_predictor_32x16, svt_aom_highbd_dc_left_predictor_32x16_c);
+    SET_ONLY_C(svt_aom_highbd_dc_left_predictor_32x32, svt_aom_highbd_dc_left_predictor_32x32_c);
+    SET_ONLY_C(svt_aom_highbd_dc_left_predictor_32x64, svt_aom_highbd_dc_left_predictor_32x64_c);
+    SET_ONLY_C(svt_aom_highbd_dc_left_predictor_64x16, svt_aom_highbd_dc_left_predictor_64x16_c);
+    SET_ONLY_C(svt_aom_highbd_dc_left_predictor_64x32, svt_aom_highbd_dc_left_predictor_64x32_c);
+    SET_ONLY_C(svt_aom_highbd_dc_left_predictor_64x64, svt_aom_highbd_dc_left_predictor_64x64_c);
+
+    SET_ONLY_C(svt_aom_highbd_dc_predictor_4x4, svt_aom_highbd_dc_predictor_4x4_c);
+    SET_ONLY_C(svt_aom_highbd_dc_predictor_4x8, svt_aom_highbd_dc_predictor_4x8_c);
+    SET_ONLY_C(svt_aom_highbd_dc_predictor_4x16, svt_aom_highbd_dc_predictor_4x16_c);
+    SET_ONLY_C(svt_aom_highbd_dc_predictor_8x4, svt_aom_highbd_dc_predictor_8x4_c);
+    SET_ONLY_C(svt_aom_highbd_dc_predictor_8x8, svt_aom_highbd_dc_predictor_8x8_c);
+    SET_ONLY_C(svt_aom_highbd_dc_predictor_8x16, svt_aom_highbd_dc_predictor_8x16_c);
+    SET_ONLY_C(svt_aom_highbd_dc_predictor_8x32, svt_aom_highbd_dc_predictor_8x32_c);
+    SET_ONLY_C(svt_aom_highbd_dc_predictor_16x4, svt_aom_highbd_dc_predictor_16x4_c);
+    SET_ONLY_C(svt_aom_highbd_dc_predictor_16x8, svt_aom_highbd_dc_predictor_16x8_c);
+    SET_ONLY_C(svt_aom_highbd_dc_predictor_16x16, svt_aom_highbd_dc_predictor_16x16_c);
+    SET_ONLY_C(svt_aom_highbd_dc_predictor_16x32, svt_aom_highbd_dc_predictor_16x32_c);
+    SET_ONLY_C(svt_aom_highbd_dc_predictor_16x64, svt_aom_highbd_dc_predictor_16x64_c);
+    SET_ONLY_C(svt_aom_highbd_dc_predictor_32x8, svt_aom_highbd_dc_predictor_32x8_c);
+    SET_ONLY_C(svt_aom_highbd_dc_predictor_32x16, svt_aom_highbd_dc_predictor_32x16_c);
+    SET_ONLY_C(svt_aom_highbd_dc_predictor_32x32, svt_aom_highbd_dc_predictor_32x32_c);
+    SET_ONLY_C(svt_aom_highbd_dc_predictor_32x64, svt_aom_highbd_dc_predictor_32x64_c);
+    SET_ONLY_C(svt_aom_highbd_dc_predictor_64x16, svt_aom_highbd_dc_predictor_64x16_c);
+    SET_ONLY_C(svt_aom_highbd_dc_predictor_64x32, svt_aom_highbd_dc_predictor_64x32_c);
+    SET_ONLY_C(svt_aom_highbd_dc_predictor_64x64, svt_aom_highbd_dc_predictor_64x64_c);
+
+    //aom_highbd_dc_top_predictor
+    SET_ONLY_C(svt_aom_highbd_dc_top_predictor_4x4, svt_aom_highbd_dc_top_predictor_4x4_c);
+    SET_ONLY_C(svt_aom_highbd_dc_top_predictor_4x8, svt_aom_highbd_dc_top_predictor_4x8_c);
+    SET_ONLY_C(svt_aom_highbd_dc_top_predictor_4x16, svt_aom_highbd_dc_top_predictor_4x16_c);
+    SET_ONLY_C(svt_aom_highbd_dc_top_predictor_8x4, svt_aom_highbd_dc_top_predictor_8x4_c);
+    SET_ONLY_C(svt_aom_highbd_dc_top_predictor_8x8, svt_aom_highbd_dc_top_predictor_8x8_c);
+    SET_ONLY_C(svt_aom_highbd_dc_top_predictor_8x16, svt_aom_highbd_dc_top_predictor_8x16_c);
+    SET_ONLY_C(svt_aom_highbd_dc_top_predictor_8x32, svt_aom_highbd_dc_top_predictor_8x32_c);
+    SET_ONLY_C(svt_aom_highbd_dc_top_predictor_16x4, svt_aom_highbd_dc_top_predictor_16x4_c);
+    SET_ONLY_C(svt_aom_highbd_dc_top_predictor_16x8, svt_aom_highbd_dc_top_predictor_16x8_c);
+    SET_ONLY_C(svt_aom_highbd_dc_top_predictor_16x16, svt_aom_highbd_dc_top_predictor_16x16_c);
+    SET_ONLY_C(svt_aom_highbd_dc_top_predictor_16x32, svt_aom_highbd_dc_top_predictor_16x32_c);
+    SET_ONLY_C(svt_aom_highbd_dc_top_predictor_16x64, svt_aom_highbd_dc_top_predictor_16x64_c);
+    SET_ONLY_C(svt_aom_highbd_dc_top_predictor_32x8, svt_aom_highbd_dc_top_predictor_32x8_c);
+    SET_ONLY_C(svt_aom_highbd_dc_top_predictor_32x16, svt_aom_highbd_dc_top_predictor_32x16_c);
+    SET_ONLY_C(svt_aom_highbd_dc_top_predictor_32x32, svt_aom_highbd_dc_top_predictor_32x32_c);
+    SET_ONLY_C(svt_aom_highbd_dc_top_predictor_32x64, svt_aom_highbd_dc_top_predictor_32x64_c);
+    SET_ONLY_C(svt_aom_highbd_dc_top_predictor_64x16, svt_aom_highbd_dc_top_predictor_64x16_c);
+    SET_ONLY_C(svt_aom_highbd_dc_top_predictor_64x32, svt_aom_highbd_dc_top_predictor_64x32_c);
+    SET_ONLY_C(svt_aom_highbd_dc_top_predictor_64x64, svt_aom_highbd_dc_top_predictor_64x64_c);
+
+    // svt_aom_highbd_h_predictor
+    SET_ONLY_C(svt_aom_highbd_h_predictor_4x4, svt_aom_highbd_h_predictor_4x4_c);
+    SET_ONLY_C(svt_aom_highbd_h_predictor_4x8, svt_aom_highbd_h_predictor_4x8_c);
+    SET_ONLY_C(svt_aom_highbd_h_predictor_4x16, svt_aom_highbd_h_predictor_4x16_c);
+    SET_ONLY_C(svt_aom_highbd_h_predictor_8x4, svt_aom_highbd_h_predictor_8x4_c);
+    SET_ONLY_C(svt_aom_highbd_h_predictor_8x8, svt_aom_highbd_h_predictor_8x8_c);
+    SET_ONLY_C(svt_aom_highbd_h_predictor_8x16, svt_aom_highbd_h_predictor_8x16_c);
+    SET_ONLY_C(svt_aom_highbd_h_predictor_8x32, svt_aom_highbd_h_predictor_8x32_c);
+    SET_ONLY_C(svt_aom_highbd_h_predictor_16x4, svt_aom_highbd_h_predictor_16x4_c);
+    SET_ONLY_C(svt_aom_highbd_h_predictor_16x8, svt_aom_highbd_h_predictor_16x8_c);
+    SET_ONLY_C(svt_aom_highbd_h_predictor_16x16, svt_aom_highbd_h_predictor_16x16_c);
+    SET_ONLY_C(svt_aom_highbd_h_predictor_16x32, svt_aom_highbd_h_predictor_16x32_c);
+    SET_ONLY_C(svt_aom_highbd_h_predictor_16x64, svt_aom_highbd_h_predictor_16x64_c);
+    SET_ONLY_C(svt_aom_highbd_h_predictor_32x8, svt_aom_highbd_h_predictor_32x8_c);
+    SET_ONLY_C(svt_aom_highbd_h_predictor_32x16, svt_aom_highbd_h_predictor_32x16_c);
+    SET_ONLY_C(svt_aom_highbd_h_predictor_32x32, svt_aom_highbd_h_predictor_32x32_c);
+    SET_ONLY_C(svt_aom_highbd_h_predictor_32x64, svt_aom_highbd_h_predictor_32x64_c);
+    SET_ONLY_C(svt_aom_highbd_h_predictor_64x16, svt_aom_highbd_h_predictor_64x16_c);
+    SET_ONLY_C(svt_aom_highbd_h_predictor_64x32, svt_aom_highbd_h_predictor_64x32_c);
+    SET_ONLY_C(svt_aom_highbd_h_predictor_64x64, svt_aom_highbd_h_predictor_64x64_c);
+    SET_ONLY_C(svt_log2f, svt_aom_log2f_32);
+    SET_ONLY_C(svt_memcpy, svt_memcpy_c);
+    SET_ONLY_C(svt_aom_hadamard_32x32, svt_aom_hadamard_32x32_c);
+    SET_ONLY_C(svt_aom_hadamard_16x16, svt_aom_hadamard_16x16_c);
+    SET_ONLY_C(svt_aom_hadamard_8x8, svt_aom_hadamard_8x8_c);
+#else
+    SET_ONLY_C(svt_aom_blend_a64_mask, svt_aom_blend_a64_mask_c);
+    SET_ONLY_C(svt_aom_blend_a64_hmask, svt_aom_blend_a64_hmask_c);
+    SET_ONLY_C(svt_aom_blend_a64_vmask, svt_aom_blend_a64_vmask_c);
+    SET_ONLY_C(svt_aom_lowbd_blend_a64_d16_mask, svt_aom_lowbd_blend_a64_d16_mask_c);
+    SET_ONLY_C(svt_aom_highbd_blend_a64_mask, svt_aom_highbd_blend_a64_mask_c);
+    SET_ONLY_C(svt_aom_highbd_blend_a64_hmask_8bit, svt_aom_highbd_blend_a64_hmask_8bit_c);
+    SET_ONLY_C(svt_aom_highbd_blend_a64_vmask_8bit, svt_aom_highbd_blend_a64_vmask_8bit_c);
+    SET_ONLY_C(svt_aom_highbd_blend_a64_vmask_16bit, svt_aom_highbd_blend_a64_vmask_16bit_c);
+    SET_ONLY_C(svt_aom_highbd_blend_a64_hmask_16bit, svt_aom_highbd_blend_a64_hmask_16bit_c);
+    SET_ONLY_C(svt_aom_highbd_blend_a64_d16_mask, svt_aom_highbd_blend_a64_d16_mask_c);
+    SET_ONLY_C(svt_cfl_predict_lbd, svt_cfl_predict_lbd_c);
+    SET_ONLY_C(svt_cfl_predict_hbd, svt_cfl_predict_hbd_c);
+    SET_ONLY_C(svt_av1_filter_intra_predictor, svt_av1_filter_intra_predictor_c);
+    SET_ONLY_C(svt_av1_filter_intra_edge_high, svt_av1_filter_intra_edge_high_c);
+    SET_ONLY_C(svt_av1_filter_intra_edge, svt_av1_filter_intra_edge_c);
+    SET_ONLY_C(svt_av1_upsample_intra_edge, svt_av1_upsample_intra_edge_c);
+    SET_ONLY_C(svt_av1_build_compound_diffwtd_mask_d16, svt_av1_build_compound_diffwtd_mask_d16_c);
+    SET_ONLY_C(svt_av1_highbd_wiener_convolve_add_src, svt_av1_highbd_wiener_convolve_add_src_c);
+    SET_ONLY_C(svt_apply_selfguided_restoration, svt_apply_selfguided_restoration_c);
+    SET_ONLY_C(svt_av1_selfguided_restoration, svt_av1_selfguided_restoration_c);
+    SET_ONLY_C(svt_av1_inv_txfm2d_add_4x4, svt_av1_inv_txfm2d_add_4x4_c);
+    SET_ONLY_C(svt_av1_inv_txfm2d_add_4x8, svt_av1_inv_txfm2d_add_4x8_c);
+    SET_ONLY_C(svt_av1_inv_txfm2d_add_4x16, svt_av1_inv_txfm2d_add_4x16_c);
+    SET_ONLY_C(svt_av1_inv_txfm2d_add_8x4, svt_av1_inv_txfm2d_add_8x4_c);
+    SET_ONLY_C(svt_av1_inv_txfm2d_add_8x8, svt_av1_inv_txfm2d_add_8x8_c);
+    SET_ONLY_C(svt_av1_inv_txfm2d_add_8x16, svt_av1_inv_txfm2d_add_8x16_c);
+    SET_ONLY_C(svt_av1_inv_txfm2d_add_8x32, svt_av1_inv_txfm2d_add_8x32_c);
+    SET_ONLY_C(svt_av1_inv_txfm2d_add_16x4, svt_av1_inv_txfm2d_add_16x4_c);
+    SET_ONLY_C(svt_av1_inv_txfm2d_add_16x8, svt_av1_inv_txfm2d_add_16x8_c);
+    SET_ONLY_C(svt_av1_inv_txfm2d_add_16x16, svt_av1_inv_txfm2d_add_16x16_c);
+    SET_ONLY_C(svt_av1_inv_txfm2d_add_16x32, svt_av1_inv_txfm2d_add_16x32_c);
+    SET_ONLY_C(svt_av1_inv_txfm2d_add_16x64, svt_av1_inv_txfm2d_add_16x64_c);
+    SET_ONLY_C(svt_av1_inv_txfm2d_add_32x8, svt_av1_inv_txfm2d_add_32x8_c);
+    SET_ONLY_C(svt_av1_inv_txfm2d_add_32x16, svt_av1_inv_txfm2d_add_32x16_c);
+    SET_ONLY_C(svt_av1_inv_txfm2d_add_32x32, svt_av1_inv_txfm2d_add_32x32_c);
+    SET_ONLY_C(svt_av1_inv_txfm2d_add_32x64, svt_av1_inv_txfm2d_add_32x64_c);
+    SET_ONLY_C(svt_av1_inv_txfm2d_add_64x16, svt_av1_inv_txfm2d_add_64x16_c);
+    SET_ONLY_C(svt_av1_inv_txfm2d_add_64x32, svt_av1_inv_txfm2d_add_64x32_c);
+    SET_ONLY_C(svt_av1_inv_txfm2d_add_64x64, svt_av1_inv_txfm2d_add_64x64_c);
+    SET_ONLY_C(svt_av1_inv_txfm_add, svt_av1_inv_txfm_add_c);
+    SET_ONLY_C(svt_compressed_packmsb, svt_compressed_packmsb_c);
+    SET_ONLY_C(svt_c_pack, svt_c_pack_c);
+    SET_ONLY_C(svt_unpack_avg, svt_unpack_avg_c);
+    SET_ONLY_C(svt_unpack_avg_safe_sub, svt_unpack_avg_safe_sub_c);
+    SET_ONLY_C(svt_un_pack8_bit_data, svt_un_pack8_bit_data_c);
+    SET_ONLY_C(svt_cfl_luma_subsampling_420_lbd, svt_cfl_luma_subsampling_420_lbd_c);
+    SET_ONLY_C(svt_cfl_luma_subsampling_420_hbd, svt_cfl_luma_subsampling_420_hbd_c);
+    SET_ONLY_C(svt_convert_8bit_to_16bit, svt_convert_8bit_to_16bit_c);
+    SET_ONLY_C(svt_convert_16bit_to_8bit, svt_convert_16bit_to_8bit_c);
+    SET_ONLY_C(svt_pack2d_16_bit_src_mul4, svt_enc_msb_pack2_d);
+    SET_ONLY_C(svt_aom_un_pack2d_16_bit_src_mul4, svt_enc_msb_un_pack2_d);
+    SET_ONLY_C(svt_full_distortion_kernel_cbf_zero32_bits, svt_full_distortion_kernel_cbf_zero32_bits_c);
+    SET_ONLY_C(svt_full_distortion_kernel32_bits, svt_full_distortion_kernel32_bits_c);
+    SET_ONLY_C(svt_spatial_full_distortion_kernel, svt_spatial_full_distortion_kernel_c);
+    SET_ONLY_C(svt_full_distortion_kernel16_bits, svt_full_distortion_kernel16_bits_c);
+    SET_ONLY_C(svt_residual_kernel8bit, svt_residual_kernel8bit_c);
+    SET_ONLY_C(svt_residual_kernel16bit, svt_residual_kernel16bit_c);
+    SET_ONLY_C(svt_picture_average_kernel, svt_picture_average_kernel_c);
+    SET_ONLY_C(svt_picture_average_kernel1_line, svt_picture_average_kernel1_line_c);
+    SET_ONLY_C(svt_av1_wiener_convolve_add_src, svt_av1_wiener_convolve_add_src_c);
+    SET_ONLY_C(svt_av1_convolve_2d_scale, svt_av1_convolve_2d_scale_c);
+    SET_ONLY_C(svt_av1_highbd_convolve_y_sr, svt_av1_highbd_convolve_y_sr_c);
+    SET_ONLY_C(svt_av1_highbd_convolve_2d_sr, svt_av1_highbd_convolve_2d_sr_c);
+    SET_ONLY_C(svt_av1_highbd_convolve_2d_scale, svt_av1_highbd_convolve_2d_scale_c);
+    SET_ONLY_C(svt_av1_highbd_convolve_2d_copy_sr, svt_av1_highbd_convolve_2d_copy_sr_c);
+    SET_ONLY_C(svt_av1_highbd_jnt_convolve_2d, svt_av1_highbd_jnt_convolve_2d_c);
+    SET_ONLY_C(svt_av1_highbd_jnt_convolve_2d_copy, svt_av1_highbd_jnt_convolve_2d_copy_c);
+    SET_ONLY_C(svt_av1_highbd_jnt_convolve_x, svt_av1_highbd_jnt_convolve_x_c);
+    SET_ONLY_C(svt_av1_highbd_jnt_convolve_y, svt_av1_highbd_jnt_convolve_y_c);
+    SET_ONLY_C(svt_av1_highbd_convolve_x_sr, svt_av1_highbd_convolve_x_sr_c);
+    SET_ONLY_C(svt_av1_convolve_2d_sr, svt_av1_convolve_2d_sr_c);
+    SET_ONLY_C(svt_av1_convolve_2d_copy_sr, svt_av1_convolve_2d_copy_sr_c);
+    SET_ONLY_C(svt_av1_convolve_x_sr, svt_av1_convolve_x_sr_c);
+    SET_ONLY_C(svt_av1_convolve_y_sr, svt_av1_convolve_y_sr_c);
+    SET_ONLY_C(svt_av1_jnt_convolve_2d, svt_av1_jnt_convolve_2d_c);
+    SET_ONLY_C(svt_av1_jnt_convolve_2d_copy, svt_av1_jnt_convolve_2d_copy_c);
+    SET_ONLY_C(svt_av1_jnt_convolve_x, svt_av1_jnt_convolve_x_c);
+    SET_ONLY_C(svt_av1_jnt_convolve_y, svt_av1_jnt_convolve_y_c);
+    SET_ONLY_C(svt_aom_convolve8_horiz, svt_aom_convolve8_horiz_c);
+    SET_ONLY_C(svt_aom_convolve8_vert, svt_aom_convolve8_vert_c);
+    SET_ONLY_C(svt_av1_build_compound_diffwtd_mask, svt_av1_build_compound_diffwtd_mask_c);
+    SET_ONLY_C(svt_av1_build_compound_diffwtd_mask_highbd, svt_av1_build_compound_diffwtd_mask_highbd_c);
+    SET_ONLY_C(svt_av1_wedge_sse_from_residuals, svt_av1_wedge_sse_from_residuals_c);
+    SET_ONLY_C(svt_aom_subtract_block, svt_aom_subtract_block_c);
+    SET_ONLY_C(svt_aom_highbd_subtract_block, svt_aom_highbd_subtract_block_c);
+    SET_ONLY_C(svt_aom_highbd_smooth_v_predictor_4x4, svt_aom_highbd_smooth_v_predictor_4x4_c);
+    SET_ONLY_C(svt_aom_highbd_smooth_v_predictor_4x8, svt_aom_highbd_smooth_v_predictor_4x8_c);
+    SET_ONLY_C(svt_aom_highbd_smooth_v_predictor_4x16, svt_aom_highbd_smooth_v_predictor_4x16_c);
+    SET_ONLY_C(svt_aom_highbd_smooth_v_predictor_8x4, svt_aom_highbd_smooth_v_predictor_8x4_c);
+    SET_ONLY_C(svt_aom_highbd_smooth_v_predictor_8x8, svt_aom_highbd_smooth_v_predictor_8x8_c);
+    SET_ONLY_C(svt_aom_highbd_smooth_v_predictor_8x16, svt_aom_highbd_smooth_v_predictor_8x16_c);
+    SET_ONLY_C(svt_aom_highbd_smooth_v_predictor_8x32, svt_aom_highbd_smooth_v_predictor_8x32_c);
+    SET_ONLY_C(svt_aom_highbd_smooth_v_predictor_16x4, svt_aom_highbd_smooth_v_predictor_16x4_c);
+    SET_ONLY_C(svt_aom_highbd_smooth_v_predictor_16x8, svt_aom_highbd_smooth_v_predictor_16x8_c);
+    SET_ONLY_C(svt_aom_highbd_smooth_v_predictor_16x16, svt_aom_highbd_smooth_v_predictor_16x16_c);
+    SET_ONLY_C(svt_aom_highbd_smooth_v_predictor_16x32, svt_aom_highbd_smooth_v_predictor_16x32_c);
+    SET_ONLY_C(svt_aom_highbd_smooth_v_predictor_16x64, svt_aom_highbd_smooth_v_predictor_16x64_c);
+    SET_ONLY_C(svt_aom_highbd_smooth_v_predictor_32x8, svt_aom_highbd_smooth_v_predictor_32x8_c);
+    SET_ONLY_C(svt_aom_highbd_smooth_v_predictor_32x16, svt_aom_highbd_smooth_v_predictor_32x16_c);
+    SET_ONLY_C(svt_aom_highbd_smooth_v_predictor_32x32, svt_aom_highbd_smooth_v_predictor_32x32_c);
+    SET_ONLY_C(svt_aom_highbd_smooth_v_predictor_32x64, svt_aom_highbd_smooth_v_predictor_32x64_c);
+    SET_ONLY_C(svt_aom_highbd_smooth_v_predictor_64x16, svt_aom_highbd_smooth_v_predictor_64x16_c);
+    SET_ONLY_C(svt_aom_highbd_smooth_v_predictor_64x32, svt_aom_highbd_smooth_v_predictor_64x32_c);
+    SET_ONLY_C(svt_aom_highbd_smooth_v_predictor_64x64, svt_aom_highbd_smooth_v_predictor_64x64_c);
+    SET_ONLY_C(svt_av1_dr_prediction_z1, svt_av1_dr_prediction_z1_c);
+    SET_ONLY_C(svt_av1_dr_prediction_z2, svt_av1_dr_prediction_z2_c);
+    SET_ONLY_C(svt_av1_dr_prediction_z3, svt_av1_dr_prediction_z3_c);
+    SET_ONLY_C(svt_av1_highbd_dr_prediction_z1, svt_av1_highbd_dr_prediction_z1_c);
+    SET_ONLY_C(svt_av1_highbd_dr_prediction_z2, svt_av1_highbd_dr_prediction_z2_c);
+    SET_ONLY_C(svt_av1_highbd_dr_prediction_z3, svt_av1_highbd_dr_prediction_z3_c);
+    SET_ONLY_C(svt_aom_paeth_predictor_4x4, svt_aom_paeth_predictor_4x4_c);
+    SET_ONLY_C(svt_aom_paeth_predictor_4x8, svt_aom_paeth_predictor_4x8_c);
+    SET_ONLY_C(svt_aom_paeth_predictor_4x16, svt_aom_paeth_predictor_4x16_c);
+    SET_ONLY_C(svt_aom_paeth_predictor_8x4, svt_aom_paeth_predictor_8x4_c);
+    SET_ONLY_C(svt_aom_paeth_predictor_8x8, svt_aom_paeth_predictor_8x8_c);
+    SET_ONLY_C(svt_aom_paeth_predictor_8x16, svt_aom_paeth_predictor_8x16_c);
+    SET_ONLY_C(svt_aom_paeth_predictor_8x32, svt_aom_paeth_predictor_8x32_c);
+    SET_ONLY_C(svt_aom_paeth_predictor_16x4, svt_aom_paeth_predictor_16x4_c);
+    SET_ONLY_C(svt_aom_paeth_predictor_16x8, svt_aom_paeth_predictor_16x8_c);
+    SET_ONLY_C(svt_aom_paeth_predictor_16x16, svt_aom_paeth_predictor_16x16_c);
+    SET_ONLY_C(svt_aom_paeth_predictor_16x32, svt_aom_paeth_predictor_16x32_c);
+    SET_ONLY_C(svt_aom_paeth_predictor_16x64, svt_aom_paeth_predictor_16x64_c);
+    SET_ONLY_C(svt_aom_paeth_predictor_32x8, svt_aom_paeth_predictor_32x8_c);
+    SET_ONLY_C(svt_aom_paeth_predictor_32x16, svt_aom_paeth_predictor_32x16_c);
+    SET_ONLY_C(svt_aom_paeth_predictor_32x32, svt_aom_paeth_predictor_32x32_c);
+    SET_ONLY_C(svt_aom_paeth_predictor_32x64, svt_aom_paeth_predictor_32x64_c);
+    SET_ONLY_C(svt_aom_paeth_predictor_64x16, svt_aom_paeth_predictor_64x16_c);
+    SET_ONLY_C(svt_aom_paeth_predictor_64x32, svt_aom_paeth_predictor_64x32_c);
+    SET_ONLY_C(svt_aom_paeth_predictor_64x64, svt_aom_paeth_predictor_64x64_c);
+    SET_ONLY_C(svt_aom_highbd_paeth_predictor_4x4, svt_aom_highbd_paeth_predictor_4x4_c);
+    SET_ONLY_C(svt_aom_highbd_paeth_predictor_4x8, svt_aom_highbd_paeth_predictor_4x8_c);
+    SET_ONLY_C(svt_aom_highbd_paeth_predictor_4x16, svt_aom_highbd_paeth_predictor_4x16_c);
+    SET_ONLY_C(svt_aom_highbd_paeth_predictor_8x4, svt_aom_highbd_paeth_predictor_8x4_c);
+    SET_ONLY_C(svt_aom_highbd_paeth_predictor_8x8, svt_aom_highbd_paeth_predictor_8x8_c);
+    SET_ONLY_C(svt_aom_highbd_paeth_predictor_8x16, svt_aom_highbd_paeth_predictor_8x16_c);
+    SET_ONLY_C(svt_aom_highbd_paeth_predictor_8x32, svt_aom_highbd_paeth_predictor_8x32_c);
+    SET_ONLY_C(svt_aom_highbd_paeth_predictor_16x4, svt_aom_highbd_paeth_predictor_16x4_c);
+    SET_ONLY_C(svt_aom_highbd_paeth_predictor_16x8, svt_aom_highbd_paeth_predictor_16x8_c);
+    SET_ONLY_C(svt_aom_highbd_paeth_predictor_16x16, svt_aom_highbd_paeth_predictor_16x16_c);
+    SET_ONLY_C(svt_aom_highbd_paeth_predictor_16x32, svt_aom_highbd_paeth_predictor_16x32_c);
+    SET_ONLY_C(svt_aom_highbd_paeth_predictor_16x64, svt_aom_highbd_paeth_predictor_16x64_c);
+    SET_ONLY_C(svt_aom_highbd_paeth_predictor_32x8, svt_aom_highbd_paeth_predictor_32x8_c);
+    SET_ONLY_C(svt_aom_highbd_paeth_predictor_32x16, svt_aom_highbd_paeth_predictor_32x16_c);
+    SET_ONLY_C(svt_aom_highbd_paeth_predictor_32x32, svt_aom_highbd_paeth_predictor_32x32_c);
+    SET_ONLY_C(svt_aom_highbd_paeth_predictor_32x64, svt_aom_highbd_paeth_predictor_32x64_c);
+    SET_ONLY_C(svt_aom_highbd_paeth_predictor_64x16, svt_aom_highbd_paeth_predictor_64x16_c);
+    SET_ONLY_C(svt_aom_highbd_paeth_predictor_64x32, svt_aom_highbd_paeth_predictor_64x32_c);
+    SET_ONLY_C(svt_aom_highbd_paeth_predictor_64x64, svt_aom_highbd_paeth_predictor_64x64_c);
+    SET_ONLY_C(svt_aom_sum_squares_i16, svt_aom_sum_squares_i16_c);
+    SET_ONLY_C(svt_aom_dc_predictor_4x4, svt_aom_dc_predictor_4x4_c);
+    SET_ONLY_C(svt_aom_dc_predictor_4x8, svt_aom_dc_predictor_4x8_c);
+    SET_ONLY_C(svt_aom_dc_predictor_4x16, svt_aom_dc_predictor_4x16_c);
+    SET_ONLY_C(svt_aom_dc_predictor_8x4, svt_aom_dc_predictor_8x4_c);
+    SET_ONLY_C(svt_aom_dc_predictor_8x8, svt_aom_dc_predictor_8x8_c);
+    SET_ONLY_C(svt_aom_dc_predictor_8x16, svt_aom_dc_predictor_8x16_c);
+    SET_ONLY_C(svt_aom_dc_predictor_8x32, svt_aom_dc_predictor_8x32_c);
+    SET_ONLY_C(svt_aom_dc_predictor_16x4, svt_aom_dc_predictor_16x4_c);
+    SET_ONLY_C(svt_aom_dc_predictor_16x8, svt_aom_dc_predictor_16x8_c);
+    SET_ONLY_C(svt_aom_dc_predictor_16x16, svt_aom_dc_predictor_16x16_c);
+    SET_ONLY_C(svt_aom_dc_predictor_16x32, svt_aom_dc_predictor_16x32_c);
+    SET_ONLY_C(svt_aom_dc_predictor_16x64, svt_aom_dc_predictor_16x64_c);
+    SET_ONLY_C(svt_aom_dc_predictor_32x8, svt_aom_dc_predictor_32x8_c);
+    SET_ONLY_C(svt_aom_dc_predictor_32x16, svt_aom_dc_predictor_32x16_c);
+    SET_ONLY_C(svt_aom_dc_predictor_32x32, svt_aom_dc_predictor_32x32_c);
+    SET_ONLY_C(svt_aom_dc_predictor_32x64, svt_aom_dc_predictor_32x64_c);
+    SET_ONLY_C(svt_aom_dc_predictor_64x16, svt_aom_dc_predictor_64x16_c);
+    SET_ONLY_C(svt_aom_dc_predictor_64x32, svt_aom_dc_predictor_64x32_c);
+    SET_ONLY_C(svt_aom_dc_predictor_64x64, svt_aom_dc_predictor_64x64_c);
+
+    SET_ONLY_C(svt_aom_dc_top_predictor_4x4, svt_aom_dc_top_predictor_4x4_c);
+    SET_ONLY_C(svt_aom_dc_top_predictor_4x8, svt_aom_dc_top_predictor_4x8_c);
+    SET_ONLY_C(svt_aom_dc_top_predictor_4x16, svt_aom_dc_top_predictor_4x16_c);
+    SET_ONLY_C(svt_aom_dc_top_predictor_8x4, svt_aom_dc_top_predictor_8x4_c);
+    SET_ONLY_C(svt_aom_dc_top_predictor_8x8, svt_aom_dc_top_predictor_8x8_c);
+    SET_ONLY_C(svt_aom_dc_top_predictor_8x16, svt_aom_dc_top_predictor_8x16_c);
+    SET_ONLY_C(svt_aom_dc_top_predictor_8x32, svt_aom_dc_top_predictor_8x32_c);
+    SET_ONLY_C(svt_aom_dc_top_predictor_16x4, svt_aom_dc_top_predictor_16x4_c);
+    SET_ONLY_C(svt_aom_dc_top_predictor_16x8, svt_aom_dc_top_predictor_16x8_c);
+    SET_ONLY_C(svt_aom_dc_top_predictor_16x16, svt_aom_dc_top_predictor_16x16_c);
+    SET_ONLY_C(svt_aom_dc_top_predictor_16x32, svt_aom_dc_top_predictor_16x32_c);
+    SET_ONLY_C(svt_aom_dc_top_predictor_16x64, svt_aom_dc_top_predictor_16x64_c);
+    SET_ONLY_C(svt_aom_dc_top_predictor_32x8, svt_aom_dc_top_predictor_32x8_c);
+    SET_ONLY_C(svt_aom_dc_top_predictor_32x16, svt_aom_dc_top_predictor_32x16_c);
+    SET_ONLY_C(svt_aom_dc_top_predictor_32x32, svt_aom_dc_top_predictor_32x32_c);
+    SET_ONLY_C(svt_aom_dc_top_predictor_32x64, svt_aom_dc_top_predictor_32x64_c);
+    SET_ONLY_C(svt_aom_dc_top_predictor_64x16, svt_aom_dc_top_predictor_64x16_c);
+    SET_ONLY_C(svt_aom_dc_top_predictor_64x32, svt_aom_dc_top_predictor_64x32_c);
+    SET_ONLY_C(svt_aom_dc_top_predictor_64x64, svt_aom_dc_top_predictor_64x64_c);
+
+    SET_ONLY_C(svt_aom_dc_left_predictor_4x4, svt_aom_dc_left_predictor_4x4_c);
+    SET_ONLY_C(svt_aom_dc_left_predictor_4x8, svt_aom_dc_left_predictor_4x8_c);
+    SET_ONLY_C(svt_aom_dc_left_predictor_4x16, svt_aom_dc_left_predictor_4x16_c);
+    SET_ONLY_C(svt_aom_dc_left_predictor_8x4, svt_aom_dc_left_predictor_8x4_c);
+    SET_ONLY_C(svt_aom_dc_left_predictor_8x8, svt_aom_dc_left_predictor_8x8_c);
+    SET_ONLY_C(svt_aom_dc_left_predictor_8x16, svt_aom_dc_left_predictor_8x16_c);
+    SET_ONLY_C(svt_aom_dc_left_predictor_8x32, svt_aom_dc_left_predictor_8x32_c);
+    SET_ONLY_C(svt_aom_dc_left_predictor_16x4, svt_aom_dc_left_predictor_16x4_c);
+    SET_ONLY_C(svt_aom_dc_left_predictor_16x8, svt_aom_dc_left_predictor_16x8_c);
+    SET_ONLY_C(svt_aom_dc_left_predictor_16x16, svt_aom_dc_left_predictor_16x16_c);
+    SET_ONLY_C(svt_aom_dc_left_predictor_16x32, svt_aom_dc_left_predictor_16x32_c);
+    SET_ONLY_C(svt_aom_dc_left_predictor_16x64, svt_aom_dc_left_predictor_16x64_c);
+    SET_ONLY_C(svt_aom_dc_left_predictor_32x8, svt_aom_dc_left_predictor_32x8_c);
+    SET_ONLY_C(svt_aom_dc_left_predictor_32x16, svt_aom_dc_left_predictor_32x16_c);
+    SET_ONLY_C(svt_aom_dc_left_predictor_32x32, svt_aom_dc_left_predictor_32x32_c);
+    SET_ONLY_C(svt_aom_dc_left_predictor_32x64, svt_aom_dc_left_predictor_32x64_c);
+    SET_ONLY_C(svt_aom_dc_left_predictor_64x16, svt_aom_dc_left_predictor_64x16_c);
+    SET_ONLY_C(svt_aom_dc_left_predictor_64x32, svt_aom_dc_left_predictor_64x32_c);
+    SET_ONLY_C(svt_aom_dc_left_predictor_64x64, svt_aom_dc_left_predictor_64x64_c);
+
+    SET_ONLY_C(svt_aom_dc_128_predictor_4x4, svt_aom_dc_128_predictor_4x4_c);
+    SET_ONLY_C(svt_aom_dc_128_predictor_4x8, svt_aom_dc_128_predictor_4x8_c);
+    SET_ONLY_C(svt_aom_dc_128_predictor_4x16, svt_aom_dc_128_predictor_4x16_c);
+    SET_ONLY_C(svt_aom_dc_128_predictor_8x4, svt_aom_dc_128_predictor_8x4_c);
+    SET_ONLY_C(svt_aom_dc_128_predictor_8x8, svt_aom_dc_128_predictor_8x8_c);
+    SET_ONLY_C(svt_aom_dc_128_predictor_8x16, svt_aom_dc_128_predictor_8x16_c);
+    SET_ONLY_C(svt_aom_dc_128_predictor_8x32, svt_aom_dc_128_predictor_8x32_c);
+    SET_ONLY_C(svt_aom_dc_128_predictor_16x4, svt_aom_dc_128_predictor_16x4_c);
+    SET_ONLY_C(svt_aom_dc_128_predictor_16x8, svt_aom_dc_128_predictor_16x8_c);
+    SET_ONLY_C(svt_aom_dc_128_predictor_16x16, svt_aom_dc_128_predictor_16x16_c);
+    SET_ONLY_C(svt_aom_dc_128_predictor_16x32, svt_aom_dc_128_predictor_16x32_c);
+    SET_ONLY_C(svt_aom_dc_128_predictor_16x64, svt_aom_dc_128_predictor_16x64_c);
+    SET_ONLY_C(svt_aom_dc_128_predictor_32x8, svt_aom_dc_128_predictor_32x8_c);
+    SET_ONLY_C(svt_aom_dc_128_predictor_32x16, svt_aom_dc_128_predictor_32x16_c);
+    SET_ONLY_C(svt_aom_dc_128_predictor_32x32, svt_aom_dc_128_predictor_32x32_c);
+    SET_ONLY_C(svt_aom_dc_128_predictor_32x64, svt_aom_dc_128_predictor_32x64_c);
+    SET_ONLY_C(svt_aom_dc_128_predictor_64x16, svt_aom_dc_128_predictor_64x16_c);
+    SET_ONLY_C(svt_aom_dc_128_predictor_64x32, svt_aom_dc_128_predictor_64x32_c);
+    SET_ONLY_C(svt_aom_dc_128_predictor_64x64, svt_aom_dc_128_predictor_64x64_c);
+
+    SET_ONLY_C(svt_aom_smooth_h_predictor_4x4, svt_aom_smooth_h_predictor_4x4_c);
+    SET_ONLY_C(svt_aom_smooth_h_predictor_4x8, svt_aom_smooth_h_predictor_4x8_c);
+    SET_ONLY_C(svt_aom_smooth_h_predictor_4x16, svt_aom_smooth_h_predictor_4x16_c);
+    SET_ONLY_C(svt_aom_smooth_h_predictor_8x4, svt_aom_smooth_h_predictor_8x4_c);
+    SET_ONLY_C(svt_aom_smooth_h_predictor_8x8, svt_aom_smooth_h_predictor_8x8_c);
+    SET_ONLY_C(svt_aom_smooth_h_predictor_8x16, svt_aom_smooth_h_predictor_8x16_c);
+    SET_ONLY_C(svt_aom_smooth_h_predictor_8x32, svt_aom_smooth_h_predictor_8x32_c);
+    SET_ONLY_C(svt_aom_smooth_h_predictor_16x4, svt_aom_smooth_h_predictor_16x4_c);
+    SET_ONLY_C(svt_aom_smooth_h_predictor_16x8, svt_aom_smooth_h_predictor_16x8_c);
+    SET_ONLY_C(svt_aom_smooth_h_predictor_16x16, svt_aom_smooth_h_predictor_16x16_c);
+    SET_ONLY_C(svt_aom_smooth_h_predictor_16x32, svt_aom_smooth_h_predictor_16x32_c);
+    SET_ONLY_C(svt_aom_smooth_h_predictor_16x64, svt_aom_smooth_h_predictor_16x64_c);
+    SET_ONLY_C(svt_aom_smooth_h_predictor_32x8, svt_aom_smooth_h_predictor_32x8_c);
+    SET_ONLY_C(svt_aom_smooth_h_predictor_32x16, svt_aom_smooth_h_predictor_32x16_c);
+    SET_ONLY_C(svt_aom_smooth_h_predictor_32x32, svt_aom_smooth_h_predictor_32x32_c);
+    SET_ONLY_C(svt_aom_smooth_h_predictor_32x64, svt_aom_smooth_h_predictor_32x64_c);
+    SET_ONLY_C(svt_aom_smooth_h_predictor_64x16, svt_aom_smooth_h_predictor_64x16_c);
+    SET_ONLY_C(svt_aom_smooth_h_predictor_64x32, svt_aom_smooth_h_predictor_64x32_c);
+    SET_ONLY_C(svt_aom_smooth_h_predictor_64x64, svt_aom_smooth_h_predictor_64x64_c);
+
+    SET_ONLY_C(svt_aom_smooth_v_predictor_4x4, svt_aom_smooth_v_predictor_4x4_c);
+    SET_ONLY_C(svt_aom_smooth_v_predictor_4x8, svt_aom_smooth_v_predictor_4x8_c);
+    SET_ONLY_C(svt_aom_smooth_v_predictor_4x16, svt_aom_smooth_v_predictor_4x16_c);
+    SET_ONLY_C(svt_aom_smooth_v_predictor_8x4, svt_aom_smooth_v_predictor_8x4_c);
+    SET_ONLY_C(svt_aom_smooth_v_predictor_8x8, svt_aom_smooth_v_predictor_8x8_c);
+    SET_ONLY_C(svt_aom_smooth_v_predictor_8x16, svt_aom_smooth_v_predictor_8x16_c);
+    SET_ONLY_C(svt_aom_smooth_v_predictor_8x32, svt_aom_smooth_v_predictor_8x32_c);
+    SET_ONLY_C(svt_aom_smooth_v_predictor_16x4, svt_aom_smooth_v_predictor_16x4_c);
+    SET_ONLY_C(svt_aom_smooth_v_predictor_16x8, svt_aom_smooth_v_predictor_16x8_c);
+    SET_ONLY_C(svt_aom_smooth_v_predictor_16x16, svt_aom_smooth_v_predictor_16x16_c);
+    SET_ONLY_C(svt_aom_smooth_v_predictor_16x32, svt_aom_smooth_v_predictor_16x32_c);
+    SET_ONLY_C(svt_aom_smooth_v_predictor_16x64, svt_aom_smooth_v_predictor_16x64_c);
+    SET_ONLY_C(svt_aom_smooth_v_predictor_32x8, svt_aom_smooth_v_predictor_32x8_c);
+    SET_ONLY_C(svt_aom_smooth_v_predictor_32x16, svt_aom_smooth_v_predictor_32x16_c);
+    SET_ONLY_C(svt_aom_smooth_v_predictor_32x32, svt_aom_smooth_v_predictor_32x32_c);
+    SET_ONLY_C(svt_aom_smooth_v_predictor_32x64, svt_aom_smooth_v_predictor_32x64_c);
+    SET_ONLY_C(svt_aom_smooth_v_predictor_64x16, svt_aom_smooth_v_predictor_64x16_c);
+    SET_ONLY_C(svt_aom_smooth_v_predictor_64x32, svt_aom_smooth_v_predictor_64x32_c);
+    SET_ONLY_C(svt_aom_smooth_v_predictor_64x64, svt_aom_smooth_v_predictor_64x64_c);
+
+    SET_ONLY_C(svt_aom_smooth_predictor_4x4, svt_aom_smooth_predictor_4x4_c);
+    SET_ONLY_C(svt_aom_smooth_predictor_4x8, svt_aom_smooth_predictor_4x8_c);
+    SET_ONLY_C(svt_aom_smooth_predictor_4x16, svt_aom_smooth_predictor_4x16_c);
+    SET_ONLY_C(svt_aom_smooth_predictor_8x4, svt_aom_smooth_predictor_8x4_c);
+    SET_ONLY_C(svt_aom_smooth_predictor_8x8, svt_aom_smooth_predictor_8x8_c);
+    SET_ONLY_C(svt_aom_smooth_predictor_8x16, svt_aom_smooth_predictor_8x16_c);
+    SET_ONLY_C(svt_aom_smooth_predictor_8x32, svt_aom_smooth_predictor_8x32_c);
+    SET_ONLY_C(svt_aom_smooth_predictor_16x4, svt_aom_smooth_predictor_16x4_c);
+    SET_ONLY_C(svt_aom_smooth_predictor_16x8, svt_aom_smooth_predictor_16x8_c);
+    SET_ONLY_C(svt_aom_smooth_predictor_16x16, svt_aom_smooth_predictor_16x16_c);
+    SET_ONLY_C(svt_aom_smooth_predictor_16x32, svt_aom_smooth_predictor_16x32_c);
+    SET_ONLY_C(svt_aom_smooth_predictor_16x64, svt_aom_smooth_predictor_16x64_c);
+    SET_ONLY_C(svt_aom_smooth_predictor_32x8, svt_aom_smooth_predictor_32x8_c);
+    SET_ONLY_C(svt_aom_smooth_predictor_32x16, svt_aom_smooth_predictor_32x16_c);
+    SET_ONLY_C(svt_aom_smooth_predictor_32x32, svt_aom_smooth_predictor_32x32_c);
+    SET_ONLY_C(svt_aom_smooth_predictor_32x64, svt_aom_smooth_predictor_32x64_c);
+    SET_ONLY_C(svt_aom_smooth_predictor_64x16, svt_aom_smooth_predictor_64x16_c);
+    SET_ONLY_C(svt_aom_smooth_predictor_64x32, svt_aom_smooth_predictor_64x32_c);
+    SET_ONLY_C(svt_aom_smooth_predictor_64x64, svt_aom_smooth_predictor_64x64_c);
+
+    SET_ONLY_C(svt_aom_v_predictor_4x4, svt_aom_v_predictor_4x4_c);
+    SET_ONLY_C(svt_aom_v_predictor_4x8, svt_aom_v_predictor_4x8_c);
+    SET_ONLY_C(svt_aom_v_predictor_4x16, svt_aom_v_predictor_4x16_c);
+    SET_ONLY_C(svt_aom_v_predictor_8x4, svt_aom_v_predictor_8x4_c);
+    SET_ONLY_C(svt_aom_v_predictor_8x8, svt_aom_v_predictor_8x8_c);
+    SET_ONLY_C(svt_aom_v_predictor_8x16, svt_aom_v_predictor_8x16_c);
+    SET_ONLY_C(svt_aom_v_predictor_8x32, svt_aom_v_predictor_8x32_c);
+    SET_ONLY_C(svt_aom_v_predictor_16x4, svt_aom_v_predictor_16x4_c);
+    SET_ONLY_C(svt_aom_v_predictor_16x8, svt_aom_v_predictor_16x8_c);
+    SET_ONLY_C(svt_aom_v_predictor_16x16, svt_aom_v_predictor_16x16_c);
+    SET_ONLY_C(svt_aom_v_predictor_16x32, svt_aom_v_predictor_16x32_c);
+    SET_ONLY_C(svt_aom_v_predictor_16x64, svt_aom_v_predictor_16x64_c);
+    SET_ONLY_C(svt_aom_v_predictor_32x8, svt_aom_v_predictor_32x8_c);
+    SET_ONLY_C(svt_aom_v_predictor_32x16, svt_aom_v_predictor_32x16_c);
+    SET_ONLY_C(svt_aom_v_predictor_32x32, svt_aom_v_predictor_32x32_c);
+    SET_ONLY_C(svt_aom_v_predictor_32x64, svt_aom_v_predictor_32x64_c);
+    SET_ONLY_C(svt_aom_v_predictor_64x16, svt_aom_v_predictor_64x16_c);
+    SET_ONLY_C(svt_aom_v_predictor_64x32, svt_aom_v_predictor_64x32_c);
+    SET_ONLY_C(svt_aom_v_predictor_64x64, svt_aom_v_predictor_64x64_c);
+
+    SET_ONLY_C(svt_aom_h_predictor_4x4, svt_aom_h_predictor_4x4_c);
+    SET_ONLY_C(svt_aom_h_predictor_4x8, svt_aom_h_predictor_4x8_c);
+    SET_ONLY_C(svt_aom_h_predictor_4x16, svt_aom_h_predictor_4x16_c);
+    SET_ONLY_C(svt_aom_h_predictor_8x4, svt_aom_h_predictor_8x4_c);
+    SET_ONLY_C(svt_aom_h_predictor_8x8, svt_aom_h_predictor_8x8_c);
+    SET_ONLY_C(svt_aom_h_predictor_8x16, svt_aom_h_predictor_8x16_c);
+    SET_ONLY_C(svt_aom_h_predictor_8x32, svt_aom_h_predictor_8x32_c);
+    SET_ONLY_C(svt_aom_h_predictor_16x4, svt_aom_h_predictor_16x4_c);
+    SET_ONLY_C(svt_aom_h_predictor_16x8, svt_aom_h_predictor_16x8_c);
+    SET_ONLY_C(svt_aom_h_predictor_16x16, svt_aom_h_predictor_16x16_c);
+    SET_ONLY_C(svt_aom_h_predictor_16x32, svt_aom_h_predictor_16x32_c);
+    SET_ONLY_C(svt_aom_h_predictor_16x64, svt_aom_h_predictor_16x64_c);
+    SET_ONLY_C(svt_aom_h_predictor_32x8, svt_aom_h_predictor_32x8_c);
+    SET_ONLY_C(svt_aom_h_predictor_32x16, svt_aom_h_predictor_32x16_c);
+    SET_ONLY_C(svt_aom_h_predictor_32x32, svt_aom_h_predictor_32x32_c);
+    SET_ONLY_C(svt_aom_h_predictor_32x64, svt_aom_h_predictor_32x64_c);
+    SET_ONLY_C(svt_aom_h_predictor_64x16, svt_aom_h_predictor_64x16_c);
+    SET_ONLY_C(svt_aom_h_predictor_64x32, svt_aom_h_predictor_64x32_c);
+    SET_ONLY_C(svt_aom_h_predictor_64x64, svt_aom_h_predictor_64x64_c);
+    SET_ONLY_C(svt_aom_cdef_find_dir, svt_aom_cdef_find_dir_c);
+    SET_ONLY_C(svt_aom_cdef_find_dir_dual, svt_aom_cdef_find_dir_dual_c);
+    SET_ONLY_C(svt_cdef_filter_block, svt_cdef_filter_block_c);
+    SET_ONLY_C(svt_aom_copy_rect8_8bit_to_16bit, svt_aom_copy_rect8_8bit_to_16bit_c);
+    SET_ONLY_C(svt_av1_highbd_warp_affine, svt_av1_highbd_warp_affine_c);
+    SET_ONLY_C(dec_svt_av1_highbd_warp_affine, svt_aom_dec_svt_av1_highbd_warp_affine_c);
+    SET_ONLY_C(svt_av1_warp_affine, svt_av1_warp_affine_c);
+
+    SET_ONLY_C(svt_aom_highbd_lpf_horizontal_4, svt_aom_highbd_lpf_horizontal_4_c);
+    SET_ONLY_C(svt_aom_highbd_lpf_horizontal_6, svt_aom_highbd_lpf_horizontal_6_c);
+    SET_ONLY_C(svt_aom_highbd_lpf_horizontal_8, svt_aom_highbd_lpf_horizontal_8_c);
+    SET_ONLY_C(svt_aom_highbd_lpf_horizontal_14, svt_aom_highbd_lpf_horizontal_14_c);
+    SET_ONLY_C(svt_aom_highbd_lpf_vertical_4, svt_aom_highbd_lpf_vertical_4_c);
+    SET_ONLY_C(svt_aom_highbd_lpf_vertical_6, svt_aom_highbd_lpf_vertical_6_c);
+    SET_ONLY_C(svt_aom_highbd_lpf_vertical_8, svt_aom_highbd_lpf_vertical_8_c);
+    SET_ONLY_C(svt_aom_highbd_lpf_vertical_14, svt_aom_highbd_lpf_vertical_14_c);
+    SET_ONLY_C(svt_aom_lpf_horizontal_4, svt_aom_lpf_horizontal_4_c);
+    SET_ONLY_C(svt_aom_lpf_horizontal_6, svt_aom_lpf_horizontal_6_c);
+    SET_ONLY_C(svt_aom_lpf_horizontal_8, svt_aom_lpf_horizontal_8_c);
+    SET_ONLY_C(svt_aom_lpf_horizontal_14, svt_aom_lpf_horizontal_14_c);
+    SET_ONLY_C(svt_aom_lpf_vertical_4, svt_aom_lpf_vertical_4_c);
+    SET_ONLY_C(svt_aom_lpf_vertical_6, svt_aom_lpf_vertical_6_c);
+    SET_ONLY_C(svt_aom_lpf_vertical_8, svt_aom_lpf_vertical_8_c);
+    SET_ONLY_C(svt_aom_lpf_vertical_14, svt_aom_lpf_vertical_14_c);
+
+    // svt_aom_highbd_v_predictor
+    SET_ONLY_C(svt_aom_highbd_v_predictor_4x4, svt_aom_highbd_v_predictor_4x4_c);
+    SET_ONLY_C(svt_aom_highbd_v_predictor_4x8, svt_aom_highbd_v_predictor_4x8_c);
+    SET_ONLY_C(svt_aom_highbd_v_predictor_4x16, svt_aom_highbd_v_predictor_4x16_c);
+    SET_ONLY_C(svt_aom_highbd_v_predictor_8x4, svt_aom_highbd_v_predictor_8x4_c);
+    SET_ONLY_C(svt_aom_highbd_v_predictor_8x8, svt_aom_highbd_v_predictor_8x8_c);
+    SET_ONLY_C(svt_aom_highbd_v_predictor_8x16, svt_aom_highbd_v_predictor_8x16_c);
+    SET_ONLY_C(svt_aom_highbd_v_predictor_8x32, svt_aom_highbd_v_predictor_8x32_c);
+    SET_ONLY_C(svt_aom_highbd_v_predictor_16x4, svt_aom_highbd_v_predictor_16x4_c);
+    SET_ONLY_C(svt_aom_highbd_v_predictor_16x8, svt_aom_highbd_v_predictor_16x8_c);
+    SET_ONLY_C(svt_aom_highbd_v_predictor_16x16, svt_aom_highbd_v_predictor_16x16_c);
+    SET_ONLY_C(svt_aom_highbd_v_predictor_16x32, svt_aom_highbd_v_predictor_16x32_c);
+    SET_ONLY_C(svt_aom_highbd_v_predictor_16x64, svt_aom_highbd_v_predictor_16x64_c);
+    SET_ONLY_C(svt_aom_highbd_v_predictor_32x8, svt_aom_highbd_v_predictor_32x8_c);
+    SET_ONLY_C(svt_aom_highbd_v_predictor_32x16, svt_aom_highbd_v_predictor_32x16_c);
+    SET_ONLY_C(svt_aom_highbd_v_predictor_32x32, svt_aom_highbd_v_predictor_32x32_c);
+    SET_ONLY_C(svt_aom_highbd_v_predictor_32x64, svt_aom_highbd_v_predictor_32x64_c);
+    SET_ONLY_C(svt_aom_highbd_v_predictor_64x16, svt_aom_highbd_v_predictor_64x16_c);
+    SET_ONLY_C(svt_aom_highbd_v_predictor_64x32, svt_aom_highbd_v_predictor_64x32_c);
+    SET_ONLY_C(svt_aom_highbd_v_predictor_64x64, svt_aom_highbd_v_predictor_64x64_c);
+
+    //aom_highbd_smooth_predictor
+    SET_ONLY_C(svt_aom_highbd_smooth_predictor_4x4, svt_aom_highbd_smooth_predictor_4x4_c);
+    SET_ONLY_C(svt_aom_highbd_smooth_predictor_4x8, svt_aom_highbd_smooth_predictor_4x8_c);
+    SET_ONLY_C(svt_aom_highbd_smooth_predictor_4x16, svt_aom_highbd_smooth_predictor_4x16_c);
+    SET_ONLY_C(svt_aom_highbd_smooth_predictor_8x4, svt_aom_highbd_smooth_predictor_8x4_c);
+    SET_ONLY_C(svt_aom_highbd_smooth_predictor_8x8, svt_aom_highbd_smooth_predictor_8x8_c);
+    SET_ONLY_C(svt_aom_highbd_smooth_predictor_8x16, svt_aom_highbd_smooth_predictor_8x16_c);
+    SET_ONLY_C(svt_aom_highbd_smooth_predictor_8x32, svt_aom_highbd_smooth_predictor_8x32_c);
+    SET_ONLY_C(svt_aom_highbd_smooth_predictor_16x4, svt_aom_highbd_smooth_predictor_16x4_c);
+    SET_ONLY_C(svt_aom_highbd_smooth_predictor_16x8, svt_aom_highbd_smooth_predictor_16x8_c);
+    SET_ONLY_C(svt_aom_highbd_smooth_predictor_16x16, svt_aom_highbd_smooth_predictor_16x16_c);
+    SET_ONLY_C(svt_aom_highbd_smooth_predictor_16x32, svt_aom_highbd_smooth_predictor_16x32_c);
+    SET_ONLY_C(svt_aom_highbd_smooth_predictor_16x64, svt_aom_highbd_smooth_predictor_16x64_c);
+    SET_ONLY_C(svt_aom_highbd_smooth_predictor_32x8, svt_aom_highbd_smooth_predictor_32x8_c);
+    SET_ONLY_C(svt_aom_highbd_smooth_predictor_32x16, svt_aom_highbd_smooth_predictor_32x16_c);
+    SET_ONLY_C(svt_aom_highbd_smooth_predictor_32x32, svt_aom_highbd_smooth_predictor_32x32_c);
+    SET_ONLY_C(svt_aom_highbd_smooth_predictor_32x64, svt_aom_highbd_smooth_predictor_32x64_c);
+    SET_ONLY_C(svt_aom_highbd_smooth_predictor_64x16, svt_aom_highbd_smooth_predictor_64x16_c);
+    SET_ONLY_C(svt_aom_highbd_smooth_predictor_64x32, svt_aom_highbd_smooth_predictor_64x32_c);
+    SET_ONLY_C(svt_aom_highbd_smooth_predictor_64x64, svt_aom_highbd_smooth_predictor_64x64_c);
+
+    //aom_highbd_smooth_h_predictor
+    SET_ONLY_C(svt_aom_highbd_smooth_h_predictor_4x4, svt_aom_highbd_smooth_h_predictor_4x4_c);
+    SET_ONLY_C(svt_aom_highbd_smooth_h_predictor_4x8, svt_aom_highbd_smooth_h_predictor_4x8_c);
+    SET_ONLY_C(svt_aom_highbd_smooth_h_predictor_4x16, svt_aom_highbd_smooth_h_predictor_4x16_c);
+    SET_ONLY_C(svt_aom_highbd_smooth_h_predictor_8x4, svt_aom_highbd_smooth_h_predictor_8x4_c);
+    SET_ONLY_C(svt_aom_highbd_smooth_h_predictor_8x8, svt_aom_highbd_smooth_h_predictor_8x8_c);
+    SET_ONLY_C(svt_aom_highbd_smooth_h_predictor_8x16, svt_aom_highbd_smooth_h_predictor_8x16_c);
+    SET_ONLY_C(svt_aom_highbd_smooth_h_predictor_8x32, svt_aom_highbd_smooth_h_predictor_8x32_c);
+    SET_ONLY_C(svt_aom_highbd_smooth_h_predictor_16x4, svt_aom_highbd_smooth_h_predictor_16x4_c);
+    SET_ONLY_C(svt_aom_highbd_smooth_h_predictor_16x8, svt_aom_highbd_smooth_h_predictor_16x8_c);
+    SET_ONLY_C(svt_aom_highbd_smooth_h_predictor_16x16, svt_aom_highbd_smooth_h_predictor_16x16_c);
+    SET_ONLY_C(svt_aom_highbd_smooth_h_predictor_16x32, svt_aom_highbd_smooth_h_predictor_16x32_c);
+    SET_ONLY_C(svt_aom_highbd_smooth_h_predictor_16x64, svt_aom_highbd_smooth_h_predictor_16x64_c);
+    SET_ONLY_C(svt_aom_highbd_smooth_h_predictor_32x8, svt_aom_highbd_smooth_h_predictor_32x8_c);
+    SET_ONLY_C(svt_aom_highbd_smooth_h_predictor_32x16, svt_aom_highbd_smooth_h_predictor_32x16_c);
+    SET_ONLY_C(svt_aom_highbd_smooth_h_predictor_32x32, svt_aom_highbd_smooth_h_predictor_32x32_c);
+    SET_ONLY_C(svt_aom_highbd_smooth_h_predictor_32x64, svt_aom_highbd_smooth_h_predictor_32x64_c);
+    SET_ONLY_C(svt_aom_highbd_smooth_h_predictor_64x16, svt_aom_highbd_smooth_h_predictor_64x16_c);
+    SET_ONLY_C(svt_aom_highbd_smooth_h_predictor_64x32, svt_aom_highbd_smooth_h_predictor_64x32_c);
+    SET_ONLY_C(svt_aom_highbd_smooth_h_predictor_64x64, svt_aom_highbd_smooth_h_predictor_64x64_c);
+
+    //aom_highbd_dc_128_predictor
+    SET_ONLY_C(svt_aom_highbd_dc_128_predictor_4x4, svt_aom_highbd_dc_128_predictor_4x4_c);
+    SET_ONLY_C(svt_aom_highbd_dc_128_predictor_4x8, svt_aom_highbd_dc_128_predictor_4x8_c);
+    SET_ONLY_C(svt_aom_highbd_dc_128_predictor_4x16, svt_aom_highbd_dc_128_predictor_4x16_c);
+    SET_ONLY_C(svt_aom_highbd_dc_128_predictor_8x4, svt_aom_highbd_dc_128_predictor_8x4_c);
+    SET_ONLY_C(svt_aom_highbd_dc_128_predictor_8x8, svt_aom_highbd_dc_128_predictor_8x8_c);
+    SET_ONLY_C(svt_aom_highbd_dc_128_predictor_8x16, svt_aom_highbd_dc_128_predictor_8x16_c);
+    SET_ONLY_C(svt_aom_highbd_dc_128_predictor_8x32, svt_aom_highbd_dc_128_predictor_8x32_c);
+    SET_ONLY_C(svt_aom_highbd_dc_128_predictor_16x4, svt_aom_highbd_dc_128_predictor_16x4_c);
+    SET_ONLY_C(svt_aom_highbd_dc_128_predictor_16x8, svt_aom_highbd_dc_128_predictor_16x8_c);
+    SET_ONLY_C(svt_aom_highbd_dc_128_predictor_16x16, svt_aom_highbd_dc_128_predictor_16x16_c);
+    SET_ONLY_C(svt_aom_highbd_dc_128_predictor_16x32, svt_aom_highbd_dc_128_predictor_16x32_c);
+    SET_ONLY_C(svt_aom_highbd_dc_128_predictor_16x64, svt_aom_highbd_dc_128_predictor_16x64_c);
+    SET_ONLY_C(svt_aom_highbd_dc_128_predictor_32x8, svt_aom_highbd_dc_128_predictor_32x8_c);
+    SET_ONLY_C(svt_aom_highbd_dc_128_predictor_32x16, svt_aom_highbd_dc_128_predictor_32x16_c);
+    SET_ONLY_C(svt_aom_highbd_dc_128_predictor_32x32, svt_aom_highbd_dc_128_predictor_32x32_c);
+    SET_ONLY_C(svt_aom_highbd_dc_128_predictor_32x64, svt_aom_highbd_dc_128_predictor_32x64_c);
+    SET_ONLY_C(svt_aom_highbd_dc_128_predictor_64x16, svt_aom_highbd_dc_128_predictor_64x16_c);
+    SET_ONLY_C(svt_aom_highbd_dc_128_predictor_64x32, svt_aom_highbd_dc_128_predictor_64x32_c);
+    SET_ONLY_C(svt_aom_highbd_dc_128_predictor_64x64, svt_aom_highbd_dc_128_predictor_64x64_c);
+
+    //aom_highbd_dc_left_predictor
+    SET_ONLY_C(svt_aom_highbd_dc_left_predictor_4x4, svt_aom_highbd_dc_left_predictor_4x4_c);
+    SET_ONLY_C(svt_aom_highbd_dc_left_predictor_4x8, svt_aom_highbd_dc_left_predictor_4x8_c);
+    SET_ONLY_C(svt_aom_highbd_dc_left_predictor_4x16, svt_aom_highbd_dc_left_predictor_4x16_c);
+    SET_ONLY_C(svt_aom_highbd_dc_left_predictor_8x4, svt_aom_highbd_dc_left_predictor_8x4_c);
+    SET_ONLY_C(svt_aom_highbd_dc_left_predictor_8x8, svt_aom_highbd_dc_left_predictor_8x8_c);
+    SET_ONLY_C(svt_aom_highbd_dc_left_predictor_8x16, svt_aom_highbd_dc_left_predictor_8x16_c);
+    SET_ONLY_C(svt_aom_highbd_dc_left_predictor_8x32, svt_aom_highbd_dc_left_predictor_8x32_c);
+    SET_ONLY_C(svt_aom_highbd_dc_left_predictor_16x4, svt_aom_highbd_dc_left_predictor_16x4_c);
+    SET_ONLY_C(svt_aom_highbd_dc_left_predictor_16x8, svt_aom_highbd_dc_left_predictor_16x8_c);
+    SET_ONLY_C(svt_aom_highbd_dc_left_predictor_16x16, svt_aom_highbd_dc_left_predictor_16x16_c);
+    SET_ONLY_C(svt_aom_highbd_dc_left_predictor_16x32, svt_aom_highbd_dc_left_predictor_16x32_c);
+    SET_ONLY_C(svt_aom_highbd_dc_left_predictor_16x64, svt_aom_highbd_dc_left_predictor_16x64_c);
+    SET_ONLY_C(svt_aom_highbd_dc_left_predictor_32x8, svt_aom_highbd_dc_left_predictor_32x8_c);
+    SET_ONLY_C(svt_aom_highbd_dc_left_predictor_32x16, svt_aom_highbd_dc_left_predictor_32x16_c);
+    SET_ONLY_C(svt_aom_highbd_dc_left_predictor_32x32, svt_aom_highbd_dc_left_predictor_32x32_c);
+    SET_ONLY_C(svt_aom_highbd_dc_left_predictor_32x64, svt_aom_highbd_dc_left_predictor_32x64_c);
+    SET_ONLY_C(svt_aom_highbd_dc_left_predictor_64x16, svt_aom_highbd_dc_left_predictor_64x16_c);
+    SET_ONLY_C(svt_aom_highbd_dc_left_predictor_64x32, svt_aom_highbd_dc_left_predictor_64x32_c);
+    SET_ONLY_C(svt_aom_highbd_dc_left_predictor_64x64, svt_aom_highbd_dc_left_predictor_64x64_c);
+
+    SET_ONLY_C(svt_aom_highbd_dc_predictor_4x4, svt_aom_highbd_dc_predictor_4x4_c);
+    SET_ONLY_C(svt_aom_highbd_dc_predictor_4x8, svt_aom_highbd_dc_predictor_4x8_c);
+    SET_ONLY_C(svt_aom_highbd_dc_predictor_4x16, svt_aom_highbd_dc_predictor_4x16_c);
+    SET_ONLY_C(svt_aom_highbd_dc_predictor_8x4, svt_aom_highbd_dc_predictor_8x4_c);
+    SET_ONLY_C(svt_aom_highbd_dc_predictor_8x8, svt_aom_highbd_dc_predictor_8x8_c);
+    SET_ONLY_C(svt_aom_highbd_dc_predictor_8x16, svt_aom_highbd_dc_predictor_8x16_c);
+    SET_ONLY_C(svt_aom_highbd_dc_predictor_8x32, svt_aom_highbd_dc_predictor_8x32_c);
+    SET_ONLY_C(svt_aom_highbd_dc_predictor_16x4, svt_aom_highbd_dc_predictor_16x4_c);
+    SET_ONLY_C(svt_aom_highbd_dc_predictor_16x8, svt_aom_highbd_dc_predictor_16x8_c);
+    SET_ONLY_C(svt_aom_highbd_dc_predictor_16x16, svt_aom_highbd_dc_predictor_16x16_c);
+    SET_ONLY_C(svt_aom_highbd_dc_predictor_16x32, svt_aom_highbd_dc_predictor_16x32_c);
+    SET_ONLY_C(svt_aom_highbd_dc_predictor_16x64, svt_aom_highbd_dc_predictor_16x64_c);
+    SET_ONLY_C(svt_aom_highbd_dc_predictor_32x8, svt_aom_highbd_dc_predictor_32x8_c);
+    SET_ONLY_C(svt_aom_highbd_dc_predictor_32x16, svt_aom_highbd_dc_predictor_32x16_c);
+    SET_ONLY_C(svt_aom_highbd_dc_predictor_32x32, svt_aom_highbd_dc_predictor_32x32_c);
+    SET_ONLY_C(svt_aom_highbd_dc_predictor_32x64, svt_aom_highbd_dc_predictor_32x64_c);
+    SET_ONLY_C(svt_aom_highbd_dc_predictor_64x16, svt_aom_highbd_dc_predictor_64x16_c);
+    SET_ONLY_C(svt_aom_highbd_dc_predictor_64x32, svt_aom_highbd_dc_predictor_64x32_c);
+    SET_ONLY_C(svt_aom_highbd_dc_predictor_64x64, svt_aom_highbd_dc_predictor_64x64_c);
+
+    //aom_highbd_dc_top_predictor
+    SET_ONLY_C(svt_aom_highbd_dc_top_predictor_4x4, svt_aom_highbd_dc_top_predictor_4x4_c);
+    SET_ONLY_C(svt_aom_highbd_dc_top_predictor_4x8, svt_aom_highbd_dc_top_predictor_4x8_c);
+    SET_ONLY_C(svt_aom_highbd_dc_top_predictor_4x16, svt_aom_highbd_dc_top_predictor_4x16_c);
+    SET_ONLY_C(svt_aom_highbd_dc_top_predictor_8x4, svt_aom_highbd_dc_top_predictor_8x4_c);
+    SET_ONLY_C(svt_aom_highbd_dc_top_predictor_8x8, svt_aom_highbd_dc_top_predictor_8x8_c);
+    SET_ONLY_C(svt_aom_highbd_dc_top_predictor_8x16, svt_aom_highbd_dc_top_predictor_8x16_c);
+    SET_ONLY_C(svt_aom_highbd_dc_top_predictor_8x32, svt_aom_highbd_dc_top_predictor_8x32_c);
+    SET_ONLY_C(svt_aom_highbd_dc_top_predictor_16x4, svt_aom_highbd_dc_top_predictor_16x4_c);
+    SET_ONLY_C(svt_aom_highbd_dc_top_predictor_16x8, svt_aom_highbd_dc_top_predictor_16x8_c);
+    SET_ONLY_C(svt_aom_highbd_dc_top_predictor_16x16, svt_aom_highbd_dc_top_predictor_16x16_c);
+    SET_ONLY_C(svt_aom_highbd_dc_top_predictor_16x32, svt_aom_highbd_dc_top_predictor_16x32_c);
+    SET_ONLY_C(svt_aom_highbd_dc_top_predictor_16x64, svt_aom_highbd_dc_top_predictor_16x64_c);
+    SET_ONLY_C(svt_aom_highbd_dc_top_predictor_32x8, svt_aom_highbd_dc_top_predictor_32x8_c);
+    SET_ONLY_C(svt_aom_highbd_dc_top_predictor_32x16, svt_aom_highbd_dc_top_predictor_32x16_c);
+    SET_ONLY_C(svt_aom_highbd_dc_top_predictor_32x32, svt_aom_highbd_dc_top_predictor_32x32_c);
+    SET_ONLY_C(svt_aom_highbd_dc_top_predictor_32x64, svt_aom_highbd_dc_top_predictor_32x64_c);
+    SET_ONLY_C(svt_aom_highbd_dc_top_predictor_64x16, svt_aom_highbd_dc_top_predictor_64x16_c);
+    SET_ONLY_C(svt_aom_highbd_dc_top_predictor_64x32, svt_aom_highbd_dc_top_predictor_64x32_c);
+    SET_ONLY_C(svt_aom_highbd_dc_top_predictor_64x64, svt_aom_highbd_dc_top_predictor_64x64_c);
+
+    // svt_aom_highbd_h_predictor
+    SET_ONLY_C(svt_aom_highbd_h_predictor_4x4, svt_aom_highbd_h_predictor_4x4_c);
+    SET_ONLY_C(svt_aom_highbd_h_predictor_4x8, svt_aom_highbd_h_predictor_4x8_c);
+    SET_ONLY_C(svt_aom_highbd_h_predictor_4x16, svt_aom_highbd_h_predictor_4x16_c);
+    SET_ONLY_C(svt_aom_highbd_h_predictor_8x4, svt_aom_highbd_h_predictor_8x4_c);
+    SET_ONLY_C(svt_aom_highbd_h_predictor_8x8, svt_aom_highbd_h_predictor_8x8_c);
+    SET_ONLY_C(svt_aom_highbd_h_predictor_8x16, svt_aom_highbd_h_predictor_8x16_c);
+    SET_ONLY_C(svt_aom_highbd_h_predictor_8x32, svt_aom_highbd_h_predictor_8x32_c);
+    SET_ONLY_C(svt_aom_highbd_h_predictor_16x4, svt_aom_highbd_h_predictor_16x4_c);
+    SET_ONLY_C(svt_aom_highbd_h_predictor_16x8, svt_aom_highbd_h_predictor_16x8_c);
+    SET_ONLY_C(svt_aom_highbd_h_predictor_16x16, svt_aom_highbd_h_predictor_16x16_c);
+    SET_ONLY_C(svt_aom_highbd_h_predictor_16x32, svt_aom_highbd_h_predictor_16x32_c);
+    SET_ONLY_C(svt_aom_highbd_h_predictor_16x64, svt_aom_highbd_h_predictor_16x64_c);
+    SET_ONLY_C(svt_aom_highbd_h_predictor_32x8, svt_aom_highbd_h_predictor_32x8_c);
+    SET_ONLY_C(svt_aom_highbd_h_predictor_32x16, svt_aom_highbd_h_predictor_32x16_c);
+    SET_ONLY_C(svt_aom_highbd_h_predictor_32x32, svt_aom_highbd_h_predictor_32x32_c);
+    SET_ONLY_C(svt_aom_highbd_h_predictor_32x64, svt_aom_highbd_h_predictor_32x64_c);
+    SET_ONLY_C(svt_aom_highbd_h_predictor_64x16, svt_aom_highbd_h_predictor_64x16_c);
+    SET_ONLY_C(svt_aom_highbd_h_predictor_64x32, svt_aom_highbd_h_predictor_64x32_c);
+    SET_ONLY_C(svt_aom_highbd_h_predictor_64x64, svt_aom_highbd_h_predictor_64x64_c);
+    SET_ONLY_C(svt_log2f, svt_aom_log2f_32);
+    SET_ONLY_C(svt_memcpy, svt_memcpy_c);
+    SET_ONLY_C(svt_aom_hadamard_32x32, svt_aom_hadamard_32x32_c);
+    SET_ONLY_C(svt_aom_hadamard_16x16, svt_aom_hadamard_16x16_c);
+    SET_ONLY_C(svt_aom_hadamard_8x8, svt_aom_hadamard_8x8_c);
+
+#endif
+
+    if(0 == flags)
+    {
+      (void) check_pointer_was_set;
+    }
+    (void)flags;
+
 }
 // clang-format on

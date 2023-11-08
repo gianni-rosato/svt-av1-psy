@@ -22,6 +22,7 @@
 #include "EbReferenceObject.h"
 #include "EbPictureDecisionProcess.h"
 #include "EbUtility.h"
+#include "aom_dsp_rtcd.h"
 
 #ifdef __cplusplus
 extern "C" {

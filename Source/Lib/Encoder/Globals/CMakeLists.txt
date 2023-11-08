@@ -28,6 +28,9 @@ include_directories(
         ${PROJECT_SOURCE_DIR}/Source/Lib/Common/ASM_AVX2/
         ${PROJECT_SOURCE_DIR}/Source/Lib/Common/ASM_AVX512/
         )
+elseif(NOT COMPILE_C_ONLY AND HAVE_ARM_PLATFORM)
+include_directories(
+        ${PROJECT_SOURCE_DIR}/Source/Lib/Common/ASM_NEON/)
 endif()
 
 set(all_files

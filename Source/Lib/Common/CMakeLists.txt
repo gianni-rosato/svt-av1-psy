@@ -23,3 +23,7 @@ if(NOT COMPILE_C_ONLY AND HAVE_X86_PLATFORM)
     add_subdirectory(ASM_AVX2)
     add_subdirectory(ASM_AVX512)
 endif()
+
+if(NOT COMPILE_C_ONLY AND HAVE_ARM_PLATFORM)
+    add_subdirectory(ASM_NEON)
+endif()

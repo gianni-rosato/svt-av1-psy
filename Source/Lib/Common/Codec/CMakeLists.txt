@@ -40,6 +40,14 @@ include_directories(${PROJECT_SOURCE_DIR}/Source/API/
     ${PROJECT_SOURCE_DIR}/Source/Lib/Encoder/Codec/
     ${PROJECT_SOURCE_DIR}/third_party/fastfeat/
     ${PROJECT_SOURCE_DIR}/third_party/cpuinfo/include/)
+elseif(NOT COMPILE_C_ONLY AND HAVE_ARM_PLATFORM)
+include_directories(${PROJECT_SOURCE_DIR}/Source/API/
+    ${PROJECT_SOURCE_DIR}/Source/Lib/Common/Codec/
+    ${PROJECT_SOURCE_DIR}/Source/Lib/Common/C_DEFAULT/
+    ${PROJECT_SOURCE_DIR}/Source/Lib/Common/ASM_NEON/
+    ${PROJECT_SOURCE_DIR}/Source/Lib/Encoder/Codec/
+    ${PROJECT_SOURCE_DIR}/third_party/fastfeat/
+    ${PROJECT_SOURCE_DIR}/third_party/cpuinfo/include/)
 else ()
 # Include Encoder Subdirectories
 include_directories(${PROJECT_SOURCE_DIR}/Source/API/
