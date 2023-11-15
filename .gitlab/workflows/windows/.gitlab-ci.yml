@@ -9,7 +9,7 @@
 .windows-compiler-base:
   extends: .common-ci-base
   stage: compile
-  image: registry.gitlab.com/aomediacodec/aom-testing/core1809:9bb45dd286d3 
+  image: registry.gitlab.com/aomediacodec/aom-testing/core1809@9bb45dd286d3
   tags:
     - svt-windows-docker
   script:
@@ -24,7 +24,7 @@
 .windows-test-base:
   extends: .common-ci-base
   stage: test
-  image: registry.gitlab.com/aomediacodec/aom-testing/core1809:9bb45dd286d3 
+  image: registry.gitlab.com/aomediacodec/aom-testing/core1809@9bb45dd286d3
   tags:
     - svt-windows-docker
   before_script:
