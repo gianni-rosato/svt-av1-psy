@@ -5,13 +5,11 @@
 #
 # Anchors
 #
-variables:
-  BASE_IMAGE_DIGEST: "sha256:750d6f784b11ed9976d942657bda22c22795d312d6e25a27be485dd1bf7e8099"
 
 .windows-compiler-base:
   extends: .common-ci-base
   stage: compile
-  image: registry.gitlab.com/aomediacodec/aom-testing/core1809@${BASE_IMAGE_DIGEST}
+  image: registry.gitlab.com/aomediacodec/aom-testing/core1809
   tags:
     - svt-windows-docker
   script:
@@ -26,7 +24,7 @@ variables:
 .windows-test-base:
   extends: .common-ci-base
   stage: test
-  image: registry.gitlab.com/aomediacodec/aom-testing/core1809@${BASE_IMAGE_DIGEST}
+  image: registry.gitlab.com/aomediacodec/aom-testing/core1809
   tags:
     - svt-windows-docker
   before_script:
