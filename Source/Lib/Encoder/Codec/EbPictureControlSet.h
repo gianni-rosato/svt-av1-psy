@@ -1123,6 +1123,9 @@ typedef struct PictureParentControlSet {
     uint32_t         tf_tot_vert_blks; // total vertical motion blocks in TF
     uint32_t         tf_tot_horz_blks; // total horizontal motion blocks in TF
     int8_t           tf_motion_direction; // motion direction in TF   -1:invalid   0:horz  1:vert
+#if !OPT_VBR2
+    uint8_t          adjust_under_shoot_gf;
+#endif
     uint8_t          adjust_under_shoot_gf;
     int32_t          is_noise_level;
     bool             r0_based_qps_qpm;
@@ -1137,6 +1140,9 @@ typedef struct PictureParentControlSet {
     bool     tf_active_region_present;
 #if FTR_RES_ON_FLY
     bool seq_param_changed;
+#endif
+#if OPT_VBR6
+    uint64_t avg_variance_me_dist;
 #endif
 } PictureParentControlSet;
 

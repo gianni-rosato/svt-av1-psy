@@ -518,8 +518,13 @@ static int get_cqp_kf_boost_from_r0(double r0, int frames_to_key, EbInputResolut
         factor = AOMMAX(factor, 4.0);
     }
     const int is_720p_or_smaller = input_resolution <= INPUT_SIZE_720p_RANGE;
+#if OPT_VBR6
+    const int boost = is_720p_or_smaller ? (int)rint(3 * (75.0 + 17.0 * factor) / r0)
+                                         : (int)rint(4 * (75.0 + 17.0 * factor) / r0);
+#else
     const int boost              = is_720p_or_smaller ? (int)rint(3 * (75.0 + 17.0 * factor) / 2 / r0)
                                                       : (int)rint(2 * (75.0 + 17.0 * factor) / r0);
+#endif
     return boost;
 }
 
@@ -685,6 +690,9 @@ static void adjust_active_best_and_worst_quality_org(PictureControlSet *pcs, RAT
     TWO_PASS *const     twopass              = &scs->twopass;
     // Extension to max or min Q if undershoot or overshoot is outside
     // the permitted range.
+#if OPT_VBR6
+    if (pcs->ppcs->transition_present != 1) {
+#endif
     if (frame_is_intra_only(pcs->ppcs) || (scs->static_config.gop_constraint_rc && pcs->ppcs->is_ref) ||
         (pcs->ppcs->temporal_layer_index < 2 && scs->is_short_clip) || (pcs->ppcs->is_ref && !scs->is_short_clip)) {
         active_best_quality -= (twopass->extend_minq + twopass->extend_minq_fast);
@@ -693,6 +701,9 @@ static void adjust_active_best_and_worst_quality_org(PictureControlSet *pcs, RAT
         active_best_quality -= (twopass->extend_minq + twopass->extend_minq_fast) / 2;
         active_worst_quality += twopass->extend_maxq;
     }
+#if OPT_VBR6
+    }
+#endif
     // Static forced key frames Q restrictions dealt with elsewhere.
     const int qdelta = av1_frame_type_qdelta_org(pcs->ppcs, rc, active_worst_quality, bit_depth);
 
@@ -1450,12 +1461,23 @@ static void process_tpl_stats_frame_kf_gfu_boost(PictureControlSet *pcs) {
         // Scale r0 based on the GOP structure
         ppcs->r0 = ppcs->r0 / tpl_hl_islice_div_factor[hierarchical_levels];
 
+#if OPT_VBR6
+        // when frames_to_key not available, i.e. in 1 pass encoding
+        rc->kf_boost = get_cqp_kf_boost_from_r0(ppcs->r0, rc->frames_to_key, scs->input_resolution);
+
+        rc->gfu_boost = get_gfu_boost_from_r0_lap(
+            MIN_BOOST_COMBINE_FACTOR, MAX_GFUBOOST_FACTOR, ppcs->r0, rc->frames_to_key);
+        int max_boost = 10000; // ppcs->used_tpl_frame_num * KB;
+        rc->kf_boost  = AOMMIN(rc->kf_boost, max_boost);
+#else
         // when frames_to_key not available, i.e. in 1 pass encoding
         rc->kf_boost  = get_cqp_kf_boost_from_r0(ppcs->r0, rc->frames_to_key, scs->input_resolution);
         int max_boost = ppcs->used_tpl_frame_num * KB;
         rc->kf_boost  = AOMMIN(rc->kf_boost, max_boost);
+#endif
     }
 }
+#if !OPT_VBR4
 static void get_intra_q_and_bounds(PictureControlSet *pcs, int *active_best, int *active_worst, int is_fwd_kf) {
     SequenceControlSet *scs     = pcs->ppcs->scs;
     EncodeContext      *enc_ctx = scs->enc_ctx;
@@ -1502,6 +1524,7 @@ static void get_intra_q_and_bounds(PictureControlSet *pcs, int *active_best, int
     *active_worst = active_worst_quality;
     return;
 }
+#endif
 
 // Returns |active_best_quality| for an inter frame.
 // The returning active_best_quality could further be adjusted in
@@ -1982,9 +2005,11 @@ static int rc_pick_q_and_bounds(PictureControlSet *pcs) {
             rc->arf_q = qindex_from_qstep_ratio;
         active_best_quality  = clamp(qindex_from_qstep_ratio, rc->best_quality, rc->active_worst_quality);
         active_worst_quality = (active_best_quality + (3 * active_worst_quality) + 2) / 4;
+#if !OPT_VBR4
     } else if (frame_is_intra_only(pcs->ppcs)) {
         const int is_fwd_kf = pcs->ppcs->frm_hdr.frame_type == KEY_FRAME && pcs->ppcs->frm_hdr.show_frame == 0;
         get_intra_q_and_bounds(pcs, &active_best_quality, &active_worst_quality, is_fwd_kf);
+#endif
     } else {
         const int pyramid_level = pcs->ppcs->layer_depth;
         if ((pyramid_level <= 1) || (pyramid_level > MAX_ARF_LAYERS)) {
@@ -2996,6 +3021,14 @@ void *svt_aom_rate_control_kernel(void *input_ptr) {
                             set_rc_buffer_sizes(scs);
                             av1_rc_init(scs);
                         }
+#if OPT_VBR2
+                        int32_t update_type = pcs->ppcs->update_type;
+                        if (pcs->ppcs->tpl_ctrls.enable && pcs->ppcs->r0 != 0 &&
+                            (update_type == SVT_AV1_KF_UPDATE || update_type == SVT_AV1_GF_UPDATE ||
+                             update_type == SVT_AV1_ARF_UPDATE)) {
+                            process_tpl_stats_frame_kf_gfu_boost(pcs);
+                        }
+#endif
                         svt_block_on_mutex(scs->enc_ctx->stat_file_mutex);
                         restore_param(pcs->ppcs, pcs->ppcs->rate_control_param_ptr);
 
@@ -3097,12 +3130,14 @@ void *svt_aom_rate_control_kernel(void *input_ptr) {
                 } else {
                     // ***Rate Control***
                     int32_t new_qindex;
+#if !OPT_VBR2
                     int32_t update_type = pcs->ppcs->update_type;
                     if (pcs->ppcs->tpl_ctrls.enable && pcs->ppcs->r0 != 0 &&
                         (update_type == SVT_AV1_KF_UPDATE || update_type == SVT_AV1_GF_UPDATE ||
                          update_type == SVT_AV1_ARF_UPDATE)) {
                         process_tpl_stats_frame_kf_gfu_boost(pcs);
                     }
+#endif
                     // Qindex calculating
                     if (scs->static_config.rate_control_mode == SVT_AV1_RC_MODE_CBR)
                         new_qindex = rc_pick_q_and_bounds_no_stats_cbr(pcs);
@@ -3149,6 +3184,38 @@ void *svt_aom_rate_control_kernel(void *input_ptr) {
                                                              (uint8_t)(ref_qp - 4));
                         }
                     }
+#if OPT_VBR6
+                    else if ((int32_t)pcs->temporal_layer_index == 0 && pcs->ppcs->transition_present != 1 &&
+                             pcs->slice_type != I_SLICE) {
+                        uint32_t sb_index;
+                        uint64_t cur_dist = 0, ref_dist = 0;
+                        ;
+
+                        EbReferenceObject *ref_obj_l0 =
+                            (EbReferenceObject *)pcs->ref_pic_ptr_array[REF_LIST_0][0]->object_ptr;
+                        for (sb_index = 0; sb_index < pcs->b64_total_count; ++sb_index) {
+                            ref_dist += ref_obj_l0->sb_me_64x64_dist[sb_index];
+                            cur_dist += pcs->ppcs->me_64x64_distortion[sb_index];
+                        }
+
+                        uint32_t ref_qp = 0;
+                        uint32_t limit  = 25;
+                        if (cur_dist > 3 * ref_dist || (pcs->ppcs->r0 - ref_obj_l0->r0 > 0))
+                            limit = 6;
+                        if (pcs->ref_slice_type_array[0][0] != I_SLICE)
+                            ref_qp = pcs->ref_pic_qp_array[0][0];
+                        if ((pcs->slice_type == B_SLICE) && (pcs->ref_slice_type_array[1][0] != I_SLICE))
+                            ref_qp = MAX(ref_qp, pcs->ref_pic_qp_array[1][0]);
+                        if (!scs->static_config.gop_constraint_rc) {
+                            if (ref_qp > limit && pcs->picture_qp < ref_qp - limit) {
+                                pcs->picture_qp = (uint8_t)CLIP3(scs->static_config.min_qp_allowed,
+                                                                 scs->static_config.max_qp_allowed,
+                                                                 (uint8_t)(ref_qp - limit));
+                            }
+                        }
+                    }
+
+#endif
                     frm_hdr->quantization_params.base_q_idx = quantizer_to_qindex[pcs->picture_qp];
                 }
                 if (pcs->ppcs->slice_type == I_SLICE) {

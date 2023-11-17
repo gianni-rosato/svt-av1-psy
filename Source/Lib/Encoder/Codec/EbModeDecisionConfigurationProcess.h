@@ -28,9 +28,11 @@ extern "C" {
 /**************************************
      * Defines
      **************************************/
+#if !OPT_REORDER_GEOM
 static const uint8_t  depth_offset[4]   = {85, 21, 5, 1};
 static const uint32_t ns_blk_offset[10] = {0, 1, 3, 25, 5, 8, 11, 14, 17, 21};
 static const uint32_t ns_blk_num[10]    = {1, 2, 2, 4, 3, 3, 3, 3, 4, 4};
+#endif
 
 typedef struct MdcpLocalBlkStruct {
     uint64_t early_cost;

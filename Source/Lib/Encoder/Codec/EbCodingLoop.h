@@ -295,6 +295,7 @@ static const uint32_t intra_adaptive_md_cycles_reduction_th[DEPTH_DELTA_NUM][NUM
     {1875, 962, 222, 144, 171, 5, 17, 1272, 15},
     {3, 0, 0, 0, 0, 0, 0, 0, 0},
 };
+#if !CLN_ME_OFFSET
 static const uint32_t me_idx[] = {
     0,  0,  0,  0,  0,  1,  2,  0,  0,  3,  4,  1,  3,  0,  0,  2,  4,  0,  0,  0,  0,  0,  0,  0,  0,  1,  1,  1,  1,
     1,  5,  6,  1,  1,  9,  10, 5,  9,  1,  1,  6,  10, 1,  1,  1,  1,  1,  1,  1,  1,  5,  5,  5,  5,  5,  21, 22, 5,
@@ -1006,7 +1007,7 @@ static const int32_t me_idx_128x128[4][BLOCK_MAX_COUNT_SB_128] = {
      81, 82, 82, 82, 82, 82, 82, 82, 82, 82, 20, 20, 20, 20, 20, 75, 76, 20, 20, 83, 84, 75, 83, 20, 20, 76, 84, 20, 20,
      20, 20, 20, 20, 20, 20, 75, 75, 75, 75, 75, 75, 75, 75, 75, 76, 76, 76, 76, 76, 76, 76, 76, 76, 83, 83, 83, 83, 83,
      83, 83, 83, 83, 84, 84, 84, 84, 84, 84, 84, 84, 84}};
-
+#endif
 void perform_md_reference_pruning(PictureControlSet *pcs, ModeDecisionContext *ctx, EbPictureBufferDesc *input_pic);
 
 void svt_aom_move_blk_data(PictureControlSet *pcs, EncDecContext *ed_ctx, BlkStruct *src_cu, EcBlkStruct *dst_cu);

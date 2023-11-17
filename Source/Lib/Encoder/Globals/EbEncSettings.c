@@ -107,7 +107,17 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet *scs) {
             config->maximum_buffer_size_ms - 1);
         config->optimal_buffer_level_ms = (config->maximum_buffer_size_ms - 1);
     }
-
+#if OPT_VBR6
+    if (config->under_shoot_pct == DEFAULT) {
+        if ((config->rate_control_mode == SVT_AV1_RC_MODE_VBR))
+            config->under_shoot_pct = 50;
+        else
+            config->under_shoot_pct = 25;
+    }
+    if (config->over_shoot_pct == DEFAULT) {
+        config->over_shoot_pct = 25;
+    }
+#endif
     if (config->over_shoot_pct > 100) {
         SVT_ERROR("Instance %u: The overshoot percentage must be between [0, 100] \n", channel_number + 1);
         return_error = EB_ErrorBadParameter;
@@ -927,8 +937,13 @@ EbErrorType svt_av1_set_default_params(EbSvtAv1EncConfiguration *config_ptr) {
     config_ptr->vbr_bias_pct             = 100;
     config_ptr->vbr_min_section_pct      = 0;
     config_ptr->vbr_max_section_pct      = 2000;
+#if OPT_VBR6
+    config_ptr->under_shoot_pct          = DEFAULT;
+    config_ptr->over_shoot_pct           = DEFAULT;
+#else
     config_ptr->under_shoot_pct          = 25;
-    config_ptr->over_shoot_pct           = 25;
+    config_ptr->over_shoot_pct = 25;
+#endif
     config_ptr->mbr_over_shoot_pct       = 50;
     config_ptr->gop_constraint_rc        = 0;
     config_ptr->maximum_buffer_size_ms   = 1000; // default settings for CBR

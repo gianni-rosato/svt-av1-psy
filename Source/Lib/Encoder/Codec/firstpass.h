@@ -19,15 +19,16 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
+#if !OPT_VBR4
 #define TURN_OFF_EC_FIRST_PASS 1
-
+#endif
 #define FORCED_BLK_SIZE 16
 #define FIRST_PASS_Q 10.0
 
 #define DOUBLE_DIVIDE_CHECK(x) ((x) < 0 ? (x)-0.000001 : (x) + 0.000001)
 
 #define MAX_LAG_BUFFERS 35
+#if !OPT_VBR4
 #define MIN_ZERO_MOTION 0.95
 #define MAX_SR_CODED_ERROR 40
 #define MAX_RAW_ERR_VAR 2000
@@ -42,6 +43,7 @@ extern "C" {
 // The maximum duration of a GF group that is static (e.g. a slide show).
 #define MAX_STATIC_GF_GROUP_LENGTH 250
 #define MAX_LAP_BUFFERS 35
+#endif
 
 /*!
  * \brief The stucture of acummulated frame stats in the first pass.
@@ -52,12 +54,14 @@ typedef struct {
    * No real meaning for a collection of frames.
    */
     double frame;
+#if !OPT_VBR4
     /*!
    * Weight assigned to this frame (or total weight for the collection of
    * frames) currently based on intra factor and brightness factor. This is used
    * to distribute bits betweeen easier and harder frames.
    */
     double weight;
+#endif
     /*!
    * Intra prediction error.
    */
@@ -66,10 +70,13 @@ typedef struct {
    * Best of intra pred error and inter pred error using last frame as ref.
    */
     double coded_error;
+#if !OPT_VBR4
     /*!
    * Best of intra pred error and inter pred error using golden frame as ref.
    */
+#endif
     double sr_coded_error;
+#if !OPT_VBR_2P
     /*!
    * Percentage of blocks with inter pred error < intra pred error.
    */
@@ -78,6 +85,8 @@ typedef struct {
    * Percentage of blocks using (inter prediction and) non-zero motion vectors.
    */
     double pcnt_motion;
+#endif
+#if !OPT_VBR4
     /*!
    * Percentage of blocks where golden frame was better than last or intra:
    * inter pred error using golden frame < inter pred error using last frame and
@@ -90,6 +99,7 @@ typedef struct {
    * weighted by how close the two errors were.
    */
     double pcnt_neutral;
+#endif
     /*!
    * Percentage of blocks that have almost no intra error residual
    * (i.e. are in effect completely flat and untextured in the intra
@@ -102,6 +112,7 @@ typedef struct {
    * Image mask rows top and bottom.
    */
     double inactive_zone_rows;
+#if !OPT_VBR4
     /*!
    * Image mask columns at left and right edges.
    */
@@ -114,12 +125,15 @@ typedef struct {
    * Mean of absolute value of column motion vectors.
    */
     double mvc_abs;
+#endif
+#if !OPT_VBR_2P
     /*!
    * Value in range [-1,1] indicating fraction of row and column motion vectors
    * that point inwards (negative MV value) or outwards (positive MV value).
    * For example, value of 1 indicates, all row/column MVs are inwards.
    */
     double mv_in_out_count;
+#endif
     /*!
    * Duration of the frame / collection of frames.
    */
@@ -189,24 +203,33 @@ typedef struct {
     int64_t intra_error;
     // Best of intra pred error and inter pred error using last frame as ref.
     int64_t coded_error;
+#if !OPT_VBR4
     // Best of intra pred error and inter pred error using golden frame as ref.
     int64_t sr_coded_error;
+#endif
+#if !OPT_VBR_2P
     // Count of motion vector.
     int mv_count;
     // Count of blocks that pick inter prediction (inter pred error is smaller
     // than intra pred error).
     int inter_count;
+#endif
+#if !OPT_VBR4
     // Count of blocks that pick second ref (golden frame).
     int second_ref_count;
     // Count of blocks where the inter and intra are very close and very low.
     double neutral_count;
+#endif
     // Count of blocks where intra error is very small.
     int intra_skip_count;
     // Start row.
     int image_data_start_row;
+#if !OPT_VBR_2P
     // Count of unique non-zero motion vectors.
     // Sum of inward motion vectors.
     int sum_in_vectors;
+#endif
+#if !OPT_VBR4
     // Sum of motion vector row.
     // Sum of motion vector column.
     int sum_mvc;
@@ -218,6 +241,7 @@ typedef struct {
     double intra_factor;
     // A factor that measures brightness.
     double brightness_factor;
+#endif
 } FRAME_STATS;
 
 // This structure contains first pass data.

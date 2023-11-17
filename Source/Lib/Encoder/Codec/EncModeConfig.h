@@ -25,7 +25,11 @@ void    svt_aom_set_depth_ctrls(PictureControlSet *pcs, ModeDecisionContext *ctx
 uint8_t svt_aom_get_enable_me_16x16(EncMode enc_mode, bool rtc_tune);
 
 Bool    svt_aom_is_ref_same_size(PictureControlSet *pcs, uint8_t list_idx, uint8_t ref_idx);
+#if TUNE_ENABLE_ME_8X8
+uint8_t svt_aom_get_enable_me_8x8(EncMode enc_mode, bool rtc_tune, EbInputResolution input_resolution);
+#else
 uint8_t svt_aom_get_enable_me_8x8(EncMode enc_mode, bool rtc_tune);
+#endif
 void    svt_aom_set_tpl_extended_controls(PictureParentControlSet *pcs, uint8_t tpl_level);
 void    svt_aom_sig_deriv_mode_decision_config(SequenceControlSet *scs, PictureControlSet *pcs);
 void    svt_aom_first_pass_sig_deriv_mode_decision_config(PictureControlSet *pcs);

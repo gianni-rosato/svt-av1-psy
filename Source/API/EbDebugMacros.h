@@ -33,6 +33,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif // __cplusplus
+
 #define FTR_KF_ON_FLY             1 // Add key frames on the fly
 #define FTR_RES_ON_FLY            1 // Add Resolution on the fly
 #define FTR_RES_ON_FLY2           1 // move parameters from scs to enc_ctx
@@ -44,6 +45,43 @@ extern "C" {
 #define FTR_RES_ON_FLY7           1 // changing Resolution fix TF
 #define FTR_RES_ON_FLY_APP        1 // Application changes for change the resolution on the fly
 #define FTR_RATE_ON_FLY           1 // changing bit rate
+
+#define CLN_ME_OFFSET                             1 // Create unified function for deriving me offset in MD
+#define NEW_BLK_GEOM 1
+#if NEW_BLK_GEOM
+#define OPT_REORDER_GEOM                          1 // reorder geom to have HVA/HVB partitions at the end
+#define OPT_REMOVE_HVAB_GEOM                      1 // Add new block geom with HVA/HVB shapes removed
+#endif
+#define OPT_REST_SIZE_FULL                        1 // Use the largest restoration unit size for 240p content
+#define OPT_BLK_EARLY_EXIT                        1 // Exit early from process_block() based on known settings
+
+#define OPT_VBR_PACKAGE         1 // VBR optimization
+#if OPT_VBR_PACKAGE
+#define OPT_VBR2                1 // remove IPPP and use lookahead data in VBR
+#define OPT_VBR3                1 // lossless changes to save cycle for 1P VBR
+#define OPT_VBR4                1 // lossless changes clean up
+#define OPT_VBR_2P              1 // remove DG from 2P
+#define OPT_VBR6                1 // VBR improvement
+#define OPT_2PVBR               1 // 2 Pass VBR improvement
+#endif
+#define OPT_TF_LVL3                               1 // Opt tf lvl3
+
+#define OPT_NSQ_RATE_THS                          1 // Apply offset to nsq rate THs for small block sizes
+#define CLN_REMOVE_COND0                          1 // Remove cond0 from skip_sub_depth_ctrls
+#define TUNE_NSQ_LEVELS                           1 // Tune NSQ settings
+#define OPT_TPL                                   1 // Optimize TPL
+#define TUNE_M8_M12                               1 // Tune M8-M12 for fast-decode-crf-lp1
+#define OPT_MRP_VBR                               1 // Optimize MRP in VBR
+#define TUNE_ENABLE_ME_8X8                        1 // tune enable_me_8x8 for 1080p
+
+#define USE_PRED_MODE                             1 // Optimize the INTRA-search classifier of PD0, and use the pred-mode @ the sub-depth(s) refinement
+#if USE_PRED_MODE
+#define OPT_M4_BEYOND_DEPTHS                      0 // Not yet ready
+#define OPT_M3_BEYOND_DEPTHS                      1 // Shut sub-depth refinement if INTRA pred-block (speed)
+#define OPT_M2_BELOW_DEPTHS                       1 // (-2,2) for MR, and (-2,2) for INTRA pred-block for M0 (BD-rate)
+#endif
+#define OPT_PRE_MDS0_SEARCH                       1 // Variance instead of SSD @ the PME and NSQ-MV-refinement MR (BD-rate) and M0 (BD-rate)
+
 //FOR DEBUGGING - Do not remove
 #define OPT_LD_LATENCY2         0 // Latency optimization for low delay
 #define LOG_ENC_DONE            0 // log encoder job one

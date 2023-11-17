@@ -483,6 +483,46 @@ void *svt_aom_initial_rate_control_kernel(void *input_ptr) {
                 }
 #endif
             }
+#if OPT_VBR2
+            // Store the avg me distortion for base layer pictures only
+            if (scs->lap_rc) {
+                if (scs->static_config.rate_control_mode) {
+                    pcs->stat_struct = (scs->twopass.stats_buf_ctx->stats_in_start + pcs->picture_number)->stat_struct;
+                }
+                if (pcs->slice_type != I_SLICE) {
+                    uint64_t avg_me_dist          = 0;
+                    uint64_t avg_variance_me_dist = 0;
+                    for (int b64_idx = 0; b64_idx < pcs->b64_total_count; ++b64_idx) {
+                        avg_me_dist += pcs->rc_me_distortion[b64_idx];
+                        avg_variance_me_dist += pcs->me_8x8_cost_variance[b64_idx];
+                    }
+                    avg_me_dist /= pcs->b64_total_count;
+                    avg_variance_me_dist /= pcs->b64_total_count;
+
+#if OPT_VBR6
+                    pcs->avg_variance_me_dist = avg_variance_me_dist;
+#endif
+                    double weight = 1;
+                    if (avg_variance_me_dist > 50000)
+                        weight = 1.5;
+                    else if (avg_variance_me_dist < 10000)
+                        weight = 0.75;
+                    if (scs->input_resolution <= INPUT_SIZE_480p_RANGE)
+                        weight = 1.5 * weight;
+                    pcs->stat_struct.poc = pcs->picture_number;
+#if OPT_VBR6
+                    (scs->twopass.stats_buf_ctx->stats_in_start + pcs->picture_number)->stat_struct.total_num_bits = MAX(1000, avg_me_dist);
+#else
+                    (scs->twopass.stats_buf_ctx->stats_in_start + pcs->picture_number)->stat_struct.total_num_bits =
+                        avg_me_dist;
+#endif
+                    (scs->twopass.stats_buf_ctx->stats_in_start + pcs->picture_number)->coded_error =
+                        (double)avg_me_dist * pcs->b64_total_count * weight / 30;
+                    (scs->twopass.stats_buf_ctx->stats_in_start + pcs->picture_number)->stat_struct.poc =
+                        pcs->picture_number;
+                }
+            }
+#endif
             // tpl_la can be performed on unscaled frames in super-res q-threshold and auto mode
             if (pcs->tpl_ctrls.enable && !pcs->frame_superres_enabled) {
                 svt_set_cond_var(&pcs->me_ready, 1);

@@ -2182,7 +2182,12 @@ EB_EXTERN void svt_aom_encode_decode(SequenceControlSet *scs, PictureControlSet 
         }
 
         // Loop over all d1 blocks
+#if OPT_REORDER_GEOM
+        uint32_t d1_start_blk = blk_it +
+            (blk_geom->sq_size == 128 ? ns_blk_offset_128[blk_ptr->part] : ns_blk_offset[blk_ptr->part]);
+#else
         uint32_t d1_start_blk = blk_it + ns_blk_offset[blk_ptr->part];
+#endif
         uint32_t num_d1_block = ns_blk_num[blk_ptr->part]; // blk_geom->totns;
         for (uint32_t d1_itr = d1_start_blk; d1_itr < (d1_start_blk + num_d1_block); d1_itr++) {
             if (!pcs->ppcs->sb_geom[sb_addr].block_is_allowed[d1_itr]) {
@@ -2323,7 +2328,12 @@ EB_EXTERN EbErrorType svt_aom_encdec_update(SequenceControlSet *scs, PictureCont
         }
 
         // Loop over all d1 blocks
+#if OPT_REORDER_GEOM
+        uint32_t d1_start_blk = blk_it +
+            (blk_geom->sq_size == 128 ? ns_blk_offset_128[blk_ptr->part] : ns_blk_offset[blk_ptr->part]);
+#else
         uint32_t d1_start_blk = blk_it + ns_blk_offset[blk_ptr->part];
+#endif
         uint32_t num_d1_block = ns_blk_num[blk_ptr->part]; // blk_geom->totns;
         for (uint32_t d1_itr = d1_start_blk; d1_itr < (d1_start_blk + num_d1_block); d1_itr++) {
             if (!pcs->ppcs->sb_geom[sb_addr].block_is_allowed[d1_itr]) {

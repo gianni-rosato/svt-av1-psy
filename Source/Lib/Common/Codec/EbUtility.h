@@ -31,8 +31,19 @@ typedef enum GeomIndex {
     GEOM_2, //64x64  ->8x8  NSQ:ON (only H & V shapes, but not 8x4 and 4x8)
     GEOM_3, //64x64  ->8x8  NSQ:ON (only H & V shapes)
     GEOM_4, //64x64  ->4x4  NSQ:ON (only H & V shapes)
+#if OPT_REMOVE_HVAB_GEOM
+    GEOM_5, //64x64  ->4x4  NSQ:ON (only H, V, H4, V4 shapes)
+    GEOM_6, //64x64  ->4x4  NSQ:ON (all shapes)
+#if OPT_GEOM_SB12B_B4
+    GEOM_7, //128x128->4x4  NSQ:ON (all shapes)
+    GEOM_8, //128x128->8x8  NSQ:ON  (only H, V, H4, V4 shapes)
+#else
+    GEOM_7, //128x128->4x4  NSQ:ON (all shapes)
+#endif
+#else
     GEOM_5, //64x64  ->4x4  NSQ:ON (all shapes)
     GEOM_6, //128x128->4x4  NSQ:ON (all shapes
+#endif
     GEOM_TOT
 } GeomIndex;
 void svt_aom_build_blk_geom(GeomIndex geom);
@@ -127,6 +138,9 @@ static const uint32_t parent_depth_offset[GEOM_TOT][6] = {{NOT_USED_VALUE, 64, 1
                                                           {NOT_USED_VALUE, 128, 32, 8, NOT_USED_VALUE, NOT_USED_VALUE},
                                                           {NOT_USED_VALUE, 320, 80, 20, NOT_USED_VALUE, NOT_USED_VALUE},
                                                           {NOT_USED_VALUE, 512, 128, 32, 8, NOT_USED_VALUE},
+#if OPT_REMOVE_HVAB_GEOM
+                                                          {NOT_USED_VALUE, 640, 160, 40, 8, NOT_USED_VALUE},
+#endif
                                                           {NOT_USED_VALUE, 832, 208, 52, 8, NOT_USED_VALUE},
                                                           {NOT_USED_VALUE, 3320, 832, 208, 52, 8}};
 //gives the index of next quadrant child within a depth
@@ -135,6 +149,9 @@ static const uint32_t ns_depth_offset[GEOM_TOT][6] = {{85, 21, 5, 1, NOT_USED_VA
                                                       {169, 41, 9, 1, NOT_USED_VALUE, NOT_USED_VALUE},
                                                       {425, 105, 25, 5, NOT_USED_VALUE, NOT_USED_VALUE},
                                                       {681, 169, 41, 9, 1, NOT_USED_VALUE},
+#if OPT_REMOVE_HVAB_GEOM
+                                                      {849, 209, 49, 9, 1, NOT_USED_VALUE},
+#endif
                                                       {1101, 269, 61, 9, 1, NOT_USED_VALUE},
                                                       {4421, 1101, 269, 61, 9, 1}};
 //gives the next depth block(first qudrant child) from a given parent square
@@ -143,8 +160,30 @@ static const uint32_t d1_depth_offset[GEOM_TOT][6] = {{1, 1, 1, 1, 1, NOT_USED_V
                                                       {5, 5, 5, 1, 1, NOT_USED_VALUE},
                                                       {5, 5, 5, 5, 1, NOT_USED_VALUE},
                                                       {5, 5, 5, 5, 1, NOT_USED_VALUE},
+#if OPT_REMOVE_HVAB_GEOM
+                                                      {13, 13, 13, 5, 1, NOT_USED_VALUE},
+#endif
                                                       {25, 25, 25, 5, 1, NOT_USED_VALUE},
                                                       {17, 25, 25, 25, 5, 1}};
+#if OPT_REORDER_GEOM
+// gives the index offset (relative to SQ block) of the given nsq shape
+// Different tables for 128x128 because H4/V4 are not allowed
+static const uint32_t ns_blk_offset[EXT_PARTITION_TYPES]     = {0, 1, 3, 25, 13, 16, 19, 22, 5, 9};
+static const uint32_t ns_blk_offset_128[EXT_PARTITION_TYPES] = {
+    0, 1, 3, 25, 5, 8, 11, 14, 0 /*H4 not allowed*/, 0 /*V4 not allowed*/};
+
+// number of blocks in the given NSQ shape
+static const uint32_t ns_blk_num[EXT_PARTITION_TYPES] = {1, 2, 2, 4, 3, 3, 3, 3, 4, 4};
+
+// Index of the 32x32 blocks when have a max bsize of 64
+static const uint32_t blk32_idx_tab[GEOM_TOT - 1][4] = {{1, 22, 43, 64},
+                                                        {5, 30, 55, 80},
+                                                        {5, 46, 87, 128},
+                                                        {5, 110, 215, 320},
+                                                        {5, 174, 343, 512},
+                                                        {13, 222, 431, 640},
+                                                        {25, 294, 563, 832}};
+#endif
 extern BlockGeom      svt_aom_blk_geom_mds[MAX_NUM_BLOCKS_ALLOC];
 
 static INLINE const BlockGeom* get_blk_geom_mds(uint32_t bidx_mds) { return &svt_aom_blk_geom_mds[bidx_mds]; }

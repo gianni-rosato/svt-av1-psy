@@ -2822,12 +2822,17 @@ Bool svt_aom_is_delayed_intra(PictureParentControlSet *pcs) {
     else
         return 0;
 }
+#if OPT_VBR3
+void first_pass_frame_end_one_pass(PictureParentControlSet *pcs);
+#endif
 /*
   Performs first pass in ME process
 */
 static void process_first_pass_frame(
     SequenceControlSet      *scs, PictureParentControlSet *pcs, PictureDecisionContext  *pd_ctx) {
+#if !OPT_VBR3
     int16_t seg_idx;
+#endif
 
     // Initialize Segments
     pcs->first_pass_seg_column_count = (uint8_t)(scs->me_segment_column_count_array[0]);
@@ -2836,6 +2841,12 @@ static void process_first_pass_frame(
     pcs->first_pass_seg_total_count = (uint16_t)(pcs->first_pass_seg_column_count  * pcs->first_pass_seg_row_count);
     pcs->first_pass_seg_acc = 0;
     svt_aom_first_pass_sig_deriv_multi_processes(scs, pcs);
+#if OPT_VBR3
+    if (scs->lap_rc) {
+        first_pass_frame_end_one_pass(pcs);
+    }
+    else {
+#endif
     if (pcs->me_data_wrapper == NULL) {
         EbObjectWrapper               *me_wrapper;
         svt_get_empty_object(pd_ctx->me_fifo_ptr, &me_wrapper);
@@ -2846,7 +2857,11 @@ static void process_first_pass_frame(
 #endif
     }
 
+#if OPT_VBR3
+        for (int16_t seg_idx = 0; seg_idx < pcs->first_pass_seg_total_count; ++seg_idx) {
+#else
     for (seg_idx = 0; seg_idx < pcs->first_pass_seg_total_count; ++seg_idx) {
+#endif
 
         EbObjectWrapper               *out_results_wrapper;
         PictureDecisionResults        *out_results;
@@ -2864,6 +2879,9 @@ static void process_first_pass_frame(
     svt_release_object(pcs->me_data_wrapper);
     pcs->me_data_wrapper = (EbObjectWrapper *)NULL;
     pcs->pa_me_data = NULL;
+#if OPT_VBR3
+    }
+#endif
 }
 void svt_aom_pack_highbd_pic(const EbPictureBufferDesc *pic_ptr, uint16_t *buffer_16bit[3], uint32_t ss_x,
     uint32_t ss_y, Bool include_padding);

@@ -22,6 +22,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+#if !OPT_VBR_2P
 typedef struct MiniGopSizeCtrls {
     int    adptive_enable; // 0: Off, 1: Switch at clip level, 2: Switch at GOP level
     double short_shot_th; // Threshold to determine short scene.
@@ -33,6 +34,7 @@ typedef struct MiniGopSizeCtrls {
     double hmv_di_th; // Threshold to determine high mv direction scene
     double lmv_di_th; // Threshold to determine low mv direction scene
 } MiniGopSizeCtrls;
+#endif
 typedef enum EncPass {
     ENC_SINGLE_PASS, //single pass mode
     ENC_FIRST_PASS, // first pass of multi pass mode
@@ -266,7 +268,9 @@ typedef struct SequenceControlSet {
     int32_t          nmv_costs[2][MV_VALS];
     uint8_t          mvrate_set;
     VqCtrls          vq_ctrls;
+#if !OPT_VBR_2P
     MiniGopSizeCtrls mgs_ctls;
+#endif
     uint8_t          calc_hist;
     TfControls       tf_params_per_type[3]; // [I_SLICE][BASE][L1]
     MrpCtrls         mrp_ctrls;

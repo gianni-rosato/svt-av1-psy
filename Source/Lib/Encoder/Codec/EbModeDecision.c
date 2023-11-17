@@ -74,6 +74,76 @@ int svt_aom_filter_intra_allowed_bsize(uint8_t enable_filter_intra, BlockSize bs
 int svt_aom_filter_intra_allowed(uint8_t enable_filter_intra, BlockSize bsize, uint8_t palette_size, uint32_t mode) {
     return mode == DC_PRED && palette_size == 0 && svt_aom_filter_intra_allowed_bsize(enable_filter_intra, bsize);
 }
+#if CLN_ME_OFFSET
+/*
+Get the ME offset for a given block(the offset used to locate the PA MVs from the parent PCS).
+*/
+uint32_t svt_aom_get_me_block_offset(const BlockGeom *const blk_geom, uint8_t enable_me_8x8, uint8_t enable_me_16x16) {
+    uint32_t first_quad_org_x = blk_geom->org_x % 32;
+    uint32_t first_quad_org_y = blk_geom->org_y % 32;
+
+    uint32_t max_length = MAX(blk_geom->bwidth, blk_geom->bheight);
+
+    uint32_t me_idx = 0;
+    switch (max_length) {
+    case 128:
+    case 64: me_idx = 0; break;
+    case 32:
+        me_idx = 1;
+
+        if ((blk_geom->org_x % 64) / 32)
+            me_idx += 21;
+        if ((blk_geom->org_y % 64) / 32)
+            me_idx += 42;
+        break;
+    case 16:
+        me_idx = 2;
+        if ((first_quad_org_x % 32) / 16)
+            me_idx += 5;
+        if ((first_quad_org_y % 32) / 16)
+            me_idx += 10;
+
+        if ((blk_geom->org_x % 64) / 32)
+            me_idx += 21;
+        if ((blk_geom->org_y % 64) / 32)
+            me_idx += 42;
+        break;
+    case 8:
+    default:
+        me_idx = 3;
+        if ((first_quad_org_x % 16) / 8)
+            me_idx += 1;
+        if ((first_quad_org_y % 16) / 8)
+            me_idx += 2;
+
+        if ((first_quad_org_x % 32) / 16)
+            me_idx += 5;
+        if ((first_quad_org_y % 32) / 16)
+            me_idx += 10;
+
+        if ((blk_geom->org_x % 64) / 32)
+            me_idx += 21;
+        if ((blk_geom->org_y % 64) / 32)
+            me_idx += 42;
+        break;
+    }
+
+    uint32_t me_block_offset = me_idx_85[me_idx]; // convert idx to me_idx
+
+    if (!enable_me_8x8) {
+        if (me_block_offset >= MAX_SB64_PU_COUNT_NO_8X8)
+            me_block_offset = me_idx_85_8x8_to_16x16_conversion[me_block_offset - MAX_SB64_PU_COUNT_NO_8X8];
+        assert(me_block_offset < 21);
+        if (!enable_me_16x16)
+            if (me_block_offset >= MAX_SB64_PU_COUNT_WO_16X16) {
+                assert(me_block_offset < 21);
+                me_block_offset = me_idx_16x16_to_parent_32x32_conversion[me_block_offset - MAX_SB64_PU_COUNT_WO_16X16];
+            }
+    }
+
+    return me_block_offset;
+}
+#endif
 //Given one reference frame identified by the pair (list_index,ref_index)
 //indicate if ME data is valid
 uint8_t svt_aom_is_me_data_present(uint32_t me_block_offset, uint32_t me_cand_offset, const MeSbResults *me_results,
@@ -4857,6 +4927,9 @@ uint32_t svt_aom_product_full_mode_decision(
 
     // Set common signals (INTER/INTRA)
     blk_ptr->prediction_mode_flag = is_inter_mode(cand->pred_mode) ? INTER_MODE : INTRA_MODE;
+#if USE_PRED_MODE
+    ctx->md_local_blk_unit[blk_ptr->mds_idx].is_inter = is_inter_mode(cand_bf->cand->pred_mode);
+#endif
     blk_ptr->use_intrabc = cand->use_intrabc;
     blk_ptr->pred_mode = cand->pred_mode;
     blk_ptr->is_interintra_used = cand->is_interintra_used;

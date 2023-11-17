@@ -804,7 +804,31 @@ typedef enum ATTRIBUTE_PACKED {
 } PartitionType;
 
 #define MAX_NUM_BLOCKS_ALLOC 4421
+#if OPT_REORDER_GEOM
+typedef enum ATTRIBUTE_PACKED {
+    PART_N,
+    PART_H,
+    PART_V,
+    PART_H4,
+    PART_V4,
+    PART_HA,
+    PART_HB,
+    PART_VA,
+    PART_VB,
+    PART_S
+} Part;
 
+static const PartitionType from_shape_to_part[EXT_PARTITION_TYPES] = {PARTITION_NONE,
+                                                                      PARTITION_HORZ,
+                                                                      PARTITION_VERT,
+                                                                      PARTITION_HORZ_4,
+                                                                      PARTITION_VERT_4,
+                                                                      PARTITION_HORZ_A,
+                                                                      PARTITION_HORZ_B,
+                                                                      PARTITION_VERT_A,
+                                                                      PARTITION_VERT_B,
+                                                                      PARTITION_SPLIT};
+#else
 typedef enum ATTRIBUTE_PACKED {
     PART_N,
     PART_H,
@@ -828,6 +852,7 @@ static const PartitionType from_shape_to_part[EXT_PARTITION_TYPES] = {PARTITION_
                                                                       PARTITION_HORZ_4,
                                                                       PARTITION_VERT_4,
                                                                       PARTITION_SPLIT};
+#endif
 
 static const uint8_t mi_size_wide[BlockSizeS_ALL] = {1,  1,  2,  2,  2,  4, 4, 4, 8, 8, 8,
                                                      16, 16, 16, 32, 32, 1, 4, 2, 8, 4, 16};

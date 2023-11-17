@@ -87,6 +87,9 @@ typedef struct MdBlkStruct {
     uint8_t  y_has_coeff[TRANSFORM_UNIT_MAX_COUNT];
     uint16_t min_nz_h;
     uint16_t min_nz_v;
+#if USE_PRED_MODE
+    uint8_t is_inter;
+#endif
 } MdBlkStruct;
 
 struct ModeDecisionCandidate;
@@ -243,6 +246,9 @@ typedef struct DepthCtrls {
     int8_t e_depth;
     // If true, limit the max/min block sizes for PD1 to the max/min selected by PD0 (when the max/min block sizes are different).
     uint8_t limit_max_min_to_pd0;
+#if USE_PRED_MODE
+    uint8_t use_pred_mode; // 0: OFF, 1: reduce the number of depth(s) if the pred mode is INTER
+#endif
 } DepthCtrls;
 #define MAX_RANGE_CNT 8
 #define MAX_RANGE_CNT 8
@@ -294,8 +300,13 @@ typedef struct PfCtrls {
 typedef struct MdNsqMotionSearchCtrls {
     // 0: NSQ motion search @ MD OFF; 1: NSQ motion search @ MD ON
     uint8_t enabled;
+#if OPT_PRE_MDS0_SEARCH
+    // 0: search using SAD; 1: search using SSD; 2: search using variance
+    uint8_t dist_type;
+#else
     // 0: search using SAD; 1: search using SSD
     uint8_t use_ssd;
+#endif
     // Full Pel search area width
     uint8_t full_pel_search_width;
     // Full Pel search area height
@@ -306,8 +317,13 @@ typedef struct MdNsqMotionSearchCtrls {
 typedef struct MdSqMotionSearchCtrls {
     // 0: SQ motion search @ MD OFF; 1: SQ motion search @ MD ON
     uint8_t enabled;
+#if OPT_PRE_MDS0_SEARCH
+    // 0: search using SAD; 1: search using SSD; 2: search using variance
+    uint8_t dist_type;
+#else
     // 0: search using SAD; 1: search using SSD
     uint8_t use_ssd;
+#endif
     // TH for pa_me distortion to determine whether to search (distortion per pixel)
     uint16_t pame_distortion_th;
 
@@ -355,8 +371,13 @@ typedef struct MdSqMotionSearchCtrls {
 typedef struct MdPmeCtrls {
     // 0: PME search @ MD OFF; 1: PME search @ MD ON
     uint8_t enabled;
+#if OPT_PRE_MDS0_SEARCH
+    // 0: search using SAD; 1: search using SSD; 2: search using variance
+    uint8_t dist_type;
+#else
     // 0: search using SAD; 1: search using SSD
     uint8_t use_ssd;
+#endif
     // Do not perform PME search for blocks that have a valid ME_MV unless the ME_MV has a different
     // direction than all MVP(s) and the ME_MV mag is higher than MV_TH=f(early_check_mv_th_multiplier)
     int early_check_mv_th_multiplier;
@@ -599,6 +620,10 @@ typedef struct NsqCtrls {
     uint32_t non_HV_split_rate_th;
     // Apply an offset to non_HV_split_rate_th
     bool non_HV_split_rate_modulation;
+#if OPT_NSQ_RATE_THS
+    // Offset applied to rate thresholds for 16x16 and smaller block sizes. Higher is more aggressive; 0 is off.
+    uint32_t rate_th_offset_lte16;
+#endif
     // If the distortion (or rate) component of the SQ cost is more than component_multiple_th times the rate (or distortion) component, skip the NSQ shapes
     // 0: off, higher is safer
     uint32_t component_multiple_th;
@@ -853,7 +878,13 @@ typedef struct CandReductionCtrls {
 } CandReductionCtrls;
 typedef struct SkipSubDepthCtrls {
     uint8_t enabled;
-
+#if !CLN_REMOVE_COND0
+    // Cond0: use the nsq-to-sq cost deviation to skip sub-depth(s)
+    // Do not skip sub-depth(s) if the depth block size is higher than method1_max_size
+    uint8_t max_size_cond0;
+    // Do not skip sub-depth(s) if the depth block size is higher than method1_max_size
+    int nsq_to_sq_th;
+#endif
     // Cond0: use the nsq-to-sq cost deviation to skip sub-depth(s)
     // Do not skip sub-depth(s) if the depth block size is higher than method1_max_size
     uint8_t max_size_cond0;
@@ -1202,6 +1233,9 @@ typedef struct ModeDecisionContext {
     COMPONENT_TYPE lpd1_chroma_comp;
     uint8_t        corrupted_mv_check;
     uint8_t        skip_pd0;
+#if USE_PRED_MODE
+    uint8_t pred_mode_depth_refine;
+#endif
     // when MD is done on 8bit, scale palette colors to 10bit (valid when bypass is 1)
     uint8_t scale_palette;
     uint8_t high_freq_present;

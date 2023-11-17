@@ -38,10 +38,14 @@ static void set_restoration_unit_size(int32_t width, int32_t height, int32_t sx,
 
     int32_t s = 0;
 
+#if OPT_REST_SIZE_FULL
+    rst[0].restoration_unit_size = RESTORATION_UNITSIZE_MAX;
+#else
     if (width * height > 352 * 288)
         rst[0].restoration_unit_size = RESTORATION_UNITSIZE_MAX;
     else
         rst[0].restoration_unit_size = (RESTORATION_UNITSIZE_MAX >> 1);
+#endif
 
     rst[1].restoration_unit_size = rst[0].restoration_unit_size >> s;
     rst[2].restoration_unit_size = rst[1].restoration_unit_size;
@@ -109,7 +113,12 @@ EbErrorType svt_aom_me_sb_results_ctor(MeSbResults *obj_ptr, PictureControlSetIn
     EbInputResolution resolution;
     svt_aom_derive_input_resolution(&resolution, init_data_ptr->picture_width * init_data_ptr->picture_height);
     uint8_t number_of_pus = svt_aom_get_enable_me_16x16(init_data_ptr->enc_mode, init_data_ptr->rtc_tune)
+#if TUNE_ENABLE_ME_8X8
+        ? svt_aom_get_enable_me_8x8(init_data_ptr->enc_mode, init_data_ptr->rtc_tune, resolution)
+            ? SQUARE_PU_COUNT
+#else
         ? svt_aom_get_enable_me_8x8(init_data_ptr->enc_mode, init_data_ptr->rtc_tune) ? SQUARE_PU_COUNT
+#endif
                                                                                       : MAX_SB64_PU_COUNT_NO_8X8
         : MAX_SB64_PU_COUNT_WO_16X16;
 
@@ -1491,7 +1500,11 @@ static EbErrorType picture_parent_control_set_ctor(PictureParentControlSet *obje
 
     // 8x8 can only be used if 16x16 is enabled
     object_ptr->enable_me_8x8 = object_ptr->enable_me_16x16
+#if TUNE_ENABLE_ME_8X8
+        ? svt_aom_get_enable_me_8x8(init_data_ptr->enc_mode, init_data_ptr->rtc_tune, resolution)
+#else
         ? svt_aom_get_enable_me_8x8(init_data_ptr->enc_mode, init_data_ptr->rtc_tune)
+#endif
         : 0;
     EB_NEW(object_ptr->dg_detector, svt_aom_dg_detector_seg_ctor);
 
