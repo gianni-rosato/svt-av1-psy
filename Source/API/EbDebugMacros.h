@@ -81,6 +81,28 @@ extern "C" {
 #define OPT_M2_BELOW_DEPTHS                       1 // (-2,2) for MR, and (-2,2) for INTRA pred-block for M0 (BD-rate)
 #endif
 #define OPT_PRE_MDS0_SEARCH                       1 // Variance instead of SSD @ the PME and NSQ-MV-refinement MR (BD-rate) and M0 (BD-rate)
+#define OPT_PD0_NSQ                               1 // Optimize the NSQ of PD 0 MR (speed) and M0 (BD-rate)
+
+#define TUNE_M0_M1_M3_M5                          1 // Optimize m0, m1, m3, m5
+
+#define OPT_UNIPRED_3x3                           1 // Opt unipred_3x3 for MR and M0
+#define OPT_PME                                   1 // Opt PME for MR and M0
+
+#define TUNE_M7_M13                               1 // Tune m7-m13 for lp8
+#define CLN_MISC                                  1 // Clean redundancies
+
+
+#define OPT_UV_RDOQ                               1 // Shut early uv quant-coeff shaving
+#define OPT_EOB_RDOQ                              1 // Improve RDOQ EOB check
+
+#define OPT_TF_FACTOR_LARGE_BLOCKS                1 // Double the decay factor when large blocks are selected
+#define OPT_TF_8X8_BLOCKS                         1 // Include 8x8 blocks in TF motion search and prediction
+#define OPT_TF_AHD_TH                             1 // Adjust the THs used to prune frames in TF based on AHD
+#define FIX_TF_64X64_PRED                         1 // Fix improper block size in TF 64x64 prediction path
+
+#define OPT_MR_M0                                 1 // optimize mr and m0 features
+#define OPT_M1                                    1 // tune m1 features
+#define OPT_INTRA_LVL                             1 // optimize intra levels for higher presets
 
 //FOR DEBUGGING - Do not remove
 #define OPT_LD_LATENCY2         0 // Latency optimization for low delay

@@ -112,7 +112,11 @@ EbErrorType svt_aom_me_sb_results_ctor(MeSbResults *obj_ptr, PictureControlSetIn
                                       &max_cand_to_alloc);
     EbInputResolution resolution;
     svt_aom_derive_input_resolution(&resolution, init_data_ptr->picture_width * init_data_ptr->picture_height);
+#if CLN_MISC
+    uint8_t number_of_pus = svt_aom_get_enable_me_16x16(init_data_ptr->enc_mode)
+#else
     uint8_t number_of_pus = svt_aom_get_enable_me_16x16(init_data_ptr->enc_mode, init_data_ptr->rtc_tune)
+#endif
 #if TUNE_ENABLE_ME_8X8
         ? svt_aom_get_enable_me_8x8(init_data_ptr->enc_mode, init_data_ptr->rtc_tune, resolution)
             ? SQUARE_PU_COUNT
@@ -1119,9 +1123,21 @@ static EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr
     for (uint8_t is_base = 0; is_base <= 1; is_base++)
         for (uint8_t is_islice = 0; is_islice <= 1; is_islice++)
             for (uint8_t coeff_lvl = 0; coeff_lvl <= HIGH_LVL + 1; coeff_lvl++)
+#if OPT_NSQ_QP
+                disallow_4x4 = MIN(
+                    disallow_4x4,
+                    (svt_aom_get_nsq_level(init_data_ptr->enc_mode, is_base, coeff_lvl, 63) == 0 ? 1 : 0));
+#else
+#if OPT_MR_M0
+                disallow_4x4 = MIN(
+                    disallow_4x4,
+                    (svt_aom_get_nsq_level(init_data_ptr->enc_mode, is_base, coeff_lvl) == 0 ? 1 : 0));
+#else
                 disallow_4x4 = MIN(
                     disallow_4x4,
                     (svt_aom_get_nsq_level(init_data_ptr->enc_mode, is_islice, is_base, coeff_lvl) == 0 ? 1 : 0));
+#endif
+#endif
     for (SliceType slice_type = 0; slice_type < IDR_SLICE + 1; slice_type++)
         disallow_4x4 = MIN(disallow_4x4, svt_aom_get_disallow_4x4(init_data_ptr->enc_mode, slice_type));
 
@@ -1496,7 +1512,11 @@ static EbErrorType picture_parent_control_set_ctor(PictureParentControlSet *obje
     EB_CREATE_MUTEX(object_ptr->pcs_total_rate_mutex);
     EbInputResolution resolution;
     svt_aom_derive_input_resolution(&resolution, init_data_ptr->picture_width * init_data_ptr->picture_height);
+#if CLN_MISC
+    object_ptr->enable_me_16x16 = svt_aom_get_enable_me_16x16(init_data_ptr->enc_mode);
+#else
     object_ptr->enable_me_16x16 = svt_aom_get_enable_me_16x16(init_data_ptr->enc_mode, init_data_ptr->rtc_tune);
+#endif
 
     // 8x8 can only be used if 16x16 is enabled
     object_ptr->enable_me_8x8 = object_ptr->enable_me_16x16

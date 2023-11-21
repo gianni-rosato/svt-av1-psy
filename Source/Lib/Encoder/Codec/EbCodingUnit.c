@@ -54,8 +54,18 @@ EbErrorType svt_aom_largest_coding_unit_ctor(SuperBlock *larget_coding_unit_ptr,
     for (uint8_t is_base = 0; is_base <= 1; is_base++)
         for (uint8_t is_islice = 0; is_islice <= 1; is_islice++)
             for (uint8_t coeff_lvl = 0; coeff_lvl <= HIGH_LVL + 1; coeff_lvl++)
+#if OPT_NSQ_QP
+                disallow_nsq = MIN(disallow_nsq,
+                                   (svt_aom_get_nsq_level(enc_mode, is_base, coeff_lvl, 63) == 0 ? 1 : 0));
+#else
+#if OPT_MR_M0
+                disallow_nsq = MIN(disallow_nsq,
+                                   (svt_aom_get_nsq_level(enc_mode, is_base, coeff_lvl) == 0 ? 1 : 0));
+#else
                 disallow_nsq = MIN(disallow_nsq,
                                    (svt_aom_get_nsq_level(enc_mode, is_islice, is_base, coeff_lvl) == 0 ? 1 : 0));
+#endif
+#endif
     bool disallow_4x4 = true;
     for (SliceType slice_type = 0; slice_type < IDR_SLICE + 1; slice_type++)
         disallow_4x4 = MIN(disallow_4x4, svt_aom_get_disallow_4x4(enc_mode, slice_type));

@@ -1191,10 +1191,15 @@ void svt_av1_optimize_b(ModeDecisionContext *ctx, int16_t txb_skip_context, int1
     const TranLow qc         = qcoeff_ptr[ci];
     const TranLow abs_qc     = abs(qc);
     const int     sign       = qc < 0;
+#if OPT_EOB_RDOQ
+    const int     max_nz_num = 4;
+    int           nz_num = 1;
+    int           nz_ci[5] = { ci, 0, 0, 0, 0 };
+#else
     const int     max_nz_num = 2;
     int           nz_num     = 1;
     int           nz_ci[3]   = {ci, 0, 0};
-
+#endif
     if (abs_qc >= 2) {
         update_coeff_general(&accu_rate,
                              &accu_dist,

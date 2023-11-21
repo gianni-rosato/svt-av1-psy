@@ -171,7 +171,9 @@ extern "C" {
         uint8_t *ref,
         uint32_t ref_stride,
         uint32_t mv,
+#if !OPT_TF_8X8_BLOCKS
         uint8_t out_8x8,
+#endif
         uint32_t *p_best_sad_8x8,
         uint32_t *p_best_sad_16x16,
         uint32_t *p_best_mv8x8,

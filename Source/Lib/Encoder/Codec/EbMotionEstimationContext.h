@@ -463,6 +463,12 @@ typedef struct MeContext {
     signed short tf_16x16_mv_x[16];
     signed short tf_16x16_mv_y[16];
     uint64_t     tf_16x16_block_error[16];
+#if OPT_TF_8X8_BLOCKS
+    signed short tf_8x8_mv_x[64];
+    signed short tf_8x8_mv_y[64];
+    uint64_t     tf_8x8_block_error[64];
+    int          tf_16x16_block_split_flag[4][4];
+#endif
 
     signed short tf_32x32_mv_x[4];
     signed short tf_32x32_mv_y[4];

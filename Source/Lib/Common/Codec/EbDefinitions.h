@@ -188,6 +188,10 @@ typedef struct TfControls {
     // Specifies the 32x32 prediction error(after subpel) under which the subpel for the 16x16
     // block(s) is bypassed
     uint64_t pred_error_32x32_th;
+#if OPT_TF_8X8_BLOCKS
+    // If true, check 8x8 blocks for TF prediction
+    bool enable_8x8_pred;
+#endif
 
     // Specifies whether to exit ME after HME or not (0: perform both HME and Full-Pel search, else
     // if the HME distortion is less than me_exit_th then exit after HME(i.e. do not perform the

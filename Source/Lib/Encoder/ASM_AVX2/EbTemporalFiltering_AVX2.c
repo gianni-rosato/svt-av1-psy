@@ -240,7 +240,11 @@ void svt_av1_apply_zz_based_temporal_filter_planewise_medium_avx2(
 static void svt_av1_apply_temporal_filter_planewise_medium_partial_avx2(
     struct MeContext *me_ctx, const uint8_t *y_src, int y_src_stride, const uint8_t *y_pre, int y_pre_stride,
     unsigned int block_width, unsigned int block_height, uint32_t *y_accum, uint16_t *y_count,
+#if OPT_TF_FACTOR_LARGE_BLOCKS
+    uint32_t tf_decay_factor, uint32_t luma_window_error_quad_fp8[4], int is_chroma) {
+#else
     const uint32_t tf_decay_factor, uint32_t luma_window_error_quad_fp8[4], int is_chroma) {
+#endif
     unsigned int i, j, k, subblock_idx;
 
     int32_t  idx_32x32               = me_ctx->tf_block_col + me_ctx->tf_block_row * 2;
@@ -264,6 +268,9 @@ static void svt_av1_apply_temporal_filter_planewise_medium_partial_avx2(
             block_error_fp8[i] = (uint32_t)(me_ctx->tf_16x16_block_error[idx_32x32 * 4 + i]);
         }
     } else {
+#if OPT_TF_FACTOR_LARGE_BLOCKS
+        tf_decay_factor <<= 1;
+#endif
         int32_t col = me_ctx->tf_32x32_mv_x[idx_32x32];
         int32_t row = me_ctx->tf_32x32_mv_y[idx_32x32];
 
@@ -501,7 +508,11 @@ void svt_av1_apply_zz_based_temporal_filter_planewise_medium_hbd_avx2(
 static void svt_av1_apply_temporal_filter_planewise_medium_hbd_partial_avx2(
     struct MeContext *me_ctx, const uint16_t *y_src, int y_src_stride, const uint16_t *y_pre, int y_pre_stride,
     unsigned int block_width, unsigned int block_height, uint32_t *y_accum, uint16_t *y_count,
+#if OPT_TF_FACTOR_LARGE_BLOCKS
+    uint32_t tf_decay_factor, uint32_t luma_window_error_quad_fp8[4], int is_chroma, uint32_t encoder_bit_depth) {
+#else
     const uint32_t tf_decay_factor, uint32_t luma_window_error_quad_fp8[4], int is_chroma, uint32_t encoder_bit_depth) {
+#endif
     unsigned int i, j, k, subblock_idx;
 
     int32_t  idx_32x32               = me_ctx->tf_block_col + me_ctx->tf_block_row * 2;
@@ -525,6 +536,9 @@ static void svt_av1_apply_temporal_filter_planewise_medium_hbd_partial_avx2(
             block_error_fp8[i] = (uint32_t)(me_ctx->tf_16x16_block_error[idx_32x32 * 4 + i] >> 4);
         }
     } else {
+#if OPT_TF_FACTOR_LARGE_BLOCKS
+        tf_decay_factor <<= 1;
+#endif
         int32_t col = me_ctx->tf_32x32_mv_x[idx_32x32];
         int32_t row = me_ctx->tf_32x32_mv_y[idx_32x32];
 

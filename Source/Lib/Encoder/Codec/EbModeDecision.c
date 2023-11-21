@@ -4904,10 +4904,13 @@ uint32_t svt_aom_product_full_mode_decision(
     ModeDecisionCandidateBuffer* cand_bf = buffer_ptr_array[lowest_cost_index];
     ModeDecisionCandidate* cand = cand_bf->cand;
     PredictionUnit* pu_ptr = blk_ptr->prediction_unit_array;
-
+#if OPT_PD0_NSQ
+    blk_ptr->total_rate = cand_bf->total_rate;
+#else
     if (ctx->pd_pass == PD_PASS_1) {
         blk_ptr->total_rate = cand_bf->total_rate;
     }
+#endif
     if (!(ctx->pd_pass == PD_PASS_1 && ctx->pred_depth_only && ctx->md_disallow_nsq)) {
         if (ctx->blk_lambda_tuning) {
             // When lambda tuning is on, lambda of each block is set separately, however at interdepth decision the sb lambda is used
