@@ -999,8 +999,12 @@ EbErrorType svt_av1_set_default_params(EbSvtAv1EncConfiguration *config_ptr) {
     config_ptr->min_qm_level = 8;
     config_ptr->max_qm_level = 15;
 
-    config_ptr->startup_mg_size = 0;
-    config_ptr->enable_roi_map  = false;
+    config_ptr->startup_mg_size                   = 0;
+    config_ptr->frame_scale_evts.evt_num          = 0;
+    config_ptr->frame_scale_evts.resize_denoms    = NULL;
+    config_ptr->frame_scale_evts.resize_kf_denoms = NULL;
+    config_ptr->frame_scale_evts.start_frame_nums = NULL;
+    config_ptr->enable_roi_map                    = false;
     return return_error;
 }
 
