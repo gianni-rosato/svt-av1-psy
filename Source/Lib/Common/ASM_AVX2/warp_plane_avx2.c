@@ -13,7 +13,7 @@
 #include "common_dsp_rtcd.h"
 #include "EbWarpedMotion.h"
 
-/* This is a modified version of 'eb_warped_filter' from warped_motion.c:
+/* This is a modified version of 'svt_aom_warped_filter' from warped_motion.c:
     * Each coefficient is stored in 8 bits instead of 16 bits
     * The coefficients are rearranged in the column order 0, 2, 4, 6, 1, 3, 5, 7
 
@@ -540,15 +540,15 @@ static INLINE void prepare_vertical_filter_coeffs_avx2(int gamma, int delta, int
     _mm256_storeu_si256((__m256i *)(idx_final + 8),
                         _mm256_srli_epi32(_mm256_add_epi32(sy_d_val, gamma_val), WARPEDDIFF_PREC_BITS));
 
-    __m128i filt_00 = _mm_loadu_si128((__m128i *)(eb_warped_filter + idx_final[0]));
-    __m128i filt_01 = _mm_loadu_si128((__m128i *)(eb_warped_filter + idx_final[2]));
-    __m128i filt_02 = _mm_loadu_si128((__m128i *)(eb_warped_filter + idx_final[4]));
-    __m128i filt_03 = _mm_loadu_si128((__m128i *)(eb_warped_filter + idx_final[6]));
+    __m128i filt_00 = _mm_loadu_si128((__m128i *)(svt_aom_warped_filter + idx_final[0]));
+    __m128i filt_01 = _mm_loadu_si128((__m128i *)(svt_aom_warped_filter + idx_final[2]));
+    __m128i filt_02 = _mm_loadu_si128((__m128i *)(svt_aom_warped_filter + idx_final[4]));
+    __m128i filt_03 = _mm_loadu_si128((__m128i *)(svt_aom_warped_filter + idx_final[6]));
 
-    __m128i filt_10 = _mm_loadu_si128((__m128i *)(eb_warped_filter + idx_final[8]));
-    __m128i filt_11 = _mm_loadu_si128((__m128i *)(eb_warped_filter + idx_final[10]));
-    __m128i filt_12 = _mm_loadu_si128((__m128i *)(eb_warped_filter + idx_final[12]));
-    __m128i filt_13 = _mm_loadu_si128((__m128i *)(eb_warped_filter + idx_final[14]));
+    __m128i filt_10 = _mm_loadu_si128((__m128i *)(svt_aom_warped_filter + idx_final[8]));
+    __m128i filt_11 = _mm_loadu_si128((__m128i *)(svt_aom_warped_filter + idx_final[10]));
+    __m128i filt_12 = _mm_loadu_si128((__m128i *)(svt_aom_warped_filter + idx_final[12]));
+    __m128i filt_13 = _mm_loadu_si128((__m128i *)(svt_aom_warped_filter + idx_final[14]));
 
     __m256i filt_0 = _mm256_inserti128_si256(_mm256_castsi128_si256(filt_00), filt_10, 0x1);
     __m256i filt_1 = _mm256_inserti128_si256(_mm256_castsi128_si256(filt_01), filt_11, 0x1);
@@ -565,15 +565,15 @@ static INLINE void prepare_vertical_filter_coeffs_avx2(int gamma, int delta, int
     coeffs[2] = _mm256_unpacklo_epi64(res_2, res_3);
     coeffs[3] = _mm256_unpackhi_epi64(res_2, res_3);
 
-    filt_00 = _mm_loadu_si128((__m128i *)(eb_warped_filter + idx_final[1]));
-    filt_01 = _mm_loadu_si128((__m128i *)(eb_warped_filter + idx_final[3]));
-    filt_02 = _mm_loadu_si128((__m128i *)(eb_warped_filter + idx_final[5]));
-    filt_03 = _mm_loadu_si128((__m128i *)(eb_warped_filter + idx_final[7]));
+    filt_00 = _mm_loadu_si128((__m128i *)(svt_aom_warped_filter + idx_final[1]));
+    filt_01 = _mm_loadu_si128((__m128i *)(svt_aom_warped_filter + idx_final[3]));
+    filt_02 = _mm_loadu_si128((__m128i *)(svt_aom_warped_filter + idx_final[5]));
+    filt_03 = _mm_loadu_si128((__m128i *)(svt_aom_warped_filter + idx_final[7]));
 
-    filt_10 = _mm_loadu_si128((__m128i *)(eb_warped_filter + idx_final[9]));
-    filt_11 = _mm_loadu_si128((__m128i *)(eb_warped_filter + idx_final[11]));
-    filt_12 = _mm_loadu_si128((__m128i *)(eb_warped_filter + idx_final[13]));
-    filt_13 = _mm_loadu_si128((__m128i *)(eb_warped_filter + idx_final[15]));
+    filt_10 = _mm_loadu_si128((__m128i *)(svt_aom_warped_filter + idx_final[9]));
+    filt_11 = _mm_loadu_si128((__m128i *)(svt_aom_warped_filter + idx_final[11]));
+    filt_12 = _mm_loadu_si128((__m128i *)(svt_aom_warped_filter + idx_final[13]));
+    filt_13 = _mm_loadu_si128((__m128i *)(svt_aom_warped_filter + idx_final[15]));
 
     filt_0 = _mm256_inserti128_si256(_mm256_castsi128_si256(filt_00), filt_10, 0x1);
     filt_1 = _mm256_inserti128_si256(_mm256_castsi128_si256(filt_01), filt_11, 0x1);
@@ -602,10 +602,10 @@ static INLINE void prepare_vertical_filter_coeffs_delta0_avx2(int gamma, int sy,
     _mm256_storeu_si256((__m256i *)idx_final,
                         _mm256_srli_epi32(_mm256_add_epi32(sy_val, gamma_val), WARPEDDIFF_PREC_BITS));
 
-    __m128i filt_00 = _mm_loadu_si128((__m128i *)(eb_warped_filter + idx_final[0]));
-    __m128i filt_01 = _mm_loadu_si128((__m128i *)(eb_warped_filter + idx_final[2]));
-    __m128i filt_02 = _mm_loadu_si128((__m128i *)(eb_warped_filter + idx_final[4]));
-    __m128i filt_03 = _mm_loadu_si128((__m128i *)(eb_warped_filter + idx_final[6]));
+    __m128i filt_00 = _mm_loadu_si128((__m128i *)(svt_aom_warped_filter + idx_final[0]));
+    __m128i filt_01 = _mm_loadu_si128((__m128i *)(svt_aom_warped_filter + idx_final[2]));
+    __m128i filt_02 = _mm_loadu_si128((__m128i *)(svt_aom_warped_filter + idx_final[4]));
+    __m128i filt_03 = _mm_loadu_si128((__m128i *)(svt_aom_warped_filter + idx_final[6]));
 
     __m256i filt_0 = _mm256_broadcastsi128_si256(filt_00);
     __m256i filt_1 = _mm256_broadcastsi128_si256(filt_01);
@@ -622,10 +622,10 @@ static INLINE void prepare_vertical_filter_coeffs_delta0_avx2(int gamma, int sy,
     coeffs[2] = _mm256_unpacklo_epi64(res_2, res_3);
     coeffs[3] = _mm256_unpackhi_epi64(res_2, res_3);
 
-    filt_00 = _mm_loadu_si128((__m128i *)(eb_warped_filter + idx_final[1]));
-    filt_01 = _mm_loadu_si128((__m128i *)(eb_warped_filter + idx_final[3]));
-    filt_02 = _mm_loadu_si128((__m128i *)(eb_warped_filter + idx_final[5]));
-    filt_03 = _mm_loadu_si128((__m128i *)(eb_warped_filter + idx_final[7]));
+    filt_00 = _mm_loadu_si128((__m128i *)(svt_aom_warped_filter + idx_final[1]));
+    filt_01 = _mm_loadu_si128((__m128i *)(svt_aom_warped_filter + idx_final[3]));
+    filt_02 = _mm_loadu_si128((__m128i *)(svt_aom_warped_filter + idx_final[5]));
+    filt_03 = _mm_loadu_si128((__m128i *)(svt_aom_warped_filter + idx_final[7]));
 
     filt_0 = _mm256_broadcastsi128_si256(filt_00);
     filt_1 = _mm256_broadcastsi128_si256(filt_01);
@@ -644,8 +644,8 @@ static INLINE void prepare_vertical_filter_coeffs_delta0_avx2(int gamma, int sy,
 }
 
 static INLINE void prepare_vertical_filter_coeffs_gamma0_avx2(int delta, int sy, __m256i *coeffs) {
-    const __m128i filt_0 = _mm_loadu_si128((__m128i *)(eb_warped_filter + (sy >> WARPEDDIFF_PREC_BITS)));
-    const __m128i filt_1 = _mm_loadu_si128((__m128i *)(eb_warped_filter + ((sy + delta) >> WARPEDDIFF_PREC_BITS)));
+    const __m128i filt_0 = _mm_loadu_si128((__m128i *)(svt_aom_warped_filter + (sy >> WARPEDDIFF_PREC_BITS)));
+    const __m128i filt_1 = _mm_loadu_si128((__m128i *)(svt_aom_warped_filter + ((sy + delta) >> WARPEDDIFF_PREC_BITS)));
 
     __m256i res_0 = _mm256_inserti128_si256(_mm256_castsi128_si256(filt_0), filt_1, 0x1);
 

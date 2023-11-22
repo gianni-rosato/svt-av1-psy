@@ -53,7 +53,7 @@
 // [-1, 2) * WARPEDPIXEL_PREC_SHIFTS.
 // We need an extra 2 taps to fit this in, for a total of 8 taps.
 /* clang-format off */
-EB_ALIGN(16) const int16_t eb_warped_filter[WARPEDPIXEL_PREC_SHIFTS * 3 + 1][8] = {
+EB_ALIGN(16) const int16_t svt_aom_warped_filter[WARPEDPIXEL_PREC_SHIFTS * 3 + 1][8] = {
 #if WARPEDPIXEL_PREC_BITS == 6
         // [-1, 0)
         { 0,   0, 127,   1,   0, 0, 0, 0 }, { 0, - 1, 127,   2,   0, 0, 0, 0 },
@@ -620,7 +620,7 @@ void svt_av1_warp_affine_c(const int32_t *mat, const uint8_t *ref, int width, in
                     // At this point, sx = sx4 + alpha * l + beta * k
                     const int offs = ROUND_POWER_OF_TWO(sx, WARPEDDIFF_PREC_BITS) + WARPEDPIXEL_PREC_SHIFTS;
                     assert(offs >= 0 && offs <= WARPEDPIXEL_PREC_SHIFTS * 3);
-                    const int16_t *coeffs = eb_warped_filter[offs];
+                    const int16_t *coeffs = svt_aom_warped_filter[offs];
 
                     int32_t sum = 1 << offset_bits_horiz;
                     for (int m = 0; m < 8; ++m) {
@@ -643,7 +643,7 @@ void svt_av1_warp_affine_c(const int32_t *mat, const uint8_t *ref, int width, in
                     // At this point, sy = sy4 + gamma * l + delta * k
                     const int offs = ROUND_POWER_OF_TWO(sy, WARPEDDIFF_PREC_BITS) + WARPEDPIXEL_PREC_SHIFTS;
                     assert(offs >= 0 && offs <= WARPEDPIXEL_PREC_SHIFTS * 3);
-                    const int16_t *coeffs = eb_warped_filter[offs];
+                    const int16_t *coeffs = svt_aom_warped_filter[offs];
 
                     int32_t sum = 1 << offset_bits_vert;
                     for (int m = 0; m < 8; ++m) sum += tmp[(k + m + 4) * 8 + (l + 4)] * coeffs[m];
@@ -764,7 +764,7 @@ void svt_aom_dec_svt_av1_highbd_warp_affine_c(const int32_t *mat, const uint16_t
                     int       ix   = ix4 + l - 3;
                     const int offs = ROUND_POWER_OF_TWO(sx, WARPEDDIFF_PREC_BITS) + WARPEDPIXEL_PREC_SHIFTS;
                     assert(offs >= 0 && offs <= WARPEDPIXEL_PREC_SHIFTS * 3);
-                    const int16_t *coeffs = eb_warped_filter[offs];
+                    const int16_t *coeffs = svt_aom_warped_filter[offs];
 
                     int32_t sum = 1 << offset_bits_horiz;
                     for (int m = 0; m < 8; ++m) {
@@ -784,7 +784,7 @@ void svt_aom_dec_svt_av1_highbd_warp_affine_c(const int32_t *mat, const uint16_t
                 for (int l = -4; l < AOMMIN(4, p_col + p_width - j - 4); ++l) {
                     const int offs = ROUND_POWER_OF_TWO(sy, WARPEDDIFF_PREC_BITS) + WARPEDPIXEL_PREC_SHIFTS;
                     assert(offs >= 0 && offs <= WARPEDPIXEL_PREC_SHIFTS * 3);
-                    const int16_t *coeffs = eb_warped_filter[offs];
+                    const int16_t *coeffs = svt_aom_warped_filter[offs];
 
                     int32_t sum = 1 << offset_bits_vert;
                     for (int m = 0; m < 8; ++m) sum += tmp[(k + m + 4) * 8 + (l + 4)] * coeffs[m];
@@ -868,7 +868,7 @@ void svt_av1_highbd_warp_affine_c(const int32_t *mat, const uint8_t *ref8b, cons
                     int       ix   = ix4 + l - 3;
                     const int offs = ROUND_POWER_OF_TWO(sx, WARPEDDIFF_PREC_BITS) + WARPEDPIXEL_PREC_SHIFTS;
                     assert(offs >= 0 && offs <= WARPEDPIXEL_PREC_SHIFTS * 3);
-                    const int16_t *coeffs = eb_warped_filter[offs];
+                    const int16_t *coeffs = svt_aom_warped_filter[offs];
 
                     int32_t sum = 1 << offset_bits_horiz;
                     for (int m = 0; m < 8; ++m) {
@@ -890,7 +890,7 @@ void svt_av1_highbd_warp_affine_c(const int32_t *mat, const uint8_t *ref8b, cons
                 for (int l = -4; l < AOMMIN(4, p_col + p_width - j - 4); ++l) {
                     const int offs = ROUND_POWER_OF_TWO(sy, WARPEDDIFF_PREC_BITS) + WARPEDPIXEL_PREC_SHIFTS;
                     assert(offs >= 0 && offs <= WARPEDPIXEL_PREC_SHIFTS * 3);
-                    const int16_t *coeffs = eb_warped_filter[offs];
+                    const int16_t *coeffs = svt_aom_warped_filter[offs];
 
                     int32_t sum = 1 << offset_bits_vert;
                     for (int m = 0; m < 8; ++m) sum += tmp[(k + m + 4) * 8 + (l + 4)] * coeffs[m];

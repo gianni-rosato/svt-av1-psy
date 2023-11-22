@@ -72,7 +72,7 @@ static INLINE int16x8_t horizontal_filter_8x1_f8(const uint8x16_t in, int sx, in
 static INLINE int16x8_t horizontal_filter_4x1_f1(const uint8x16_t in, int sx) {
     const int32x4_t add_const = vdupq_n_s32(1 << (8 + FILTER_BITS - 1));
 
-    int16x8_t f_s16 = vld1q_s16((int16_t *)(av1_warped_filter + (sx >> WARPEDDIFF_PREC_BITS)));
+    int16x8_t f_s16 = vld1q_s16((int16_t *)(svt_aom_warped_filter + (sx >> WARPEDDIFF_PREC_BITS)));
 
     int16x8_t in16_lo = vreinterpretq_s16_u16(vmovl_u8(vget_low_u8(in)));
     int16x8_t in16_hi = vreinterpretq_s16_u16(vmovl_u8(vget_high_u8(in)));
@@ -95,7 +95,7 @@ static INLINE int16x8_t horizontal_filter_4x1_f1(const uint8x16_t in, int sx) {
 static INLINE int16x8_t horizontal_filter_8x1_f1(const uint8x16_t in, int sx) {
     const int32x4_t add_const = vdupq_n_s32(1 << (8 + FILTER_BITS - 1));
 
-    int16x8_t f_s16 = vld1q_s16((int16_t *)(av1_warped_filter + (sx >> WARPEDDIFF_PREC_BITS)));
+    int16x8_t f_s16 = vld1q_s16((int16_t *)(svt_aom_warped_filter + (sx >> WARPEDDIFF_PREC_BITS)));
 
     int16x8_t in16_lo = vreinterpretq_s16_u16(vmovl_u8(vget_low_u8(in)));
     int16x8_t in16_hi = vreinterpretq_s16_u16(vmovl_u8(vget_high_u8(in)));
@@ -132,7 +132,7 @@ static INLINE void vertical_filter_4x1_f1(const int16x8_t *src, int32x4_t *res, 
     int16x4_t s6 = vget_low_s16(src[6]);
     int16x4_t s7 = vget_low_s16(src[7]);
 
-    int16x8_t f = vld1q_s16((int16_t *)(av1_warped_filter + (sy >> WARPEDDIFF_PREC_BITS)));
+    int16x8_t f = vld1q_s16((int16_t *)(svt_aom_warped_filter + (sy >> WARPEDDIFF_PREC_BITS)));
 
     int32x4_t m0123 = vmull_lane_s16(s0, vget_low_s16(f), 0);
     m0123           = vmlal_lane_s16(m0123, s1, vget_low_s16(f), 1);
@@ -188,7 +188,7 @@ static INLINE void vertical_filter_8x1_f1(const int16x8_t *src, int32x4_t *res_l
     int16x8_t s6 = src[6];
     int16x8_t s7 = src[7];
 
-    int16x8_t f = vld1q_s16((int16_t *)(av1_warped_filter + (sy >> WARPEDDIFF_PREC_BITS)));
+    int16x8_t f = vld1q_s16((int16_t *)(svt_aom_warped_filter + (sy >> WARPEDDIFF_PREC_BITS)));
 
     int32x4_t m0123 = vmull_lane_s16(vget_low_s16(s0), vget_low_s16(f), 0);
     m0123           = vmlal_lane_s16(m0123, vget_low_s16(s1), vget_low_s16(f), 1);
@@ -268,6 +268,7 @@ void svt_av1_warp_affine_neon(const int32_t *mat, const uint8_t *ref, int width,
 
     assert(IMPLIES(is_compound, dst != NULL));
     assert(IMPLIES(do_average, is_compound));
+    assert(6 == WARPEDPIXEL_PREC_BITS);
 
     for (int i = 0; i < p_height; i += 8) {
         for (int j = 0; j < p_width; j += 8) {
