@@ -2747,11 +2747,26 @@ void svt_aom_sig_deriv_pre_analysis_scs(SequenceControlSet *scs) {
         scs->seq_header.pic_based_rate_est = (uint8_t)scs->pic_based_rate_est;
 
     if (scs->static_config.enable_restoration_filtering == DEFAULT) {
+#if FTR_RES_ON_FLY4
+        // As allocation has already happened based on the initial input resolution, the resolution
+        // changes should not impact enabling restoration. For some presets, restoration is off for 8K
+        // and above and memory allocation is not performed. So, if we switch to smaller resolution, we need
+        // to keep restoration off
+        EbInputResolution init_input_resolution;
+        svt_aom_derive_input_resolution(&init_input_resolution,
+                                        scs->max_initial_input_luma_width * scs->max_initial_input_luma_height);
+        scs->seq_header.enable_restoration = svt_aom_get_enable_restoration(
+            scs->static_config.enc_mode,
+            scs->static_config.enable_restoration_filtering,
+            init_input_resolution,
+            scs->static_config.fast_decode);
+#else
         scs->seq_header.enable_restoration = svt_aom_get_enable_restoration(
             scs->static_config.enc_mode,
             scs->static_config.enable_restoration_filtering,
             scs->input_resolution,
             scs->static_config.fast_decode);
+#endif
     } else
         scs->seq_header.enable_restoration = (uint8_t)scs->static_config.enable_restoration_filtering;
 
@@ -9411,3 +9426,24 @@ void svt_aom_sig_deriv_mode_decision_config(SequenceControlSet *scs, PictureCont
         }
     }
 }
+#if FTR_RES_ON_FLY6
+/****************************************************
+* svt_aom_set_mfmv_config: enable/disable mfmv based on the enc_mode, input_res and pred_structure at sequence level
+****************************************************/
+void svt_aom_set_mfmv_config(SequenceControlSet *scs) {
+    if (scs->static_config.enable_mfmv == DEFAULT) {
+        if (scs->static_config.enc_mode <= ENC_M5)
+            scs->mfmv_enabled = 1;
+        else if ((scs->static_config.enc_mode <= ENC_M9) ||
+                 (scs->static_config.pred_structure != SVT_AV1_PRED_LOW_DELAY_B &&
+                  scs->static_config.enc_mode <= ENC_M11)) {
+            if (scs->input_resolution <= INPUT_SIZE_1080p_RANGE)
+                scs->mfmv_enabled = 1;
+            else
+                scs->mfmv_enabled = 0;
+        } else
+            scs->mfmv_enabled = 0;
+    } else
+        scs->mfmv_enabled = scs->static_config.enable_mfmv;
+}
+#endif

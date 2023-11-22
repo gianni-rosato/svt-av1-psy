@@ -2988,7 +2988,11 @@ void *svt_aom_rate_control_kernel(void *input_ptr) {
             } else {
                 if (!is_superres_recode_task) {
                     if (scs->static_config.rate_control_mode) {
+#if FTR_RATE_ON_FLY
+                        if (pcs->picture_number == 0 || pcs->ppcs->seq_param_changed) {
+#else
                         if (pcs->picture_number == 0) {
+#endif
                             set_rc_buffer_sizes(scs);
                             av1_rc_init(scs);
                         }
@@ -3009,6 +3013,11 @@ void *svt_aom_rate_control_kernel(void *input_ptr) {
                 if (scs->static_config.rate_control_mode == SVT_AV1_RC_MODE_CQP_OR_CRF) {
                     // if RC mode is 0,  fixed QP is used
                     // QP scaling based on POC number for Flat IPPP structure
+#if FTR_RATE_ON_FLY
+                    // make sure no run to run is cause
+                    if (pcs->ppcs->seq_param_changed)
+                        rc->active_worst_quality = quantizer_to_qindex[(uint8_t)scs->static_config.qp];
+#endif
                     frm_hdr->quantization_params.base_q_idx = quantizer_to_qindex[pcs->picture_qp];
                     if (pcs->ppcs->qp_on_the_fly == TRUE) {
                         pcs->picture_qp = (uint8_t)CLIP3((int32_t)scs->static_config.min_qp_allowed,
@@ -3302,7 +3311,9 @@ void *svt_aom_rate_control_kernel(void *input_ptr) {
             free_private_data_list((EbBufferHeaderType *)ppcs->input_pic_wrapper->object_ptr);
 
             svt_release_object(ppcs->input_pic_wrapper);
-
+#if FTR_RES_ON_FLY3
+            svt_release_object(ppcs->scs_wrapper);
+#endif
             svt_release_object(rc_tasks->pcs_wrapper);
 
             // Release Rate Control Tasks

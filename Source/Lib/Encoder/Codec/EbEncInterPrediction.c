@@ -294,8 +294,12 @@ static void model_rd_with_curvfit(PictureControlSet *pcs, BlockSize plane_bsize,
     const int           dequant_shift   = 3;
     int32_t             current_q_index = pcs->ppcs->frm_hdr.quantization_params.base_q_idx;
     SequenceControlSet *scs             = pcs->scs;
-    Dequants *const     dequants        = ctx->hbd_md ? &scs->deq_bd : &scs->deq_8bit;
-    int16_t             quantizer       = dequants->y_dequant_qtx[current_q_index][1];
+#if FTR_RES_ON_FLY2
+    Dequants *const dequants = ctx->hbd_md ? &scs->enc_ctx->deq_bd : &scs->enc_ctx->deq_8bit;
+#else
+    Dequants *const dequants = ctx->hbd_md ? &scs->deq_bd : &scs->deq_8bit;
+#endif
+    int16_t quantizer = dequants->y_dequant_qtx[current_q_index][1];
 
     const int qstep = AOMMAX(quantizer >> dequant_shift, 1);
 
@@ -2358,8 +2362,12 @@ static void model_rd_for_sb(PictureControlSet *pcs, EbPictureBufferDesc *predict
         } else {
             SequenceControlSet *scs             = pcs->scs;
             const uint8_t       current_q_index = pcs->ppcs->frm_hdr.quantization_params.base_q_idx;
-            Dequants *const     dequants        = ctx->hbd_md ? &scs->deq_bd : &scs->deq_8bit;
-            int16_t             quantizer       = dequants->y_dequant_qtx[current_q_index][1];
+#if FTR_RES_ON_FLY2
+            Dequants *const dequants = ctx->hbd_md ? &scs->enc_ctx->deq_bd : &scs->enc_ctx->deq_8bit;
+#else
+            Dequants *const dequants = ctx->hbd_md ? &scs->deq_bd : &scs->deq_8bit;
+#endif
+            int16_t quantizer = dequants->y_dequant_qtx[current_q_index][1];
             model_rd_from_sse(plane == 0 ? ctx->blk_geom->bsize : ctx->blk_geom->bsize_uv,
                               quantizer,
                               bit_depth,

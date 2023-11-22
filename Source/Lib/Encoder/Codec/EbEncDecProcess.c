@@ -555,36 +555,64 @@ void svt_aom_recon_output(PictureControlSet *pcs, SequenceControlSet *scs) {
                 recon_w = recon_ptr->max_width; //ALIGN_POWER_OF_TWO(recon_ptr->width, 3);
                 recon_h = recon_ptr->max_height; //ALIGN_POWER_OF_TWO(recon_ptr->height, 3);
             }
-
+#if FTR_RES_ON_FLY5
+            // Keep the recon at full resolution and show the lower resolution video on the top right part
+            // Y Recon Samples
+            sample_total_count = ((pcs->scs->max_initial_input_luma_width - scs->max_initial_input_pad_right) *
+                                  (pcs->scs->max_initial_input_luma_height - scs->max_initial_input_pad_bottom))
+                << is_16bit;
+#else
             // Y Recon Samples
             sample_total_count = ((recon_w - scs->pad_right) * (recon_h - scs->pad_bottom)) << is_16bit;
-            recon_read_ptr     = recon_ptr->buffer_y + (recon_ptr->org_y << is_16bit) * recon_ptr->stride_y +
+#endif
+            recon_read_ptr = recon_ptr->buffer_y + (recon_ptr->org_y << is_16bit) * recon_ptr->stride_y +
                 (recon_ptr->org_x << is_16bit);
             recon_write_ptr = &(output_recon_ptr->p_buffer[output_recon_ptr->n_filled_len]);
-
+#if FTR_RES_ON_FLY5
+            // Reset the Luma buffer for the case on changing the resolution on the fly
+            memset(recon_write_ptr, 0, sample_total_count);
+#endif
             CHECK_REPORT_ERROR((output_recon_ptr->n_filled_len + sample_total_count <= output_recon_ptr->n_alloc_len),
                                enc_ctx->app_callback_ptr,
                                EB_ENC_ROB_OF_ERROR);
 
             // Initialize Y recon buffer
-            svt_aom_picture_copy_kernel(recon_read_ptr,
-                                        recon_ptr->stride_y,
-                                        recon_write_ptr,
-                                        recon_w - scs->pad_right,
-                                        recon_w - scs->pad_right,
-                                        recon_h - scs->pad_bottom,
-                                        1 << is_16bit);
+            svt_aom_picture_copy_kernel(
+                recon_read_ptr,
+                recon_ptr->stride_y,
+                recon_write_ptr,
+#if FTR_RES_ON_FLY5
+                pcs->scs->max_initial_input_luma_width - scs->pad_right, // use the full res stride
+#else
+                recon_w - scs->pad_right,
+#endif
+                recon_w - scs->pad_right,
+                recon_h - scs->pad_bottom,
+                1 << is_16bit);
 
             output_recon_ptr->n_filled_len += sample_total_count;
 
             // U Recon Samples
+#if FTR_RES_ON_FLY5
+            // Keep the recon at full resolution and show the lower resolution video on the top right part
+            sample_total_count =
+                (((pcs->scs->max_initial_input_luma_width + ss_x - scs->max_initial_input_pad_right) >> ss_x) *
+                 ((pcs->scs->max_initial_input_luma_height + ss_y - scs->max_initial_input_pad_bottom) >> ss_y))
+                << is_16bit;
+#else
             sample_total_count =
                 (((recon_w + ss_x - scs->pad_right) >> ss_x) * ((recon_h + ss_y - scs->pad_bottom) >> ss_y))
                 << is_16bit;
+#endif
             recon_read_ptr = recon_ptr->buffer_cb + ((recon_ptr->org_y << is_16bit) >> ss_y) * recon_ptr->stride_cb +
                 ((recon_ptr->org_x << is_16bit) >> ss_x);
             recon_write_ptr = &(output_recon_ptr->p_buffer[output_recon_ptr->n_filled_len]);
 
+#if FTR_RES_ON_FLY5
+            // Reset the Chroma buffer for the case on changing the resolution on the fly
+            memset(recon_write_ptr, 0, sample_total_count);
+
+#endif
             CHECK_REPORT_ERROR((output_recon_ptr->n_filled_len + sample_total_count <= output_recon_ptr->n_alloc_len),
                                enc_ctx->app_callback_ptr,
                                EB_ENC_ROB_OF_ERROR);
@@ -593,30 +621,47 @@ void svt_aom_recon_output(PictureControlSet *pcs, SequenceControlSet *scs) {
             svt_aom_picture_copy_kernel(recon_read_ptr,
                                         recon_ptr->stride_cb,
                                         recon_write_ptr,
+#if FTR_RES_ON_FLY5
+                                        (pcs->scs->max_initial_input_luma_width + ss_x - scs->pad_right) >> ss_x,
+#else
                                         (recon_w + ss_x - scs->pad_right) >> ss_x,
+#endif
                                         (recon_w + ss_x - scs->pad_right) >> ss_x,
                                         (recon_h + ss_y - scs->pad_bottom) >> ss_y,
                                         1 << is_16bit);
             output_recon_ptr->n_filled_len += sample_total_count;
 
             // V Recon Samples
+#if FTR_RES_ON_FLY5
+            sample_total_count =
+                (((pcs->scs->max_initial_input_luma_width + ss_x - scs->max_initial_input_pad_right) >> ss_x) *
+                 ((pcs->scs->max_initial_input_luma_height + ss_y - scs->max_initial_input_pad_bottom) >> ss_y))
+                << is_16bit;
+#else
             sample_total_count =
                 (((recon_w + ss_x - scs->pad_right) >> ss_x) * ((recon_h + ss_y - scs->pad_bottom) >> ss_y))
                 << is_16bit;
+#endif
             recon_read_ptr = recon_ptr->buffer_cr + ((recon_ptr->org_y << is_16bit) >> ss_y) * recon_ptr->stride_cr +
                 ((recon_ptr->org_x << is_16bit) >> ss_x);
             recon_write_ptr = &(output_recon_ptr->p_buffer[output_recon_ptr->n_filled_len]);
-
+#if FTR_RES_ON_FLY5
+            // Reset the Chroma buffer for the case on changing the resolution on the fly
+            memset(recon_write_ptr, 0, sample_total_count);
+#endif
             CHECK_REPORT_ERROR((output_recon_ptr->n_filled_len + sample_total_count <= output_recon_ptr->n_alloc_len),
                                enc_ctx->app_callback_ptr,
                                EB_ENC_ROB_OF_ERROR);
 
             // Initialize V recon buffer
-
             svt_aom_picture_copy_kernel(recon_read_ptr,
                                         recon_ptr->stride_cr,
                                         recon_write_ptr,
+#if FTR_RES_ON_FLY5
+                                        (pcs->scs->max_initial_input_luma_width + ss_x - scs->pad_right) >> ss_x,
+#else
                                         (recon_w + ss_x - scs->pad_right) >> ss_x,
+#endif
                                         (recon_w + ss_x - scs->pad_right) >> ss_x,
                                         (recon_h + ss_y - scs->pad_bottom) >> ss_y,
                                         1 << is_16bit);

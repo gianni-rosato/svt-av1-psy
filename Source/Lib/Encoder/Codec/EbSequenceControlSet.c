@@ -101,6 +101,17 @@ EbErrorType svt_sequence_control_set_ctor(SequenceControlSet *scs, EbPtr object_
 
     return EB_ErrorNone;
 }
+#if FTR_RES_ON_FLY
+EbErrorType svt_aom_scs_set_creator(EbPtr *object_dbl_ptr, EbPtr object_init_data_ptr) {
+    SequenceControlSet *obj;
+
+    *object_dbl_ptr = NULL;
+    EB_NEW(obj, svt_sequence_control_set_ctor, object_init_data_ptr);
+    *object_dbl_ptr = obj;
+
+    return EB_ErrorNone;
+}
+#endif
 extern EbErrorType svt_aom_derive_input_resolution(EbInputResolution *input_resolution, uint32_t inputSize) {
     EbErrorType return_error = EB_ErrorNone;
     if (inputSize < INPUT_SIZE_240p_TH)
@@ -125,6 +136,9 @@ static void svt_sequence_control_set_instance_dctor(EbPtr p) {
     EbSequenceControlSetInstance *obj = (EbSequenceControlSetInstance *)p;
     EB_DELETE(obj->enc_ctx);
     EB_DESTROY_SEMAPHORE(obj->scs->ref_buffer_available_semaphore);
+#if FTR_RES_ON_FLY
+    EB_DESTROY_MUTEX(obj->config_mutex);
+#endif
     EB_DELETE(obj->scs);
 }
 
@@ -135,6 +149,9 @@ EbErrorType svt_sequence_control_set_instance_ctor(EbSequenceControlSetInstance 
     EB_NEW(object_ptr->scs, svt_sequence_control_set_ctor, NULL);
     object_ptr->scs->enc_ctx = object_ptr->enc_ctx;
 
+#if FTR_RES_ON_FLY
+    EB_CREATE_MUTEX(object_ptr->config_mutex);
+#endif
     return EB_ErrorNone;
 }
 
@@ -274,3 +291,47 @@ EbErrorType svt_aom_sb_geom_init(SequenceControlSet *scs) {
 
     return 0;
 }
+#if FTR_RES_ON_FLY
+/************************************************
+ * Sequence Control Set Copy
+ ************************************************/
+EbErrorType copy_sequence_control_set(SequenceControlSet *dst, SequenceControlSet *src) {
+    if (dst->sb_geom != NULL)
+        EB_FREE_ARRAY(dst->sb_geom);
+    if (dst->b64_geom != NULL)
+        EB_FREE_ARRAY(dst->b64_geom);
+    // Copy the non-pointer members
+    *dst = *src;
+
+    EB_MALLOC_ARRAY(dst->b64_geom, dst->b64_total_count);
+    memcpy(dst->b64_geom, src->b64_geom, sizeof(B64Geom) * dst->b64_total_count);
+    EB_MALLOC_ARRAY(dst->sb_geom, dst->sb_total_count);
+    memcpy(dst->sb_geom, src->sb_geom, sizeof(SbGeom) * dst->sb_total_count);
+
+    if (src->static_config.frame_scale_evts.start_frame_nums) {
+        EB_NO_THROW_MALLOC(dst->static_config.frame_scale_evts.start_frame_nums,
+                           sizeof(int64_t) * src->static_config.frame_scale_evts.evt_num);
+        memcpy(dst->static_config.frame_scale_evts.start_frame_nums,
+               src->static_config.frame_scale_evts.start_frame_nums,
+               sizeof(int64_t) * src->static_config.frame_scale_evts.evt_num);
+    }
+    if (src->static_config.frame_scale_evts.resize_kf_denoms) {
+        EB_NO_THROW_MALLOC(dst->static_config.frame_scale_evts.resize_kf_denoms,
+                           sizeof(int32_t) * src->static_config.frame_scale_evts.evt_num);
+        memcpy(dst->static_config.frame_scale_evts.resize_kf_denoms,
+               src->static_config.frame_scale_evts.resize_kf_denoms,
+               sizeof(int32_t) * src->static_config.frame_scale_evts.evt_num);
+    }
+    if (src->static_config.frame_scale_evts.resize_denoms) {
+        EB_NO_THROW_MALLOC(dst->static_config.frame_scale_evts.resize_denoms,
+                           sizeof(int32_t) * src->static_config.frame_scale_evts.evt_num);
+        memcpy(dst->static_config.frame_scale_evts.resize_denoms,
+               src->static_config.frame_scale_evts.resize_denoms,
+               sizeof(int32_t) * src->static_config.frame_scale_evts.evt_num);
+    }
+
+    // Continue this process for all other pointers within the struct...
+
+    return EB_ErrorNone;
+}
+#endif

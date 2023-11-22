@@ -230,7 +230,13 @@ extern EbErrorType svt_picture_buffer_desc_ctor_noy8b(EbPictureBufferDesc *objec
 extern EbErrorType svt_picture_buffer_desc_ctor(EbPictureBufferDesc *object_ptr, const EbPtr object_init_data_ptr);
 
 extern EbErrorType svt_recon_picture_buffer_desc_ctor(EbPictureBufferDesc *object_ptr, EbPtr object_init_data_ptr);
-
+#if FTR_RES_ON_FLY4
+extern EbErrorType svt_picture_buffer_desc_noy8b_update(EbPictureBufferDesc *object_ptr,
+                                                        const EbPtr          object_init_data_ptr);
+extern EbErrorType svt_picture_buffer_desc_update(EbPictureBufferDesc *pictureBufferDescPtr,
+                                                  const EbPtr          object_init_data_ptr);
+extern EbErrorType svt_recon_picture_buffer_desc_update(EbPictureBufferDesc *object_ptr, EbPtr object_init_data_ptr);
+#endif
 #ifdef __cplusplus
 }
 #endif

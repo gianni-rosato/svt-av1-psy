@@ -97,7 +97,9 @@ typedef struct EncodeContext {
     EbFifo *reference_picture_pool_fifo_ptr;
     EbFifo *pa_reference_picture_pool_fifo_ptr;
     EbFifo *tpl_reference_picture_pool_fifo_ptr;
+#if !FTR_RES_ON_FLY
     EbFifo *down_scaled_picture_pool_fifo_ptr;
+#endif
 
     // Picture Decision Reorder Queue
     PictureDecisionReorderEntry **picture_decision_reorder_queue;
@@ -201,6 +203,12 @@ typedef struct EncodeContext {
     //Superblock end index for cycling refresh through the frame.
     uint32_t         cr_sb_end;
     SvtAv1RoiMapEvt *roi_map_evt;
+#if FTR_RES_ON_FLY2
+    Quants   quants_bd; // follows input bit depth
+    Dequants deq_bd; // follows input bit depth
+    Quants   quants_8bit; // 8bit
+    Dequants deq_8bit; // 8bit
+#endif
 } EncodeContext;
 
 typedef struct EncodeContextInitData {

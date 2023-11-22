@@ -294,6 +294,12 @@ typedef enum {
     //FILM_GRAIN_PARAM,        // passing film grain parameters per picture
     REF_FRAME_SCALING_EVENT, // reference frame scaling data per picture
     ROI_MAP_EVENT, // ROI map data per picture
+#if FTR_RES_ON_FLY6
+    RES_CHANGE_EVENT, // resolution change data per picture (KF only)
+#endif
+#if FTR_RATE_ON_FLY
+    RATE_CHANGE_EVENT, // Rate change data per picture (KF only)
+#endif
     PRIVATE_DATA_TYPES // end of private data types
 } PrivDataType;
 typedef struct EbPrivDataNode {
@@ -321,6 +327,21 @@ typedef struct SvtAv1RoiMap {
     int16_t         *qp_map;
     char            *buf;
 } SvtAv1RoiMap;
+#if FTR_RES_ON_FLY6
+typedef struct SvtAv1InputPicDef {
+    uint16_t input_luma_width; // input luma width aligned to 8, this is used during encoding
+    uint16_t input_luma_height; // input luma height aligned to 8, this is used during encoding
+    uint16_t input_pad_bottom;
+    uint16_t input_pad_right;
+} SvtAv1InputPicDef;
+#endif
+#if FTR_RATE_ON_FLY
+typedef struct SvtAv1RateInfo {
+    // Sequence QP used in CRF/CQP algorithm. Over writes the sequence QP.
+    uint32_t seq_qp;
+    uint32_t target_bit_rate;
+} SvtAv1RateInfo;
+#endif
 /**
 CPU FLAGS
 */

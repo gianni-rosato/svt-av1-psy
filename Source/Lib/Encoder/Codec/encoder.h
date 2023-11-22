@@ -89,8 +89,10 @@ typedef struct {
     // Indicates the minimum qindex that can be used by the quantizer i.e. the
     // best quality qindex.
     int best_allowed_q;
+#if !FTR_RATE_ON_FLY
     // Indicates the Constant/Constrained Quality level.
     int cq_level;
+#endif
     // Indicates if the encoding mode is vbr, cbr, constrained quality or constant
     // quality.
     enum aom_rc_mode mode;

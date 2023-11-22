@@ -209,6 +209,9 @@ typedef struct EncDecSet {
     struct PictureParentControlSet *ppcs; // The parent of this PCS.
     EbObjectWrapper                *ppcs_wrapper;
     uint16_t                        b64_total_count;
+#if FTR_RES_ON_FLY4
+    uint16_t init_b64_total_count;
+#endif
 } EncDecSet;
 typedef struct CdefDirData {
     uint8_t dir[CDEF_NBLOCKS][CDEF_NBLOCKS];
@@ -232,7 +235,6 @@ typedef struct PictureControlSet {
 
     EbObjectWrapper *c_pcs_wrapper_ptr;
 
-    // Reference Lists
     // Reference Lists
     EbObjectWrapper *ref_pic_ptr_array[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
     // EB_S64 refPicPocArray[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
@@ -281,7 +283,13 @@ typedef struct PictureControlSet {
     // Rate Control
     uint8_t picture_qp;
     // SB Array
-    uint16_t     b64_total_count;
+    uint16_t b64_total_count;
+#if FTR_RES_ON_FLY4
+    uint16_t init_b64_total_count;
+    uint16_t frame_width;
+    uint16_t frame_height;
+#endif
+
     SuperBlock **sb_ptr_array;
     uint8_t     *sb_intra;
     uint8_t     *sb_skip;
@@ -477,9 +485,12 @@ typedef struct TileGroupInfo {
     uint16_t tile_group_tile_end_y;
 } TileGroupInfo;
 typedef struct MotionEstimationData {
-    EbDctor        dctor;
-    MeSbResults  **me_results;
-    uint16_t       b64_total_count;
+    EbDctor       dctor;
+    MeSbResults **me_results;
+    uint16_t      b64_total_count;
+#if FTR_RES_ON_FLY4
+    uint16_t init_b64_total_count;
+#endif
     uint8_t        max_cand; // total max me candidates given the active references
     uint8_t        max_refs; // total max active references
     uint8_t        max_l0; // max active refs in L0
@@ -719,6 +730,9 @@ typedef struct PictureParentControlSet {
     Bool                       is_chroma_downsampled_picture_ptr_owner;
     PredictionStructure       *pred_struct_ptr; // need to check
     struct SequenceControlSet *scs;
+#if FTR_RES_ON_FLY
+    EbObjectWrapper *scs_wrapper;
+#endif
     EbObjectWrapper           *p_pcs_wrapper_ptr;
     EbObjectWrapper           *previous_picture_control_set_wrapper_ptr;
     EbObjectWrapper           *output_stream_wrapper_ptr;
@@ -1121,6 +1135,9 @@ typedef struct PictureParentControlSet {
     // Average absolute histogram deviation of all frames in the TF window to the current (central) frame
     uint32_t tf_avg_ahd_error;
     bool     tf_active_region_present;
+#if FTR_RES_ON_FLY
+    bool seq_param_changed;
+#endif
 } PictureParentControlSet;
 
 typedef struct TplDispResults {
@@ -1219,7 +1236,12 @@ EbErrorType svt_aom_recon_coef_creator(EbPtr *object_dbl_ptr, EbPtr object_init_
 EbErrorType svt_aom_picture_parent_control_set_creator(EbPtr *object_dbl_ptr, EbPtr object_init_data_ptr);
 EbErrorType svt_aom_me_creator(EbPtr *object_dbl_ptr, EbPtr object_init_data_ptr);
 EbErrorType svt_aom_me_sb_results_ctor(MeSbResults *obj_ptr, PictureControlSetInitData *init_data_ptr);
-
+#if FTR_RES_ON_FLY4
+EbErrorType ppcs_update_param(PictureParentControlSet *ppcs);
+EbErrorType pcs_update_param(PictureControlSet *pcs);
+EbErrorType me_update_param(MotionEstimationData *me_data, struct SequenceControlSet *scs);
+EbErrorType recon_coef_update_param(EncDecSet *recon_coef, struct SequenceControlSet *scs);
+#endif
 extern Bool svt_aom_is_pic_skipped(PictureParentControlSet *pcs);
 void svt_aom_get_gm_needed_resolutions(uint8_t ds_lvl, bool *gm_need_full, bool *gm_need_quart, bool *gm_need_sixteen);
 #ifdef __cplusplus

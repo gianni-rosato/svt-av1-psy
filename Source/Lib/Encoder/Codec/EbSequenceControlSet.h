@@ -147,10 +147,18 @@ typedef struct SequenceControlSet {
     uint16_t          subsampling_y;
     uint16_t          max_input_luma_width; // input luma width aligned to 8, this is used during encoding
     uint16_t          max_input_luma_height; // input luma height aligned to 8, this is used during encoding
-    uint16_t          max_input_chroma_width;
-    uint16_t          max_input_chroma_height;
-    uint16_t          max_input_pad_bottom;
-    uint16_t          max_input_pad_right;
+#if !FTR_RES_ON_FLY
+    uint16_t max_input_chroma_width;
+    uint16_t max_input_chroma_height;
+#endif
+    uint16_t max_input_pad_bottom;
+    uint16_t max_input_pad_right;
+#if FTR_RES_ON_FLY4
+    uint16_t max_initial_input_luma_width; // max init time input luma width aligned to 8
+    uint16_t max_initial_input_luma_height; // max init time input luma height aligned to 8
+    uint16_t max_initial_input_pad_bottom; // max init time input pad bottom
+    uint16_t max_initial_input_pad_right; // max init time input pad right
+#endif
     uint32_t          chroma_width;
     uint32_t          chroma_height;
     uint32_t          pad_right;
@@ -194,6 +202,9 @@ typedef struct SequenceControlSet {
     uint32_t rest_segment_row_count;
     uint32_t tf_segment_column_count;
     uint32_t tf_segment_row_count;
+#if FTR_RES_ON_FLY6
+    unsigned int core_count;
+#endif
 
     /*!< Picture, reference, recon and input output buffer count */
     uint32_t picture_control_set_pool_init_count;
@@ -244,10 +255,12 @@ typedef struct SequenceControlSet {
     int32_t          lap_rc;
     TWO_PASS         twopass;
     double           double_frame_rate;
-    Quants           quants_bd; // follows input bit depth
-    Dequants         deq_bd; // follows input bit depth
-    Quants           quants_8bit; // 8bit
-    Dequants         deq_8bit; // 8bit
+#if !FTR_RES_ON_FLY2
+    Quants   quants_bd; // follows input bit depth
+    Dequants deq_bd; // follows input bit depth
+    Quants   quants_8bit; // 8bit
+    Dequants deq_8bit; // 8bit
+#endif
     ScaleFactors     sf_identity;
     int32_t          nmv_vec_cost[MV_JOINTS];
     int32_t          nmv_costs[2][MV_VALS];
@@ -414,6 +427,9 @@ typedef struct EbSequenceControlSetInstance {
     EbDctor             dctor;
     EncodeContext      *enc_ctx;
     SequenceControlSet *scs;
+#if FTR_RES_ON_FLY
+    EbHandle config_mutex;
+#endif
 } EbSequenceControlSetInstance;
 
 /**************************************
@@ -424,6 +440,10 @@ extern EbErrorType svt_sequence_control_set_instance_ctor(EbSequenceControlSetIn
 extern EbErrorType svt_aom_b64_geom_init(SequenceControlSet *scs);
 
 extern EbErrorType svt_aom_derive_input_resolution(EbInputResolution *input_resolution, uint32_t input_size);
+#if FTR_RES_ON_FLY
+extern EbErrorType copy_sequence_control_set(SequenceControlSet *dst, SequenceControlSet *src);
+extern EbErrorType svt_aom_scs_set_creator(EbPtr *object_dbl_ptr, EbPtr object_init_data_ptr);
+#endif
 
 EbErrorType svt_aom_sb_geom_init(SequenceControlSet *scs);
 

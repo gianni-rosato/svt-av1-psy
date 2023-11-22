@@ -33,12 +33,18 @@ struct _EbEncHandle {
     uint32_t encode_instance_total_count;
     uint32_t compute_segments_total_count_array;
     // Full Results Count
+#if FTR_RES_ON_FLY
+    uint32_t scs_pool_total_count;
+#else
     uint32_t pcs_pool_total_count;
-
+#endif
     // Picture Buffer Count
     uint32_t ref_pic_pool_total_count;
 
     // Config Set Pool & Active Array
+#if FTR_RES_ON_FLY
+    EbSystemResource **scs_pool_ptr_array; //*scs_pool_ptr
+#endif
     EbSequenceControlSetInstance **scs_instance_array;
 
     // Full Results
@@ -130,5 +136,7 @@ struct _EbEncHandle {
     bool eos_sent; // used to signal we sent the EOS to the app
     bool frame_received; // used to signal we received any frame from the app
 };
-
+#if FTR_RES_ON_FLY6
+void set_segments_numbers(SequenceControlSet *scs);
+#endif
 #endif // EbEncHandle_h

@@ -559,7 +559,15 @@ void *svt_aom_picture_manager_kernel(void *input_ptr) {
                             // reset reference object in case of its members are altered by superres
                             // tool
                             EbReferenceObject *ref = (EbReferenceObject *)ref_pic_wrapper->object_ptr;
+#if FTR_RES_ON_FLY5
+                            // if resolution has changed, and the ref_picsettings do not match scs settings, update ref_pic params
+                            if (ref->reference_picture->max_width != entry_scs_ptr->max_input_luma_width ||
+                                ref->reference_picture->max_height != entry_scs_ptr->max_input_luma_height)
+                                svt_reference_param_update(ref, entry_scs_ptr);
+                            svt_reference_object_reset(ref, entry_scs_ptr);
+#else
                             svt_reference_object_reset(ref, scs);
+#endif
                             // Give the new Reference a nominal live_count of 1
                             svt_object_inc_live_count(entry_ppcs->ref_pic_wrapper, 1);
 #if SRM_REPORT
@@ -572,7 +580,13 @@ void *svt_aom_picture_manager_kernel(void *input_ptr) {
                         svt_get_empty_object(context_ptr->recon_coef_fifo_ptr, &enc_dec_wrapper);
                         // Child PCS is released by Packetization
                         svt_object_inc_live_count(enc_dec_wrapper, 1);
-                        enc_dec_ptr                  = (EncDecSet *)enc_dec_wrapper->object_ptr;
+                        enc_dec_ptr = (EncDecSet *)enc_dec_wrapper->object_ptr;
+#if FTR_RES_ON_FLY5
+                        // if resolution has changed, and the recon pic settings do not match scs settings, update recon coeff params
+                        if (enc_dec_ptr->recon_pic->max_width != entry_scs_ptr->max_input_luma_width ||
+                            enc_dec_ptr->recon_pic->max_height != entry_scs_ptr->max_input_luma_height)
+                            recon_coef_update_param(enc_dec_ptr, entry_scs_ptr);
+#endif
                         enc_dec_ptr->enc_dec_wrapper = enc_dec_wrapper;
 
                         // 1.Link The Child PCS to its Parent
@@ -599,7 +613,13 @@ void *svt_aom_picture_manager_kernel(void *input_ptr) {
                         child_pcs->ppcs->av1_cm->child_pcs = child_pcs;
 
                         // 2. Have some common information between  ChildPCS and ParentPCS.
-                        child_pcs->scs                  = entry_ppcs->scs;
+                        child_pcs->scs = entry_ppcs->scs;
+#if FTR_RES_ON_FLY5
+                        // if resolution has changed, and the child_pcs settings do not match scs settings, update pcs params
+                        if (child_pcs->frame_width != child_pcs->scs->max_input_luma_width ||
+                            child_pcs->frame_height != child_pcs->scs->max_input_luma_height)
+                            pcs_update_param(child_pcs);
+#endif
                         child_pcs->picture_qp           = entry_ppcs->picture_qp;
                         child_pcs->picture_number       = entry_ppcs->picture_number;
                         child_pcs->slice_type           = entry_ppcs->slice_type;

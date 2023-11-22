@@ -70,3 +70,7 @@ uint8_t svt_aom_get_obmc_level(EncMode enc_mode, uint8_t fast_decode, EbInputRes
 void    svt_aom_set_nsq_ctrls(ModeDecisionContext *ctx, uint8_t nsq_level, uint8_t *allow_HVA_HVB, uint8_t *allow_HV4,
                               uint8_t *min_nsq_bsize);
 uint8_t svt_aom_get_tpl_synthesizer_block_size(int8_t tpl_level, uint32_t picture_width, uint32_t picture_height);
+
+#if FTR_RES_ON_FLY6
+void svt_aom_set_mfmv_config(SequenceControlSet *scs);
+#endif
