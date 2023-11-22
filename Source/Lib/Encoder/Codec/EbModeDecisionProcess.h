@@ -168,6 +168,12 @@ typedef struct ObmcControls {
     uint8_t trans_face_off;
     // if trans_face_off ON; perform the face-off for only the tran-MV that beats the best-class0 by at least trans_face_off_th percentage
     uint8_t trans_face_off_th;
+#if OPT_OBMC_REFINEMENT
+    // Specifies the search range @ the full-pel of OBMC
+    uint8_t fpel_search_range;
+    // Whether to search diagonal positions @ the full-pel of OBMC
+    uint8_t fpel_search_diag;
+#endif
 } ObmcControls;
 typedef struct TxtControls {
     uint8_t enabled;
@@ -215,7 +221,14 @@ typedef struct NearCountCtrls {
     // max # of near_near to consider
     uint8_t near_near_count;
 } NearCountCtrls;
-
+#if OPT_BIPRED3x3
+typedef struct Bipred3x3Controls {
+    uint8_t enabled;
+    uint8_t search_diag;
+    uint8_t use_best_list;
+    uint8_t use_l0_l1_dev;
+} Bipred3x3Controls;
+#endif
 typedef struct RefPruningControls {
     // 0: OFF; 1: use inter to inter distortion deviation to derive best_refs
     uint8_t enabled;
@@ -669,6 +682,10 @@ typedef struct WmCtrls {
     // Number of iterations to use in the refinement search; each iteration searches the cardinal
     // neighbours around the best-so-far position; 0 is no refinement
     uint8_t refinement_iterations;
+#if OPT_WARP_REFINEMENT
+    // Refinement search for diagonal positions
+    uint8_t refine_diag;
+#endif
     // Specifies the MD Stage where the wm refinement will take place. 0: Before MDS0.  1: At MDS1.  2: At MDS3.
     uint8_t refine_level;
     // Specifies minimum neighbour percentage for WM
@@ -1020,7 +1037,11 @@ typedef struct ModeDecisionContext {
     WmCtrls              wm_ctrls;
     UvCtrls              uv_ctrls;
     uint8_t              unipred3x3_injection;
+#if OPT_BIPRED3x3
+    Bipred3x3Controls    bipred3x3_ctrls;
+#else
     uint8_t              bipred3x3_injection;
+#endif
     uint8_t              redundant_blk;
     uint8_t              nic_level;
     uint8_t              svt_aom_inject_inter_candidates;

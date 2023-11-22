@@ -315,6 +315,10 @@ typedef struct Me8x8VarCtrls {
     uint32_t me_sr_div4_th;
     // If ME 8x8 SAD variance is below me_sr_div2_th, divide the search area width/height by 2
     uint32_t me_sr_div2_th;
+#if OPT_ME_8x8
+    // If ME 8x8 SAD variance is above me_sr_mult2_th, multiply the search area width/height by 2
+    uint32_t me_sr_mult2_th;
+#endif
 } Me8x8VarCtrls;
 #define SEARCH_REGION_COUNT 2
 typedef struct SearchArea {

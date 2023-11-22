@@ -97,6 +97,36 @@ static void get_ref_skip_percentage(PictureControlSet *pcs, uint8_t *skip_area) 
 
     *skip_area = skip_perc;
 }
+
+#if OPT_HP_MV
+// hp_area will be set to the % of hp area in two nearest ref frames
+static void get_ref_hp_percentage(PictureControlSet *pcs, int16_t *hp_area) {
+    assert(hp_area != NULL);
+    if (pcs->slice_type == I_SLICE) {
+        *hp_area = -1;
+        return;
+    }
+
+    int8_t             hp_perc_l0 = -1;
+    EbReferenceObject *ref_obj_l0 = (EbReferenceObject *)pcs->ref_pic_ptr_array[REF_LIST_0][0]->object_ptr;
+    hp_perc_l0                    = ref_obj_l0->slice_type == I_SLICE ? -1 : ref_obj_l0->hp_coded_area;
+
+    int8_t hp_perc_l1 = -1;
+    if (pcs->slice_type == B_SLICE) {
+        EbReferenceObject *ref_obj_l1 = (EbReferenceObject *)pcs->ref_pic_ptr_array[REF_LIST_1][0]->object_ptr;
+        hp_perc_l1                    = ref_obj_l1->slice_type == I_SLICE ? -1 : ref_obj_l1->hp_coded_area;
+    }
+    if (hp_perc_l0 == -1 && hp_perc_l1 == -1)
+        *hp_area = -1;
+    else if (hp_perc_l1 == -1)
+        *hp_area = hp_perc_l0;
+    else if (hp_perc_l0 == -1)
+        *hp_area = hp_perc_l1;
+    else
+        *hp_area = (hp_perc_l0 + hp_perc_l1) >> 1;
+}
+#endif
+
 static void free_private_data_list(EbBufferHeaderType *p) {
     EbPrivDataNode *p_node = (EbPrivDataNode *)p->p_app_private;
     while (p_node) {
@@ -1049,6 +1079,51 @@ int svt_aom_compute_rd_mult(PictureControlSet *pcs, uint8_t q_index, uint8_t me_
     }
     return (int)rdmult;
 }
+
+#if OPT_FAST_LAMBDA
+int svt_aom_compute_fast_lambda(PictureControlSet* pcs, uint8_t q_index, uint8_t me_q_index, uint8_t bit_depth) {
+    FrameType frame_type = pcs->ppcs->frm_hdr.frame_type;
+    // To set gf_update_type based on current TL vs. the max TL (e.g. for 5L, max TL is 4)
+    uint8_t temporal_layer_index = pcs->ppcs->temporal_layer_index;
+    uint8_t max_temporal_layer = pcs->ppcs->hierarchical_levels;
+    // Always use q_index for the derivation of the initial rdmult (i.e. don't use me_q_index)
+    int64_t rdmult = bit_depth == 8
+        ? av1_lambda_mode_decision8_bit_sad[q_index]
+        : av1lambda_mode_decision10_bit_sad[q_index];
+
+    // Update rdmult based on the frame's position in the miniGOP
+    uint8_t gf_update_type = frame_type == KEY_FRAME ? SVT_AV1_KF_UPDATE
+        : temporal_layer_index == 0 ? SVT_AV1_ARF_UPDATE
+        : temporal_layer_index < max_temporal_layer ? SVT_AV1_INTNL_ARF_UPDATE
+        : SVT_AV1_LF_UPDATE;
+    rdmult = (rdmult * rd_frame_type_factor[gf_update_type]) >> 7;
+    if (pcs->scs->stats_based_sb_lambda_modulation) {
+        int factor = 128;
+        if (pcs->ppcs->frm_hdr.delta_q_params.delta_q_present) {
+            int qdiff = q_index - pcs->ppcs->frm_hdr.quantization_params.base_q_idx;
+            if (qdiff < 0) {
+                factor = (qdiff <= -8) ? 90 : 115;
+            }
+            else if (qdiff > 0) {
+                factor = (qdiff <= 8) ? 135 : 150;
+            }
+        }
+        else {
+            int qdiff = me_q_index - pcs->ppcs->frm_hdr.quantization_params.base_q_idx;
+            if (qdiff < 0) {
+                factor = (qdiff <= -4) ? 100 : 115;
+            }
+            else if (qdiff > 0) {
+                factor = (qdiff <= 4) ? 135 : 150;
+            }
+        }
+
+        rdmult = (rdmult * factor) >> 7;
+    }
+    return (int)rdmult;
+}
+#endif
+
 static void sb_setup_lambda(PictureControlSet *pcs, SuperBlock *sb_ptr) {
     const Av1Common *const   cm       = pcs->ppcs->av1_cm;
     PictureParentControlSet *ppcs_ptr = pcs->ppcs;
@@ -2983,6 +3058,10 @@ void *svt_aom_rate_control_kernel(void *input_ptr) {
             get_ref_intra_percentage(pcs, &pcs->ref_intra_percentage);
             // Get skip % in ref frame
             get_ref_skip_percentage(pcs, &pcs->ref_skip_percentage);
+#if OPT_HP_MV
+            // Get hp % in ref frame
+            get_ref_hp_percentage(pcs, &pcs->ref_hp_percentage);
+#endif
             FrameHeader *frm_hdr = &pcs->ppcs->frm_hdr;
             rc                   = &scs->enc_ctx->rc;
             if (scs->passes > 1 && scs->static_config.max_bit_rate)

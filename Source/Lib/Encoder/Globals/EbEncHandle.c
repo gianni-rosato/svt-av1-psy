@@ -4589,8 +4589,27 @@ static void set_param_based_on_input(SequenceControlSet *scs)
         (scs->tpl_level && scs->input_resolution == INPUT_SIZE_240p_RANGE))
         scs->super_block_size = 64;
     else
+#if OPT_SB_SIZE && DIS_LPD0_128x128
+#if NEW_M0
+        if (scs->static_config.enc_mode <= ENC_M1)
+#else
+        if (scs->static_config.enc_mode <= ENC_MR)
+#endif
+            scs->super_block_size = 128;
+#if TUNE_SHIFT_PRESETS
+        else if (scs->static_config.enc_mode <= ENC_M6){
+#else
+        else if (scs->static_config.enc_mode <= ENC_M5){
+#endif
+            if (scs->static_config.qp <= 56)
+                scs->super_block_size = 64;
+            else
+                scs->super_block_size = 128;
+        }
+#else
         if (scs->static_config.enc_mode <= ENC_M3)
             scs->super_block_size = 128;
+#endif
         else
             scs->super_block_size = 64;
     // When switch frame is on, all renditions must have same super block size. See spec 5.5.1, 5.9.15.
@@ -4651,12 +4670,21 @@ static void set_param_based_on_input(SequenceControlSet *scs)
     for (SliceType slice_type = 0; slice_type < IDR_SLICE + 1; slice_type++)
         disallow_4x4 = MIN(disallow_4x4, svt_aom_get_disallow_4x4(scs->static_config.enc_mode, slice_type));
     if (scs->super_block_size == 128) {
+#if OPT_GEOM_SB12B_B4
+    if(!allow_HVA_HVB && disallow_4x4) {
+        scs->svt_aom_geom_idx = GEOM_8;
+        scs->max_block_cnt = 2377;
+    } else {
+#endif
 #if OPT_REMOVE_HVAB_GEOM
         scs->svt_aom_geom_idx = GEOM_7;
 #else
         scs->svt_aom_geom_idx = GEOM_6;
 #endif
         scs->max_block_cnt = 4421;
+#if OPT_GEOM_SB12B_B4
+        }
+#endif
     }
     else {
         //SB 64x64

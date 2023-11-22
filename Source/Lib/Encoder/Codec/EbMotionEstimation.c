@@ -1442,6 +1442,13 @@ static void integer_search_b64(PictureParentControlSet *pcs, uint32_t b64_index,
 
                 uint32_t me_8x8_cost_var = (uint32_t)(sum_ofsq_dist_8x8 / 64);
 
+#if OPT_ME_8x8
+                if (me_8x8_cost_var > me_ctx->me_8x8_var_ctrls.me_sr_mult2_th) {
+                    search_area_width = (MAX(1, search_area_width * 3 / 2) + 7) & ~0x7;
+                    search_area_height = MAX(1, search_area_height * 3 / 2);
+                }
+#endif
+
                 if (me_8x8_cost_var < me_ctx->me_8x8_var_ctrls.me_sr_div4_th) {
                     search_area_width = (MAX(1, search_area_width >> 2) + 7) & ~0x7;
                     search_area_height = MAX(1, search_area_height >> 2);

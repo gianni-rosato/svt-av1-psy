@@ -57,7 +57,13 @@ void svt_aom_assert_err(uint32_t condition, char *err_msg);
 
 #define ALT_REF_QP_THRESH 20
 // Q threshold for high precision mv.
+#if OPT_HP_MV
+#define HIGH_PRECISION_MV_QTHRESH_0 128
+#define HIGH_PRECISION_MV_QTHRESH_1 196
+#define HIGH_PRECISION_REF_PERC_TH 50
+#else
 #define HIGH_PRECISION_MV_QTHRESH 128
+#endif
 // Actions in the second pass: Frame and SB QP assignment and temporal filtering strenght change
 #define AOM_INTERP_EXTEND 4
 #define AOM_LEFT_TOP_MARGIN_PX(subsampling) ((AOM_BORDER_IN_PIXELS >> subsampling) - AOM_INTERP_EXTEND)

@@ -142,7 +142,12 @@ static const uint32_t parent_depth_offset[GEOM_TOT][6] = {{NOT_USED_VALUE, 64, 1
                                                           {NOT_USED_VALUE, 640, 160, 40, 8, NOT_USED_VALUE},
 #endif
                                                           {NOT_USED_VALUE, 832, 208, 52, 8, NOT_USED_VALUE},
+#if OPT_GEOM_SB12B_B4 //
+                                                          {NOT_USED_VALUE, 3320, 832, 208, 52, 8},
+                                                          {NOT_USED_VALUE, 1784, 448, 112, 28, NOT_USED_VALUE}};
+#else
                                                           {NOT_USED_VALUE, 3320, 832, 208, 52, 8}};
+#endif
 //gives the index of next quadrant child within a depth
 static const uint32_t ns_depth_offset[GEOM_TOT][6] = {{85, 21, 5, 1, NOT_USED_VALUE, NOT_USED_VALUE},
                                                       {105, 25, 5, 1, NOT_USED_VALUE, NOT_USED_VALUE},
@@ -153,7 +158,12 @@ static const uint32_t ns_depth_offset[GEOM_TOT][6] = {{85, 21, 5, 1, NOT_USED_VA
                                                       {849, 209, 49, 9, 1, NOT_USED_VALUE},
 #endif
                                                       {1101, 269, 61, 9, 1, NOT_USED_VALUE},
+#if OPT_GEOM_SB12B_B4 //
+                                                      {4421, 1101, 269, 61, 9, 1},
+                                                      {2377, 593, 145, 33, 5, NOT_USED_VALUE}};
+#else
                                                       {4421, 1101, 269, 61, 9, 1}};
+#endif
 //gives the next depth block(first qudrant child) from a given parent square
 static const uint32_t d1_depth_offset[GEOM_TOT][6] = {{1, 1, 1, 1, 1, NOT_USED_VALUE},
                                                       {5, 5, 1, 1, 1, NOT_USED_VALUE},
@@ -164,7 +174,12 @@ static const uint32_t d1_depth_offset[GEOM_TOT][6] = {{1, 1, 1, 1, 1, NOT_USED_V
                                                       {13, 13, 13, 5, 1, NOT_USED_VALUE},
 #endif
                                                       {25, 25, 25, 5, 1, NOT_USED_VALUE},
+#if OPT_GEOM_SB12B_B4 //
+                                                      {17, 25, 25, 25, 5, 1},
+                                                      {5, 13, 13, 13, 5, NOT_USED_VALUE}};
+#else
                                                       {17, 25, 25, 25, 5, 1}};
+#endif
 #if OPT_REORDER_GEOM
 // gives the index offset (relative to SQ block) of the given nsq shape
 // Different tables for 128x128 because H4/V4 are not allowed

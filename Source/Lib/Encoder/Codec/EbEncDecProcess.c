@@ -3163,7 +3163,11 @@ static void exaustive_light_pd1_features(ModeDecisionContext *md_ctx, PicturePar
             md_ctx->spatial_sse_ctrls.spatial_sse_full_loop_level == 0 && md_ctx->md_sq_me_ctrls.enabled == 0 &&
             md_ctx->md_pme_ctrls.enabled == 0 && md_ctx->txt_ctrls.enabled == 0 &&
             md_ctx->mds0_ctrls.mds0_dist_type != MDS0_SSD && md_ctx->unipred3x3_injection == 0 &&
+#if OPT_BIPRED3x3
+            md_ctx->bipred3x3_ctrls.enabled == 0 && md_ctx->inter_compound_mode == 0 && md_ctx->md_pic_obmc_level == 0 &&
+#else
             md_ctx->bipred3x3_injection == 0 && md_ctx->inter_compound_mode == 0 && md_ctx->md_pic_obmc_level == 0 &&
+#endif
             md_ctx->md_filter_intra_level == 0 && md_ctx->new_nearest_near_comb_injection == 0 &&
             md_ctx->md_palette_level == 0 && md_ctx->cand_reduction_ctrls.merge_inter_classes &&
             ppcs->gm_ctrls.enabled == 0 &&
@@ -3594,6 +3598,9 @@ void *svt_aom_mode_decision_kernel(void *input_ptr) {
         uint16_t tile_group_width_in_sb = pcs->ppcs->tile_group_info[ed_ctx->tile_group_index].tile_group_width_in_sb;
         ed_ctx->tot_intra_coded_area    = 0;
         ed_ctx->tot_skip_coded_area     = 0;
+#if OPT_HP_MV
+        ed_ctx->tot_hp_coded_area = 0;
+#endif
         // Bypass encdec for the first pass
         if (scs->static_config.pass == ENC_FIRST_PASS || svt_aom_is_pic_skipped(pcs->ppcs)) {
             svt_release_object(pcs->ppcs->me_data_wrapper);
@@ -3912,6 +3919,9 @@ void *svt_aom_mode_decision_kernel(void *input_ptr) {
             svt_block_on_mutex(pcs->intra_mutex);
             pcs->intra_coded_area += (uint32_t)ed_ctx->tot_intra_coded_area;
             pcs->skip_coded_area += (uint32_t)ed_ctx->tot_skip_coded_area;
+#if OPT_HP_MV
+            pcs->hp_coded_area += (uint32_t)ed_ctx->tot_hp_coded_area;
+#endif
             // Accumulate block selection
             pcs->enc_dec_coded_sb_count += (uint32_t)ed_ctx->coded_sb_count;
             Bool last_sb_flag = (pcs->sb_total_count == pcs->enc_dec_coded_sb_count);

@@ -1139,9 +1139,36 @@ static void bipred_3x3_candidates_injection(const SequenceControlSet *scs, Pictu
                                          me_block_results_ptr->ref1_list,
                                          list1_ref_index))
                     continue;
+
+#if OPT_BIPRED3x3
+                int8_t best_list = -1;
+                int    diff      = ((int)ctx->post_subpel_me_mv_cost[me_block_results_ptr->ref0_list][list0_ref_index] -
+                            (int)ctx->post_subpel_me_mv_cost[me_block_results_ptr->ref1_list][list1_ref_index]) *
+                    100;
+
+                if (ctx->bipred3x3_ctrls.use_l0_l1_dev != (uint8_t)~0)
+                    if (abs(diff) >
+                        (ctx->bipred3x3_ctrls.use_l0_l1_dev *
+                         (int)ctx->post_subpel_me_mv_cost[me_block_results_ptr->ref0_list][list0_ref_index]))
+                        return;
+
+                // Best list in terms of distortion reduction
+                if (ctx->bipred3x3_ctrls.use_best_list) {
+                    best_list = me_block_results_ptr->ref0_list;
+                    if (diff > 0) {
+                        best_list = me_block_results_ptr->ref1_list;
+                    }
+                }
+
+                if (best_list == -1 || best_list == me_block_results_ptr->ref0_list) {
+#endif
                 // (Best_L0, 8 Best_L1 neighbors)
                 for (uint32_t bipred_index = 0; bipred_index < BIPRED_3x3_REFINMENT_POSITIONS; ++bipred_index) {
+#if OPT_BIPRED3x3
+                    if (!ctx->bipred3x3_ctrls.search_diag) {
+#else
                     if (ctx->bipred3x3_injection >= 2) {
+#endif
                         if (allow_refinement_flag[bipred_index] == 0)
                             continue;
                     }
@@ -1244,10 +1271,17 @@ static void bipred_3x3_candidates_injection(const SequenceControlSet *scs, Pictu
                         }
                     }
                 }
-
+#if OPT_BIPRED3x3
+                }
+                if (best_list == -1 || best_list == me_block_results_ptr->ref1_list) {
+#endif
                 // (8 Best_L0 neighbors, Best_L1) :
                 for (uint32_t bipred_index = 0; bipred_index < BIPRED_3x3_REFINMENT_POSITIONS; ++bipred_index) {
+#if OPT_BIPRED3x3
+                    if (!ctx->bipred3x3_ctrls.search_diag) {
+#else
                     if (ctx->bipred3x3_injection >= 2) {
+#endif
                         if (allow_refinement_flag[bipred_index] == 0)
                             continue;
                     }
@@ -1354,6 +1388,9 @@ static void bipred_3x3_candidates_injection(const SequenceControlSet *scs, Pictu
                         }
                     }
                 }
+#if OPT_BIPRED3x3
+                }
+#endif
             }
         }
     }
@@ -2251,7 +2288,11 @@ uint8_t svt_aom_wm_motion_refinement(PictureControlSet *pcs, ModeDecisionContext
                                      ModeDecisionCandidateBuffer *cand_bf, ModeDecisionCandidate *cand,
                                      uint8_t list_idx, int shut_approx) {
     PictureParentControlSet *ppcs         = pcs->ppcs;
+#if OPT_WARP_REFINEMENT
+    const MV neighbors[9] = {{0, 0}, {0, -1}, {1, 0}, {0, 1}, {-1, 0}, {-1, 1}, {1, 1}, {1, -1}, {-1, -1}};
+#else
     const MV                 neighbors[5] = {{0, 0}, {0, -1}, {1, 0}, {0, 1}, {-1, 0}};
+#endif
 
     // Set info used to get MV cost
     int     *mvjcost       = ctx->md_rate_est_ctx->nmv_vec_cost;
@@ -2277,14 +2318,26 @@ uint8_t svt_aom_wm_motion_refinement(PictureControlSet *pcs, ModeDecisionContext
     ref_mv.col = cand->pred_mv[list_idx].x;
     ref_mv.row = cand->pred_mv[list_idx].y;
 
+#if OPT_WARP_REFINEMENT
     int max_iterations = ctx->wm_ctrls.refinement_iterations;
+#else
+    int      max_iterations = ctx->wm_ctrls.refinement_iterations;
+#endif
     if (ctx->inject_new_warp == 2)
         max_iterations = MIN(max_iterations, 2);
     int      tot_checked_pos = 0;
+#if OPT_WARP_REFINEMENT
+    uint32_t mv_record[256];
+#else
     uint32_t mv_record[64];
+#endif
     for (int iter = 0; iter < max_iterations; iter++) {
         // search the (0,0) offset position only for the first search iteration
+#if OPT_WARP_REFINEMENT
+        for (int i = (iter ? 1 : 0); i < (ctx->wm_ctrls.refine_diag ? 9 : 5); i++) {
+#else
         for (int i = (iter ? 1 : 0); i < 5; i++) {
+#endif
             Mv test_mv = (Mv){{search_centre_mv.x + (neighbors[i].col << mv_prec_shift),
                                search_centre_mv.y + (neighbors[i].row << mv_prec_shift)}};
 
@@ -2479,15 +2532,35 @@ void svt_av1_init_me_luts(void) {
     init_me_luts_bd(sad_per_bit_lut_8, QINDEX_RANGE, EB_EIGHT_BIT);
     init_me_luts_bd(sad_per_bit_lut_10, QINDEX_RANGE, EB_TEN_BIT);
 }
-
+#if !OPT_SUBPEL_OBMC
 int svt_av1_find_best_obmc_sub_pixel_tree_up(ModeDecisionContext *ctx, IntraBcContext *x, const AV1_COMMON *const cm,
                                              int mi_row, int mi_col, MV *bestmv, const MV *ref_mv, int allow_hp,
                                              int error_per_bit, const AomVarianceFnPtr *vfp, int forced_stop,
                                              int iters_per_step, int *mvjcost, int *mvcost[2], int *distortion,
                                              unsigned int *sse1, int is_second, int use_accurate_subpel_search);
-
+#endif
+#if OPT_SUBPEL_OBMC
+int av1_find_best_obmc_sub_pixel_tree_up(MacroBlockD *xd, const struct AV1Common *const cm,
+                                         const SUBPEL_MOTION_SEARCH_PARAMS *ms_params, MV start_mv, MV *bestmv,
+                                         int *distortion, unsigned int *sse1);
+#endif
 int  svt_av1_obmc_full_pixel_search(ModeDecisionContext *ctx, IntraBcContext *x, MV *mvp_full, int sadpb,
                                     const AomVarianceFnPtr *fn_ptr, const MV *ref_mv, MV *dst_mv, int is_second);
+
+#if OPT_SUBPEL_OBMC
+static void svt_init_mv_cost_params(MV_COST_PARAMS *mv_cost_params, ModeDecisionContext *ctx, const MV *ref_mv,
+                                    uint8_t base_q_idx, uint32_t rdmult, uint8_t hbd_md) {
+    mv_cost_params->ref_mv        = ref_mv;
+    mv_cost_params->full_ref_mv   = get_fullmv_from_mv(ref_mv);
+    mv_cost_params->early_exit_th = 1020 - (ctx->blk_geom->sq_size >> 2);
+    mv_cost_params->mv_cost_type  = ctx->md_subpel_me_ctrls.skip_diag_refinement >= 3 ? MV_COST_OPT : MV_COST_ENTROPY;
+    mv_cost_params->error_per_bit = AOMMAX(rdmult >> RD_EPB_SHIFT, 1);
+    mv_cost_params->sad_per_bit   = svt_aom_get_sad_per_bit(base_q_idx, hbd_md);
+    mv_cost_params->mvjcost       = ctx->md_rate_est_ctx->nmv_vec_cost;
+    mv_cost_params->mvcost[0]     = ctx->md_rate_est_ctx->nmvcoststack[0];
+    mv_cost_params->mvcost[1]     = ctx->md_rate_est_ctx->nmvcoststack[1];
+}
+#endif
 void single_motion_search(PictureControlSet *pcs, ModeDecisionContext *ctx, ModeDecisionCandidate *cand,
                           IntMv best_pred_mv, IntraBcContext *x, BlockSize bsize, MV *ref_mv, int *rate_mv,
                           int refine_level) {
@@ -2560,11 +2633,68 @@ void single_motion_search(PictureControlSet *pcs, ModeDecisionContext *ctx, Mode
         x->best_mv.as_mv.col = best_pred_mv.as_mv.col >> 3;
         x->best_mv.as_mv.row = best_pred_mv.as_mv.row >> 3;
     }
+
+#if OPT_SUBPEL_OBMC
+    // High level params
+    SUBPEL_MOTION_SEARCH_PARAMS  ms_params_struct;
+    SUBPEL_MOTION_SEARCH_PARAMS *ms_params = &ms_params_struct;
+#endif
     if (do_frac_refine) {
         int          dis; /* TODO: use dis in distortion calculation later. */
         unsigned int sse1; //unused
         switch (cand->motion_mode) {
         case OBMC_CAUSAL:
+#if OPT_SUBPEL_OBMC
+            ms_params->allow_hp       = pcs->ppcs->frm_hdr.allow_high_precision_mv;
+            ms_params->forced_stop    = EIGHTH_PEL;
+            ms_params->iters_per_step = 2;
+            MvLimits mv_limits;
+            int      mi_row    = x->xd->mi_row;
+            int      mi_col    = x->xd->mi_col;
+            int      mi_width  = mi_size_wide[ctx->blk_geom->bsize];
+            int      mi_height = mi_size_high[ctx->blk_geom->bsize];
+            mv_limits.row_min  = -(((mi_row + mi_height) * MI_SIZE) + AOM_INTERP_EXTEND);
+            mv_limits.col_min  = -(((mi_col + mi_width) * MI_SIZE) + AOM_INTERP_EXTEND);
+            mv_limits.row_max  = (cm->mi_rows - mi_row) * MI_SIZE + AOM_INTERP_EXTEND;
+            mv_limits.col_max  = (cm->mi_cols - mi_col) * MI_SIZE + AOM_INTERP_EXTEND;
+            svt_av1_set_mv_search_range(&mv_limits, ref_mv);
+            svt_av1_set_subpel_mv_search_range(&ms_params->mv_limits, (FullMvLimits *)&mv_limits, ref_mv);
+            // Mvcost params
+            svt_init_mv_cost_params(&ms_params->mv_cost_params,
+                                    ctx,
+                                    ref_mv,
+                                    frm_hdr->quantization_params.base_q_idx,
+                                    ctx->full_lambda_md[EB_8_BIT_MD],
+                                    0); // 10BIT not supported
+            // Subpel variance params
+            ms_params->var_params.vfp                = &svt_aom_mefn_ptr[ctx->blk_geom->bsize];
+            ms_params->var_params.subpel_search_type = USE_8_TAPS; // md_subpel_ctrls.subpel_search_type;
+            ms_params->var_params.w                  = block_size_wide[ctx->blk_geom->bsize];
+            ms_params->var_params.h                  = block_size_high[ctx->blk_geom->bsize];
+
+            // Ref and src buffers
+            MSBuffers *ms_buffers = &ms_params->var_params.ms_buffers;
+
+            // Ref buffer
+            const struct Buf2D *in_what = (const struct Buf2D *)(&x->xdplane[0].pre[0]);
+            struct svt_buf_2d   ref_struct;
+            ref_struct.buf    = in_what->buf;
+            ref_struct.width  = in_what->width;
+            ref_struct.height = in_what->height;
+            ref_struct.stride = in_what->stride;
+            ms_buffers->ref   = &ref_struct;
+
+            // Src buffer
+            ms_buffers->wsrc      = ctx->wsrc_buf;
+            ms_buffers->obmc_mask = ctx->mask_buf;
+
+            MV subpel_start_mv;
+            subpel_start_mv.row = x->best_mv.as_mv.row << 3;
+            subpel_start_mv.col = x->best_mv.as_mv.col << 3;
+
+            av1_find_best_obmc_sub_pixel_tree_up(
+                x->xd, (const struct AV1Common *const)cm, ms_params, subpel_start_mv, &x->best_mv.as_mv, &dis, &sse1);
+#else
             svt_av1_find_best_obmc_sub_pixel_tree_up(ctx,
                                                      x,
                                                      cm,
@@ -2583,6 +2713,7 @@ void single_motion_search(PictureControlSet *pcs, ModeDecisionContext *ctx, Mode
                                                      &sse1,
                                                      0,
                                                      USE_8_TAPS);
+#endif
             break;
         default: assert(0 && "Invalid motion mode!\n");
         }
@@ -3906,7 +4037,11 @@ void svt_aom_inject_inter_candidates(PictureControlSet *pcs, ModeDecisionContext
         inject_global_candidates(scs, ctx, pcs, is_compound_enabled, allow_bipred, &cand_total_cnt);
     }
     if (is_compound_enabled) {
+#if OPT_BIPRED3x3
+        if (ctx->bipred3x3_ctrls.enabled && allow_bipred && pcs->slice_type == B_SLICE)
+#else
         if (allow_bipred && ctx->bipred3x3_injection > 0 && pcs->slice_type == B_SLICE)
+#endif
             //----------------------
             // Bipred2Nx2N
             //----------------------

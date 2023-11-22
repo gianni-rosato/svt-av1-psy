@@ -257,6 +257,9 @@ typedef struct PictureControlSet {
     EbHandle          intra_mutex;
     uint32_t          intra_coded_area;
     uint64_t          skip_coded_area;
+#if OPT_HP_MV
+    uint64_t hp_coded_area;
+#endif
     uint32_t          tot_seg_searched_cdef;
     EbHandle          cdef_search_mutex;
 
@@ -428,6 +431,9 @@ typedef struct PictureControlSet {
     int32_t  rst_end_stripe[MAX_TILE_ROWS];
     uint8_t  ref_intra_percentage;
     uint8_t  ref_skip_percentage;
+#if OPT_HP_MV
+    int16_t ref_hp_percentage;
+#endif
     uint64_t avg_me_clpx;
     uint64_t min_me_clpx;
     uint64_t max_me_clpx;

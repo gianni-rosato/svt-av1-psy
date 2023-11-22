@@ -103,6 +103,29 @@ extern "C" {
 #define OPT_MR_M0                                 1 // optimize mr and m0 features
 #define OPT_M1                                    1 // tune m1 features
 #define OPT_INTRA_LVL                             1 // optimize intra levels for higher presets
+#define OPT_WARP_REFINEMENT                       1  // Opt Warp refinment for MR/M0
+#define OPT_OBMC_REFINEMENT                       1  // Opt OBMC refinment for MR/M0/M1
+
+#define OPT_FAST_LAMBDA                           1  // Use full_lambda modulation process for fast_lambda derivation
+#define FIX_ENC_MODE_TF                           1  // From unsigned to signed
+
+#define TUNE_M2_M3_M4                             1 // tune m2-m4 for fast decode lp8
+#define TUNE_M5_M6                                1 // tune m5-m6 for fast decode lp8
+
+#define OPT_ME_8x8                                1 // optimize ME SA based on 8x8 var cost
+#define OPT_M2                                    1 // optimize m2 features
+#define TUNE_M9                                   1 // tune M9
+
+#define OPT_BIPRED3x3                             1 // Use unipred info to cut the number of search position(s)
+#define OPT_HP_MV                                 1 // Optimize hp; use the percentage of hp at ref frame(s)
+#define OPT_SUBPEL_OBMC                           0 // Upgrace the subpel of OBMC code (wip)
+
+#define OPT_M3                                    1 // optimize m3 features
+
+#define OPT_GEOM_SB12B_B4                         1 // 128x128 --> 8x8 (H/V + H4/V4 only)
+
+#define DIS_LPD0_128x128                          1 // Disable lpd0 when sb size is 128
+#define OPT_SB_SIZE                               1 // optimize sb size feature
 
 //FOR DEBUGGING - Do not remove
 #define OPT_LD_LATENCY2         0 // Latency optimization for low delay

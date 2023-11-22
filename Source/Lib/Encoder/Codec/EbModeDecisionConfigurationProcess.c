@@ -231,6 +231,9 @@ void mode_decision_configuration_init_qp_update(PictureControlSet *pcs) {
     FrameHeader *frm_hdr  = &pcs->ppcs->frm_hdr;
     pcs->intra_coded_area = 0;
     pcs->skip_coded_area  = 0;
+#if OPT_HP_MV
+    pcs->hp_coded_area = 0;
+#endif
     // Init block selection
     // Set reference sg ep
     set_reference_sg_ep(pcs);
@@ -604,6 +607,9 @@ void *svt_aom_mode_decision_configuration_kernel(void *input_ptr) {
 
         pcs->intra_coded_area = 0;
         pcs->skip_coded_area  = 0;
+#if OPT_HP_MV
+        pcs->hp_coded_area = 0;
+#endif
         // Init block selection
         // Set reference sg ep
         set_reference_sg_ep(pcs);

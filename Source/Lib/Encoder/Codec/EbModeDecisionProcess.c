@@ -503,9 +503,17 @@ void svt_aom_reset_mode_decision_neighbor_arrays(PictureControlSet *pcs, uint16_
 // Testing showed that updating SAD lambda based on frame info was not helpful; therefore, the SAD lambda generation is not changed.
 static void av1_lambda_assign_md(PictureControlSet *pcs, ModeDecisionContext *ctx) {
     ctx->full_lambda_md[0] = (uint32_t)svt_aom_compute_rd_mult(pcs, ctx->qp_index, ctx->me_q_index, 8);
+#if OPT_FAST_LAMBDA
+    ctx->fast_lambda_md[0] = (uint32_t)svt_aom_compute_fast_lambda(pcs, ctx->qp_index, ctx->me_q_index, 8);
+#else
     ctx->fast_lambda_md[0] = av1_lambda_mode_decision8_bit_sad[ctx->qp_index];
+#endif
     ctx->full_lambda_md[1] = (uint32_t)svt_aom_compute_rd_mult(pcs, ctx->qp_index, ctx->me_q_index, 10);
+#if OPT_FAST_LAMBDA
+    ctx->fast_lambda_md[1] = (uint32_t)svt_aom_compute_fast_lambda(pcs, ctx->qp_index, ctx->me_q_index, 10);
+#else
     ctx->fast_lambda_md[1] = av1lambda_mode_decision10_bit_sad[ctx->qp_index];
+#endif
 
     if (pcs->scs->stats_based_sb_lambda_modulation) {
         if (pcs->temporal_layer_index > 0) {
