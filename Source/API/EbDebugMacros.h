@@ -46,6 +46,8 @@ extern "C" {
 #define FTR_RES_ON_FLY_APP        1 // Application changes for change the resolution on the fly
 #define FTR_RATE_ON_FLY           1 // changing bit rate
 
+#define OPT_LPD0                                  1 // optimize LPD0 levels, lpd0 enc_dec_deriv, and lpd0 detector thresholds
+
 #define CLN_ME_OFFSET                             1 // Create unified function for deriving me offset in MD
 #define NEW_BLK_GEOM 1
 #if NEW_BLK_GEOM
@@ -126,6 +128,58 @@ extern "C" {
 
 #define DIS_LPD0_128x128                          1 // Disable lpd0 when sb size is 128
 #define OPT_SB_SIZE                               1 // optimize sb size feature
+#define OPT_M4                                    1 // optimize m4 features
+#define OPT_M5                                    1 // optimize m5 features
+#define OPT_NSQ_LEVELS                            1 // optimize nsq levels
+
+
+#define USE_QP_COMPLEXITY                         0 // Modulate the accuracy of the prediction tools using QP
+#if USE_QP_COMPLEXITY
+#define OPT_WARP_QP                               1
+#define OPT_OBMC_QP                               1
+#define OPT_TXT_QP                                1
+#define OPT_PME_QP                                1
+#define OPT_TXS_QP                                1
+#define OPT_ME_NSQ_QP                             1
+#endif
+
+#define CLN_CMPOUND                               1 //Lossless clean up for compound - avoid extra useless computation
+#define OPT_CMPOUND                               1 //Optimize compound level
+
+#define CLN_IS_REF                                1 // cleanup is_ref flags
+
+#define OPT_M0_M1                                 1 // opt m0 m1 features
+
+#define USE_QP_COMP                               1 // Modulate the accuracy of the prediction tools using QP
+#if USE_QP_COMP
+#define OPT_NSQ_QP                                1
+#define OPT_NIC_QP                                1
+#define OPT_TXT_QP_2                              0
+#define OPT_DEPTH_QP                              1 // temp m5-m7
+#define OPT_COEFF_LVL                             1
+#define OPT_LPD0_QP                               1
+#define OPT_TX_BYPASS                             1
+#define OPT_DLF_QP                                1
+#endif
+
+#define FIX_NSQ_MEM_ALLOC                         1 // Fix memory allocation for NSQ
+#define OPT_Q_PRUNE_TH_WEIGHT                     0 // Modulate mds-pruning th(s) using q and distortion
+#define OPT_SC_PAL_DEPTH                          1 // improve SC trade-offs for M3-M12, changes to depth_level and palette_level
+
+#define TUNE_MRP                                  1 // Tune mrp m6-m7
+
+#define OPT_Q_TXT                                 1 // Modulate txt-th(s) using q
+
+#define OPT_ME_RP                                 1 // opt ME ref pruning
+
+#define OPT_DEPTH_LEVELS                          1 // Optimize depth level
+
+#define OPT_Q_PME                                 1 // Modulate PME (w,h) using q
+
+#define OPT_DEPTH_REFINE                          1 // optimize block based depth refinement
+#define TUNE_M0_MR                                1 // tune m0 / mr features
+
+#define TUNE_TXS_LEVELS                           1 // tune TXS feature levels
 
 //FOR DEBUGGING - Do not remove
 #define OPT_LD_LATENCY2         0 // Latency optimization for low delay

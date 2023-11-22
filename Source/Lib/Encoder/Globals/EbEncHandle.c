@@ -4407,7 +4407,19 @@ static void validate_scaling_params(SequenceControlSet *scs) {
         scs->static_config.resize_mode = RESIZE_NONE;
     }
 }
+#if OPT_CMPOUND
+uint32_t get_comp_th(uint32_t qp) {
 
+    float qpf = (float)(qp);
+    //3
+    if (qp <= 32)
+        return (uint32_t)(-12.5*qpf + 900);
+    else if (qp < 40)
+        return (uint32_t)(-60.6*qpf + 2440);
+    else
+        return 15;
+}
+#endif
 static void set_param_based_on_input(SequenceControlSet *scs)
 {
     set_multi_pass_params(
@@ -4518,9 +4530,17 @@ static void set_param_based_on_input(SequenceControlSet *scs)
             scs->static_config.qp = 20;
 #endif
     }
+#if OPT_CMPOUND
+    scs->compound_th = get_comp_th(scs->static_config.qp);
+#endif
     svt_aom_derive_input_resolution(
         &scs->input_resolution,
         scs->max_input_luma_width *scs->max_input_luma_height);
+#if USE_QP_COMPLEXITY
+    scs->qp_tune = (scs->static_config.enc_mode <= ENC_M1)
+        ? 0
+        : 1;
+#endif
     // Set tune params
     derive_vq_params(scs);
 
@@ -4661,7 +4681,14 @@ static void set_param_based_on_input(SequenceControlSet *scs)
                 nsq_level = svt_aom_get_nsq_level(scs->static_config.enc_mode, is_islice, is_base, coeff_lvl);
 #endif
                 disallow_nsq = MIN(disallow_nsq, (nsq_level == 0 ? 1 : 0));
+#if FIX_NSQ_MEM_ALLOC
+                uint8_t temp_allow_HVA_HVB = 0, temp_allow_HV4 = 0;
+                svt_aom_set_nsq_ctrls(NULL, nsq_level, &temp_allow_HVA_HVB, &temp_allow_HV4, &min_nsq_bsize);
+                allow_HVA_HVB |= temp_allow_HVA_HVB;
+                allow_HV4 |= temp_allow_HV4;
+#else
                 svt_aom_set_nsq_ctrls(NULL, nsq_level, &allow_HVA_HVB, &allow_HV4, &min_nsq_bsize);
+#endif
                 h_v_only = h_v_only && !allow_HVA_HVB && !allow_HV4;
                 no_8x4_4x8 = no_8x4_4x8 && min_nsq_bsize >= 8;
                 no_16x8_8x16 = no_16x8_8x16 && min_nsq_bsize >= 16;
@@ -4811,7 +4838,27 @@ static void set_param_based_on_input(SequenceControlSet *scs)
 #endif
 
     uint8_t list0_only_base_lvl = 0;
+#if OPT_M4
+#if TUNE_M1_M4
+#if TUNE_SHIFT_PRESETS
+#if TUNE_M2_M4
     if (scs->static_config.enc_mode <= ENC_M4)
+#else
+    if (scs->static_config.enc_mode <= ENC_M3)
+#endif
+#else
+    if (scs->static_config.enc_mode <= ENC_M2)
+#endif
+#else
+    if (scs->static_config.enc_mode <= ENC_M3)
+#endif
+#else
+#if TUNE_M2_M4_M10
+    if (scs->static_config.enc_mode <= ENC_M4)
+#else
+    if (scs->static_config.enc_mode <= ENC_M3)
+#endif
+#endif
         list0_only_base_lvl = 0;
     else if (scs->static_config.enc_mode <= ENC_M5)
         list0_only_base_lvl = 1;

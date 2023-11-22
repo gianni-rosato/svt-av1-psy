@@ -2120,7 +2120,11 @@ static const uint8_t AV1_VAR_OFFS[MAX_SB_SIZE] = {
     128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128,
     128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128,
     128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128};
+#if OPT_CMPOUND
+unsigned int aom_av1_get_perpixel_variance(const uint8_t *buf, uint32_t stride, const int block_size) {
+#else
 static unsigned int aom_av1_get_perpixel_variance(const uint8_t *buf, uint32_t stride, const int block_size) {
+#endif
     unsigned int            var, sse;
     const AomVarianceFnPtr *fn_ptr = &svt_aom_mefn_ptr[block_size];
     var                            = fn_ptr->vf(buf, stride, AV1_VAR_OFFS, 0, &sse);

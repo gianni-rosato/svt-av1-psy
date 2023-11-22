@@ -898,6 +898,8 @@ static void calculate_active_worst_quality(PictureParentControlSet *ppcs, GF_GRO
     if (rc->baseline_gf_interval > 1) {
         const int    vbr_group_bits_per_frame = (int)(rc->gf_group_bits / rc->baseline_gf_interval);
 #if OPT_VBR2
+        double group_av_err = gf_stats.gf_group_raw_error / rc->baseline_gf_interval;
+#else
         const double group_av_err             = gf_stats.gf_group_raw_error / rc->baseline_gf_interval;
 #endif
         const double group_av_skip_pct        = gf_stats.gf_group_skip_pct / rc->baseline_gf_interval;

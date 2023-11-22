@@ -1132,7 +1132,6 @@ typedef struct PictureParentControlSet {
 #if !OPT_VBR2
     uint8_t          adjust_under_shoot_gf;
 #endif
-    uint8_t          adjust_under_shoot_gf;
     int32_t          is_noise_level;
     bool             r0_based_qps_qpm;
     uint32_t         dpb_order_hint[REF_FRAMES]; // spec 6.8.2. ref_order_hint[]

@@ -1405,7 +1405,11 @@ void set_md_stage_counts(PictureControlSet *pcs, ModeDecisionContext *ctx) {
     // Step 1: Set the number of NICs for each stage
     // no NIC setting should be done beyond this point
     // Set md_stage count
+#if CLN_IS_REF
+     uint8_t pic_type = pcs->slice_type == I_SLICE ? 0 : pcs->ppcs->temporal_layer_index < pcs->ppcs->hierarchical_levels ? 1 : 2;
+#else
     uint8_t pic_type = pcs->slice_type == I_SLICE ? 0 : pcs->ppcs->is_ref ? 1 : 2;
+#endif
     svt_aom_set_nics(
         &ctx->nic_ctrls.scaling_ctrls, ctx->md_stage_1_count, ctx->md_stage_2_count, ctx->md_stage_3_count, pic_type);
 
@@ -3293,6 +3297,22 @@ static void pme_search(PictureControlSet *pcs, ModeDecisionContext *ctx, EbPictu
 static void pme_search(PictureControlSet *pcs, ModeDecisionContext *ctx, EbPictureBufferDesc *input_pic) {
 #endif
     uint8_t hbd_md = EB_8_BIT_MD;
+#if OPT_Q_PME
+    // Modulate the PME-full-pel search-area using QP
+    // The PME-full-pel search will be skipped  if width or/and height ends-up equal to 0 (only subpel-search will take place)
+    uint16_t mult = ctx->md_pme_ctrls.sa_q_weight;
+
+    uint16_t q_weight = (mult == (uint8_t)~0)
+        ? 1000
+        : CLIP3(250, 1000, (int)(mult * ((8 * pcs->ppcs->scs->static_config.qp) - 125)));
+#if OPT_PME_LVL
+    uint8_t full_pel_search_width  = MAX(3, (ctx->md_pme_ctrls.full_pel_search_width  * q_weight) / 1000);
+    uint8_t full_pel_search_height = MAX(3, (ctx->md_pme_ctrls.full_pel_search_height * q_weight) / 1000);
+#else
+    uint8_t full_pel_search_width = (ctx->md_pme_ctrls.full_pel_search_width * q_weight) / 1000;
+    uint8_t full_pel_search_height = (ctx->md_pme_ctrls.full_pel_search_height * q_weight) / 1000;
+#endif
+#endif
 
     input_pic = hbd_md ? pcs->input_frame16bit : pcs->ppcs->enhanced_pic;
 
@@ -3586,6 +3606,14 @@ static void pme_search(PictureControlSet *pcs, ModeDecisionContext *ctx, EbPictu
             ctx->pme_res[list_idx][ref_idx].dist   = post_subpel_pme_mv_cost;
         }
     }
+#if OPT_CMPOUND
+    for (uint8_t list_idx = 0; list_idx < MAX_NUM_OF_REF_PIC_LIST; list_idx++) {
+        for (uint8_t ref_idx = 0; ref_idx < REF_LIST_MAX_DEPTH; ref_idx++) {
+            if (ctx->pme_res[list_idx][ref_idx].dist < ctx->md_pme_dist)
+                ctx->md_pme_dist = ctx->pme_res[list_idx][ref_idx].dist;
+        }
+    }
+#endif
 }
 static void av1_cost_calc_cfl(PictureControlSet *pcs, ModeDecisionCandidateBuffer *cand_bf, ModeDecisionContext *ctx,
                               uint32_t component_mask, EbPictureBufferDesc *input_pic,
@@ -4690,7 +4718,13 @@ static INLINE Bool search_dct_dct_only(PictureControlSet *pcs, ModeDecisionConte
     if (ctx->md_stage == MD_STAGE_3 && ctx->use_tx_shortcuts_mds3) {
         return 1;
     } else if (ctx->tx_shortcut_ctrls.bypass_tx_when_zcoeff && ctx->md_stage == MD_STAGE_3 && ctx->perform_mds1 &&
+#if OPT_TX_BYPASS
+               !cand_bf->block_has_coeff &&
+               (cand_bf->luma_fast_dist < (uint32_t)(ctx->blk_geom->bheight * ctx->blk_geom->bwidth * ctx->qp_index) /
+                    ctx->tx_shortcut_ctrls.bypass_tx_th)) {
+#else
                !cand_bf->block_has_coeff) {
+#endif
         return 1;
     }
 
@@ -4801,9 +4835,25 @@ static void tx_type_search(PictureControlSet *pcs, ModeDecisionContext *ctx, Mod
     uint64_t       best_cost_tx_search = (uint64_t)~0;
     uint64_t       dct_dct_cost        = (uint64_t)~0;
     int            best_satd_tx_search = INT_MAX;
-    const uint16_t satd_early_exit_th  = only_dct_dct ? 0
-         : is_inter                                   ? ctx->txt_ctrls.satd_early_exit_th_inter
-                    : ctx->txt_ctrls.satd_early_exit_th_intra; // only compute satd when using TXT search
+#if OPT_Q_TXT
+    uint16_t satd_early_exit_th = only_dct_dct ? 0
+        : is_inter                             ? ctx->txt_ctrls.satd_early_exit_th_inter
+                   : ctx->txt_ctrls.satd_early_exit_th_intra; // only compute satd when using TXT search
+
+    if (satd_early_exit_th) {
+        uint16_t mult = ctx->txt_ctrls.satd_th_q_weight;
+
+        uint16_t q_weight = (mult == (uint16_t)~0)
+            ? 1000
+            : CLIP3(100, 1000, (int)(mult * ((16 * pcs->ppcs->scs->static_config.qp) - 250)));
+
+        satd_early_exit_th = MAX(1, ((satd_early_exit_th * q_weight) / 1000));
+    }
+#else
+    const uint16_t satd_early_exit_th = only_dct_dct ? 0
+        : is_inter ? ctx->txt_ctrls.satd_early_exit_th_inter
+                   : ctx->txt_ctrls.satd_early_exit_th_intra; // only compute satd when using TXT search
+#endif
     int32_t        tx_type;
     uint16_t       txb_origin_x           = ctx->blk_geom->tx_org_x[is_inter][ctx->tx_depth][ctx->txb_itr];
     uint16_t       txb_origin_y           = ctx->blk_geom->tx_org_y[is_inter][ctx->tx_depth][ctx->txb_itr];
@@ -5459,7 +5509,14 @@ static void perform_tx_partitioning(ModeDecisionCandidateBuffer *cand_bf, ModeDe
             uint8_t tx_search_skip_flag = 0;
             // only have prev. stage coeff info if mds1/2 were performed
             if (ctx->tx_shortcut_ctrls.bypass_tx_when_zcoeff && ctx->md_stage == MD_STAGE_3 && ctx->perform_mds1 &&
+#if OPT_TX_BYPASS
+                !cand_bf->block_has_coeff &&
+                (cand_bf->luma_fast_dist < (uint32_t)(ctx->blk_geom->bheight * ctx->blk_geom->bwidth * ctx->qp_index) /
+                     ctx->tx_shortcut_ctrls.bypass_tx_th))
+#else
+
                 !cand_bf->block_has_coeff)
+#endif
                 tx_search_skip_flag = 1;
             tx_type_search(pcs,
                            ctx,
@@ -6816,7 +6873,13 @@ static void full_loop_core(PictureControlSet *pcs, ModeDecisionContext *ctx, Mod
                                 ctx->blk_geom->bwidth,
                                 ctx->blk_geom->bheight >> ctx->mds_subres_step);
     if (ctx->perform_mds1 && ctx->md_stage == MD_STAGE_3 && ctx->tx_shortcut_ctrls.bypass_tx_when_zcoeff &&
+#if OPT_TX_BYPASS
+        !cand_bf->block_has_coeff &&
+        (cand_bf->luma_fast_dist < (uint32_t)(ctx->blk_geom->bheight * ctx->blk_geom->bwidth * ctx->qp_index) /
+             ctx->tx_shortcut_ctrls.bypass_tx_th)) {
+#else
         !cand_bf->block_has_coeff) {
+#endif
         start_tx_depth = 0;
         end_tx_depth   = 0;
     }
@@ -6831,7 +6894,13 @@ static void full_loop_core(PictureControlSet *pcs, ModeDecisionContext *ctx, Mod
 
         uint8_t tx_search_skip_flag = 0;
         if (ctx->perform_mds1 && ctx->md_stage == MD_STAGE_3 && ctx->tx_shortcut_ctrls.bypass_tx_when_zcoeff &&
+#if OPT_TX_BYPASS
+            !cand_bf->block_has_coeff &&
+            (cand_bf->luma_fast_dist < (uint32_t)(ctx->blk_geom->bheight * ctx->blk_geom->bwidth * ctx->qp_index) /
+                 ctx->tx_shortcut_ctrls.bypass_tx_th))
+#else
             !cand_bf->block_has_coeff)
+#endif
             tx_search_skip_flag = 1;
         perform_dct_dct_tx(pcs,
                            ctx,
@@ -7711,7 +7780,11 @@ static void search_best_independent_uv_mode(PictureControlSet *pcs, EbPictureBuf
     }
 
     // Set number of UV candidates to be tested in the full loop
+#if CLN_IS_REF
+    unsigned int uv_mode_nfl_count = pcs->slice_type == I_SLICE ? 64 : ppcs->temporal_layer_index < ppcs->hierarchical_levels ? 32 : 16;
+#else
     unsigned int uv_mode_nfl_count = pcs->slice_type == I_SLICE ? 64 : ppcs->is_ref ? 32 : 16;
+#endif
     uv_mode_nfl_count              = MAX(1, DIVIDE_AND_ROUND(uv_mode_nfl_count * ctx->uv_ctrls.uv_nic_scaling_num, 16));
     uv_mode_nfl_count              = MIN(uv_mode_nfl_count, uv_mode_total_count);
     uv_mode_nfl_count              = MAX(uv_mode_nfl_count, 1);
@@ -7838,11 +7911,25 @@ static void search_best_independent_uv_mode(PictureControlSet *pcs, EbPictureBuf
 static void post_mds0_nic_pruning(PictureControlSet *pcs, ModeDecisionContext *ctx, uint64_t best_md_stage_cost,
                                   uint64_t best_md_stage_dist) {
     const struct NicPruningCtrls  pruning_ctrls            = ctx->nic_ctrls.pruning_ctrls;
+#if OPT_Q_PRUNE_TH_WEIGHT
+    uint16_t mult = pruning_ctrls.mds1_q_weight;
+
+    uint16_t q_weight = (mult == (uint16_t)~0)
+        ? 1000
+        : CLIP3(1, 1000, (int)(mult * MAX((best_md_stage_cost / ((ctx->blk_geom->bwidth * ctx->blk_geom->bheight) << 10)), 1) * ((5 * pcs->ppcs->scs->static_config.qp) - 100)));
+
+    uint64_t  mds1_class_th = (pruning_ctrls.mds1_class_th * q_weight) / 1000;
+    uint8_t   mds1_band_cnt = pruning_ctrls.mds1_band_cnt;
+    uint16_t  mds1_cand_th_rank_factor = pruning_ctrls.mds1_cand_th_rank_factor;
+    uint64_t  mds1_cand_base_th_intra = (pruning_ctrls.mds1_cand_base_th_intra * q_weight) / 1000;
+    uint64_t  mds1_cand_base_th_inter = (pruning_ctrls.mds1_cand_base_th_inter * q_weight) / 1000;
+#else
     const uint64_t                mds1_class_th            = pruning_ctrls.mds1_class_th;
     const uint8_t                 mds1_band_cnt            = pruning_ctrls.mds1_band_cnt;
     const uint16_t                mds1_cand_th_rank_factor = pruning_ctrls.mds1_cand_th_rank_factor;
     const uint64_t                mds1_cand_base_th_intra  = pruning_ctrls.mds1_cand_base_th_intra;
     const uint64_t                mds1_cand_base_th_inter  = pruning_ctrls.mds1_cand_base_th_inter;
+#endif
     ModeDecisionCandidateBuffer **cand_bf_arr              = ctx->cand_bf_ptr_array;
     for (CandClass cidx = CAND_CLASS_0; cidx < CAND_CLASS_TOTAL; cidx++) {
         const uint64_t mds1_cand_th = is_intra_class(cidx) ? mds1_cand_base_th_intra : mds1_cand_base_th_inter;
@@ -7899,10 +7986,24 @@ static void post_mds0_nic_pruning(PictureControlSet *pcs, ModeDecisionContext *c
     }
 }
 // Perform the NIC class pruning and candidate pruning after MSD1
-static void post_mds1_nic_pruning(ModeDecisionContext *ctx, uint64_t best_md_stage_cost) {
-    const struct NicPruningCtrls  pruning_ctrls        = ctx->nic_ctrls.pruning_ctrls;
+#if OPT_Q_PRUNE_TH_WEIGHT
+static void post_mds1_nic_pruning(PictureControlSet* pcs, ModeDecisionContext* ctx, uint64_t best_md_stage_cost) {
+    const struct NicPruningCtrls  pruning_ctrls = ctx->nic_ctrls.pruning_ctrls;
+
+    uint16_t mult = pruning_ctrls.mds2_q_weight;
+
+    uint16_t q_weight = (mult == (uint16_t)~0)
+        ? 1000
+        : CLIP3(1, 1000, (int)(mult * MAX((best_md_stage_cost / (uint64_t)(((uint64_t)ctx->blk_geom->bwidth * (uint64_t)ctx->blk_geom->bheight * (uint64_t)ctx->blk_geom->bwidth * (uint64_t)ctx->blk_geom->bheight) << 10)), 1) * ((5 * pcs->ppcs->scs->static_config.qp) - 100)));
+
+    const uint64_t                mds2_cand_th = (pruning_ctrls.mds2_cand_base_th * q_weight) / 1000;
+    const uint64_t                mds2_class_th = (pruning_ctrls.mds2_class_th * q_weight) / 1000;
+#else
+static void post_mds1_nic_pruning(ModeDecisionContext* ctx, uint64_t best_md_stage_cost) {
+    const struct NicPruningCtrls  pruning_ctrls = ctx->nic_ctrls.pruning_ctrls;
     const uint64_t                mds2_cand_th         = pruning_ctrls.mds2_cand_base_th;
     const uint64_t                mds2_class_th        = pruning_ctrls.mds2_class_th;
+#endif
     const uint8_t                 mds2_band_cnt        = pruning_ctrls.mds2_band_cnt;
     const uint16_t                mds2_relative_dev_th = pruning_ctrls.mds2_relative_dev_th;
     ModeDecisionCandidateBuffer **cand_bf_arr          = ctx->cand_bf_ptr_array;
@@ -7963,10 +8064,24 @@ static void post_mds1_nic_pruning(ModeDecisionContext *ctx, uint64_t best_md_sta
     }
 }
 // Perform the NIC class pruning and candidate pruning after MSD2
+#if OPT_Q_PRUNE_TH_WEIGHT
+static void post_mds2_nic_pruning(PictureControlSet* pcs, ModeDecisionContext* ctx, uint64_t best_md_stage_cost) {
+    const struct NicPruningCtrls  pruning_ctrls = ctx->nic_ctrls.pruning_ctrls;
+
+    uint16_t mult = pruning_ctrls.mds3_q_weight;
+
+    uint16_t q_weight = (mult == (uint16_t)~0)
+        ? 1000
+        : CLIP3(1, 1000, (int)(mult * MAX((best_md_stage_cost / (uint64_t)(((uint64_t)ctx->blk_geom->bwidth * (uint64_t)ctx->blk_geom->bheight * (uint64_t)ctx->blk_geom->bwidth * (uint64_t)ctx->blk_geom->bheight) << 10)), 1) * ((5 * pcs->ppcs->scs->static_config.qp) - 100)));
+
+    const uint64_t                mds3_cand_th = (pruning_ctrls.mds3_cand_base_th * q_weight) / 1000;
+    const uint64_t                mds3_class_th = (pruning_ctrls.mds3_class_th * q_weight) / 1000;
+#else
 static void post_mds2_nic_pruning(ModeDecisionContext *ctx, uint64_t best_md_stage_cost) {
     const struct NicPruningCtrls  pruning_ctrls = ctx->nic_ctrls.pruning_ctrls;
     const uint64_t                mds3_cand_th  = pruning_ctrls.mds3_cand_base_th;
     const uint64_t                mds3_class_th = pruning_ctrls.mds3_class_th;
+#endif
     const uint8_t                 mds3_band_cnt = pruning_ctrls.mds3_band_cnt;
     ModeDecisionCandidateBuffer **cand_bf_arr   = ctx->cand_bf_ptr_array;
     ctx->md_stage_3_total_count                 = 0;
@@ -9409,8 +9524,17 @@ static void md_encode_block(PictureControlSet *pcs, ModeDecisionContext *ctx, ui
 #else
         read_refine_me_mvs(pcs, ctx);
 #endif
+#if OPT_CMPOUND
+    for (uint8_t list_idx = 0; list_idx < MAX_NUM_OF_REF_PIC_LIST; list_idx++) {
+        for (uint8_t ref_idx = 0; ref_idx < REF_LIST_MAX_DEPTH; ref_idx++) {
+            ctx->pme_res[list_idx][ref_idx].dist = (uint32_t)~0;
+            ctx->md_pme_dist = (uint32_t)~0;
+        }
+    }
+#else
     // Initialized for eliminate_candidate_based_on_pme_me_results()
     ctx->pme_res[0][0].dist = ctx->pme_res[1][0].dist = 0xFFFFFFFF;
+#endif
     // Perform md reference pruning
     if (ctx->ref_pruning_ctrls.enabled)
         perform_md_reference_pruning(pcs, ctx, input_pic);
@@ -9541,7 +9665,11 @@ static void md_encode_block(PictureControlSet *pcs, ModeDecisionContext *ctx, ui
         }
     }
     if (ctx->perform_mds1)
+#if OPT_Q_PRUNE_TH_WEIGHT
+        post_mds1_nic_pruning(pcs, ctx, best_md_stage_cost);
+#else
         post_mds1_nic_pruning(ctx, best_md_stage_cost);
+#endif
     // 2nd Full-Loop
     best_md_stage_cost = (uint64_t)~0;
     ctx->md_stage      = MD_STAGE_2;
@@ -9573,7 +9701,11 @@ static void md_encode_block(PictureControlSet *pcs, ModeDecisionContext *ctx, ui
     }
 
     if (ctx->perform_mds1) {
+#if OPT_Q_PRUNE_TH_WEIGHT
+        post_mds2_nic_pruning(pcs, ctx, best_md_stage_cost);
+#else
         post_mds2_nic_pruning(ctx, best_md_stage_cost);
+#endif
         construct_best_sorted_arrays_md_stage_3(ctx, ctx->best_candidate_index_array);
     } else {
         ctx->md_stage_3_total_count        = 1;

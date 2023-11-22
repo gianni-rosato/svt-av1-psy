@@ -4594,9 +4594,32 @@ Bool svt_aom_calc_pred_masked_compound(PictureControlSet *pcs, ModeDecisionConte
     //CHKN get seperate prediction of each ref(Luma only)
     //ref0 prediction
     mv_unit.pred_direction = UNI_PRED_LIST_0;
+
+#if CLN_CMPOUND
+    int32_t found_l0 = false;
+    int     bufi;
+    for (bufi = 0; bufi < ctx->cmp_store.pred0_cnt; bufi++) {
+        if (mv_0.as_int == ctx->cmp_store.pred0_mv[bufi].as_int) {
+            found_l0 = true;
+            break;
+        }
+    }
+
+    if (found_l0) {
+        ctx->pred0 = ctx->cmp_store.pred0_buf[bufi];
+    } else {
+        ctx->cmp_store.pred0_mv[ctx->cmp_store.pred0_cnt].as_int = mv_0.as_int;
+        svt_aom_assert_err(ctx->cmp_store.pred0_cnt < 4, "compound store full \n");
+        ctx->pred0 = ctx->cmp_store.pred0_buf[ctx->cmp_store.pred0_cnt++];
+    }
+#endif
+
     pred_desc.buffer_y     = ctx->pred0;
 
     //we call the regular inter prediction path here(no compound)
+#if CLN_CMPOUND
+    if (!found_l0)
+#endif
     svt_aom_inter_prediction(scs,
                              pcs,
                              0, //fixed interpolation filter for compound search
@@ -4629,11 +4652,32 @@ Bool svt_aom_calc_pred_masked_compound(PictureControlSet *pcs, ModeDecisionConte
                              hbd_md ? EB_TEN_BIT : EB_EIGHT_BIT,
                              0); // is_16bit_pipeline
 
+#if CLN_CMPOUND
+    int32_t found_l1 = false;
+    for (bufi = 0; bufi < ctx->cmp_store.pred1_cnt; bufi++) {
+        if (mv_1.as_int == ctx->cmp_store.pred1_mv[bufi].as_int) {
+            found_l1 = true;
+            break;
+        }
+    }
+
+    if (found_l1) {
+        ctx->pred1 = ctx->cmp_store.pred1_buf[bufi];
+    } else {
+        ctx->cmp_store.pred1_mv[ctx->cmp_store.pred1_cnt].as_int = mv_1.as_int;
+        svt_aom_assert_err(ctx->cmp_store.pred1_cnt < 4, "compound store full \n");
+        ctx->pred1 = ctx->cmp_store.pred1_buf[ctx->cmp_store.pred1_cnt++];
+    }
+#endif
+
     //ref1 prediction
     mv_unit.pred_direction = UNI_PRED_LIST_1;
     pred_desc.buffer_y     = ctx->pred1;
 
     //we call the regular inter prediction path here(no compound)
+#if CLN_CMPOUND
+    if (!found_l1)
+#endif
     svt_aom_inter_prediction(scs,
                              pcs,
                              0, //fixed interpolation filter for compound search
@@ -4665,6 +4709,24 @@ Bool svt_aom_calc_pred_masked_compound(PictureControlSet *pcs, ModeDecisionConte
                              PICTURE_BUFFER_DESC_LUMA_MASK,
                              hbd_md ? EB_TEN_BIT : EB_EIGHT_BIT,
                              0); // is_16bit_pipeline
+
+#if CLN_CMPOUND
+    Bool     exit_compound_prep  = FALSE;
+    uint32_t pred0_to_pred1_dist = 0;
+
+    if (hbd_md) {
+        pred0_to_pred1_dist = sad_16b_kernel(
+            (uint16_t *)ctx->pred0, bwidth, (uint16_t *)ctx->pred1, bwidth, bheight, bwidth);
+    } else {
+        pred0_to_pred1_dist = svt_nxm_sad_kernel_sub_sampled(ctx->pred0, bwidth, ctx->pred1, bwidth, bheight, bwidth);
+    }
+
+    if (pred0_to_pred1_dist < (bheight * bwidth * ctx->inter_comp_ctrls.pred0_to_pred1_mult)) {
+        exit_compound_prep = TRUE;
+        return exit_compound_prep;
+    }
+#endif
+
     if (hbd_md) {
         uint16_t *src_buf_hbd = (uint16_t *)src_pic->buffer_y + (ctx->blk_org_x + src_pic->org_x) +
             (ctx->blk_org_y + src_pic->org_y) * src_pic->stride_y;
@@ -4693,6 +4755,7 @@ Bool svt_aom_calc_pred_masked_compound(PictureControlSet *pcs, ModeDecisionConte
         svt_aom_subtract_block(bheight, bwidth, ctx->diff10, bwidth, ctx->pred1, bwidth, ctx->pred0, bwidth);
     }
 
+#if !CLN_CMPOUND
     Bool     exit_compound_prep  = FALSE;
     uint32_t pred0_to_pred1_dist = 0;
 
@@ -4705,7 +4768,7 @@ Bool svt_aom_calc_pred_masked_compound(PictureControlSet *pcs, ModeDecisionConte
 
     if (pred0_to_pred1_dist < (bheight * bwidth * ctx->inter_comp_ctrls.pred0_to_pred1_mult))
         exit_compound_prep = TRUE;
-
+#endif
     return exit_compound_prep;
 }
 void svt_aom_search_compound_diff_wedge(PictureControlSet *pcs, ModeDecisionContext *ctx, ModeDecisionCandidate *cand) {

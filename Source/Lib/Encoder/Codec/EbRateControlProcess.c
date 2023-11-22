@@ -799,15 +799,27 @@ static int crf_qindex_calc(PictureControlSet *pcs, RATE_CONTROL *rc, int qindex)
     int                      active_worst_quality = qindex;
     rc->arf_q                                     = 0;
     int           q;
-    const uint8_t is_ref              = ppcs->is_ref;
+#if CLN_IS_REF
     const uint8_t temporal_layer      = ppcs->temporal_layer_index;
     const uint8_t hierarchical_levels = ppcs->hierarchical_levels;
-    const int     is_intrl_arf_boost  = (temporal_layer > 0 && is_ref);
+    const uint8_t is_not_last_layer   = temporal_layer < hierarchical_levels;
+    const int     is_intrl_arf_boost  = (temporal_layer > 0 && is_not_last_layer);
     const int     leaf_frame          = temporal_layer < hierarchical_levels ? 0 : 1;
     const int     rf_level            = (frame_is_intra_only(ppcs)) ? KF_STD
                        : (temporal_layer == 0)                      ? GF_ARF_STD
-                       : is_ref                                     ? GF_ARF_LOW
+                       : is_not_last_layer                          ? GF_ARF_LOW
                                                                     : INTER_NORMAL;
+#else
+    const uint8_t is_ref               = ppcs->is_ref;
+    const uint8_t temporal_layer       = ppcs->temporal_layer_index;
+    const uint8_t hierarchical_levels  = ppcs->hierarchical_levels;
+    const int     is_intrl_arf_boost   = (temporal_layer > 0 && is_ref);
+    const int     leaf_frame           = temporal_layer < hierarchical_levels ? 0 : 1;
+    const int     rf_level             = (frame_is_intra_only(ppcs)) ? KF_STD
+                        : (temporal_layer == 0)                      ? GF_ARF_STD
+                        : is_ref                                     ? GF_ARF_LOW
+                                                                     : INTER_NORMAL;
+#endif
 
     const int bit_depth = scs->static_config.encoder_bit_depth;
 

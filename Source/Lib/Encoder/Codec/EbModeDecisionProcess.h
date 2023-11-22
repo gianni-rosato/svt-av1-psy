@@ -143,8 +143,19 @@ typedef struct InterCompCtrls {
     uint8_t pred0_to_pred1_mult;
     // if true, use rate @ compound params derivation
     uint8_t use_rate;
+#if OPT_CMPOUND
+    //no compound for low complexity blocks
+    uint8_t no_cmp_low_cmplx;
+    //no diff for nsq
+    uint8_t no_diff_nsq;
+    //no wedge for flat blocks
+    uint8_t no_wdg_flat;
+    //no distance for symteric refs
+    uint8_t no_dist;
+#else
     // if true, do not consider distance compound
     uint8_t no_dist;
+#endif
 } InterCompCtrls;
 typedef struct InterIntraCompCtrls {
     uint8_t enabled;
@@ -202,6 +213,9 @@ typedef struct TxtControls {
     // If the rate cost of using a TX type is greater than the percentage threshold of the cost of the best TX type (actual cost, not just rate cost),
     // skip testing the TX type. txt_rate_cost_th is specified as a perentage * 10 (i.e. a value of 70 corresponds to skipping the TX type if the
     // txt rate cost is > 7% of the best TX type cost). 0 is off.  Lower values are more aggressive.
+#if OPT_Q_TXT
+    uint16_t satd_th_q_weight;
+#endif
     uint16_t txt_rate_cost_th;
 } TxtControls;
 typedef struct TxsCycleRControls {
@@ -414,6 +428,9 @@ typedef struct MdPmeCtrls {
     uint8_t modulate_pme_for_blk_size_res;
     // Enable pSad
     uint8_t enable_psad;
+#if OPT_Q_PME
+    uint8_t sa_q_weight;
+#endif
 } MdPmeCtrls;
 typedef struct MdSubPelSearchCtrls {
     // Specifies whether the Sub-Pel search will be performed or not (0: OFF, 1: ON)
@@ -580,6 +597,11 @@ typedef struct NicPruningCtrls {
     // if (best_mds0_distortion/QP < TH) consider only the best candidate after MDS0; 0: OFF,
     // higher: more aggressive.
     uint32_t force_1_cand_th;
+#if OPT_Q_PRUNE_TH_WEIGHT
+    uint16_t mds1_q_weight;
+    uint16_t mds2_q_weight;
+    uint16_t mds3_q_weight;
+#endif
 } NicPruningCtrls;
 typedef struct NicCtrls {
     NicPruningCtrls pruning_ctrls;
@@ -861,6 +883,10 @@ typedef struct IntraCtrls {
 typedef struct TxShortcutCtrls {
     // Skip TX at MDS3 if the MDS1 TX gave 0 coeffs
     uint8_t bypass_tx_when_zcoeff;
+#if OPT_TX_BYPASS
+    // Skip TX at MDS3 if the MDS0 Distortion is less than certain threshold
+    uint32_t bypass_tx_th;
+#endif
     // Apply pf based on the number of coeffs
     uint8_t apply_pf_on_coeffs;
     // Use a detector to protect chroma from aggressive actions based on luma info: 0: OFF, 1:
@@ -902,12 +928,6 @@ typedef struct SkipSubDepthCtrls {
     // Do not skip sub-depth(s) if the depth block size is higher than method1_max_size
     int nsq_to_sq_th;
 #endif
-    // Cond0: use the nsq-to-sq cost deviation to skip sub-depth(s)
-    // Do not skip sub-depth(s) if the depth block size is higher than method1_max_size
-    uint8_t max_size_cond0;
-    // Do not skip sub-depth(s) if the depth block size is higher than method1_max_size
-    int nsq_to_sq_th;
-
     // Cond1: use the 4 quad(s) src-to-recon cost deviation to skip sub-depth(s)
     // Do not skip sub-depth(s) if the depth block size is higher than method0_max_size
     uint8_t max_size_cond1;
@@ -917,6 +937,23 @@ typedef struct SkipSubDepthCtrls {
     uint8_t coeff_perc;
 
 } SkipSubDepthCtrls;
+
+#if CLN_CMPOUND
+typedef struct CompoundPredictionStore {
+    //avoid doing Unipred prediction for redundant MV
+    //example: NRST_NRST:  (0,0) (1,2)
+    //         NEAR_NEAR:  (1,0) (1,2)
+    //pred1 for NEAR_NEAR could be retrived from  NRST_NRST
+    uint8_t  pred0_cnt; //actual size for available predictions
+    uint8_t *pred0_buf[4]; //stores prediction for up to 4 different MVs (NEAREST + 3 NEAR)
+    IntMv    pred0_mv[4]; //MVs for availble predictions
+
+    uint8_t  pred1_cnt;
+    uint8_t *pred1_buf[4];
+    IntMv    pred1_mv[4];
+} CompoundPredictionStore;
+#endif
+
 typedef struct ModeDecisionContext {
     EbDctor dctor;
 
@@ -1061,6 +1098,10 @@ typedef struct ModeDecisionContext {
     uint8_t  hbd_pack_done;
     uint16_t tile_index;
     // Store buffers for inter-inter compound search
+#if CLN_CMPOUND
+    CompoundPredictionStore cmp_store;
+#endif
+
     uint8_t  *pred0;
     uint8_t  *pred1;
     int16_t  *residual1;
@@ -1190,6 +1231,9 @@ typedef struct ModeDecisionContext {
     CandClass       mds1_best_class_it;
     Mds0Ctrls       mds0_ctrls;
     uint32_t        md_me_dist;
+#if OPT_CMPOUND
+    uint32_t md_pme_dist;
+#endif
     uint8_t         inject_new_me;
     uint8_t         inject_new_pme;
     uint8_t         inject_new_warp;

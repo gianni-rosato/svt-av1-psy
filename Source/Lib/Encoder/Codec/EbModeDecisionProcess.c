@@ -71,10 +71,20 @@ static void mode_decision_context_dctor(EbPtr p) {
     EB_FREE_ARRAY(obj->md_blk_arr_nsq);
     if (obj->rate_est_table)
         EB_FREE_ARRAY(obj->rate_est_table);
+
+#if CLN_CMPOUND
+    for (int i = 0; i < 4; i++) {
+        if (obj->cmp_store.pred0_buf[i])
+            EB_FREE(obj->cmp_store.pred0_buf[i]);
+        if (obj->cmp_store.pred1_buf[i])
+            EB_FREE(obj->cmp_store.pred1_buf[i]);
+    }
+#else
     if (obj->pred0)
         EB_FREE(obj->pred0);
     if (obj->pred1)
         EB_FREE(obj->pred1);
+#endif
     if (obj->residual1)
         EB_FREE(obj->residual1);
     if (obj->diff10)
@@ -137,7 +147,11 @@ EbErrorType svt_aom_mode_decision_context_ctor(ModeDecisionContext *ctx, EbColor
     uint8_t min_nic_scaling_level = NICS_SCALING_LEVELS - 1;
     for (uint8_t hl = 0; hl < MAX_TEMPORAL_LAYERS; hl++) {
         for (uint8_t is_base = 0; is_base < 2; is_base++) {
+#if OPT_NIC_QP
+            uint8_t nic_level         = svt_aom_get_nic_level(enc_mode, is_base, hl, 63, rtc_tune);
+#else
             uint8_t nic_level         = svt_aom_get_nic_level(enc_mode, is_base, hl, rtc_tune);
+#endif
             uint8_t nic_scaling_level = svt_aom_set_nic_controls(NULL, nic_level);
             min_nic_scaling_level     = MIN(min_nic_scaling_level, nic_scaling_level);
         }
@@ -190,8 +204,15 @@ EbErrorType svt_aom_mode_decision_context_ctor(ModeDecisionContext *ctx, EbColor
     // Allocate buffer for inter-inter compound prediction
     if (get_inter_compound_level(enc_mode)) {
         const uint8_t bits = ctx->hbd_md > EB_8_BIT_MD ? 2 : 1;
+#if CLN_CMPOUND
+        for (int i = 0; i < 4; i++) {
+            EB_MALLOC(ctx->cmp_store.pred0_buf[i], sb_size * sb_size * bits * sizeof(uint8_t));
+            EB_MALLOC(ctx->cmp_store.pred1_buf[i], sb_size * sb_size * bits * sizeof(uint8_t));
+        }
+#else
         EB_MALLOC(ctx->pred0, sb_size * sb_size * bits * sizeof(ctx->pred0[0]));
         EB_MALLOC(ctx->pred1, sb_size * sb_size * bits * sizeof(ctx->pred1[0]));
+#endif
         EB_MALLOC(ctx->residual1, sb_size * sb_size * sizeof(ctx->residual1[0]));
         EB_MALLOC(ctx->diff10, sb_size * sb_size * sizeof(ctx->diff10[0]));
     }
@@ -213,7 +234,10 @@ EbErrorType svt_aom_mode_decision_context_ctor(ModeDecisionContext *ctx, EbColor
 
     // Allocate buffers for obmc prediction
     uint8_t obmc_allowed = 0;
+#if CLN_IS_REF
+#else
     for (uint8_t is_ref = 0; is_ref < 2; is_ref++) {
+#endif
         for (uint8_t fast_decode = 0; fast_decode < 2; fast_decode++) {
             for (EbInputResolution input_resolution = 0; input_resolution < INPUT_SIZE_COUNT; input_resolution++) {
                 if (obmc_allowed)
@@ -221,7 +245,10 @@ EbErrorType svt_aom_mode_decision_context_ctor(ModeDecisionContext *ctx, EbColor
                 obmc_allowed |= svt_aom_get_obmc_level(enc_mode, fast_decode, input_resolution);
             }
         }
+#if CLN_IS_REF
+#else
     }
+#endif
     if (obmc_allowed) {
         const uint8_t bits = ctx->hbd_md > EB_8_BIT_MD ? 2 : 1;
         EB_MALLOC(ctx->obmc_buff_0, sb_size * sb_size * bits * MAX_MB_PLANE * sizeof(ctx->obmc_buff_0[0]));
