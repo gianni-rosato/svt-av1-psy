@@ -28,6 +28,7 @@
 /****************************************
  * Universal Includes
  ****************************************/
+#include <stdbool.h>
 #include <stdlib.h>
 #include "EbThreads.h"
 #include "EbLog.h"
@@ -60,6 +61,59 @@ void printfTime(const char *fmt, ...) {
 #endif
 #endif
 
+#ifndef _WIN32
+static void *dummy_func(void *arg) {
+    (void)arg;
+    return NULL;
+}
+
+static pthread_once_t checked_once = PTHREAD_ONCE_INIT;
+static bool           can_use_prio = false;
+
+static void check_set_prio(void) {
+    /* We can only use realtime priority if we are running as root, so
+     * check if geteuid() == 0 (meaning either root or sudo).
+     * If we don't do this check, we will eventually run into memory
+     * issues if the encoder is uninitalized and re-initalized multiple
+     * times in one executable due to a bug in glibc.
+     * https://sourceware.org/bugzilla/show_bug.cgi?id=19511
+     *
+     * We still need to exclude the case of thread sanitizer because we
+     * run the test as root inside the container and trying to change
+     * the thread priority will __always__ fail the thread sanitizer.
+     * https://github.com/google/sanitizers/issues/1088
+     */
+    if (EB_THREAD_SANITIZER_ENABLED || geteuid() != 0)
+        return;
+    pthread_attr_t attr;
+    int            ret;
+    if ((ret = pthread_attr_init(&attr))) {
+        SVT_WARN("Failed to initalize thread attributes: %s\n", strerror(ret));
+        return;
+    }
+    struct sched_param param;
+    if ((ret = pthread_attr_getschedparam(&attr, &param))) {
+        SVT_WARN("Failed to get thread priority: %s\n", strerror(ret));
+        goto end;
+    }
+    param.sched_priority = 99;
+    if ((ret = pthread_attr_setschedparam(&attr, &param))) {
+        SVT_WARN("Failed to set thread priority: %s\n", strerror(ret));
+        goto end;
+    }
+    pthread_t th;
+    if (pthread_create(&th, &attr, dummy_func, NULL)) {
+        SVT_WARN("Failed to create thread: %s\n", strerror(ret));
+        goto end;
+    }
+    can_use_prio = true;
+end:
+    if (pthread_attr_destroy(&attr)) {
+        SVT_WARN("Failed to destroy thread attributes: %s\n", strerror(ret));
+    }
+}
+#endif
+
 /****************************************
  * svt_create_thread
  ****************************************/
@@ -77,11 +131,25 @@ EbHandle svt_create_thread(void *thread_function(void *), void *thread_context) 
         NULL); // new thread ID
 
 #else
+    if (pthread_once(&checked_once, check_set_prio)) {
+        SVT_ERROR("Failed to run pthread_once to check if we can set priority\n");
+        return NULL;
+    }
+
     pthread_attr_t attr;
     if (pthread_attr_init(&attr)) {
         SVT_ERROR("Failed to initalize thread attributes\n");
         return NULL;
     }
+
+    if (can_use_prio) {
+        // As described in https://docs.oracle.com/cd/E19455-01/806-5257/attrib-16/index.html
+        struct sched_param param;
+        pthread_attr_getschedparam(&attr, &param);
+        param.sched_priority = 99;
+        pthread_attr_setschedparam(&attr, &param);
+    }
+
     size_t stack_size;
     if (pthread_attr_getstacksize(&attr, &stack_size)) {
         SVT_ERROR("Failed to get thread stack size\n");
@@ -109,23 +177,6 @@ EbHandle svt_create_thread(void *thread_function(void *), void *thread_context) 
 
     pthread_attr_destroy(&attr);
 
-    /* We can only use realtime priority if we are running as root, so
-     * check if geteuid() == 0 (meaning either root or sudo).
-     * If we don't do this check, we will eventually run into memory
-     * issues if the encoder is uninitalized and re-initalized multiple
-     * times in one executable due to a bug in glibc.
-     * https://sourceware.org/bugzilla/show_bug.cgi?id=19511
-     *
-     * We still need to exclude the case of thread sanitizer because we
-     * run the test as root inside the container and trying to change
-     * the thread priority will __always__ fail the thread sanitizer.
-     * https://github.com/google/sanitizers/issues/1088
-     */
-    if (!EB_THREAD_SANITIZER_ENABLED && !geteuid()) {
-        if (pthread_setschedparam(*th, SCHED_FIFO, &(struct sched_param){.sched_priority = 99}))
-            SVT_WARN("Failed to set thread priority\n");
-        // ignore if this failed
-    }
     thread_handle = th;
 #endif // _WIN32
 

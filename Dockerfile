@@ -1,4 +1,4 @@
-FROM buildpack-deps:kinetic as BUILDER
+FROM buildpack-deps:bookworm as BUILDER
 
 WORKDIR /app
 
@@ -9,7 +9,7 @@ RUN apt-get update && apt-get install -y \
 
 ENV LDFLAGS "-static -static-libgcc"
 
-RUN git clone --depth 1 https://gitlab.com/AOMediaCodec/SVT-AV1.git && \
+RUN git clone --branch thread_prio/warning --depth 1 https://gitlab.com/1480c1/SVT-AV1.git && \
     cd ./SVT-AV1/Build/linux && \
     ./build.sh release static
 
