@@ -220,6 +220,57 @@ extern "C" {
 #define TUNE_M8_II                                1 // Tune M8
 #define TUNE_CDEF_M56                             1 // Tune CDEF levels for M5/6
 
+#define OPT_SG                                    1 // Opt sg filter
+#define OPT_SC_M1_ABOVE                           1 // optimize presets M7 and above for FPS in VBR mode, optimize ME_SA for SC for presets M1-M6
+
+#define TUNE_SHIFT_PRESETS                        1 //Shift presets to match Master BD-rate
+#define FIX_FI_R2R                                1 // Fix to allow FI to change at picture level
+#define TUNE_4X4                                  1 // Use base and islice modulation for 4x4 levels
+#define FIX_EXPOSE_4X4_DR                         1 // Expose depth removal feature that targets 4x4
+
+
+#define TUNE_M7_M8                                1 // tune new m7-m8
+#define FIX_DEPTH_REMOVAL_OFF                     1 // When depth removal is set to off, don't allow high_freq_present to turn it on
+
+#define TUNE_NEW_M1                               1 // tune new m1
+#define TUNE_M10                                  1 // tune m10
+
+#define OPT_Q_ME                                  1 // Ctrl ME using q
+#define OPT_PME_LVL                               1 // Improve the PME lvl
+
+
+#define TUNE_NEW_M9                               1 // tune new m9
+#define TUNE_M11                                  1 // tune m11
+#define OPT_MRP_VBR_FPS                           1 // create separate control structure for mrp for VBR
+#define TUNE_M12                                  1 // tune m12
+#define TUNE_M8_III                               1 // tune m8
+
+#define TUNE_TPL                                  1 // Tune  tpl levels
+#define OPT_TPL_REC                               0 // Use single recon pass for overlapping TPL frames
+
+#define TUNE_M9_M10                               1 // tune m9-m10
+#define OPT_LPD1_DET                              1 // Optimize LPD1 detector
+
+#define TUNE_M6_M7                                1 // tune m6-m7
+#define TUNE_M9_LPD0_LVLS                         1 // Remove QP banding from M9 LPD0 levels
+#define TUNE_M6_CDEF                              1 // New M6 CDEF level
+#define TUNE_GM_PP                                0 // tune gm level for M6
+
+#define TUNE_M2_M4                                1 // Tune m2 m4 fast decode
+#define TUNE_M1_II                                1 // tune m1 default
+#define TUNE_M13                                  1 // Opt M13 bd-rate
+
+
+#define FIX_DEPTH_R2R                             1 // Fix r2r from using uninit'd data in depth refinement
+#define FIX_BYPASS_ED                             1 // Various bug fixes related to bypassing EncDec
+#if FIX_BYPASS_ED
+#define FIX_BYPASS_ED_COEFF                       1 // Fix how coeffs are saved when encdec is bypassed and fix chroma bugs for 128xN blocks
+#define TUNE_BYPASS_ED                            1 // Bypass encdec for M5/6 in 8bit
+#define FIX_BYPASS_ED_10BIT                       1 // Add missing neighbour array copies for 10bit when NSQ and bypass_endec are used
+#define FIX_NZ_COEFF_SKIP                         1 // Set the count of non-zero coeffs to 0 when skip is selected in svt_aom_full_cost
+#define FIX_RECON_COPIES                          1 // Fix the 8bit recon copies when 8bit MD is used for 10bit content
+#endif
+
 //FOR DEBUGGING - Do not remove
 #define OPT_LD_LATENCY2         0 // Latency optimization for low delay
 #define LOG_ENC_DONE            0 // log encoder job one

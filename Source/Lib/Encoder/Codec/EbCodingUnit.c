@@ -67,8 +67,14 @@ EbErrorType svt_aom_largest_coding_unit_ctor(SuperBlock *larget_coding_unit_ptr,
 #endif
 #endif
     bool disallow_4x4 = true;
+#if TUNE_4X4
+    for (uint8_t is_islice = 0; is_islice <= 1; is_islice++)
+        for (uint8_t is_base = 0; is_base <= 1; is_base++)
+            disallow_4x4 = MIN(disallow_4x4, svt_aom_get_disallow_4x4(enc_mode, is_base, is_islice));
+#else
     for (SliceType slice_type = 0; slice_type < IDR_SLICE + 1; slice_type++)
         disallow_4x4 = MIN(disallow_4x4, svt_aom_get_disallow_4x4(enc_mode, slice_type));
+#endif
     uint32_t tot_blk_num;
     if (sb_size_pix == 128)
         if (disallow_4x4 && disallow_nsq)

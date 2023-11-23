@@ -4433,7 +4433,11 @@ void set_multi_pass_params(SequenceControlSet *scs)
         }
 
         case ENC_FIRST_PASS: {
+#if TUNE_SHIFT_PRESETS
+            if (config->enc_mode <= ENC_M5)
+#else
             if (config->enc_mode <= ENC_M4)
+#endif
                 set_ipp_pass_ctrls(scs, 0);
             else if (config->enc_mode <= ENC_M10)
                 set_ipp_pass_ctrls(scs, 2);
@@ -4462,7 +4466,11 @@ void set_multi_pass_params(SequenceControlSet *scs)
                 set_mid_pass_ctrls(scs, 1);
             scs->ipp_was_ds = 0;
             scs->final_pass_preset = config->enc_mode;
+#if TUNE_SHIFT_PRESETS
+            if (scs->final_pass_preset <= ENC_M8)
+#else
             if (scs->final_pass_preset <= ENC_M7)
+#endif
                 scs->static_config.enc_mode = ENC_M11;
             else if (scs->final_pass_preset <= ENC_M9)
                 scs->static_config.enc_mode = ENC_M12;
@@ -4523,7 +4531,11 @@ void set_multi_pass_params(SequenceControlSet *scs)
         if (!scs->static_config.rate_control_mode && scs->static_config.max_bit_rate)
             scs->static_config.recode_loop = ALLOW_RECODE_KFARFGF;
         else
+#if TUNE_SHIFT_PRESETS
+            scs->static_config.recode_loop = scs->static_config.enc_mode <= ENC_M3 ? ALLOW_RECODE_KFARFGF : ALLOW_RECODE_KFMAXBW;
+#else
             scs->static_config.recode_loop = scs->static_config.enc_mode <= ENC_M2 ? ALLOW_RECODE_KFARFGF : ALLOW_RECODE_KFMAXBW;
+#endif
     }
 
     scs->enc_ctx->recode_loop = scs->static_config.recode_loop;
@@ -4841,8 +4853,14 @@ static void set_param_based_on_input(SequenceControlSet *scs)
                 no_16x8_8x16 = no_16x8_8x16 && min_nsq_bsize >= 16;
             }
     bool disallow_4x4 = true;
+#if TUNE_4X4
+    for (uint8_t is_islice = 0; is_islice <= 1; is_islice++)
+        for (uint8_t is_base = 0; is_base <= 1; is_base++)
+            disallow_4x4 = MIN(disallow_4x4, svt_aom_get_disallow_4x4(scs->static_config.enc_mode, is_base, is_islice));
+#else
     for (SliceType slice_type = 0; slice_type < IDR_SLICE + 1; slice_type++)
         disallow_4x4 = MIN(disallow_4x4, svt_aom_get_disallow_4x4(scs->static_config.enc_mode, slice_type));
+#endif
     if (scs->super_block_size == 128) {
 #if OPT_GEOM_SB12B_B4
     if(!allow_HVA_HVB && disallow_4x4) {
@@ -4965,7 +4983,11 @@ static void set_param_based_on_input(SequenceControlSet *scs)
     svt_aom_set_mfmv_config(scs);
 #else
     if (scs->static_config.enable_mfmv == DEFAULT) {
+#if TUNE_SHIFT_PRESETS
+        if (scs->static_config.enc_mode <= ENC_M6)
+#else
         if (scs->static_config.enc_mode <= ENC_M5)
+#endif
             scs->mfmv_enabled = 1;
         else if ((scs->static_config.enc_mode <= ENC_M9) ||
             (scs->static_config.pred_structure != SVT_AV1_PRED_LOW_DELAY_B &&

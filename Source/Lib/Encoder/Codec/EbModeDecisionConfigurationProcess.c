@@ -259,7 +259,11 @@ void mode_decision_configuration_init_qp_update(PictureControlSet *pcs) {
     // Initial Rate Estimation of the syntax elements
     svt_aom_estimate_syntax_rate(md_rate_est_ctx,
                                  pcs->slice_type == I_SLICE ? TRUE : FALSE,
+#if FIX_FI_R2R
+                                 pcs->ppcs->scs->seq_header.filter_intra_level,
+#else
                                  pcs->pic_filter_intra_level,
+#endif
                                  pcs->ppcs->frm_hdr.allow_screen_content_tools,
                                  pcs->ppcs->enable_restoration,
                                  pcs->ppcs->frm_hdr.allow_intrabc,
@@ -776,7 +780,11 @@ void *svt_aom_mode_decision_configuration_kernel(void *input_ptr) {
         // Initial Rate Estimation of the syntax elements
         svt_aom_estimate_syntax_rate(md_rate_est_ctx,
                                      pcs->slice_type == I_SLICE ? TRUE : FALSE,
+#if FIX_FI_R2R
+                                     scs->seq_header.filter_intra_level,
+#else
                                      pcs->pic_filter_intra_level,
+#endif
                                      pcs->ppcs->frm_hdr.allow_screen_content_tools,
                                      pcs->ppcs->enable_restoration,
                                      pcs->ppcs->frm_hdr.allow_intrabc,

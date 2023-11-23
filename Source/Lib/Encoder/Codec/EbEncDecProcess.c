@@ -2944,6 +2944,14 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs, PictureContro
                     int8_t s_depth = ctx->depth_ctrls.s_depth;
                     int8_t e_depth = ctx->depth_ctrls.e_depth;
 
+#if FIX_DEPTH_R2R
+                    // Selected depths should be available, unless they are not valid blocks (e.g. out of bounds).
+                    // Therefore, when blocks are invalid, don't add parent/child.
+                    if (!ctx->avail_blk_flag[blk_geom->sqi_mds]) {
+                        s_depth = e_depth = 0;
+                    }
+#endif
+
 #if OPT_M2_BELOW_DEPTHS
                     // Cap to (-1,+1) if the pred mode is INTER (if both INTER and INTRA are tested)
                     if (ctx->depth_ctrls.use_pred_mode) {
@@ -3328,7 +3336,11 @@ static void lpd1_detector_post_pd0(PictureControlSet *pcs, ModeDecisionContext *
                 const uint64_t low_th      = RDCOST(lambda, rate, (uint64_t)dist << 14);
                 const uint16_t nz_coeff_th = md_ctx->lpd1_ctrls.nz_coeff_th[pd1_lvl];
                 // If the PD0 cost is very high and the number of non-zero coeffs is high, the block is difficult, so should use regular PD1
+#if OPT_LPD1_DET
+                if (pd0_cost > low_th && nz_coeffs >= nz_coeff_th) {
+#else
                 if (pd0_cost > low_th && nz_coeffs > nz_coeff_th) {
+#endif
                     md_ctx->lpd1_ctrls.pd1_level = pd1_lvl - 1;
                 }
 
@@ -3355,12 +3367,21 @@ static void lpd1_detector_post_pd0(PictureControlSet *pcs, ModeDecisionContext *
                 }
 
                 if (pcs->slice_type != I_SLICE) {
+#if OPT_LPD1_DET
+                    /* me_8x8_cost_variance_th is shifted by 5 then mulitplied by 73 minus pic_qp.  Therefore, the TH must be less than
+                       (((uint32_t)~0) >> 2) to avoid overflow issues from the multiplication. */
+                    if (md_ctx->lpd1_ctrls.me_8x8_cost_variance_th[pd1_lvl] < (((uint32_t)~0) >> 2) &&
+                        pcs->ppcs->me_8x8_cost_variance[md_ctx->sb_index] >
+                        (md_ctx->lpd1_ctrls.me_8x8_cost_variance_th[pd1_lvl] >> 5) * (73 - pcs->picture_qp))
+                        md_ctx->lpd1_ctrls.pd1_level = pd1_lvl - 1;
+#else
                     /* me_8x8_cost_variance_th is shifted by 5 then mulitplied by the pic QP (max 63).  Therefore, the TH must be less than
                        (((uint32_t)~0) >> 1) to avoid overflow issues from the multiplication. */
                     if (md_ctx->lpd1_ctrls.me_8x8_cost_variance_th[pd1_lvl] < (((uint32_t)~0) >> 1) &&
                         pcs->ppcs->me_8x8_cost_variance[md_ctx->sb_index] >
                             (md_ctx->lpd1_ctrls.me_8x8_cost_variance_th[pd1_lvl] >> 5) * pcs->picture_qp)
                         md_ctx->lpd1_ctrls.pd1_level = pd1_lvl - 1;
+#endif
                 }
             }
         }
@@ -3462,12 +3483,21 @@ static void lpd1_detector_skip_pd0(PictureControlSet *pcs, ModeDecisionContext *
                         if (pcs->ppcs->me_64x64_distortion[md_ctx->sb_index] >
                             md_ctx->lpd1_ctrls.skip_pd0_edge_dist_th[pd1_lvl])
                             md_ctx->lpd1_ctrls.pd1_level = pd1_lvl - 1;
+#if OPT_LPD1_DET
+                        /* me_8x8_cost_variance_th is shifted by 5 then mulitplied by 73 minus pic_qp.  Therefore, the TH must be less than
+                           (((uint32_t)~0) >> 2) to avoid overflow issues from the multiplication. */
+                        else if (md_ctx->lpd1_ctrls.me_8x8_cost_variance_th[pd1_lvl] < (((uint32_t)~0) >> 2) &&
+                            pcs->ppcs->me_8x8_cost_variance[md_ctx->sb_index] >
+                            (md_ctx->lpd1_ctrls.me_8x8_cost_variance_th[pd1_lvl] >> 5) * (73 - pcs->picture_qp))
+                            md_ctx->lpd1_ctrls.pd1_level = pd1_lvl - 1;
+#else
                         /* me_8x8_cost_variance_th is shifted by 5 then mulitplied by the pic QP (max 63).  Therefore, the TH must be less than
                            (((uint32_t)~0) >> 1) to avoid overflow issues from the multiplication. */
                         else if (md_ctx->lpd1_ctrls.me_8x8_cost_variance_th[pd1_lvl] < (((uint32_t)~0) >> 1) &&
                                  pcs->ppcs->me_8x8_cost_variance[md_ctx->sb_index] >
                                      (md_ctx->lpd1_ctrls.me_8x8_cost_variance_th[pd1_lvl] >> 5) * pcs->picture_qp)
                             md_ctx->lpd1_ctrls.pd1_level = pd1_lvl - 1;
+#endif
                     } else {
                         if (md_ctx->lpd1_ctrls.skip_pd0_me_shift[pd1_lvl] != (uint16_t)~0 &&
                             pcs->ppcs->me_64x64_distortion[md_ctx->sb_index] >
@@ -3743,7 +3773,11 @@ void *svt_aom_mode_decision_kernel(void *input_ptr) {
 
                     svt_aom_estimate_syntax_rate(ed_ctx->md_ctx->rate_est_table,
                                                  pcs->slice_type == I_SLICE ? TRUE : FALSE,
+#if FIX_FI_R2R
+                                                 scs->seq_header.filter_intra_level,
+#else
                                                  pcs->pic_filter_intra_level,
+#endif
                                                  pcs->ppcs->frm_hdr.allow_screen_content_tools,
                                                  pcs->ppcs->enable_restoration,
                                                  pcs->ppcs->frm_hdr.allow_intrabc,
@@ -3839,7 +3873,11 @@ void *svt_aom_mode_decision_kernel(void *input_ptr) {
                             if (pcs->cdf_ctrl.update_se)
                                 svt_aom_estimate_syntax_rate(ed_ctx->md_ctx->rate_est_table,
                                                              pcs->slice_type == I_SLICE,
+#if FIX_FI_R2R
+                                                             scs->seq_header.filter_intra_level,
+#else
                                                              pcs->pic_filter_intra_level,
+#endif
                                                              pcs->ppcs->frm_hdr.allow_screen_content_tools,
                                                              pcs->ppcs->enable_restoration,
                                                              pcs->ppcs->frm_hdr.allow_intrabc,

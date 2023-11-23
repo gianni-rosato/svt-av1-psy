@@ -5073,8 +5073,13 @@ void svt_aom_product_full_mode_decision_light_pd1(
         int32_t* src_ptr;
         int32_t* dst_ptr;
 
+#if FIX_BYPASS_ED_COEFF
+        uint16_t bwidth = ctx->blk_geom->tx_width[blk_ptr->tx_depth];
+        uint16_t bheight = ctx->blk_geom->tx_height[blk_ptr->tx_depth];
+#else
         uint16_t  bwidth = MIN(ctx->blk_geom->tx_width[blk_ptr->tx_depth], 32);
         uint16_t  bheight = MIN(ctx->blk_geom->tx_height[blk_ptr->tx_depth], 32);
+#endif
 
         if (ctx->md_local_blk_unit[ctx->blk_geom->blkidx_mds].y_has_coeff[txb_itr]) {
             src_ptr = &(((int32_t*)cand_bf->quant->buffer_y)[txb_1d_offset]);
@@ -5342,8 +5347,10 @@ uint32_t svt_aom_product_full_mode_decision(
     uint16_t txb_itr = 0;
     uint16_t tu_total_count = ctx->blk_geom->txb_count[blk_ptr->tx_depth];
     int32_t txb_1d_offset = 0, txb_1d_offset_uv = 0;
+#if !FIX_BYPASS_ED_COEFF
     ctx->md_local_blk_unit[ctx->blk_geom->blkidx_mds].quantized_dc[1][0] = cand_bf->quantized_dc[1][0];
     ctx->md_local_blk_unit[ctx->blk_geom->blkidx_mds].quantized_dc[2][0] = cand_bf->quantized_dc[2][0];
+#endif
     do {
         TransformUnit *txb_ptr = &blk_ptr->txb_array[txb_itr];
         ctx->md_local_blk_unit[ctx->blk_geom->blkidx_mds].y_has_coeff[txb_itr] = (Bool)(((cand_bf->y_has_coeff) & (1 << txb_itr)) > 0);
@@ -5352,13 +5359,22 @@ uint32_t svt_aom_product_full_mode_decision(
         txb_ptr->transform_type[PLANE_TYPE_Y] = cand->transform_type[txb_itr];
         txb_ptr->transform_type[PLANE_TYPE_UV] = cand->transform_type_uv;
         ctx->md_local_blk_unit[ctx->blk_geom->blkidx_mds].quantized_dc[0][txb_itr] = cand_bf->quantized_dc[0][txb_itr];
+#if FIX_BYPASS_ED_COEFF
+        ctx->md_local_blk_unit[ctx->blk_geom->blkidx_mds].quantized_dc[1][txb_itr] = cand_bf->quantized_dc[1][txb_itr];
+        ctx->md_local_blk_unit[ctx->blk_geom->blkidx_mds].quantized_dc[2][txb_itr] = cand_bf->quantized_dc[2][txb_itr];
+#endif
 
         if (ctx->bypass_encdec && ctx->pd_pass == PD_PASS_1) {
             txb_ptr->nz_coef_count[0] = cand_bf->eob[0][txb_itr];
             txb_ptr->nz_coef_count[1] = cand_bf->eob[1][txb_itr];
             txb_ptr->nz_coef_count[2] = cand_bf->eob[2][txb_itr];
+#if FIX_BYPASS_ED_COEFF
+            uint16_t  bwidth = ctx->blk_geom->tx_width[blk_ptr->tx_depth];
+            uint16_t  bheight = ctx->blk_geom->tx_height[blk_ptr->tx_depth];
+#else
             uint16_t  bwidth = MIN(ctx->blk_geom->tx_width[blk_ptr->tx_depth], 32);
             uint16_t  bheight = MIN(ctx->blk_geom->tx_height[blk_ptr->tx_depth], 32);
+#endif
             int32_t* src_ptr = &(((int32_t*)cand_bf->quant->buffer_y)[txb_1d_offset]);
             int32_t* dst_ptr = &(((int32_t*)ctx->blk_ptr->coeff_tmp->buffer_y)[txb_1d_offset]);
 

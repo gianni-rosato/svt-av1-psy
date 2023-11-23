@@ -2187,7 +2187,11 @@ void svt_aom_full_loop_uv(PictureControlSet *pcs, ModeDecisionContext *ctx, Mode
             int32_t seg_qp              = pcs->ppcs->frm_hdr.segmentation_params.segmentation_enabled
                              ? pcs->ppcs->frm_hdr.segmentation_params.feature_data[ctx->blk_ptr->segment_id][SEG_LVL_ALT_Q]
                              : 0;
+#if FIX_BYPASS_ED_COEFF
+            cand_bf->quantized_dc[1][txb_itr] = svt_aom_quantize_inv_quantize(
+#else
             cand_bf->quantized_dc[1][0] = svt_aom_quantize_inv_quantize(
+#endif
                 pcs,
                 ctx,
                 &(((int32_t *)ctx->tx_coeffs->buffer_cb)[txb_1d_offset]),
@@ -2372,7 +2376,11 @@ void svt_aom_full_loop_uv(PictureControlSet *pcs, ModeDecisionContext *ctx, Mode
             int32_t seg_qp              = pcs->ppcs->frm_hdr.segmentation_params.segmentation_enabled
                              ? pcs->ppcs->frm_hdr.segmentation_params.feature_data[ctx->blk_ptr->segment_id][SEG_LVL_ALT_Q]
                              : 0;
+#if FIX_BYPASS_ED_COEFF
+            cand_bf->quantized_dc[2][txb_itr] = svt_aom_quantize_inv_quantize(
+#else
             cand_bf->quantized_dc[2][0] = svt_aom_quantize_inv_quantize(
+#endif
                 pcs,
                 ctx,
                 &(((int32_t *)ctx->tx_coeffs->buffer_cr)[txb_1d_offset]),

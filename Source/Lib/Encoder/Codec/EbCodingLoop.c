@@ -2503,11 +2503,19 @@ EB_EXTERN EbErrorType svt_aom_encdec_update(SequenceControlSet *scs, PictureCont
                         int32_t *ep_coeff = ((int32_t *)coeff_buffer_sb->buffer_y) + ctx->coded_area_sb;
                         int32_t *md_coeff = ((int32_t *)blk_ptr->coeff_tmp->buffer_y) + txb_1d_offset;
 
+#if FIX_BYPASS_ED_COEFF
+                        if (md_ctx->md_local_blk_unit[blk_geom->blkidx_mds].y_has_coeff[ctx->txb_itr])
+                            svt_memcpy(ep_coeff,
+                                       md_coeff,
+                                       sizeof(int32_t) * blk_geom->tx_height[blk_ptr->tx_depth] *
+                                           blk_geom->tx_width[blk_ptr->tx_depth]);
+#else
                         if (md_ctx->md_local_blk_unit[blk_geom->blkidx_mds].y_has_coeff[ctx->txb_itr])
                             svt_memcpy(ep_coeff,
                                        md_coeff,
                                        sizeof(int32_t) * MIN(blk_geom->tx_height[blk_ptr->tx_depth], 32) *
                                            MIN(blk_geom->tx_width[blk_ptr->tx_depth], 32));
+#endif
 
                         if (blk_geom->has_uv && uv_pass) {
                             int32_t *ep_coeff_cb = ((int32_t *)coeff_buffer_sb->buffer_cb) + ctx->coded_area_sb_uv;

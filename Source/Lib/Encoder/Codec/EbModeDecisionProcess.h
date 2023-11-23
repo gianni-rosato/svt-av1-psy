@@ -440,8 +440,10 @@ typedef struct MdPmeCtrls {
     // If post_fp_pme_to_me_mv smaller than post_fp_pme_to_me_mv_th then PME_MV = ME_MV and exit
     // (increase towards a faster level)
     int post_fp_pme_to_me_mv_th;
+#if !OPT_PME_LVL
     // only turn pme on for 32x32 blocks or 1080p 64x64 blocks
     uint8_t modulate_pme_for_blk_size_res;
+#endif
     // Enable pSad
     uint8_t enable_psad;
 #if OPT_Q_PME

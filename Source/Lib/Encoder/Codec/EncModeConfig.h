@@ -18,7 +18,11 @@ uint8_t svt_aom_set_nic_controls(ModeDecisionContext *ctx, uint8_t nic_level);
 uint8_t svt_aom_set_chroma_controls(ModeDecisionContext *ctx, uint8_t uv_level);
 uint8_t svt_aom_get_update_cdf_level(EncMode enc_mode, SliceType is_islice, uint8_t is_base);
 uint8_t svt_aom_get_chroma_level(EncMode enc_mode);
+#if FIX_RECON_COPIES
+uint8_t svt_aom_get_bypass_encdec(EncMode enc_mode, uint8_t encoder_bit_depth);
+#else
 uint8_t svt_aom_get_bypass_encdec(EncMode enc_mode, uint8_t hbd_md, uint8_t encoder_bit_depth);
+#endif
 #if OPT_NIC_QP
 uint8_t svt_aom_get_nic_level(EncMode enc_mode, uint8_t is_base, uint8_t hierarchical_levels, uint32_t qp, bool rtc_tune);
 #else
@@ -64,14 +68,27 @@ uint8_t svt_aom_derive_gm_level(PictureParentControlSet *pcs, bool super_res_off
 
 void svt_aom_set_gm_controls(PictureParentControlSet *pcs, uint8_t gm_level);
 
+#if OPT_SG
+uint8_t svt_aom_get_enable_sg(EncMode enc_mode, uint8_t input_resolution, Bool fast_decode, uint8_t qp);
+#else
 uint8_t svt_aom_get_enable_sg(EncMode enc_mode, uint8_t input_resolution, Bool fast_decode);
+#endif
 
+#if OPT_SG
+uint8_t svt_aom_get_enable_restoration(EncMode enc_mode, int8_t config_enable_restoration, uint8_t input_resolution,
+                                       Bool fast_decode, uint8_t qp);
+#else
 uint8_t svt_aom_get_enable_restoration(EncMode enc_mode, int8_t config_enable_restoration, uint8_t input_resolution,
                                        Bool fast_decode);
+#endif
 
 void svt_aom_set_dist_based_ref_pruning_controls(ModeDecisionContext *ctx, uint8_t dist_based_ref_pruning_level);
 
+#if TUNE_4X4
+bool svt_aom_get_disallow_4x4(EncMode enc_mode, uint8_t is_base, uint8_t is_islice);
+#else
 bool svt_aom_get_disallow_4x4(EncMode enc_mode, SliceType slice_type);
+#endif
 
 #if OPT_MR_M0
 #if OPT_NSQ_QP

@@ -363,7 +363,11 @@ EbErrorType svt_aom_mode_decision_context_ctor(ModeDecisionContext *ctx, EbColor
         ctx->md_blk_arr_nsq[coded_leaf_index].segment_id = 0;
         const BlockGeom *blk_geom                        = get_blk_geom_mds(coded_leaf_index);
 
+#if FIX_RECON_COPIES
+        if (svt_aom_get_bypass_encdec(enc_mode, encoder_bit_depth)) {
+#else
         if (svt_aom_get_bypass_encdec(enc_mode, ctx->hbd_md, encoder_bit_depth)) {
+#endif
             EbPictureBufferDescInitData init_data;
 
             init_data.buffer_enable_mask = PICTURE_BUFFER_DESC_FULL_MASK;
@@ -504,7 +508,11 @@ void svt_aom_reset_mode_decision_neighbor_arrays(PictureControlSet *pcs, uint16_
             svt_aom_neighbor_array_unit_reset(pcs->md_cb_recon_na[depth][tile_idx]);
             svt_aom_neighbor_array_unit_reset(pcs->md_cr_recon_na[depth][tile_idx]);
         }
+#if FIX_BYPASS_ED_10BIT
+        if (pcs->hbd_md > EB_8_BIT_MD || (pcs->scs->encoder_bit_depth > EB_EIGHT_BIT && pcs->pic_bypass_encdec)) {
+#else
         if (pcs->hbd_md > EB_8_BIT_MD) {
+#endif
             svt_aom_neighbor_array_unit_reset(pcs->md_luma_recon_na_16bit[depth][tile_idx]);
             svt_aom_neighbor_array_unit_reset(pcs->md_tx_depth_1_luma_recon_na_16bit[depth][tile_idx]);
             svt_aom_neighbor_array_unit_reset(pcs->md_tx_depth_2_luma_recon_na_16bit[depth][tile_idx]);

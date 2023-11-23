@@ -588,6 +588,10 @@ typedef struct GmControls {
     bool inj_psq_glb;
     //enable Pre-processor for GM
     bool pp_enabled;
+#if TUNE_GM_PP
+    //downsampling level for the pre-processor
+    uint8_t pp_downsample_level;
+#endif
     //limit the search to  ref index = 0 only
     bool ref_idx0_only;
 #if OPT_Q_GLOBAL

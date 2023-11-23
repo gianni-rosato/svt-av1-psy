@@ -38,6 +38,16 @@
  * Context
  **************************************/
 
+#if OPT_TPL_REC
+typedef struct TplRefList {
+    EbObjectWrapper* ref;
+    int32_t          frame_idx;
+    uint8_t          refresh_frame_mask;
+    bool             is_valid;
+    uint64_t         picture_number;
+} TplRefList;
+#endif
+
 typedef struct SourceBasedOperationsContext {
     EbDctor  dctor;
     EbFifo  *initial_rate_control_results_input_fifo_ptr;
@@ -46,6 +56,9 @@ typedef struct SourceBasedOperationsContext {
     uint8_t *y_mean_ptr;
     uint8_t *cr_mean_ptr;
     uint8_t *cb_mean_ptr;
+#if OPT_TPL_REC
+    TplRefList tpl_ref_dpb[REF_FRAMES + 1]; // Buffer for each ref pic and current pic
+#endif
 } SourceBasedOperationsContext;
 typedef struct TplDispenserContext {
     EbDctor  dctor;
@@ -78,6 +91,11 @@ EbErrorType svt_aom_source_based_operations_context_ctor(EbThreadContext *thread
 
     context_ptr->picture_demux_results_output_fifo_ptr = svt_system_resource_get_producer_fifo(
         enc_handle_ptr->picture_demux_results_resource_ptr, index);
+
+#if OPT_TPL_REC
+    memset(context_ptr->tpl_ref_dpb, 0, sizeof(TplRefList) * (REF_FRAMES + 1));
+#endif
+
     return EB_ErrorNone;
 }
 /*
@@ -571,7 +589,11 @@ static void tpl_mc_flow_dispenser_sb_generic(EncodeContext *enc_ctx, SequenceCon
     B64Geom       *b64_geom        = &scs->b64_geom[sb_index];
     const int      aligned16_width = (pcs->aligned_width + 15) >> 4;
 
+#if TUNE_TPL
+    const uint8_t disable_intra_pred = (pcs->tpl_ctrls.disable_intra_pred_nref && (pcs->temporal_layer_index == pcs->hierarchical_levels));
+#else
     const uint8_t disable_intra_pred = (pcs->tpl_ctrls.disable_intra_pred_nref && (pcs->tpl_data.is_ref == 0));
+#endif
     const uint8_t intra_dc_sad_path  = pcs->tpl_ctrls.use_sad_in_src_search && pcs->tpl_ctrls.intra_mode_end == DC_PRED;
 
     for (uint32_t blk_index = blk_start; blk_index <= blk_end; blk_index++) {
@@ -1782,12 +1804,14 @@ static void init_tpl_segments(SequenceControlSet *scs, PictureParentControlSet *
     }
 }
 
+#if !OPT_TPL_REC
 typedef struct TplRefList {
-    EbObjectWrapper *ref;
+    EbObjectWrapper* ref;
     int32_t          frame_idx;
     uint8_t          refresh_frame_mask;
     bool             is_valid;
 } TplRefList;
+#endif
 /************************************************
  * Genrate TPL MC Flow Based on frames in the tpl group
  ************************************************/
@@ -1809,8 +1833,16 @@ static EbErrorType tpl_mc_flow(EncodeContext *enc_ctx, SequenceControlSet *scs, 
     pcs->tpl_is_valid = 0;
     init_tpl_buffers(enc_ctx);
 
+#if OPT_TPL_REC
+    //use a single reconstruction pass for pictures belonging to multiple TPL groups
+    //DG case still need to be supported
+    const bool single_pass_recon = scs->enable_dg ? false : true;
+    TplRefList* tpl_ref_list = context_ptr->tpl_ref_dpb;
+#else
     TplRefList tpl_ref_list[REF_FRAMES + 1]; // Buffer for each ref pic and current pic
     memset(tpl_ref_list, 0, sizeof(tpl_ref_list[0]) * (REF_FRAMES + 1));
+#endif
+
     if (pcs->tpl_group[0]->tpl_data.tpl_temporal_layer_index == 0) {
         // no Tiles path
         if (scs->static_config.tile_rows == 0 && scs->static_config.tile_columns == 0)
@@ -1818,10 +1850,65 @@ static EbErrorType tpl_mc_flow(EncodeContext *enc_ctx, SequenceControlSet *scs, 
 
         uint8_t tpl_on;
         enc_ctx->poc_map_idx[0] = pcs->tpl_group[0]->picture_number;
+
+#if OPT_TPL_REC
+        if (single_pass_recon) {
+            //go over the tpl-dpb and recycle any picture not needed for current tpl group
+            //we need only recon pictures that belong to this tpl group
+            for (int i = 0; i < REF_FRAMES + 1; i++) {
+
+                if (tpl_ref_list[i].is_valid) {
+                    bool found_pic = false;
+                    for (int j = 0; j < pcs->tpl_group_size; j++) {
+                        if (pcs->tpl_group[j]->picture_number == tpl_ref_list[i].picture_number) {
+                            found_pic = true;
+                            break;
+                        }
+                    }
+                    if (!found_pic) {
+                        //printf(" dpb recycle not needed recon pic:%lld \n ", tpl_ref_list[i].picture_number);
+                        svt_release_object(tpl_ref_list[i].ref);
+                        tpl_ref_list[i].ref = NULL;
+                        tpl_ref_list[i].frame_idx = -1;
+                        tpl_ref_list[i].refresh_frame_mask = 0;
+                        tpl_ref_list[i].is_valid = false;
+                    }
+                }
+            }
+        }
+#endif
+        //TPL main frame loop
         for (int32_t frame_idx = 0; frame_idx < frames_in_sw; frame_idx++) {
             enc_ctx->poc_map_idx[frame_idx] = pcs->tpl_group[frame_idx]->picture_number;
             // NREF need recon buffer for intra pred
             EbObjectWrapper *ref_pic_wrapper;
+
+#if OPT_TPL_REC
+            PictureParentControlSet* cur_pcs = pcs->tpl_group[frame_idx];
+            if (single_pass_recon && cur_pcs->tpl_src_data_ready) {
+
+                //search if current picture is present in TPL-dpb from last tpl group
+                for (int i = 0; i < REF_FRAMES + 1; i++) {
+                    if (tpl_ref_list[i].is_valid && tpl_ref_list[i].picture_number == cur_pcs->picture_number) {
+                        //if present correct its information using the new frame index within the current TPL group
+                        tpl_ref_list[i].frame_idx = frame_idx;
+                        enc_ctx->mc_flow_rec_picture_buffer[frame_idx] =
+                            ((EbTplReferenceObject*)tpl_ref_list[i].ref->object_ptr)->ref_picture_ptr;
+                        break;
+                    }
+                }
+
+                //reset stat dependance info for this picture
+                for (uint32_t blky = 0; blky < picture_height_in_mb; blky++) {
+                    for (uint32_t blkx = 0; blkx < picture_width_in_mb; blkx++) {
+                        cur_pcs->pa_me_data->tpl_stats[blkx + blky * picture_width_in_mb]->mc_dep_rate = 0;
+                        cur_pcs->pa_me_data->tpl_stats[blkx + blky * picture_width_in_mb]->mc_dep_dist = 0;
+                    }
+                }
+            }
+            else {
+#endif
+
             // Get Empty Reference Picture Object
             svt_get_empty_object(scs->enc_ctx->tpl_reference_picture_pool_fifo_ptr, &ref_pic_wrapper);
 #if FTR_RES_ON_FLY5
@@ -1844,6 +1931,9 @@ static EbErrorType tpl_mc_flow(EncodeContext *enc_ctx, SequenceControlSet *scs, 
                         : 0;
                     tpl_ref_list[i].frame_idx          = frame_idx;
                     tpl_ref_list[i].is_valid           = true;
+#if OPT_TPL_REC
+                    tpl_ref_list[i].picture_number = pcs->tpl_group[frame_idx]->picture_number;
+#endif
                     enc_ctx->mc_flow_rec_picture_buffer[frame_idx] =
                         ((EbTplReferenceObject *)ref_pic_wrapper->object_ptr)->ref_picture_ptr;
                     break;
@@ -1884,6 +1974,9 @@ static EbErrorType tpl_mc_flow(EncodeContext *enc_ctx, SequenceControlSet *scs, 
                     }
                 }
             }
+#if OPT_TPL_REC
+        }
+#endif
         }
 
         // synthesizer
@@ -1934,6 +2027,10 @@ static EbErrorType tpl_mc_flow(EncodeContext *enc_ctx, SequenceControlSet *scs, 
     }
 #endif
 
+#if OPT_TPL_REC
+    //TPL DPB should stay alive for single recon pass mode
+    if (!single_pass_recon) {
+#endif
     // Release un-released tpl references
     for (int i = 0; i < (REF_FRAMES + 1); i++) {
         // Get empty list entry
@@ -1946,6 +2043,9 @@ static EbErrorType tpl_mc_flow(EncodeContext *enc_ctx, SequenceControlSet *scs, 
             tpl_ref_list[i].is_valid                                       = false;
         }
     }
+#if OPT_TPL_REC
+    }
+#endif
 
     // When super-res recode is actived, don't release pa_ref_objs until final loop is finished
     // Although tpl-la won't be enabled in super-res FIXED or RANDOM mode, here we use the condition to align with that in initial rate control process

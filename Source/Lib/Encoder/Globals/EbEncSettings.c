@@ -847,6 +847,7 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet *scs) {
                   channel_number + 1);
         return_error = EB_ErrorBadParameter;
     }
+#if !FIX_RECON_COPIES
     if (config->encoder_bit_depth == 10 && (config->stat_report == 1 || config->recon_enabled == 1) &&
         config->enc_mode >= ENC_M10) {
         SVT_WARN(
@@ -855,6 +856,7 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet *scs) {
             "(-o) "
             "is or is not specified in the command line\n");
     }
+#endif
     if (config->startup_mg_size != 0 && config->startup_mg_size != 2 && config->startup_mg_size != 3 &&
         config->startup_mg_size != 4) {
         SVT_ERROR("Instance %u: Startup MG size supported [0, 2, 3, 4]\n", channel_number + 1);

@@ -2179,7 +2179,11 @@ typedef uint8_t EbModeType;
 #define INTRA_MODE 2
 
 #define INVALID_MODE 0xFFu
+#if TUNE_SHIFT_PRESETS
+#define SPEED_CONTROL_INIT_MOD ENC_M5;
+#else
 #define SPEED_CONTROL_INIT_MOD ENC_M4;
+#endif
 typedef enum ATTRIBUTE_PACKED {
     REF_LIST_0 = 0,
     REF_LIST_1 = 1,

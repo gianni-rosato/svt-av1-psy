@@ -466,7 +466,12 @@ EbErrorType pcs_update_param(PictureControlSet *pcs) {
     if (svt_aom_get_enable_restoration(scs->static_config.enc_mode,
                                        scs->static_config.enable_restoration_filtering,
                                        scs->input_resolution,
+#if OPT_SG
+                                       scs->static_config.fast_decode,
+                                       scs->static_config.qp)) {
+#else
                                        scs->static_config.fast_decode)) {
+#endif
         set_restoration_unit_size(scs->max_input_luma_width, scs->max_input_luma_height, 1, 1, pcs->rst_info);
     }
     pcs->frame_width  = scs->max_input_luma_width;
@@ -560,10 +565,17 @@ static EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr
     object_ptr->temp_lf_recon_pic_16bit           = (EbPictureBufferDesc *)NULL;
     object_ptr->temp_lf_recon_pic                 = (EbPictureBufferDesc *)NULL;
     object_ptr->scaled_input_pic                  = (EbPictureBufferDesc *)NULL;
+#if OPT_SG
+    if (svt_aom_get_enable_restoration(init_data_ptr->enc_mode,
+        init_data_ptr->static_config.enable_restoration_filtering,
+        init_data_ptr->input_resolution,
+        init_data_ptr->static_config.fast_decode, init_data_ptr->static_config.qp)) {
+#else
     if (svt_aom_get_enable_restoration(init_data_ptr->enc_mode,
                                        init_data_ptr->static_config.enable_restoration_filtering,
                                        init_data_ptr->input_resolution,
                                        init_data_ptr->static_config.fast_decode)) {
+#endif
         set_restoration_unit_size(
             init_data_ptr->picture_width, init_data_ptr->picture_height, 1, 1, object_ptr->rst_info);
 
@@ -1138,8 +1150,14 @@ static EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr
                     (svt_aom_get_nsq_level(init_data_ptr->enc_mode, is_islice, is_base, coeff_lvl) == 0 ? 1 : 0));
 #endif
 #endif
+#if TUNE_4X4
+    for (uint8_t is_islice = 0; is_islice <= 1; is_islice++)
+        for (uint8_t is_base = 0; is_base <= 1; is_base++)
+            disallow_4x4 = MIN(disallow_4x4, svt_aom_get_disallow_4x4(init_data_ptr->enc_mode, is_base, is_islice));
+#else
     for (SliceType slice_type = 0; slice_type < IDR_SLICE + 1; slice_type++)
         disallow_4x4 = MIN(disallow_4x4, svt_aom_get_disallow_4x4(init_data_ptr->enc_mode, slice_type));
+#endif
 
     object_ptr->disallow_4x4_all_frames = disallow_4x4;
 

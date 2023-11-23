@@ -43,7 +43,11 @@ void svt_aom_gm_pre_processor(PictureParentControlSet *pcs, PictureParentControl
     pcs->gm_ctrls.use_stationary_block         = 0;
     pcs->gm_ctrls.use_distance_based_active_th = 0;
     pcs->gm_ctrls.params_refinement_steps      = 2;
+#if TUNE_GM_PP
+    pcs->gm_ctrls.downsample_level             = pcs->gm_ctrls.pp_downsample_level;
+#else
     pcs->gm_ctrls.downsample_level             = GM_FULL;
+#endif
     pcs->gm_ctrls.corners                      = 2;
     pcs->gm_ctrls.chess_rfn                    = 1;
     pcs->gm_ctrls.match_sz                     = 7;
