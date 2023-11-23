@@ -2541,7 +2541,7 @@ uint32_t svt_aom_get_tot_1d_blks(struct ModeDecisionContext *ctx, const int32_t 
 
     if (!ctx->nsq_ctrls.allow_HVA_HVB && !ctx->nsq_ctrls.allow_HV4)
         tot_d1_blocks = MIN(5, tot_d1_blocks);
-#if OPT_REORDER_GEOM //to double check
+#if OPT_REORDER_GEOM
     else if (!ctx->nsq_ctrls.allow_HVA_HVB)
         tot_d1_blocks = MIN((uint32_t)(sq_size == 128 ? 5 : 13), tot_d1_blocks);
 #else
@@ -2607,16 +2607,33 @@ static void build_cand_block_array(SequenceControlSet *scs, PictureControlSet *p
             if (tot_d1_blocks > 1 && !results_ptr->consider_block[blk_index + 1])
                 tot_d1_blocks = 1;
 
+#if OPT_REORDER_GEOM
+            // If HA/HB/VA/VB and H4/V4 are disallowed, tot_d1_blocks will be
+            // capped at 5 in svt_aom_get_tot_1d_blks().  Therefore, if the condition MIN(17, tot_d1_blocks) is
+            // hit, tot_d1_blocks will be 5 OR HA/HB/VA/VB will be enabled.  Either case is valid.
+            const uint32_t to_test_d1_blocks = !ctx->nsq_ctrls.allow_HV4 ? MIN(17, tot_d1_blocks) : tot_d1_blocks;
+#else
             // If HA/HB/VA/VB and H4/V4 are disallowed, tot_d1_blocks will be
             // capped at 5 in svt_aom_get_tot_1d_blks().  Therefore, if the condition MIN(13, tot_d1_blocks) is
             // hit, tot_d1_blocks will be 5 OR H4/V4 will be enabled.  Either case is valid.
             const uint32_t to_test_d1_blocks = (ctx->nsq_ctrls.allow_HVA_HVB == 0)
                 ? (blk_geom->sq_size == 128 ? MIN(5, tot_d1_blocks) : MIN(13, tot_d1_blocks))
                 : tot_d1_blocks;
+#endif
 
             for (uint32_t idx = blk_index; idx < (tot_d1_blocks + blk_index); ++idx) {
 
-#if !OPT_REORDER_GEOM
+#if OPT_REORDER_GEOM
+                if (!ctx->nsq_ctrls.allow_HV4) {
+                    // Index of first H4 block is 5; if H4/V4 blocks are skipped increase index to bypass the blocks.
+                    // idx is increased by 7, rather than 8, because after continue is exectued, idx will be incremented
+                    // by 1 (as part of the for loop).  H4/V4 blocks are not allowed for 128 sq_size, so don't skip.
+                    if (blk_geom->sq_size < 128 && (idx - blk_index) == 5) {
+                        idx += 7;
+                        continue;
+                    }
+                }
+#else
                 if (ctx->nsq_ctrls.allow_HVA_HVB == 0) {
                     // Index of first HA block is 5; if HA/HB/VA/VB blocks are skipped increase index to bypass the blocks.
                     // idx is increased by 11, rather than 12, because after continue is exectued, idx will be incremented
@@ -2718,16 +2735,17 @@ static uint8_t is_parent_to_current_deviation_small(ModeDecisionContext *ctx, co
 #endif
 
 #if OPT_DR_QP
-    uint32_t mult              = ctx->depth_refinement_ctrls.q_weight;
-    uint32_t cost_part         = MAX((ctx->md_local_blk_unit[blk_geom->sqi_mds].default_cost /
-                              (uint64_t)(((uint64_t)blk_geom->bwidth * (uint64_t)blk_geom->bheight) << 10)),
-                             1);
-    int      q_weight_unscaled = (int)((mult * cost_part * ((5 * (int)pcs->ppcs->scs->static_config.qp) - 100)) / 10);
-    uint32_t q_weight          = (mult == (uint32_t)~0) ? 1000 : CLIP3(100, 2000, q_weight_unscaled);
-
     int64_t parent_to_current_th = ctx->depth_refinement_ctrls.parent_to_current_th;
+    if (ctx->depth_refinement_ctrls.q_weight) {
+        const uint32_t mult = ctx->depth_refinement_ctrls.q_weight;
+        const uint32_t cost_part = MAX((ctx->md_local_blk_unit[blk_geom->sqi_mds].default_cost /
+            (uint64_t)(((uint64_t)blk_geom->bwidth * (uint64_t)blk_geom->bheight) << 10)), 1);
+        const int q_weight_unscaled = (int)((mult * cost_part *
+            ((5 * (int)pcs->ppcs->scs->static_config.qp) - 100)) / 10);
+        const uint32_t q_weight = CLIP3(100, 2000, q_weight_unscaled);
 
-    parent_to_current_th = (parent_to_current_th * q_weight) / 2000;
+        parent_to_current_th = (parent_to_current_th * q_weight) / 2000;
+    }
 
     if (ctx->parent_to_current_deviation <= (parent_to_current_th + th_offset))
 #else
@@ -2804,7 +2822,8 @@ static uint8_t is_child_to_current_deviation_small(PictureControlSet *pcs, ModeD
     }
 
 #if USE_PRED_MODE
-    if (ctx->intra_ctrls.enable_intra && ctx->md_local_blk_unit[blk_geom->sqi_mds].is_inter) {
+    if (ctx->intra_ctrls.enable_intra &&
+       (ctx->blk_ptr->prediction_mode_flag == INTER_MODE)) {
         th_offset -= 20;
         if (ctx->lpd0_ctrls.pd0_level < VERY_LIGHT_PD0 && !ctx->md_local_blk_unit[blk_geom->sqi_mds].y_has_coeff[0])
             th_offset -= 20;
@@ -2837,18 +2856,17 @@ static uint8_t is_child_to_current_deviation_small(PictureControlSet *pcs, ModeD
 #endif
 
 #if OPT_DR_QP
-    uint32_t mult = ctx->depth_refinement_ctrls.q_weight;
-    uint32_t cost_part = MAX((ctx->md_local_blk_unit[blk_geom->sqi_mds].default_cost /
-        (uint64_t)(((uint64_t)blk_geom->bwidth * (uint64_t)blk_geom->bheight) << 10)), 1);
-    int q_weight_unscaled = (int)((mult * cost_part *
-            ((5 * (int)pcs->ppcs->scs->static_config.qp) - 100)) / 10);
-    uint32_t q_weight = (mult == (uint32_t)~0)
-                        ? 1000
-                        : CLIP3(100, 2000, q_weight_unscaled);
-
     int64_t sub_to_current_th = ctx->depth_refinement_ctrls.sub_to_current_th;
+    if (ctx->depth_refinement_ctrls.q_weight) {
+        const uint32_t mult = ctx->depth_refinement_ctrls.q_weight;
+        const uint32_t cost_part = MAX((ctx->md_local_blk_unit[blk_geom->sqi_mds].default_cost /
+            (uint64_t)(((uint64_t)blk_geom->bwidth * (uint64_t)blk_geom->bheight) << 10)), 1);
+        const int q_weight_unscaled = (int)((mult * cost_part *
+            ((5 * (int)pcs->ppcs->scs->static_config.qp) - 100)) / 10);
+        const uint32_t q_weight = CLIP3(100, 2000, q_weight_unscaled);
 
-    sub_to_current_th = (sub_to_current_th * q_weight) / 2000;
+        sub_to_current_th = (sub_to_current_th * q_weight) / 2000;
+    }
 
     if (ctx->child_to_current_deviation <= (sub_to_current_th + th_offset))
 #else
@@ -2858,6 +2876,39 @@ static uint8_t is_child_to_current_deviation_small(PictureControlSet *pcs, ModeD
 
     return FALSE;
 }
+
+static void get_max_min_pd0_depths(SequenceControlSet* scs, PictureControlSet* pcs, ModeDecisionContext* ctx,
+    uint16_t* max_pd0_size_out, uint16_t* min_pd0_size_out) {
+    uint16_t max_pd0_size = 0;
+    uint16_t min_pd0_size = 255;
+    uint32_t blk_index = 0;
+    while (blk_index < scs->max_block_cnt) {
+        const BlockGeom* blk_geom = get_blk_geom_mds(blk_index);
+        // if the parent square is inside inject this block
+        const uint8_t is_blk_allowed = pcs->slice_type != I_SLICE ? 1 : (blk_geom->sq_size < 128) ? 1 : 0;
+
+        // derive split_flag
+        const Bool split_flag = ctx->md_blk_arr_nsq[blk_index].split_flag;
+
+        if (is_blk_allowed) {
+            if (blk_geom->shape == PART_N) {
+                if (split_flag == FALSE) {
+                    if (blk_geom->sq_size > max_pd0_size)
+                        max_pd0_size = blk_geom->sq_size;
+
+                    if (blk_geom->sq_size < min_pd0_size)
+                        min_pd0_size = blk_geom->sq_size;
+                }
+            }
+        }
+        blk_index += split_flag ? blk_geom->d1_depth_offset : blk_geom->ns_depth_offset;
+    }
+
+    // Save results
+    *max_pd0_size_out = max_pd0_size;
+    *min_pd0_size_out = min_pd0_size;
+}
+
 static void perform_pred_depth_refinement(SequenceControlSet *scs, PictureControlSet *pcs, ModeDecisionContext *ctx,
                                           uint32_t sb_index) {
     MdcSbData *results_ptr = ctx->mdc_sb_array;
@@ -2895,29 +2946,8 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs, PictureContro
     // Get max/min PD0 selected block sizes
     uint16_t max_pd0_size = 0;
     uint16_t min_pd0_size = 255;
-
-    blk_index = 0;
-    while (blk_index < scs->max_block_cnt) {
-        const BlockGeom *blk_geom = get_blk_geom_mds(blk_index);
-        // if the parent square is inside inject this block
-        const uint8_t is_blk_allowed = pcs->slice_type != I_SLICE ? 1 : (blk_geom->sq_size < 128) ? 1 : 0;
-
-        // derive split_flag
-        const Bool split_flag = ctx->md_blk_arr_nsq[blk_index].split_flag;
-
-        if (is_blk_allowed) {
-            if (blk_geom->shape == PART_N) {
-                if (split_flag == FALSE) {
-                    if (blk_geom->sq_size > max_pd0_size)
-                        max_pd0_size = blk_geom->sq_size;
-
-                    if (blk_geom->sq_size < min_pd0_size)
-                        min_pd0_size = blk_geom->sq_size;
-                }
-            }
-        }
-        blk_index += split_flag ? blk_geom->d1_depth_offset : blk_geom->ns_depth_offset;
-    }
+    if (ctx->depth_ctrls.limit_max_min_to_pd0)
+        get_max_min_pd0_depths(scs, pcs, ctx, &max_pd0_size, &min_pd0_size);
     results_ptr->leaf_count = 0;
     blk_index               = 0;
     Bool pred_depth_only    = 1;
@@ -2925,6 +2955,9 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs, PictureContro
     while (blk_index < scs->max_block_cnt) {
         const BlockGeom *blk_geom      = get_blk_geom_mds(blk_index);
         uint32_t         tot_d1_blocks = svt_aom_get_tot_1d_blks(ctx, blk_geom->sq_size, !ctx->nsq_ctrls.enabled);
+#if USE_PRED_MODE
+        BlkStruct* blk_ptr = ctx->blk_ptr = &ctx->md_blk_arr_nsq[blk_index];
+#endif
 
         // if the parent square is inside inject this block
         uint8_t is_blk_allowed = pcs->slice_type != I_SLICE ? 1 : (blk_geom->sq_size < 128) ? 1 : 0;
@@ -2955,7 +2988,9 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs, PictureContro
 #if OPT_M2_BELOW_DEPTHS
                     // Cap to (-1,+1) if the pred mode is INTER (if both INTER and INTRA are tested)
                     if (ctx->depth_ctrls.use_pred_mode) {
-                        if (ctx->intra_ctrls.enable_intra && ctx->md_local_blk_unit[blk_geom->sqi_mds].is_inter) {
+                        if (ctx->intra_ctrls.enable_intra &&
+                           (ctx->blk_ptr->prediction_mode_flag == INTER_MODE)) {
+
                             s_depth = MAX(s_depth, -1);
                             e_depth = MIN(e_depth, 1);
                         }
@@ -3012,11 +3047,11 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs, PictureContro
                                                                     : e_depth;
                             }
                         }
-                        if (ctx->depth_ctrls.limit_max_min_to_pd0) {
+                        if (ctx->depth_ctrls.limit_max_min_to_pd0 && max_pd0_size != min_pd0_size) {
                             // If PD0 selected multiple depths, don't test depths above the largest or below the smallest block sizes
-                            if (max_pd0_size != min_pd0_size && blk_geom->sq_size == max_pd0_size)
+                            if (blk_geom->sq_size == max_pd0_size)
                                 s_depth = 0;
-                            if (max_pd0_size != min_pd0_size && blk_geom->sq_size == min_pd0_size)
+                            if (blk_geom->sq_size == min_pd0_size)
                                 e_depth = 0;
                         }
 
@@ -3140,16 +3175,34 @@ static EbErrorType build_starting_cand_block_array(SequenceControlSet *scs, Pict
                 ? 1
                 : svt_aom_get_tot_1d_blks(ctx, blk_geom->sq_size, ctx->md_disallow_nsq);
 
+#if OPT_REORDER_GEOM
+            // If HA/HB/VA/VB and H4/V4 are disallowed, tot_d1_blocks will be
+            // capped at 5 in svt_aom_get_tot_1d_blks().  Therefore, if the condition MIN(17, tot_d1_blocks) is
+            // hit, tot_d1_blocks will be 5 OR HA/HB/VA/VB will be enabled.  Either case is valid.
+            const uint32_t to_test_d1_blocks = !ctx->nsq_ctrls.allow_HV4 ? MIN(17, tot_d1_blocks) : tot_d1_blocks;
+#else
             // If HA/HB/VA/VB and H4/V4 are disallowed, tot_d1_blocks will be
             // capped at 5 in svt_aom_get_tot_1d_blks().  Therefore, if the condition MIN(13, tot_d1_blocks) is
             // hit, tot_d1_blocks will be 5 OR H4/V4 will be enabled.  Either case is valid.
             const uint32_t to_test_d1_blocks = (ctx->nsq_ctrls.allow_HVA_HVB == 0)
                 ? (blk_geom->sq_size == 128 ? MIN(5, tot_d1_blocks) : MIN(13, tot_d1_blocks))
                 : tot_d1_blocks;
+#endif
 
             for (uint32_t idx = blk_index; idx < (tot_d1_blocks + blk_index); ++idx) {
 
-#if !OPT_REORDER_GEOM
+
+#if OPT_REORDER_GEOM
+                if (!ctx->nsq_ctrls.allow_HV4) {
+                    // Index of first H4 block is 5; if H4/V4 blocks are skipped increase index to bypass the blocks.
+                    // idx is increased by 7, rather than 8, because after continue is exectued, idx will be incremented
+                    // by 1 (as part of the for loop).  H4/V4 blocks are not allowed for 128 sq_size, so don't skip.
+                    if (blk_geom->sq_size < 128 && (idx - blk_index) == 5) {
+                        idx += 7;
+                        continue;
+                    }
+        }
+#else
                 if (ctx->nsq_ctrls.allow_HVA_HVB == 0) {
                     // Index of first HA block is 5; if HA/HB/VA/VB blocks are skipped increase index to bypass the blocks.
                     // idx is increased by 11, rather than 12, because after continue is exectued, idx will be incremented
@@ -3264,7 +3317,11 @@ static void exaustive_light_pd1_features(ModeDecisionContext *md_ctx, PicturePar
             md_ctx->inter_intra_comp_ctrls.enabled == 0 && md_ctx->rate_est_ctrls.update_skip_ctx_dc_sign_ctx == 0 &&
             md_ctx->spatial_sse_ctrls.spatial_sse_full_loop_level == 0 && md_ctx->md_sq_me_ctrls.enabled == 0 &&
             md_ctx->md_pme_ctrls.enabled == 0 && md_ctx->txt_ctrls.enabled == 0 &&
+#if OPT_PRE_MDS0_SEARCH
+            md_ctx->mds0_ctrls.mds0_dist_type != SSD && md_ctx->unipred3x3_injection == 0 &&
+#else
             md_ctx->mds0_ctrls.mds0_dist_type != MDS0_SSD && md_ctx->unipred3x3_injection == 0 &&
+#endif
 #if OPT_BIPRED3x3
             md_ctx->bipred3x3_ctrls.enabled == 0 && md_ctx->inter_compound_mode == 0 && md_ctx->md_pic_obmc_level == 0 &&
 #else
@@ -3288,7 +3345,11 @@ static void exaustive_light_pd1_features(ModeDecisionContext *md_ctx, PicturePar
 }
 /* Light-PD1 classifier used when cost/coeff info is available.  If PD0 is skipped, or the trasnsform is
 not performed, a separate detector (lpd1_detector_skip_pd0) is used. */
+#if FIX_LD_CBR_MODE
+static void lpd1_detector_post_pd0(PictureControlSet *pcs, ModeDecisionContext *md_ctx, bool rtc_tune) {
+#else
 static void lpd1_detector_post_pd0(PictureControlSet *pcs, ModeDecisionContext *md_ctx) {
+#endif
     // the frame size of reference pics are different if enable reference scaling.
     // sb info can not be reused because super blocks are mismatched, so we set
     // the reference pic unavailable to avoid using wrong info
@@ -3367,6 +3428,23 @@ static void lpd1_detector_post_pd0(PictureControlSet *pcs, ModeDecisionContext *
                 }
 
                 if (pcs->slice_type != I_SLICE) {
+#if FIX_LD_CBR_MODE
+                    // lpd1 needs to be optimized for low-delay so that all modes can use the RA version of this check
+                    if (rtc_tune) {
+                        if (md_ctx->lpd1_ctrls.me_8x8_cost_variance_th[pd1_lvl] < (((uint32_t)~0) >> 1) &&
+                            pcs->ppcs->me_8x8_cost_variance[md_ctx->sb_index] >
+                            (md_ctx->lpd1_ctrls.me_8x8_cost_variance_th[pd1_lvl] >> 5) * pcs->picture_qp)
+                            md_ctx->lpd1_ctrls.pd1_level = pd1_lvl - 1;
+                    }
+                    else {
+                        /* me_8x8_cost_variance_th is shifted by 5 then mulitplied by 73 minus pic_qp.  Therefore, the TH must be less than
+                        (((uint32_t)~0) >> 2) to avoid overflow issues from the multiplication. */
+                        if (md_ctx->lpd1_ctrls.me_8x8_cost_variance_th[pd1_lvl] < (((uint32_t)~0) >> 2) &&
+                            pcs->ppcs->me_8x8_cost_variance[md_ctx->sb_index] >
+                            (md_ctx->lpd1_ctrls.me_8x8_cost_variance_th[pd1_lvl] >> 5) * (73 - pcs->picture_qp))
+                            md_ctx->lpd1_ctrls.pd1_level = pd1_lvl - 1;
+                    }
+#else
 #if OPT_LPD1_DET
                     /* me_8x8_cost_variance_th is shifted by 5 then mulitplied by 73 minus pic_qp.  Therefore, the TH must be less than
                        (((uint32_t)~0) >> 2) to avoid overflow issues from the multiplication. */
@@ -3379,8 +3457,9 @@ static void lpd1_detector_post_pd0(PictureControlSet *pcs, ModeDecisionContext *
                        (((uint32_t)~0) >> 1) to avoid overflow issues from the multiplication. */
                     if (md_ctx->lpd1_ctrls.me_8x8_cost_variance_th[pd1_lvl] < (((uint32_t)~0) >> 1) &&
                         pcs->ppcs->me_8x8_cost_variance[md_ctx->sb_index] >
-                            (md_ctx->lpd1_ctrls.me_8x8_cost_variance_th[pd1_lvl] >> 5) * pcs->picture_qp)
+                        (md_ctx->lpd1_ctrls.me_8x8_cost_variance_th[pd1_lvl] >> 5) * pcs->picture_qp)
                         md_ctx->lpd1_ctrls.pd1_level = pd1_lvl - 1;
+#endif
 #endif
                 }
             }
@@ -3390,7 +3469,11 @@ static void lpd1_detector_post_pd0(PictureControlSet *pcs, ModeDecisionContext *
 
 /* Light-PD1 classifier used when cost/coeff info is unavailable.  If PD0 is skipped, or the trasnsform is
 not performed, this detector is used (else lpd1_detector_post_pd0() is used). */
+#if FIX_LD_CBR_MODE
+static void lpd1_detector_skip_pd0(PictureControlSet *pcs, ModeDecisionContext *md_ctx, uint32_t pic_width_in_sb, bool rtc_tune) {
+#else
 static void lpd1_detector_skip_pd0(PictureControlSet *pcs, ModeDecisionContext *md_ctx, uint32_t pic_width_in_sb) {
+#endif
     if (md_ctx->pd1_lvl_refinement) {
         uint32_t me_8x8_cost_variance = pcs->ppcs->me_8x8_cost_variance[md_ctx->sb_index];
         if (md_ctx->pd1_lvl_refinement == 2) {
@@ -3483,6 +3566,25 @@ static void lpd1_detector_skip_pd0(PictureControlSet *pcs, ModeDecisionContext *
                         if (pcs->ppcs->me_64x64_distortion[md_ctx->sb_index] >
                             md_ctx->lpd1_ctrls.skip_pd0_edge_dist_th[pd1_lvl])
                             md_ctx->lpd1_ctrls.pd1_level = pd1_lvl - 1;
+#if FIX_LD_CBR_MODE
+                        // lpd1 needs to be optimized for low-delay so that all modes can use the RA version of this check
+                        else if (rtc_tune) {
+                            /* me_8x8_cost_variance_th is shifted by 5 then mulitplied by the pic QP (max 63).  Therefore, the TH must be less than
+                            (((uint32_t)~0) >> 1) to avoid overflow issues from the multiplication. */
+                            if (md_ctx->lpd1_ctrls.me_8x8_cost_variance_th[pd1_lvl] < (((uint32_t)~0) >> 1) &&
+                                pcs->ppcs->me_8x8_cost_variance[md_ctx->sb_index] >
+                                (md_ctx->lpd1_ctrls.me_8x8_cost_variance_th[pd1_lvl] >> 5) * pcs->picture_qp)
+                                md_ctx->lpd1_ctrls.pd1_level = pd1_lvl - 1;
+                        }
+                        else {
+                            /* me_8x8_cost_variance_th is shifted by 5 then mulitplied by 73 minus pic_qp.  Therefore, the TH must be less than
+                            (((uint32_t)~0) >> 2) to avoid overflow issues from the multiplication. */
+                            if (md_ctx->lpd1_ctrls.me_8x8_cost_variance_th[pd1_lvl] < (((uint32_t)~0) >> 2) &&
+                                pcs->ppcs->me_8x8_cost_variance[md_ctx->sb_index] >
+                                (md_ctx->lpd1_ctrls.me_8x8_cost_variance_th[pd1_lvl] >> 5) * (73 - pcs->picture_qp))
+                                md_ctx->lpd1_ctrls.pd1_level = pd1_lvl - 1;
+                        }
+#else
 #if OPT_LPD1_DET
                         /* me_8x8_cost_variance_th is shifted by 5 then mulitplied by 73 minus pic_qp.  Therefore, the TH must be less than
                            (((uint32_t)~0) >> 2) to avoid overflow issues from the multiplication. */
@@ -3494,9 +3596,10 @@ static void lpd1_detector_skip_pd0(PictureControlSet *pcs, ModeDecisionContext *
                         /* me_8x8_cost_variance_th is shifted by 5 then mulitplied by the pic QP (max 63).  Therefore, the TH must be less than
                            (((uint32_t)~0) >> 1) to avoid overflow issues from the multiplication. */
                         else if (md_ctx->lpd1_ctrls.me_8x8_cost_variance_th[pd1_lvl] < (((uint32_t)~0) >> 1) &&
-                                 pcs->ppcs->me_8x8_cost_variance[md_ctx->sb_index] >
-                                     (md_ctx->lpd1_ctrls.me_8x8_cost_variance_th[pd1_lvl] >> 5) * pcs->picture_qp)
+                            pcs->ppcs->me_8x8_cost_variance[md_ctx->sb_index] >
+                            (md_ctx->lpd1_ctrls.me_8x8_cost_variance_th[pd1_lvl] >> 5) * pcs->picture_qp)
                             md_ctx->lpd1_ctrls.pd1_level = pd1_lvl - 1;
+#endif
 #endif
                     } else {
                         if (md_ctx->lpd1_ctrls.skip_pd0_me_shift[pd1_lvl] != (uint16_t)~0 &&
@@ -3990,7 +4093,11 @@ void *svt_aom_mode_decision_kernel(void *input_ptr) {
                             // This classifier is used for only pd0_level 0 and pd0_level 1
                             // where the cnt_nz_coeff is derived @ PD0
                             if (md_ctx->lpd0_ctrls.pd0_level < VERY_LIGHT_PD0)
+#if FIX_LD_CBR_MODE
+                                lpd1_detector_post_pd0(pcs, md_ctx, rtc_tune);
+#else
                                 lpd1_detector_post_pd0(pcs, md_ctx);
+#endif
                             // Force pred depth only for modes where that is not the default
                             if (md_ctx->lpd1_ctrls.pd1_level > REGULAR_PD1) {
                                 svt_aom_set_depth_ctrls(pcs, md_ctx, 0);
@@ -4004,7 +4111,11 @@ void *svt_aom_mode_decision_kernel(void *input_ptr) {
                         // This classifier is used for the case PD0 is bypassed and for pd0_level 2
                         // where the cnt_nz_coeff is not derived @ PD0
                         if (skip_pd_pass_0 || md_ctx->lpd0_ctrls.pd0_level == VERY_LIGHT_PD0) {
+#if FIX_LD_CBR_MODE
+                            lpd1_detector_skip_pd0(pcs, md_ctx, pic_width_in_sb, rtc_tune);
+#else
                             lpd1_detector_skip_pd0(pcs, md_ctx, pic_width_in_sb);
+#endif
                         }
 
                         // Can only use light-PD1 under the following conditions

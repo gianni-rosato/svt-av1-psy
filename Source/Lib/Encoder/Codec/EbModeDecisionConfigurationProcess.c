@@ -30,10 +30,6 @@
 #include "EncModeConfig.h"
 #include "EbGlobalMotionEstimation.h"
 
-#if OPT_COEFF_LVL
-static uint64_t ll_multi_tab[2][MAX_HIERARCHICAL_LEVEL] = {{-50, -10, 20, 30, 40, 60}, {-50, -10, 50, 100, 200, 300}};
-static uint64_t hl_multi_tab[2][MAX_HIERARCHICAL_LEVEL] = {{-10, -5, 5, 10, 20, 30}, {-10, -5, 5, 10, 20, 30}};
-#endif
 #define MAX_MESH_SPEED 5 // Max speed setting for mesh motion method
 static MeshPattern good_quality_mesh_patterns[MAX_MESH_SPEED + 1][MAX_MESH_STEP] = {
     {{64, 8}, {28, 4}, {15, 1}, {7, 1}},
@@ -498,127 +494,10 @@ static void av1_setup_motion_field(Av1Common *cm, PictureControlSet *pcs) {
 EbErrorType svt_av1_hash_table_create(HashTable *p_hash_table);
 void       *rtime_alloc_block_hash_block_is_same(size_t size) { return malloc(size); }
 
+#if !OPT_COEFF_LVL
 // Use me_8x8_distortion and QP to predict the coeff level per frame
-#if OPT_COEFF_LVL
-static void set_predict_frame_coeff_lvl(EncMode enc_mode, uint8_t *lvl) {
-#if NEW_M0
-    if (enc_mode <= ENC_M0) {
-        *lvl = 0;
-#else
-    if (enc_mode <= ENC_MR) {
-        *lvl = 0;
-#endif
-#if TUNE_SHIFT_PRESETS
-    } else if (enc_mode <= ENC_M1) {
-        *lvl = 1;
-    } else if (enc_mode <= ENC_M2) {
-        *lvl = 2;
-    } else if (enc_mode <= ENC_M3) {
-        *lvl = 3;
-    } else if (enc_mode <= ENC_M4) {
-        *lvl = 4;
-    } else if (enc_mode <= ENC_M5) {
-        *lvl = 5;
-#if !TUNE_M6_M7
-    } else if (enc_mode <= ENC_M6) {
-        *lvl = 6;
-#endif
-#if TUNE_M7_II
-#if TUNE_M8_II
-#if TUNE_M10_II
-    } else if (enc_mode <= ENC_M10) {
-#else
-    } else if (enc_mode <= ENC_M9) {
-#endif
-#else
-    } else if (enc_mode <= ENC_M7) {
-#endif
-#else
-    } else if (enc_mode <= ENC_M6) {
-#endif
-#else
-    } else if (enc_mode <= ENC_M0) {
-        *lvl = 1;
-    } else if (enc_mode <= ENC_M1) {
-        *lvl = 2;
-    } else if (enc_mode <= ENC_M2) {
-        *lvl = 3;
-    } else if (enc_mode <= ENC_M3) {
-        *lvl = 4;
-    } else if (enc_mode <= ENC_M4) {
-        *lvl = 5;
-    } else if (enc_mode <= ENC_M5) {
-        *lvl = 6;
-#if TUNE_M7_II
-#if TUNE_M8_II
-    } else if (enc_mode <= ENC_M8) {
-#else
-    } else if (enc_mode <= ENC_M7) {
-#endif
-#else
-    } else if (enc_mode <= ENC_M6) {
-#endif
-#endif
-        *lvl = 7;
-    } else {
-        *lvl = 8;
-    }
-}
-#endif
-#if OPT_COEFF_LVL
-static void predict_frame_coeff_lvl(struct PictureControlSet *pcs, uint8_t lvl) {
-#else
 static void predict_frame_coeff_lvl(struct PictureControlSet *pcs) {
-#endif
 
-#if OPT_COEFF_LVL
-    const uint8_t tl_idx = pcs->temporal_layer_index;
-    const uint8_t enc_mode = pcs->enc_mode;
-    const uint64_t ll_multi            = enc_mode <= ENC_M5 ? 0
-                   : enc_mode <= ENC_M12                    ? ll_multi_tab[0][tl_idx]
-                                                            : ll_multi_tab[1][tl_idx];
-    const uint64_t hl_multi            = enc_mode <= ENC_M5 ? 0
-                   : enc_mode <= ENC_M12                    ? hl_multi_tab[0][tl_idx]
-                                                            : hl_multi_tab[1][tl_idx];
-
-    uint64_t coeff_low_level_th  = COEFF_LVL_TH_0;
-    uint64_t coeff_high_level_th = COEFF_LVL_TH_1;
-    switch (lvl) {
-    case 1:
-        coeff_low_level_th  = MAX(0, COEFF_LVL_TH_0 - (pcs->picture_qp * (150 + ll_multi)));
-        coeff_high_level_th = MAX(0, COEFF_LVL_TH_1 - (pcs->picture_qp * (400 + hl_multi)));
-        break;
-    case 2:
-        coeff_low_level_th  = MAX(0, COEFF_LVL_TH_0 - (pcs->picture_qp * (150 + ll_multi)));
-        coeff_high_level_th = MAX(0, COEFF_LVL_TH_1 - (pcs->picture_qp * (550 + hl_multi)));
-        break;
-    case 3:
-        coeff_low_level_th  = MAX(0, COEFF_LVL_TH_0 - (pcs->picture_qp * (150 + ll_multi)));
-        coeff_high_level_th = MAX(0, COEFF_LVL_TH_1 - (pcs->picture_qp * (600 + hl_multi)));
-        break;
-    case 4:
-        coeff_low_level_th  = MAX(0, COEFF_LVL_TH_0 - (pcs->picture_qp * (150 + ll_multi)));
-        coeff_high_level_th = MAX(0, COEFF_LVL_TH_1 - (pcs->picture_qp * (700 + hl_multi)));
-        break;
-    case 5:
-        coeff_low_level_th  = MAX(0, COEFF_LVL_TH_0 - (pcs->picture_qp * (200 + ll_multi)));
-        coeff_high_level_th = MAX(0, COEFF_LVL_TH_1 - (pcs->picture_qp * (700 + hl_multi)));
-        break;
-    case 6:
-        coeff_low_level_th  = MAX(0, COEFF_LVL_TH_0 - (pcs->picture_qp * (200 + ll_multi)));
-        coeff_high_level_th = MAX(0, COEFF_LVL_TH_1 - (pcs->picture_qp * (750 + hl_multi)));
-        break;
-    case 7:
-        coeff_low_level_th  = MAX(0, COEFF_LVL_TH_0 - (pcs->picture_qp * (200 + ll_multi)));
-        coeff_high_level_th = MAX(0, COEFF_LVL_TH_1 - (pcs->picture_qp * (1000 + hl_multi)));
-        break;
-    case 8:
-        coeff_low_level_th  = MAX(0, COEFF_LVL_TH_0 - (pcs->picture_qp * (200 + ll_multi)));
-        coeff_high_level_th = MAX(0, COEFF_LVL_TH_1 - (pcs->picture_qp * (1500 + hl_multi)));
-        break;
-    default: break;
-    }
-#endif
     uint64_t tot_me_8x8_dis = 0;
     for (uint32_t b64_idx = 0; b64_idx < pcs->b64_total_count; b64_idx++) {
         tot_me_8x8_dis += pcs->ppcs->me_8x8_distortion[b64_idx];
@@ -626,20 +505,13 @@ static void predict_frame_coeff_lvl(struct PictureControlSet *pcs) {
     tot_me_8x8_dis = tot_me_8x8_dis / pcs->picture_qp;
 
     pcs->coeff_lvl = NORMAL_LVL;
-#if OPT_COEFF_LVL
-    if (tot_me_8x8_dis < coeff_low_level_th) {
-        pcs->coeff_lvl = LOW_LVL;
-    } else if (tot_me_8x8_dis > coeff_high_level_th) {
-        pcs->coeff_lvl = HIGH_LVL;
-    }
-#else
     if (tot_me_8x8_dis < COEFF_LVL_TH_0) {
         pcs->coeff_lvl = LOW_LVL;
     } else if (tot_me_8x8_dis > COEFF_LVL_TH_1) {
         pcs->coeff_lvl = HIGH_LVL;
     }
-#endif
 }
+#endif
 
 /* Mode Decision Configuration Kernel */
 
@@ -708,9 +580,8 @@ void *svt_aom_mode_decision_configuration_kernel(void *input_ptr) {
         if (scs->static_config.pass != ENC_FIRST_PASS) {
             if (pcs->slice_type != I_SLICE && !pcs->ppcs->sc_class1) {
 #if OPT_COEFF_LVL
-                uint8_t pfc_lvl = 0;
-                set_predict_frame_coeff_lvl(pcs->enc_mode, &pfc_lvl);
-                predict_frame_coeff_lvl(pcs, pfc_lvl);
+                uint8_t pfc_lvl = svt_aom_get_predict_frame_coeff_lvl(pcs->enc_mode);
+                svt_aom_set_frame_coeff_lvl(pcs, pfc_lvl);
 #else
                 predict_frame_coeff_lvl(pcs);
 #endif

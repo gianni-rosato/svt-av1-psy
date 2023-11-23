@@ -2768,6 +2768,9 @@ void initialize_overlay_frame(PictureParentControlSet     *pcs) {
     pcs->slice_type = P_SLICE;
     // set the overlay frame as non reference frame with max temporal layer index
     pcs->temporal_layer_index = (uint8_t)pcs->hierarchical_levels;
+#if CLN_IS_REF
+    pcs->is_highest_layer = true;
+#endif
     pcs->ref_list0_count = 1;
     pcs->ref_list1_count = 0;
 
@@ -4878,6 +4881,9 @@ void* svt_aom_picture_decision_kernel(void *input_ptr) {
                                 assert(!pcs->is_overlay);
                                 pcs->pred_struct_index = (uint8_t)enc_ctx->pred_struct_position;
                                 pcs->temporal_layer_index = (uint8_t)pred_position_ptr->temporal_layer_index;
+#if CLN_IS_REF
+                                pcs->is_highest_layer = (pcs->temporal_layer_index == pcs->hierarchical_levels);
+#endif
                                 switch (pcs->slice_type) {
                                 case I_SLICE:
 

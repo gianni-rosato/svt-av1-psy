@@ -40,19 +40,23 @@ static double calculate_active_area(const FrameInfo *frame_info, const FIRSTPASS
 // Calculate a modified Error used in distributing bits between easier and
 // harder frames.
 #define ACT_AREA_CORRECTION 0.5
+#if OPT_VBR2
+static double calculate_modified_err(const TWO_PASS *twopass, const FIRSTPASS_STATS *this_frame) {
+    const FIRSTPASS_STATS *const stats = twopass->stats_buf_ctx->total_stats;
+    if (stats == NULL)
+        return 0;
+    return (double)this_frame->stat_struct.total_num_bits;
+
+}
+#else
 static double calculate_modified_err(const FrameInfo *frame_info, const TWO_PASS *twopass,
                                      const TwoPassCfg *two_pass_cfg, const FIRSTPASS_STATS *this_frame) {
     const FIRSTPASS_STATS *const stats = twopass->stats_buf_ctx->total_stats;
     if (stats == NULL) {
         return 0;
     }
-#if OPT_VBR2
-    //   return (double)stats->coded_error;
-#else
     if (twopass->passes == 3)
-#endif
         return (double)this_frame->stat_struct.total_num_bits;
-#if !OPT_VBR2
     const double av_weight      = stats->weight / stats->count;
     const double av_err         = (stats->coded_error * av_weight) / stats->count;
     double       modified_error = av_err *
@@ -66,8 +70,8 @@ static double calculate_modified_err(const FrameInfo *frame_info, const TWO_PASS
     modified_error *= pow(calculate_active_area(frame_info, this_frame), ACT_AREA_CORRECTION);
 
     return fclamp(modified_error, twopass->modified_error_min, twopass->modified_error_max);
-#endif
 }
+#endif
 
 // Resets the first pass file to the given position using a relative seek from
 // the current position.
@@ -548,14 +552,7 @@ static int64_t calculate_total_gf_group_bits(PictureParentControlSet *pcs, doubl
                 rc->frames_to_key;
         else
             kf_group_bits = twopass->kf_group_bits;
-#if 0 // OPT_VBR2
-        double stat_ratio = (double)rc->baseline_gf_interval / (double) MIN(pcs->frames_in_sw, rc->frames_to_key);
-        double ratio = CLIP3(0.15, 1,
-            gf_group_err / twopass->kf_group_error_left);
-        total_group_bits = (int64_t)(kf_group_bits * ratio);
-#else
-        total_group_bits = (int64_t)(kf_group_bits * (gf_group_err / twopass->kf_group_error_left));
-#endif
+       total_group_bits = (int64_t)(kf_group_bits * (gf_group_err / twopass->kf_group_error_left));
     } else {
         total_group_bits = 0;
     }
@@ -609,7 +606,7 @@ static void av1_gop_bit_allocation_same_pred(PictureParentControlSet *pcs, int64
     }
 }
 // Allocate bits to each frame in a GF / ARF group
-static double layer_fraction[MAX_ARF_LAYERS + 1] = {1.0, 0.80, 0.7, 0.60, 0.60, 1.0, 1.0};
+static double layer_fraction[MAX_ARF_LAYERS + 1] = { 1.0, 0.80, 0.7, 0.60, 0.60, 1.0, 1.0 };
 static void   allocate_gf_group_bits(PictureParentControlSet *pcs, RATE_CONTROL *const rc, int64_t gf_group_bits,
                                      int gf_arf_bits, int gf_interval, int key_frame, int use_arf) {
     int64_t total_group_bits = gf_group_bits;
@@ -791,14 +788,20 @@ static void calculate_gf_stats(PictureParentControlSet *ppcs, GF_GROUP_STATS *gf
     SequenceControlSet          *scs        = ppcs->scs;
     RATE_CONTROL *const          rc         = &scs->enc_ctx->rc;
     TWO_PASS *const              twopass    = &scs->twopass;
+#if !OPT_VBR2
     FrameInfo                   *frame_info = &scs->enc_ctx->frame_info;
+#endif
     FIRSTPASS_STATS              next_frame;
     const FIRSTPASS_STATS *const start_pos = twopass->stats_in;
 
     init_gf_stats(gf_stats);
 
     // Load stats for the current frame.
+#if OPT_VBR2
+    double mod_frame_err = calculate_modified_err(twopass, this_frame);
+#else
     double mod_frame_err = calculate_modified_err(frame_info, twopass, &(scs->enc_ctx->two_pass_cfg), this_frame);
+#endif
 
     // Note the error of the frame at the start of the group. This will be
     // the GF frame error if we code a normal gf.
@@ -820,7 +823,11 @@ static void calculate_gf_stats(PictureParentControlSet *ppcs, GF_GROUP_STATS *gf
 #endif
         ++i;
         // Accumulate error score of frames in this gf group.
+#if OPT_VBR2
+        mod_frame_err = calculate_modified_err(twopass, this_frame);
+#else
         mod_frame_err = calculate_modified_err(frame_info, twopass, &(scs->enc_ctx->two_pass_cfg), this_frame);
+#endif
         // accumulate stats for this frame
         accumulate_this_frame_stats(this_frame, mod_frame_err, gf_stats);
 
@@ -1016,7 +1023,9 @@ static void lap_rc_init(PictureParentControlSet *pcs, FIRSTPASS_STATS this_frame
     SequenceControlSet          *scs                  = pcs->scs;
     EncodeContext               *enc_ctx              = scs->enc_ctx;
     TWO_PASS *const              twopass              = &scs->twopass;
+#if !OPT_VBR2
     FrameInfo *const             frame_info           = &enc_ctx->frame_info;
+#endif
     int                          num_stats            = 0;
     double                       modified_error_total = 0.0;
     double                       coded_error_total    = 0.0;
@@ -1045,7 +1054,11 @@ static void lap_rc_init(PictureParentControlSet *pcs, FIRSTPASS_STATS this_frame
     // loop over the look ahead and calculate the modified_error_total
     while (twopass->stats_in <= twopass->stats_buf_ctx->stats_in_end) {
         // Accumulate error.
+#if OPT_VBR2
+        modified_error_total += calculate_modified_err(twopass, &this_frame);
+#else
         modified_error_total += calculate_modified_err(frame_info, twopass, &(enc_ctx->two_pass_cfg), &this_frame);
+#endif
         // Load the next frame's stats.
         if (input_stats(twopass, &this_frame) == EOF)
             break;
@@ -1063,9 +1076,13 @@ static void lap_rc_init(PictureParentControlSet *pcs, FIRSTPASS_STATS this_frame
  */
 static double lap_rc_group_error_calc(PictureParentControlSet *pcs, FIRSTPASS_STATS this_frame) {
     SequenceControlSet          *scs                  = pcs->scs;
+#if !OPT_VBR2
     EncodeContext               *enc_ctx              = scs->enc_ctx;
+#endif
     TWO_PASS *const              twopass              = &scs->twopass;
+#if !OPT_VBR2
     FrameInfo *const             frame_info           = &enc_ctx->frame_info;
+#endif
     int                          num_stats            = 0;
     double                       modified_error_total = 0.0;
     const FIRSTPASS_STATS *const start_position       = twopass->stats_in;
@@ -1074,7 +1091,11 @@ static double lap_rc_group_error_calc(PictureParentControlSet *pcs, FIRSTPASS_ST
     while (twopass->stats_in <= twopass->stats_buf_ctx->stats_in_end && num_stats < pcs->frames_to_key) {
         num_stats++;
         // Accumulate error.
+#if OPT_VBR2
+        modified_error_total += calculate_modified_err(twopass, &this_frame);
+#else
         modified_error_total += calculate_modified_err(frame_info, twopass, &(enc_ctx->two_pass_cfg), &this_frame);
+#endif
         // Load the next frame's stats.
         if (input_stats(twopass, &this_frame) == EOF)
             break;
@@ -1101,7 +1122,9 @@ static void set_kf_interval_variables(PictureParentControlSet *pcs, FIRSTPASS_ST
     TWO_PASS *const     twopass = &scs->twopass;
 
     int              frames_to_key = 0;
+#if !OPT_VBR2
     FrameInfo *const frame_info    = &enc_ctx->frame_info;
+#endif
     if (num_frames_to_detect_scenecut == 0)
         return;
 
@@ -1110,7 +1133,11 @@ static void set_kf_interval_variables(PictureParentControlSet *pcs, FIRSTPASS_ST
 
         // Accumulate kf group error.
         if (kf_group_err != NULL)
+#if OPT_VBR2
+            *kf_group_err += calculate_modified_err(twopass, this_frame);
+#else
             *kf_group_err += calculate_modified_err(frame_info, twopass, &(enc_ctx->two_pass_cfg), this_frame);
+#endif
 
         ++frames_to_key;
         if (input_stats(twopass, this_frame) == EOF)
@@ -1237,7 +1264,9 @@ static void kf_group_rate_assingment(PictureParentControlSet *pcs, FIRSTPASS_STA
     EncodeContext      *enc_ctx    = scs->enc_ctx;
     RATE_CONTROL *const rc         = &enc_ctx->rc;
     TWO_PASS *const     twopass    = &scs->twopass;
+#if !OPT_VBR2
     FrameInfo          *frame_info = &enc_ctx->frame_info;
+#endif
     FIRSTPASS_STATS     next_frame;
     av1_zero(next_frame);
 
@@ -1263,7 +1292,11 @@ static void kf_group_rate_assingment(PictureParentControlSet *pcs, FIRSTPASS_STA
 #if !OPT_VBR2
     kf_raw_err                   = this_frame.intra_error;
 #endif
-    kf_mod_err                   = calculate_modified_err(frame_info, twopass, &(enc_ctx->two_pass_cfg), &this_frame);
+#if OPT_VBR2
+    kf_mod_err                   = calculate_modified_err(twopass, &this_frame);
+#else
+    kf_mod_err = calculate_modified_err(frame_info, twopass, &(enc_ctx->two_pass_cfg), &this_frame);
+#endif
     set_kf_interval_variables(pcs, &this_frame, &kf_group_err, scs->static_config.intra_period_length + 1);
 
     // Calculate the number of bits that should be assigned to the kf group.
@@ -1725,9 +1758,11 @@ void svt_aom_set_rc_param(SequenceControlSet *scs) {
     frame_info->num_mbs   = frame_info->mb_cols * frame_info->mb_rows;
     frame_info->bit_depth = scs->static_config.encoder_bit_depth;
     // input config  from options
+#if !CLN_VBR
     enc_ctx->two_pass_cfg.vbrmin_section = scs->static_config.vbr_min_section_pct;
     enc_ctx->two_pass_cfg.vbrmax_section = scs->static_config.vbr_max_section_pct;
     enc_ctx->two_pass_cfg.vbrbias        = scs->static_config.vbr_bias_pct;
+#endif
     enc_ctx->rc_cfg.gf_cbr_boost_pct     = 0;
     enc_ctx->rc_cfg.mode                 = scs->static_config.rate_control_mode == SVT_AV1_RC_MODE_VBR
                         ? AOM_VBR
@@ -1801,7 +1836,9 @@ void svt_av1_init_single_pass_lap(SequenceControlSet *scs) {
 void svt_av1_init_second_pass(SequenceControlSet *scs) {
     TWO_PASS *const twopass    = &scs->twopass;
     EncodeContext  *enc_ctx    = scs->enc_ctx;
+#if !OPT_VBR2
     FrameInfo      *frame_info = &enc_ctx->frame_info;
+#endif
 
     double           frame_rate;
     FIRSTPASS_STATS *stats;
@@ -1849,7 +1886,11 @@ void svt_av1_init_second_pass(SequenceControlSet *scs) {
         twopass->modified_error_min                 = (avg_error * enc_ctx->two_pass_cfg.vbrmin_section) / 100;
         twopass->modified_error_max                 = (avg_error * enc_ctx->two_pass_cfg.vbrmax_section) / 100;
         while (s < twopass->stats_buf_ctx->stats_in_end) {
+#if OPT_VBR2
+            modified_error_total += calculate_modified_err(twopass, s);
+#else
             modified_error_total += calculate_modified_err(frame_info, twopass, &(enc_ctx->two_pass_cfg), s);
+#endif
             ++s;
         }
         twopass->modified_error_left = modified_error_total;

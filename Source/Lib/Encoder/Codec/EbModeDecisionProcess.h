@@ -87,9 +87,6 @@ typedef struct MdBlkStruct {
     uint8_t  y_has_coeff[TRANSFORM_UNIT_MAX_COUNT];
     uint16_t min_nz_h;
     uint16_t min_nz_v;
-#if USE_PRED_MODE
-    uint8_t is_inter;
-#endif
 } MdBlkStruct;
 
 struct ModeDecisionCandidate;
@@ -144,14 +141,14 @@ typedef struct InterCompCtrls {
     // if true, use rate @ compound params derivation
     uint8_t use_rate;
 #if OPT_CMPOUND
-    //no compound for low complexity blocks
-    uint8_t no_cmp_low_cmplx;
-    //no diff for nsq
-    uint8_t no_diff_nsq;
-    //no wedge for flat blocks
-    uint8_t no_wdg_flat;
+    //no compound for low complexity blocks (MVP only)
+    uint8_t mvp_no_cmp_low_cmplx;
+    //no diff for nsq (MVP only)
+    uint8_t mvp_no_diff_nsq;
+    //no wedge if blk variance is less than mvp_no_wdg_var_th; 0: OFF (MVP only)
+    uint8_t mvp_no_wdg_var_th;
     //no distance for symteric refs
-    uint8_t no_dist;
+    uint8_t no_sym_dist;
 #else
     // if true, do not consider distance compound
     uint8_t no_dist;
@@ -217,10 +214,11 @@ typedef struct TxtControls {
     // If the rate cost of using a TX type is greater than the percentage threshold of the cost of the best TX type (actual cost, not just rate cost),
     // skip testing the TX type. txt_rate_cost_th is specified as a perentage * 10 (i.e. a value of 70 corresponds to skipping the TX type if the
     // txt rate cost is > 7% of the best TX type cost). 0 is off.  Lower values are more aggressive.
+    uint16_t txt_rate_cost_th;
 #if OPT_Q_TXT
+    // a multiplier to control the q-based modulation of satd_early_exit_th; ~0 is off, lower values are more aggressive.
     uint16_t satd_th_q_weight;
 #endif
-    uint16_t txt_rate_cost_th;
 } TxtControls;
 typedef struct TxsCycleRControls {
     // On/Off feature control
@@ -241,10 +239,15 @@ typedef struct NearCountCtrls {
 } NearCountCtrls;
 #if OPT_BIPRED3x3
 typedef struct Bipred3x3Controls {
+    // Specifies whether to refine the ME-MV(s) of bipred @ mds0 or not (0: OFF, 1: ON)
     uint8_t enabled;
+    // Specifies whether to search the diagonal position(s) or not (0: OFF, 1: ON)
     uint8_t search_diag;
+    // Specifies whether to refine the MV(s) of only the best List (in terms of pred-error) or both (0: OFF, 1: ON)
     uint8_t use_best_list;
+    // Specifies whether to skip the refinement when the List0-to-List1 pred-error deviation is higher than use_best_list or not
     uint8_t use_l0_l1_dev;
+
 } Bipred3x3Controls;
 #endif
 typedef struct RefPruningControls {
@@ -344,8 +347,8 @@ typedef struct MdNsqMotionSearchCtrls {
     // 0: NSQ motion search @ MD OFF; 1: NSQ motion search @ MD ON
     uint8_t enabled;
 #if OPT_PRE_MDS0_SEARCH
-    // 0: search using SAD; 1: search using SSD; 2: search using variance
-    uint8_t dist_type;
+    // 0: search using SAD; 1: search using Variance; 2: search using SSD
+    DistortionType dist_type;
 #else
     // 0: search using SAD; 1: search using SSD
     uint8_t use_ssd;
@@ -361,8 +364,8 @@ typedef struct MdSqMotionSearchCtrls {
     // 0: SQ motion search @ MD OFF; 1: SQ motion search @ MD ON
     uint8_t enabled;
 #if OPT_PRE_MDS0_SEARCH
-    // 0: search using SAD; 1: search using SSD; 2: search using variance
-    uint8_t dist_type;
+    // 0: search using SAD; 1: search using Variance; 2: search using SSD
+    DistortionType dist_type;
 #else
     // 0: search using SAD; 1: search using SSD
     uint8_t use_ssd;
@@ -415,8 +418,8 @@ typedef struct MdPmeCtrls {
     // 0: PME search @ MD OFF; 1: PME search @ MD ON
     uint8_t enabled;
 #if OPT_PRE_MDS0_SEARCH
-    // 0: search using SAD; 1: search using SSD; 2: search using variance
-    uint8_t dist_type;
+    // 0: search using SAD; 1: search using Variance; 2: search using SSD
+    DistortionType dist_type;
 #else
     // 0: search using SAD; 1: search using SSD
     uint8_t use_ssd;
@@ -447,6 +450,7 @@ typedef struct MdPmeCtrls {
     // Enable pSad
     uint8_t enable_psad;
 #if OPT_Q_PME
+    // a weight to control the q-based modulation of the fpel width and height, lower values are more aggressive.
     uint8_t sa_q_weight;
 #endif
 } MdPmeCtrls;
@@ -515,11 +519,13 @@ typedef struct NsqPsqTxsCtrls {
         h_to_v_th; // Skip H/V if min(H0-nz,H1-nz)/min(V0-nz,V1-nz) is higher than min(V0-nz,V1-nz)/min(H0-nz,H1-nz),
     // and min(H0-nz,H1-nz)/min(V0-nz,V1-nz) is higher than h_to_v_th * sq-nz
 } NsqPsqTxsCtrls;
+#if !CLN_NSQ_LVLS
 typedef struct NsqPsqPredCtrls {
     uint8_t  enabled;
     uint32_t cost_th; // The intra/new-cost-to-mvp cost deviation beyond wich NSQ is skipped when the SQ is MVP
     uint8_t  coef_th; // The perc of SQ nz-coeff beyond wich the the NSQ skip is not allowed
 } NsqPsqPredCtrls;
+#endif
 typedef struct RdoqCtrls {
     uint8_t enabled;
 
@@ -615,11 +621,6 @@ typedef struct NicPruningCtrls {
     // if (best_mds0_distortion/QP < TH) consider only the best candidate after MDS0; 0: OFF,
     // higher: more aggressive.
     uint32_t force_1_cand_th;
-#if OPT_Q_PRUNE_TH_WEIGHT
-    uint16_t mds1_q_weight;
-    uint16_t mds2_q_weight;
-    uint16_t mds3_q_weight;
-#endif
 } NicPruningCtrls;
 typedef struct NicCtrls {
     NicPruningCtrls pruning_ctrls;
@@ -632,7 +633,9 @@ typedef struct CandEliminationCtlrs {
     uint8_t  dc_only;
     uint8_t  inject_new_me;
     uint8_t  inject_new_pme;
+#if !OPT_Q_WARP
     uint8_t  inject_new_warp;
+#endif
     // factor to scale base TH by for distortion check
     uint8_t th_multiplier;
 } CandEliminationCtlrs;
@@ -682,7 +685,9 @@ typedef struct NsqCtrls {
     uint32_t component_multiple_th;
     // Predict the number of non-zero coeff per NSQ shape using a non-conformant txs-search
     uint8_t psq_txs_lvl;
+#if !CLN_NSQ_LVLS
     uint8_t psq_pred_lvl;
+#endif
     // Whether to use the default or aggressive settings for the sub-Pred_depth block(s) (i.e. not applicable when PRED only)
     uint8_t sub_depth_block_lvl;
 } NsqCtrls;
@@ -950,16 +955,20 @@ typedef struct CandReductionCtrls {
 } CandReductionCtrls;
 typedef struct SkipSubDepthCtrls {
     uint8_t enabled;
-#if !CLN_REMOVE_COND0
+#if CLN_REMOVE_COND0
+    // Use the 4 quad(s) src-to-recon cost deviation to skip sub-depth(s)
+    // Do not skip sub-depth(s) if the depth block size is higher than max_size
+    uint8_t max_size;
+#else
     // Cond0: use the nsq-to-sq cost deviation to skip sub-depth(s)
     // Do not skip sub-depth(s) if the depth block size is higher than method1_max_size
     uint8_t max_size_cond0;
     // Do not skip sub-depth(s) if the depth block size is higher than method1_max_size
     int nsq_to_sq_th;
-#endif
     // Cond1: use the 4 quad(s) src-to-recon cost deviation to skip sub-depth(s)
     // Do not skip sub-depth(s) if the depth block size is higher than method0_max_size
     uint8_t max_size_cond1;
+#endif
     // Do not skip sub-depth(s) if std_deviation of the src-to-rec quad(s) is higher than std_deviation_th
     int quad_deviation_th;
     // Do not skip sub-depth(s) if coeff_perc is higher than coeff_perc
@@ -1226,7 +1235,9 @@ typedef struct ModeDecisionContext {
     // was parent_sq_coeff_area_based_cycles_reduction_ctrls
     ParentSqCmplxCtrls   psq_cplx_ctrls;
     NsqPsqTxsCtrls       nsq_psq_txs_ctrls;
+#if !CLN_NSQ_LVLS
     NsqPsqPredCtrls      nsq_psq_pred_ctrls;
+#endif
     uint8_t              sb_size;
     EbPictureBufferDesc *recon_coeff_ptr[TX_TYPES];
     EbPictureBufferDesc *recon_ptr[TX_TYPES];

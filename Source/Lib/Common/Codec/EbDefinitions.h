@@ -44,8 +44,12 @@ extern "C" {
 #define MAX_TPL_EXT_GROUP_SIZE MAX_TPL_GROUP_SIZE
 #define OUT_Q_ADVANCE(h) ((h == REFERENCE_QUEUE_MAX_DEPTH - 1) ? 0 : h + 1)
 #define MIN_LAD_MG 1
+#if OPT_VBR6
+#define RC_DEFAULT_LAD_MG 2 // default look ahead value for rate control
+#else
 #define RC_DEFAULT_LAD_MG_MT 2 // default look ahead value for rate control in Multi-threaded mode
 #define RC_DEFAULT_LAD_MG_LP1 1 // default look ahead value for rate control in LP 1
+#endif
 void svt_aom_assert_err(uint32_t condition, char *err_msg);
 
 #define TPL_DEP_COST_SCALE_LOG2 4
@@ -83,6 +87,9 @@ void svt_aom_assert_err(uint32_t condition, char *err_msg);
 
 #define INVALID_LUMA 256
 
+#if CLN_CMPOUND
+#define NEAREST_NEAR_MV_CNT 4 // 1 nearest + 3 near
+#endif
 typedef struct SharpnessCtrls {
     uint8_t scene_transition;
     uint8_t tf;
@@ -120,12 +127,15 @@ typedef struct MrpCtrls {
     uint8_t base_ref_list1_count;
     uint8_t non_base_ref_list0_count;
     uint8_t non_base_ref_list1_count;
-    uint8_t more_5L_refs; //use few more references in the rps list.
+    // Use extra reference frames in the rps list for 5L.
+    uint8_t more_5L_refs;
 
     // Limit references to (1,1) if it's safe to do so based on brightness and ME ZZ sad
-    uint8_t  safe_limit_nref; //0:off  1:brigthness + ME ZZ sad   2:brightness only. action taken at pic level in PD
-    uint32_t safe_limit_zz_th; // used for mode 1 above. zz sad of closest references is smaller than this th
-        //0: feature off      non-zero-value: feature on
+    // 0:off  1:brigthness + ME ZZ sad   2:brightness only. action taken at pic level in PD
+    uint8_t safe_limit_nref;
+    // used for mode 1 of safe_limit_nref. zz sad of closest references is smaller than this th
+    // 0: feature off      non-zero-value: feature on
+    uint32_t safe_limit_zz_th;
     // Limit candidate types to LAST, BWD and LAST-BWD
     bool only_l_bwd;
     // Limit PME to ref index 0 only
@@ -758,12 +768,21 @@ typedef enum IfsLevel {
     IFS_MDS2, // IFS @ md_stage_2()
     IFS_MDS3, // IFS @ md_stage_3()
 } IfsLevel;
+#if OPT_PRE_MDS0_SEARCH
+typedef enum DistortionType {
+    SAD,
+    VAR,
+    SSD,
+    DIST_TYPES
+} DistortionType;
+#else
 typedef enum Mds0DistortionType {
     MDS0_SAD, // Use SAD at MDS0
     MDS0_VAR, // Use variance at MDS0
     MDS0_SSD, // Use SSD at MDS0
     MDS0_DIST_TYPES
 } Mds0DistortionType;
+#endif
 // Profile 0.  8-bit and 10-bit 4:2:0 and 4:0:0 only.
 // Profile 1.  8-bit and 10-bit 4:4:4
 // Profile 2.  8-bit and 10-bit 4:2:2

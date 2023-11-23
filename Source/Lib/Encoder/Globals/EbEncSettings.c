@@ -75,11 +75,12 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet *scs) {
         SVT_ERROR("Instance %u: Multi-passes is not support with Low Delay mode \n", channel_number + 1);
         return_error = EB_ErrorBadParameter;
     }
-
+#if !CLN_VBR
     if (config->vbr_bias_pct > 100) {
         SVT_ERROR("Instance %u: The bias percentage must be [0, 100]  \n", channel_number + 1);
         return_error = EB_ErrorBadParameter;
     }
+#endif
 
     if (config->maximum_buffer_size_ms < 20 || config->maximum_buffer_size_ms > 10000) {
         SVT_ERROR("Instance %u: The maximum buffer size must be between [20, 10000]\n", channel_number + 1);
@@ -107,17 +108,7 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet *scs) {
             config->maximum_buffer_size_ms - 1);
         config->optimal_buffer_level_ms = (config->maximum_buffer_size_ms - 1);
     }
-#if OPT_VBR6
-    if (config->under_shoot_pct == DEFAULT) {
-        if ((config->rate_control_mode == SVT_AV1_RC_MODE_VBR))
-            config->under_shoot_pct = 50;
-        else
-            config->under_shoot_pct = 25;
-    }
-    if (config->over_shoot_pct == DEFAULT) {
-        config->over_shoot_pct = 25;
-    }
-#endif
+
     if (config->over_shoot_pct > 100) {
         SVT_ERROR("Instance %u: The overshoot percentage must be between [0, 100] \n", channel_number + 1);
         return_error = EB_ErrorBadParameter;
@@ -140,6 +131,7 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet *scs) {
         SVT_ERROR("Instance %u: The maximum bit rate must be between [0, 100000] kbps \n", channel_number + 1);
         return_error = EB_ErrorBadParameter;
     }
+#if !CLN_VBR
     if (config->vbr_max_section_pct > 10000) {
         SVT_ERROR("Instance %u: The max section percentage must be between [0, 10000] \n", channel_number + 1);
         return_error = EB_ErrorBadParameter;
@@ -149,6 +141,7 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet *scs) {
         SVT_ERROR("Instance %u: The min section percentage must be between [0, 100] \n", channel_number + 1);
         return_error = EB_ErrorBadParameter;
     }
+#endif
     if (config->gop_constraint_rc &&
         ((config->rate_control_mode != SVT_AV1_RC_MODE_VBR) || config->intra_period_length < 119)) {
         SVT_ERROR(
@@ -174,12 +167,26 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet *scs) {
         SVT_ERROR("Instance %u: Force key frame is only supported with RA CRF/CQP mode\n", channel_number + 1);
         return_error = EB_ErrorBadParameter;
     }
-
+#if DIS_UNSUPPORTED_MODES
+    if (config->rate_control_mode != SVT_AV1_RC_MODE_CQP_OR_CRF && (config->max_bit_rate != 0)) {
+        SVT_ERROR("Instance %u: Max Bitrate only supported with CRF mode\n", channel_number + 1);
+        return_error = EB_ErrorBadParameter;
+    }
+    if (config->rate_control_mode == SVT_AV1_RC_MODE_CBR && config->pred_structure == SVT_AV1_PRED_RANDOM_ACCESS) {
+        SVT_ERROR("CBR Rate control is currently not supported for SVT_AV1_PRED_RANDOM_ACCESS, use VBR mode\n");
+        return_error = EB_ErrorBadParameter;
+    }
+    if (config->rate_control_mode == SVT_AV1_RC_MODE_VBR && config->pred_structure == SVT_AV1_PRED_LOW_DELAY_B) {
+        SVT_ERROR("VBR Rate control is currently not supported for SVT_AV1_PRED_LOW_DELAY_B, use CBR mode\n");
+        return_error = EB_ErrorBadParameter;
+    }
+#else
     if (config->rate_control_mode != SVT_AV1_RC_MODE_CQP_OR_CRF && (config->target_bit_rate >= config->max_bit_rate) &&
         (config->max_bit_rate != 0)) {
         SVT_ERROR("Instance %u: Max Bitrate must be greater than Target Bitrate\n", channel_number + 1);
         return_error = EB_ErrorBadParameter;
     }
+#endif
 
     if (scs->max_input_luma_width > 16384) {
         SVT_ERROR("Instance %u: Source Width must be less than or equal to 16384\n", channel_number + 1);
@@ -731,8 +738,13 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet *scs) {
     }
 
     if (config->pass > 1 && config->rate_control_mode == SVT_AV1_RC_MODE_CQP_OR_CRF) {
+#if DIS_UNSUPPORTED_MODES
+        SVT_ERROR("Instance %u: CRF does not support Multi-pass. Use single pass\n", channel_number + 1);
+        return_error = EB_ErrorBadParameter;
+#else
         SVT_WARN("Instance %u: CRF does not support Multi-pass. Switching to single pass\n", channel_number + 1);
         config->pass = ENC_SINGLE_PASS;
+#endif
     }
     // color description
     if (config->color_primaries == 0 || config->color_primaries == 3 ||
@@ -936,9 +948,11 @@ EbErrorType svt_av1_set_default_params(EbSvtAv1EncConfiguration *config_ptr) {
     config_ptr->encoder_color_format         = EB_YUV420;
     // Rate control options
     // Set the default value toward more flexible rate allocation
+#if !CLN_VBR
     config_ptr->vbr_bias_pct             = 100;
     config_ptr->vbr_min_section_pct      = 0;
     config_ptr->vbr_max_section_pct      = 2000;
+#endif
 #if OPT_VBR6
     config_ptr->under_shoot_pct          = DEFAULT;
     config_ptr->over_shoot_pct           = DEFAULT;
@@ -1760,7 +1774,9 @@ static EbErrorType str_to_rc_mode(const char *nptr, uint32_t *out, uint8_t *aq_m
     case RC_MODE_VBR: *out = SVT_AV1_RC_MODE_VBR; break;
     case RC_MODE_CBR:
         *out            = SVT_AV1_RC_MODE_CBR;
+#if !DIS_UNSUPPORTED_MODES
         *pred_structure = SVT_AV1_PRED_LOW_DELAY_B;
+#endif
         break;
     default: SVT_ERROR("Invalid rc mode: %s\n", nptr); return EB_ErrorBadParameter;
     }
@@ -1928,9 +1944,11 @@ EB_API EbErrorType svt_av1_enc_parse_parameter(EbSvtAv1EncConfiguration *config_
         {"scd", &config_struct->scene_change_detection},
         {"max-qp", &config_struct->max_qp_allowed},
         {"min-qp", &config_struct->min_qp_allowed},
+#if !CLN_VBR
         {"bias-pct", &config_struct->vbr_bias_pct},
         {"minsection-pct", &config_struct->vbr_min_section_pct},
         {"maxsection-pct", &config_struct->vbr_max_section_pct},
+#endif
         {"undershoot-pct", &config_struct->under_shoot_pct},
         {"overshoot-pct", &config_struct->over_shoot_pct},
         {"mbr-overshoot-pct", &config_struct->mbr_over_shoot_pct},

@@ -978,7 +978,7 @@ static INLINE const uint8_t *pre(const uint8_t *buf, int stride, int r, int c) {
     const int offset = (r >> 3) * stride + (c >> 3);
     return buf + offset;
 }
-#if !OPT_SUBPEL_OBMC
+
 int svt_av1_find_best_obmc_sub_pixel_tree_up(ModeDecisionContext *ctx, IntraBcContext *x, const AV1_COMMON *const cm,
                                              int mi_row, int mi_col, MV *bestmv, const MV *ref_mv, int allow_hp,
                                              int error_per_bit, const AomVarianceFnPtr *vfp, int forced_stop,
@@ -1149,7 +1149,7 @@ int svt_av1_find_best_obmc_sub_pixel_tree_up(ModeDecisionContext *ctx, IntraBcCo
 
     return besterr;
 }
-#endif
+
 int svt_av1_full_pixel_search(PictureControlSet *pcs, IntraBcContext *x, BlockSize bsize, MV *mvp_full, int step_param,
                               int method, int run_mesh_search, int error_per_bit, int *cost_list, const MV *ref_mv,
                               int var_max, int rd, int x_pos, int y_pos, int intra) {

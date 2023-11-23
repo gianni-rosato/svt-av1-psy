@@ -35,7 +35,10 @@ uint8_t svt_aom_get_enable_me_16x16(EncMode enc_mode);
 #else
 uint8_t svt_aom_get_enable_me_16x16(EncMode enc_mode, bool rtc_tune);
 #endif
-
+#if OPT_COEFF_LVL
+uint8_t svt_aom_get_predict_frame_coeff_lvl(EncMode enc_mode);
+void svt_aom_set_frame_coeff_lvl(PictureControlSet* pcs, uint8_t lvl);
+#endif
 Bool    svt_aom_is_ref_same_size(PictureControlSet *pcs, uint8_t list_idx, uint8_t ref_idx);
 #if TUNE_ENABLE_ME_8X8
 uint8_t svt_aom_get_enable_me_8x8(EncMode enc_mode, bool rtc_tune, EbInputResolution input_resolution);
@@ -92,7 +95,11 @@ bool svt_aom_get_disallow_4x4(EncMode enc_mode, SliceType slice_type);
 
 #if OPT_MR_M0
 #if OPT_NSQ_QP
+#if TUNE_NSQ_HIGH_RES
+uint8_t svt_aom_get_nsq_level(EncMode enc_mode, uint8_t is_base, InputCoeffLvl coeff_lvl, uint32_t qp, uint8_t input_resolution);
+#else
 uint8_t svt_aom_get_nsq_level(EncMode enc_mode, uint8_t is_base, InputCoeffLvl coeff_lvl, uint32_t qp);
+#endif
 #else
 uint8_t svt_aom_get_nsq_level(EncMode enc_mode, uint8_t is_base, InputCoeffLvl coeff_lvl);
 #endif

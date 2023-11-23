@@ -73,7 +73,7 @@ static void mode_decision_context_dctor(EbPtr p) {
         EB_FREE_ARRAY(obj->rate_est_table);
 
 #if CLN_CMPOUND
-    for (int i = 0; i < 4; i++) {
+    for (int i = 0; i < NEAREST_NEAR_MV_CNT; i++) {
         if (obj->cmp_store.pred0_buf[i])
             EB_FREE(obj->cmp_store.pred0_buf[i]);
         if (obj->cmp_store.pred1_buf[i])
@@ -205,7 +205,7 @@ EbErrorType svt_aom_mode_decision_context_ctor(ModeDecisionContext *ctx, EbColor
     if (get_inter_compound_level(enc_mode)) {
         const uint8_t bits = ctx->hbd_md > EB_8_BIT_MD ? 2 : 1;
 #if CLN_CMPOUND
-        for (int i = 0; i < 4; i++) {
+        for (int i = 0; i < NEAREST_NEAR_MV_CNT; i++) {
             EB_MALLOC(ctx->cmp_store.pred0_buf[i], sb_size * sb_size * bits * sizeof(uint8_t));
             EB_MALLOC(ctx->cmp_store.pred1_buf[i], sb_size * sb_size * bits * sizeof(uint8_t));
         }
@@ -234,10 +234,6 @@ EbErrorType svt_aom_mode_decision_context_ctor(ModeDecisionContext *ctx, EbColor
 
     // Allocate buffers for obmc prediction
     uint8_t obmc_allowed = 0;
-#if CLN_IS_REF
-#else
-    for (uint8_t is_ref = 0; is_ref < 2; is_ref++) {
-#endif
         for (uint8_t fast_decode = 0; fast_decode < 2; fast_decode++) {
             for (EbInputResolution input_resolution = 0; input_resolution < INPUT_SIZE_COUNT; input_resolution++) {
                 if (obmc_allowed)
@@ -245,10 +241,6 @@ EbErrorType svt_aom_mode_decision_context_ctor(ModeDecisionContext *ctx, EbColor
                 obmc_allowed |= svt_aom_get_obmc_level(enc_mode, fast_decode, input_resolution);
             }
         }
-#if CLN_IS_REF
-#else
-    }
-#endif
     if (obmc_allowed) {
         const uint8_t bits = ctx->hbd_md > EB_8_BIT_MD ? 2 : 1;
         EB_MALLOC(ctx->obmc_buff_0, sb_size * sb_size * bits * MAX_MB_PLANE * sizeof(ctx->obmc_buff_0[0]));

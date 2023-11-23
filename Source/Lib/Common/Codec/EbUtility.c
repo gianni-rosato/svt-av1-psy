@@ -461,7 +461,9 @@ static void md_scan_all_blks(uint32_t* idx_mds, uint32_t sq_size, uint32_t x, ui
             svt_aom_blk_geom_mds[*idx_mds].quadi            = quad_it;
 
 #if OPT_REORDER_GEOM
-            uint32_t part_it_idx                 = part_it >= 3 && sq_size == 128 ? part_it + 2 : part_it;
+            // part_it >= 3 for 128x128 blocks corresponds to HA/HB/VA/VB shapes since H4/V4 are not allowed
+            // for 128x128 blocks.  Therefore, need to offset part_it by 2 to not index H4/V4 shapes.
+            uint32_t part_it_idx = part_it >= 3 && sq_size == 128 ? part_it + 2 : part_it;
             svt_aom_blk_geom_mds[*idx_mds].shape = (Part)part_it_idx;
             svt_aom_blk_geom_mds[*idx_mds].org_x = x + quartsize * ns_quarter_off_mult[part_it_idx][0][nsq_it];
             svt_aom_blk_geom_mds[*idx_mds].org_y = y + quartsize * ns_quarter_off_mult[part_it_idx][1][nsq_it];

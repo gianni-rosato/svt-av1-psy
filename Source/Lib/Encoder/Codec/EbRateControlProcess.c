@@ -802,13 +802,12 @@ static int crf_qindex_calc(PictureControlSet *pcs, RATE_CONTROL *rc, int qindex)
 #if CLN_IS_REF
     const uint8_t temporal_layer      = ppcs->temporal_layer_index;
     const uint8_t hierarchical_levels = ppcs->hierarchical_levels;
-    const uint8_t is_not_last_layer   = temporal_layer < hierarchical_levels;
-    const int     is_intrl_arf_boost  = (temporal_layer > 0 && is_not_last_layer);
-    const int     leaf_frame          = temporal_layer < hierarchical_levels ? 0 : 1;
-    const int     rf_level            = (frame_is_intra_only(ppcs)) ? KF_STD
-                       : (temporal_layer == 0)                      ? GF_ARF_STD
-                       : is_not_last_layer                          ? GF_ARF_LOW
-                                                                    : INTER_NORMAL;
+    const int     leaf_frame          = ppcs->is_highest_layer;
+    const int     is_intrl_arf_boost = (temporal_layer > 0 && !leaf_frame);
+    const int rf_level = (frame_is_intra_only(ppcs)) ? KF_STD
+                    : (temporal_layer == 0)          ? GF_ARF_STD
+                    : !leaf_frame                    ? GF_ARF_LOW
+                                                     : INTER_NORMAL;
 #else
     const uint8_t is_ref               = ppcs->is_ref;
     const uint8_t temporal_layer       = ppcs->temporal_layer_index;
@@ -1062,13 +1061,10 @@ int svt_aom_compute_rd_mult(PictureControlSet *pcs, uint8_t q_index, uint8_t me_
     int64_t rdmult = svt_aom_compute_rd_mult_based_on_qindex(bit_depth, pcs->ppcs->update_type, q_index);
     // Update rdmult based on the frame's position in the miniGOP
     uint8_t gf_update_type = frame_type == KEY_FRAME ? SVT_AV1_KF_UPDATE
-        : temporal_layer_index == 0                  ? SVT_AV1_ARF_UPDATE
-        : temporal_layer_index < max_temporal_layer  ? SVT_AV1_INTNL_ARF_UPDATE
-                                                     : SVT_AV1_LF_UPDATE;
-    if (pcs->scs->static_config.pred_structure != SVT_AV1_PRED_RANDOM_ACCESS)
-        rdmult = (rdmult * rd_frame_type_factor_ld[gf_update_type]) >> 7;
-    else
-        rdmult = (rdmult * rd_frame_type_factor[gf_update_type]) >> 7;
+        : temporal_layer_index == 0 ? SVT_AV1_ARF_UPDATE
+        : temporal_layer_index < max_temporal_layer ? SVT_AV1_INTNL_ARF_UPDATE
+        : SVT_AV1_LF_UPDATE;
+    rdmult = (rdmult * rd_frame_type_factor[gf_update_type]) >> 7;
     if (pcs->scs->stats_based_sb_lambda_modulation) {
         int factor = 128;
         if (pcs->ppcs->frm_hdr.delta_q_params.delta_q_present) {

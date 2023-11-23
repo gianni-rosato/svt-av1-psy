@@ -517,21 +517,21 @@ static EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr
     // Max/Min CU Sizes
     const uint32_t max_blk_size = init_data_ptr->sb_size;
     // SBs
-    const uint16_t picture_sb_width  = (uint16_t)((init_data_ptr->picture_width + init_data_ptr->b64_size - 1) /
-                                                 init_data_ptr->b64_size);
+    const uint16_t picture_sb_width = (uint16_t)((init_data_ptr->picture_width + init_data_ptr->b64_size - 1) /
+        init_data_ptr->b64_size);
     const uint16_t picture_sb_height = (uint16_t)((init_data_ptr->picture_height + init_data_ptr->b64_size - 1) /
-                                                  init_data_ptr->b64_size);
+        init_data_ptr->b64_size);
     uint16_t       sb_index;
     uint16_t       sb_origin_x;
     uint16_t       sb_origin_y;
     EbErrorType    return_error;
 
-    Bool           is_16bit      = init_data_ptr->bit_depth > 8 ? TRUE : FALSE;
+    Bool           is_16bit = init_data_ptr->bit_depth > 8 ? TRUE : FALSE;
     const uint16_t subsampling_x = (init_data_ptr->color_format == EB_YUV444 ? 1 : 2) - 1;
     const uint16_t subsampling_y = (init_data_ptr->color_format >= EB_YUV422 ? 1 : 2) - 1;
 
     uint32_t total_tile_cnt = init_data_ptr->tile_row_count * init_data_ptr->tile_column_count;
-    uint32_t tile_idx       = 0;
+    uint32_t tile_idx = 0;
 
     uint32_t output_buffer_size = svt_aom_get_out_buffer_size(init_data_ptr->picture_width,
                                                               init_data_ptr->picture_height);
@@ -549,22 +549,23 @@ static EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr
     // Init Picture Init data
     uint16_t padding = init_data_ptr->sb_size + 32;
 
-    coeff_buffer_desc_init_data.max_width          = init_data_ptr->picture_width;
-    coeff_buffer_desc_init_data.max_height         = init_data_ptr->picture_height;
-    coeff_buffer_desc_init_data.bit_depth          = EB_SIXTEEN_BIT;
+    coeff_buffer_desc_init_data.max_width = init_data_ptr->picture_width;
+    coeff_buffer_desc_init_data.max_height = init_data_ptr->picture_height;
+    coeff_buffer_desc_init_data.bit_depth = EB_SIXTEEN_BIT;
     coeff_buffer_desc_init_data.buffer_enable_mask = PICTURE_BUFFER_DESC_FULL_MASK;
-    coeff_buffer_desc_init_data.color_format       = init_data_ptr->color_format;
+    coeff_buffer_desc_init_data.color_format = init_data_ptr->color_format;
 
-    coeff_buffer_desc_init_data.left_padding      = padding;
-    coeff_buffer_desc_init_data.right_padding     = padding;
-    coeff_buffer_desc_init_data.top_padding       = padding;
-    coeff_buffer_desc_init_data.bot_padding       = padding;
-    coeff_buffer_desc_init_data.split_mode        = FALSE;
+    coeff_buffer_desc_init_data.left_padding = padding;
+    coeff_buffer_desc_init_data.right_padding = padding;
+    coeff_buffer_desc_init_data.top_padding = padding;
+    coeff_buffer_desc_init_data.bot_padding = padding;
+    coeff_buffer_desc_init_data.split_mode = FALSE;
     coeff_buffer_desc_init_data.is_16bit_pipeline = init_data_ptr->is_16bit_pipeline;
-    object_ptr->color_format                      = init_data_ptr->color_format;
-    object_ptr->temp_lf_recon_pic_16bit           = (EbPictureBufferDesc *)NULL;
-    object_ptr->temp_lf_recon_pic                 = (EbPictureBufferDesc *)NULL;
-    object_ptr->scaled_input_pic                  = (EbPictureBufferDesc *)NULL;
+    object_ptr->color_format = init_data_ptr->color_format;
+    object_ptr->temp_lf_recon_pic_16bit = (EbPictureBufferDesc*)NULL;
+    object_ptr->temp_lf_recon_pic = (EbPictureBufferDesc*)NULL;
+    object_ptr->scaled_input_pic = (EbPictureBufferDesc*)NULL;
+
 #if OPT_SG
     if (svt_aom_get_enable_restoration(init_data_ptr->enc_mode,
         init_data_ptr->static_config.enable_restoration_filtering,
@@ -572,9 +573,9 @@ static EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr
         init_data_ptr->static_config.fast_decode, init_data_ptr->static_config.qp)) {
 #else
     if (svt_aom_get_enable_restoration(init_data_ptr->enc_mode,
-                                       init_data_ptr->static_config.enable_restoration_filtering,
-                                       init_data_ptr->input_resolution,
-                                       init_data_ptr->static_config.fast_decode)) {
+        init_data_ptr->static_config.enable_restoration_filtering,
+        init_data_ptr->input_resolution,
+        init_data_ptr->static_config.fast_decode)) {
 #endif
         set_restoration_unit_size(
             init_data_ptr->picture_width, init_data_ptr->picture_height, 1, 1, object_ptr->rst_info);
@@ -603,7 +604,7 @@ static EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr
     EB_NEW(object_ptr->bitstream_ptr, svt_aom_bitstream_ctor, output_buffer_size);
 
     // GOP
-    object_ptr->picture_number       = 0;
+    object_ptr->picture_number = 0;
     object_ptr->temporal_layer_index = 0;
 
     // SB Array
@@ -625,12 +626,12 @@ static EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr
     sb_origin_y = 0;
 
     const uint16_t picture_sb_w = (uint16_t)((init_data_ptr->picture_width + init_data_ptr->sb_size - 1) /
-                                             init_data_ptr->sb_size);
+        init_data_ptr->sb_size);
     const uint16_t picture_sb_h = (uint16_t)((init_data_ptr->picture_height + init_data_ptr->sb_size - 1) /
-                                             init_data_ptr->sb_size);
-    const uint16_t all_sb       = picture_sb_w * picture_sb_h;
+        init_data_ptr->sb_size);
+    const uint16_t all_sb = picture_sb_w * picture_sb_h;
 
-    object_ptr->sb_total_count          = all_sb;
+    object_ptr->sb_total_count = all_sb;
     object_ptr->sb_total_count_unscaled = all_sb;
     EB_ALLOC_PTR_ARRAY(object_ptr->sb_ptr_array, object_ptr->sb_total_count_unscaled);
 
@@ -638,14 +639,14 @@ static EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr
 
     for (sb_index = 0; sb_index < all_sb; ++sb_index) {
         EB_NEW(object_ptr->sb_ptr_array[sb_index],
-               svt_aom_largest_coding_unit_ctor,
-               (uint8_t)init_data_ptr->sb_size,
-               (uint16_t)(sb_origin_x * max_blk_size),
-               (uint16_t)(sb_origin_y * max_blk_size),
-               (uint16_t)sb_index,
-               init_data_ptr->enc_mode,
-               init_data_ptr->init_max_block_cnt,
-               object_ptr);
+            svt_aom_largest_coding_unit_ctor,
+            (uint8_t)init_data_ptr->sb_size,
+            (uint16_t)(sb_origin_x * max_blk_size),
+            (uint16_t)(sb_origin_y * max_blk_size),
+            (uint16_t)sb_index,
+            init_data_ptr->enc_mode,
+            init_data_ptr->init_max_block_cnt,
+            object_ptr);
         // Increment the Order in coding order (Raster Scan Order)
         sb_origin_y = (sb_origin_x == picture_sb_w - 1) ? sb_origin_y + 1 : sb_origin_y;
         sb_origin_x = (sb_origin_x == picture_sb_w - 1) ? 0 : sb_origin_x + 1;
@@ -805,7 +806,7 @@ static EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr
                     return EB_ErrorInsufficientResources;
             }
             if (init_data_ptr->hbd_md > EB_8_BIT_MD) {
-                InitData data[] = {{
+                InitData data[] = { {
                                        &object_ptr->md_luma_recon_na_16bit[depth][tile_idx],
                                        na_max_pic_w,
                                        na_max_pic_h,
@@ -849,8 +850,8 @@ static EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr
                                        SAMPLE_NEIGHBOR_ARRAY_GRANULARITY,
                                        SAMPLE_NEIGHBOR_ARRAY_GRANULARITY,
                                        NEIGHBOR_ARRAY_UNIT_FULL_MASK,
-                                   }};
-                return_error    = create_neighbor_array_units(data, DIM(data));
+                                   } };
+                return_error = create_neighbor_array_units(data, DIM(data));
                 if (return_error == EB_ErrorInsufficientResources)
                     return EB_ErrorInsufficientResources;
             }
@@ -1088,17 +1089,18 @@ static EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr
             return_error = create_neighbor_array_units(data, DIM(data));
             if (return_error == EB_ErrorInsufficientResources)
                 return EB_ErrorInsufficientResources;
-        } else {
+        }
+        else {
             object_ptr->ep_luma_recon_na_16bit = 0;
-            object_ptr->ep_cb_recon_na_16bit   = 0;
-            object_ptr->ep_cr_recon_na_16bit   = 0;
+            object_ptr->ep_cb_recon_na_16bit = 0;
+            object_ptr->ep_cr_recon_na_16bit = 0;
         }
     }
     //Segmentation neighbor arrays
     EB_NEW(object_ptr->segmentation_neighbor_map,
-           segmentation_map_ctor,
-           init_data_ptr->picture_width,
-           init_data_ptr->picture_height);
+        segmentation_map_ctor,
+        init_data_ptr->picture_width,
+        init_data_ptr->picture_height);
     // Segments
     object_ptr->enc_dec_coded_sb_count = 0;
 
@@ -1106,9 +1108,9 @@ static EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr
 
     for (tile_idx = 0; tile_idx < total_tile_cnt; tile_idx++) {
         EB_NEW(object_ptr->enc_dec_segment_ctrl[tile_idx],
-               svt_aom_enc_dec_segments_ctor,
-               init_data_ptr->enc_dec_segment_col,
-               init_data_ptr->enc_dec_segment_row);
+            svt_aom_enc_dec_segments_ctor,
+            init_data_ptr->enc_dec_segment_col,
+            init_data_ptr->enc_dec_segment_row);
     }
 
     // Entropy Rows
@@ -1128,17 +1130,33 @@ static EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr
 
     //the granularity is 4x4
     EB_MALLOC_ARRAY(object_ptr->mi_grid_base,
-                    all_sb * (init_data_ptr->sb_size >> MI_SIZE_LOG2) * (init_data_ptr->sb_size >> MI_SIZE_LOG2));
+        all_sb * (init_data_ptr->sb_size >> MI_SIZE_LOG2) * (init_data_ptr->sb_size >> MI_SIZE_LOG2));
 
     // If NSQ is allowed, then need a 4x4 MI grid because 8x8 NSQ shapes will require 4x4 granularity
     bool disallow_4x4 = true;
-    for (uint8_t is_base = 0; is_base <= 1; is_base++)
-        for (uint8_t is_islice = 0; is_islice <= 1; is_islice++)
-            for (uint8_t coeff_lvl = 0; coeff_lvl <= HIGH_LVL + 1; coeff_lvl++)
+    for (uint8_t is_base = 0; is_base <= 1; is_base++) {
+        for (uint8_t is_islice = 0; is_islice <= 1; is_islice++) {
+            for (uint8_t coeff_lvl = 0; coeff_lvl <= HIGH_LVL + 1; coeff_lvl++) {
 #if OPT_NSQ_QP
-                disallow_4x4 = MIN(
-                    disallow_4x4,
-                    (svt_aom_get_nsq_level(init_data_ptr->enc_mode, is_base, coeff_lvl, 63) == 0 ? 1 : 0));
+#if TUNE_NSQ_HIGH_RES
+                for (EbInputResolution res = INPUT_SIZE_240p_RANGE; res <= INPUT_SIZE_8K_RANGE; res++) {
+#endif
+                // min QP is 1 b/c 0 is lossless and is not supported
+                for (uint8_t qp = 1; qp <= MAX_QP_VALUE + 1; qp++) {
+                    if (!disallow_4x4)
+                        break;
+#if TUNE_NSQ_HIGH_RES
+                    disallow_4x4 = MIN(
+                        disallow_4x4,
+                        (svt_aom_get_nsq_level(init_data_ptr->enc_mode, is_base, coeff_lvl, qp, res) == 0 ? 1 : 0));
+                }
+                }
+#else
+                    disallow_4x4 = MIN(
+                        disallow_4x4,
+                        (svt_aom_get_nsq_level(init_data_ptr->enc_mode, is_base, coeff_lvl, qp) == 0 ? 1 : 0));
+                }
+#endif
 #else
 #if OPT_MR_M0
                 disallow_4x4 = MIN(
@@ -1150,10 +1168,15 @@ static EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr
                     (svt_aom_get_nsq_level(init_data_ptr->enc_mode, is_islice, is_base, coeff_lvl) == 0 ? 1 : 0));
 #endif
 #endif
+                }
+            }
+        }
 #if TUNE_4X4
-    for (uint8_t is_islice = 0; is_islice <= 1; is_islice++)
-        for (uint8_t is_base = 0; is_base <= 1; is_base++)
+    for (uint8_t is_islice = 0; is_islice <= 1; is_islice++) {
+        for (uint8_t is_base = 0; is_base <= 1; is_base++) {
             disallow_4x4 = MIN(disallow_4x4, svt_aom_get_disallow_4x4(init_data_ptr->enc_mode, is_base, is_islice));
+        }
+    }
 #else
     for (SliceType slice_type = 0; slice_type < IDR_SLICE + 1; slice_type++)
         disallow_4x4 = MIN(disallow_4x4, svt_aom_get_disallow_4x4(init_data_ptr->enc_mode, slice_type));

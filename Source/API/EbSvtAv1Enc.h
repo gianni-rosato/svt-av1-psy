@@ -460,7 +460,7 @@ typedef struct EbSvtAv1EncConfiguration {
     uint32_t min_qp_allowed;
 
     // DATARATE CONTROL OPTIONS
-
+#if !CLN_VBR
     /**
      * @brief Variable Bit Rate Bias Percentage
      *
@@ -497,8 +497,9 @@ typedef struct EbSvtAv1EncConfiguration {
      * Default is 2000.
      */
     uint32_t vbr_max_section_pct;
+#endif
 
-    #if OPT_VBR6
+#if OPT_VBR6
     /**
      * @brief UnderShoot Percentage
      *

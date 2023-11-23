@@ -62,7 +62,9 @@ typedef struct BitstreamLevel {
 } BitstreamLevel;
 
 typedef struct List0OnlyBase {
+    // Specifies whether to use List1 for BASE frame(s) or not (0: OFF, 1: ON)
     uint8_t enabled;
+    // Specifies the percentage of ahd-based active region under which List1 is not used (0 to 100)
     uint8_t list0_only_base_th;
 } List0OnlyBase;
 
@@ -416,9 +418,6 @@ typedef struct SequenceControlSet {
 
     //Flag that will hold the tpl level, set at init time, level 0 is off, other levels are set by preset
     uint8_t tpl_level;
-#if OPT_CMPOUND
-    uint32_t compound_th;
-#endif
     // If true, calculate and store the SB-based variance
     uint8_t calculate_variance;
     // Whether to modulation lambda using TPL stats or/and ME-stats or/and the percentage of INTRA selection at reference frame(s)
@@ -428,10 +427,6 @@ typedef struct SequenceControlSet {
     // Enable low latency KF coding for RTC
     bool          low_latency_kf;
     List0OnlyBase list0_only_base_ctrls;
-#if USE_QP_COMPLEXITY
-    // If true, modulate the accuracy of the prediction tools using QP
-    bool qp_tune;
-#endif
 } SequenceControlSet;
 typedef struct EbSequenceControlSetInstance {
     EbDctor             dctor;

@@ -257,8 +257,8 @@ void store_extended_group(PictureParentControlSet *pcs, InitialRateControlContex
     }
 #if LAD_MG_PRINT
     if (log) {
-        SVT_LOG("\n NEW TPL group Pic:%lld  size:%i  \n", pcs->picture_number, pcs->ntpl_group_size);
-        for (uint32_t i = 0; i < pcs->ntpl_group_size; i++) {
+        SVT_LOG("\n NEW TPL group Pic:%lld  gop:%i  size:%i  \n", pcs->picture_number,pcs->hierarchical_levels, pcs->tpl_group_size);
+        for (uint32_t i = 0; i < pcs->tpl_group_size; i++) {
             if (pcs->ext_group[i]->temporal_layer_index == 0)
                 SVT_LOG(" | ");
             SVT_LOG("%lld ", pcs->ntpl_group[i]->picture_number);
@@ -375,6 +375,47 @@ static void process_lad_queue(InitialRateControlContext *ctx, uint8_t pass_thru)
     }
 }
 
+#if OPT_VBR2
+#define LOW_8x8_DIST_VAR_TH 10000
+#define HIGH_8x8_DIST_VAR_TH 50000
+#define MIN_AVG_ME_DIST 1000
+#define VBR_CODED_ERROR_FACTOR 30
+/*
+ set_1pvbr_param: Set the 1 Pass VBR parameters based on the look ahead data
+*/
+static void set_1pvbr_param(PictureParentControlSet *pcs) {
+    SequenceControlSet *scs = pcs->scs;
+
+    pcs->stat_struct = (scs->twopass.stats_buf_ctx->stats_in_start + pcs->picture_number)->stat_struct;
+    if (pcs->slice_type != I_SLICE) {
+        uint64_t avg_me_dist = 0;
+        uint64_t avg_variance_me_dist = 0;
+        for (int b64_idx = 0; b64_idx < pcs->b64_total_count; ++b64_idx) {
+            avg_me_dist += pcs->rc_me_distortion[b64_idx];
+            avg_variance_me_dist += pcs->me_8x8_cost_variance[b64_idx];
+        }
+        avg_me_dist /= pcs->b64_total_count;
+        avg_variance_me_dist /= pcs->b64_total_count;
+
+        double weight = 1;
+        if (avg_variance_me_dist > HIGH_8x8_DIST_VAR_TH)
+            weight = 1.5;
+        else if (avg_variance_me_dist < LOW_8x8_DIST_VAR_TH)
+            weight = 0.75;
+
+        if (scs->input_resolution <= INPUT_SIZE_480p_RANGE)
+            weight = 1.5*weight;
+        pcs->stat_struct.poc = pcs->picture_number;
+#if OPT_VBR6
+        (scs->twopass.stats_buf_ctx->stats_in_start + pcs->picture_number)->stat_struct.total_num_bits = MAX(MIN_AVG_ME_DIST, avg_me_dist);
+#else
+        (scs->twopass.stats_buf_ctx->stats_in_start + pcs->picture_number)->stat_struct.total_num_bits = avg_me_dist;
+#endif
+        (scs->twopass.stats_buf_ctx->stats_in_start + pcs->picture_number)->coded_error = (double)avg_me_dist* pcs->b64_total_count*weight / VBR_CODED_ERROR_FACTOR;
+        (scs->twopass.stats_buf_ctx->stats_in_start + pcs->picture_number)->stat_struct.poc = pcs->picture_number;
+    }
+}
+#endif
 /* Initial Rate Control Kernel */
 
 /*********************************************************************************
@@ -484,43 +525,9 @@ void *svt_aom_initial_rate_control_kernel(void *input_ptr) {
 #endif
             }
 #if OPT_VBR2
-            // Store the avg me distortion for base layer pictures only
+            // Set the one pass VBR parameters based on the look ahead data
             if (scs->lap_rc) {
-                if (scs->static_config.rate_control_mode) {
-                    pcs->stat_struct = (scs->twopass.stats_buf_ctx->stats_in_start + pcs->picture_number)->stat_struct;
-                }
-                if (pcs->slice_type != I_SLICE) {
-                    uint64_t avg_me_dist          = 0;
-                    uint64_t avg_variance_me_dist = 0;
-                    for (int b64_idx = 0; b64_idx < pcs->b64_total_count; ++b64_idx) {
-                        avg_me_dist += pcs->rc_me_distortion[b64_idx];
-                        avg_variance_me_dist += pcs->me_8x8_cost_variance[b64_idx];
-                    }
-                    avg_me_dist /= pcs->b64_total_count;
-                    avg_variance_me_dist /= pcs->b64_total_count;
-
-#if OPT_VBR6
-                    pcs->avg_variance_me_dist = avg_variance_me_dist;
-#endif
-                    double weight = 1;
-                    if (avg_variance_me_dist > 50000)
-                        weight = 1.5;
-                    else if (avg_variance_me_dist < 10000)
-                        weight = 0.75;
-                    if (scs->input_resolution <= INPUT_SIZE_480p_RANGE)
-                        weight = 1.5 * weight;
-                    pcs->stat_struct.poc = pcs->picture_number;
-#if OPT_VBR6
-                    (scs->twopass.stats_buf_ctx->stats_in_start + pcs->picture_number)->stat_struct.total_num_bits = MAX(1000, avg_me_dist);
-#else
-                    (scs->twopass.stats_buf_ctx->stats_in_start + pcs->picture_number)->stat_struct.total_num_bits =
-                        avg_me_dist;
-#endif
-                    (scs->twopass.stats_buf_ctx->stats_in_start + pcs->picture_number)->coded_error =
-                        (double)avg_me_dist * pcs->b64_total_count * weight / 30;
-                    (scs->twopass.stats_buf_ctx->stats_in_start + pcs->picture_number)->stat_struct.poc =
-                        pcs->picture_number;
-                }
+                set_1pvbr_param(pcs);
             }
 #endif
             // tpl_la can be performed on unscaled frames in super-res q-threshold and auto mode

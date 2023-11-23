@@ -28,6 +28,6 @@ EbErrorType svt_aom_source_based_operations_context_ctor(EbThreadContext *thread
 
 extern void *svt_aom_source_based_operations_kernel(void *input_ptr);
 #if OPT_CMPOUND
-unsigned int aom_av1_get_perpixel_variance(const uint8_t *buf, uint32_t stride, const int block_size);
+unsigned int svt_aom_get_perpixel_variance(const uint8_t *buf, uint32_t stride, const int block_size);
 #endif
 #endif // EbSourceBasedOperations_h

@@ -432,7 +432,7 @@ typedef struct PictureControlSet {
     uint8_t  ref_intra_percentage;
     uint8_t  ref_skip_percentage;
 #if OPT_HP_MV
-    int16_t ref_hp_percentage;
+    int16_t  ref_hp_percentage;
 #endif
     uint64_t avg_me_clpx;
     uint64_t min_me_clpx;
@@ -588,10 +588,6 @@ typedef struct GmControls {
     bool inj_psq_glb;
     //enable Pre-processor for GM
     bool pp_enabled;
-#if TUNE_GM_PP
-    //downsampling level for the pre-processor
-    uint8_t pp_downsample_level;
-#endif
     //limit the search to  ref index = 0 only
     bool ref_idx0_only;
 #if OPT_Q_GLOBAL
@@ -792,6 +788,9 @@ typedef struct PictureParentControlSet {
     uint64_t released_pics[REF_FRAMES + 1];
     uint8_t  released_pics_count;
     Bool     is_ref;
+#if CLN_IS_REF
+    bool is_highest_layer;
+#endif
     // status of PA reference 0: Not release; 1: Released
     uint8_t reference_released;
     uint8_t ref_list0_count;
@@ -1051,7 +1050,8 @@ typedef struct PictureParentControlSet {
     // size of above buffer
     uint32_t tpl_group_size;
     // stores previous, current, future pictures from pd-reord-queue. empty for first I.
-    void *pd_window[2 + TF_MAX_BASE_REF_PICS];
+    // 1 past + 1 curent  + TF_MAX_BASE_REF_PICS from future
+    void* pd_window[2+TF_MAX_BASE_REF_PICS];
     // stores pcs pictures needed for lad mg based algorithms
     struct PictureParentControlSet *ext_group[MAX_TPL_EXT_GROUP_SIZE];
     // actual size of extended group
@@ -1153,9 +1153,6 @@ typedef struct PictureParentControlSet {
     bool     tf_active_region_present;
 #if FTR_RES_ON_FLY
     bool seq_param_changed;
-#endif
-#if OPT_VBR6
-    uint64_t avg_variance_me_dist;
 #endif
 } PictureParentControlSet;
 

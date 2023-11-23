@@ -63,12 +63,6 @@ typedef struct {
 
     // The source and predictors/mask used by translational search
     struct svt_buf_2d *src;
-
-#if OPT_SUBPEL_OBMC
-    // The weighted source and mask used by OBMC
-    const int32_t *wsrc;
-    const int32_t *obmc_mask;
-#endif
 } MSBuffers;
 // =============================================================================
 //  Subpixel Motion Search

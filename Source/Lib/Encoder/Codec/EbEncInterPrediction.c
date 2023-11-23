@@ -4596,20 +4596,18 @@ Bool svt_aom_calc_pred_masked_compound(PictureControlSet *pcs, ModeDecisionConte
     mv_unit.pred_direction = UNI_PRED_LIST_0;
 
 #if CLN_CMPOUND
-    int32_t found_l0 = false;
-    int     bufi;
-    for (bufi = 0; bufi < ctx->cmp_store.pred0_cnt; bufi++) {
-        if (mv_0.as_int == ctx->cmp_store.pred0_mv[bufi].as_int) {
+    bool found_l0 = false;
+    for (int bufi = 0; bufi < ctx->cmp_store.pred0_cnt; bufi++) {
+        if (mv_0.as_int == ctx->cmp_store.pred0_mv[bufi].as_int){
             found_l0 = true;
+            ctx->pred0 = ctx->cmp_store.pred0_buf[bufi];
             break;
         }
     }
 
-    if (found_l0) {
-        ctx->pred0 = ctx->cmp_store.pred0_buf[bufi];
-    } else {
-        ctx->cmp_store.pred0_mv[ctx->cmp_store.pred0_cnt].as_int = mv_0.as_int;
+    if (!found_l0){
         svt_aom_assert_err(ctx->cmp_store.pred0_cnt < 4, "compound store full \n");
+        ctx->cmp_store.pred0_mv[ctx->cmp_store.pred0_cnt].as_int = mv_0.as_int;
         ctx->pred0 = ctx->cmp_store.pred0_buf[ctx->cmp_store.pred0_cnt++];
     }
 #endif
@@ -4653,19 +4651,18 @@ Bool svt_aom_calc_pred_masked_compound(PictureControlSet *pcs, ModeDecisionConte
                              0); // is_16bit_pipeline
 
 #if CLN_CMPOUND
-    int32_t found_l1 = false;
-    for (bufi = 0; bufi < ctx->cmp_store.pred1_cnt; bufi++) {
+    bool found_l1 = false;
+    for (int bufi = 0; bufi < ctx->cmp_store.pred1_cnt; bufi++) {
         if (mv_1.as_int == ctx->cmp_store.pred1_mv[bufi].as_int) {
             found_l1 = true;
+            ctx->pred1 = ctx->cmp_store.pred1_buf[bufi];
             break;
         }
     }
 
-    if (found_l1) {
-        ctx->pred1 = ctx->cmp_store.pred1_buf[bufi];
-    } else {
-        ctx->cmp_store.pred1_mv[ctx->cmp_store.pred1_cnt].as_int = mv_1.as_int;
+    if (!found_l1) {
         svt_aom_assert_err(ctx->cmp_store.pred1_cnt < 4, "compound store full \n");
+        ctx->cmp_store.pred1_mv[ctx->cmp_store.pred1_cnt].as_int = mv_1.as_int;
         ctx->pred1 = ctx->cmp_store.pred1_buf[ctx->cmp_store.pred1_cnt++];
     }
 #endif
