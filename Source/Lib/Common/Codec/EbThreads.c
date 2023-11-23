@@ -150,19 +150,11 @@ EbHandle svt_create_thread(void *thread_function(void *), void *thread_context) 
         pthread_attr_setschedparam(&attr, &param);
     }
 
-    size_t stack_size;
-    if (pthread_attr_getstacksize(&attr, &stack_size)) {
-        SVT_ERROR("Failed to get thread stack size\n");
-        pthread_attr_destroy(&attr);
-        return NULL;
-    }
     // 1 MiB in bytes for now since we can't easily change the stack size after creation
     const size_t min_stack_size = 1024 * 1024;
-    if (stack_size < min_stack_size && pthread_attr_setstacksize(&attr, min_stack_size)) {
-        SVT_ERROR("Failed to set thread stack size\n");
-        pthread_attr_destroy(&attr);
-        return NULL;
-    }
+    // We don't care if this fails, it's just a hint for the min size we are expecting.
+    (void)pthread_attr_setstacksize(&attr, min_stack_size);
+
     pthread_t *th = malloc(sizeof(*th));
     if (th == NULL) {
         SVT_ERROR("Failed to allocate thread handle\n");
