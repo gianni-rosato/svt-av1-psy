@@ -185,6 +185,10 @@ typedef struct ObmcControls {
     // Whether to search diagonal positions @ the full-pel of OBMC
     uint8_t fpel_search_diag;
 #endif
+#if OPT_Q_OBMC
+    // if true, use pme/me pre-mds0 distortion(s) and qp to early exit
+    uint8_t qp_dist_early_exit;
+#endif
 } ObmcControls;
 typedef struct TxtControls {
     uint8_t enabled;
@@ -312,6 +316,18 @@ typedef struct DepthRefinementCtrls {
     int sub_to_current_pd0_coeff_offset;
     // Prune child depths if they were not tested in PD0 (typically due to elimination from depth early exit tools)
     uint8_t prune_child_if_not_avail;
+#if OPT_DEPTH_REFIN
+    // Skip parent depth if PARTITION_SPLIT rate of parent depth is much lower than parent cost. 0 is off; higher is more aggressive.
+    uint32_t lower_depth_split_cost_th;
+#endif
+#if OPT_CHILD_DEPTH_RATE
+    // Skip child depth if PARTITION_SPLIT rate of current depth is X% higher than current cost. 0 is off; lower is more aggressive.
+    uint32_t split_rate_th;
+#endif
+#if OPT_DR_QP
+    // Modulate sub/parent-to-current TH using QP. 0 is off; lower is more aggressive.
+    uint32_t q_weight;
+#endif
 } DepthRefinementCtrls;
 typedef struct SubresCtrls {
     // Residual sub-sampling step (0:OFF)
@@ -696,6 +712,13 @@ typedef struct TxsControls {
     int depth2_txt_group_offset;
     // Min. sq size to use TXS for
     uint16_t min_sq_size;
+
+#if OPT_TX_SIZE
+    //skip depth if cost of processed sublocks of curent depth > th% of normalized
+    //parent cost. th is the smaller the faster (sf)
+    int32_t quadrant_th_sf;
+#endif
+
 } TxsControls;
 typedef struct WmCtrls {
     uint8_t enabled;
@@ -720,6 +743,10 @@ typedef struct WmCtrls {
     uint16_t upper_band_th;
     // Shut the approximation(s) if refinement @ mds1 or mds3
     Bool shut_approx_if_not_mds0;
+#if OPT_Q_WARP
+    // if true, use pme/me pre-mds0 distortion(s) and qp to early exit
+    uint8_t qp_dist_early_exit;
+#endif
 } WmCtrls;
 typedef struct UvCtrls {
     uint8_t enabled;
@@ -1236,7 +1263,9 @@ typedef struct ModeDecisionContext {
 #endif
     uint8_t         inject_new_me;
     uint8_t         inject_new_pme;
-    uint8_t         inject_new_warp;
+#if !OPT_Q_WARP
+    uint8_t inject_new_warp;
+#endif
     TxShortcutCtrls tx_shortcut_ctrls;
     // [TOTAL_REFS_PER_FRAME + 1]
     uint64_t estimate_ref_frames_num_bits[MODE_CTX_REF_FRAMES];
@@ -1310,6 +1339,12 @@ typedef struct ModeDecisionContext {
     // SSIM_LVL_1: use ssim cost to find best candidate in product_full_mode_decision()
     // SSIM_LVL_2: addition to level 1, also use ssim cost to find best tx type in tx_type_search()
     SsimLevel tune_ssim_level;
+#if OPT_Q_OBMC
+    uint8_t do_obmc;
+#endif
+#if OPT_Q_WARP
+    uint8_t do_warp;
+#endif
 } ModeDecisionContext;
 
 typedef void (*EbAv1LambdaAssignFunc)(PictureControlSet *pcs, uint32_t *fast_lambda, uint32_t *full_lambda,

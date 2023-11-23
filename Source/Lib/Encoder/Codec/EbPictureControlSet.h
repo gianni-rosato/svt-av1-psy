@@ -590,6 +590,10 @@ typedef struct GmControls {
     bool pp_enabled;
     //limit the search to  ref index = 0 only
     bool ref_idx0_only;
+#if OPT_Q_GLOBAL
+    // if true, apply an offset to the segments of the me-dist based modulation
+    uint8_t qp_offset;
+#endif
 } GmControls;
 typedef struct CdefControls {
     uint8_t enabled;

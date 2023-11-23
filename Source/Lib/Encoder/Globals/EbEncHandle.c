@@ -2778,6 +2778,9 @@ static void tf_ld_controls(SequenceControlSet* scs, uint8_t tf_level) {
         scs->tf_params_per_type[1].me_exit_th = 0;
         scs->tf_params_per_type[1].subpel_early_exit = 1;
         scs->tf_params_per_type[1].ref_frame_factor = 1;
+#if OPT_Q_TF
+        scs->tf_params_per_type[1].qp_opt = 0;
+#endif
         // L1 TF Params
         scs->tf_params_per_type[2].enabled = 0;
         break;
@@ -2807,6 +2810,9 @@ static void tf_ld_controls(SequenceControlSet* scs, uint8_t tf_level) {
         scs->tf_params_per_type[1].me_exit_th = 0;
         scs->tf_params_per_type[1].subpel_early_exit = 0;
         scs->tf_params_per_type[1].ref_frame_factor = 1;
+#if OPT_Q_TF
+        scs->tf_params_per_type[1].qp_opt = 0;
+#endif
         // L1 TF Params
         scs->tf_params_per_type[2].enabled = 0;
         break;
@@ -2861,7 +2867,9 @@ void tf_controls(SequenceControlSet* scs, uint8_t tf_level) {
         scs->tf_params_per_type[0].me_exit_th = 0;
         scs->tf_params_per_type[0].subpel_early_exit = 0;
         scs->tf_params_per_type[0].ref_frame_factor = 1;
-
+#if OPT_Q_TF
+        scs->tf_params_per_type[0].qp_opt = 0;
+#endif
         // BASE TF Params
         scs->tf_params_per_type[1].enabled = 1;
         scs->tf_params_per_type[1].num_past_pics = 1;
@@ -2887,7 +2895,9 @@ void tf_controls(SequenceControlSet* scs, uint8_t tf_level) {
         scs->tf_params_per_type[1].me_exit_th = 0;
         scs->tf_params_per_type[1].subpel_early_exit = 0;
         scs->tf_params_per_type[1].ref_frame_factor = 1;
-
+#if OPT_Q_TF
+        scs->tf_params_per_type[1].qp_opt = 0;
+#endif
         // L1 TF Params
         scs->tf_params_per_type[2].enabled = 1;
         scs->tf_params_per_type[2].num_past_pics = 1;
@@ -2913,6 +2923,9 @@ void tf_controls(SequenceControlSet* scs, uint8_t tf_level) {
         scs->tf_params_per_type[2].me_exit_th = 0;
         scs->tf_params_per_type[2].subpel_early_exit = 0;
         scs->tf_params_per_type[2].ref_frame_factor = 1;
+#if OPT_Q_TF
+        scs->tf_params_per_type[2].qp_opt = 0;
+#endif
         break;
 
     case 2:
@@ -2939,7 +2952,9 @@ void tf_controls(SequenceControlSet* scs, uint8_t tf_level) {
         scs->tf_params_per_type[0].me_exit_th = 0;
         scs->tf_params_per_type[0].subpel_early_exit = 0;
         scs->tf_params_per_type[0].ref_frame_factor = 1;
-
+#if OPT_Q_TF
+        scs->tf_params_per_type[0].qp_opt = 0;
+#endif
         // BASE TF Params
         scs->tf_params_per_type[1].enabled = 1;
         scs->tf_params_per_type[1].num_past_pics = 1;
@@ -2965,7 +2980,9 @@ void tf_controls(SequenceControlSet* scs, uint8_t tf_level) {
         scs->tf_params_per_type[1].me_exit_th = 0;
         scs->tf_params_per_type[1].subpel_early_exit = 0;
         scs->tf_params_per_type[1].ref_frame_factor = 1;
-
+#if OPT_Q_TF
+        scs->tf_params_per_type[1].qp_opt = 0;
+#endif
         // L1 TF Params
         scs->tf_params_per_type[2].enabled = 1;
         scs->tf_params_per_type[2].num_past_pics = 1;
@@ -2991,6 +3008,9 @@ void tf_controls(SequenceControlSet* scs, uint8_t tf_level) {
         scs->tf_params_per_type[2].me_exit_th = 0;
         scs->tf_params_per_type[2].subpel_early_exit = 0;
         scs->tf_params_per_type[2].ref_frame_factor = 1;
+#if OPT_Q_TF
+        scs->tf_params_per_type[2].qp_opt = 0;
+#endif
         break;
 
     case 3:
@@ -3226,8 +3246,87 @@ void tf_controls(SequenceControlSet* scs, uint8_t tf_level) {
         break;
 #endif
 #endif
-
+#if PPT_TF_PRESET
     case 4:
+        // I_SLICE TF Params
+        scs->tf_params_per_type[0].enabled = 1;
+        scs->tf_params_per_type[0].num_future_pics = 24;
+        scs->tf_params_per_type[0].modulate_pics = 1;
+        scs->tf_params_per_type[0].max_num_future_pics = MIN((1 << scs->static_config.hierarchical_levels), svt_aom_tf_max_ref_per_struct(scs->static_config.hierarchical_levels, 0, 1));
+        scs->tf_params_per_type[0].hme_me_level = 2;
+        scs->tf_params_per_type[0].half_pel_mode = 1;
+        scs->tf_params_per_type[0].quarter_pel_mode = 1;
+        scs->tf_params_per_type[0].eight_pel_mode = 0;
+        scs->tf_params_per_type[0].chroma_lvl = 1;
+        scs->tf_params_per_type[0].pred_error_32x32_th = 8 * 32 * 32;
+        scs->tf_params_per_type[0].enable_8x8_pred = 0;
+        scs->tf_params_per_type[0].sub_sampling_shift = 0;
+        scs->tf_params_per_type[0].avoid_2d_qpel = 0;
+        scs->tf_params_per_type[0].use_2tap = 0;
+        scs->tf_params_per_type[0].use_intra_for_noise_est = 0;
+        scs->tf_params_per_type[0].use_8bit_subpel = 0;
+        scs->tf_params_per_type[0].use_pred_64x64_only_th = 0;
+        scs->tf_params_per_type[0].me_exit_th = 0;
+        scs->tf_params_per_type[0].subpel_early_exit = 1;
+        scs->tf_params_per_type[0].ref_frame_factor = 1;
+        scs->tf_params_per_type[0].qp_opt = 1;
+
+        // BASE TF Params
+        scs->tf_params_per_type[1].enabled = 1;
+        scs->tf_params_per_type[1].num_past_pics = 1;
+        scs->tf_params_per_type[1].num_future_pics = 1;
+        scs->tf_params_per_type[1].modulate_pics = 2;
+        scs->tf_params_per_type[1].max_num_past_pics = MIN((1 << scs->static_config.hierarchical_levels), svt_aom_tf_max_ref_per_struct(scs->static_config.hierarchical_levels, 1, 0));
+        scs->tf_params_per_type[1].max_num_future_pics = MIN((1 << scs->static_config.hierarchical_levels), svt_aom_tf_max_ref_per_struct(scs->static_config.hierarchical_levels, 1, 1));
+        scs->tf_params_per_type[1].hme_me_level = 2;
+        scs->tf_params_per_type[1].half_pel_mode = 1;
+        scs->tf_params_per_type[1].quarter_pel_mode = 1;
+        scs->tf_params_per_type[1].eight_pel_mode = 0;
+        scs->tf_params_per_type[1].chroma_lvl = 1;
+        scs->tf_params_per_type[1].pred_error_32x32_th = 8 * 32 * 32;
+        scs->tf_params_per_type[1].enable_8x8_pred = 0;
+        scs->tf_params_per_type[1].sub_sampling_shift = 0;
+        scs->tf_params_per_type[1].avoid_2d_qpel = 0;
+        scs->tf_params_per_type[1].use_2tap = 0;
+        scs->tf_params_per_type[1].use_intra_for_noise_est = 0;
+        scs->tf_params_per_type[1].use_8bit_subpel = 0;
+        scs->tf_params_per_type[1].use_pred_64x64_only_th = 0;
+        scs->tf_params_per_type[1].me_exit_th = 0;
+        scs->tf_params_per_type[1].subpel_early_exit = 1;
+        scs->tf_params_per_type[1].ref_frame_factor = 1;
+        scs->tf_params_per_type[1].qp_opt = 1;
+
+        // L1 TF Params
+        scs->tf_params_per_type[2].enabled = 1;
+        scs->tf_params_per_type[2].num_past_pics = 1;
+        scs->tf_params_per_type[2].num_future_pics = 1;
+        scs->tf_params_per_type[2].modulate_pics = 1;
+        scs->tf_params_per_type[2].max_num_past_pics = MIN((1 << scs->static_config.hierarchical_levels) / 2, svt_aom_tf_max_ref_per_struct(scs->static_config.hierarchical_levels, 2, 0));
+        scs->tf_params_per_type[2].max_num_future_pics = MIN((1 << scs->static_config.hierarchical_levels) / 2, svt_aom_tf_max_ref_per_struct(scs->static_config.hierarchical_levels, 2, 1));
+        scs->tf_params_per_type[2].hme_me_level = 1;
+        scs->tf_params_per_type[2].half_pel_mode = 1;
+        scs->tf_params_per_type[2].quarter_pel_mode = 1;
+        scs->tf_params_per_type[2].eight_pel_mode = 1;
+        scs->tf_params_per_type[2].chroma_lvl = 1;
+        scs->tf_params_per_type[2].pred_error_32x32_th = 8 * 32 * 32;
+        scs->tf_params_per_type[2].enable_8x8_pred = 0;
+        scs->tf_params_per_type[2].sub_sampling_shift = 0;
+        scs->tf_params_per_type[2].avoid_2d_qpel = 0;
+        scs->tf_params_per_type[2].use_2tap = 0;
+        scs->tf_params_per_type[2].use_intra_for_noise_est = 0;
+        scs->tf_params_per_type[2].use_8bit_subpel = 0;
+        scs->tf_params_per_type[2].use_pred_64x64_only_th = 0;
+        scs->tf_params_per_type[2].me_exit_th = 0;
+        scs->tf_params_per_type[2].subpel_early_exit = 0;
+        scs->tf_params_per_type[2].ref_frame_factor = 1;
+        scs->tf_params_per_type[2].qp_opt = 1;
+        break;
+#endif
+#if PPT_TF_PRESET
+    case 5:
+#else
+    case 4:
+#endif
         // I_SLICE TF Params
         scs->tf_params_per_type[0].enabled = 1;
         scs->tf_params_per_type[0].num_future_pics = (scs->static_config.hierarchical_levels < 5) ? 8 : 16;
@@ -3248,12 +3347,18 @@ void tf_controls(SequenceControlSet* scs, uint8_t tf_level) {
         scs->tf_params_per_type[0].me_exit_th = 0;
         scs->tf_params_per_type[0].subpel_early_exit = 1;
         scs->tf_params_per_type[0].ref_frame_factor = 1;
-
+#if OPT_Q_TF
+        scs->tf_params_per_type[0].qp_opt = 1;
+#endif
         // BASE TF Params
         scs->tf_params_per_type[1].enabled = 1;
         scs->tf_params_per_type[1].num_past_pics = 1;
         scs->tf_params_per_type[1].num_future_pics = 1;
+#if MCTF_OPT_REFS_MODULATION
         scs->tf_params_per_type[1].modulate_pics = 3;
+#else
+        scs->tf_params_per_type[1].modulate_pics = 2;
+#endif
         scs->tf_params_per_type[1].max_num_past_pics = MIN((1 << scs->static_config.hierarchical_levels), svt_aom_tf_max_ref_per_struct(scs->static_config.hierarchical_levels, 1, 0));
         scs->tf_params_per_type[1].max_num_future_pics = MIN((1 << scs->static_config.hierarchical_levels), svt_aom_tf_max_ref_per_struct(scs->static_config.hierarchical_levels, 1, 1));
         scs->tf_params_per_type[1].hme_me_level = 2;
@@ -3274,7 +3379,9 @@ void tf_controls(SequenceControlSet* scs, uint8_t tf_level) {
         scs->tf_params_per_type[1].me_exit_th = 0;
         scs->tf_params_per_type[1].subpel_early_exit = 1;
         scs->tf_params_per_type[1].ref_frame_factor = 1;
-
+#if OPT_Q_TF
+        scs->tf_params_per_type[1].qp_opt = 1;
+#endif
         // L1 TF Params
         scs->tf_params_per_type[2].enabled = 1;
         scs->tf_params_per_type[2].num_past_pics = 1;
@@ -3300,9 +3407,15 @@ void tf_controls(SequenceControlSet* scs, uint8_t tf_level) {
         scs->tf_params_per_type[2].me_exit_th = 0;
         scs->tf_params_per_type[2].subpel_early_exit = 1;
         scs->tf_params_per_type[2].ref_frame_factor = 1;
+#if OPT_Q_TF
+        scs->tf_params_per_type[2].qp_opt = 1;
+#endif
         break;
-
+#if PPT_TF_PRESET
+    case 6:
+#else
     case 5:
+#endif
         // I_SLICE TF Params
         scs->tf_params_per_type[0].enabled = 1;
         scs->tf_params_per_type[0].num_future_pics = (scs->static_config.hierarchical_levels < 5) ? 8 : 16;
@@ -3326,12 +3439,18 @@ void tf_controls(SequenceControlSet* scs, uint8_t tf_level) {
         scs->tf_params_per_type[0].me_exit_th = 0;
         scs->tf_params_per_type[0].subpel_early_exit = 1;
         scs->tf_params_per_type[0].ref_frame_factor = 1;
-
+#if OPT_Q_TF
+        scs->tf_params_per_type[0].qp_opt = 1;
+#endif
         // BASE TF Params
         scs->tf_params_per_type[1].enabled = 1;
         scs->tf_params_per_type[1].num_past_pics = 1;
         scs->tf_params_per_type[1].num_future_pics = 1;
+#if MCTF_OPT_REFS_MODULATION
         scs->tf_params_per_type[1].modulate_pics = 3;
+#else
+        scs->tf_params_per_type[1].modulate_pics = 2;
+#endif
         scs->tf_params_per_type[1].max_num_past_pics = MIN((1 << scs->static_config.hierarchical_levels), svt_aom_tf_max_ref_per_struct(scs->static_config.hierarchical_levels, 1, 0));
         scs->tf_params_per_type[1].max_num_future_pics = MIN((1 << scs->static_config.hierarchical_levels), svt_aom_tf_max_ref_per_struct(scs->static_config.hierarchical_levels, 1, 1));
         scs->tf_params_per_type[1].hme_me_level = 2;
@@ -3352,11 +3471,17 @@ void tf_controls(SequenceControlSet* scs, uint8_t tf_level) {
         scs->tf_params_per_type[1].me_exit_th = 0;
         scs->tf_params_per_type[1].subpel_early_exit = 1;
         scs->tf_params_per_type[1].ref_frame_factor = 1;
+#if OPT_Q_TF
+        scs->tf_params_per_type[1].qp_opt = 1;
+#endif
         // L1 TF Params
         scs->tf_params_per_type[2].enabled = 0;
         break;
-
+#if PPT_TF_PRESET
+    case 7:
+#else
     case 6:
+#endif
         // I_SLICE TF Params
         scs->tf_params_per_type[0].enabled = 1;
         scs->tf_params_per_type[0].num_future_pics = (scs->static_config.hierarchical_levels < 5) ? 8 : 16;
@@ -3380,7 +3505,9 @@ void tf_controls(SequenceControlSet* scs, uint8_t tf_level) {
         scs->tf_params_per_type[0].me_exit_th = 16 * 16;
         scs->tf_params_per_type[0].subpel_early_exit = 1;
         scs->tf_params_per_type[0].ref_frame_factor = 1;
-
+#if OPT_Q_TF
+        scs->tf_params_per_type[0].qp_opt = 1;
+#endif
         // BASE TF Params
         scs->tf_params_per_type[1].enabled = 1;
         scs->tf_params_per_type[1].num_past_pics = 1;
@@ -3406,11 +3533,17 @@ void tf_controls(SequenceControlSet* scs, uint8_t tf_level) {
         scs->tf_params_per_type[1].me_exit_th = 16 * 16;
         scs->tf_params_per_type[1].subpel_early_exit = 1;
         scs->tf_params_per_type[1].ref_frame_factor = 1;
+#if OPT_Q_TF
+        scs->tf_params_per_type[1].qp_opt = 1;
+#endif
         // L1 TF Params
         scs->tf_params_per_type[2].enabled = 0;
         break;
-
+#if PPT_TF_PRESET
+    case 8:
+#else
     case 7:
+#endif
         // I_SLICE TF Params
         scs->tf_params_per_type[0].enabled = 1;
         scs->tf_params_per_type[0].num_future_pics = 8;
@@ -3434,7 +3567,9 @@ void tf_controls(SequenceControlSet* scs, uint8_t tf_level) {
         scs->tf_params_per_type[0].me_exit_th = 16 * 16;
         scs->tf_params_per_type[0].subpel_early_exit = 1;
         scs->tf_params_per_type[0].ref_frame_factor = 2;
-
+#if OPT_Q_TF
+        scs->tf_params_per_type[0].qp_opt = 1;
+#endif
         // BASE TF Params
         scs->tf_params_per_type[1].enabled = 1;
         scs->tf_params_per_type[1].num_past_pics = 1;
@@ -3460,11 +3595,18 @@ void tf_controls(SequenceControlSet* scs, uint8_t tf_level) {
         scs->tf_params_per_type[1].me_exit_th = 16 * 16;
         scs->tf_params_per_type[1].subpel_early_exit = 1;
         scs->tf_params_per_type[1].ref_frame_factor = 1;
+#if OPT_Q_TF
+        scs->tf_params_per_type[1].qp_opt = 1;
+#endif
         // L1 TF Params
         scs->tf_params_per_type[2].enabled = 0;
         break;
-
+#if !TUNE_M13
+#if PPT_TF_PRESET
+    case 9:
+#else
     case 8:
+#endif
         // I_SLICE TF Params
         scs->tf_params_per_type[0].enabled = 1;
         scs->tf_params_per_type[0].num_future_pics = 8;
@@ -3488,7 +3630,9 @@ void tf_controls(SequenceControlSet* scs, uint8_t tf_level) {
         scs->tf_params_per_type[0].me_exit_th = 16 * 16;
         scs->tf_params_per_type[0].subpel_early_exit = 1;
         scs->tf_params_per_type[0].ref_frame_factor = 2;
-
+#if OPT_Q_TF
+        scs->tf_params_per_type[0].qp_opt = 1;
+#endif
         // BASE TF Params
         scs->tf_params_per_type[1].enabled = 1;
         scs->tf_params_per_type[1].num_past_pics = 1;
@@ -3514,10 +3658,13 @@ void tf_controls(SequenceControlSet* scs, uint8_t tf_level) {
         scs->tf_params_per_type[1].me_exit_th = 16 * 16;
         scs->tf_params_per_type[1].subpel_early_exit = 1;
         scs->tf_params_per_type[1].ref_frame_factor = 1;
+#if OPT_Q_TF
+        scs->tf_params_per_type[1].qp_opt = 1;
+#endif
         // L1 TF Params
         scs->tf_params_per_type[2].enabled = 0;
         break;
-
+#endif
     default:
         assert(0);
         break;
@@ -4860,10 +5007,24 @@ static void set_param_based_on_input(SequenceControlSet *scs)
 #endif
 #endif
         list0_only_base_lvl = 0;
+#if TUNE_M6_II
+#if TUNE_SHIFT_PRESETS
+#if TUNE_M6_M7
+    else if (scs->static_config.enc_mode <= ENC_M5)
+#else
+    else if (scs->static_config.enc_mode <= ENC_M7)
+#endif
+        list0_only_base_lvl = 1;
+#else
+    else if (scs->static_config.enc_mode <= ENC_M6)
+        list0_only_base_lvl = 1;
+#endif
+#else
     else if (scs->static_config.enc_mode <= ENC_M5)
         list0_only_base_lvl = 1;
     else if (scs->static_config.enc_mode <= ENC_M6)
         list0_only_base_lvl = 2;
+#endif
 #if !TUNE_M8_III
 #if TUNE_M7_M13
 #if TUNE_NEW_M9

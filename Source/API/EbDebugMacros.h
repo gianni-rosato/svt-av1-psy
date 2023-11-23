@@ -181,6 +181,45 @@ extern "C" {
 
 #define TUNE_TXS_LEVELS                           1 // tune TXS feature levels
 
+#define TUNE_DEPTH_REMOVAL                        1 // tune fast decode depth removal
+
+#define OPT_M1M2                                  1 // Opt m1 and m2
+#define OPT_DEPTH_REFIN                           1 // Use split rate to skip testing parent depth in PD1
+
+#define TUNE_M6_II                                1 // tune M6
+#define OPT_TX_SIZE                               1 // optimize TXS feature levels
+
+
+#define OPT_Q_WARP                                1 // Ctrl Warp using q and distortion
+#define OPT_Q_GLOBAL                              1 // Ctrl GM using q
+#define OPT_Q_TF                                  1 // Ctrl TF using q
+#if OPT_Q_TF
+#define OPT_Q_OFFSET_TF                           1
+#define OPT_Q_ME_TF                               1
+#define PPT_TF_PRESET                             1
+#endif
+
+#define OPT_Q_OBMC                                1 // Ctrl OBMC using q and distortion
+
+#define TUNE_M1_M4                                1 // tune m1-m4 fast decode
+#define OPT_FI                                    1 // Filter intra opt for M4
+
+#define TUNE_M7_II                                1 // Tune M7
+
+#define NEW_M0                                    1 // New preset candidate (between M0 / MR). Macro on + run MR for the new preset
+
+#define TUNE_M5_II                                1 // tune m5 fast decode
+
+#define OPT_CHILD_DEPTH_RATE                      1 // Use split rate info to skip child depth in PD1
+#define FIX_DR_ONION_RING                         0 // Fix depth refinement levels
+#define TUNE_DEPTH_LVLS                           1 // Tune depth levels for M8-M10
+#define TUNE_ILV                                  1 // Tune Intra level
+#define OPT_DR_QP                                 1 // Use QP to modulate depth refinement thresholds
+
+#define TUNE_M4_II                                1 // Tune m4
+#define TUNE_M8_II                                1 // Tune M8
+#define TUNE_CDEF_M56                             1 // Tune CDEF levels for M5/6
+
 //FOR DEBUGGING - Do not remove
 #define OPT_LD_LATENCY2         0 // Latency optimization for low delay
 #define LOG_ENC_DONE            0 // log encoder job one

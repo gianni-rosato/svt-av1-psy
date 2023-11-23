@@ -178,12 +178,20 @@ uint8_t svt_aom_is_me_data_present(uint32_t me_block_offset, uint32_t me_cand_of
 static Bool warped_motion_mode_allowed(PictureControlSet *pcs, ModeDecisionContext *ctx) {
     FrameHeader *frm_hdr = &pcs->ppcs->frm_hdr;
     return frm_hdr->allow_warped_motion && has_overlappable_candidates(ctx->blk_ptr) && ctx->blk_geom->bwidth >= 8 &&
+#if OPT_Q_WARP
+        ctx->blk_geom->bheight >= 8 && ctx->wm_ctrls.enabled && ctx->do_warp;
+#else
         ctx->blk_geom->bheight >= 8 && ctx->wm_ctrls.enabled && ctx->inject_new_warp;
+#endif
 }
 MotionMode svt_aom_obmc_motion_mode_allowed(
     const PictureControlSet *pcs, struct ModeDecisionContext *ctx, const BlockSize bsize,
     uint8_t          situation, // 0: candidate(s) preparation, 1: data preparation, 2: simple translation face-off
     MvReferenceFrame rf0, MvReferenceFrame rf1, PredictionMode mode) {
+#if OPT_Q_OBMC
+    if (!ctx->do_obmc)
+        return SIMPLE_TRANSLATION;
+#endif
     if (ctx->obmc_ctrls.trans_face_off && !situation)
         return SIMPLE_TRANSLATION;
     // check if should cap the max block size for obmc
@@ -2417,10 +2425,12 @@ uint8_t svt_aom_wm_motion_refinement(PictureControlSet *pcs, ModeDecisionContext
 #if OPT_WARP_REFINEMENT
     int max_iterations = ctx->wm_ctrls.refinement_iterations;
 #else
-    int      max_iterations = ctx->wm_ctrls.refinement_iterations;
+    int max_iterations = ctx->wm_ctrls.refinement_iterations;
 #endif
+#if !OPT_Q_WARP
     if (ctx->inject_new_warp == 2)
         max_iterations = MIN(max_iterations, 2);
+#endif
     int      tot_checked_pos = 0;
 #if OPT_WARP_REFINEMENT
     uint32_t mv_record[256];
@@ -4713,10 +4723,14 @@ static INLINE void eliminate_candidate_based_on_pme_me_results(ModeDecisionConte
         const uint32_t best_me_distotion = MIN(MIN(ctx->pme_res[0][0].dist, ctx->pme_res[1][0].dist), ctx->md_me_dist);
         if (best_me_distotion < th) {
             *dc_cand_only_flag = ctx->cand_reduction_ctrls.cand_elimination_ctrls.dc_only ? 1 : *dc_cand_only_flag;
+#if !OPT_Q_WARP
             ctx->inject_new_warp = ctx->cand_reduction_ctrls.cand_elimination_ctrls.inject_new_warp ? 0 : ctx->inject_new_warp;
+#endif
         }
+#if !OPT_Q_WARP
         else
             ctx->inject_new_warp = ctx->cand_reduction_ctrls.cand_elimination_ctrls.inject_new_warp ? 2 : ctx->inject_new_warp;
+#endif
         if (ctx->updated_enable_pme && ctx->md_subpel_me_ctrls.enabled) {
         const int32_t me_pme_distance = ((int32_t)ctx->md_me_dist - (int32_t)MIN(ctx->pme_res[0][0].dist, ctx->pme_res[1][0].dist));
         if (me_pme_distance >= 0)
@@ -4825,7 +4839,9 @@ EbErrorType generate_md_stage_0_cand(
     ctx->injected_mv_count = 0;
     ctx->inject_new_me = 1;
     ctx->inject_new_pme = 1;
+#if !OPT_Q_WARP
     ctx->inject_new_warp = 1;
+#endif
     uint8_t dc_cand_only_flag = ctx->intra_ctrls.enable_intra && (ctx->intra_ctrls.intra_mode_end == DC_PRED);
     if (ctx->cand_reduction_ctrls.cand_elimination_ctrls.enabled)
 #if CLN_IS_REF

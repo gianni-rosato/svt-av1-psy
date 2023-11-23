@@ -5540,6 +5540,25 @@ static void perform_tx_partitioning(ModeDecisionCandidateBuffer *cand_bf, ModeDe
             if (current_tx_cost > best_cost_search)
                 break;
 
+#if OPT_TX_SIZE
+
+            if (ctx->txs_ctrls.quadrant_th_sf && ctx->tx_depth>0 ) {
+
+                uint64_t normlized_cost = ((ctx->txb_itr + 1)*best_cost_search) / txb_count;
+
+                uint64_t tx_size_bit_tmp = pcs->ppcs->frm_hdr.tx_mode == TX_MODE_SELECT
+                    ? svt_aom_get_tx_size_bits(tx_cand_bf, ctx, pcs, ctx->tx_depth, block_has_coeff)
+                   : 0;
+                const uint64_t cost_tmp = RDCOST(
+                    full_lambda, tx_y_coeff_bits + tx_size_bit_tmp, tx_y_full_distortion[DIST_SSD][DIST_CALC_RESIDUAL]);
+
+                if (cost_tmp * 100 > normlized_cost * ctx->txs_ctrls.quadrant_th_sf) {
+                    tx_y_coeff_bits = MAX_MODE_COST;
+                    tx_y_full_distortion[DIST_SSD][DIST_CALC_RESIDUAL] = MAX_MODE_COST;
+                    break;
+                }
+            }
+#endif
         } // Transform Loop
 
         if (end_tx_depth) {
@@ -9546,6 +9565,23 @@ static void md_encode_block(PictureControlSet *pcs, ModeDecisionContext *ctx, ui
         pme_search(pcs, ctx, input_pic);
 #endif
     }
+
+#if OPT_Q_OBMC
+    ctx->do_obmc = 1;
+    if (ctx->obmc_ctrls.qp_dist_early_exit) {
+        uint16_t th = (ctx->obmc_ctrls.qp_dist_early_exit * (63 - pcs->scs->static_config.qp)) >> 1;
+        if ((MIN(ctx->md_me_dist, ctx->md_pme_dist) / (ctx->blk_geom->bwidth * ctx->blk_geom->bheight)) < th)
+            ctx->do_obmc = 0;
+    }
+#endif
+#if OPT_Q_WARP
+    ctx->do_warp = 1;
+    if (ctx->wm_ctrls.qp_dist_early_exit) {
+        uint16_t th = (ctx->wm_ctrls.qp_dist_early_exit * (63 - pcs->scs->static_config.qp)) >> 1;
+        if ((MIN(ctx->md_me_dist, ctx->md_pme_dist) / (ctx->blk_geom->bwidth * ctx->blk_geom->bheight)) < th)
+            ctx->do_warp = 0;
+    }
+#endif
     if (ctx->inter_intra_comp_ctrls.enabled && svt_aom_is_interintra_allowed_bsize(ctx->blk_geom->bsize)) {
         svt_aom_precompute_intra_pred_for_inter_intra(pcs, ctx);
     }

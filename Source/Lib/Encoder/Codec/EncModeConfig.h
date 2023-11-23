@@ -83,7 +83,11 @@ uint8_t svt_aom_get_nsq_level(EncMode enc_mode, uint8_t is_base, InputCoeffLvl c
 uint8_t svt_aom_get_nsq_level(EncMode enc_mode, uint8_t is_islice, uint8_t is_base, InputCoeffLvl coeff_lvl);
 #endif
 uint8_t get_inter_compound_level(EncMode enc_mode);
+#if OPT_FI
+uint8_t get_filter_intra_level(EncMode enc_mode, uint8_t is_base);
+#else
 uint8_t get_filter_intra_level(EncMode enc_mode);
+#endif
 uint8_t svt_aom_get_inter_intra_level(EncMode enc_mode, uint8_t is_base, uint8_t transition_present);
 uint8_t svt_aom_get_obmc_level(EncMode enc_mode, uint8_t fast_decode, EbInputResolution input_resolution);
 

@@ -2985,7 +2985,11 @@ static int ref_pics_modulation(
             break;
         }
     }
-
+#if OPT_Q_OFFSET_TF
+    // Modulate offset using qp
+    if (pcs->tf_ctrls.qp_opt)
+        offset = (offset * CLIP3(100, 1000, (int)(int)(45 * pcs->scs->static_config.qp) - 1000)) / 1000;
+#endif
     return offset;
 }
 

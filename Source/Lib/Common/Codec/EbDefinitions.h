@@ -212,6 +212,10 @@ typedef struct TfControls {
     uint8_t subpel_early_exit;
     // Specifies whether to skip reference frame e.g. 1 = use all frames, 2 = use every other frame, 4 = use 1/4 frames, etc.
     uint8_t ref_frame_factor;
+#if OPT_Q_TF
+    // Specifies whether to tune the params using qp (0: OFF, 1: ON)
+    uint8_t qp_opt;
+#endif
 } TfControls;
 typedef enum GM_LEVEL {
     GM_FULL   = 0, // Exhaustive search mode.
