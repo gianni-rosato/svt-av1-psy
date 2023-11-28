@@ -634,11 +634,11 @@ static void mmap_read_input_frames(EbConfig *app_cfg, uint8_t is_16bit, EbBuffer
     app_cfg->mmap.cur_offset += (input_ptr->luma ? (uint32_t)luma_read_size : 0);
 
     input_ptr->cb = svt_mmap(&app_cfg->mmap, app_cfg->mmap.cur_offset, chroma_read_size);
-    header_ptr->n_filled_len += (input_ptr->cb ? chroma_read_size : 0);
+    header_ptr->n_filled_len += (input_ptr->cb ? (uint32_t)chroma_read_size : 0);
     app_cfg->mmap.cur_offset += (input_ptr->cb ? chroma_read_size : 0);
 
     input_ptr->cr = svt_mmap(&app_cfg->mmap, app_cfg->mmap.cur_offset, chroma_read_size);
-    header_ptr->n_filled_len += (input_ptr->cr ? chroma_read_size : 0);
+    header_ptr->n_filled_len += (input_ptr->cr ? (uint32_t)chroma_read_size : 0);
     app_cfg->mmap.cur_offset += (input_ptr->cr ? chroma_read_size : 0);
 
     if (read_size != header_ptr->n_filled_len) {
@@ -652,11 +652,11 @@ static void mmap_read_input_frames(EbConfig *app_cfg, uint8_t is_16bit, EbBuffer
         app_cfg->mmap.cur_offset += (input_ptr->luma ? (uint32_t)luma_read_size : 0);
 
         input_ptr->cb = svt_mmap(&app_cfg->mmap, app_cfg->mmap.cur_offset, chroma_read_size);
-        header_ptr->n_filled_len += (input_ptr->cb ? chroma_read_size : 0);
+        header_ptr->n_filled_len += (input_ptr->cb ? (uint32_t)chroma_read_size : 0);
         app_cfg->mmap.cur_offset += (input_ptr->cb ? chroma_read_size : 0);
 
         input_ptr->cr = svt_mmap(&app_cfg->mmap, app_cfg->mmap.cur_offset, chroma_read_size);
-        header_ptr->n_filled_len += (input_ptr->cr ? chroma_read_size : 0);
+        header_ptr->n_filled_len += (input_ptr->cr ? (uint32_t)chroma_read_size : 0);
         app_cfg->mmap.cur_offset += (input_ptr->cr ? chroma_read_size : 0);
     }
 #else
@@ -666,11 +666,19 @@ static void mmap_read_input_frames(EbConfig *app_cfg, uint8_t is_16bit, EbBuffer
 
     offset += luma_read_size;
     input_ptr->cb = svt_mmap(&app_cfg->mmap, offset, chroma_read_size);
+#if CLN_MISC_II
+    header_ptr->n_filled_len += (uint32_t)(input_ptr->cb ? chroma_read_size : 0);
+#else
     header_ptr->n_filled_len += (input_ptr->cb ? chroma_read_size : 0);
+#endif
 
     offset += chroma_read_size;
     input_ptr->cr = svt_mmap(&app_cfg->mmap, offset, chroma_read_size);
+#if CLN_MISC_II
+    header_ptr->n_filled_len += (uint32_t)(input_ptr->cr ? chroma_read_size : 0);
+#else
     header_ptr->n_filled_len += (input_ptr->cr ? chroma_read_size : 0);
+#endif
 
     if (read_size != header_ptr->n_filled_len) {
         app_cfg->mmap.file_frame_it = 0;
@@ -681,11 +689,19 @@ static void mmap_read_input_frames(EbConfig *app_cfg, uint8_t is_16bit, EbBuffer
 
         offset += luma_read_size;
         input_ptr->cb = svt_mmap(&app_cfg->mmap, offset, chroma_read_size);
+#if CLN_MISC_II
+        header_ptr->n_filled_len += (uint32_t)(input_ptr->cb ? chroma_read_size : 0);
+#else
         header_ptr->n_filled_len += (input_ptr->cb ? chroma_read_size : 0);
+#endif
 
         offset += chroma_read_size;
         input_ptr->cr = svt_mmap(&app_cfg->mmap, offset, chroma_read_size);
+#if CLN_MISC_II
+        header_ptr->n_filled_len += (uint32_t)(input_ptr->cr ? chroma_read_size : 0);
+#else
         header_ptr->n_filled_len += (input_ptr->cr ? chroma_read_size : 0);
+#endif
     }
 #endif
 }

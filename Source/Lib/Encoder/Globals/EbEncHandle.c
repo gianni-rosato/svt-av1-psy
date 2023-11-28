@@ -4700,7 +4700,11 @@ static void set_param_based_on_input(SequenceControlSet *scs)
     }
     // Set initial qp for single pass vbr
 #if OPT_2PVBR
+#if CLN_MISC_II
+    if (scs->static_config.rate_control_mode == SVT_AV1_RC_MODE_VBR) {
+#else
     if ((scs->static_config.rate_control_mode == SVT_AV1_RC_MODE_VBR)){
+#endif
 #else
     if ((scs->static_config.rate_control_mode == SVT_AV1_RC_MODE_VBR) && (scs->static_config.pass == ENC_SINGLE_PASS)) {
 #endif
@@ -4744,6 +4748,9 @@ static void set_param_based_on_input(SequenceControlSet *scs)
 #endif
     }
 
+#if FIX_MEM_ALLOC_ON_THE_FLY
+    scs->initial_qp = scs->static_config.qp;
+#endif
     svt_aom_derive_input_resolution(
         &scs->input_resolution,
         scs->max_input_luma_width *scs->max_input_luma_height);
@@ -4871,7 +4878,7 @@ static void set_param_based_on_input(SequenceControlSet *scs)
     uint8_t  min_nsq_bsize = 0;
     uint8_t  no_8x4_4x8 = 1;
     uint8_t  no_16x8_8x16 = 1;
-    for (uint8_t is_base = 0; is_base <= 1; is_base++)
+    for (uint8_t is_base = 0; is_base <= 1; is_base++) {
 #if !OPT_MR_M0
         for (uint8_t is_islice = 0; is_islice <= 1; is_islice++)
 #endif
@@ -4880,7 +4887,14 @@ static void set_param_based_on_input(SequenceControlSet *scs)
 #if OPT_MR_M0
 #if OPT_NSQ_QP
 #if TUNE_NSQ_HIGH_RES
+#if FIX_MEM_ALLOC_ON_THE_FLY
+                for (EbInputResolution res = INPUT_SIZE_240p_RANGE; res <= INPUT_SIZE_8K_RANGE; res++) {
+                    // min QP is 1 b/c 0 is lossless and is not supported
+                    for (uint8_t qp = 1; qp <= MAX_QP_VALUE; qp++) {
+                        nsq_level = svt_aom_get_nsq_level(scs->static_config.enc_mode, is_base, coeff_lvl, qp, res);
+#else
                 nsq_level = svt_aom_get_nsq_level(scs->static_config.enc_mode, is_base, coeff_lvl, scs->static_config.qp, scs->input_resolution);
+#endif
 #else
                 nsq_level = svt_aom_get_nsq_level(scs->static_config.enc_mode, is_base, coeff_lvl, scs->static_config.qp);
 #endif
@@ -4902,12 +4916,21 @@ static void set_param_based_on_input(SequenceControlSet *scs)
                 h_v_only = h_v_only && !allow_HVA_HVB && !allow_HV4;
                 no_8x4_4x8 = no_8x4_4x8 && min_nsq_bsize >= 8;
                 no_16x8_8x16 = no_16x8_8x16 && min_nsq_bsize >= 16;
+#if FIX_MEM_ALLOC_ON_THE_FLY
+                    }
+                }
+#endif
             }
+    }
     bool disallow_4x4 = true;
 #if TUNE_4X4
     for (uint8_t is_islice = 0; is_islice <= 1; is_islice++)
         for (uint8_t is_base = 0; is_base <= 1; is_base++)
+#if CLN_MISC_II
+            disallow_4x4 = MIN(disallow_4x4, svt_aom_get_disallow_4x4(scs->static_config.enc_mode, is_base));
+#else
             disallow_4x4 = MIN(disallow_4x4, svt_aom_get_disallow_4x4(scs->static_config.enc_mode, is_base, is_islice));
+#endif
 #else
     for (SliceType slice_type = 0; slice_type < IDR_SLICE + 1; slice_type++)
         disallow_4x4 = MIN(disallow_4x4, svt_aom_get_disallow_4x4(scs->static_config.enc_mode, slice_type));
@@ -5611,21 +5634,26 @@ static void copy_api_from_app(
         (((EbSvtAv1EncConfiguration*)config_struct)->min_qp_allowed > 0) ?
         ((EbSvtAv1EncConfiguration*)config_struct)->min_qp_allowed : 1 :
         1; // lossless coding not supported
-#if !CLN_VBR
+#if !SVT_AV1_CHECK_VERSION(2, 0, 0)
     scs->static_config.vbr_bias_pct        = ((EbSvtAv1EncConfiguration*)config_struct)->vbr_bias_pct;
+#endif
     scs->static_config.vbr_min_section_pct = ((EbSvtAv1EncConfiguration*)config_struct)->vbr_min_section_pct;
     scs->static_config.vbr_max_section_pct = ((EbSvtAv1EncConfiguration*)config_struct)->vbr_max_section_pct;
-#endif
     scs->static_config.under_shoot_pct     = ((EbSvtAv1EncConfiguration*)config_struct)->under_shoot_pct;
     scs->static_config.over_shoot_pct      = ((EbSvtAv1EncConfiguration*)config_struct)->over_shoot_pct;
 #if OPT_VBR6
-    if (scs->static_config.under_shoot_pct == DEFAULT) {
+    if (scs->static_config.under_shoot_pct == (uint32_t)DEFAULT) {
+#if CLN_MISC_II
+        if (scs->static_config.rate_control_mode == SVT_AV1_RC_MODE_VBR)
+#else
         if ((scs->static_config.rate_control_mode == SVT_AV1_RC_MODE_VBR))
+#endif
             scs->static_config.under_shoot_pct = 50;
         else
             scs->static_config.under_shoot_pct = 25;
     }
-    if (scs->static_config.over_shoot_pct == DEFAULT) {
+
+    if (scs->static_config.over_shoot_pct == (uint32_t)DEFAULT) {
         scs->static_config.over_shoot_pct = 25;
     }
 #endif

@@ -1192,13 +1192,13 @@ void svt_av1_optimize_b(ModeDecisionContext *ctx, int16_t txb_skip_context, int1
     const TranLow abs_qc     = abs(qc);
     const int     sign       = qc < 0;
 #if OPT_EOB_RDOQ
-    const int     max_nz_num = 4;
-    int           nz_num = 1;
-    int           nz_ci[5] = { ci, 0, 0, 0, 0 };
+    const int max_nz_num = 4;
+    int       nz_num     = 1;
+    int       nz_ci[5]   = {ci, 0, 0, 0, 0};
 #else
-    const int     max_nz_num = 2;
-    int           nz_num     = 1;
-    int           nz_ci[3]   = {ci, 0, 0};
+    const int           max_nz_num = 2;
+    int                 nz_num     = 1;
+    int                 nz_ci[3]   = {ci, 0, 0};
 #endif
     if (abs_qc >= 2) {
         update_coeff_general(&accu_rate,
@@ -2184,9 +2184,9 @@ void svt_aom_full_loop_uv(PictureControlSet *pcs, ModeDecisionContext *ctx, Mode
                                        PLANE_TYPE_UV,
                                        pf_shape);
 
-            int32_t seg_qp              = pcs->ppcs->frm_hdr.segmentation_params.segmentation_enabled
-                             ? pcs->ppcs->frm_hdr.segmentation_params.feature_data[ctx->blk_ptr->segment_id][SEG_LVL_ALT_Q]
-                             : 0;
+            int32_t seg_qp = pcs->ppcs->frm_hdr.segmentation_params.segmentation_enabled
+                ? pcs->ppcs->frm_hdr.segmentation_params.feature_data[ctx->blk_ptr->segment_id][SEG_LVL_ALT_Q]
+                : 0;
 #if FIX_BYPASS_ED_COEFF
             cand_bf->quantized_dc[1][txb_itr] = svt_aom_quantize_inv_quantize(
 #else
@@ -2373,9 +2373,9 @@ void svt_aom_full_loop_uv(PictureControlSet *pcs, ModeDecisionContext *ctx, Mode
                                        cand_bf->cand->transform_type_uv,
                                        PLANE_TYPE_UV,
                                        pf_shape);
-            int32_t seg_qp              = pcs->ppcs->frm_hdr.segmentation_params.segmentation_enabled
-                             ? pcs->ppcs->frm_hdr.segmentation_params.feature_data[ctx->blk_ptr->segment_id][SEG_LVL_ALT_Q]
-                             : 0;
+            int32_t seg_qp = pcs->ppcs->frm_hdr.segmentation_params.segmentation_enabled
+                ? pcs->ppcs->frm_hdr.segmentation_params.feature_data[ctx->blk_ptr->segment_id][SEG_LVL_ALT_Q]
+                : 0;
 #if FIX_BYPASS_ED_COEFF
             cand_bf->quantized_dc[2][txb_itr] = svt_aom_quantize_inv_quantize(
 #else

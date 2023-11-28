@@ -199,7 +199,7 @@ static const uint32_t blk32_idx_tab[GEOM_TOT - 1][4] = {{1, 22, 43, 64},
                                                         {13, 222, 431, 640},
                                                         {25, 294, 563, 832}};
 #endif
-extern BlockGeom      svt_aom_blk_geom_mds[MAX_NUM_BLOCKS_ALLOC];
+extern BlockGeom svt_aom_blk_geom_mds[MAX_NUM_BLOCKS_ALLOC];
 
 static INLINE const BlockGeom* get_blk_geom_mds(uint32_t bidx_mds) { return &svt_aom_blk_geom_mds[bidx_mds]; }
 // CU Stats Helper Functions

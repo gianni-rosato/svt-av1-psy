@@ -257,7 +257,10 @@ void store_extended_group(PictureParentControlSet *pcs, InitialRateControlContex
     }
 #if LAD_MG_PRINT
     if (log) {
-        SVT_LOG("\n NEW TPL group Pic:%lld  gop:%i  size:%i  \n", pcs->picture_number,pcs->hierarchical_levels, pcs->tpl_group_size);
+        SVT_LOG("\n NEW TPL group Pic:%lld  gop:%i  size:%i  \n",
+                pcs->picture_number,
+                pcs->hierarchical_levels,
+                pcs->tpl_group_size);
         for (uint32_t i = 0; i < pcs->tpl_group_size; i++) {
             if (pcs->ext_group[i]->temporal_layer_index == 0)
                 SVT_LOG(" | ");
@@ -388,7 +391,7 @@ static void set_1pvbr_param(PictureParentControlSet *pcs) {
 
     pcs->stat_struct = (scs->twopass.stats_buf_ctx->stats_in_start + pcs->picture_number)->stat_struct;
     if (pcs->slice_type != I_SLICE) {
-        uint64_t avg_me_dist = 0;
+        uint64_t avg_me_dist          = 0;
         uint64_t avg_variance_me_dist = 0;
         for (int b64_idx = 0; b64_idx < pcs->b64_total_count; ++b64_idx) {
             avg_me_dist += pcs->rc_me_distortion[b64_idx];
@@ -404,14 +407,16 @@ static void set_1pvbr_param(PictureParentControlSet *pcs) {
             weight = 0.75;
 
         if (scs->input_resolution <= INPUT_SIZE_480p_RANGE)
-            weight = 1.5*weight;
+            weight = 1.5 * weight;
         pcs->stat_struct.poc = pcs->picture_number;
 #if OPT_VBR6
-        (scs->twopass.stats_buf_ctx->stats_in_start + pcs->picture_number)->stat_struct.total_num_bits = MAX(MIN_AVG_ME_DIST, avg_me_dist);
+        (scs->twopass.stats_buf_ctx->stats_in_start + pcs->picture_number)->stat_struct.total_num_bits = MAX(
+            MIN_AVG_ME_DIST, avg_me_dist);
 #else
         (scs->twopass.stats_buf_ctx->stats_in_start + pcs->picture_number)->stat_struct.total_num_bits = avg_me_dist;
 #endif
-        (scs->twopass.stats_buf_ctx->stats_in_start + pcs->picture_number)->coded_error = (double)avg_me_dist* pcs->b64_total_count*weight / VBR_CODED_ERROR_FACTOR;
+        (scs->twopass.stats_buf_ctx->stats_in_start + pcs->picture_number)->coded_error = (double)avg_me_dist *
+            pcs->b64_total_count * weight / VBR_CODED_ERROR_FACTOR;
         (scs->twopass.stats_buf_ctx->stats_in_start + pcs->picture_number)->stat_struct.poc = pcs->picture_number;
     }
 }

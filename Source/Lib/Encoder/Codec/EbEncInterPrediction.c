@@ -4598,63 +4598,63 @@ Bool svt_aom_calc_pred_masked_compound(PictureControlSet *pcs, ModeDecisionConte
 #if CLN_CMPOUND
     bool found_l0 = false;
     for (int bufi = 0; bufi < ctx->cmp_store.pred0_cnt; bufi++) {
-        if (mv_0.as_int == ctx->cmp_store.pred0_mv[bufi].as_int){
-            found_l0 = true;
+        if (mv_0.as_int == ctx->cmp_store.pred0_mv[bufi].as_int) {
+            found_l0   = true;
             ctx->pred0 = ctx->cmp_store.pred0_buf[bufi];
             break;
         }
     }
 
-    if (!found_l0){
+    if (!found_l0) {
         svt_aom_assert_err(ctx->cmp_store.pred0_cnt < 4, "compound store full \n");
         ctx->cmp_store.pred0_mv[ctx->cmp_store.pred0_cnt].as_int = mv_0.as_int;
-        ctx->pred0 = ctx->cmp_store.pred0_buf[ctx->cmp_store.pred0_cnt++];
+        ctx->pred0                                               = ctx->cmp_store.pred0_buf[ctx->cmp_store.pred0_cnt++];
     }
 #endif
 
-    pred_desc.buffer_y     = ctx->pred0;
+    pred_desc.buffer_y = ctx->pred0;
 
     //we call the regular inter prediction path here(no compound)
 #if CLN_CMPOUND
     if (!found_l0)
 #endif
-    svt_aom_inter_prediction(scs,
-                             pcs,
-                             0, //fixed interpolation filter for compound search
-                             ctx->blk_ptr,
-                             cand->ref_frame_type,
-                             &mv_unit,
-                             0, //use_intrabc,
-                             SIMPLE_TRANSLATION,
-                             0,
-                             0,
-                             1, //compound_idx not used
-                             NULL, // interinter_comp not used
-                             NULL,
-                             NULL,
-                             NULL,
-                             0,
-                             0,
-                             0,
-                             0,
-                             ctx->blk_org_x,
-                             ctx->blk_org_y,
-                             bwidth,
-                             bheight,
-                             ref_pic_list0,
-                             ref_pic_list1,
-                             &pred_desc, //output
-                             0, //output org_x,
-                             0, //output org_y,
-                             PICTURE_BUFFER_DESC_LUMA_MASK,
-                             hbd_md ? EB_TEN_BIT : EB_EIGHT_BIT,
-                             0); // is_16bit_pipeline
+        svt_aom_inter_prediction(scs,
+                                 pcs,
+                                 0, //fixed interpolation filter for compound search
+                                 ctx->blk_ptr,
+                                 cand->ref_frame_type,
+                                 &mv_unit,
+                                 0, //use_intrabc,
+                                 SIMPLE_TRANSLATION,
+                                 0,
+                                 0,
+                                 1, //compound_idx not used
+                                 NULL, // interinter_comp not used
+                                 NULL,
+                                 NULL,
+                                 NULL,
+                                 0,
+                                 0,
+                                 0,
+                                 0,
+                                 ctx->blk_org_x,
+                                 ctx->blk_org_y,
+                                 bwidth,
+                                 bheight,
+                                 ref_pic_list0,
+                                 ref_pic_list1,
+                                 &pred_desc, //output
+                                 0, //output org_x,
+                                 0, //output org_y,
+                                 PICTURE_BUFFER_DESC_LUMA_MASK,
+                                 hbd_md ? EB_TEN_BIT : EB_EIGHT_BIT,
+                                 0); // is_16bit_pipeline
 
 #if CLN_CMPOUND
     bool found_l1 = false;
     for (int bufi = 0; bufi < ctx->cmp_store.pred1_cnt; bufi++) {
         if (mv_1.as_int == ctx->cmp_store.pred1_mv[bufi].as_int) {
-            found_l1 = true;
+            found_l1   = true;
             ctx->pred1 = ctx->cmp_store.pred1_buf[bufi];
             break;
         }
@@ -4663,7 +4663,7 @@ Bool svt_aom_calc_pred_masked_compound(PictureControlSet *pcs, ModeDecisionConte
     if (!found_l1) {
         svt_aom_assert_err(ctx->cmp_store.pred1_cnt < 4, "compound store full \n");
         ctx->cmp_store.pred1_mv[ctx->cmp_store.pred1_cnt].as_int = mv_1.as_int;
-        ctx->pred1 = ctx->cmp_store.pred1_buf[ctx->cmp_store.pred1_cnt++];
+        ctx->pred1                                               = ctx->cmp_store.pred1_buf[ctx->cmp_store.pred1_cnt++];
     }
 #endif
 
@@ -4675,37 +4675,37 @@ Bool svt_aom_calc_pred_masked_compound(PictureControlSet *pcs, ModeDecisionConte
 #if CLN_CMPOUND
     if (!found_l1)
 #endif
-    svt_aom_inter_prediction(scs,
-                             pcs,
-                             0, //fixed interpolation filter for compound search
-                             ctx->blk_ptr,
-                             cand->ref_frame_type,
-                             &mv_unit,
-                             0, //use_intrabc,
-                             SIMPLE_TRANSLATION,
-                             0,
-                             0,
-                             1, //compound_idx not used
-                             NULL, // interinter_comp not useds
-                             NULL,
-                             NULL,
-                             NULL,
-                             0,
-                             0,
-                             0,
-                             0,
-                             ctx->blk_org_x,
-                             ctx->blk_org_y,
-                             bwidth,
-                             bheight,
-                             ref_pic_list0,
-                             ref_pic_list1,
-                             &pred_desc, //output
-                             0, //output org_x,
-                             0, //output org_y,
-                             PICTURE_BUFFER_DESC_LUMA_MASK,
-                             hbd_md ? EB_TEN_BIT : EB_EIGHT_BIT,
-                             0); // is_16bit_pipeline
+        svt_aom_inter_prediction(scs,
+                                 pcs,
+                                 0, //fixed interpolation filter for compound search
+                                 ctx->blk_ptr,
+                                 cand->ref_frame_type,
+                                 &mv_unit,
+                                 0, //use_intrabc,
+                                 SIMPLE_TRANSLATION,
+                                 0,
+                                 0,
+                                 1, //compound_idx not used
+                                 NULL, // interinter_comp not useds
+                                 NULL,
+                                 NULL,
+                                 NULL,
+                                 0,
+                                 0,
+                                 0,
+                                 0,
+                                 ctx->blk_org_x,
+                                 ctx->blk_org_y,
+                                 bwidth,
+                                 bheight,
+                                 ref_pic_list0,
+                                 ref_pic_list1,
+                                 &pred_desc, //output
+                                 0, //output org_x,
+                                 0, //output org_y,
+                                 PICTURE_BUFFER_DESC_LUMA_MASK,
+                                 hbd_md ? EB_TEN_BIT : EB_EIGHT_BIT,
+                                 0); // is_16bit_pipeline
 
 #if CLN_CMPOUND
     Bool     exit_compound_prep  = FALSE;

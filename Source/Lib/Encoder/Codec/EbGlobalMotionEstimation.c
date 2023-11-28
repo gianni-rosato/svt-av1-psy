@@ -168,13 +168,25 @@ void svt_aom_global_motion_estimation(PictureParentControlSet *pcs, EbPictureBuf
     // 2: use up to 2 ref per list @ the GMV params derivation
     // 3: all refs @ the GMV params derivation
 #if OPT_Q_GLOBAL
-    int offset = pcs->gm_ctrls.qp_offset ? CLIP3(0, 5, (int)(90 - ((int)2 * pcs->scs->static_config.qp))) : 0;
+    uint32_t offset = pcs->gm_ctrls.qp_offset ? CLIP3(0, 5, (int)(90 - ((int)2 * pcs->scs->static_config.qp))) : 0;
 
+#if CLN_MISC_II
     if (average_me_sad <= (GMV_ME_SAD_TH_0 + offset))
+#else
+    if (average_me_sad <= (GMV_ME_SAD_TH_0 + offset))
+#endif
         global_motion_estimation_level = 0;
+#if CLN_MISC_II
     else if (average_me_sad < (GMV_ME_SAD_TH_1 + offset))
+#else
+    else if (average_me_sad < (GMV_ME_SAD_TH_1 + offset))
+#endif
         global_motion_estimation_level = 1;
+#if CLN_MISC_II
     else if (average_me_sad < (GMV_ME_SAD_TH_2 + offset))
+#else
+    else if (average_me_sad < (GMV_ME_SAD_TH_2 + offset))
+#endif
         global_motion_estimation_level = 2;
     else
         global_motion_estimation_level = 3;

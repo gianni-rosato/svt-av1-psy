@@ -46,7 +46,6 @@ static double calculate_modified_err(const TWO_PASS *twopass, const FIRSTPASS_ST
     if (stats == NULL)
         return 0;
     return (double)this_frame->stat_struct.total_num_bits;
-
 }
 #else
 static double calculate_modified_err(const FrameInfo *frame_info, const TWO_PASS *twopass,
@@ -552,7 +551,7 @@ static int64_t calculate_total_gf_group_bits(PictureParentControlSet *pcs, doubl
                 rc->frames_to_key;
         else
             kf_group_bits = twopass->kf_group_bits;
-       total_group_bits = (int64_t)(kf_group_bits * (gf_group_err / twopass->kf_group_error_left));
+        total_group_bits = (int64_t)(kf_group_bits * (gf_group_err / twopass->kf_group_error_left));
     } else {
         total_group_bits = 0;
     }
@@ -606,7 +605,7 @@ static void av1_gop_bit_allocation_same_pred(PictureParentControlSet *pcs, int64
     }
 }
 // Allocate bits to each frame in a GF / ARF group
-static double layer_fraction[MAX_ARF_LAYERS + 1] = { 1.0, 0.80, 0.7, 0.60, 0.60, 1.0, 1.0 };
+static double layer_fraction[MAX_ARF_LAYERS + 1] = {1.0, 0.80, 0.7, 0.60, 0.60, 1.0, 1.0};
 static void   allocate_gf_group_bits(PictureParentControlSet *pcs, RATE_CONTROL *const rc, int64_t gf_group_bits,
                                      int gf_arf_bits, int gf_interval, int key_frame, int use_arf) {
     int64_t total_group_bits = gf_group_bits;
@@ -785,11 +784,11 @@ int         svt_aom_frame_is_kf_gf_arf(PictureParentControlSet *ppcs);
 ************************************************************************************/
 static void calculate_gf_stats(PictureParentControlSet *ppcs, GF_GROUP_STATS *gf_stats, FIRSTPASS_STATS *this_frame,
                                int *use_alt_ref) {
-    SequenceControlSet          *scs        = ppcs->scs;
-    RATE_CONTROL *const          rc         = &scs->enc_ctx->rc;
-    TWO_PASS *const              twopass    = &scs->twopass;
+    SequenceControlSet *scs     = ppcs->scs;
+    RATE_CONTROL *const rc      = &scs->enc_ctx->rc;
+    TWO_PASS *const     twopass = &scs->twopass;
 #if !OPT_VBR2
-    FrameInfo                   *frame_info = &scs->enc_ctx->frame_info;
+    FrameInfo *frame_info = &scs->enc_ctx->frame_info;
 #endif
     FIRSTPASS_STATS              next_frame;
     const FIRSTPASS_STATS *const start_pos = twopass->stats_in;
@@ -851,7 +850,7 @@ static void calculate_gf_stats(PictureParentControlSet *ppcs, GF_GROUP_STATS *gf
 #if OPT_VBR2
     set_baseline_gf_interval(ppcs, i);
 #else
-    int alt_offset           = 0; // left to add code from 2-pass
+    int alt_offset = 0; // left to add code from 2-pass
 
     // Should we use the alternate reference frame.
     if (*use_alt_ref) {
@@ -903,14 +902,14 @@ static void calculate_active_worst_quality(PictureParentControlSet *ppcs, GF_GRO
     // sections where we do not wish to risk creating an overshoot
     // of the allocated bit budget.
     if (rc->baseline_gf_interval > 1) {
-        const int    vbr_group_bits_per_frame = (int)(rc->gf_group_bits / rc->baseline_gf_interval);
+        const int vbr_group_bits_per_frame = (int)(rc->gf_group_bits / rc->baseline_gf_interval);
 #if OPT_VBR2
         double group_av_err = gf_stats.gf_group_raw_error / rc->baseline_gf_interval;
 #else
-        const double group_av_err             = gf_stats.gf_group_raw_error / rc->baseline_gf_interval;
+        const double group_av_err = gf_stats.gf_group_raw_error / rc->baseline_gf_interval;
 #endif
-        const double group_av_skip_pct        = gf_stats.gf_group_skip_pct / rc->baseline_gf_interval;
-        const double group_av_inactive_zone   = ((gf_stats.gf_group_inactive_zone_rows * 2) /
+        const double group_av_skip_pct      = gf_stats.gf_group_skip_pct / rc->baseline_gf_interval;
+        const double group_av_inactive_zone = ((gf_stats.gf_group_inactive_zone_rows * 2) /
                                                (rc->baseline_gf_interval * (double)frame_info->mb_rows));
 
         int tmp_q;
@@ -1020,11 +1019,11 @@ static void av1_gop_bit_allocation(PictureParentControlSet *ppcs, RATE_CONTROL *
  *
  */
 static void lap_rc_init(PictureParentControlSet *pcs, FIRSTPASS_STATS this_frame) {
-    SequenceControlSet          *scs                  = pcs->scs;
-    EncodeContext               *enc_ctx              = scs->enc_ctx;
-    TWO_PASS *const              twopass              = &scs->twopass;
+    SequenceControlSet *scs     = pcs->scs;
+    EncodeContext      *enc_ctx = scs->enc_ctx;
+    TWO_PASS *const     twopass = &scs->twopass;
 #if !OPT_VBR2
-    FrameInfo *const             frame_info           = &enc_ctx->frame_info;
+    FrameInfo *const frame_info = &enc_ctx->frame_info;
 #endif
     int                          num_stats            = 0;
     double                       modified_error_total = 0.0;
@@ -1075,13 +1074,13 @@ static void lap_rc_init(PictureParentControlSet *pcs, FIRSTPASS_STATS this_frame
  *
  */
 static double lap_rc_group_error_calc(PictureParentControlSet *pcs, FIRSTPASS_STATS this_frame) {
-    SequenceControlSet          *scs                  = pcs->scs;
+    SequenceControlSet *scs = pcs->scs;
 #if !OPT_VBR2
-    EncodeContext               *enc_ctx              = scs->enc_ctx;
+    EncodeContext *enc_ctx = scs->enc_ctx;
 #endif
-    TWO_PASS *const              twopass              = &scs->twopass;
+    TWO_PASS *const twopass = &scs->twopass;
 #if !OPT_VBR2
-    FrameInfo *const             frame_info           = &enc_ctx->frame_info;
+    FrameInfo *const frame_info = &enc_ctx->frame_info;
 #endif
     int                          num_stats            = 0;
     double                       modified_error_total = 0.0;
@@ -1121,9 +1120,9 @@ static void set_kf_interval_variables(PictureParentControlSet *pcs, FIRSTPASS_ST
     RATE_CONTROL *const rc      = &enc_ctx->rc;
     TWO_PASS *const     twopass = &scs->twopass;
 
-    int              frames_to_key = 0;
+    int frames_to_key = 0;
 #if !OPT_VBR2
-    FrameInfo *const frame_info    = &enc_ctx->frame_info;
+    FrameInfo *const frame_info = &enc_ctx->frame_info;
 #endif
     if (num_frames_to_detect_scenecut == 0)
         return;
@@ -1265,37 +1264,37 @@ static void kf_group_rate_assingment(PictureParentControlSet *pcs, FIRSTPASS_STA
     RATE_CONTROL *const rc         = &enc_ctx->rc;
     TWO_PASS *const     twopass    = &scs->twopass;
 #if !OPT_VBR2
-    FrameInfo          *frame_info = &enc_ctx->frame_info;
+    FrameInfo *frame_info = &enc_ctx->frame_info;
 #endif
-    FIRSTPASS_STATS     next_frame;
+    FIRSTPASS_STATS next_frame;
     av1_zero(next_frame);
 
     rc->frames_since_key = 0;
 
-    const FIRSTPASS_STATS *const start_position          = twopass->stats_in;
-    int                          kf_bits                 = 0;
+    const FIRSTPASS_STATS *const start_position = twopass->stats_in;
+    int                          kf_bits        = 0;
 #if !OPT_VBR2
-    double                       zero_motion_accumulator = 1.0;
-    double                       boost_score             = 0.0;
-    double                       kf_raw_err;
+    double zero_motion_accumulator = 1.0;
+    double boost_score             = 0.0;
+    double kf_raw_err;
 #endif
-    double                       kf_mod_err;
-    double                       kf_group_err          = 0.0;
+    double kf_mod_err;
+    double kf_group_err = 0.0;
 #if !OPT_VBR2
-    double                       sr_accumulator        = 0.0;
+    double sr_accumulator = 0.0;
 #endif
-    int                          frames_to_key_clipped = INT_MAX;
-    int64_t                      kf_group_bits_clipped = INT64_MAX;
+    int     frames_to_key_clipped = INT_MAX;
+    int64_t kf_group_bits_clipped = INT64_MAX;
 
     twopass->kf_group_bits       = 0; // Total bits available to kf group
     twopass->kf_group_error_left = 0; // Group modified error score.
 #if !OPT_VBR2
-    kf_raw_err                   = this_frame.intra_error;
+    kf_raw_err = this_frame.intra_error;
 #endif
 #if OPT_VBR2
-    kf_mod_err                   = calculate_modified_err(twopass, &this_frame);
+    kf_mod_err = calculate_modified_err(twopass, &this_frame);
 #else
-    kf_mod_err = calculate_modified_err(frame_info, twopass, &(enc_ctx->two_pass_cfg), &this_frame);
+    kf_mod_err                 = calculate_modified_err(frame_info, twopass, &(enc_ctx->two_pass_cfg), &this_frame);
 #endif
     set_kf_interval_variables(pcs, &this_frame, &kf_group_err, scs->static_config.intra_period_length + 1);
 
@@ -1758,10 +1757,10 @@ void svt_aom_set_rc_param(SequenceControlSet *scs) {
     frame_info->num_mbs   = frame_info->mb_cols * frame_info->mb_rows;
     frame_info->bit_depth = scs->static_config.encoder_bit_depth;
     // input config  from options
-#if !CLN_VBR
     enc_ctx->two_pass_cfg.vbrmin_section = scs->static_config.vbr_min_section_pct;
     enc_ctx->two_pass_cfg.vbrmax_section = scs->static_config.vbr_max_section_pct;
-    enc_ctx->two_pass_cfg.vbrbias        = scs->static_config.vbr_bias_pct;
+#if !CLN_VBR
+    enc_ctx->two_pass_cfg.vbrbias = scs->static_config.vbr_bias_pct;
 #endif
     enc_ctx->rc_cfg.gf_cbr_boost_pct     = 0;
     enc_ctx->rc_cfg.mode                 = scs->static_config.rate_control_mode == SVT_AV1_RC_MODE_VBR
@@ -1834,10 +1833,10 @@ void svt_av1_init_single_pass_lap(SequenceControlSet *scs) {
     twopass->kf_zeromotion_pct = 100;
 }
 void svt_av1_init_second_pass(SequenceControlSet *scs) {
-    TWO_PASS *const twopass    = &scs->twopass;
-    EncodeContext  *enc_ctx    = scs->enc_ctx;
+    TWO_PASS *const twopass = &scs->twopass;
+    EncodeContext  *enc_ctx = scs->enc_ctx;
 #if !OPT_VBR2
-    FrameInfo      *frame_info = &enc_ctx->frame_info;
+    FrameInfo *frame_info = &enc_ctx->frame_info;
 #endif
 
     double           frame_rate;

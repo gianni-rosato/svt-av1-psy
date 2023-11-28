@@ -497,7 +497,6 @@ void       *rtime_alloc_block_hash_block_is_same(size_t size) { return malloc(si
 #if !OPT_COEFF_LVL
 // Use me_8x8_distortion and QP to predict the coeff level per frame
 static void predict_frame_coeff_lvl(struct PictureControlSet *pcs) {
-
     uint64_t tot_me_8x8_dis = 0;
     for (uint32_t b64_idx = 0; b64_idx < pcs->b64_total_count; b64_idx++) {
         tot_me_8x8_dis += pcs->ppcs->me_8x8_distortion[b64_idx];

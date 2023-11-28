@@ -1633,7 +1633,7 @@ void svt_aom_full_cost(PictureControlSet *pcs, ModeDecisionContext *ctx, struct 
 #if FIX_NZ_COEFF_SKIP
             cand_bf->cnt_nz_coeff = 0;
 #endif
-            cand_bf->cand->tx_depth  = 0;
+            cand_bf->cand->tx_depth = 0;
             assert(DCT_DCT == 0);
             memset(cand_bf->cand->transform_type, DCT_DCT, 16 * sizeof(cand_bf->cand->transform_type[0]));
             cand_bf->cand->transform_type_uv = DCT_DCT;

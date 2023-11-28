@@ -233,12 +233,19 @@ static void svt_ext_eight_sad_calculation_8x8_16x16_neon(uint8_t *src, uint32_t 
 }
 
 void svt_ext_all_sad_calculation_8x8_16x16_neon(uint8_t *src, uint32_t src_stride, uint8_t *ref, uint32_t ref_stride,
-                                                uint32_t mv, uint8_t out_8x8, uint32_t *p_best_sad_8x8,
-                                                uint32_t *p_best_sad_16x16, uint32_t *p_best_mv8x8,
-                                                uint32_t *p_best_mv16x16, uint32_t p_eight_sad16x16[16][8],
-                                                uint32_t p_eight_sad8x8[64][8], Bool sub_sad) {
+                                                uint32_t mv,
+#if !OPT_TF_8X8_BLOCKS
+                                                uint8_t out_8x8,
+#endif
+                                                uint32_t *p_best_sad_8x8, uint32_t *p_best_sad_16x16,
+                                                uint32_t *p_best_mv8x8, uint32_t *p_best_mv16x16,
+                                                uint32_t p_eight_sad16x16[16][8], uint32_t p_eight_sad8x8[64][8],
+                                                Bool sub_sad) {
     static const char offsets[16] = {0, 1, 4, 5, 2, 3, 6, 7, 8, 9, 12, 13, 10, 11, 14, 15};
+#if !OPT_TF_8X8_BLOCKS
     (void)out_8x8;
+#endif
+
     //---- 16x16 : 0, 1, 4, 5, 2, 3, 6, 7, 8, 9, 12, 13, 10, 11, 14, 15
     for (int y = 0; y < 4; y++) {
         for (int x = 0; x < 4; x++) {

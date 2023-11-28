@@ -332,16 +332,6 @@ Linux Intra Enc Test:
         ./Bin/Release/SvtAv1EncApp --preset 8 --keyint $INTRA_PERIOD -i "$SVT_ENCTEST_FILENAME" -n 120 -b "test-${BRANCH:-pr}-$(uname)-intra${INTRA_PERIOD}-${SVT_ENCTEST_BITNESS}bit-m8.ivf"
       done
 
-Linux Passes vs Passes Test:
-  extends: .linux-enc-test-base
-  script:
-    - ./Bin/Release/SvtAv1EncApp --preset 2 --passes 2 --irefresh-type 2 --keyint -1 -i "$SVT_ENCTEST_FILENAME" -n 17 -b "test-${BRANCH:-pr}-$(uname)-passes=2-${SVT_ENCTEST_BITNESS}bit-m2.ivf"
-    - ./Bin/Release/SvtAv1EncApp --preset 8 --passes 2 --irefresh-type 2 --keyint -1 -i "$SVT_ENCTEST_FILENAME" -n 120 -b "test-${BRANCH:-pr}-$(uname)-passes=2-${SVT_ENCTEST_BITNESS}bit-m8.ivf"
-    - ./Bin/Release/SvtAv1EncApp --preset 2 --pass 1 --irefresh-type 2 --keyint -1 -i "$SVT_ENCTEST_FILENAME" -n 17 --stats "test-${BRANCH:-pr}-$(uname)-pass=2-${SVT_ENCTEST_BITNESS}bit-m2.stat"
-    - ./Bin/Release/SvtAv1EncApp --preset 2 --pass 2 --irefresh-type 2 --keyint -1 -i "$SVT_ENCTEST_FILENAME" -n 17 --stats "test-${BRANCH:-pr}-$(uname)-pass=2-${SVT_ENCTEST_BITNESS}bit-m2.stat" -b "test-${BRANCH:-pr}-$(uname)-pass=2-${SVT_ENCTEST_BITNESS}bit-m2.ivf"
-    - ./Bin/Release/SvtAv1EncApp --preset 8 --pass 1 --irefresh-type 2 --keyint -1 -i "$SVT_ENCTEST_FILENAME" -n 120 --stats "test-${BRANCH:-pr}-$(uname)-pass=2-${SVT_ENCTEST_BITNESS}bit-m8.stat"
-    - ./Bin/Release/SvtAv1EncApp --preset 8 --pass 2 --irefresh-type 2 --keyint -1 -i "$SVT_ENCTEST_FILENAME" -n 120 --stats "test-${BRANCH:-pr}-$(uname)-pass=2-${SVT_ENCTEST_BITNESS}bit-m8.stat" -b "test-${BRANCH:-pr}-$(uname)-pass=2-${SVT_ENCTEST_BITNESS}bit-m8.ivf"
-
 Linux Multiple Channels Test:
   extends: .linux-enc-test-base
   script:

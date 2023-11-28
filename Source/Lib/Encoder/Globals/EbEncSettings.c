@@ -75,7 +75,12 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet *scs) {
         SVT_ERROR("Instance %u: Multi-passes is not support with Low Delay mode \n", channel_number + 1);
         return_error = EB_ErrorBadParameter;
     }
-#if !CLN_VBR
+#if CLN_VBR
+    if (config->vbr_bias_pct != 100) {
+        SVT_WARN("Instance %u: The bias percentage is being ignored and will be deprecated in the up coming release \n",
+                 channel_number + 1);
+    }
+#else
     if (config->vbr_bias_pct > 100) {
         SVT_ERROR("Instance %u: The bias percentage must be [0, 100]  \n", channel_number + 1);
         return_error = EB_ErrorBadParameter;
@@ -123,6 +128,7 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet *scs) {
         SVT_ERROR("Instance %u: The undershoot percentage must be between [0, 100] \n", channel_number + 1);
         return_error = EB_ErrorBadParameter;
     }
+
     if (config->target_bit_rate > 100000000) {
         SVT_ERROR("Instance %u: The target bit rate must be between [0, 100000] kbps \n", channel_number + 1);
         return_error = EB_ErrorBadParameter;
@@ -131,7 +137,6 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet *scs) {
         SVT_ERROR("Instance %u: The maximum bit rate must be between [0, 100000] kbps \n", channel_number + 1);
         return_error = EB_ErrorBadParameter;
     }
-#if !CLN_VBR
     if (config->vbr_max_section_pct > 10000) {
         SVT_ERROR("Instance %u: The max section percentage must be between [0, 10000] \n", channel_number + 1);
         return_error = EB_ErrorBadParameter;
@@ -141,7 +146,6 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet *scs) {
         SVT_ERROR("Instance %u: The min section percentage must be between [0, 100] \n", channel_number + 1);
         return_error = EB_ErrorBadParameter;
     }
-#endif
     if (config->gop_constraint_rc &&
         ((config->rate_control_mode != SVT_AV1_RC_MODE_VBR) || config->intra_period_length < 119)) {
         SVT_ERROR(
@@ -948,17 +952,17 @@ EbErrorType svt_av1_set_default_params(EbSvtAv1EncConfiguration *config_ptr) {
     config_ptr->encoder_color_format         = EB_YUV420;
     // Rate control options
     // Set the default value toward more flexible rate allocation
-#if !CLN_VBR
-    config_ptr->vbr_bias_pct             = 100;
-    config_ptr->vbr_min_section_pct      = 0;
-    config_ptr->vbr_max_section_pct      = 2000;
+#if !SVT_AV1_CHECK_VERSION(2, 0, 0)
+    config_ptr->vbr_bias_pct = 100;
 #endif
+    config_ptr->vbr_min_section_pct = 0;
+    config_ptr->vbr_max_section_pct = 2000;
 #if OPT_VBR6
-    config_ptr->under_shoot_pct          = DEFAULT;
-    config_ptr->over_shoot_pct           = DEFAULT;
+    config_ptr->under_shoot_pct = (uint32_t)DEFAULT;
+    config_ptr->over_shoot_pct  = (uint32_t)DEFAULT;
 #else
-    config_ptr->under_shoot_pct          = 25;
-    config_ptr->over_shoot_pct = 25;
+    config_ptr->under_shoot_pct = 25;
+    config_ptr->over_shoot_pct  = 25;
 #endif
     config_ptr->mbr_over_shoot_pct       = 50;
     config_ptr->gop_constraint_rc        = 0;
@@ -1728,7 +1732,11 @@ static EbErrorType str_to_sframe_mode(const char *nptr, EbSFrameMode *out) {
     return EB_ErrorBadParameter;
 }
 
+#if CLN_MISC_II && DIS_UNSUPPORTED_MODES
+static EbErrorType str_to_rc_mode(const char *nptr, uint32_t *out, uint8_t *aq_mode) {
+#else
 static EbErrorType str_to_rc_mode(const char *nptr, uint32_t *out, uint8_t *aq_mode, uint8_t *pred_structure) {
+#endif
     // separate rc mode enum to distinguish between cqp and crf modes
     enum rc_modes {
         RC_MODE_ZERO = 0, // unique mode in case user passes a literal 0
@@ -1772,8 +1780,7 @@ static EbErrorType str_to_rc_mode(const char *nptr, uint32_t *out, uint8_t *aq_m
         *aq_mode = 2;
         break;
     case RC_MODE_VBR: *out = SVT_AV1_RC_MODE_VBR; break;
-    case RC_MODE_CBR:
-        *out            = SVT_AV1_RC_MODE_CBR;
+    case RC_MODE_CBR: *out = SVT_AV1_RC_MODE_CBR;
 #if !DIS_UNSUPPORTED_MODES
         *pred_structure = SVT_AV1_PRED_LOW_DELAY_B;
 #endif
@@ -1865,8 +1872,12 @@ EB_API EbErrorType svt_av1_enc_parse_parameter(EbSvtAv1EncConfiguration *config_
     if (!strcmp(name, "rc"))
         return str_to_rc_mode(value,
                               &config_struct->rate_control_mode,
+#if CLN_MISC_II && DIS_UNSUPPORTED_MODES
+                              &config_struct->enable_adaptive_quantization);
+#else
                               &config_struct->enable_adaptive_quantization,
                               &config_struct->pred_structure);
+#endif
 
     // custom enum fields
     if (!strcmp(name, "profile"))
@@ -1944,11 +1955,11 @@ EB_API EbErrorType svt_av1_enc_parse_parameter(EbSvtAv1EncConfiguration *config_
         {"scd", &config_struct->scene_change_detection},
         {"max-qp", &config_struct->max_qp_allowed},
         {"min-qp", &config_struct->min_qp_allowed},
-#if !CLN_VBR
+#if !SVT_AV1_CHECK_VERSION(2, 0, 0)
         {"bias-pct", &config_struct->vbr_bias_pct},
+#endif
         {"minsection-pct", &config_struct->vbr_min_section_pct},
         {"maxsection-pct", &config_struct->vbr_max_section_pct},
-#endif
         {"undershoot-pct", &config_struct->under_shoot_pct},
         {"overshoot-pct", &config_struct->over_shoot_pct},
         {"mbr-overshoot-pct", &config_struct->mbr_over_shoot_pct},

@@ -117,11 +117,12 @@
 #define MAX_BIT_RATE_TOKEN "--mbr"
 #define MAX_QP_TOKEN "--max-qp"
 #define MIN_QP_TOKEN "--min-qp"
-#if !CLN_VBR
+#if !SVT_AV1_CHECK_VERSION(2, 0, 0)
+/* DEPRECATED: to be removed in 2.0.0. */
 #define VBR_BIAS_PCT_TOKEN "--bias-pct"
+#endif
 #define VBR_MIN_SECTION_PCT_TOKEN "--minsection-pct"
 #define VBR_MAX_SECTION_PCT_TOKEN "--maxsection-pct"
-#endif
 #define UNDER_SHOOT_PCT_TOKEN "--undershoot-pct"
 #define OVER_SHOOT_PCT_TOKEN "--overshoot-pct"
 #define MBR_OVER_SHOOT_PCT_TOKEN "--mbr-overshoot-pct"
@@ -891,11 +892,13 @@ ConfigEntry config_entry_rc[] = {
      "Recode loop level, refer to \"Recode loop level table\" in the user guide for more info [0: "
      "off, 4: preset based]",
      set_cfg_generic_token},
-#if !CLN_VBR
+#if !SVT_AV1_CHECK_VERSION(2, 0, 0)
+    /* DEPRECATED: to be removed in 2.0.0. */
     {SINGLE_INPUT,
      VBR_BIAS_PCT_TOKEN,
-     "CBR/VBR bias, default is 50 [0: CBR-like, 1-99, 100: VBR-like]",
+     "CBR/VBR bias, default is 50 [0: CBR-like, 1-99, 100: VBR-like] DEPRECATED: to be removed in 2.0.0",
      set_cfg_generic_token},
+#endif
     {SINGLE_INPUT,
      VBR_MIN_SECTION_PCT_TOKEN,
      "GOP min bitrate (expressed as a percentage of the target rate), default is 0 [0-100]",
@@ -904,7 +907,6 @@ ConfigEntry config_entry_rc[] = {
      VBR_MAX_SECTION_PCT_TOKEN,
      "GOP max bitrate (expressed as a percentage of the target rate), default is 2000 [0-10000]",
      set_cfg_generic_token},
-#endif
     {SINGLE_INPUT, ENABLE_QM_TOKEN, "Enable quantisation matrices, default is 0 [0-1]", set_cfg_generic_token},
     {SINGLE_INPUT, MIN_QM_LEVEL_TOKEN, "Min quant matrix flatness, default is 8 [0-15]", set_cfg_generic_token},
     {SINGLE_INPUT, MAX_QM_LEVEL_TOKEN, "Max quant matrix flatness, default is 15 [0-15]", set_cfg_generic_token},
@@ -1252,11 +1254,12 @@ ConfigEntry config_entry[] = {
     {SINGLE_INPUT, BUFFER_INITIAL_SIZE_TOKEN, "BufInitialSz", set_cfg_generic_token},
     {SINGLE_INPUT, BUFFER_OPTIMAL_SIZE_TOKEN, "BufOptimalSz", set_cfg_generic_token},
     {SINGLE_INPUT, RECODE_LOOP_TOKEN, "RecodeLoop", set_cfg_generic_token},
-#if !CLN_VBR
+#if !SVT_AV1_CHECK_VERSION(2, 0, 0)
+    /* DEPRECATED: to be removed in 2.0.0. */
     {SINGLE_INPUT, VBR_BIAS_PCT_TOKEN, "VBRBiasPct", set_cfg_generic_token},
+#endif
     {SINGLE_INPUT, VBR_MIN_SECTION_PCT_TOKEN, "MinSectionPct", set_cfg_generic_token},
     {SINGLE_INPUT, VBR_MAX_SECTION_PCT_TOKEN, "MaxSectionPct", set_cfg_generic_token},
-#endif
 
     // Multi-pass Options
     {SINGLE_INPUT, PASS_TOKEN, "Pass", set_cfg_generic_token},
@@ -2158,10 +2161,15 @@ uint32_t get_passes(int32_t argc, char *const argv[], EncPass enc_pass[MAX_ENC_P
     // Determine the number of passes in CRF mode
     if (rc_mode == 0) {
         if (passes != 1) {
-            passes = 1;
+#if DIS_UNSUPPORTED_MODES
+            fprintf(stderr, "[SVT-Error]: Multipass CRF is not supported.\n\n");
+            return 0;
+#else
+            passes     = 1;
             fprintf(stderr,
                     "[SVT-Warning]: Multipass CRF is not supported. Switching to "
                     "1-pass encoding\n\n");
+#endif
         }
         multi_pass_mode = passes == 2 ? TWO_PASS_IPP_FINAL : SINGLE_PASS;
     }
@@ -2172,9 +2180,7 @@ uint32_t get_passes(int32_t argc, char *const argv[], EncPass enc_pass[MAX_ENC_P
         else if (passes > 1) {
             if (enc_mode > ENC_M12) {
 #if DIS_UNSUPPORTED_MODES
-                fprintf(stderr,
-                    "[SVT-Error]:  Multipass VBR is not supported for preset %d.\n\n",
-                    enc_mode);
+                fprintf(stderr, "[SVT-Error]:  Multipass VBR is not supported for preset %d.\n\n", enc_mode);
                 return 0;
 #else
                 fprintf(stderr,
@@ -2192,7 +2198,7 @@ uint32_t get_passes(int32_t argc, char *const argv[], EncPass enc_pass[MAX_ENC_P
     } else {
         if (passes > 1) {
 #if DIS_UNSUPPORTED_MODES
-            fprintf(stderr, "[SVT-Error]: Multipass CBR is not supported.");
+            fprintf(stderr, "[SVT-Error]: Multipass CBR is not supported.\n\n");
             return 0;
 #else
             fprintf(stderr, "[SVT-Warning]: Multipass CBR is not supported. Switching to 1-pass encoding\n\n");

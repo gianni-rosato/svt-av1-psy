@@ -229,7 +229,9 @@ extern void *svt_aom_rate_control_kernel(void *input_ptr);
 int svt_aom_compute_rd_mult_based_on_qindex(EbBitDepth bit_depth, SvtAv1FrameUpdateType update_type, int qindex);
 struct PictureControlSet;
 int svt_aom_compute_rd_mult(struct PictureControlSet *pcs, uint8_t q_index, uint8_t me_q_index, uint8_t bit_depth);
-
+#if CLN_MISC_II && OPT_FAST_LAMBDA
+int svt_aom_compute_fast_lambda(struct PictureControlSet *pcs, uint8_t q_index, uint8_t me_q_index, uint8_t bit_depth);
+#endif
 struct PictureParentControlSet;
 void svt_aom_cyclic_refresh_init(struct PictureParentControlSet *ppcs);
 

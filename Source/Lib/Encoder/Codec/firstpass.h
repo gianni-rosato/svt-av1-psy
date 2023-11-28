@@ -74,8 +74,8 @@ typedef struct {
     /*!
    * Best of intra pred error and inter pred error using golden frame as ref.
    */
-#endif
     double sr_coded_error;
+#endif
 #if !OPT_VBR_2P
     /*!
    * Percentage of blocks with inter pred error < intra pred error.

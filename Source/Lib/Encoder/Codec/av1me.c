@@ -726,7 +726,7 @@ static int obmc_refining_search_sad(const IntraBcContext *x, const int32_t *wsrc
                                     const MV *center_mv, int is_second) {
 #endif
 #if OPT_OBMC_REFINEMENT
-    const MV neighbors[8]  = { {-1, 0}, {0, -1}, {0, 1}, {1, 0}, {-1, 1}, {1, 1}, {1, -1},  {-1, -1}};
+    const MV neighbors[8] = {{-1, 0}, {0, -1}, {0, 1}, {1, 0}, {-1, 1}, {1, 1}, {1, -1}, {-1, -1}};
 #else
     const MV neighbors[4] = {{-1, 0}, {0, -1}, {0, 1}, {1, 0}};
 #endif
@@ -772,19 +772,20 @@ static int obmc_refining_search_sad(const IntraBcContext *x, const int32_t *wsrc
 int svt_av1_obmc_full_pixel_search(ModeDecisionContext *ctx, IntraBcContext *x, MV *mvp_full, int sadpb,
                                    const AomVarianceFnPtr *fn_ptr, const MV *ref_mv, MV *dst_mv, int is_second) {
     // obmc_full_pixel_diamond does not provide BDR gain on 360p
-    const int32_t *wsrc         = ctx->wsrc_buf;
-    const int32_t *mask         = ctx->mask_buf;
+    const int32_t *wsrc = ctx->wsrc_buf;
+    const int32_t *mask = ctx->mask_buf;
 #if OPT_OBMC_REFINEMENT
-    const int      search_range = ctx->obmc_ctrls.fpel_search_range;
+    const int search_range = ctx->obmc_ctrls.fpel_search_range;
 #else
-    const int      search_range = 8;
+    const int search_range = 8;
 #endif
-    *dst_mv                     = *mvp_full;
-    x->approx_inter_rate        = ctx->approx_inter_rate;
+    *dst_mv              = *mvp_full;
+    x->approx_inter_rate = ctx->approx_inter_rate;
     clamp_mv(dst_mv, x->mv_limits.col_min, x->mv_limits.col_max, x->mv_limits.row_min, x->mv_limits.row_max);
     clamp_mv(dst_mv, x->mv_limits.col_min, x->mv_limits.col_max, x->mv_limits.row_min, x->mv_limits.row_max);
 #if OPT_OBMC_REFINEMENT
-    int thissme = obmc_refining_search_sad(x, wsrc, mask, dst_mv, sadpb, search_range, fn_ptr, ref_mv, is_second, ctx->obmc_ctrls.fpel_search_diag);
+    int thissme = obmc_refining_search_sad(
+        x, wsrc, mask, dst_mv, sadpb, search_range, fn_ptr, ref_mv, is_second, ctx->obmc_ctrls.fpel_search_diag);
 #else
     int thissme = obmc_refining_search_sad(x, wsrc, mask, dst_mv, sadpb, search_range, fn_ptr, ref_mv, is_second);
 #endif

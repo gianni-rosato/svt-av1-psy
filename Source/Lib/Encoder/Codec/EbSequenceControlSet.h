@@ -163,6 +163,9 @@ typedef struct SequenceControlSet {
     uint16_t max_initial_input_pad_bottom; // max init time input pad bottom
     uint16_t max_initial_input_pad_right; // max init time input pad right
 #endif
+#if FIX_MEM_ALLOC_ON_THE_FLY
+    uint16_t initial_qp; // init time qp
+#endif
     uint32_t          chroma_width;
     uint32_t          chroma_height;
     uint32_t          pad_right;
@@ -273,9 +276,9 @@ typedef struct SequenceControlSet {
 #if !OPT_VBR_2P
     MiniGopSizeCtrls mgs_ctls;
 #endif
-    uint8_t          calc_hist;
-    TfControls       tf_params_per_type[3]; // [I_SLICE][BASE][L1]
-    MrpCtrls         mrp_ctrls;
+    uint8_t    calc_hist;
+    TfControls tf_params_per_type[3]; // [I_SLICE][BASE][L1]
+    MrpCtrls   mrp_ctrls;
     /*!< The RC stat generation pass mode (0: The default, 1: optimized)*/
     uint8_t rc_stat_gen_pass_mode;
     int     cqp_base_q_tf;

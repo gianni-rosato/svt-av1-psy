@@ -107,9 +107,15 @@ static void get_ref_hp_percentage(PictureControlSet *pcs, int16_t *hp_area) {
         return;
     }
 
-    int8_t             hp_perc_l0 = -1;
+#if !CLN_MISC_II
+    int8_t hp_perc_l0 = -1;
+#endif
     EbReferenceObject *ref_obj_l0 = (EbReferenceObject *)pcs->ref_pic_ptr_array[REF_LIST_0][0]->object_ptr;
-    hp_perc_l0                    = ref_obj_l0->slice_type == I_SLICE ? -1 : ref_obj_l0->hp_coded_area;
+#if CLN_MISC_II
+    int8_t hp_perc_l0 = ref_obj_l0->slice_type == I_SLICE ? -1 : ref_obj_l0->hp_coded_area;
+#else
+    hp_perc_l0 = ref_obj_l0->slice_type == I_SLICE ? -1 : ref_obj_l0->hp_coded_area;
+#endif
 
     int8_t hp_perc_l1 = -1;
     if (pcs->slice_type == B_SLICE) {
@@ -552,8 +558,8 @@ static int get_cqp_kf_boost_from_r0(double r0, int frames_to_key, EbInputResolut
     const int boost = is_720p_or_smaller ? (int)rint(3 * (75.0 + 17.0 * factor) / r0)
                                          : (int)rint(4 * (75.0 + 17.0 * factor) / r0);
 #else
-    const int boost              = is_720p_or_smaller ? (int)rint(3 * (75.0 + 17.0 * factor) / 2 / r0)
-                                                      : (int)rint(2 * (75.0 + 17.0 * factor) / r0);
+    const int     boost                = is_720p_or_smaller ? (int)rint(3 * (75.0 + 17.0 * factor) / 2 / r0)
+                                                            : (int)rint(2 * (75.0 + 17.0 * factor) / r0);
 #endif
     return boost;
 }
@@ -723,14 +729,14 @@ static void adjust_active_best_and_worst_quality_org(PictureControlSet *pcs, RAT
 #if OPT_VBR6
     if (pcs->ppcs->transition_present != 1) {
 #endif
-    if (frame_is_intra_only(pcs->ppcs) || (scs->static_config.gop_constraint_rc && pcs->ppcs->is_ref) ||
-        (pcs->ppcs->temporal_layer_index < 2 && scs->is_short_clip) || (pcs->ppcs->is_ref && !scs->is_short_clip)) {
-        active_best_quality -= (twopass->extend_minq + twopass->extend_minq_fast);
-        active_worst_quality += (twopass->extend_maxq / 2);
-    } else {
-        active_best_quality -= (twopass->extend_minq + twopass->extend_minq_fast) / 2;
-        active_worst_quality += twopass->extend_maxq;
-    }
+        if (frame_is_intra_only(pcs->ppcs) || (scs->static_config.gop_constraint_rc && pcs->ppcs->is_ref) ||
+            (pcs->ppcs->temporal_layer_index < 2 && scs->is_short_clip) || (pcs->ppcs->is_ref && !scs->is_short_clip)) {
+            active_best_quality -= (twopass->extend_minq + twopass->extend_minq_fast);
+            active_worst_quality += (twopass->extend_maxq / 2);
+        } else {
+            active_best_quality -= (twopass->extend_minq + twopass->extend_minq_fast) / 2;
+            active_worst_quality += twopass->extend_maxq;
+        }
 #if OPT_VBR6
     }
 #endif
@@ -798,16 +804,16 @@ static int crf_qindex_calc(PictureControlSet *pcs, RATE_CONTROL *rc, int qindex)
     int                      active_best_quality  = 0;
     int                      active_worst_quality = qindex;
     rc->arf_q                                     = 0;
-    int           q;
+    int q;
 #if CLN_IS_REF
     const uint8_t temporal_layer      = ppcs->temporal_layer_index;
     const uint8_t hierarchical_levels = ppcs->hierarchical_levels;
     const int     leaf_frame          = ppcs->is_highest_layer;
-    const int     is_intrl_arf_boost = (temporal_layer > 0 && !leaf_frame);
-    const int rf_level = (frame_is_intra_only(ppcs)) ? KF_STD
-                    : (temporal_layer == 0)          ? GF_ARF_STD
-                    : !leaf_frame                    ? GF_ARF_LOW
-                                                     : INTER_NORMAL;
+    const int     is_intrl_arf_boost  = (temporal_layer > 0 && !leaf_frame);
+    const int     rf_level            = (frame_is_intra_only(ppcs)) ? KF_STD
+                       : (temporal_layer == 0)                      ? GF_ARF_STD
+                       : !leaf_frame                                ? GF_ARF_LOW
+                                                                    : INTER_NORMAL;
 #else
     const uint8_t is_ref               = ppcs->is_ref;
     const uint8_t temporal_layer       = ppcs->temporal_layer_index;
@@ -1047,8 +1053,11 @@ int svt_aom_compute_rd_mult_based_on_qindex(EbBitDepth bit_depth, SvtAv1FrameUpd
 // static const int rd_frame_type_factor[FRAME_UPDATE_TYPES] = { 128, 144, 128,
 //                                                               128, 144, 144,
 //                                                               128 };
-static const int rd_frame_type_factor[SVT_AV1_FRAME_UPDATE_TYPES]    = {140, 180, 128, 140, 164, 164, 140};
+static const int rd_frame_type_factor[SVT_AV1_FRAME_UPDATE_TYPES] = {140, 180, 128, 140, 164, 164, 140};
+#if !CLN_MISC_II
 static const int rd_frame_type_factor_ld[SVT_AV1_FRAME_UPDATE_TYPES] = {128, 164, 128, 128, 164, 164, 128};
+#endif
+
 /*
  * Set the sse lambda based on the bit_depth, then update based on frame position.
  */
@@ -1061,10 +1070,10 @@ int svt_aom_compute_rd_mult(PictureControlSet *pcs, uint8_t q_index, uint8_t me_
     int64_t rdmult = svt_aom_compute_rd_mult_based_on_qindex(bit_depth, pcs->ppcs->update_type, q_index);
     // Update rdmult based on the frame's position in the miniGOP
     uint8_t gf_update_type = frame_type == KEY_FRAME ? SVT_AV1_KF_UPDATE
-        : temporal_layer_index == 0 ? SVT_AV1_ARF_UPDATE
-        : temporal_layer_index < max_temporal_layer ? SVT_AV1_INTNL_ARF_UPDATE
-        : SVT_AV1_LF_UPDATE;
-    rdmult = (rdmult * rd_frame_type_factor[gf_update_type]) >> 7;
+        : temporal_layer_index == 0                  ? SVT_AV1_ARF_UPDATE
+        : temporal_layer_index < max_temporal_layer  ? SVT_AV1_INTNL_ARF_UPDATE
+                                                     : SVT_AV1_LF_UPDATE;
+    rdmult                 = (rdmult * rd_frame_type_factor[gf_update_type]) >> 7;
     if (pcs->scs->stats_based_sb_lambda_modulation) {
         int factor = 128;
         if (pcs->ppcs->frm_hdr.delta_q_params.delta_q_present) {
@@ -1089,39 +1098,35 @@ int svt_aom_compute_rd_mult(PictureControlSet *pcs, uint8_t q_index, uint8_t me_
 }
 
 #if OPT_FAST_LAMBDA
-int svt_aom_compute_fast_lambda(PictureControlSet* pcs, uint8_t q_index, uint8_t me_q_index, uint8_t bit_depth) {
+int svt_aom_compute_fast_lambda(PictureControlSet *pcs, uint8_t q_index, uint8_t me_q_index, uint8_t bit_depth) {
     FrameType frame_type = pcs->ppcs->frm_hdr.frame_type;
     // To set gf_update_type based on current TL vs. the max TL (e.g. for 5L, max TL is 4)
     uint8_t temporal_layer_index = pcs->ppcs->temporal_layer_index;
-    uint8_t max_temporal_layer = pcs->ppcs->hierarchical_levels;
+    uint8_t max_temporal_layer   = pcs->ppcs->hierarchical_levels;
     // Always use q_index for the derivation of the initial rdmult (i.e. don't use me_q_index)
-    int64_t rdmult = bit_depth == 8
-        ? av1_lambda_mode_decision8_bit_sad[q_index]
-        : av1lambda_mode_decision10_bit_sad[q_index];
+    int64_t rdmult = bit_depth == 8 ? av1_lambda_mode_decision8_bit_sad[q_index]
+                                    : av1lambda_mode_decision10_bit_sad[q_index];
 
     // Update rdmult based on the frame's position in the miniGOP
     uint8_t gf_update_type = frame_type == KEY_FRAME ? SVT_AV1_KF_UPDATE
-        : temporal_layer_index == 0 ? SVT_AV1_ARF_UPDATE
-        : temporal_layer_index < max_temporal_layer ? SVT_AV1_INTNL_ARF_UPDATE
-        : SVT_AV1_LF_UPDATE;
-    rdmult = (rdmult * rd_frame_type_factor[gf_update_type]) >> 7;
+        : temporal_layer_index == 0                  ? SVT_AV1_ARF_UPDATE
+        : temporal_layer_index < max_temporal_layer  ? SVT_AV1_INTNL_ARF_UPDATE
+                                                     : SVT_AV1_LF_UPDATE;
+    rdmult                 = (rdmult * rd_frame_type_factor[gf_update_type]) >> 7;
     if (pcs->scs->stats_based_sb_lambda_modulation) {
         int factor = 128;
         if (pcs->ppcs->frm_hdr.delta_q_params.delta_q_present) {
             int qdiff = q_index - pcs->ppcs->frm_hdr.quantization_params.base_q_idx;
             if (qdiff < 0) {
                 factor = (qdiff <= -8) ? 90 : 115;
-            }
-            else if (qdiff > 0) {
+            } else if (qdiff > 0) {
                 factor = (qdiff <= 8) ? 135 : 150;
             }
-        }
-        else {
+        } else {
             int qdiff = me_q_index - pcs->ppcs->frm_hdr.quantization_params.base_q_idx;
             if (qdiff < 0) {
                 factor = (qdiff <= -4) ? 100 : 115;
-            }
-            else if (qdiff > 0) {
+            } else if (qdiff > 0) {
                 factor = (qdiff <= 4) ? 135 : 150;
             }
         }

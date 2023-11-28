@@ -147,7 +147,6 @@ static const std::vector<EncTestSetting> default_enc_settings = {
     {"ConstrainIntraTest1", {{"ConstrainedIntra", "1"}}, default_test_vectors},
 
     // test rate control modes, default is 0, 1 and 2 is supported
-    {"RateControlTest1", {{"RateControlMode", "2"}}, default_test_vectors},
     {"RateControlTest2", {{"RateControlMode", "1"}}, default_test_vectors},
 
     // test scene change detection, default is 1
@@ -169,16 +168,8 @@ static const std::vector<EncTestSetting> default_enc_settings = {
     {"TileTest2", {{"TileCol", "1"}}, default_test_vectors},
     {"TileTest3", {{"TileCol", "1"}, {"TileRow", "1"}}, default_test_vectors},
 
-    // Validate by setting a low bitrate and MaxQpAllowed, push the encoder to producing
-    // large partitions.
-    {"IncompleteSbTest1",
-     {{"RateControlMode", "2"}, {"TargetBitRate", "100000"}, {"MaxQpAllowed", "40"}},
-     parkjoy},
     // Validate by setting a high bitrate and MinQpAllowed, push the encoder to producing
     // small partitions.
-    {"IncompleteSbTest2",
-     {{"RateControlMode", "2"}, {"TargetBitRate", "1000000"}, {"MinQpAllowed", "10"}},
-     parkjoy},
 
     // test pallete mode
     {"PaletteModeTest1",
@@ -235,10 +226,6 @@ static const std::vector<EncTestSetting> default_enc_settings = {
     // reference scaling tests with loop restoration
     { "RefScalingTest7", {{"ResizeMode", "2"}, {"EnableRestoration", "1"}, {"EncoderMode", "8"}}, default_test_vectors },
     // reference scaling tests for dynamic mode
-    { "RefScalingTest8", {{"ResizeMode", "3"}, {"RateControlMode", "2"}, {"PredStructure", "1"}, {"TargetBitRate", "100"}, {"EncoderMode", "8"}}, default_long_test_vectors },
-    { "RefScalingTest9", {{"ResizeMode", "3"}, {"RateControlMode", "2"}, {"PredStructure", "1"}, {"TargetBitRate", "50"}, {"EncoderMode", "8"}}, default_long_test_vectors },
-    { "RefScalingTest10", {{"ResizeMode", "3"}, {"RateControlMode", "2"}, {"PredStructure", "1"}, {"TargetBitRate", "20"}, {"EncoderMode", "8"}}, default_long_test_vectors },
-    { "RefScalingTest11", {{"ResizeMode", "3"}, {"RateControlMode", "2"}, {"PredStructure", "1"}, {"TargetBitRate", "15"}, {"EncoderMode", "8"}}, default_long_test_vectors },
 
     // reference scaling tests with super resolution
     { "SuperResRefScalingTest0", {{"SuperresMode", "2"}, {"ResizeMode", "2"}, {"EncoderMode", "8"}}, default_test_vectors },
@@ -677,10 +664,6 @@ generate_ref_scaling_random_access_settings() {
         // VBR
         {{"ResizeMode", "4"},
          {"RateControlMode", "1"},
-         {"TargetBitRate", "1000"}},
-        // CBR
-        {{"ResizeMode", "4"},
-         {"RateControlMode", "2"},
          {"TargetBitRate", "1000"}}};
     std::vector<TestFrameEvent> event_vec;
     uint32_t frame_count = 10;

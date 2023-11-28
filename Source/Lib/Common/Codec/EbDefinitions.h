@@ -769,12 +769,7 @@ typedef enum IfsLevel {
     IFS_MDS3, // IFS @ md_stage_3()
 } IfsLevel;
 #if OPT_PRE_MDS0_SEARCH
-typedef enum DistortionType {
-    SAD,
-    VAR,
-    SSD,
-    DIST_TYPES
-} DistortionType;
+typedef enum DistortionType { SAD, VAR, SSD, DIST_TYPES } DistortionType;
 #else
 typedef enum Mds0DistortionType {
     MDS0_SAD, // Use SAD at MDS0

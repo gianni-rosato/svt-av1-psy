@@ -634,7 +634,7 @@ typedef struct CandEliminationCtlrs {
     uint8_t  inject_new_me;
     uint8_t  inject_new_pme;
 #if !OPT_Q_WARP
-    uint8_t  inject_new_warp;
+    uint8_t inject_new_warp;
 #endif
     // factor to scale base TH by for distortion check
     uint8_t th_multiplier;
@@ -1113,9 +1113,9 @@ typedef struct ModeDecisionContext {
     UvCtrls              uv_ctrls;
     uint8_t              unipred3x3_injection;
 #if OPT_BIPRED3x3
-    Bipred3x3Controls    bipred3x3_ctrls;
+    Bipred3x3Controls bipred3x3_ctrls;
 #else
-    uint8_t              bipred3x3_injection;
+    uint8_t bipred3x3_injection;
 #endif
     uint8_t              redundant_blk;
     uint8_t              nic_level;
@@ -1233,10 +1233,10 @@ typedef struct ModeDecisionContext {
     uint8_t             params_status; // specifies the status of MD parameters; 0: default, 1: modified
     bool                d1_skip_flag[25];
     // was parent_sq_coeff_area_based_cycles_reduction_ctrls
-    ParentSqCmplxCtrls   psq_cplx_ctrls;
-    NsqPsqTxsCtrls       nsq_psq_txs_ctrls;
+    ParentSqCmplxCtrls psq_cplx_ctrls;
+    NsqPsqTxsCtrls     nsq_psq_txs_ctrls;
 #if !CLN_NSQ_LVLS
-    NsqPsqPredCtrls      nsq_psq_pred_ctrls;
+    NsqPsqPredCtrls nsq_psq_pred_ctrls;
 #endif
     uint8_t              sb_size;
     EbPictureBufferDesc *recon_coeff_ptr[TX_TYPES];
@@ -1274,8 +1274,8 @@ typedef struct ModeDecisionContext {
 #if OPT_CMPOUND
     uint32_t md_pme_dist;
 #endif
-    uint8_t         inject_new_me;
-    uint8_t         inject_new_pme;
+    uint8_t inject_new_me;
+    uint8_t inject_new_pme;
 #if !OPT_Q_WARP
     uint8_t inject_new_warp;
 #endif

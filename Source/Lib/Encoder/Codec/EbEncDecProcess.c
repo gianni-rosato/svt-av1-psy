@@ -1831,15 +1831,13 @@ void set_block_based_depth_refinement_controls(ModeDecisionContext *ctx, uint8_t
 
     switch (block_based_depth_refinement_level) {
     case 0: depth_refinement_ctrls->enabled = 0; break;
-    case 1:
-        depth_refinement_ctrls->enabled                         = 1;
-        depth_refinement_ctrls->prune_child_if_not_avail        = 1;
+    case 1: depth_refinement_ctrls->enabled = 1; depth_refinement_ctrls->prune_child_if_not_avail = 1;
 #if OPT_M3_BEYOND_DEPTHS
-        depth_refinement_ctrls->parent_to_current_th            = 100;
-        depth_refinement_ctrls->sub_to_current_th               = 100;
+        depth_refinement_ctrls->parent_to_current_th = 100;
+        depth_refinement_ctrls->sub_to_current_th    = 100;
 #else
-        depth_refinement_ctrls->parent_to_current_th            = MAX_SIGNED_VALUE;
-        depth_refinement_ctrls->sub_to_current_th               = MAX_SIGNED_VALUE;
+        depth_refinement_ctrls->parent_to_current_th = MAX_SIGNED_VALUE;
+        depth_refinement_ctrls->sub_to_current_th = MAX_SIGNED_VALUE;
 #endif
         depth_refinement_ctrls->parent_max_cost_th_mult         = 10;
         depth_refinement_ctrls->cost_band_based_modulation      = 0;
@@ -1858,15 +1856,13 @@ void set_block_based_depth_refinement_controls(ModeDecisionContext *ctx, uint8_t
 #endif
         break;
 #if OPT_DEPTH_REFIN
-    case 2:
-        depth_refinement_ctrls->enabled                         = 1;
-        depth_refinement_ctrls->prune_child_if_not_avail        = 1;
+    case 2: depth_refinement_ctrls->enabled = 1; depth_refinement_ctrls->prune_child_if_not_avail = 1;
 #if OPT_M3_BEYOND_DEPTHS
-        depth_refinement_ctrls->parent_to_current_th            = 100;
-        depth_refinement_ctrls->sub_to_current_th               = 100;
+        depth_refinement_ctrls->parent_to_current_th = 100;
+        depth_refinement_ctrls->sub_to_current_th    = 100;
 #else
-        depth_refinement_ctrls->parent_to_current_th            = MAX_SIGNED_VALUE;
-        depth_refinement_ctrls->sub_to_current_th               = MAX_SIGNED_VALUE;
+        depth_refinement_ctrls->parent_to_current_th = MAX_SIGNED_VALUE;
+        depth_refinement_ctrls->sub_to_current_th    = MAX_SIGNED_VALUE;
 #endif
         depth_refinement_ctrls->parent_max_cost_th_mult         = 10;
         depth_refinement_ctrls->cost_band_based_modulation      = 0;
@@ -1876,10 +1872,10 @@ void set_block_based_depth_refinement_controls(ModeDecisionContext *ctx, uint8_t
         depth_refinement_ctrls->sub_to_current_pd0_coeff_offset = 0;
         depth_refinement_ctrls->lower_depth_split_cost_th       = 20;
 #if OPT_CHILD_DEPTH_RATE
-        depth_refinement_ctrls->split_rate_th                   = 10;
+        depth_refinement_ctrls->split_rate_th = 10;
 #endif
 #if OPT_DR_QP
-        depth_refinement_ctrls->q_weight                        = 10;
+        depth_refinement_ctrls->q_weight = 10;
 #endif
         break;
     case 3:
@@ -1895,10 +1891,10 @@ void set_block_based_depth_refinement_controls(ModeDecisionContext *ctx, uint8_t
         depth_refinement_ctrls->sub_to_current_pd0_coeff_offset = 0;
         depth_refinement_ctrls->lower_depth_split_cost_th       = 20;
 #if OPT_CHILD_DEPTH_RATE
-        depth_refinement_ctrls->split_rate_th                   = 10;
+        depth_refinement_ctrls->split_rate_th = 10;
 #endif
 #if OPT_DR_QP
-        depth_refinement_ctrls->q_weight                        = 10;
+        depth_refinement_ctrls->q_weight = 10;
 #endif
         break;
 
@@ -1921,10 +1917,10 @@ void set_block_based_depth_refinement_controls(ModeDecisionContext *ctx, uint8_t
         depth_refinement_ctrls->sub_to_current_pd0_coeff_offset = 0;
         depth_refinement_ctrls->lower_depth_split_cost_th       = 20;
 #if OPT_CHILD_DEPTH_RATE
-        depth_refinement_ctrls->split_rate_th                   = 10;
+        depth_refinement_ctrls->split_rate_th = 10;
 #endif
 #if OPT_DR_QP
-        depth_refinement_ctrls->q_weight                        = 10;
+        depth_refinement_ctrls->q_weight = 10;
 #endif
         break;
     case 5:
@@ -1946,10 +1942,10 @@ void set_block_based_depth_refinement_controls(ModeDecisionContext *ctx, uint8_t
         depth_refinement_ctrls->sub_to_current_pd0_coeff_offset = 20;
         depth_refinement_ctrls->lower_depth_split_cost_th       = 20;
 #if OPT_CHILD_DEPTH_RATE
-        depth_refinement_ctrls->split_rate_th                   = 10;
+        depth_refinement_ctrls->split_rate_th = 10;
 #endif
 #if OPT_DR_QP
-        depth_refinement_ctrls->q_weight                        = 10;
+        depth_refinement_ctrls->q_weight = 10;
 #endif
         break;
     case 6:
@@ -1971,10 +1967,10 @@ void set_block_based_depth_refinement_controls(ModeDecisionContext *ctx, uint8_t
         depth_refinement_ctrls->sub_to_current_pd0_coeff_offset = 20;
         depth_refinement_ctrls->lower_depth_split_cost_th       = 20;
 #if OPT_CHILD_DEPTH_RATE
-        depth_refinement_ctrls->split_rate_th                   = 10;
+        depth_refinement_ctrls->split_rate_th = 10;
 #endif
 #if OPT_DR_QP
-        depth_refinement_ctrls->q_weight                        = 10;
+        depth_refinement_ctrls->q_weight = 10;
 #endif
         break;
     case 7:
@@ -1996,10 +1992,10 @@ void set_block_based_depth_refinement_controls(ModeDecisionContext *ctx, uint8_t
         depth_refinement_ctrls->sub_to_current_pd0_coeff_offset = 20;
         depth_refinement_ctrls->lower_depth_split_cost_th       = 20;
 #if OPT_CHILD_DEPTH_RATE
-        depth_refinement_ctrls->split_rate_th                   = 10;
+        depth_refinement_ctrls->split_rate_th = 10;
 #endif
 #if OPT_DR_QP
-        depth_refinement_ctrls->q_weight                        = 10;
+        depth_refinement_ctrls->q_weight = 10;
 #endif
         break;
     case 8:
@@ -2021,10 +2017,10 @@ void set_block_based_depth_refinement_controls(ModeDecisionContext *ctx, uint8_t
         depth_refinement_ctrls->sub_to_current_pd0_coeff_offset = 20;
         depth_refinement_ctrls->lower_depth_split_cost_th       = 20;
 #if OPT_CHILD_DEPTH_RATE
-        depth_refinement_ctrls->split_rate_th                   = 10;
+        depth_refinement_ctrls->split_rate_th = 10;
 #endif
 #if OPT_DR_QP
-        depth_refinement_ctrls->q_weight                        = 10;
+        depth_refinement_ctrls->q_weight = 10;
 #endif
         break;
     case 9:
@@ -2046,10 +2042,10 @@ void set_block_based_depth_refinement_controls(ModeDecisionContext *ctx, uint8_t
         depth_refinement_ctrls->sub_to_current_pd0_coeff_offset = 20;
         depth_refinement_ctrls->lower_depth_split_cost_th       = 20;
 #if OPT_CHILD_DEPTH_RATE
-        depth_refinement_ctrls->split_rate_th                   = 10;
+        depth_refinement_ctrls->split_rate_th = 10;
 #endif
 #if OPT_DR_QP
-        depth_refinement_ctrls->q_weight                        = 10;
+        depth_refinement_ctrls->q_weight = 10;
 #endif
         break;
     case 10:
@@ -2071,10 +2067,10 @@ void set_block_based_depth_refinement_controls(ModeDecisionContext *ctx, uint8_t
         depth_refinement_ctrls->sub_to_current_pd0_coeff_offset = 20;
         depth_refinement_ctrls->lower_depth_split_cost_th       = 20;
 #if OPT_CHILD_DEPTH_RATE
-        depth_refinement_ctrls->split_rate_th                   = 10;
+        depth_refinement_ctrls->split_rate_th = 10;
 #endif
 #if OPT_DR_QP
-        depth_refinement_ctrls->q_weight                        = 10;
+        depth_refinement_ctrls->q_weight = 10;
 #endif
         break;
     case 11:
@@ -2096,10 +2092,10 @@ void set_block_based_depth_refinement_controls(ModeDecisionContext *ctx, uint8_t
         depth_refinement_ctrls->sub_to_current_pd0_coeff_offset = 20;
         depth_refinement_ctrls->lower_depth_split_cost_th       = 20;
 #if OPT_CHILD_DEPTH_RATE
-        depth_refinement_ctrls->split_rate_th                   = 10;
+        depth_refinement_ctrls->split_rate_th = 10;
 #endif
 #if OPT_DR_QP
-        depth_refinement_ctrls->q_weight                        = 10;
+        depth_refinement_ctrls->q_weight = 10;
 #endif
         break;
     case 12:
@@ -2121,10 +2117,10 @@ void set_block_based_depth_refinement_controls(ModeDecisionContext *ctx, uint8_t
         depth_refinement_ctrls->sub_to_current_pd0_coeff_offset = 20;
         depth_refinement_ctrls->lower_depth_split_cost_th       = 20;
 #if OPT_CHILD_DEPTH_RATE
-        depth_refinement_ctrls->split_rate_th                   = 10;
+        depth_refinement_ctrls->split_rate_th = 10;
 #endif
 #if OPT_DR_QP
-        depth_refinement_ctrls->q_weight                        = 10;
+        depth_refinement_ctrls->q_weight = 10;
 #endif
         break;
     case 13:
@@ -2146,10 +2142,10 @@ void set_block_based_depth_refinement_controls(ModeDecisionContext *ctx, uint8_t
         depth_refinement_ctrls->sub_to_current_pd0_coeff_offset = 20;
         depth_refinement_ctrls->lower_depth_split_cost_th       = 20;
 #if OPT_CHILD_DEPTH_RATE
-        depth_refinement_ctrls->split_rate_th                   = 10;
+        depth_refinement_ctrls->split_rate_th = 10;
 #endif
 #if OPT_DR_QP
-        depth_refinement_ctrls->q_weight                        = 10;
+        depth_refinement_ctrls->q_weight = 10;
 #endif
         break;
         // Pred_Only
@@ -2166,222 +2162,263 @@ void set_block_based_depth_refinement_controls(ModeDecisionContext *ctx, uint8_t
         depth_refinement_ctrls->sub_to_current_pd0_coeff_offset = 20;
         depth_refinement_ctrls->lower_depth_split_cost_th       = 20;
 #if OPT_CHILD_DEPTH_RATE
-        depth_refinement_ctrls->split_rate_th                   = 10;
+
+        depth_refinement_ctrls->split_rate_th = 10;
+
 #endif
+
 #if OPT_DR_QP
-        depth_refinement_ctrls->q_weight                        = 10;
+
+        depth_refinement_ctrls->q_weight = 10;
+
 #endif
+
         break;
+
 #else
+
     case 2:
-        depth_refinement_ctrls->enabled                         = 1;
-        depth_refinement_ctrls->prune_child_if_not_avail        = 1;
-        depth_refinement_ctrls->parent_to_current_th            = 50;
-        depth_refinement_ctrls->sub_to_current_th               = 50;
-        depth_refinement_ctrls->parent_max_cost_th_mult         = 10;
-        depth_refinement_ctrls->cost_band_based_modulation      = 0;
-        depth_refinement_ctrls->up_to_2_depth                   = 0;
-        depth_refinement_ctrls->limit_4x4_depth                 = 0;
-        depth_refinement_ctrls->sub_to_current_pd0_coeff_th     = 0;
+
+        depth_refinement_ctrls->enabled = 1;
+
+        depth_refinement_ctrls->prune_child_if_not_avail = 1;
+
+        depth_refinement_ctrls->parent_to_current_th = 50;
+
+        depth_refinement_ctrls->sub_to_current_th = 50;
+
+        depth_refinement_ctrls->parent_max_cost_th_mult = 10;
+
+        depth_refinement_ctrls->cost_band_based_modulation = 0;
+
+        depth_refinement_ctrls->up_to_2_depth = 0;
+
+        depth_refinement_ctrls->limit_4x4_depth = 0;
+
+        depth_refinement_ctrls->sub_to_current_pd0_coeff_th = 0;
+
         depth_refinement_ctrls->sub_to_current_pd0_coeff_offset = 0;
+
         break;
 
     case 3:
-        depth_refinement_ctrls->enabled                         = 1;
-        depth_refinement_ctrls->prune_child_if_not_avail        = 1;
-        depth_refinement_ctrls->parent_to_current_th            = 50;
-        depth_refinement_ctrls->sub_to_current_th               = 50;
-        depth_refinement_ctrls->parent_max_cost_th_mult         = 10;
-        depth_refinement_ctrls->cost_band_based_modulation      = 1;
-        depth_refinement_ctrls->max_cost_multiplier             = 400;
-        depth_refinement_ctrls->max_band_cnt                    = 4;
-        depth_refinement_ctrls->decrement_per_band[0]           = MAX_SIGNED_VALUE;
-        depth_refinement_ctrls->decrement_per_band[1]           = 15;
-        depth_refinement_ctrls->decrement_per_band[2]           = 10;
-        depth_refinement_ctrls->decrement_per_band[3]           = 5;
-        depth_refinement_ctrls->up_to_2_depth                   = 0;
-        depth_refinement_ctrls->limit_4x4_depth                 = 0;
-        depth_refinement_ctrls->sub_to_current_pd0_coeff_th     = 0;
+
+        depth_refinement_ctrls->enabled = 1;
+
+        depth_refinement_ctrls->prune_child_if_not_avail = 1;
+
+        depth_refinement_ctrls->parent_to_current_th = 50;
+
+        depth_refinement_ctrls->sub_to_current_th = 50;
+
+        depth_refinement_ctrls->parent_max_cost_th_mult = 10;
+
+        depth_refinement_ctrls->cost_band_based_modulation = 1;
+        depth_refinement_ctrls->max_cost_multiplier = 400;
+        depth_refinement_ctrls->max_band_cnt = 4;
+        depth_refinement_ctrls->decrement_per_band[0] = MAX_SIGNED_VALUE;
+        depth_refinement_ctrls->decrement_per_band[1] = 15;
+        depth_refinement_ctrls->decrement_per_band[2] = 10;
+        depth_refinement_ctrls->decrement_per_band[3] = 5;
+        depth_refinement_ctrls->up_to_2_depth = 0;
+        depth_refinement_ctrls->limit_4x4_depth = 0;
+        depth_refinement_ctrls->sub_to_current_pd0_coeff_th = 0;
         depth_refinement_ctrls->sub_to_current_pd0_coeff_offset = 0;
         break;
     case 4:
-        depth_refinement_ctrls->enabled                         = 1;
-        depth_refinement_ctrls->prune_child_if_not_avail        = 1;
-        depth_refinement_ctrls->parent_to_current_th            = 50;
-        depth_refinement_ctrls->sub_to_current_th               = 50;
-        depth_refinement_ctrls->parent_max_cost_th_mult         = 10;
-        depth_refinement_ctrls->cost_band_based_modulation      = 1;
-        depth_refinement_ctrls->max_cost_multiplier             = 400;
-        depth_refinement_ctrls->max_band_cnt                    = 4;
-        depth_refinement_ctrls->decrement_per_band[0]           = MAX_SIGNED_VALUE;
-        depth_refinement_ctrls->decrement_per_band[1]           = 15;
-        depth_refinement_ctrls->decrement_per_band[2]           = 10;
-        depth_refinement_ctrls->decrement_per_band[3]           = 5;
-        depth_refinement_ctrls->up_to_2_depth                   = 0;
-        depth_refinement_ctrls->limit_4x4_depth                 = 0;
-        depth_refinement_ctrls->sub_to_current_pd0_coeff_th     = 20;
+        depth_refinement_ctrls->enabled = 1;
+        depth_refinement_ctrls->prune_child_if_not_avail = 1;
+        depth_refinement_ctrls->parent_to_current_th = 50;
+        depth_refinement_ctrls->sub_to_current_th = 50;
+        depth_refinement_ctrls->parent_max_cost_th_mult = 10;
+        depth_refinement_ctrls->cost_band_based_modulation = 1;
+        depth_refinement_ctrls->max_cost_multiplier = 400;
+        depth_refinement_ctrls->max_band_cnt = 4;
+        depth_refinement_ctrls->decrement_per_band[0] = MAX_SIGNED_VALUE;
+        depth_refinement_ctrls->decrement_per_band[1] = 15;
+        depth_refinement_ctrls->decrement_per_band[2] = 10;
+        depth_refinement_ctrls->decrement_per_band[3] = 5;
+        depth_refinement_ctrls->up_to_2_depth = 0;
+        depth_refinement_ctrls->limit_4x4_depth = 0;
+        depth_refinement_ctrls->sub_to_current_pd0_coeff_th = 20;
         depth_refinement_ctrls->sub_to_current_pd0_coeff_offset = 20;
         break;
     case 5:
-        depth_refinement_ctrls->enabled                         = 1;
-        depth_refinement_ctrls->prune_child_if_not_avail        = 1;
-        depth_refinement_ctrls->parent_to_current_th            = 25;
-        depth_refinement_ctrls->sub_to_current_th               = 25;
-        depth_refinement_ctrls->parent_max_cost_th_mult         = 10;
-        depth_refinement_ctrls->cost_band_based_modulation      = 1;
-        depth_refinement_ctrls->max_cost_multiplier             = 400;
-        depth_refinement_ctrls->max_band_cnt                    = 4;
-        depth_refinement_ctrls->decrement_per_band[0]           = MAX_SIGNED_VALUE;
-        depth_refinement_ctrls->decrement_per_band[1]           = 15;
-        depth_refinement_ctrls->decrement_per_band[2]           = 10;
-        depth_refinement_ctrls->decrement_per_band[3]           = 5;
-        depth_refinement_ctrls->up_to_2_depth                   = 0;
-        depth_refinement_ctrls->limit_4x4_depth                 = 15;
-        depth_refinement_ctrls->sub_to_current_pd0_coeff_th     = 20;
+        depth_refinement_ctrls->enabled = 1;
+        depth_refinement_ctrls->prune_child_if_not_avail = 1;
+        depth_refinement_ctrls->parent_to_current_th = 25;
+        depth_refinement_ctrls->sub_to_current_th = 25;
+        depth_refinement_ctrls->parent_max_cost_th_mult = 10;
+        depth_refinement_ctrls->cost_band_based_modulation = 1;
+        depth_refinement_ctrls->max_cost_multiplier = 400;
+        depth_refinement_ctrls->max_band_cnt = 4;
+        depth_refinement_ctrls->decrement_per_band[0] = MAX_SIGNED_VALUE;
+        depth_refinement_ctrls->decrement_per_band[1] = 15;
+        depth_refinement_ctrls->decrement_per_band[2] = 10;
+        depth_refinement_ctrls->decrement_per_band[3] = 5;
+        depth_refinement_ctrls->up_to_2_depth = 0;
+        depth_refinement_ctrls->limit_4x4_depth = 15;
+        depth_refinement_ctrls->sub_to_current_pd0_coeff_th = 20;
         depth_refinement_ctrls->sub_to_current_pd0_coeff_offset = 20;
         break;
     case 6:
-        depth_refinement_ctrls->enabled                         = 1;
-        depth_refinement_ctrls->prune_child_if_not_avail        = 1;
-        depth_refinement_ctrls->parent_to_current_th            = 20;
-        depth_refinement_ctrls->sub_to_current_th               = 20;
-        depth_refinement_ctrls->parent_max_cost_th_mult         = 10;
-        depth_refinement_ctrls->cost_band_based_modulation      = 1;
-        depth_refinement_ctrls->max_cost_multiplier             = 400;
-        depth_refinement_ctrls->max_band_cnt                    = 4;
-        depth_refinement_ctrls->decrement_per_band[0]           = MAX_SIGNED_VALUE;
-        depth_refinement_ctrls->decrement_per_band[1]           = MAX_SIGNED_VALUE;
-        depth_refinement_ctrls->decrement_per_band[2]           = 10;
-        depth_refinement_ctrls->decrement_per_band[3]           = 5;
-        depth_refinement_ctrls->up_to_2_depth                   = 0;
-        depth_refinement_ctrls->limit_4x4_depth                 = 15;
-        depth_refinement_ctrls->sub_to_current_pd0_coeff_th     = 20;
+        depth_refinement_ctrls->enabled = 1;
+        depth_refinement_ctrls->prune_child_if_not_avail = 1;
+        depth_refinement_ctrls->parent_to_current_th = 20;
+        depth_refinement_ctrls->sub_to_current_th = 20;
+        depth_refinement_ctrls->parent_max_cost_th_mult = 10;
+        depth_refinement_ctrls->cost_band_based_modulation = 1;
+        depth_refinement_ctrls->max_cost_multiplier = 400;
+        depth_refinement_ctrls->max_band_cnt = 4;
+        depth_refinement_ctrls->decrement_per_band[0] = MAX_SIGNED_VALUE;
+        depth_refinement_ctrls->decrement_per_band[1] = MAX_SIGNED_VALUE;
+        depth_refinement_ctrls->decrement_per_band[2] = 10;
+        depth_refinement_ctrls->decrement_per_band[3] = 5;
+        depth_refinement_ctrls->up_to_2_depth = 0;
+        depth_refinement_ctrls->limit_4x4_depth = 15;
+        depth_refinement_ctrls->sub_to_current_pd0_coeff_th = 20;
         depth_refinement_ctrls->sub_to_current_pd0_coeff_offset = 20;
         break;
     case 7:
-        depth_refinement_ctrls->enabled                         = 1;
-        depth_refinement_ctrls->prune_child_if_not_avail        = 1;
-        depth_refinement_ctrls->parent_to_current_th            = 15;
-        depth_refinement_ctrls->sub_to_current_th               = 15;
-        depth_refinement_ctrls->parent_max_cost_th_mult         = 0;
-        depth_refinement_ctrls->cost_band_based_modulation      = 1;
-        depth_refinement_ctrls->max_cost_multiplier             = 400;
-        depth_refinement_ctrls->max_band_cnt                    = 4;
-        depth_refinement_ctrls->decrement_per_band[0]           = MAX_SIGNED_VALUE;
-        depth_refinement_ctrls->decrement_per_band[1]           = MAX_SIGNED_VALUE;
-        depth_refinement_ctrls->decrement_per_band[2]           = 10;
-        depth_refinement_ctrls->decrement_per_band[3]           = 5;
-        depth_refinement_ctrls->up_to_2_depth                   = 0;
-        depth_refinement_ctrls->limit_4x4_depth                 = 15;
-        depth_refinement_ctrls->sub_to_current_pd0_coeff_th     = 20;
+        depth_refinement_ctrls->enabled = 1;
+        depth_refinement_ctrls->prune_child_if_not_avail = 1;
+        depth_refinement_ctrls->parent_to_current_th = 15;
+        depth_refinement_ctrls->sub_to_current_th = 15;
+        depth_refinement_ctrls->parent_max_cost_th_mult = 0;
+        depth_refinement_ctrls->cost_band_based_modulation = 1;
+        depth_refinement_ctrls->max_cost_multiplier = 400;
+        depth_refinement_ctrls->max_band_cnt = 4;
+        depth_refinement_ctrls->decrement_per_band[0] = MAX_SIGNED_VALUE;
+        depth_refinement_ctrls->decrement_per_band[1] = MAX_SIGNED_VALUE;
+        depth_refinement_ctrls->decrement_per_band[2] = 10;
+        depth_refinement_ctrls->decrement_per_band[3] = 5;
+        depth_refinement_ctrls->up_to_2_depth = 0;
+        depth_refinement_ctrls->limit_4x4_depth = 15;
+        depth_refinement_ctrls->sub_to_current_pd0_coeff_th = 20;
         depth_refinement_ctrls->sub_to_current_pd0_coeff_offset = 20;
         break;
     case 8:
-        depth_refinement_ctrls->enabled                         = 1;
-        depth_refinement_ctrls->prune_child_if_not_avail        = 1;
-        depth_refinement_ctrls->parent_to_current_th            = 10;
-        depth_refinement_ctrls->sub_to_current_th               = 10;
-        depth_refinement_ctrls->parent_max_cost_th_mult         = 0;
-        depth_refinement_ctrls->cost_band_based_modulation      = 1;
-        depth_refinement_ctrls->max_cost_multiplier             = 400;
-        depth_refinement_ctrls->max_band_cnt                    = 4;
-        depth_refinement_ctrls->decrement_per_band[0]           = MAX_SIGNED_VALUE;
-        depth_refinement_ctrls->decrement_per_band[1]           = MAX_SIGNED_VALUE;
-        depth_refinement_ctrls->decrement_per_band[2]           = 10;
-        depth_refinement_ctrls->decrement_per_band[3]           = 5;
-        depth_refinement_ctrls->up_to_2_depth                   = 0;
-        depth_refinement_ctrls->limit_4x4_depth                 = 15;
-        depth_refinement_ctrls->sub_to_current_pd0_coeff_th     = 20;
+        depth_refinement_ctrls->enabled = 1;
+        depth_refinement_ctrls->prune_child_if_not_avail = 1;
+        depth_refinement_ctrls->parent_to_current_th = 10;
+        depth_refinement_ctrls->sub_to_current_th = 10;
+        depth_refinement_ctrls->parent_max_cost_th_mult = 0;
+        depth_refinement_ctrls->cost_band_based_modulation = 1;
+        depth_refinement_ctrls->max_cost_multiplier = 400;
+        depth_refinement_ctrls->max_band_cnt = 4;
+        depth_refinement_ctrls->decrement_per_band[0] = MAX_SIGNED_VALUE;
+        depth_refinement_ctrls->decrement_per_band[1] = MAX_SIGNED_VALUE;
+        depth_refinement_ctrls->decrement_per_band[2] = 10;
+        depth_refinement_ctrls->decrement_per_band[3] = 5;
+        depth_refinement_ctrls->up_to_2_depth = 0;
+        depth_refinement_ctrls->limit_4x4_depth = 15;
+        depth_refinement_ctrls->sub_to_current_pd0_coeff_th = 20;
         depth_refinement_ctrls->sub_to_current_pd0_coeff_offset = 20;
         break;
     case 9:
-        depth_refinement_ctrls->enabled                         = 1;
-        depth_refinement_ctrls->prune_child_if_not_avail        = 1;
-        depth_refinement_ctrls->parent_to_current_th            = 5;
-        depth_refinement_ctrls->sub_to_current_th               = 5;
-        depth_refinement_ctrls->parent_max_cost_th_mult         = 0;
-        depth_refinement_ctrls->cost_band_based_modulation      = 1;
-        depth_refinement_ctrls->max_cost_multiplier             = 400;
-        depth_refinement_ctrls->max_band_cnt                    = 4;
-        depth_refinement_ctrls->decrement_per_band[0]           = MAX_SIGNED_VALUE;
-        depth_refinement_ctrls->decrement_per_band[1]           = MAX_SIGNED_VALUE;
-        depth_refinement_ctrls->decrement_per_band[2]           = 10;
-        depth_refinement_ctrls->decrement_per_band[3]           = 5;
-        depth_refinement_ctrls->up_to_2_depth                   = 0;
-        depth_refinement_ctrls->limit_4x4_depth                 = 15;
-        depth_refinement_ctrls->sub_to_current_pd0_coeff_th     = 20;
+        depth_refinement_ctrls->enabled = 1;
+        depth_refinement_ctrls->prune_child_if_not_avail = 1;
+        depth_refinement_ctrls->parent_to_current_th = 5;
+        depth_refinement_ctrls->sub_to_current_th = 5;
+        depth_refinement_ctrls->parent_max_cost_th_mult = 0;
+        depth_refinement_ctrls->cost_band_based_modulation = 1;
+        depth_refinement_ctrls->max_cost_multiplier = 400;
+        depth_refinement_ctrls->max_band_cnt = 4;
+        depth_refinement_ctrls->decrement_per_band[0] = MAX_SIGNED_VALUE;
+        depth_refinement_ctrls->decrement_per_band[1] = MAX_SIGNED_VALUE;
+        depth_refinement_ctrls->decrement_per_band[2] = 10;
+        depth_refinement_ctrls->decrement_per_band[3] = 5;
+        depth_refinement_ctrls->up_to_2_depth = 0;
+        depth_refinement_ctrls->limit_4x4_depth = 15;
+        depth_refinement_ctrls->sub_to_current_pd0_coeff_th = 20;
         depth_refinement_ctrls->sub_to_current_pd0_coeff_offset = 20;
         break;
     case 10:
-        depth_refinement_ctrls->enabled                         = 1;
-        depth_refinement_ctrls->prune_child_if_not_avail        = 1;
-        depth_refinement_ctrls->parent_to_current_th            = 5;
-        depth_refinement_ctrls->sub_to_current_th               = 5;
-        depth_refinement_ctrls->parent_max_cost_th_mult         = 0;
-        depth_refinement_ctrls->cost_band_based_modulation      = 1;
-        depth_refinement_ctrls->max_cost_multiplier             = 800;
-        depth_refinement_ctrls->max_band_cnt                    = 4;
-        depth_refinement_ctrls->decrement_per_band[0]           = MAX_SIGNED_VALUE;
-        depth_refinement_ctrls->decrement_per_band[1]           = MAX_SIGNED_VALUE;
-        depth_refinement_ctrls->decrement_per_band[2]           = 10;
-        depth_refinement_ctrls->decrement_per_band[3]           = 5;
-        depth_refinement_ctrls->up_to_2_depth                   = 0;
-        depth_refinement_ctrls->limit_4x4_depth                 = 15;
-        depth_refinement_ctrls->sub_to_current_pd0_coeff_th     = 20;
+        depth_refinement_ctrls->enabled = 1;
+        depth_refinement_ctrls->prune_child_if_not_avail = 1;
+        depth_refinement_ctrls->parent_to_current_th = 5;
+        depth_refinement_ctrls->sub_to_current_th = 5;
+        depth_refinement_ctrls->parent_max_cost_th_mult = 0;
+        depth_refinement_ctrls->cost_band_based_modulation = 1;
+        depth_refinement_ctrls->max_cost_multiplier = 800;
+        depth_refinement_ctrls->max_band_cnt = 4;
+        depth_refinement_ctrls->decrement_per_band[0] = MAX_SIGNED_VALUE;
+        depth_refinement_ctrls->decrement_per_band[1] = MAX_SIGNED_VALUE;
+        depth_refinement_ctrls->decrement_per_band[2] = 10;
+        depth_refinement_ctrls->decrement_per_band[3] = 5;
+        depth_refinement_ctrls->up_to_2_depth = 0;
+        depth_refinement_ctrls->limit_4x4_depth = 15;
+        depth_refinement_ctrls->sub_to_current_pd0_coeff_th = 20;
         depth_refinement_ctrls->sub_to_current_pd0_coeff_offset = 20;
         break;
     case 11:
-        depth_refinement_ctrls->enabled                         = 1;
-        depth_refinement_ctrls->prune_child_if_not_avail        = 1;
-        depth_refinement_ctrls->parent_to_current_th            = 5;
-        depth_refinement_ctrls->sub_to_current_th               = -50;
-        depth_refinement_ctrls->parent_max_cost_th_mult         = 0;
-        depth_refinement_ctrls->cost_band_based_modulation      = 1;
-        depth_refinement_ctrls->max_cost_multiplier             = 800;
-        depth_refinement_ctrls->max_band_cnt                    = 4;
-        depth_refinement_ctrls->decrement_per_band[0]           = MAX_SIGNED_VALUE;
-        depth_refinement_ctrls->decrement_per_band[1]           = MAX_SIGNED_VALUE;
-        depth_refinement_ctrls->decrement_per_band[2]           = 10;
-        depth_refinement_ctrls->decrement_per_band[3]           = 5;
-        depth_refinement_ctrls->up_to_2_depth                   = 1;
-        depth_refinement_ctrls->limit_4x4_depth                 = 15;
-        depth_refinement_ctrls->sub_to_current_pd0_coeff_th     = 20;
+        depth_refinement_ctrls->enabled = 1;
+        depth_refinement_ctrls->prune_child_if_not_avail = 1;
+        depth_refinement_ctrls->parent_to_current_th = 5;
+        depth_refinement_ctrls->sub_to_current_th = -50;
+        depth_refinement_ctrls->parent_max_cost_th_mult = 0;
+        depth_refinement_ctrls->cost_band_based_modulation = 1;
+        depth_refinement_ctrls->max_cost_multiplier = 800;
+        depth_refinement_ctrls->max_band_cnt = 4;
+        depth_refinement_ctrls->decrement_per_band[0] = MAX_SIGNED_VALUE;
+        depth_refinement_ctrls->decrement_per_band[1] = MAX_SIGNED_VALUE;
+        depth_refinement_ctrls->decrement_per_band[2] = 10;
+        depth_refinement_ctrls->decrement_per_band[3] = 5;
+        depth_refinement_ctrls->up_to_2_depth = 1;
+        depth_refinement_ctrls->limit_4x4_depth = 15;
+        depth_refinement_ctrls->sub_to_current_pd0_coeff_th = 20;
         depth_refinement_ctrls->sub_to_current_pd0_coeff_offset = 20;
         break;
     case 12:
-        depth_refinement_ctrls->enabled                         = 1;
-        depth_refinement_ctrls->prune_child_if_not_avail        = 1;
-        depth_refinement_ctrls->parent_to_current_th            = -25;
-        depth_refinement_ctrls->sub_to_current_th               = -50;
-        depth_refinement_ctrls->parent_max_cost_th_mult         = 0;
-        depth_refinement_ctrls->cost_band_based_modulation      = 1;
-        depth_refinement_ctrls->max_cost_multiplier             = 800;
-        depth_refinement_ctrls->max_band_cnt                    = 4;
-        depth_refinement_ctrls->decrement_per_band[0]           = MAX_SIGNED_VALUE;
-        depth_refinement_ctrls->decrement_per_band[1]           = MAX_SIGNED_VALUE;
-        depth_refinement_ctrls->decrement_per_band[2]           = 10;
-        depth_refinement_ctrls->decrement_per_band[3]           = 5;
-        depth_refinement_ctrls->up_to_2_depth                   = 1;
-        depth_refinement_ctrls->limit_4x4_depth                 = 15;
-        depth_refinement_ctrls->sub_to_current_pd0_coeff_th     = 20;
+        depth_refinement_ctrls->enabled = 1;
+        depth_refinement_ctrls->prune_child_if_not_avail = 1;
+        depth_refinement_ctrls->parent_to_current_th = -25;
+        depth_refinement_ctrls->sub_to_current_th = -50;
+        depth_refinement_ctrls->parent_max_cost_th_mult = 0;
+        depth_refinement_ctrls->cost_band_based_modulation = 1;
+        depth_refinement_ctrls->max_cost_multiplier = 800;
+        depth_refinement_ctrls->max_band_cnt = 4;
+        depth_refinement_ctrls->decrement_per_band[0] = MAX_SIGNED_VALUE;
+        depth_refinement_ctrls->decrement_per_band[1] = MAX_SIGNED_VALUE;
+        depth_refinement_ctrls->decrement_per_band[2] = 10;
+        depth_refinement_ctrls->decrement_per_band[3] = 5;
+        depth_refinement_ctrls->up_to_2_depth = 1;
+        depth_refinement_ctrls->limit_4x4_depth = 15;
+        depth_refinement_ctrls->sub_to_current_pd0_coeff_th = 20;
         depth_refinement_ctrls->sub_to_current_pd0_coeff_offset = 20;
+
         break;
+
         // Pred_Only
+
         // Pred_Only
+
     case 13:
-        depth_refinement_ctrls->enabled                         = 1;
-        depth_refinement_ctrls->prune_child_if_not_avail        = 1;
-        depth_refinement_ctrls->parent_to_current_th            = MIN_SIGNED_VALUE;
-        depth_refinement_ctrls->sub_to_current_th               = MIN_SIGNED_VALUE;
-        depth_refinement_ctrls->parent_max_cost_th_mult         = 0;
-        depth_refinement_ctrls->cost_band_based_modulation      = 0;
-        depth_refinement_ctrls->up_to_2_depth                   = 0;
-        depth_refinement_ctrls->sub_to_current_pd0_coeff_th     = 20;
+
+        depth_refinement_ctrls->enabled = 1;
+
+        depth_refinement_ctrls->prune_child_if_not_avail = 1;
+
+        depth_refinement_ctrls->parent_to_current_th = MIN_SIGNED_VALUE;
+
+        depth_refinement_ctrls->sub_to_current_th = MIN_SIGNED_VALUE;
+
+        depth_refinement_ctrls->parent_max_cost_th_mult = 0;
+
+        depth_refinement_ctrls->cost_band_based_modulation = 0;
+
+        depth_refinement_ctrls->up_to_2_depth = 0;
+
+        depth_refinement_ctrls->sub_to_current_pd0_coeff_th = 20;
+
         depth_refinement_ctrls->sub_to_current_pd0_coeff_offset = 20;
+
         break;
+
 #endif
     }
 }
+
 static void copy_neighbour_arrays_light_pd0(PictureControlSet *pcs, ModeDecisionContext *ctx, uint32_t src_idx,
                                             uint32_t dst_idx, uint32_t sb_org_x, uint32_t sb_org_y) {
     const uint16_t tile_idx = ctx->tile_index;
@@ -2622,7 +2659,6 @@ static void build_cand_block_array(SequenceControlSet *scs, PictureControlSet *p
 #endif
 
             for (uint32_t idx = blk_index; idx < (tot_d1_blocks + blk_index); ++idx) {
-
 #if OPT_REORDER_GEOM
                 if (!ctx->nsq_ctrls.allow_HV4) {
                     // Index of first H4 block is 5; if H4/V4 blocks are skipped increase index to bypass the blocks.
@@ -2696,7 +2732,8 @@ void update_pred_th_offset(ModeDecisionContext *ctx, const BlockGeom *blk_geom, 
     }
 }
 #if OPT_DEPTH_REFIN
-static uint8_t is_parent_to_current_deviation_small(PictureControlSet *pcs, ModeDecisionContext *ctx, const BlockGeom *blk_geom,
+static uint8_t is_parent_to_current_deviation_small(PictureControlSet *pcs, ModeDecisionContext *ctx,
+                                                    const BlockGeom *blk_geom,
 #else
 static uint8_t is_parent_to_current_deviation_small(ModeDecisionContext *ctx, const BlockGeom *blk_geom,
 #endif
@@ -2738,11 +2775,19 @@ static uint8_t is_parent_to_current_deviation_small(ModeDecisionContext *ctx, co
     int64_t parent_to_current_th = ctx->depth_refinement_ctrls.parent_to_current_th;
     if (ctx->depth_refinement_ctrls.q_weight) {
         const uint32_t mult = ctx->depth_refinement_ctrls.q_weight;
-        const uint32_t cost_part = MAX((ctx->md_local_blk_unit[blk_geom->sqi_mds].default_cost /
-            (uint64_t)(((uint64_t)blk_geom->bwidth * (uint64_t)blk_geom->bheight) << 10)), 1);
-        const int q_weight_unscaled = (int)((mult * cost_part *
-            ((5 * (int)pcs->ppcs->scs->static_config.qp) - 100)) / 10);
-        const uint32_t q_weight = CLIP3(100, 2000, q_weight_unscaled);
+#if CLN_MISC_II
+        const uint32_t cost_part = (uint32_t)MAX(
+            (ctx->md_local_blk_unit[blk_geom->sqi_mds].default_cost /
+             (uint64_t)(((uint64_t)blk_geom->bwidth * (uint64_t)blk_geom->bheight) << 10)),
+            1);
+#else
+        const uint32_t cost_part                     = MAX((ctx->md_local_blk_unit[blk_geom->sqi_mds].default_cost /
+                                        (uint64_t)(((uint64_t)blk_geom->bwidth * (uint64_t)blk_geom->bheight) << 10)),
+                                       1);
+#endif
+        const int q_weight_unscaled = (int)((mult * cost_part * ((5 * (int)pcs->ppcs->scs->static_config.qp) - 100)) /
+                                            10);
+        const uint32_t q_weight     = CLIP3(100, 2000, q_weight_unscaled);
 
         parent_to_current_th = (parent_to_current_th * q_weight) / 2000;
     }
@@ -2822,8 +2867,7 @@ static uint8_t is_child_to_current_deviation_small(PictureControlSet *pcs, ModeD
     }
 
 #if USE_PRED_MODE
-    if (ctx->intra_ctrls.enable_intra &&
-       (ctx->blk_ptr->prediction_mode_flag == INTER_MODE)) {
+    if (ctx->intra_ctrls.enable_intra && (ctx->blk_ptr->prediction_mode_flag == INTER_MODE)) {
         th_offset -= 20;
         if (ctx->lpd0_ctrls.pd0_level < VERY_LIGHT_PD0 && !ctx->md_local_blk_unit[blk_geom->sqi_mds].y_has_coeff[0])
             th_offset -= 20;
@@ -2859,11 +2903,19 @@ static uint8_t is_child_to_current_deviation_small(PictureControlSet *pcs, ModeD
     int64_t sub_to_current_th = ctx->depth_refinement_ctrls.sub_to_current_th;
     if (ctx->depth_refinement_ctrls.q_weight) {
         const uint32_t mult = ctx->depth_refinement_ctrls.q_weight;
-        const uint32_t cost_part = MAX((ctx->md_local_blk_unit[blk_geom->sqi_mds].default_cost /
-            (uint64_t)(((uint64_t)blk_geom->bwidth * (uint64_t)blk_geom->bheight) << 10)), 1);
-        const int q_weight_unscaled = (int)((mult * cost_part *
-            ((5 * (int)pcs->ppcs->scs->static_config.qp) - 100)) / 10);
-        const uint32_t q_weight = CLIP3(100, 2000, q_weight_unscaled);
+#if CLN_MISC_II
+        const uint32_t cost_part = (uint32_t)MAX(
+            (ctx->md_local_blk_unit[blk_geom->sqi_mds].default_cost /
+             (uint64_t)(((uint64_t)blk_geom->bwidth * (uint64_t)blk_geom->bheight) << 10)),
+            1);
+#else
+        const uint32_t cost_part                     = MAX((ctx->md_local_blk_unit[blk_geom->sqi_mds].default_cost /
+                                        (uint64_t)(((uint64_t)blk_geom->bwidth * (uint64_t)blk_geom->bheight) << 10)),
+                                       1);
+#endif
+        const int q_weight_unscaled = (int)((mult * cost_part * ((5 * (int)pcs->ppcs->scs->static_config.qp) - 100)) /
+                                            10);
+        const uint32_t q_weight     = CLIP3(100, 2000, q_weight_unscaled);
 
         sub_to_current_th = (sub_to_current_th * q_weight) / 2000;
     }
@@ -2877,13 +2929,13 @@ static uint8_t is_child_to_current_deviation_small(PictureControlSet *pcs, ModeD
     return FALSE;
 }
 
-static void get_max_min_pd0_depths(SequenceControlSet* scs, PictureControlSet* pcs, ModeDecisionContext* ctx,
-    uint16_t* max_pd0_size_out, uint16_t* min_pd0_size_out) {
+static void get_max_min_pd0_depths(SequenceControlSet *scs, PictureControlSet *pcs, ModeDecisionContext *ctx,
+                                   uint16_t *max_pd0_size_out, uint16_t *min_pd0_size_out) {
     uint16_t max_pd0_size = 0;
     uint16_t min_pd0_size = 255;
-    uint32_t blk_index = 0;
+    uint32_t blk_index    = 0;
     while (blk_index < scs->max_block_cnt) {
-        const BlockGeom* blk_geom = get_blk_geom_mds(blk_index);
+        const BlockGeom *blk_geom = get_blk_geom_mds(blk_index);
         // if the parent square is inside inject this block
         const uint8_t is_blk_allowed = pcs->slice_type != I_SLICE ? 1 : (blk_geom->sq_size < 128) ? 1 : 0;
 
@@ -2956,7 +3008,11 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs, PictureContro
         const BlockGeom *blk_geom      = get_blk_geom_mds(blk_index);
         uint32_t         tot_d1_blocks = svt_aom_get_tot_1d_blks(ctx, blk_geom->sq_size, !ctx->nsq_ctrls.enabled);
 #if USE_PRED_MODE
-        BlkStruct* blk_ptr = ctx->blk_ptr = &ctx->md_blk_arr_nsq[blk_index];
+#if CLN_MISC_II
+        ctx->blk_ptr = &ctx->md_blk_arr_nsq[blk_index];
+#else
+        BlkStruct     *blk_ptr = ctx->blk_ptr = &ctx->md_blk_arr_nsq[blk_index];
+#endif
 #endif
 
         // if the parent square is inside inject this block
@@ -2977,7 +3033,7 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs, PictureContro
                     int8_t s_depth = ctx->depth_ctrls.s_depth;
                     int8_t e_depth = ctx->depth_ctrls.e_depth;
 
-#if FIX_DEPTH_R2R
+#if FIX_DEPTH_R2R && !OPT_M2_BELOW_DEPTHS
                     // Selected depths should be available, unless they are not valid blocks (e.g. out of bounds).
                     // Therefore, when blocks are invalid, don't add parent/child.
                     if (!ctx->avail_blk_flag[blk_geom->sqi_mds]) {
@@ -2986,13 +3042,19 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs, PictureContro
 #endif
 
 #if OPT_M2_BELOW_DEPTHS
-                    // Cap to (-1,+1) if the pred mode is INTER (if both INTER and INTRA are tested)
-                    if (ctx->depth_ctrls.use_pred_mode) {
-                        if (ctx->intra_ctrls.enable_intra &&
-                           (ctx->blk_ptr->prediction_mode_flag == INTER_MODE)) {
-
-                            s_depth = MAX(s_depth, -1);
-                            e_depth = MIN(e_depth, 1);
+                    // Selected depths should be available, unless they are not valid blocks (e.g. out of bounds).
+                    // Therefore, when blocks are invalid, don't add parent/child.
+                    if (!ctx->avail_blk_flag[blk_geom->sqi_mds]) {
+                        s_depth = e_depth = 0;
+                    } else {
+                        // Getting here means avail_blk_flag is true, so the block was tested. Decisions that rely on
+                        // info from a tested block should go here.
+                        if (ctx->depth_ctrls.use_pred_mode) {
+                            // Cap to (-1,+1) if the pred mode is INTER (if both INTER and INTRA are tested)
+                            if (ctx->intra_ctrls.enable_intra && (ctx->blk_ptr->prediction_mode_flag == INTER_MODE)) {
+                                s_depth = MAX(s_depth, -1);
+                                e_depth = MIN(e_depth, 1);
+                            }
                         }
                     }
 #endif
@@ -3190,8 +3252,6 @@ static EbErrorType build_starting_cand_block_array(SequenceControlSet *scs, Pict
 #endif
 
             for (uint32_t idx = blk_index; idx < (tot_d1_blocks + blk_index); ++idx) {
-
-
 #if OPT_REORDER_GEOM
                 if (!ctx->nsq_ctrls.allow_HV4) {
                     // Index of first H4 block is 5; if H4/V4 blocks are skipped increase index to bypass the blocks.
@@ -3201,7 +3261,7 @@ static EbErrorType build_starting_cand_block_array(SequenceControlSet *scs, Pict
                         idx += 7;
                         continue;
                     }
-        }
+                }
 #else
                 if (ctx->nsq_ctrls.allow_HVA_HVB == 0) {
                     // Index of first HA block is 5; if HA/HB/VA/VB blocks are skipped increase index to bypass the blocks.
@@ -3323,7 +3383,8 @@ static void exaustive_light_pd1_features(ModeDecisionContext *md_ctx, PicturePar
             md_ctx->mds0_ctrls.mds0_dist_type != MDS0_SSD && md_ctx->unipred3x3_injection == 0 &&
 #endif
 #if OPT_BIPRED3x3
-            md_ctx->bipred3x3_ctrls.enabled == 0 && md_ctx->inter_compound_mode == 0 && md_ctx->md_pic_obmc_level == 0 &&
+            md_ctx->bipred3x3_ctrls.enabled == 0 && md_ctx->inter_compound_mode == 0 &&
+            md_ctx->md_pic_obmc_level == 0 &&
 #else
             md_ctx->bipred3x3_injection == 0 && md_ctx->inter_compound_mode == 0 && md_ctx->md_pic_obmc_level == 0 &&
 #endif
@@ -3433,15 +3494,14 @@ static void lpd1_detector_post_pd0(PictureControlSet *pcs, ModeDecisionContext *
                     if (rtc_tune) {
                         if (md_ctx->lpd1_ctrls.me_8x8_cost_variance_th[pd1_lvl] < (((uint32_t)~0) >> 1) &&
                             pcs->ppcs->me_8x8_cost_variance[md_ctx->sb_index] >
-                            (md_ctx->lpd1_ctrls.me_8x8_cost_variance_th[pd1_lvl] >> 5) * pcs->picture_qp)
+                                (md_ctx->lpd1_ctrls.me_8x8_cost_variance_th[pd1_lvl] >> 5) * pcs->picture_qp)
                             md_ctx->lpd1_ctrls.pd1_level = pd1_lvl - 1;
-                    }
-                    else {
+                    } else {
                         /* me_8x8_cost_variance_th is shifted by 5 then mulitplied by 73 minus pic_qp.  Therefore, the TH must be less than
                         (((uint32_t)~0) >> 2) to avoid overflow issues from the multiplication. */
                         if (md_ctx->lpd1_ctrls.me_8x8_cost_variance_th[pd1_lvl] < (((uint32_t)~0) >> 2) &&
                             pcs->ppcs->me_8x8_cost_variance[md_ctx->sb_index] >
-                            (md_ctx->lpd1_ctrls.me_8x8_cost_variance_th[pd1_lvl] >> 5) * (73 - pcs->picture_qp))
+                                (md_ctx->lpd1_ctrls.me_8x8_cost_variance_th[pd1_lvl] >> 5) * (73 - pcs->picture_qp))
                             md_ctx->lpd1_ctrls.pd1_level = pd1_lvl - 1;
                     }
 #else
@@ -3450,14 +3510,14 @@ static void lpd1_detector_post_pd0(PictureControlSet *pcs, ModeDecisionContext *
                        (((uint32_t)~0) >> 2) to avoid overflow issues from the multiplication. */
                     if (md_ctx->lpd1_ctrls.me_8x8_cost_variance_th[pd1_lvl] < (((uint32_t)~0) >> 2) &&
                         pcs->ppcs->me_8x8_cost_variance[md_ctx->sb_index] >
-                        (md_ctx->lpd1_ctrls.me_8x8_cost_variance_th[pd1_lvl] >> 5) * (73 - pcs->picture_qp))
+                            (md_ctx->lpd1_ctrls.me_8x8_cost_variance_th[pd1_lvl] >> 5) * (73 - pcs->picture_qp))
                         md_ctx->lpd1_ctrls.pd1_level = pd1_lvl - 1;
 #else
                     /* me_8x8_cost_variance_th is shifted by 5 then mulitplied by the pic QP (max 63).  Therefore, the TH must be less than
                        (((uint32_t)~0) >> 1) to avoid overflow issues from the multiplication. */
                     if (md_ctx->lpd1_ctrls.me_8x8_cost_variance_th[pd1_lvl] < (((uint32_t)~0) >> 1) &&
                         pcs->ppcs->me_8x8_cost_variance[md_ctx->sb_index] >
-                        (md_ctx->lpd1_ctrls.me_8x8_cost_variance_th[pd1_lvl] >> 5) * pcs->picture_qp)
+                            (md_ctx->lpd1_ctrls.me_8x8_cost_variance_th[pd1_lvl] >> 5) * pcs->picture_qp)
                         md_ctx->lpd1_ctrls.pd1_level = pd1_lvl - 1;
 #endif
 #endif
@@ -3470,7 +3530,8 @@ static void lpd1_detector_post_pd0(PictureControlSet *pcs, ModeDecisionContext *
 /* Light-PD1 classifier used when cost/coeff info is unavailable.  If PD0 is skipped, or the trasnsform is
 not performed, this detector is used (else lpd1_detector_post_pd0() is used). */
 #if FIX_LD_CBR_MODE
-static void lpd1_detector_skip_pd0(PictureControlSet *pcs, ModeDecisionContext *md_ctx, uint32_t pic_width_in_sb, bool rtc_tune) {
+static void lpd1_detector_skip_pd0(PictureControlSet *pcs, ModeDecisionContext *md_ctx, uint32_t pic_width_in_sb,
+                                   bool rtc_tune) {
 #else
 static void lpd1_detector_skip_pd0(PictureControlSet *pcs, ModeDecisionContext *md_ctx, uint32_t pic_width_in_sb) {
 #endif
@@ -3573,15 +3634,14 @@ static void lpd1_detector_skip_pd0(PictureControlSet *pcs, ModeDecisionContext *
                             (((uint32_t)~0) >> 1) to avoid overflow issues from the multiplication. */
                             if (md_ctx->lpd1_ctrls.me_8x8_cost_variance_th[pd1_lvl] < (((uint32_t)~0) >> 1) &&
                                 pcs->ppcs->me_8x8_cost_variance[md_ctx->sb_index] >
-                                (md_ctx->lpd1_ctrls.me_8x8_cost_variance_th[pd1_lvl] >> 5) * pcs->picture_qp)
+                                    (md_ctx->lpd1_ctrls.me_8x8_cost_variance_th[pd1_lvl] >> 5) * pcs->picture_qp)
                                 md_ctx->lpd1_ctrls.pd1_level = pd1_lvl - 1;
-                        }
-                        else {
+                        } else {
                             /* me_8x8_cost_variance_th is shifted by 5 then mulitplied by 73 minus pic_qp.  Therefore, the TH must be less than
                             (((uint32_t)~0) >> 2) to avoid overflow issues from the multiplication. */
                             if (md_ctx->lpd1_ctrls.me_8x8_cost_variance_th[pd1_lvl] < (((uint32_t)~0) >> 2) &&
                                 pcs->ppcs->me_8x8_cost_variance[md_ctx->sb_index] >
-                                (md_ctx->lpd1_ctrls.me_8x8_cost_variance_th[pd1_lvl] >> 5) * (73 - pcs->picture_qp))
+                                    (md_ctx->lpd1_ctrls.me_8x8_cost_variance_th[pd1_lvl] >> 5) * (73 - pcs->picture_qp))
                                 md_ctx->lpd1_ctrls.pd1_level = pd1_lvl - 1;
                         }
 #else
@@ -3589,15 +3649,16 @@ static void lpd1_detector_skip_pd0(PictureControlSet *pcs, ModeDecisionContext *
                         /* me_8x8_cost_variance_th is shifted by 5 then mulitplied by 73 minus pic_qp.  Therefore, the TH must be less than
                            (((uint32_t)~0) >> 2) to avoid overflow issues from the multiplication. */
                         else if (md_ctx->lpd1_ctrls.me_8x8_cost_variance_th[pd1_lvl] < (((uint32_t)~0) >> 2) &&
-                            pcs->ppcs->me_8x8_cost_variance[md_ctx->sb_index] >
-                            (md_ctx->lpd1_ctrls.me_8x8_cost_variance_th[pd1_lvl] >> 5) * (73 - pcs->picture_qp))
+                                 pcs->ppcs->me_8x8_cost_variance[md_ctx->sb_index] >
+                                     (md_ctx->lpd1_ctrls.me_8x8_cost_variance_th[pd1_lvl] >> 5) *
+                                         (73 - pcs->picture_qp))
                             md_ctx->lpd1_ctrls.pd1_level = pd1_lvl - 1;
 #else
                         /* me_8x8_cost_variance_th is shifted by 5 then mulitplied by the pic QP (max 63).  Therefore, the TH must be less than
                            (((uint32_t)~0) >> 1) to avoid overflow issues from the multiplication. */
                         else if (md_ctx->lpd1_ctrls.me_8x8_cost_variance_th[pd1_lvl] < (((uint32_t)~0) >> 1) &&
-                            pcs->ppcs->me_8x8_cost_variance[md_ctx->sb_index] >
-                            (md_ctx->lpd1_ctrls.me_8x8_cost_variance_th[pd1_lvl] >> 5) * pcs->picture_qp)
+                                 pcs->ppcs->me_8x8_cost_variance[md_ctx->sb_index] >
+                                     (md_ctx->lpd1_ctrls.me_8x8_cost_variance_th[pd1_lvl] >> 5) * pcs->picture_qp)
                             md_ctx->lpd1_ctrls.pd1_level = pd1_lvl - 1;
 #endif
 #endif

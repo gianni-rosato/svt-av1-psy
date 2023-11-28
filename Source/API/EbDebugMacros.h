@@ -58,7 +58,7 @@ extern "C" {
 #define OPT_REST_SIZE_FULL                        1 // Use the largest restoration unit size for 240p content
 #define OPT_BLK_EARLY_EXIT                        1 // Exit early from process_block() based on known settings
 #define OPT_VBR_PACKAGE                           1 // VBR optimization
-#if OPT_VBR_PACKAGE                               
+#if OPT_VBR_PACKAGE
 #define OPT_VBR2                                  1 // remove IPPP and use lookahead data in VBR
 #define OPT_VBR3                                  1 // lossless changes to save cycle for 1P VBR
 #define OPT_VBR4                                  1 // lossless changes clean up
@@ -214,6 +214,9 @@ extern "C" {
 #define OPT_M11_VBR_SPEED                         1 // move M11 in 1/2-pass VBR mode in order to fix the speed spacing between M10-M11-M12
 
 #define TUNE_NSQ_HIGH_RES                         1 // tune nsq for 720p+ content
+
+#define CLN_MISC_II                               1 // CI cleanup
+#define FIX_MEM_ALLOC_ON_THE_FLY                  1 // Ensure memory is allocated for features whose level depends on resolution/qp (which can be updated on the fly)
 
 //FOR DEBUGGING - Do not remove
 #define OPT_LD_LATENCY2         0 // Latency optimization for low delay

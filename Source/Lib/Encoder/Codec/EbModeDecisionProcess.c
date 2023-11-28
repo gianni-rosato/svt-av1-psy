@@ -147,13 +147,22 @@ EbErrorType svt_aom_mode_decision_context_ctor(ModeDecisionContext *ctx, EbColor
     uint8_t min_nic_scaling_level = NICS_SCALING_LEVELS - 1;
     for (uint8_t hl = 0; hl < MAX_TEMPORAL_LAYERS; hl++) {
         for (uint8_t is_base = 0; is_base < 2; is_base++) {
+#if FIX_MEM_ALLOC_ON_THE_FLY
+            // min QP is 1 b/c 0 is lossless and is not supported
+            for (uint8_t qp = 1; qp <= MAX_QP_VALUE; qp++) {
+                uint8_t nic_level         = svt_aom_get_nic_level(enc_mode, is_base, hl, qp, rtc_tune);
+                uint8_t nic_scaling_level = svt_aom_set_nic_controls(NULL, nic_level);
+                min_nic_scaling_level     = MIN(min_nic_scaling_level, nic_scaling_level);
+            }
+#else
 #if OPT_NIC_QP
             uint8_t nic_level         = svt_aom_get_nic_level(enc_mode, is_base, hl, 63, rtc_tune);
 #else
-            uint8_t nic_level         = svt_aom_get_nic_level(enc_mode, is_base, hl, rtc_tune);
+            uint8_t nic_level = svt_aom_get_nic_level(enc_mode, is_base, hl, rtc_tune);
 #endif
             uint8_t nic_scaling_level = svt_aom_set_nic_controls(NULL, nic_level);
             min_nic_scaling_level     = MIN(min_nic_scaling_level, nic_scaling_level);
+#endif
         }
     }
     uint8_t stage1_scaling_num = MD_STAGE_NICS_SCAL_NUM[min_nic_scaling_level][MD_STAGE_1];
@@ -234,13 +243,13 @@ EbErrorType svt_aom_mode_decision_context_ctor(ModeDecisionContext *ctx, EbColor
 
     // Allocate buffers for obmc prediction
     uint8_t obmc_allowed = 0;
-        for (uint8_t fast_decode = 0; fast_decode < 2; fast_decode++) {
-            for (EbInputResolution input_resolution = 0; input_resolution < INPUT_SIZE_COUNT; input_resolution++) {
-                if (obmc_allowed)
-                    break;
-                obmc_allowed |= svt_aom_get_obmc_level(enc_mode, fast_decode, input_resolution);
-            }
+    for (uint8_t fast_decode = 0; fast_decode < 2; fast_decode++) {
+        for (EbInputResolution input_resolution = 0; input_resolution < INPUT_SIZE_COUNT; input_resolution++) {
+            if (obmc_allowed)
+                break;
+            obmc_allowed |= svt_aom_get_obmc_level(enc_mode, fast_decode, input_resolution);
         }
+    }
     if (obmc_allowed) {
         const uint8_t bits = ctx->hbd_md > EB_8_BIT_MD ? 2 : 1;
         EB_MALLOC(ctx->obmc_buff_0, sb_size * sb_size * bits * MAX_MB_PLANE * sizeof(ctx->obmc_buff_0[0]));

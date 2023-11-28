@@ -260,8 +260,8 @@ typedef struct PictureControlSet {
 #if OPT_HP_MV
     uint64_t hp_coded_area;
 #endif
-    uint32_t          tot_seg_searched_cdef;
-    EbHandle          cdef_search_mutex;
+    uint32_t tot_seg_searched_cdef;
+    EbHandle cdef_search_mutex;
 
     uint16_t cdef_segments_total_count;
     uint8_t  cdef_segments_column_count;
@@ -428,11 +428,11 @@ typedef struct PictureControlSet {
     RestorationInfo rst_info[MAX_MB_PLANE];
     // rst_end_stripe[i] is one more than the index of the bottom stripe
     // for tile row i.
-    int32_t  rst_end_stripe[MAX_TILE_ROWS];
-    uint8_t  ref_intra_percentage;
-    uint8_t  ref_skip_percentage;
+    int32_t rst_end_stripe[MAX_TILE_ROWS];
+    uint8_t ref_intra_percentage;
+    uint8_t ref_skip_percentage;
 #if OPT_HP_MV
-    int16_t  ref_hp_percentage;
+    int16_t ref_hp_percentage;
 #endif
     uint64_t avg_me_clpx;
     uint64_t min_me_clpx;
@@ -1051,7 +1051,7 @@ typedef struct PictureParentControlSet {
     uint32_t tpl_group_size;
     // stores previous, current, future pictures from pd-reord-queue. empty for first I.
     // 1 past + 1 curent  + TF_MAX_BASE_REF_PICS from future
-    void* pd_window[2+TF_MAX_BASE_REF_PICS];
+    void *pd_window[2 + TF_MAX_BASE_REF_PICS];
     // stores pcs pictures needed for lad mg based algorithms
     struct PictureParentControlSet *ext_group[MAX_TPL_EXT_GROUP_SIZE];
     // actual size of extended group
@@ -1134,11 +1134,11 @@ typedef struct PictureParentControlSet {
     IntraBCCtrls                    intraBC_ctrls;
     PaletteCtrls                    palette_ctrls;
 
-    uint32_t         tf_tot_vert_blks; // total vertical motion blocks in TF
-    uint32_t         tf_tot_horz_blks; // total horizontal motion blocks in TF
-    int8_t           tf_motion_direction; // motion direction in TF   -1:invalid   0:horz  1:vert
+    uint32_t tf_tot_vert_blks; // total vertical motion blocks in TF
+    uint32_t tf_tot_horz_blks; // total horizontal motion blocks in TF
+    int8_t   tf_motion_direction; // motion direction in TF   -1:invalid   0:horz  1:vert
 #if !OPT_VBR2
-    uint8_t          adjust_under_shoot_gf;
+    uint8_t adjust_under_shoot_gf;
 #endif
     int32_t          is_noise_level;
     bool             r0_based_qps_qpm;

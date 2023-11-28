@@ -274,7 +274,12 @@ static void derive_tf_32x32_block_split_flag(MeContext *me_ctx) {
             }
             else { // Do split.
                 me_ctx->tf_16x16_block_split_flag[idx_32x32][i] = 1;
+#if CLN_MISC_II
+                me_ctx->tf_16x16_block_error[idx_32x32 * 4 + i] = error_8x8;
+                subblock_errors[i]                              = error_8x8;
+#else
                 subblock_errors[i] = me_ctx->tf_16x16_block_error[idx_32x32 * 4 + i] = error_8x8;
+#endif
             }
         }
         else {
@@ -4206,7 +4211,9 @@ static void tf_32x32_inter_prediction(PictureParentControlSet *pcs, MeContext *m
 
     uint32_t idx_32x32 = me_ctx->idx_32x32;
     if (me_ctx->tf_32x32_block_split_flag[idx_32x32]) {
+#if !CLN_MISC_II
         uint32_t bsize = 16;
+#endif
 
         for (uint32_t idx_16x16 = 0; idx_16x16 < 4; idx_16x16++) {
 #if OPT_TF_8X8_BLOCKS
@@ -4276,6 +4283,9 @@ static void tf_32x32_inter_prediction(PictureParentControlSet *pcs, MeContext *m
                 }
             }
             else {
+#if CLN_MISC_II
+            uint32_t bsize = 16;
+#endif
 #endif
             uint32_t pu_index = idx_32x32_to_idx_16x16[idx_32x32][idx_16x16];
 

@@ -58,26 +58,25 @@ EbErrorType svt_aom_largest_coding_unit_ctor(SuperBlock *larget_coding_unit_ptr,
 #if TUNE_NSQ_HIGH_RES
                 for (EbInputResolution res = INPUT_SIZE_240p_RANGE; res <= INPUT_SIZE_8K_RANGE; res++) {
 #endif
-                // min QP is 1 b/c 0 is lossless and is not supported
-                for (uint8_t qp = 1; qp <= MAX_QP_VALUE + 1; qp++) {
-                    if (!disallow_nsq)
-                        break;
+                    // min QP is 1 b/c 0 is lossless and is not supported
+                    for (uint8_t qp = 1; qp <= MAX_QP_VALUE; qp++) {
+                        if (!disallow_nsq)
+                            break;
 #if TUNE_NSQ_HIGH_RES
-                    disallow_nsq = MIN(disallow_nsq,
-                                       (svt_aom_get_nsq_level(enc_mode, is_base, coeff_lvl, qp, res) == 0 ? 1 : 0));
-                }
+                        disallow_nsq = MIN(disallow_nsq,
+                                           (svt_aom_get_nsq_level(enc_mode, is_base, coeff_lvl, qp, res) == 0 ? 1 : 0));
+                    }
 #else
                     disallow_nsq = MIN(disallow_nsq,
-                        (svt_aom_get_nsq_level(enc_mode, is_base, coeff_lvl, qp) == 0 ? 1 : 0));
+                                       (svt_aom_get_nsq_level(enc_mode, is_base, coeff_lvl, qp) == 0 ? 1 : 0));
 #endif
                 }
 #else
 #if OPT_MR_M0
-                disallow_nsq = MIN(disallow_nsq,
-                    (svt_aom_get_nsq_level(enc_mode, is_base, coeff_lvl) == 0 ? 1 : 0));
+                disallow_nsq = MIN(disallow_nsq, (svt_aom_get_nsq_level(enc_mode, is_base, coeff_lvl) == 0 ? 1 : 0));
 #else
                 disallow_nsq = MIN(disallow_nsq,
-                    (svt_aom_get_nsq_level(enc_mode, is_islice, is_base, coeff_lvl) == 0 ? 1 : 0));
+                                   (svt_aom_get_nsq_level(enc_mode, is_islice, is_base, coeff_lvl) == 0 ? 1 : 0));
 #endif
 #endif
             }
@@ -87,7 +86,11 @@ EbErrorType svt_aom_largest_coding_unit_ctor(SuperBlock *larget_coding_unit_ptr,
 #if TUNE_4X4
     for (uint8_t is_islice = 0; is_islice <= 1; is_islice++) {
         for (uint8_t is_base = 0; is_base <= 1; is_base++) {
+#if CLN_MISC_II
+            disallow_4x4 = MIN(disallow_4x4, svt_aom_get_disallow_4x4(enc_mode, is_base));
+#else
             disallow_4x4 = MIN(disallow_4x4, svt_aom_get_disallow_4x4(enc_mode, is_base, is_islice));
+#endif
         }
     }
 #else

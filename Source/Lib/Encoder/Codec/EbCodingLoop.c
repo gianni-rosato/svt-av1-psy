@@ -2357,23 +2357,21 @@ EB_EXTERN EbErrorType svt_aom_encdec_update(SequenceControlSet *scs, PictureCont
                     int hp = 0;
 
                     if (blk_ptr->prediction_unit_array->inter_pred_direction_index == UNI_PRED_LIST_0) {
-                        if(blk_ptr->prediction_unit_array->mv[0].x % 2 != 0 ||
-                           blk_ptr->prediction_unit_array->mv[0].y % 2 != 0)
+                        if (blk_ptr->prediction_unit_array->mv[0].x % 2 != 0 ||
+                            blk_ptr->prediction_unit_array->mv[0].y % 2 != 0)
                             hp = 1;
-                    }
-                    else if (blk_ptr->prediction_unit_array->inter_pred_direction_index == UNI_PRED_LIST_1) {
+                    } else if (blk_ptr->prediction_unit_array->inter_pred_direction_index == UNI_PRED_LIST_1) {
                         if (blk_ptr->prediction_unit_array->mv[1].x % 2 != 0 ||
                             blk_ptr->prediction_unit_array->mv[1].y % 2 != 0)
                             hp = 1;
-                    }
-                    else {
-                         if (blk_ptr->prediction_unit_array->mv[0].x % 2 != 0 ||
+                    } else {
+                        if (blk_ptr->prediction_unit_array->mv[0].x % 2 != 0 ||
                             blk_ptr->prediction_unit_array->mv[0].y % 2 != 0 ||
                             blk_ptr->prediction_unit_array->mv[1].x % 2 != 0 ||
                             blk_ptr->prediction_unit_array->mv[1].y % 2 != 0)
-                             hp = 1;
+                            hp = 1;
                     }
-                    if(hp)
+                    if (hp)
                         ctx->tot_hp_coded_area += blk_geom->bwidth * blk_geom->bheight;
                 }
 #endif

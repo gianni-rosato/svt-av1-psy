@@ -116,12 +116,14 @@ typedef struct {
     // pass, concatenated.
     //aom_fixed_buf_t stats_in;
 
+#if !CLN_VBR
     // TWO PASS DATARATE CONTROL OPTIONS.
     // Indicates the bias (expressed on a scale of 0 to 100) for determining
     // target size for the current frame. The value 0 indicates the optimal CBR
     // mode value should be used, and 100 indicates the optimal VBR mode value
     // should be used.
     int vbrbias;
+#endif
     // Indicates the minimum bitrate to be used for a single GOP as a percentage
     // of the target bitrate.
     int vbrmin_section;
@@ -170,7 +172,7 @@ typedef struct AV1EncoderConfig {
     int          disable_trellis_quant;
     unsigned int vbr_corpus_complexity_lap; // 0 indicates corpus complexity vbr
         // mode is disabled
-
+#if !CLN_VBR
     // Configuration related to Quantization.
     //QuantizationCfg q_cfg;
 
@@ -179,7 +181,7 @@ typedef struct AV1EncoderConfig {
 
     // Frame Super-Resolution size scaling.
     //SuperResCfg superres_cfg;
-
+#endif
     // two pass datarate control
     TwoPassCfg two_pass_cfg;
 

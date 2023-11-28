@@ -138,7 +138,8 @@ EbErrorType svt_aom_rest_context_ctor(EbThreadContext *thread_ctx, const EbEncHa
         }
         context_ptr->rst_tmpbuf = NULL;
 #if OPT_SG
-        if (svt_aom_get_enable_sg(init_data_ptr->enc_mode, scs->input_resolution, scs->static_config.fast_decode, scs->static_config.qp))
+        if (svt_aom_get_enable_sg(
+                init_data_ptr->enc_mode, scs->input_resolution, scs->static_config.fast_decode, scs->static_config.qp))
 #else
         if (svt_aom_get_enable_sg(init_data_ptr->enc_mode, scs->input_resolution, scs->static_config.fast_decode))
 #endif
@@ -482,8 +483,8 @@ static void copy_statistics_to_ref_obj_ect(PictureControlSet *pcs, SequenceContr
 #endif
     if (pcs->slice_type == I_SLICE)
         pcs->intra_coded_area = 0;
-    obj->intra_coded_area                   = (uint8_t)(pcs->intra_coded_area);
-    obj->skip_coded_area                    = (uint8_t)(pcs->skip_coded_area);
+    obj->intra_coded_area = (uint8_t)(pcs->intra_coded_area);
+    obj->skip_coded_area  = (uint8_t)(pcs->skip_coded_area);
 #if OPT_HP_MV
     obj->hp_coded_area = (uint8_t)(pcs->hp_coded_area);
 #endif
