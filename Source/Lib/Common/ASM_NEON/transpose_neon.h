@@ -862,4 +862,174 @@ static INLINE void transpose_arrays_s16_8x4(const int16x8_t *const in, int16x4_t
     out[7] = vget_high_s16(vreinterpretq_s16_u32(c1.val[1]));
 }
 
+static INLINE void transpose_s16_4x4d(int16x4_t *a0, int16x4_t *a1, int16x4_t *a2, int16x4_t *a3) {
+    // Swap 16 bit elements. Goes from:
+    // a0: 00 01 02 03
+    // a1: 10 11 12 13
+    // a2: 20 21 22 23
+    // a3: 30 31 32 33
+    // to:
+    // b0.val[0]: 00 10 02 12
+    // b0.val[1]: 01 11 03 13
+    // b1.val[0]: 20 30 22 32
+    // b1.val[1]: 21 31 23 33
+
+    const int16x4x2_t b0 = vtrn_s16(*a0, *a1);
+    const int16x4x2_t b1 = vtrn_s16(*a2, *a3);
+
+    // Swap 32 bit elements resulting in:
+    // c0.val[0]: 00 10 20 30
+    // c0.val[1]: 02 12 22 32
+    // c1.val[0]: 01 11 21 31
+    // c1.val[1]: 03 13 23 33
+
+    const int32x2x2_t c0 = vtrn_s32(vreinterpret_s32_s16(b0.val[0]), vreinterpret_s32_s16(b1.val[0]));
+    const int32x2x2_t c1 = vtrn_s32(vreinterpret_s32_s16(b0.val[1]), vreinterpret_s32_s16(b1.val[1]));
+
+    *a0 = vreinterpret_s16_s32(c0.val[0]);
+    *a1 = vreinterpret_s16_s32(c1.val[0]);
+    *a2 = vreinterpret_s16_s32(c0.val[1]);
+    *a3 = vreinterpret_s16_s32(c1.val[1]);
+}
+
+static INLINE void transpose_s32_4x4(int32x4_t *a0, int32x4_t *a1, int32x4_t *a2, int32x4_t *a3) {
+    // Swap 32 bit elements. Goes from:
+    // a0: 00 01 02 03
+    // a1: 10 11 12 13
+    // a2: 20 21 22 23
+    // a3: 30 31 32 33
+    // to:
+    // b0.val[0]: 00 10 02 12
+    // b0.val[1]: 01 11 03 13
+    // b1.val[0]: 20 30 22 32
+    // b1.val[1]: 21 31 23 33
+
+    const int32x4x2_t b0 = vtrnq_s32(*a0, *a1);
+    const int32x4x2_t b1 = vtrnq_s32(*a2, *a3);
+
+    // Swap 64 bit elements resulting in:
+    // c0.val[0]: 00 10 20 30
+    // c0.val[1]: 02 12 22 32
+    // c1.val[0]: 01 11 21 31
+    // c1.val[1]: 03 13 23 33
+
+    const int32x4x2_t c0 = aom_vtrnq_s64_to_s32(b0.val[0], b1.val[0]);
+    const int32x4x2_t c1 = aom_vtrnq_s64_to_s32(b0.val[1], b1.val[1]);
+
+    *a0 = c0.val[0];
+    *a1 = c1.val[0];
+    *a2 = c0.val[1];
+    *a3 = c1.val[1];
+}
+
+static INLINE void transpose_arrays_s32_4x4(const int32x4_t *in, int32x4_t *out) {
+    transpose_elems_s32_4x4(in[0], in[1], in[2], in[3], &out[0], &out[1], &out[2], &out[3]);
+}
+
+static AOM_FORCE_INLINE void transpose_arrays_s32_4nx4n(const int32x4_t *in, int32x4_t *out, const int width,
+                                                        const int height) {
+    const int h = height >> 2;
+    const int w = width >> 2;
+    for (int j = 0; j < w; j++) {
+        for (int i = 0; i < h; i++) { transpose_arrays_s32_4x4(in + j * height + i * 4, out + i * width + j * 4); }
+    }
+}
+
+static AOM_FORCE_INLINE void transpose_arrays_s32_8x8(const int32x4_t *in, int32x4_t *out) {
+    transpose_arrays_s32_4nx4n(in, out, 8, 8);
+}
+
+static AOM_FORCE_INLINE void transpose_arrays_s32_16x16(const int32x4_t *in, int32x4_t *out) {
+    transpose_arrays_s32_4nx4n(in, out, 16, 16);
+}
+
+static AOM_FORCE_INLINE void transpose_arrays_s32_32x32(const int32x4_t *in, int32x4_t *out) {
+    transpose_arrays_s32_4nx4n(in, out, 32, 32);
+}
+
+static AOM_FORCE_INLINE void transpose_arrays_s16_4nx4n(const int16x4_t *in, int16x4_t *out, const int width,
+                                                        const int height) {
+    const int h = height >> 2;
+    const int w = width >> 2;
+    for (int j = 0; j < w; j++) {
+        for (int i = 0; i < h; i++) { transpose_arrays_s16_4x4(in + j * height + i * 4, out + i * width + j * 4); }
+    }
+}
+
+static AOM_FORCE_INLINE void transpose_s16_4x4(const int16x4_t *in, int16x4_t *out) {
+    transpose_arrays_s16_4nx4n(in, out, 4, 4);
+}
+
+static AOM_FORCE_INLINE void transpose_s16_4x8(const int16x4_t *in, int16x4_t *out) {
+    transpose_arrays_s16_4nx4n(in, out, 4, 8);
+}
+
+static AOM_FORCE_INLINE void transpose_s16_4x16(const int16x4_t *in, int16x4_t *out) {
+    transpose_arrays_s16_4nx4n(in, out, 4, 16);
+}
+
+static AOM_FORCE_INLINE void transpose_s16_8x4(const int16x4_t *in, int16x4_t *out) {
+    transpose_arrays_s16_4nx4n(in, out, 8, 4);
+}
+
+static AOM_FORCE_INLINE void transpose_s16_8x8(const int16x4_t *in, int16x4_t *out) {
+    transpose_arrays_s16_4nx4n(in, out, 8, 8);
+}
+
+static AOM_FORCE_INLINE void transpose_s16_8x16(const int16x4_t *in, int16x4_t *out) {
+    transpose_arrays_s16_4nx4n(in, out, 8, 16);
+}
+
+static AOM_FORCE_INLINE void transpose_s16_8x32(const int16x4_t *in, int16x4_t *out) {
+    transpose_arrays_s16_4nx4n(in, out, 8, 32);
+}
+
+static AOM_FORCE_INLINE void transpose_s16_16x4(const int16x4_t *in, int16x4_t *out) {
+    transpose_arrays_s16_4nx4n(in, out, 16, 4);
+}
+
+static AOM_FORCE_INLINE void transpose_s16_16x8(const int16x4_t *in, int16x4_t *out) {
+    transpose_arrays_s16_4nx4n(in, out, 16, 8);
+}
+
+static AOM_FORCE_INLINE void transpose_s16_16x16(const int16x4_t *in, int16x4_t *out) {
+    transpose_arrays_s16_4nx4n(in, out, 16, 16);
+}
+
+static AOM_FORCE_INLINE void transpose_s16_16x32(const int16x4_t *in, int16x4_t *out) {
+    transpose_arrays_s16_4nx4n(in, out, 16, 32);
+}
+
+static AOM_FORCE_INLINE void transpose_s16_16x64(const int16x4_t *in, int16x4_t *out) {
+    transpose_arrays_s16_4nx4n(in, out, 16, 64);
+}
+
+static AOM_FORCE_INLINE void transpose_s16_32x8(const int16x4_t *in, int16x4_t *out) {
+    transpose_arrays_s16_4nx4n(in, out, 32, 8);
+}
+
+static AOM_FORCE_INLINE void transpose_s16_32x16(const int16x4_t *in, int16x4_t *out) {
+    transpose_arrays_s16_4nx4n(in, out, 32, 16);
+}
+
+static AOM_FORCE_INLINE void transpose_s16_32x32(const int16x4_t *in, int16x4_t *out) {
+    transpose_arrays_s16_4nx4n(in, out, 32, 32);
+}
+
+static AOM_FORCE_INLINE void transpose_s16_32x64(const int16x4_t *in, int16x4_t *out) {
+    transpose_arrays_s16_4nx4n(in, out, 32, 64);
+}
+
+static AOM_FORCE_INLINE void transpose_s16_64x16(const int16x4_t *in, int16x4_t *out) {
+    transpose_arrays_s16_4nx4n(in, out, 64, 16);
+}
+
+static AOM_FORCE_INLINE void transpose_s16_64x32(const int16x4_t *in, int16x4_t *out) {
+    transpose_arrays_s16_4nx4n(in, out, 64, 16);
+}
+
+static AOM_FORCE_INLINE void transpose_s16_64x64(const int16x4_t *in, int16x4_t *out) {
+    transpose_arrays_s16_4nx4n(in, out, 64, 16);
+}
+
 #endif // AOM_AOM_DSP_ARM_TRANSPOSE_NEON_H_

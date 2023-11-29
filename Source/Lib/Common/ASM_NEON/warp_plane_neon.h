@@ -22,7 +22,7 @@
 #include "common_dsp_rtcd.h"
 #include "EbWarpedMotion.h"
 #include "convolve.h"
-#include "Source/Lib/Encoder/ASM_NEON/sum_neon.h"
+#include "sum_neon.h"
 
 static INLINE int16x8_t horizontal_filter_4x1_f4(const uint8x16_t in, int sx, int alpha);
 

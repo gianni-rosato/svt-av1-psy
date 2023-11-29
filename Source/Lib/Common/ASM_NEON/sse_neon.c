@@ -12,7 +12,7 @@
 #include <arm_neon.h>
 
 #include "mem_neon.h"
-#include "Source/Lib/Encoder/ASM_NEON/sum_neon.h"
+#include "sum_neon.h"
 #include "transpose_neon.h"
 
 static INLINE void sse_16x1_neon(const uint8_t *src, const uint8_t *ref, uint32x4_t *sse) {

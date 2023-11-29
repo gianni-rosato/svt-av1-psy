@@ -1,14 +1,3 @@
-/*
-* Copyright (c) 2023, Alliance for Open Media. All rights reserved
-*
-* This source code is subject to the terms of the BSD 2 Clause License and
-* the Alliance for Open Media Patent License 1.0. If the BSD 2 Clause License
-* was not distributed with this source code in the LICENSE file, you can
-* obtain it at www.aomedia.org/license/software. If the Alliance for Open
-* Media Patent License 1.0 was not distributed with this source code in the
-* PATENTS file, you can obtain it at www.aomedia.org/license/patent.
-*/
-
 #include <arm_neon.h>
 #include "mem_neon.h"
 #include "sum_neon.h"
@@ -361,6 +350,22 @@ static INLINE uint32_t sad48xh_neon(const uint8_t *src_ptr, uint32_t src_stride,
     return temp_sad;
 }
 
+static INLINE uint32_t sad40xh_neon(const uint8_t *src_ptr, int src_stride, const uint8_t *ref_ptr, int ref_stride,
+                                    int h) {
+    uint32_t res1, res2;
+    res1 = sad32xh_neon(src_ptr, src_stride, ref_ptr, ref_stride, h);
+    res2 = sad8xh_neon(src_ptr + 32, src_stride, ref_ptr + 32, ref_stride, h);
+    return (res1 + res2);
+}
+
+static INLINE uint32_t sad56xh_neon(const uint8_t *src_ptr, int src_stride, const uint8_t *ref_ptr, int ref_stride,
+                                    int h) {
+    uint32_t res1, res2;
+    res1 = sad48xh_neon(src_ptr, src_stride, ref_ptr, ref_stride, h);
+    res2 = sad8xh_neon(src_ptr + 48, src_stride, ref_ptr + 48, ref_stride, h);
+    return (res1 + res2);
+}
+
 static INLINE uint32x4_t sadwxhx4d_large_neon(const uint8_t *src, uint32_t src_stride, const uint8_t *ref,
                                               uint32_t ref_stride, uint32_t w, uint32_t h, uint32_t h_overflow) {
     uint32x4_t sum[4];
@@ -528,45 +533,6 @@ static INLINE uint32x4_t sad8xhx4d_neon(const uint8_t *src, uint32_t src_stride,
         src += src_stride;
         ref_offset += ref_stride;
     } while (--i != 0);
-
-    return horizontal_add_4d_u16x8(sum);
-}
-
-static INLINE uint32x4_t sad4xhx4d_neon(const uint8_t *src, uint32_t src_stride, const uint8_t *ref,
-                                        uint32_t ref_stride, uint32_t h) {
-    uint16x8_t sum[4];
-    uint8x8_t  s, r0, r1, r2, r3;
-    uint32_t   i, ref_offset;
-
-    s  = load_unaligned_u8(src, src_stride);
-    r0 = load_unaligned_u8(ref + 0, ref_stride);
-    r1 = load_unaligned_u8(ref + 1, ref_stride);
-    r2 = load_unaligned_u8(ref + 2, ref_stride);
-    r3 = load_unaligned_u8(ref + 3, ref_stride);
-
-    sum[0] = vabdl_u8(s, r0);
-    sum[1] = vabdl_u8(s, r1);
-    sum[2] = vabdl_u8(s, r2);
-    sum[3] = vabdl_u8(s, r3);
-
-    src += 2 * src_stride;
-    ref_offset = 2 * ref_stride;
-    i          = h / 2;
-    while (--i != 0) {
-        s  = load_unaligned_u8(src, src_stride);
-        r0 = load_unaligned_u8(ref + 0 + ref_offset, ref_stride);
-        r1 = load_unaligned_u8(ref + 1 + ref_offset, ref_stride);
-        r2 = load_unaligned_u8(ref + 2 + ref_offset, ref_stride);
-        r3 = load_unaligned_u8(ref + 3 + ref_offset, ref_stride);
-
-        sum[0] = vabal_u8(sum[0], s, r0);
-        sum[1] = vabal_u8(sum[1], s, r1);
-        sum[2] = vabal_u8(sum[2], s, r2);
-        sum[3] = vabal_u8(sum[3], s, r3);
-
-        src += 2 * src_stride;
-        ref_offset += 2 * ref_stride;
-    }
 
     return horizontal_add_4d_u16x8(sum);
 }
@@ -1675,4 +1641,56 @@ void svt_pme_sad_loop_kernel_neon(const struct svt_mv_cost_param *mv_cost_params
         break;
     }
     }
+}
+
+uint32_t svt_nxm_sad_kernel_helper_neon(const uint8_t *src, uint32_t src_stride, const uint8_t *ref,
+                                        uint32_t ref_stride, uint32_t height, uint32_t width) {
+    uint32_t res = 0;
+    switch (width) {
+    case 4: {
+        res = sad4xh_neon(src, src_stride, ref, ref_stride, height);
+        break;
+    }
+    case 8: {
+        res = sad8xh_neon(src, src_stride, ref, ref_stride, height);
+        break;
+    }
+    case 16: {
+        res = sad16xh_neon(src, src_stride, ref, ref_stride, height);
+        break;
+    }
+    case 24: {
+        res = sad24xh_neon(src, src_stride, ref, ref_stride, height);
+        break;
+    }
+    case 32: {
+        res = sad32xh_neon(src, src_stride, ref, ref_stride, height);
+        break;
+    }
+    case 40: {
+        res = sad40xh_neon(src, src_stride, ref, ref_stride, height);
+        break;
+    }
+    case 48: {
+        res = sad48xh_neon(src, src_stride, ref, ref_stride, height);
+        break;
+    }
+    case 56: {
+        res = sad56xh_neon(src, src_stride, ref, ref_stride, height);
+        break;
+    }
+    case 64: {
+        res = sad64xh_neon(src, src_stride, ref, ref_stride, height);
+        break;
+    }
+    case 128: {
+        res = sad128xh_neon(src, src_stride, ref, ref_stride, height);
+        break;
+    }
+    default: {
+        res = svt_fast_loop_nxm_sad_kernel(src, src_stride, ref, ref_stride, height, width);
+        break;
+    }
+    }
+    return res;
 }
