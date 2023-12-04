@@ -137,13 +137,6 @@ Control flags associated with CDEF are listed in Table 1 below.
 
 **Implementation details**
 
-Important function calls associated with CDEF are highlighted in Figure 6 below. The function calls are
-organized according to the depth of the function call.
-
-![image29](./img/image29.png)
-
-##### Figure 6. The main function calls associated with CDEF.
-
 The main steps involved in the implementation of the algorithm are
 outlined below, followed by more details on some of the important
 functions.
@@ -151,8 +144,8 @@ functions.
 Step 1: Split the frame to be filtered into segments to allow for parallel filtering operations on
   different parts of the frame. The segments are set according to the following rules
   (see ```load_default_buffer_configuration_settings``` in ```EbEncHandle.c```):
-- The number of segment rows is set to 1 if ```(luma height/64)<6```, else it is set to 6.
-- The number of segment columns is set to 1 if ```(luma width/64)<10```, else it is set to 6.
+- The number of segment rows is set to 1 if using a single core or ```(luma height/64)<6```, else it is set to 6.
+- The number of segment columns is set to 1 if using a single core or ```(luma width/64)<10```, else it is set to 6.
 
 The segments are processed in ```cdef_kernel```. Each segment is split into
 64x64 filter blocks.

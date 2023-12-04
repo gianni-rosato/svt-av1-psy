@@ -39,7 +39,7 @@ control algorithm to update the internal model and decide on future QPs.
 
 The inputs to the rate control algorithm vary based on the application and rate
 control mode. In the case of VBR mode, the input could be analysis statistics
-from an IPP processing of frames in the look ahead window, or statistics coming
+from motion estimation processing of frames in the look ahead window, or statistics coming
 from previous passes. However, in all cases, the Temporal Dependency Model
 (TPL) data is used to calculate the boosts for frame-level QP assignment, SB QP
 modulation and lambda modulation per block.
@@ -57,8 +57,7 @@ maintain a constant bitrate in the generated bitstream.
 
 ### One-Pass VBR + Look Ahead
 
-In this mode, the latency is controlled by the size of the look ahead. The CRF
-IPP processing is performed for the frames in the look ahead window and the
+In this mode, the latency is controlled by the size of the look ahead. The motion estimation is performed for the frames in the look ahead window and the
 collected analysis data is used in the rate control algorithm. The default size
 of the look ahead is around 2 mini-GoPs (e.g. 32 frames for the case of a
 five-layer prediction structure), but it can be increased to 120 frames.
@@ -96,13 +95,10 @@ would reference at most the two preceding pictures in display order. Pictures
 are divided into 16x16 blocks and simple ME and Intra DC predictions are
 performed. The inter and intra prediction residuals are used in the
 calculations of the prediction distortion but not processed through
-transform/quantization steps. The collected data includes: Intra error
-(distortion), Inter error (distortion), coded error (distortion) of the best
-mode, percentage of Inter blocks, percentage of zero motion blocks, and
-information about motion vectors. The coded error of each mini-GoP or GoP is
-used in the final pass to allocate the rate for each section of the clip. Note
-that the results from the IPP pass can be used in other decision-making steps,
-such as the dynamic GoP decisions, in the subsequent encode pass. The
+transform/quantization steps. The collected data includes the Intra error
+(distortion) and coded error (distortion) of the best
+mode. The coded error of each mini-GoP or GoP is
+used in the final pass to allocate the rate for each section of the clip. The
 calculated data is stored in *FRAME_STATS* per block and then converted to
 *FIRSTPASS_STATS* per frame in *update_firstpass_stats()*.
 
@@ -180,8 +176,7 @@ where:
 - *kf_group_err* is the calculated error for the GoP as the sum of frame errors in the GoP.
 - *modified_error_left* is the calculated error over the remaining frames in the clip.
 
-In the above definitions, error is defined as function of the best Inter vs.
-Intra error from the first pass.
+In the above definitions, error is defined as function of the motion estimation error for each frame.
 
 #### Multi-Pass VBR:
 
@@ -205,8 +200,7 @@ ___GF_group_bits = kf_bits_left * (GF_group_err / kf_error_left)___
 *kf_bits_left* refers to the remaining bit budget in the GoP. *GF_group_err* is
 the calculated error for the gf group as the sum of frame errors in the gf
 group and *kf_error_left* is the calculated error for the remaining frames in
-the GoP. Error is defined as a function of the best inter vs. intra error from
-the first pass for the mini-GoP.
+the GoP. Error is defined as a function of the motion estimation error for each frame in the mini-GoP.
 
 #### Multi-Pass
 

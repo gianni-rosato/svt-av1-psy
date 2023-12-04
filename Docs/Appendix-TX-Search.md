@@ -113,7 +113,10 @@ number of coefficients is sufficiently low.
 | txt_group_intra_lt_16x16 | Max group to use when intra and tx block < 16x16 |
 | txt_group_intra_gt_eq_16x16 | Max group to use when intra and tx block >= 16x16 |
 | early_exit_dist_th | Per unit distortion TH; if best TX distortion is below the TH, skip remaining TX types (0 OFF, higher = more aggressive) |
-| early_exit_coeff_th | If best TX number of coeffs is less than the TH, skip remaining TX types (0 OFF, higher = more aggressive) |
+| satd_early_exit_th_intra | If the deviation of SATD of the current TX type to the best is greater than the TH, exit exit early from testing the current TX type. This TH is for intra candidates. |
+| satd_early_exit_th_inter | If the deviation of SATD of the current TX type to the best is greater than the TH, exit exit early from testing the current TX type. This TH is for inter candidates. |
+| txt_rate_cost_th | Skip some TX types based on rate info. |
+| satd_th_q_weight | Use QP to modulate satd thresholds. |
 
 #### Tx Type Search Shortcuts Based on Block Characteristics
 
@@ -212,13 +215,12 @@ two depths more than the current block size, and 0 means the default TX size.
 
 | **Flag**               | **Level (sequence/Picture)** | **Description**                                                                    |
 | ---------------------- | ---------------------------- | ---------------------------------------------------------------------              |
-| tx_size_search_mode    | Picture                      | When set, it allows transform block size search.                                   |
-| frm_hdr->tx_mode       | Picture                      | Frame-based signal used to signal that TX size search is allowed in a given frame. |
+| frm_hdr->tx_mode       | Picture                      | Frame-based signal used to signal that TX size search is allowed in a given frame. Set based on txs_level. |
 | txs_level              | Picture                      | Indicates the level of optimization to use in the TX size search.                  |
 
 #### Details of the implementation
 
-The function tx_partitioning_path performs the Tx size search in MD. The flow
+The function tx_partitioning_path performs the TX size search in MD. The flow
 of the evaluation depends on whether the block is an inter-coded block or an
 intra-coded block, as outlined below.
 
@@ -255,11 +257,14 @@ The optimization of the TX size search focuses on two areas:
 | --------------          | ---------------                                                                   |
 | enabled                 | 1: Ts size search enabled; 0: Tx size search disabled (use default TX size)       |
 | prev_depth_coeff_exit   | Skip current depth if previous depth has zero coeffs                              |
-| intra_class_max_depth   | Max number of depth(s) for INTRA classes                                          |
-| inter_class_max_depth   | Max number of depth(s) for INTER classes                                          |
+| intra_class_max_depth_sq   | Max number of depth(s) for INTRA classes in square blocks                                          |
+| intra_class_max_depth_nsq   | Max number of depth(s) for INTRA classes in non-square blocks                                          |
+| inter_class_max_depth_sq   | Max number of depth(s) for INTER classes in square blocks                                          |
+| inter_class_max_depth_nsq   | Max number of depth(s) for INTER classes in non-square blocks                                          |
 | depth1_txt_group_offset | Offset to be subtracted from default txt-group to derive the txt-group of depth-1 |
 | depth2_txt_group_offset | Offset to be subtracted from default txt-group to derive the txt-group of depth-2 |
 | min_sq_size             | Min. square size to use Tx size for                                               |
+| quadrant_th_sf             | Skip depth if cost of processed sublocks of curent depth > th% of normalized parent cost.                                               |
 
 ## Notes
 

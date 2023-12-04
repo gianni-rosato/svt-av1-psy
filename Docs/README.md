@@ -17,7 +17,6 @@
 - [Decoder Design](svt-av1-decoder-design.md)
 
 ## Technical Appendices
-- [Adaptive Prediction Structure Appendix](Appendix-Adaptive-Prediction-Structure.md)
 - [Altref and Overlay Pictures Appendix](Appendix-Alt-Refs.md)
 - [CDEF Appendix](Appendix-CDEF.md)
 - [CfL Appendix](Appendix-CfL.md)

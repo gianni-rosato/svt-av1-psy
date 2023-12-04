@@ -150,6 +150,8 @@ positions.
 | round_dev_th          | Specifies the prediction-block-error deviation threshold between round-(N-1) and round-(N-2) under which the refinement is paused; pause the refinement if the prediction-block-error is not getting better through the process (the check takes place at only the 2nd round (prior to the 1/4-Pel refinement) or the 3rd round (prior to the 1/8-Pel refinement). |
 | skip_diag_refinement  | Specifies the refinement accuracy for diagonal position(s).                                                                                                                                                                                                                                                                                                        |
 | skip_zz_mv            | Specifies whether the sub-pel search will be performed around (0,0) or not (0: OFF, 1: ON).                                                                                                                                                                                                                                                                        |
+| min_blk_sz            | Minimum block size subpel is searched.  Below this size, subpel is skipped.                                                                                                                                                                                                                                                                        |
+| Mvp_th            | When greater than 0, use MVP vs. ME distortion information to skip quarter-pel and eighth-pel search.                                                                                                                                                                                                                                                                        |
 
 ## 2. Interpolation Filter Search
 ### 2.1 Search Method
@@ -200,16 +202,13 @@ candidates).
 | **Signal(s)**                  | **Description**                                                                                                                                                                                                                        |
 | -----------                    | -----------------                                                                                                                                                                                                                      |
 | Level                          | Specifies the MD Stage where the interpolation filter search will take place (IFS_MDS0, IFS_MDS1, IFS_MDS2, or IFS_MDS3 for MD Stage 0, MD Stage 1, MD Stage 2, and MD Stage 3, respectively).                                         |
-| quarter_pel_only               | Specifies whether the interpolation filter search will use 1/8-Pel precision or 1/4 -Pel precision (0: 1/8-Pel precision, 1: 1/4 -Pel precision).                                                                                      |
-| modulate_filter_per_resolution | Specifies whether certain combination(s) will be skipped depending on the input resolution or not (0: NO, 1: only (regular, regular) and (sharp, sharp) if 480p and below, and only (regular, regular) and (smooth, smooth) otherwise. |
-| early_skip                     | Specifies whether an early interpolation filter search exit could take place based on the cost of signaling a switchable filter type (0: OFF, 1: ON).                                                                                  |
 | subsampled_distortion          | Specifies whether sub-sampled input/prediction will be used at the distortion computation (0: OFF, 1: ON, NA for block height 16 and lower).                                                                                           |
 | skip_sse_rd_model              | Specifies whether a model will be used for rate estimation or not (0: NO (assume rate is 0), 1: estimate rate from distortion).                                                                                                        |
 
 ## 3. Signaling
 
-Each of the vertical filter type and horizontal filter type are signaled
-independently in the bitstream.
+Each of the vertical filter type and horizontal filter type can be signaled
+independently in the bitstream when enable_dual_filter, under the sequence header, is true.  Otherwise, only one filter type is signaled, and will be the horizontal and vertical filter type.
 
 ## Notes
 

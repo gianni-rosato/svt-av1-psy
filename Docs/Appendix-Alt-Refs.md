@@ -54,21 +54,18 @@ function of the encoder preset (enc_mode).
 | --- | --- | --- |
 |**Filtering**|Enabled|Specifies whether the current input will be filtered or not (0: OFF, 1: ON).|
 |**Filtering**|do_chroma|Specifies whether the U&V planes will be filered or not (0: filter all planes, 1: filter Y plane only).|
-|**Filtering**|use_medium_filter|Specifies whether the weights generation will use approximations or not (0: do not use approximations, 1: per-block weights derivation, use an approximated exponential & log, use an approximated noise level).|
-|**Filtering**|use_fast_filter|Specifies whether the weights derivation will use the distance factor (MV-based correction) and the 5x5 window error or not (0: OFF, 1: ON).|
-|**Filtering**|use_fixed_point|Specifies noise-level-estimation and filtering precision (0: use float/double precision, 1: use fixed point precision).|
+|**Filtering**|use_zz_based_filter|Specifies whether to apply a motion estimation towards accurate MVs or to simply use (0, 0) MVs (0: apply motion estimation, 1: use (0, 0) MVs)|
+|**Filtering**|modulate_pics|Specifies whether the number of reference frame(s) will be modified or not; for key-frame, the modulation uses the noise level, else the modulation uses the filter_intra-to-unfilterd_intra distortion range (0: OFF, 1: ON).|
+|**Filtering**|enable_8x8_pred|Specifies whether to use 8x8 blocks (0: OFF, 1: ON).|
 |**Number of reference frame(s)**|num_past_pics|Specifies the default number of frame(s) from past.|
 |**Number of reference frame(s)**|num_future_pics|Specifies the default number of frame(s) from future.|
-|**Number of reference frame(s)**|noise_adjust_past_pics|Specifies whether num_past_pics will be incremented or not based on the noise level of the central frame (0: OFF or 1: ON).|
-|**Number of reference frame(s)**|noise_adjust_future_pics|Specifies whether num_future_pics will be incremented or not based on the noise level of the central frame (0: OFF or 1: ON).|
 |**Number of reference frame(s)**|use_intra_for_noise_est|Specifies whether to use the key-frame noise level for all inputs or to re-compute the noise level for each input.|
-|**Number of reference frame(s)**|activity_adjust_th|Specifies whether `num_past_pics` and `num_future_pics` will be decremented or not based on the activity of the outer reference frame(s) compared to the central frame (∞: OFF, else remove the reference frame if the cumulative differences between the histogram bins of the central frame and the histogram bins of the reference frame is higher than `activity_adjust_th`.|
 |**Number of reference frame(s)**|max_num_past_pics|Specifies the maximum number of frame(s) from past (after all adjustments).|
 |**Number of reference frame(s)**|max_num_future_pics|Specifies the maximum number of frame(s) from future (after all adjustments).|
 |**Motion search**|hme_me_level|Specifies the accuracy of the ME search (note that ME performs a HME search, then a Full-Pel search).|
-|**Motion search**|half_pel_mode|Specifies the accuracy of the Half-Pel search (0: OFF, 1: perform refinement for the 8 neighboring positions, 2/3: perform refinement for the 2 horizontal-neighboring positions and for the 2 vertical-neighboring positions, but not for all the 4 diagonal-neighboring positions = function (horizontal & vertical distortions).|
-|**Motion search**|quarter_pel_mode|Specifies the accuracy of the Quarter-Pel search (0: OFF, 1: perform refinement for the 8 neighboring positions, 2/3: perform refinement for the 2 horizontal-neighboring positions and for the 2 vertical-neighboring positions, but not for all the 4 diagonal-neighboring positions = function (horizontal & vertical distortions).|
-|**Motion search**|eight_pel_mode|Specifies the accuracy of the Eight-Pel search (0: OFF, 1: perform refinement for the 8 neighboring positions).|
+|**Motion search**|half_pel_mode|Specifies the accuracy of the Half-Pel search (0: OFF, 1: search the 8 neighboring positions, 2: skip the diagonal positions).|
+|**Motion search**|quarter_pel_mode|Specifies the accuracy of the Half-Pel search (0: OFF, 1: search the 8 neighboring positions, 2: skip the diagonal positions).|
+|**Motion search**|eight_pel_mode|Specifies the accuracy of the Eight-Pel search (0: OFF, 1: search the 8 neighboring positions).|
 |**Motion search**|use_8bit_subpel|Specifies whether the Sub-Pel search for a 10bit input will be performed in 8bit resolution (0: OFF, 1: ON, NA if 8bit input).|
 |**Motion search**|avoid_2d_qpel|Specifies whether the Sub-Pel positions that require a 2D interpolation will be tested or not (0: OFF, 1: ON, NA if 16x16 block or if the Sub-Pel mode is set to 1).|
 |**Motion search**|use_2tap|Specifies the Sub-Pel search filter type (0: regular, 1: bilinear, NA if 16x16 block or if the Sub-Pel mode is set to 1).|
@@ -76,6 +73,9 @@ function of the encoder preset (enc_mode).
 |**Motion search**|pred_error_32x32_th|Specifies the 32x32 prediction error (after subpel) under which the subpel for the 16x16 block(s) is bypassed.|
 |**Motion search**|tf_me_exit_th|Specifies whether to exit ME after HME or not (0: perform both HME and Full-Pel search, else if the HME distortion is less than me_exit_th then exit after HME (i.e. do not perform the Full-Pel search), NA if use_fast_filter is set 0).|
 |**Motion search**|use_pred_64x64_only_th|Specifies whether to perform Sub-Pel search for only the 64x64 block or to use default size(s) (32x32 or/and 16x16) (∞: perform Sub-Pel search for default size(s), else if the deviation between the 64x64 ME distortion and the sum of the 4 32x32 ME distortions is less than use_pred_64x64_only_th then perform Sub-Pel search for only the 64x64 block, NA if use_fast_filter is set 0).|
+|**Motion search**|subpel_early_exit|Specifies whether to early exit the Sub-Pel search based on a pred-error-th or not|
+|**Motion search**|qp_opt|Specifies whether to tune the params using qp (0: OFF, 1: ON)|
+|**Number of reference frame(s)**|ref_frame_factor|Specifies whether to skip reference frame; 1 = use all frames, 2 = use every other frame, 4 = use 1/4 frames, etc.|
 
 ### Temporal filtering data flow
 
@@ -88,49 +88,13 @@ The block diagram in Figure 2 outlines the flow of the temporal filtering operat
 
 ## Description of the main modules
 
-### Source picture noise estimation
+### Temporal window length for an intra-frame
 
-In order to decide temporal window length according to the content
-characteristics, the amount of noise is estimated from the central source
-picture. The algorithm considered is based on a simplification of the algorithm
-proposed in [1]. The standard deviation (sigma) of the noise is estimated using
-the Laplacian operator. Pixels that belong to an edge (i.e. as determined by
-how the magnitude of the Sobel gradients compare to a predetermined threshold),
-are not considered in the computation. The current noise estimation considers
-only the luma component. When `use_intra_for_noise_est` is set to 1, the noise
-level of the I-frame will be used for ALTREF_FRAME or ALTREF2_FRAME.
+The noise level of the intra-frame is used to modulate the number of filtering frames; more frames are used to filter low-noise frame such the filtered frame can provide better predictions for more frames. The noise level classifier is based on a simplification of the algorithm proposed in [1]. The standard deviation (sigma) of the noise is estimated using the Laplacian operator. Pixels that belong to an edge (i.e., as determined by how the magnitude of the Sobel gradients compare to a predetermined threshold), are not considered in the computation. The current noise estimation considers only the luma component. 
 
-### Building the list of source pictures
+### Temporal window length for an inter-frame
 
-As mentioned previously, the temporal filtering algorithm uses multiple frames
-to generate a temporally denoised or filtered picture at the central picture
-location. If enough pictures are available in the list of source picture
-buffers, the number of pictures used will generally be given by the
-num_past_pics and num_future_pics in addition to the central picture, unless
-not enough frames are available (e.g. end of sequence).
-
-The number of pictures will be first increased based on the noise level of the
-central picture. Basically, the lower the noise of the central picture, the
-widerthe temporal window (+3 on each side if noise <0.5, +2 on each side if
-noise < 1.0, and +1 on each if noise < 2.0). Both sides of the window could be
-adjusted or just one side depending on noise_adjust_past_pics and
-noise_adjust_future_pics.
-
-In order to account for illumination changes, which might compromise the
-quality of the temporally filtered picture, an adjustment of both
-`num_past_pics` and `num_future_pics` is conducted to remove cases where a
-significant illumination change is found in the defined temporal window. This
-algorithm first computes and accumulates the absolute difference between the
-luminance histograms of adjacent pictures in the temporal window, starting from
-the first past picture to the last past picture and from the first future
-picture to the last future picture. Then, depending on a threshold, ahd_th, if
-the cumulative difference is high enough, edge pictures will be removed. The
-current threshold is chosen based on the picture width and height:ahd_th =
-(width * height) * activity_adjust_th / 100
-
-After this step, the list of pictures to use for the temporal filtering is
-ready. However, given that the number of past and future frames can be
-different, the index of the central picture needs to be known.
+The noise reduction level at the previous filtered frame(s) is used to modulate the number of filtering frames; more frames are used when the delta (distortion) between the noise level of the filtered-intra-frame and the noise level of the original-intra-frame (unfiltered-frame) is high.
 
 ### Block-based processing
 
@@ -149,21 +113,15 @@ Luma plane.
 HME is performed for each single 64x64-block, while Full-Pel search is
 performed for the 85 square blocks between 8x8 and 64x64, and the Sub-Pel
 search (using regular or bilinear as filter type depending on use_2tap) is
-performed for only the 4 32x32-blocks and the 16 16x16-blocks.
+performed for the best Full-Pel MV(s).
 
-After obtaining the motion information, an inter-depth decision between the 4
-32x32-blocks and the 16 16x16-blocks is performed towards a final partitioning
+After obtaining the motion information, an inter-depth decision is performed towards a final partitioning
 for the 64x64. The latter will be considered at the final compensation (using
 sharp as filter type and for all planes).
 
 However, if the 64x64 distortion after HME is less than tf_me_exit_th, then the
 Full_Pel search is bypassed and Sub-Pel search/final compensation is performed
 for only the 64x64.
-
-Also, Sub-Pel search/final compensation is performed for only 64x64 blocks, if
-the deviation between the 64x64 ME distortion and the 4 32x32 ME distortions
-(after the Full-Pel search) is less than use_pred_64x64_only_th.
-
 
 ### Compute the Decay Factor
 
@@ -173,11 +131,7 @@ will be used at the sample-based filtering operations.
 ```tf_decay_factor = 2 * n_decay * n_decay * q_decay * s_decay```
 
 The noise-decay (`n_decay`) is mainly an increasing function of the input noise
-level, but is also adjusted depending on the filtering method
-(`use_fast_filter`), the input resolution, and the input QP; where a higher
-noise level implies a larger n_decay value and a stronger filtering. The
-computations of `n_decay` are simplified when `use_fixed_point` or
-`use_fast_filter` is set to 1.
+level, but is also adjusted depending on the sharpness level, plane and noise reduction level at previous frame(s).
 
 The QP-decay (`q_decay`) is an increasing function of the input QP. For a high
 QP, the quantization leads to a higher loss of information, and thus a stronger
@@ -238,10 +192,6 @@ For purposes of quality metrics computation, the original source picture
 is stored in ```save_enhanced_picture_ptr``` and
 ```save_enhanced_picture_bit_inc_ptr``` (for high bit-depth content)
 located in the PCS.
-
-The current implementation disables temporal filtering on key-frames if
-the source has been classified as screen content (```sc_content_detected```
-in the PCS is 1).
 
 Due to the fact that HME is open-loop, which means it operates on the
 source pictures, HME can only use the source picture which is going to
@@ -349,15 +299,6 @@ The ALTREF and Overlay picture settings are shown in Table 3.
 | is_overlay       | 0                  | 1                   |
 | show_frame       | 0                  | 1                   |
 | slice_type       | B_SLICE            | P_SLICE             |
-
-
-## Notes
-
-The feature settings that are described in this document were compiled at
-v1.7.0 of the code and may not reflect the current status of the code. The
-description in this document represents an example showing  how features would
-interact with the SVT architecture. For the most up-to-date settings, it's
-recommended to review the section of the code implementing this feature.
 
 ## References
 

@@ -60,37 +60,22 @@ $`Chroma_{pred} = \alpha_{AC} * Luma_{recon,AC} + DC_{Chroma}`$
 
 **Details of the implementation**
 
-![CfL_fig1](./img/CfL_fig1.png)
+CfL prediction takes place in MD through the ```cflprediction``` function
+and in the encode pass through the ```Av1EncodeLoop/Av1EncodeLoop16bit``` function. The details of CfL processing in ```cflprediction``` are presented below.
 
-##### Figure 2. High-level encoder pipeline dataflow with CfL feature.
+For an intra coded block, the function ```cflprediction``` is called in MD stage 3 (the final stage) when CfL prediction is allowed and enabled for the block. There are four steps in the function:
 
+**Step 1**: Generate the non-CfL cost (i.e. the cost of using a non-CfL chroma prediction mode).  If a chroma cost is already available from a previous chroma search, this step can be skipped.  The non-CfL cost is needed for deciding if CfL or non-CfL chroma prediction mode should be selected.
 
-![CfL_fig2](./img/CfL_fig2.png)
+**Step 2**: If not already available, generate the DC chroma prediction (needed for CfL prediction).
 
-##### Figure 3. The main function calls leading to CfL prediction. The functions highlighted in blue are where CfL prediction takes place.
+**Step 3**: Compute the AC component of the luma intra prediction (compute_cfl_ac_components)
 
+Reconstruct the Luma samples (av1_perform_inverse_transform_recon_luma)
 
-![CfL_fig3](./img/CfL_fig3.png)
+The first step is to reconstruct the luma samples, since the latter would be used to generate the chroma prediction. At this stage in the encoder pipeline, the luma residuals are transformed, quantized and inverse quantized. In this step, the inverse transform is applied, and the reconstructed luma residuals are added to the prediction to build the reconstructed samples.
 
-##### Figure 4. Continuation of Figure 2 showing the details of CfL processing in the function CfLPrediction.
-
-The high level dataflow of CfL in SVT-AV1 is shown in Figure 2. CfL prediction takes place in MD through the function ```CflPrediction```
-and in the encode pass through the function ```Av1EncodeLoop/Av1EncodeLoop16bit```. The details of the CfL prediction in the function ```CflPrediction``` are presented in Figure 4.
-Similar flow is also followed in the function ```Av1EncodeLoop/Av1EncodeLoop16bit```, except for the fact that $`\alpha`$
-is calculated only in MD and the encode pass would use the same $`\alpha`$
-to perform the final CfL prediction. In the following, the details of the CfL processing in the function ```CflPrediction``` are presented.
-
-For an intra coded block, the function ```CflPrediction``` is called when the ```intra_chroma_mode``` is set to ```UV_CFL_PRED```. There are four steps in the function:
-
-**Step 1**: Reconstruct the Luma samples (```AV1PerformInverseTransformReconLuma```)
-
-The first step is to reconstruct the luma samples, since the latter would be
-used to generate the chroma prediction. At this stage in the encoder pipeline,
-the luma residuals are transformed, quantized and inverse quantized. In this
-step, the inverse transform is applied, and the reconstructed luma residuals
-are added to the prediction to build the reconstructed samples.
-
-**Step 2**: Compute the AC component of the luma intra prediction
+Compute the AC component of the luma intra prediction
 
 In this step, the luma reconstructed samples are down sampled to match
 the size of chroma samples using the ``` cfl_luma_subsampling_420 ```
@@ -98,7 +83,7 @@ function. Then the AC luma values are calculated by subtracting the DC luma
 value using the ```svt_subtract_average``` function. The resulting AC values are stored
 in the ```pred_buf_q3 buffer```.
 
-**Step 3**: Find the best $`\alpha`$
+**Step 4**: Find the best $`\alpha`$ (md_cfl_rd_pick_alpha)
 
 The best $`\alpha`$ values for the chroma components are calculated by
 minimizing the overall full cost. The algorithm performs a search over the 16 possible
@@ -107,11 +92,9 @@ The search is performed in the context of a joint sign between the two chroma co
 After the best value for $`\alpha`$ is calculated, the joint cost is compared with the cost of DC prediction and the winner is selected.
 
 
-**Step 4**: Generate the chroma prediction
+**Step 5**: Generate the chroma prediction
 
-After the best $`\alpha`$ is selected, the prediction using the
-CfL mode is performed using the ```svt_cfl_predict``` function. The chroma
-residuals are then calculated using the function ```residual_kernel```.
+After selecting the best  $`\alpha`$ and generating the associated cost, set the chroma mode to be used for the block (either CfL or the best non-CfL mode, whichever has a lower cost). Generate the chroma prediction to be used later in the transform path.
 
 ## 3. Optimization of the algorithm
 
@@ -133,13 +116,7 @@ The CfL control signals are set in the function ```set_cfl_ctrls``` based on the
 
 Table 3 shows the CfL-related UV control signal and its description. The signal is set in the function ```set_chroma_controls``` based on the chroma level ```uv_level```.
 
-##### Table 3. CfL-related UV control signals description.
-
-| **Signal**        | **Description**                                                                                                       |
-| ----------------- | ------------------------------------------------------------------------------------------------------------          |
-| uv_cfl_th         | Threshold to skip CfL if the ratio of the best intra cost to the best inter cost is greater than uv_cfl_th.           |
-
-The CfL and UV levels are set according to the encoder preset, PD_PASS, temporal layer index, slice type and screen content class.
+The CfL levels are set according to the encoder preset, PD_PASS, temporal layer index, slice type and screen content class.
 
 ## 4. Signaling
 

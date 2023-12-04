@@ -144,15 +144,7 @@ partitioning, then depth level may specify to test (-1) and (+1) depth from the
 current depth in PD stage N. That means PD stage N would test depth 1, 2, and
 3. The best partition depth from PD stage (N-1) is always tested in PD stage N.
 
-The allowable refinements are shown in the Table 2 below.
-
-##### Table 2. Settings for depth_level.
-
-| **Depth_level**   | **Action**                                                                                |
-| ----------------- | ----------------------------------------------------------------------------------------- |
-| 0                 | Test only the depth selected by PDN-1 in PDN                                              |
-| 1                 | Test the depth selected by PDN-1 in PDN as well as one depth below and one depth above    |
-| 2                 | Test the depth selected by PDN-1 in PDN as well as two depths below and two depths above  |
+The allowable refinements are set in depth_level’s sub-signas, s_depth and e_depth, which control how many depths above and below (respectively) PD stage N will test.
 
 The signal ```pic_block_based_depth_refinement_level``` acts to reduce the
 number of partition depths passed from PD stage (N-1) to PD stage N. The
