@@ -365,7 +365,7 @@ static EbErrorType recon_coef_ctor(EncDecSet *object_ptr, EbPtr object_init_data
 
     // SB Array
     // object_ptr->sb_total_count          = picture_sb_width * picture_sb_height;
-    object_ptr->b64_total_count = picture_sb_width * picture_sb_height;
+    object_ptr->b64_total_count      = picture_sb_width * picture_sb_height;
     object_ptr->init_b64_total_count = object_ptr->b64_total_count;
     EB_ALLOC_PTR_ARRAY(object_ptr->quantized_coeff, object_ptr->init_b64_total_count);
 
@@ -495,10 +495,10 @@ static EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr
     uint32_t total_tile_cnt = init_data_ptr->tile_row_count * init_data_ptr->tile_column_count;
     uint32_t tile_idx       = 0;
 
-    uint32_t output_buffer_size = svt_aom_get_out_buffer_size(init_data_ptr->picture_width,
+    uint32_t output_buffer_size   = svt_aom_get_out_buffer_size(init_data_ptr->picture_width,
                                                               init_data_ptr->picture_height);
-    object_ptr->frame_width  = init_data_ptr->picture_width;
-    object_ptr->frame_height = init_data_ptr->picture_height;
+    object_ptr->frame_width       = init_data_ptr->picture_width;
+    object_ptr->frame_height      = init_data_ptr->picture_height;
     object_ptr->tile_row_count    = init_data_ptr->tile_row_count;
     object_ptr->tile_column_count = init_data_ptr->tile_column_count;
 
@@ -562,7 +562,7 @@ static EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr
     object_ptr->temporal_layer_index = 0;
 
     // SB Array
-    object_ptr->b64_total_count = picture_sb_width * picture_sb_height;
+    object_ptr->b64_total_count      = picture_sb_width * picture_sb_height;
     object_ptr->init_b64_total_count = object_ptr->b64_total_count;
     EB_MALLOC_ARRAY(object_ptr->sb_intra, object_ptr->init_b64_total_count);
     EB_MALLOC_ARRAY(object_ptr->sb_skip, object_ptr->init_b64_total_count);
@@ -1546,9 +1546,9 @@ static EbErrorType me_ctor(MotionEstimationData *object_ptr, EbPtr object_init_d
                                                   init_data_ptr->b64_size);
 
     uint16_t sb_index;
-    object_ptr->dctor           = me_dctor;
-    uint32_t sb_total_count     = picture_sb_width * picture_sb_height;
-    object_ptr->b64_total_count = sb_total_count;
+    object_ptr->dctor                = me_dctor;
+    uint32_t sb_total_count          = picture_sb_width * picture_sb_height;
+    object_ptr->b64_total_count      = sb_total_count;
     object_ptr->init_b64_total_count = sb_total_count;
 
     EB_ALLOC_PTR_ARRAY(object_ptr->me_results, sb_total_count);

@@ -200,10 +200,10 @@ typedef struct EncodeContext {
     //Superblock end index for cycling refresh through the frame.
     uint32_t         cr_sb_end;
     SvtAv1RoiMapEvt *roi_map_evt;
-    Quants   quants_bd; // follows input bit depth
-    Dequants deq_bd; // follows input bit depth
-    Quants   quants_8bit; // 8bit
-    Dequants deq_8bit; // 8bit
+    Quants           quants_bd; // follows input bit depth
+    Dequants         deq_bd; // follows input bit depth
+    Quants           quants_8bit; // 8bit
+    Dequants         deq_8bit; // 8bit
 } EncodeContext;
 
 typedef struct EncodeContextInitData {

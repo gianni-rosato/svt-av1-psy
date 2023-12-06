@@ -35,9 +35,9 @@ typedef struct ResourceCoordinationContext {
     EbFifo                        *resource_coordination_results_output_fifo_ptr;
     EbFifo                       **picture_control_set_fifo_ptr_array;
     EbSequenceControlSetInstance **scs_instance_array;
-    EbObjectWrapper **scs_active_array;
-    EbFifo          **scs_empty_fifo_ptr_array;
-    EbCallback **app_callback_ptr_array;
+    EbObjectWrapper              **scs_active_array;
+    EbFifo                       **scs_empty_fifo_ptr_array;
+    EbCallback                   **app_callback_ptr_array;
 
     // Compute Segments
     uint32_t compute_segments_total_count_array;
@@ -828,7 +828,7 @@ void *svt_aom_resource_coordination_kernel(void *input_ptr) {
 
     PictureParentControlSet *pcs;
     SequenceControlSet      *scs;
-    EbObjectWrapper *prev_scs_wrapper;
+    EbObjectWrapper         *prev_scs_wrapper;
 
     EbObjectWrapper             *eb_input_wrapper_ptr;
     EbBufferHeaderType          *eb_input_ptr;
@@ -953,7 +953,7 @@ void *svt_aom_resource_coordination_kernel(void *input_ptr) {
             // MDC->MD->ENCDEC->Packetization
             svt_object_inc_live_count(pcs_wrapper, 1);
 
-            pcs = (PictureParentControlSet *)pcs_wrapper->object_ptr;
+            pcs      = (PictureParentControlSet *)pcs_wrapper->object_ptr;
             pcs->scs = scs;
             // if resolution has changed, and the pcs settings do not match scs settings, update ppcs params
             if (pcs->frame_width != scs->max_input_luma_width || pcs->frame_height != scs->max_input_luma_height) {
@@ -1036,8 +1036,8 @@ void *svt_aom_resource_coordination_kernel(void *input_ptr) {
             // Reset seq_param_change and video_res_change to false
             context_ptr->seq_param_change = false;
             context_ptr->video_res_change = false;
-            pcs->scs               = scs;
-            pcs->input_pic_wrapper = input_pic_wrapper;
+            pcs->scs                      = scs;
+            pcs->input_pic_wrapper        = input_pic_wrapper;
             //store the y8b warapper to be used for release later
             pcs->y8b_wrapper          = y8b_wrapper;
             pcs->end_of_sequence_flag = end_of_sequence_flag;

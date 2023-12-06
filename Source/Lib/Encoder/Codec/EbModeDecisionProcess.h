@@ -1034,7 +1034,7 @@ typedef struct ModeDecisionContext {
     WmCtrls              wm_ctrls;
     UvCtrls              uv_ctrls;
     uint8_t              unipred3x3_injection;
-    Bipred3x3Controls bipred3x3_ctrls;
+    Bipred3x3Controls    bipred3x3_ctrls;
     uint8_t              redundant_blk;
     uint8_t              nic_level;
     uint8_t              svt_aom_inject_inter_candidates;
@@ -1149,8 +1149,8 @@ typedef struct ModeDecisionContext {
     uint8_t             params_status; // specifies the status of MD parameters; 0: default, 1: modified
     bool                d1_skip_flag[25];
     // was parent_sq_coeff_area_based_cycles_reduction_ctrls
-    ParentSqCmplxCtrls psq_cplx_ctrls;
-    NsqPsqTxsCtrls     nsq_psq_txs_ctrls;
+    ParentSqCmplxCtrls   psq_cplx_ctrls;
+    NsqPsqTxsCtrls       nsq_psq_txs_ctrls;
     uint8_t              sb_size;
     EbPictureBufferDesc *recon_coeff_ptr[TX_TYPES];
     EbPictureBufferDesc *recon_ptr[TX_TYPES];
@@ -1184,9 +1184,9 @@ typedef struct ModeDecisionContext {
     CandClass       mds1_best_class_it;
     Mds0Ctrls       mds0_ctrls;
     uint32_t        md_me_dist;
-    uint32_t md_pme_dist;
-    uint8_t inject_new_me;
-    uint8_t inject_new_pme;
+    uint32_t        md_pme_dist;
+    uint8_t         inject_new_me;
+    uint8_t         inject_new_pme;
     TxShortcutCtrls tx_shortcut_ctrls;
     // [TOTAL_REFS_PER_FRAME + 1]
     uint64_t estimate_ref_frames_num_bits[MODE_CTX_REF_FRAMES];
@@ -1248,7 +1248,7 @@ typedef struct ModeDecisionContext {
     COMPONENT_TYPE lpd1_chroma_comp;
     uint8_t        corrupted_mv_check;
     uint8_t        skip_pd0;
-    uint8_t pred_mode_depth_refine;
+    uint8_t        pred_mode_depth_refine;
     // when MD is done on 8bit, scale palette colors to 10bit (valid when bypass is 1)
     uint8_t scale_palette;
     uint8_t high_freq_present;
@@ -1258,8 +1258,8 @@ typedef struct ModeDecisionContext {
     // SSIM_LVL_1: use ssim cost to find best candidate in product_full_mode_decision()
     // SSIM_LVL_2: addition to level 1, also use ssim cost to find best tx type in tx_type_search()
     SsimLevel tune_ssim_level;
-    uint8_t do_obmc;
-    uint8_t do_warp;
+    uint8_t   do_obmc;
+    uint8_t   do_warp;
 } ModeDecisionContext;
 
 typedef void (*EbAv1LambdaAssignFunc)(PictureControlSet *pcs, uint32_t *fast_lambda, uint32_t *full_lambda,

@@ -107,7 +107,7 @@ static void get_ref_hp_percentage(PictureControlSet *pcs, int16_t *hp_area) {
     }
 
     EbReferenceObject *ref_obj_l0 = (EbReferenceObject *)pcs->ref_pic_ptr_array[REF_LIST_0][0]->object_ptr;
-    int8_t hp_perc_l0 = ref_obj_l0->slice_type == I_SLICE ? -1 : ref_obj_l0->hp_coded_area;
+    int8_t             hp_perc_l0 = ref_obj_l0->slice_type == I_SLICE ? -1 : ref_obj_l0->hp_coded_area;
 
     int8_t hp_perc_l1 = -1;
     if (pcs->slice_type == B_SLICE) {
@@ -545,8 +545,8 @@ static int get_cqp_kf_boost_from_r0(double r0, int frames_to_key, EbInputResolut
         factor = AOMMAX(factor, 4.0);
     }
     const int is_720p_or_smaller = input_resolution <= INPUT_SIZE_720p_RANGE;
-    const int boost = is_720p_or_smaller ? (int)rint(3 * (75.0 + 17.0 * factor) / r0)
-                                         : (int)rint(4 * (75.0 + 17.0 * factor) / r0);
+    const int boost              = is_720p_or_smaller ? (int)rint(3 * (75.0 + 17.0 * factor) / r0)
+                                                      : (int)rint(4 * (75.0 + 17.0 * factor) / r0);
     return boost;
 }
 
@@ -786,7 +786,7 @@ static int crf_qindex_calc(PictureControlSet *pcs, RATE_CONTROL *rc, int qindex)
     int                      active_best_quality  = 0;
     int                      active_worst_quality = qindex;
     rc->arf_q                                     = 0;
-    int q;
+    int           q;
     const uint8_t temporal_layer      = ppcs->temporal_layer_index;
     const uint8_t hierarchical_levels = ppcs->hierarchical_levels;
     const int     leaf_frame          = ppcs->is_highest_layer;
@@ -3162,9 +3162,8 @@ void *svt_aom_rate_control_kernel(void *input_ptr) {
                                                              scs->static_config.max_qp_allowed,
                                                              (uint8_t)(ref_qp - 4));
                         }
-                    }
-                    else if ((int32_t)pcs->temporal_layer_index == 0 && pcs->ppcs->transition_present != 1 &&
-                             pcs->slice_type != I_SLICE) {
+                    } else if ((int32_t)pcs->temporal_layer_index == 0 && pcs->ppcs->transition_present != 1 &&
+                               pcs->slice_type != I_SLICE) {
                         uint32_t sb_index;
                         uint64_t cur_dist = 0, ref_dist = 0;
                         ;

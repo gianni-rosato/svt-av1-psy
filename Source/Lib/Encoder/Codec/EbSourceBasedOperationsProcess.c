@@ -563,7 +563,7 @@ static void tpl_mc_flow_dispenser_sb_generic(EncodeContext *enc_ctx, SequenceCon
 
     const uint8_t disable_intra_pred = (pcs->tpl_ctrls.disable_intra_pred_nref &&
                                         (pcs->temporal_layer_index == pcs->hierarchical_levels));
-    const uint8_t intra_dc_sad_path = pcs->tpl_ctrls.use_sad_in_src_search && pcs->tpl_ctrls.intra_mode_end == DC_PRED;
+    const uint8_t intra_dc_sad_path  = pcs->tpl_ctrls.use_sad_in_src_search && pcs->tpl_ctrls.intra_mode_end == DC_PRED;
 
     for (uint32_t blk_index = blk_start; blk_index <= blk_end; blk_index++) {
         uint32_t               z_blk_index   = tpl_blk_idx_tab[0][blk_index];

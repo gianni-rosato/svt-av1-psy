@@ -1191,9 +1191,9 @@ void svt_av1_optimize_b(ModeDecisionContext *ctx, int16_t txb_skip_context, int1
     const TranLow qc         = qcoeff_ptr[ci];
     const TranLow abs_qc     = abs(qc);
     const int     sign       = qc < 0;
-    const int max_nz_num = 4;
-    int       nz_num     = 1;
-    int       nz_ci[5]   = {ci, 0, 0, 0, 0};
+    const int     max_nz_num = 4;
+    int           nz_num     = 1;
+    int           nz_ci[5]   = {ci, 0, 0, 0, 0};
     if (abs_qc >= 2) {
         update_coeff_general(&accu_rate,
                              &accu_dist,
@@ -1372,7 +1372,6 @@ int32_t svt_aom_quantize_inv_quantize_light(PictureControlSet *pcs, int32_t *coe
 
     const QmVal *iq_matrix = pcs->ppcs->giqmatrix[qmatrix_level][AOM_PLANE_Y][adjusted_tx_size];
 
-
     if (q_matrix == NULL && iq_matrix == NULL) {
         if (bit_depth > EB_EIGHT_BIT) {
             svt_aom_highbd_quantize_b((TranLow *)coeff,
@@ -1477,8 +1476,8 @@ int32_t svt_aom_quantize_inv_quantize(PictureControlSet *pcs, ModeDecisionContex
     (void)is_encode_pass;
     (void)coeff_stride;
     (void)is_intra_bc;
-    SequenceControlSet *scs = pcs->scs;
-    EncodeContext *enc_ctx = scs->enc_ctx;
+    SequenceControlSet *scs     = pcs->scs;
+    EncodeContext      *enc_ctx = scs->enc_ctx;
     int32_t plane = component_type == COMPONENT_LUMA ? AOM_PLANE_Y : COMPONENT_CHROMA_CB ? AOM_PLANE_U : AOM_PLANE_V;
     int32_t qmatrix_level    = (IS_2D_TRANSFORM(tx_type) && pcs->ppcs->frm_hdr.quantization_params.using_qmatrix)
            ? pcs->ppcs->frm_hdr.quantization_params.qm[plane]
@@ -2034,9 +2033,9 @@ void svt_aom_full_loop_uv(PictureControlSet *pcs, ModeDecisionContext *ctx, Mode
                                        PLANE_TYPE_UV,
                                        pf_shape);
 
-            int32_t seg_qp = pcs->ppcs->frm_hdr.segmentation_params.segmentation_enabled
-                ? pcs->ppcs->frm_hdr.segmentation_params.feature_data[ctx->blk_ptr->segment_id][SEG_LVL_ALT_Q]
-                : 0;
+            int32_t seg_qp                    = pcs->ppcs->frm_hdr.segmentation_params.segmentation_enabled
+                                   ? pcs->ppcs->frm_hdr.segmentation_params.feature_data[ctx->blk_ptr->segment_id][SEG_LVL_ALT_Q]
+                                   : 0;
             cand_bf->quantized_dc[1][txb_itr] = svt_aom_quantize_inv_quantize(
                 pcs,
                 ctx,
@@ -2219,9 +2218,9 @@ void svt_aom_full_loop_uv(PictureControlSet *pcs, ModeDecisionContext *ctx, Mode
                                        cand_bf->cand->transform_type_uv,
                                        PLANE_TYPE_UV,
                                        pf_shape);
-            int32_t seg_qp = pcs->ppcs->frm_hdr.segmentation_params.segmentation_enabled
-                ? pcs->ppcs->frm_hdr.segmentation_params.feature_data[ctx->blk_ptr->segment_id][SEG_LVL_ALT_Q]
-                : 0;
+            int32_t seg_qp                    = pcs->ppcs->frm_hdr.segmentation_params.segmentation_enabled
+                                   ? pcs->ppcs->frm_hdr.segmentation_params.feature_data[ctx->blk_ptr->segment_id][SEG_LVL_ALT_Q]
+                                   : 0;
             cand_bf->quantized_dc[2][txb_itr] = svt_aom_quantize_inv_quantize(
                 pcs,
                 ctx,

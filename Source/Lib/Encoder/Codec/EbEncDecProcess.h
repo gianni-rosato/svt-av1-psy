@@ -64,8 +64,8 @@ typedef struct EncDecContext {
     EbColorFormat color_format;
     uint64_t      tot_intra_coded_area;
     uint64_t      tot_skip_coded_area;
-    uint64_t tot_hp_coded_area;
-    uint64_t three_quad_energy;
+    uint64_t      tot_hp_coded_area;
+    uint64_t      three_quad_energy;
 
     // Needed for DC prediction
     uint8_t  upsample_left;

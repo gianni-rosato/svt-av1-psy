@@ -513,7 +513,7 @@ void process_input_buffer(EncChannel *channel) {
             if (keep_running == 0 && !app_cfg->stop_encoder)
                 app_cfg->stop_encoder = TRUE;
             // Fill in Buffers Header control data
-            header_ptr->pts = app_cfg->processed_frame_count - 1;
+            header_ptr->pts      = app_cfg->processed_frame_count - 1;
             header_ptr->pic_type = is_forced_keyframe(app_cfg, header_ptr->pts) ? EB_AV1_KEY_PICTURE
                                                                                 : header_ptr->pic_type;
             header_ptr->flags    = 0;

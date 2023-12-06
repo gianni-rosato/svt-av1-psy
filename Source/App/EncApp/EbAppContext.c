@@ -215,7 +215,6 @@ static EbErrorType parse_rio_map_file(EbConfig *app_cfg) {
     app_cfg->roi_map  = roi_map;
 
     while (fgets(buf, (int)buf_size, file)) {
-
         if (strlen(buf) == buf_size - 1) {
             fprintf(stderr, "Warning - May exceed the line length limitation of ROI map file\n");
         }

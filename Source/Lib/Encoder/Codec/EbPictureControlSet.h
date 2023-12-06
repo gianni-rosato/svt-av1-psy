@@ -209,7 +209,7 @@ typedef struct EncDecSet {
     struct PictureParentControlSet *ppcs; // The parent of this PCS.
     EbObjectWrapper                *ppcs_wrapper;
     uint16_t                        b64_total_count;
-    uint16_t init_b64_total_count;
+    uint16_t                        init_b64_total_count;
 } EncDecSet;
 typedef struct CdefDirData {
     uint8_t dir[CDEF_NBLOCKS][CDEF_NBLOCKS];
@@ -255,9 +255,9 @@ typedef struct PictureControlSet {
     EbHandle          intra_mutex;
     uint32_t          intra_coded_area;
     uint64_t          skip_coded_area;
-    uint64_t hp_coded_area;
-    uint32_t tot_seg_searched_cdef;
-    EbHandle cdef_search_mutex;
+    uint64_t          hp_coded_area;
+    uint32_t          tot_seg_searched_cdef;
+    EbHandle          cdef_search_mutex;
 
     uint16_t cdef_segments_total_count;
     uint8_t  cdef_segments_column_count;
@@ -422,10 +422,10 @@ typedef struct PictureControlSet {
     RestorationInfo rst_info[MAX_MB_PLANE];
     // rst_end_stripe[i] is one more than the index of the bottom stripe
     // for tile row i.
-    int32_t rst_end_stripe[MAX_TILE_ROWS];
-    uint8_t ref_intra_percentage;
-    uint8_t ref_skip_percentage;
-    int16_t ref_hp_percentage;
+    int32_t  rst_end_stripe[MAX_TILE_ROWS];
+    uint8_t  ref_intra_percentage;
+    uint8_t  ref_skip_percentage;
+    int16_t  ref_hp_percentage;
     uint64_t avg_me_clpx;
     uint64_t min_me_clpx;
     uint64_t max_me_clpx;
@@ -483,10 +483,10 @@ typedef struct TileGroupInfo {
     uint16_t tile_group_tile_end_y;
 } TileGroupInfo;
 typedef struct MotionEstimationData {
-    EbDctor       dctor;
-    MeSbResults **me_results;
-    uint16_t      b64_total_count;
-    uint16_t init_b64_total_count;
+    EbDctor        dctor;
+    MeSbResults  **me_results;
+    uint16_t       b64_total_count;
+    uint16_t       init_b64_total_count;
     uint8_t        max_cand; // total max me candidates given the active references
     uint8_t        max_refs; // total max active references
     uint8_t        max_l0; // max active refs in L0
@@ -728,7 +728,7 @@ typedef struct PictureParentControlSet {
     Bool                       is_chroma_downsampled_picture_ptr_owner;
     PredictionStructure       *pred_struct_ptr; // need to check
     struct SequenceControlSet *scs;
-    EbObjectWrapper *scs_wrapper;
+    EbObjectWrapper           *scs_wrapper;
     EbObjectWrapper           *p_pcs_wrapper_ptr;
     EbObjectWrapper           *previous_picture_control_set_wrapper_ptr;
     EbObjectWrapper           *output_stream_wrapper_ptr;
@@ -774,7 +774,7 @@ typedef struct PictureParentControlSet {
     uint64_t released_pics[REF_FRAMES + 1];
     uint8_t  released_pics_count;
     Bool     is_ref;
-    bool is_highest_layer;
+    bool     is_highest_layer;
     // status of PA reference 0: Not release; 1: Released
     uint8_t reference_released;
     uint8_t ref_list0_count;
@@ -1118,9 +1118,9 @@ typedef struct PictureParentControlSet {
     IntraBCCtrls                    intraBC_ctrls;
     PaletteCtrls                    palette_ctrls;
 
-    uint32_t tf_tot_vert_blks; // total vertical motion blocks in TF
-    uint32_t tf_tot_horz_blks; // total horizontal motion blocks in TF
-    int8_t   tf_motion_direction; // motion direction in TF   -1:invalid   0:horz  1:vert
+    uint32_t         tf_tot_vert_blks; // total vertical motion blocks in TF
+    uint32_t         tf_tot_horz_blks; // total horizontal motion blocks in TF
+    int8_t           tf_motion_direction; // motion direction in TF   -1:invalid   0:horz  1:vert
     int32_t          is_noise_level;
     bool             r0_based_qps_qpm;
     uint32_t         dpb_order_hint[REF_FRAMES]; // spec 6.8.2. ref_order_hint[]
@@ -1132,7 +1132,7 @@ typedef struct PictureParentControlSet {
     // Average absolute histogram deviation of all frames in the TF window to the current (central) frame
     uint32_t tf_avg_ahd_error;
     bool     tf_active_region_present;
-    bool seq_param_changed;
+    bool     seq_param_changed;
 } PictureParentControlSet;
 
 typedef struct TplDispResults {

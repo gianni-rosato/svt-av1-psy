@@ -231,7 +231,7 @@ void mode_decision_configuration_init_qp_update(PictureControlSet *pcs) {
     FrameHeader *frm_hdr  = &pcs->ppcs->frm_hdr;
     pcs->intra_coded_area = 0;
     pcs->skip_coded_area  = 0;
-    pcs->hp_coded_area = 0;
+    pcs->hp_coded_area    = 0;
     // Init block selection
     // Set reference sg ep
     set_reference_sg_ep(pcs);
@@ -488,7 +488,6 @@ static void av1_setup_motion_field(Av1Common *cm, PictureControlSet *pcs) {
 EbErrorType svt_av1_hash_table_create(HashTable *p_hash_table);
 void       *rtime_alloc_block_hash_block_is_same(size_t size) { return malloc(size); }
 
-
 /* Mode Decision Configuration Kernel */
 
 /*********************************************************************************
@@ -590,7 +589,7 @@ void *svt_aom_mode_decision_configuration_kernel(void *input_ptr) {
 
         pcs->intra_coded_area = 0;
         pcs->skip_coded_area  = 0;
-        pcs->hp_coded_area = 0;
+        pcs->hp_coded_area    = 0;
         // Init block selection
         // Set reference sg ep
         set_reference_sg_ep(pcs);

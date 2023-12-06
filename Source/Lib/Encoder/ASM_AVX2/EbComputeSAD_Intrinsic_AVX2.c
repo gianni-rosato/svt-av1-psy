@@ -4284,7 +4284,7 @@ void svt_ext_all_sad_calculation_8x8_16x16_avx2(uint8_t *src, uint32_t src_strid
             best_sad8x8               = _mm_min_epi32(best_sad8x8, sad8x8);
             _mm_storeu_si128((__m128i *)(p_best_sad_8x8 + start_8x8_pos), best_sad8x8);
 
-            const __m128i mvs = _mm_set1_epi32(mv);
+            const __m128i mvs        = _mm_set1_epi32(mv);
             __m128i       best_mv8x8 = _mm_loadu_si128((__m128i *)(p_best_mv8x8 + start_8x8_pos));
             const __m128i mv8x8      = _mm_add_epi16(mvs, pos8x8);
             best_mv8x8               = _mm_blendv_epi8(best_mv8x8, mv8x8, mask);

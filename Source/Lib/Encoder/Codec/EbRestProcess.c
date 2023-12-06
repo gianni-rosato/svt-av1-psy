@@ -467,12 +467,12 @@ static void copy_statistics_to_ref_obj_ect(PictureControlSet *pcs, SequenceContr
 
     pcs->intra_coded_area = (100 * pcs->intra_coded_area) / (pcs->ppcs->aligned_width * pcs->ppcs->aligned_height);
     pcs->skip_coded_area  = (100 * pcs->skip_coded_area) / (pcs->ppcs->aligned_width * pcs->ppcs->aligned_height);
-    pcs->hp_coded_area = (100 * pcs->hp_coded_area) / (pcs->ppcs->aligned_width * pcs->ppcs->aligned_height);
+    pcs->hp_coded_area    = (100 * pcs->hp_coded_area) / (pcs->ppcs->aligned_width * pcs->ppcs->aligned_height);
     if (pcs->slice_type == I_SLICE)
         pcs->intra_coded_area = 0;
-    obj->intra_coded_area = (uint8_t)(pcs->intra_coded_area);
-    obj->skip_coded_area  = (uint8_t)(pcs->skip_coded_area);
-    obj->hp_coded_area = (uint8_t)(pcs->hp_coded_area);
+    obj->intra_coded_area                   = (uint8_t)(pcs->intra_coded_area);
+    obj->skip_coded_area                    = (uint8_t)(pcs->skip_coded_area);
+    obj->hp_coded_area                      = (uint8_t)(pcs->hp_coded_area);
     struct PictureParentControlSet *ppcs    = pcs->ppcs;
     FrameHeader                    *frm_hdr = &ppcs->frm_hdr;
 

@@ -1228,7 +1228,7 @@ static void bipred_3x3_candidates_injection(const SequenceControlSet *scs, Pictu
                                                  pcs->ppcs->frm_hdr.allow_high_precision_mv)) {
                                 ctx->cmp_store.pred0_cnt = 0;
                                 ctx->cmp_store.pred1_cnt = 0;
-                                Bool mask_done = 0;
+                                Bool mask_done           = 0;
                                 for (MD_COMP_TYPE cur_type = MD_COMP_AVG; cur_type < tot_comp_types; cur_type++) {
                                     if (ctx->inter_comp_ctrls.no_sym_dist && cur_type == MD_COMP_DIST &&
                                         list0_ref_index == 0 && list1_ref_index == 0)
@@ -1350,7 +1350,7 @@ static void bipred_3x3_candidates_injection(const SequenceControlSet *scs, Pictu
                                                  pcs->ppcs->frm_hdr.allow_high_precision_mv)) {
                                 ctx->cmp_store.pred0_cnt = 0;
                                 ctx->cmp_store.pred1_cnt = 0;
-                                Bool mask_done = 0;
+                                Bool mask_done           = 0;
                                 for (MD_COMP_TYPE cur_type = MD_COMP_AVG; cur_type < tot_comp_types; cur_type++) {
                                     if (ctx->inter_comp_ctrls.no_sym_dist && cur_type == MD_COMP_DIST &&
                                         list0_ref_index == 0 && list1_ref_index == 0)
@@ -1916,7 +1916,6 @@ static void inject_mvp_candidates_ii(const SequenceControlSet *scs, PictureContr
                         if (ctx->inter_comp_ctrls.mvp_no_wdg_var_th && cur_type == MD_COMP_WEDGE && is_blk_flat)
                             continue;
 
-
                         if (!is_valid_bi_type(ctx, cur_type, list_idx_0, ref_idx_0, list_idx_1, ref_idx_1))
 
                             continue;
@@ -2109,7 +2108,7 @@ static void inject_new_nearest_new_comb_candidates(const SequenceControlSet *scs
                     if (inj_mv) {
                         ctx->cmp_store.pred0_cnt = 0;
                         ctx->cmp_store.pred1_cnt = 0;
-                        Bool mask_done = 0;
+                        Bool mask_done           = 0;
                         for (MD_COMP_TYPE cur_type = MD_COMP_AVG; cur_type < tot_comp_types; cur_type++) {
                             if (ctx->inter_comp_ctrls.no_sym_dist && cur_type == MD_COMP_DIST && ref_idx_0 == 0 &&
                                 ref_idx_1 == 0)
@@ -2186,7 +2185,7 @@ static void inject_new_nearest_new_comb_candidates(const SequenceControlSet *scs
                     if (inj_mv) {
                         ctx->cmp_store.pred0_cnt = 0;
                         ctx->cmp_store.pred1_cnt = 0;
-                        Bool mask_done = 0;
+                        Bool mask_done           = 0;
                         for (MD_COMP_TYPE cur_type = MD_COMP_AVG; cur_type < tot_comp_types; cur_type++) {
                             if (ctx->inter_comp_ctrls.no_sym_dist && cur_type == MD_COMP_DIST && ref_idx_0 == 0 &&
                                 ref_idx_1 == 0)
@@ -2253,7 +2252,7 @@ static void inject_new_nearest_new_comb_candidates(const SequenceControlSet *scs
                         if (inj_mv) {
                             ctx->cmp_store.pred0_cnt = 0;
                             ctx->cmp_store.pred1_cnt = 0;
-                            Bool mask_done = 0;
+                            Bool mask_done           = 0;
                             for (MD_COMP_TYPE cur_type = MD_COMP_AVG; cur_type < tot_comp_types; cur_type++) {
                                 if (ctx->inter_comp_ctrls.no_sym_dist && cur_type == MD_COMP_DIST && ref_idx_0 == 0 &&
                                     ref_idx_1 == 0)
@@ -2319,7 +2318,7 @@ static void inject_new_nearest_new_comb_candidates(const SequenceControlSet *scs
                         if (inj_mv) {
                             ctx->cmp_store.pred0_cnt = 0;
                             ctx->cmp_store.pred1_cnt = 0;
-                            Bool mask_done = 0;
+                            Bool mask_done           = 0;
                             for (MD_COMP_TYPE cur_type = MD_COMP_AVG; cur_type < tot_comp_types; cur_type++) {
                                 if (ctx->inter_comp_ctrls.no_sym_dist && cur_type == MD_COMP_DIST && ref_idx_0 == 0 &&
                                     ref_idx_1 == 0)
@@ -2366,7 +2365,7 @@ uint8_t svt_aom_wm_motion_refinement(PictureControlSet *pcs, ModeDecisionContext
                                      ModeDecisionCandidateBuffer *cand_bf, ModeDecisionCandidate *cand,
                                      uint8_t list_idx, int shut_approx) {
     PictureParentControlSet *ppcs = pcs->ppcs;
-    const MV neighbors[9] = {{0, 0}, {0, -1}, {1, 0}, {0, 1}, {-1, 0}, {-1, 1}, {1, 1}, {1, -1}, {-1, -1}};
+    const MV neighbors[9]         = {{0, 0}, {0, -1}, {1, 0}, {0, 1}, {-1, 0}, {-1, 1}, {1, 1}, {1, -1}, {-1, -1}};
 
     // Set info used to get MV cost
     int     *mvjcost       = ctx->md_rate_est_ctx->nmv_vec_cost;
@@ -2392,8 +2391,8 @@ uint8_t svt_aom_wm_motion_refinement(PictureControlSet *pcs, ModeDecisionContext
     ref_mv.col = cand->pred_mv[list_idx].x;
     ref_mv.row = cand->pred_mv[list_idx].y;
 
-    int max_iterations = ctx->wm_ctrls.refinement_iterations;
-    int tot_checked_pos = 0;
+    int      max_iterations  = ctx->wm_ctrls.refinement_iterations;
+    int      tot_checked_pos = 0;
     uint32_t mv_record[256];
     for (int iter = 0; iter < max_iterations; iter++) {
         // search the (0,0) offset position only for the first search iteration
@@ -3460,7 +3459,7 @@ static void inject_new_candidates(const SequenceControlSet *scs, struct ModeDeci
                                 best_pred_mv, to_inj_mv0, to_inj_mv1, 1, pcs->ppcs->frm_hdr.allow_high_precision_mv)) {
                             ctx->cmp_store.pred0_cnt = 0;
                             ctx->cmp_store.pred1_cnt = 0;
-                            Bool mask_done = 0;
+                            Bool mask_done           = 0;
                             for (MD_COMP_TYPE cur_type = MD_COMP_AVG; cur_type < tot_comp_types; cur_type++) {
                                 if (ctx->inter_comp_ctrls.no_sym_dist && cur_type == MD_COMP_DIST &&
                                     list0_ref_index == 0 && list1_ref_index == 0)
@@ -3897,7 +3896,7 @@ static void inject_pme_candidates(
                                 best_pred_mv, to_inj_mv0, to_inj_mv1, 1, pcs->ppcs->frm_hdr.allow_high_precision_mv)) {
                             ctx->cmp_store.pred0_cnt = 0;
                             ctx->cmp_store.pred1_cnt = 0;
-                            Bool mask_done = 0;
+                            Bool mask_done           = 0;
                             for (MD_COMP_TYPE cur_type = MD_COMP_AVG; cur_type < tot_comp_types; cur_type++) {
                                 if (ctx->inter_comp_ctrls.no_sym_dist && cur_type == MD_COMP_DIST && ref_idx_0 == 0 &&
                                     ref_idx_1 == 0)

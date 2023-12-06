@@ -393,7 +393,7 @@ static void md_scan_all_blks(uint32_t* idx_mds, uint32_t sq_size, uint32_t x, ui
     uint32_t quartsize = sq_size / 4;
 
     uint32_t max_part_updated = sq_size == 128 ? MIN(max_part, (uint32_t)(max_part < 9 && max_part > 3 ? 3 : 7))
-        : sq_size == 8 ? MIN(max_part, 3)
+        : sq_size == 8                         ? MIN(max_part, 3)
         :
 
         sq_size == 4 ? 1
@@ -438,8 +438,8 @@ static void md_scan_all_blks(uint32_t* idx_mds, uint32_t sq_size, uint32_t x, ui
                 d1_depth_offset[svt_aom_geom_idx][svt_aom_blk_geom_mds[*idx_mds].depth];
             svt_aom_blk_geom_mds[*idx_mds].ns_depth_offset =
                 ns_depth_offset[svt_aom_geom_idx][svt_aom_blk_geom_mds[*idx_mds].depth];
-            svt_aom_blk_geom_mds[*idx_mds].totns = tot_num_ns_per_part;
-            svt_aom_blk_geom_mds[*idx_mds].nsi   = nsq_it;
+            svt_aom_blk_geom_mds[*idx_mds].totns   = tot_num_ns_per_part;
+            svt_aom_blk_geom_mds[*idx_mds].nsi     = nsq_it;
             svt_aom_blk_geom_mds[*idx_mds].bwidth  = quartsize * ns_quarter_size_mult[part_it_idx][0][nsq_it];
             svt_aom_blk_geom_mds[*idx_mds].bheight = quartsize * ns_quarter_size_mult[part_it_idx][1][nsq_it];
             svt_aom_blk_geom_mds[*idx_mds].bsize =
@@ -1250,9 +1250,9 @@ static uint32_t count_total_num_of_active_blks(uint8_t min_nsq_bsize) {
                                             : max_sb / 32;
 
         uint32_t max_part_updated = sq_size == 128 ? MIN(max_part, (uint32_t)(max_part < 9 && max_part > 3 ? 3 : 7))
-            : sq_size == 8 ? MIN(max_part, 3)
-            : sq_size == 4 ? 1
-                           : max_part;
+            : sq_size == 8                         ? MIN(max_part, 3)
+            : sq_size == 4                         ? 1
+                                                   : max_part;
         if (sq_size <= min_nsq_bsize)
             max_part_updated = 1;
         for (sq_it_y = 0; sq_it_y < tot_num_sq; sq_it_y++) {
@@ -1329,8 +1329,8 @@ void svt_aom_build_blk_geom(GeomIndex geom) {
         max_block_count = 681;
         min_nsq_bsize   = 0;
     } else if (geom == GEOM_5) {
-        max_sb    = 64;
-        max_depth = 5;
+        max_sb          = 64;
+        max_depth       = 5;
         max_part        = 5;
         max_block_count = 849;
         min_nsq_bsize   = 0;

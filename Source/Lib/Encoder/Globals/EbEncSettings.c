@@ -925,10 +925,10 @@ EbErrorType svt_av1_set_default_params(EbSvtAv1EncConfiguration *config_ptr) {
 #if !SVT_AV1_CHECK_VERSION(2, 0, 0)
     config_ptr->vbr_bias_pct = 100;
 #endif
-    config_ptr->vbr_min_section_pct = 0;
-    config_ptr->vbr_max_section_pct = 2000;
-    config_ptr->under_shoot_pct = (uint32_t)DEFAULT;
-    config_ptr->over_shoot_pct  = (uint32_t)DEFAULT;
+    config_ptr->vbr_min_section_pct      = 0;
+    config_ptr->vbr_max_section_pct      = 2000;
+    config_ptr->under_shoot_pct          = (uint32_t)DEFAULT;
+    config_ptr->over_shoot_pct           = (uint32_t)DEFAULT;
     config_ptr->mbr_over_shoot_pct       = 50;
     config_ptr->gop_constraint_rc        = 0;
     config_ptr->maximum_buffer_size_ms   = 1000; // default settings for CBR
@@ -1741,8 +1741,7 @@ static EbErrorType str_to_rc_mode(const char *nptr, uint32_t *out, uint8_t *aq_m
         *aq_mode = 2;
         break;
     case RC_MODE_VBR: *out = SVT_AV1_RC_MODE_VBR; break;
-    case RC_MODE_CBR: *out = SVT_AV1_RC_MODE_CBR;
-        break;
+    case RC_MODE_CBR: *out = SVT_AV1_RC_MODE_CBR; break;
     default: SVT_ERROR("Invalid rc mode: %s\n", nptr); return EB_ErrorBadParameter;
     }
     return EB_ErrorNone;
@@ -1828,9 +1827,7 @@ EB_API EbErrorType svt_av1_enc_parse_parameter(EbSvtAv1EncConfiguration *config_
         return str_to_crf(value, config_struct);
 
     if (!strcmp(name, "rc"))
-        return str_to_rc_mode(value,
-                              &config_struct->rate_control_mode,
-                              &config_struct->enable_adaptive_quantization);
+        return str_to_rc_mode(value, &config_struct->rate_control_mode, &config_struct->enable_adaptive_quantization);
 
     // custom enum fields
     if (!strcmp(name, "profile"))

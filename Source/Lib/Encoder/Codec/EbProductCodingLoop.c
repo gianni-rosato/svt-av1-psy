@@ -1966,8 +1966,8 @@ static void md_full_pel_search(PictureControlSet *pcs, ModeDecisionContext *ctx,
     // Mvcost params
     MV_COST_PARAMS mv_cost_params;
     FrameHeader   *frm_hdr = &pcs->ppcs->frm_hdr;
-    uint32_t rdmult = dist_type != SAD ? ctx->full_lambda_md[hbd_md ? EB_10_BIT_MD : EB_8_BIT_MD]
-                                       : ctx->fast_lambda_md[hbd_md ? EB_10_BIT_MD : EB_8_BIT_MD];
+    uint32_t       rdmult  = dist_type != SAD ? ctx->full_lambda_md[hbd_md ? EB_10_BIT_MD : EB_8_BIT_MD]
+                                              : ctx->fast_lambda_md[hbd_md ? EB_10_BIT_MD : EB_8_BIT_MD];
     svt_init_mv_cost_params(
         &mv_cost_params, ctx, &ctx->ref_mv, frm_hdr->quantization_params.base_q_idx, rdmult, hbd_md);
     uint32_t cost;
@@ -2101,7 +2101,7 @@ static void derive_me_offsets(const SequenceControlSet *scs, PictureControlSet *
         ctx->me_sb_addr             = me_sb_x + me_sb_y * me_pic_width_in_sb;
         ctx->geom_offset_x          = (me_sb_x & 0x1) * me_sb_size;
         ctx->geom_offset_y          = (me_sb_y & 0x1) * me_sb_size;
-        ctx->me_block_offset = svt_aom_get_me_block_offset(
+        ctx->me_block_offset        = svt_aom_get_me_block_offset(
             ctx->blk_geom, pcs->ppcs->enable_me_8x8, pcs->ppcs->enable_me_16x16);
     } else {
         ctx->me_sb_addr = ctx->sb_ptr->index;
@@ -2114,9 +2114,9 @@ static void derive_me_offsets(const SequenceControlSet *scs, PictureControlSet *
     ctx->me_cand_offset = ctx->me_block_offset * pcs->ppcs->pa_me_data->max_cand;
 }
 #define MAX_MD_NSQ_SARCH_MVC_CNT 5
-static void md_nsq_motion_search(PictureControlSet *pcs, ModeDecisionContext *ctx,
-                                 EbPictureBufferDesc *input_pic, uint32_t input_origin_index, uint8_t list_idx,
-                                 uint8_t ref_idx, const MeSbResults *me_results, int16_t *me_mv_x, int16_t *me_mv_y) {
+static void md_nsq_motion_search(PictureControlSet *pcs, ModeDecisionContext *ctx, EbPictureBufferDesc *input_pic,
+                                 uint32_t input_origin_index, uint8_t list_idx, uint8_t ref_idx,
+                                 const MeSbResults *me_results, int16_t *me_mv_x, int16_t *me_mv_y) {
     // Step 0: derive the MVC list for the NSQ search; 1 SQ MV (default MV for NSQ) and up to 4 sub-block MV(s) (e.g. if 16x8 then 2 8x8, if 32x8 then 4 8x8)
     int16_t       mvc_x_array[MAX_MD_NSQ_SARCH_MVC_CNT];
     int16_t       mvc_y_array[MAX_MD_NSQ_SARCH_MVC_CNT];
@@ -2129,7 +2129,7 @@ static void md_nsq_motion_search(PictureControlSet *pcs, ModeDecisionContext *ct
     mvc_y_array[mvc_count] = *me_mv_y;
     mvc_count++;
     if ((ctx->blk_geom->bwidth != 4 && ctx->blk_geom->bheight != 4) && ctx->blk_geom->sq_size >= 16) {
-        uint8_t min_size = MIN(ctx->blk_geom->bwidth, ctx->blk_geom->bheight);
+        uint8_t       min_size      = MIN(ctx->blk_geom->bwidth, ctx->blk_geom->bheight);
         const uint8_t number_of_pus = pcs->ppcs->enable_me_16x16
             ? pcs->ppcs->enable_me_8x8 ? pcs->ppcs->max_number_of_pus_per_sb : MAX_SB64_PU_COUNT_NO_8X8
             : MAX_SB64_PU_COUNT_WO_16X16;
@@ -2745,25 +2745,11 @@ static void read_refine_me_mvs(PictureControlSet *pcs, ModeDecisionContext *ctx)
                 ctx->ref_mv.row = shut_fast_rate ? 0 : (as_mv.row + 4) & ~0x07;
                 if (b_w_ne_h) {
                     if (md_nsq_me_enabled) {
-                        md_nsq_motion_search(pcs,
-                                             ctx,
-                                             input_pic,
-                                             input_origin_index,
-                                             list,
-                                             ref,
-                                             me_results,
-                                             &me_mv_x,
-                                             &me_mv_y);
+                        md_nsq_motion_search(
+                            pcs, ctx, input_pic, input_origin_index, list, ref, me_results, &me_mv_x, &me_mv_y);
                     }
                 } else if (md_sq_me_enabled) {
-                    md_sq_motion_search(pcs,
-                                        ctx,
-                                        input_pic,
-                                        input_origin_index,
-                                        list,
-                                        ref,
-                                        &me_mv_x,
-                                        &me_mv_y);
+                    md_sq_motion_search(pcs, ctx, input_pic, input_origin_index, list, ref, &me_mv_x, &me_mv_y);
                 }
                 ctx->post_subpel_me_mv_cost[list][ref] = (int32_t)~0;
                 ctx->fp_me_mv[list][ref].col           = me_mv_x;
@@ -3163,11 +3149,11 @@ static void pme_search(PictureControlSet *pcs, ModeDecisionContext *ctx, EbPictu
     // The PME-full-pel search will be skipped  if width or/and height ends-up equal to 0 (only subpel-search will take place)
     uint16_t mult = ctx->md_pme_ctrls.sa_q_weight;
 
-    uint16_t q_weight = (mult == (uint8_t)~0)
-        ? 1000
-        : CLIP3(250, 1000, (int)(mult * ((8 * pcs->ppcs->scs->static_config.qp) - 125)));
-    uint8_t full_pel_search_width  = MAX(3, (ctx->md_pme_ctrls.full_pel_search_width * q_weight) / 1000);
-    uint8_t full_pel_search_height = MAX(3, (ctx->md_pme_ctrls.full_pel_search_height * q_weight) / 1000);
+    uint16_t q_weight               = (mult == (uint8_t)~0)
+                      ? 1000
+                      : CLIP3(250, 1000, (int)(mult * ((8 * pcs->ppcs->scs->static_config.qp) - 125)));
+    uint8_t  full_pel_search_width  = MAX(3, (ctx->md_pme_ctrls.full_pel_search_width * q_weight) / 1000);
+    uint8_t  full_pel_search_height = MAX(3, (ctx->md_pme_ctrls.full_pel_search_height * q_weight) / 1000);
 
     input_pic = hbd_md ? pcs->input_frame16bit : pcs->ppcs->enhanced_pic;
 
@@ -4614,9 +4600,9 @@ static void tx_type_search(PictureControlSet *pcs, ModeDecisionContext *ctx, Mod
     uint64_t best_cost_tx_search = (uint64_t)~0;
     uint64_t dct_dct_cost        = (uint64_t)~0;
     int      best_satd_tx_search = INT_MAX;
-    uint16_t satd_early_exit_th = only_dct_dct ? 0
-        : is_inter                             ? ctx->txt_ctrls.satd_early_exit_th_inter
-                   : ctx->txt_ctrls.satd_early_exit_th_intra; // only compute satd when using TXT search
+    uint16_t satd_early_exit_th  = only_dct_dct ? 0
+         : is_inter                             ? ctx->txt_ctrls.satd_early_exit_th_inter
+                    : ctx->txt_ctrls.satd_early_exit_th_intra; // only compute satd when using TXT search
 
     if (satd_early_exit_th) {
         uint16_t mult = ctx->txt_ctrls.satd_th_q_weight;
@@ -4627,11 +4613,11 @@ static void tx_type_search(PictureControlSet *pcs, ModeDecisionContext *ctx, Mod
 
         satd_early_exit_th = MAX(1, ((satd_early_exit_th * q_weight) / 1000));
     }
-    int32_t        tx_type;
-    uint16_t       txb_origin_x           = ctx->blk_geom->tx_org_x[is_inter][ctx->tx_depth][ctx->txb_itr];
-    uint16_t       txb_origin_y           = ctx->blk_geom->tx_org_y[is_inter][ctx->tx_depth][ctx->txb_itr];
-    uint32_t       txb_origin_index       = txb_origin_x + (txb_origin_y * cand_bf->residual->stride_y);
-    uint32_t       input_txb_origin_index = (ctx->sb_origin_x + txb_origin_x + input_pic->org_x) +
+    int32_t  tx_type;
+    uint16_t txb_origin_x           = ctx->blk_geom->tx_org_x[is_inter][ctx->tx_depth][ctx->txb_itr];
+    uint16_t txb_origin_y           = ctx->blk_geom->tx_org_y[is_inter][ctx->tx_depth][ctx->txb_itr];
+    uint32_t txb_origin_index       = txb_origin_x + (txb_origin_y * cand_bf->residual->stride_y);
+    uint32_t input_txb_origin_index = (ctx->sb_origin_x + txb_origin_x + input_pic->org_x) +
         ((ctx->sb_origin_y + txb_origin_y + input_pic->org_y) * input_pic->stride_y);
     int32_t        cropped_tx_width  = MIN(ctx->blk_geom->tx_width[ctx->tx_depth],
                                    pcs->ppcs->aligned_width - (ctx->sb_origin_x + txb_origin_x));
@@ -5307,7 +5293,6 @@ static void perform_tx_partitioning(ModeDecisionCandidateBuffer *cand_bf, ModeDe
                 full_lambda, tx_y_coeff_bits, tx_y_full_distortion[DIST_SSD][DIST_CALC_RESIDUAL]);
             if (current_tx_cost > best_cost_search)
                 break;
-
 
             if (ctx->txs_ctrls.quadrant_th_sf && ctx->tx_depth > 0) {
                 uint64_t normlized_cost = ((ctx->txb_itr + 1) * best_cost_search) / txb_count;
@@ -6579,11 +6564,9 @@ static void full_loop_core(PictureControlSet *pcs, ModeDecisionContext *ctx, Mod
             svt_product_prediction_fun_table[1](ctx->hbd_md, ctx, pcs, cand_bf);
             cand_bf->valid_pred = 1;
         }
-    }
-    else if ((ctx->mds_skip_full_uv == FALSE && (ctx->blk_geom->has_uv && ctx->uv_ctrls.uv_mode <= CHROMA_MODE_1) &&
-              ctx->mds_do_intra_uv_pred) ||
-             ctx->need_hbd_comp_mds3) {
-
+    } else if ((ctx->mds_skip_full_uv == FALSE && (ctx->blk_geom->has_uv && ctx->uv_ctrls.uv_mode <= CHROMA_MODE_1) &&
+                ctx->mds_do_intra_uv_pred) ||
+               ctx->need_hbd_comp_mds3) {
         ctx->uv_intra_comp_only = ctx->need_hbd_comp_mds3 ? FALSE : TRUE;
         // Here, the mode is INTRA, but if intra_bc is used, must use inter prediction function
         svt_product_prediction_fun_table[cand_bf->cand->use_intrabc](ctx->hbd_md, ctx, pcs, cand_bf);
@@ -7556,9 +7539,9 @@ static void search_best_independent_uv_mode(PictureControlSet *pcs, EbPictureBuf
 
     // Set number of UV candidates to be tested in the full loop
     unsigned int uv_mode_nfl_count = pcs->slice_type == I_SLICE ? 64 : !ppcs->is_highest_layer ? 32 : 16;
-    uv_mode_nfl_count = MAX(1, DIVIDE_AND_ROUND(uv_mode_nfl_count * ctx->uv_ctrls.uv_nic_scaling_num, 16));
-    uv_mode_nfl_count = MIN(uv_mode_nfl_count, uv_mode_total_count);
-    uv_mode_nfl_count = MAX(uv_mode_nfl_count, 1);
+    uv_mode_nfl_count              = MAX(1, DIVIDE_AND_ROUND(uv_mode_nfl_count * ctx->uv_ctrls.uv_nic_scaling_num, 16));
+    uv_mode_nfl_count              = MIN(uv_mode_nfl_count, uv_mode_total_count);
+    uv_mode_nfl_count              = MAX(uv_mode_nfl_count, 1);
     // Always test UV_DC_PRED in the full loop
     unsigned int uv_mode_count = 0;
     for (; uv_mode_count < MIN(uv_mode_total_count, uv_mode_nfl_count); uv_mode_count++) {
@@ -7982,7 +7965,7 @@ static void md_encode_block_light_pd0(PictureControlSet *pcs, ModeDecisionContex
         ctx->uv_intra_comp_only = FALSE;
     }
     if (pcs->slice_type != I_SLICE) {
-        ctx->me_sb_addr = ctx->sb_ptr->index;
+        ctx->me_sb_addr      = ctx->sb_ptr->index;
         ctx->me_block_offset = svt_aom_get_me_block_offset(
             ctx->blk_geom, pcs->ppcs->enable_me_8x8, pcs->ppcs->enable_me_16x16);
         ctx->me_cand_offset = ctx->me_block_offset * pcs->ppcs->pa_me_data->max_cand;
@@ -8109,7 +8092,7 @@ static void copy_recon_md(PictureControlSet *pcs, ModeDecisionContext *ctx, Mode
                            ((uint16_t *)recon_ptr->buffer_y) + (rec_luma_offset + j * recon_ptr->stride_y),
                            sizeof(uint16_t) * blk_geom->bwidth);
 
-                // Copy 8bit
+            // Copy 8bit
             // 8bit recon must be stored in the pic buffers, because the blk_ptr->recon_tmp contains the 10bit recon
             svt_aom_get_recon_pic(pcs, &recon_ptr, 0);
             rec_luma_offset = (recon_ptr->org_y + ctx->blk_org_y) * recon_ptr->stride_y +
@@ -8739,7 +8722,7 @@ static void md_encode_block_light_pd1(PictureControlSet *pcs, ModeDecisionContex
 
     // need to init xd before product_coding_loop_init_fast_loop()
     svt_aom_init_xd(pcs, ctx);
-    ctx->me_sb_addr = ctx->sb_ptr->index;
+    ctx->me_sb_addr      = ctx->sb_ptr->index;
     ctx->me_block_offset = svt_aom_get_me_block_offset(
         ctx->blk_geom, pcs->ppcs->enable_me_8x8, pcs->ppcs->enable_me_16x16);
 
@@ -9151,7 +9134,7 @@ static void md_encode_block(PictureControlSet *pcs, ModeDecisionContext *ctx, ui
          ctx->updated_enable_pme || ctx->ref_pruning_ctrls.enabled))
         build_single_ref_mvp_array(pcs, ctx);
     if (pcs->slice_type != I_SLICE)
-    // Read and (if needed) perform 1/8 Pel ME MVs refinement
+        // Read and (if needed) perform 1/8 Pel ME MVs refinement
         read_refine_me_mvs(pcs, ctx);
     for (uint8_t list_idx = 0; list_idx < MAX_NUM_OF_REF_PIC_LIST; list_idx++) {
         for (uint8_t ref_idx = 0; ref_idx < REF_LIST_MAX_DEPTH; ref_idx++) {
@@ -10335,7 +10318,7 @@ static void process_block(SequenceControlSet *scs, PictureControlSet *pcs, ModeD
                           Bool *md_early_exit_nsq, Bool md_skip_sub_depths, uint8_t d1_blk_count) {
     const BlockGeom *blk_geom = ctx->blk_geom = get_blk_geom_mds(blk_idx_mds);
     BlkStruct       *blk_ptr = ctx->blk_ptr = &ctx->md_blk_arr_nsq[blk_idx_mds];
-    bool skip_processing_block = (*md_early_exit_nsq) || md_skip_sub_depths ||
+    bool             skip_processing_block  = (*md_early_exit_nsq) || md_skip_sub_depths ||
         !pcs->ppcs->sb_geom[sb_addr].block_is_allowed[blk_ptr->mds_idx];
     if (skip_processing_block)
         return;
@@ -10705,8 +10688,8 @@ void svt_aom_mode_decision_sb(SequenceControlSet *scs, PictureControlSet *pcs, M
                     next_blkidx_mds    = ctx->blk_geom->sqi_mds + ctx->blk_geom->ns_depth_offset;
                 }
             }
-            first_d1_blk = 1;
-            d1_blk_count = 0;
+            first_d1_blk  = 1;
+            d1_blk_count  = 0;
             skip_h_v_path = FALSE;
         } else if (first_d1_blk) {
             first_d1_blk = 0;

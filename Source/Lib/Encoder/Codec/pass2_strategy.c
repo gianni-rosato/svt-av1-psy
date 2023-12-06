@@ -448,9 +448,9 @@ int         svt_aom_frame_is_kf_gf_arf(PictureParentControlSet *ppcs);
 ************************************************************************************/
 static void calculate_gf_stats(PictureParentControlSet *ppcs, GF_GROUP_STATS *gf_stats, FIRSTPASS_STATS *this_frame,
                                int *use_alt_ref) {
-    SequenceControlSet *scs     = ppcs->scs;
-    RATE_CONTROL *const rc      = &scs->enc_ctx->rc;
-    TWO_PASS *const     twopass = &scs->twopass;
+    SequenceControlSet          *scs     = ppcs->scs;
+    RATE_CONTROL *const          rc      = &scs->enc_ctx->rc;
+    TWO_PASS *const              twopass = &scs->twopass;
     FIRSTPASS_STATS              next_frame;
     const FIRSTPASS_STATS *const start_pos = twopass->stats_in;
 
@@ -509,10 +509,10 @@ static void calculate_active_worst_quality(PictureParentControlSet *ppcs, GF_GRO
     // sections where we do not wish to risk creating an overshoot
     // of the allocated bit budget.
     if (rc->baseline_gf_interval > 1) {
-        const int vbr_group_bits_per_frame = (int)(rc->gf_group_bits / rc->baseline_gf_interval);
-        double group_av_err = gf_stats.gf_group_raw_error / rc->baseline_gf_interval;
-        const double group_av_skip_pct      = gf_stats.gf_group_skip_pct / rc->baseline_gf_interval;
-        const double group_av_inactive_zone = ((gf_stats.gf_group_inactive_zone_rows * 2) /
+        const int    vbr_group_bits_per_frame = (int)(rc->gf_group_bits / rc->baseline_gf_interval);
+        double       group_av_err             = gf_stats.gf_group_raw_error / rc->baseline_gf_interval;
+        const double group_av_skip_pct        = gf_stats.gf_group_skip_pct / rc->baseline_gf_interval;
+        const double group_av_inactive_zone   = ((gf_stats.gf_group_inactive_zone_rows * 2) /
                                                (rc->baseline_gf_interval * (double)frame_info->mb_rows));
 
         int tmp_q;
@@ -622,9 +622,9 @@ static void av1_gop_bit_allocation(PictureParentControlSet *ppcs, RATE_CONTROL *
  *
  */
 static void lap_rc_init(PictureParentControlSet *pcs, FIRSTPASS_STATS this_frame) {
-    SequenceControlSet *scs     = pcs->scs;
-    EncodeContext      *enc_ctx = scs->enc_ctx;
-    TWO_PASS *const     twopass = &scs->twopass;
+    SequenceControlSet          *scs                  = pcs->scs;
+    EncodeContext               *enc_ctx              = scs->enc_ctx;
+    TWO_PASS *const              twopass              = &scs->twopass;
     int                          num_stats            = 0;
     double                       modified_error_total = 0.0;
     double                       coded_error_total    = 0.0;
@@ -670,8 +670,8 @@ static void lap_rc_init(PictureParentControlSet *pcs, FIRSTPASS_STATS this_frame
  *
  */
 static double lap_rc_group_error_calc(PictureParentControlSet *pcs, FIRSTPASS_STATS this_frame) {
-    SequenceControlSet *scs = pcs->scs;
-    TWO_PASS *const twopass = &scs->twopass;
+    SequenceControlSet          *scs                  = pcs->scs;
+    TWO_PASS *const              twopass              = &scs->twopass;
     int                          num_stats            = 0;
     double                       modified_error_total = 0.0;
     const FIRSTPASS_STATS *const start_position       = twopass->stats_in;
@@ -748,25 +748,25 @@ static int64_t get_kf_group_bits(PictureParentControlSet *pcs, double kf_group_e
 // Only works for key frames, and scene change is not detected for now
 /*****************************************************************************/
 static void kf_group_rate_assingment(PictureParentControlSet *pcs, FIRSTPASS_STATS this_frame) {
-    SequenceControlSet *scs        = pcs->scs;
-    EncodeContext      *enc_ctx    = scs->enc_ctx;
-    RATE_CONTROL *const rc         = &enc_ctx->rc;
-    TWO_PASS *const     twopass    = &scs->twopass;
-    FIRSTPASS_STATS next_frame;
+    SequenceControlSet *scs     = pcs->scs;
+    EncodeContext      *enc_ctx = scs->enc_ctx;
+    RATE_CONTROL *const rc      = &enc_ctx->rc;
+    TWO_PASS *const     twopass = &scs->twopass;
+    FIRSTPASS_STATS     next_frame;
     av1_zero(next_frame);
 
     rc->frames_since_key = 0;
 
     const FIRSTPASS_STATS *const start_position = twopass->stats_in;
     int                          kf_bits        = 0;
-    double kf_mod_err;
-    double kf_group_err = 0.0;
-    int     frames_to_key_clipped = INT_MAX;
-    int64_t kf_group_bits_clipped = INT64_MAX;
+    double                       kf_mod_err;
+    double                       kf_group_err          = 0.0;
+    int                          frames_to_key_clipped = INT_MAX;
+    int64_t                      kf_group_bits_clipped = INT64_MAX;
 
     twopass->kf_group_bits       = 0; // Total bits available to kf group
     twopass->kf_group_error_left = 0; // Group modified error score.
-    kf_mod_err = calculate_modified_err(twopass, &this_frame);
+    kf_mod_err                   = calculate_modified_err(twopass, &this_frame);
     set_kf_interval_variables(pcs, &this_frame, &kf_group_err, scs->static_config.intra_period_length + 1);
 
     // Calculate the number of bits that should be assigned to the kf group.
@@ -1366,7 +1366,6 @@ void svt_aom_find_init_qp_middle_pass(SequenceControlSet *scs, PictureParentCont
         scs->static_config.qp = (uint8_t)CLIP3((int32_t)scs->static_config.min_qp_allowed,
                                                (int32_t)scs->static_config.max_qp_allowed - 4,
                                                (int32_t)((tmp_q + 2) >> 2));
-
     }
 }
 int svt_aom_frame_is_kf_gf_arf(PictureParentControlSet *ppcs) {

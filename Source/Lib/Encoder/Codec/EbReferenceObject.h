@@ -30,13 +30,13 @@ typedef struct EbReferenceObject {
     EbPictureBufferDesc        *downscaled_reference_picture[NUM_SR_SCALES + 1][NUM_RESIZE_SCALES + 1];
     uint64_t                    downscaled_picture_number[NUM_SR_SCALES + 1]
                                       [NUM_RESIZE_SCALES + 1]; // save the picture_number for each denom
-    EbHandle  resize_mutex[NUM_SR_SCALES + 1][NUM_RESIZE_SCALES + 1];
-    uint64_t  ref_poc;
-    uint16_t  qp;
-    SliceType slice_type;
-    uint8_t   intra_coded_area; //percentage of intra coded area 0-100%
-    uint8_t   skip_coded_area;
-    uint8_t hp_coded_area;
+    EbHandle             resize_mutex[NUM_SR_SCALES + 1][NUM_RESIZE_SCALES + 1];
+    uint64_t             ref_poc;
+    uint16_t             qp;
+    SliceType            slice_type;
+    uint8_t              intra_coded_area; //percentage of intra coded area 0-100%
+    uint8_t              skip_coded_area;
+    uint8_t              hp_coded_area;
     uint8_t              tmp_layer_idx;
     Bool                 is_scene_change;
     uint16_t             pic_avg_variance;

@@ -38,7 +38,7 @@ struct _EbEncHandle {
     uint32_t ref_pic_pool_total_count;
 
     // Config Set Pool & Active Array
-    EbSystemResource **scs_pool_ptr_array; //*scs_pool_ptr
+    EbSystemResource             **scs_pool_ptr_array; //*scs_pool_ptr
     EbSequenceControlSetInstance **scs_instance_array;
 
     // Full Results
