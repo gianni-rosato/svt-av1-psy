@@ -90,7 +90,7 @@ The block diagram in Figure 2 outlines the flow of the temporal filtering operat
 
 ### Temporal window length for an intra-frame
 
-The noise level of the intra-frame is used to modulate the number of filtering frames; more frames are used to filter low-noise frame such the filtered frame can provide better predictions for more frames. The noise level classifier is based on a simplification of the algorithm proposed in [1]. The standard deviation (sigma) of the noise is estimated using the Laplacian operator. Pixels that belong to an edge (i.e., as determined by how the magnitude of the Sobel gradients compare to a predetermined threshold), are not considered in the computation. The current noise estimation considers only the luma component. 
+The noise level of the intra-frame is used to modulate the number of filtering frames; more frames are used to filter low-noise frame such the filtered frame can provide better predictions for more frames. The noise level classifier is based on a simplification of the algorithm proposed in [1]. The standard deviation (sigma) of the noise is estimated using the Laplacian operator. Pixels that belong to an edge (i.e., as determined by how the magnitude of the Sobel gradients compare to a predetermined threshold), are not considered in the computation. The current noise estimation considers only the luma component.
 
 ### Temporal window length for an inter-frame
 
