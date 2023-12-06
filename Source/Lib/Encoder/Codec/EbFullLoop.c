@@ -1191,15 +1191,9 @@ void svt_av1_optimize_b(ModeDecisionContext *ctx, int16_t txb_skip_context, int1
     const TranLow qc         = qcoeff_ptr[ci];
     const TranLow abs_qc     = abs(qc);
     const int     sign       = qc < 0;
-#if OPT_EOB_RDOQ
     const int max_nz_num = 4;
     int       nz_num     = 1;
     int       nz_ci[5]   = {ci, 0, 0, 0, 0};
-#else
-    const int           max_nz_num = 2;
-    int                 nz_num     = 1;
-    int                 nz_ci[3]   = {ci, 0, 0};
-#endif
     if (abs_qc >= 2) {
         update_coeff_general(&accu_rate,
                              &accu_dist,
@@ -1358,11 +1352,7 @@ static INLINE TxSize aom_av1_get_adjusted_tx_size(TxSize tx_size) {
 int32_t svt_aom_quantize_inv_quantize_light(PictureControlSet *pcs, int32_t *coeff, int32_t *quant_coeff,
                                             int32_t *recon_coeff, uint32_t qindex, TxSize txsize, uint16_t *eob,
                                             uint32_t *cnt_nz_coeff, uint32_t bit_depth, TxType tx_type) {
-#if FTR_RES_ON_FLY2
     EncodeContext *enc_ctx = pcs->scs->enc_ctx;
-#else
-    SequenceControlSet *scs = pcs->scs;
-#endif
 
     uint32_t q_index = qindex;
 
@@ -1382,7 +1372,6 @@ int32_t svt_aom_quantize_inv_quantize_light(PictureControlSet *pcs, int32_t *coe
 
     const QmVal *iq_matrix = pcs->ppcs->giqmatrix[qmatrix_level][AOM_PLANE_Y][adjusted_tx_size];
 
-#if FTR_RES_ON_FLY2
 
     if (q_matrix == NULL && iq_matrix == NULL) {
         if (bit_depth > EB_EIGHT_BIT) {
@@ -1453,79 +1442,6 @@ int32_t svt_aom_quantize_inv_quantize_light(PictureControlSet *pcs, int32_t *coe
                                   av1_get_tx_scale_tab[txsize]);
         }
     }
-#else
-
-    if (q_matrix == NULL && iq_matrix == NULL) {
-        if (bit_depth > EB_EIGHT_BIT) {
-            svt_aom_highbd_quantize_b((TranLow *)coeff,
-                                      n_coeffs,
-                                      scs->quants_bd.y_zbin[q_index],
-                                      scs->quants_bd.y_round[q_index],
-                                      scs->quants_bd.y_quant[q_index],
-                                      scs->quants_bd.y_quant_shift[q_index],
-                                      quant_coeff,
-                                      (TranLow *)recon_coeff,
-                                      scs->deq_bd.v_dequant_qtx[q_index],
-                                      eob,
-                                      scan_order->scan,
-                                      scan_order->iscan,
-                                      q_matrix,
-                                      iq_matrix,
-                                      av1_get_tx_scale_tab[txsize]);
-        } else {
-            //  svt_aom_quantize_b_c_ii((TranLow *)coeff,
-            svt_aom_quantize_b((TranLow *)coeff,
-                               n_coeffs,
-                               scs->quants_8bit.v_zbin[q_index],
-                               scs->quants_8bit.v_round[q_index],
-                               scs->quants_8bit.v_quant[q_index],
-                               scs->quants_8bit.v_quant_shift[q_index],
-                               quant_coeff,
-                               (TranLow *)recon_coeff,
-                               scs->deq_8bit.y_dequant_qtx[q_index],
-                               eob,
-                               scan_order->scan,
-                               scan_order->iscan,
-                               q_matrix,
-                               iq_matrix,
-                               av1_get_tx_scale_tab[txsize]);
-        }
-    } else {
-        if (bit_depth > EB_EIGHT_BIT) {
-            svt_av1_highbd_quantize_b_qm((TranLow *)coeff,
-                                         n_coeffs,
-                                         scs->quants_bd.y_zbin[q_index],
-                                         scs->quants_bd.y_round[q_index],
-                                         scs->quants_bd.y_quant[q_index],
-                                         scs->quants_bd.y_quant_shift[q_index],
-                                         quant_coeff,
-                                         (TranLow *)recon_coeff,
-                                         scs->deq_bd.v_dequant_qtx[q_index],
-                                         eob,
-                                         scan_order->scan,
-                                         scan_order->iscan,
-                                         q_matrix,
-                                         iq_matrix,
-                                         av1_get_tx_scale_tab[txsize]);
-        } else {
-            svt_av1_quantize_b_qm((TranLow *)coeff,
-                                  n_coeffs,
-                                  scs->quants_8bit.v_zbin[q_index],
-                                  scs->quants_8bit.v_round[q_index],
-                                  scs->quants_8bit.v_quant[q_index],
-                                  scs->quants_8bit.v_quant_shift[q_index],
-                                  quant_coeff,
-                                  (TranLow *)recon_coeff,
-                                  scs->deq_8bit.y_dequant_qtx[q_index],
-                                  eob,
-                                  scan_order->scan,
-                                  scan_order->iscan,
-                                  q_matrix,
-                                  iq_matrix,
-                                  av1_get_tx_scale_tab[txsize]);
-        }
-    }
-#endif
     *cnt_nz_coeff = *eob;
     return 0;
 }
@@ -1562,9 +1478,7 @@ int32_t svt_aom_quantize_inv_quantize(PictureControlSet *pcs, ModeDecisionContex
     (void)coeff_stride;
     (void)is_intra_bc;
     SequenceControlSet *scs = pcs->scs;
-#if FTR_RES_ON_FLY2
     EncodeContext *enc_ctx = scs->enc_ctx;
-#endif
     int32_t plane = component_type == COMPONENT_LUMA ? AOM_PLANE_Y : COMPONENT_CHROMA_CB ? AOM_PLANE_U : AOM_PLANE_V;
     int32_t qmatrix_level    = (IS_2D_TRANSFORM(tx_type) && pcs->ppcs->frm_hdr.quantization_params.using_qmatrix)
            ? pcs->ppcs->frm_hdr.quantization_params.qm[plane]
@@ -1586,7 +1500,6 @@ int32_t svt_aom_quantize_inv_quantize(PictureControlSet *pcs, ModeDecisionContex
         q_index += offset;
         q_index = (uint32_t)CLIP3(0, 255, (int32_t)q_index);
     }
-#if FTR_RES_ON_FLY2
     if (bit_depth == EB_EIGHT_BIT) {
         if (component_type == COMPONENT_LUMA) {
             candidate_plane.quant_qtx       = enc_ctx->quants_8bit.y_quant[q_index];
@@ -1646,69 +1559,6 @@ int32_t svt_aom_quantize_inv_quantize(PictureControlSet *pcs, ModeDecisionContex
             candidate_plane.dequant_qtx     = enc_ctx->deq_bd.v_dequant_qtx[q_index];
         }
     }
-#else
-    if (bit_depth == EB_EIGHT_BIT) {
-        if (component_type == COMPONENT_LUMA) {
-            candidate_plane.quant_qtx       = scs->quants_8bit.y_quant[q_index];
-            candidate_plane.quant_fp_qtx    = scs->quants_8bit.y_quant_fp[q_index];
-            candidate_plane.round_fp_qtx    = scs->quants_8bit.y_round_fp[q_index];
-            candidate_plane.quant_shift_qtx = scs->quants_8bit.y_quant_shift[q_index];
-            candidate_plane.zbin_qtx        = scs->quants_8bit.y_zbin[q_index];
-            candidate_plane.round_qtx       = scs->quants_8bit.y_round[q_index];
-            candidate_plane.dequant_qtx     = scs->deq_8bit.y_dequant_qtx[q_index];
-        }
-
-        else if (component_type == COMPONENT_CHROMA_CB) {
-            candidate_plane.quant_qtx       = scs->quants_8bit.u_quant[q_index];
-            candidate_plane.quant_fp_qtx    = scs->quants_8bit.u_quant_fp[q_index];
-            candidate_plane.round_fp_qtx    = scs->quants_8bit.u_round_fp[q_index];
-            candidate_plane.quant_shift_qtx = scs->quants_8bit.u_quant_shift[q_index];
-            candidate_plane.zbin_qtx        = scs->quants_8bit.u_zbin[q_index];
-            candidate_plane.round_qtx       = scs->quants_8bit.u_round[q_index];
-            candidate_plane.dequant_qtx     = scs->deq_8bit.u_dequant_qtx[q_index];
-        }
-
-        else {
-            candidate_plane.quant_qtx       = scs->quants_8bit.v_quant[q_index];
-            candidate_plane.quant_fp_qtx    = scs->quants_8bit.v_quant_fp[q_index];
-            candidate_plane.round_fp_qtx    = scs->quants_8bit.v_round_fp[q_index];
-            candidate_plane.quant_shift_qtx = scs->quants_8bit.v_quant_shift[q_index];
-            candidate_plane.zbin_qtx        = scs->quants_8bit.v_zbin[q_index];
-            candidate_plane.round_qtx       = scs->quants_8bit.v_round[q_index];
-            candidate_plane.dequant_qtx     = scs->deq_8bit.v_dequant_qtx[q_index];
-        }
-    } else {
-        if (component_type == COMPONENT_LUMA) {
-            candidate_plane.quant_qtx       = scs->quants_bd.y_quant[q_index];
-            candidate_plane.quant_fp_qtx    = scs->quants_bd.y_quant_fp[q_index];
-            candidate_plane.round_fp_qtx    = scs->quants_bd.y_round_fp[q_index];
-            candidate_plane.quant_shift_qtx = scs->quants_bd.y_quant_shift[q_index];
-            candidate_plane.zbin_qtx        = scs->quants_bd.y_zbin[q_index];
-            candidate_plane.round_qtx       = scs->quants_bd.y_round[q_index];
-            candidate_plane.dequant_qtx     = scs->deq_bd.y_dequant_qtx[q_index];
-        }
-
-        else if (component_type == COMPONENT_CHROMA_CB) {
-            candidate_plane.quant_qtx       = scs->quants_bd.u_quant[q_index];
-            candidate_plane.quant_fp_qtx    = scs->quants_bd.u_quant_fp[q_index];
-            candidate_plane.round_fp_qtx    = scs->quants_bd.u_round_fp[q_index];
-            candidate_plane.quant_shift_qtx = scs->quants_bd.u_quant_shift[q_index];
-            candidate_plane.zbin_qtx        = scs->quants_bd.u_zbin[q_index];
-            candidate_plane.round_qtx       = scs->quants_bd.u_round[q_index];
-            candidate_plane.dequant_qtx     = scs->deq_bd.u_dequant_qtx[q_index];
-        }
-
-        else {
-            candidate_plane.quant_qtx       = scs->quants_bd.v_quant[q_index];
-            candidate_plane.quant_fp_qtx    = scs->quants_bd.v_quant_fp[q_index];
-            candidate_plane.round_fp_qtx    = scs->quants_bd.v_round_fp[q_index];
-            candidate_plane.quant_shift_qtx = scs->quants_bd.v_quant_shift[q_index];
-            candidate_plane.zbin_qtx        = scs->quants_bd.v_zbin[q_index];
-            candidate_plane.round_qtx       = scs->quants_bd.v_round[q_index];
-            candidate_plane.dequant_qtx     = scs->deq_bd.v_dequant_qtx[q_index];
-        }
-    }
-#endif
 
     const ScanOrder *const scan_order = &av1_scan_orders[txsize][tx_type]; //get_scan(tx_size, tx_type);
 
@@ -2187,11 +2037,7 @@ void svt_aom_full_loop_uv(PictureControlSet *pcs, ModeDecisionContext *ctx, Mode
             int32_t seg_qp = pcs->ppcs->frm_hdr.segmentation_params.segmentation_enabled
                 ? pcs->ppcs->frm_hdr.segmentation_params.feature_data[ctx->blk_ptr->segment_id][SEG_LVL_ALT_Q]
                 : 0;
-#if FIX_BYPASS_ED_COEFF
             cand_bf->quantized_dc[1][txb_itr] = svt_aom_quantize_inv_quantize(
-#else
-            cand_bf->quantized_dc[1][0] = svt_aom_quantize_inv_quantize(
-#endif
                 pcs,
                 ctx,
                 &(((int32_t *)ctx->tx_coeffs->buffer_cb)[txb_1d_offset]),
@@ -2376,11 +2222,7 @@ void svt_aom_full_loop_uv(PictureControlSet *pcs, ModeDecisionContext *ctx, Mode
             int32_t seg_qp = pcs->ppcs->frm_hdr.segmentation_params.segmentation_enabled
                 ? pcs->ppcs->frm_hdr.segmentation_params.feature_data[ctx->blk_ptr->segment_id][SEG_LVL_ALT_Q]
                 : 0;
-#if FIX_BYPASS_ED_COEFF
             cand_bf->quantized_dc[2][txb_itr] = svt_aom_quantize_inv_quantize(
-#else
-            cand_bf->quantized_dc[2][0] = svt_aom_quantize_inv_quantize(
-#endif
                 pcs,
                 ctx,
                 &(((int32_t *)ctx->tx_coeffs->buffer_cr)[txb_1d_offset]),

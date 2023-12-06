@@ -107,13 +107,6 @@ void log_error_output(FILE *error_log_file, uint32_t error_code) {
 
 static void (*read_input)(EbConfig *app_cfg, uint8_t is_16bit, EbBufferHeaderType *header_ptr);
 
-#if !FTR_RES_ON_FLY_APP
-//retunrs the offset from the file start
-static int64_t get_mmap_offset(EbConfig *app_cfg, uint64_t frame_size) {
-    const int64_t offset = app_cfg->mmap.file_frame_it * frame_size;
-    return app_cfg->mmap.y4m_seq_hdr + (app_cfg->mmap.file_frame_it + 1) * app_cfg->mmap.y4m_frm_hdr + offset;
-}
-#endif
 /* returns a RAM address from a memory mapped file  */
 static void *svt_mmap(MemMapFile *h, size_t offset, size_t size) {
     if (offset + size > h->file_size)
@@ -492,49 +485,24 @@ void process_input_buffer(EncChannel *channel) {
 
     AppExitConditionType return_value = APP_ExitConditionNone;
 
-#if FTR_RES_ON_FLY_APP
     const uint64_t frames_to_be_encoded = (uint64_t)app_cfg->frames_to_be_encoded;
-#else
-    const int64_t frames_to_be_encoded = app_cfg->frames_to_be_encoded;
-    const uint8_t color_format         = app_cfg->config.encoder_color_format;
-    const int64_t input_padded_width   = app_cfg->input_padded_width;
-    const int64_t input_padded_height  = app_cfg->input_padded_height;
-    int64_t       total_bytes_to_process_count;
-    int64_t       remaining_byte_count;
-#endif
 
     if (channel->exit_cond_input != APP_ExitConditionNone)
         return;
     if (app_cfg->injector)
         injector(app_cfg->processed_frame_count, app_cfg->injector_frame_rate);
 
-#if FTR_RES_ON_FLY_APP
     if (frames_to_be_encoded != app_cfg->processed_frame_count && app_cfg->stop_encoder == FALSE) {
         header_ptr->p_app_private = NULL;
         header_ptr->pic_type      = EB_AV1_INVALID_PICTURE;
 #if FTR_RES_ON_FLY_SAMPLE
         test_update_input_pic_def(app_cfg->processed_frame_count, header_ptr, app_cfg);
 #endif
-#else
-    total_bytes_to_process_count = (frames_to_be_encoded < 0) ? -1
-                                                              : frames_to_be_encoded *
-            SIZE_OF_ONE_FRAME_IN_BYTES(input_padded_width, input_padded_height, color_format, is_16bit);
-
-    remaining_byte_count = (total_bytes_to_process_count < 0)
-        ? -1
-        : total_bytes_to_process_count - (int64_t)app_cfg->processed_byte_count;
-
-    // If there are bytes left to encode, configure the header
-    if (remaining_byte_count != 0 && app_cfg->stop_encoder == FALSE) {
-#endif
         read_input(app_cfg, is_16bit, header_ptr);
 
         if (header_ptr->n_filled_len) {
             // Update the context parameters
             app_cfg->processed_byte_count += header_ptr->n_filled_len;
-#if !FTR_RES_ON_FLY_APP
-            header_ptr->p_app_private = NULL;
-#endif
             app_cfg->mmap.file_frame_it++;
             app_cfg->frames_encoded = (int32_t)(++app_cfg->processed_frame_count);
 
@@ -546,13 +514,8 @@ void process_input_buffer(EncChannel *channel) {
                 app_cfg->stop_encoder = TRUE;
             // Fill in Buffers Header control data
             header_ptr->pts = app_cfg->processed_frame_count - 1;
-#if FTR_RES_ON_FLY_APP
             header_ptr->pic_type = is_forced_keyframe(app_cfg, header_ptr->pts) ? EB_AV1_KEY_PICTURE
                                                                                 : header_ptr->pic_type;
-#else
-            header_ptr->pic_type = is_forced_keyframe(app_cfg, header_ptr->pts) ? EB_AV1_KEY_PICTURE
-                                                                                : EB_AV1_INVALID_PICTURE;
-#endif
             header_ptr->flags    = 0;
             header_ptr->metadata = NULL;
 #if FTR_KF_ON_FLY_SAMPLE
@@ -566,12 +529,8 @@ void process_input_buffer(EncChannel *channel) {
 #endif
             retrieve_roi_map_event(app_cfg->roi_map, header_ptr->pts, header_ptr);
             // Send the picture
-#if FTR_RES_ON_FLY_APP
             if (svt_av1_enc_send_picture(component_handle, header_ptr) != EB_ErrorNone)
                 return_value = APP_ExitConditionFinished;
-#else
-            svt_av1_enc_send_picture(component_handle, header_ptr);
-#endif
             // p_app_private is deep copied so it's safe to free it now
             free_private_data_list(header_ptr->p_app_private);
 
@@ -627,7 +586,6 @@ static void mmap_read_input_frames(EbConfig *app_cfg, uint8_t is_16bit, EbBuffer
     }
     size_t luma_read_size   = (size_t)input_padded_width * input_padded_height << is_16bit;
     size_t chroma_read_size = ((size_t)luma_read_size >> (3 - color_format));
-#if FTR_RES_ON_FLY_APP
     app_cfg->mmap.cur_offset += app_cfg->mmap.y4m_frm_hdr;
     input_ptr->luma = svt_mmap(&app_cfg->mmap, app_cfg->mmap.cur_offset, luma_read_size);
     header_ptr->n_filled_len += (input_ptr->luma ? (uint32_t)luma_read_size : 0);
@@ -659,51 +617,6 @@ static void mmap_read_input_frames(EbConfig *app_cfg, uint8_t is_16bit, EbBuffer
         header_ptr->n_filled_len += (input_ptr->cr ? (uint32_t)chroma_read_size : 0);
         app_cfg->mmap.cur_offset += (input_ptr->cr ? chroma_read_size : 0);
     }
-#else
-    int64_t offset  = get_mmap_offset(app_cfg, read_size);
-    input_ptr->luma = svt_mmap(&app_cfg->mmap, offset, luma_read_size);
-    header_ptr->n_filled_len += (input_ptr->luma ? (uint32_t)luma_read_size : 0);
-
-    offset += luma_read_size;
-    input_ptr->cb = svt_mmap(&app_cfg->mmap, offset, chroma_read_size);
-#if CLN_MISC_II
-    header_ptr->n_filled_len += (uint32_t)(input_ptr->cb ? chroma_read_size : 0);
-#else
-    header_ptr->n_filled_len += (input_ptr->cb ? chroma_read_size : 0);
-#endif
-
-    offset += chroma_read_size;
-    input_ptr->cr = svt_mmap(&app_cfg->mmap, offset, chroma_read_size);
-#if CLN_MISC_II
-    header_ptr->n_filled_len += (uint32_t)(input_ptr->cr ? chroma_read_size : 0);
-#else
-    header_ptr->n_filled_len += (input_ptr->cr ? chroma_read_size : 0);
-#endif
-
-    if (read_size != header_ptr->n_filled_len) {
-        app_cfg->mmap.file_frame_it = 0;
-
-        offset          = get_mmap_offset(app_cfg, read_size);
-        input_ptr->luma = svt_mmap(&app_cfg->mmap, offset, luma_read_size);
-        header_ptr->n_filled_len += (input_ptr->luma ? (uint32_t)luma_read_size : 0);
-
-        offset += luma_read_size;
-        input_ptr->cb = svt_mmap(&app_cfg->mmap, offset, chroma_read_size);
-#if CLN_MISC_II
-        header_ptr->n_filled_len += (uint32_t)(input_ptr->cb ? chroma_read_size : 0);
-#else
-        header_ptr->n_filled_len += (input_ptr->cb ? chroma_read_size : 0);
-#endif
-
-        offset += chroma_read_size;
-        input_ptr->cr = svt_mmap(&app_cfg->mmap, offset, chroma_read_size);
-#if CLN_MISC_II
-        header_ptr->n_filled_len += (uint32_t)(input_ptr->cr ? chroma_read_size : 0);
-#else
-        header_ptr->n_filled_len += (input_ptr->cr ? chroma_read_size : 0);
-#endif
-    }
-#endif
 }
 
 static void normal_read_input_frames(EbConfig *app_cfg, uint8_t is_16bit, EbBufferHeaderType *header_ptr) {

@@ -100,18 +100,11 @@ EbErrorType svt_aom_rest_context_ctor(EbThreadContext *thread_ctx, const EbEncHa
 
     Bool is_16bit = scs->is_16bit_pipeline;
 
-#if OPT_SG
     if (svt_aom_get_enable_restoration(init_data_ptr->enc_mode,
                                        config->enable_restoration_filtering,
                                        scs->input_resolution,
                                        scs->static_config.fast_decode,
                                        scs->static_config.qp)) {
-#else
-    if (svt_aom_get_enable_restoration(init_data_ptr->enc_mode,
-                                       config->enable_restoration_filtering,
-                                       scs->input_resolution,
-                                       scs->static_config.fast_decode)) {
-#endif
         EbPictureBufferDescInitData init_data;
 
         init_data.buffer_enable_mask = PICTURE_BUFFER_DESC_FULL_MASK;
@@ -137,12 +130,8 @@ EbErrorType svt_aom_rest_context_ctor(EbThreadContext *thread_ctx, const EbEncHa
                 context_ptr->org_rec_frame->bit_depth = EB_EIGHT_BIT;
         }
         context_ptr->rst_tmpbuf = NULL;
-#if OPT_SG
         if (svt_aom_get_enable_sg(
                 init_data_ptr->enc_mode, scs->input_resolution, scs->static_config.fast_decode, scs->static_config.qp))
-#else
-        if (svt_aom_get_enable_sg(init_data_ptr->enc_mode, scs->input_resolution, scs->static_config.fast_decode))
-#endif
             EB_MALLOC_ALIGNED(context_ptr->rst_tmpbuf, RESTORATION_TMPBUF_SIZE);
     }
 
@@ -478,16 +467,12 @@ static void copy_statistics_to_ref_obj_ect(PictureControlSet *pcs, SequenceContr
 
     pcs->intra_coded_area = (100 * pcs->intra_coded_area) / (pcs->ppcs->aligned_width * pcs->ppcs->aligned_height);
     pcs->skip_coded_area  = (100 * pcs->skip_coded_area) / (pcs->ppcs->aligned_width * pcs->ppcs->aligned_height);
-#if OPT_HP_MV
     pcs->hp_coded_area = (100 * pcs->hp_coded_area) / (pcs->ppcs->aligned_width * pcs->ppcs->aligned_height);
-#endif
     if (pcs->slice_type == I_SLICE)
         pcs->intra_coded_area = 0;
     obj->intra_coded_area = (uint8_t)(pcs->intra_coded_area);
     obj->skip_coded_area  = (uint8_t)(pcs->skip_coded_area);
-#if OPT_HP_MV
     obj->hp_coded_area = (uint8_t)(pcs->hp_coded_area);
-#endif
     struct PictureParentControlSet *ppcs    = pcs->ppcs;
     FrameHeader                    *frm_hdr = &ppcs->frm_hdr;
 

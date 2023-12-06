@@ -38,14 +38,7 @@ static void set_restoration_unit_size(int32_t width, int32_t height, int32_t sx,
 
     int32_t s = 0;
 
-#if OPT_REST_SIZE_FULL
     rst[0].restoration_unit_size = RESTORATION_UNITSIZE_MAX;
-#else
-    if (width * height > 352 * 288)
-        rst[0].restoration_unit_size = RESTORATION_UNITSIZE_MAX;
-    else
-        rst[0].restoration_unit_size = (RESTORATION_UNITSIZE_MAX >> 1);
-#endif
 
     rst[1].restoration_unit_size = rst[0].restoration_unit_size >> s;
     rst[2].restoration_unit_size = rst[1].restoration_unit_size;
@@ -112,17 +105,9 @@ EbErrorType svt_aom_me_sb_results_ctor(MeSbResults *obj_ptr, PictureControlSetIn
                                       &max_cand_to_alloc);
     EbInputResolution resolution;
     svt_aom_derive_input_resolution(&resolution, init_data_ptr->picture_width * init_data_ptr->picture_height);
-#if CLN_MISC
     uint8_t number_of_pus = svt_aom_get_enable_me_16x16(init_data_ptr->enc_mode)
-#else
-    uint8_t number_of_pus = svt_aom_get_enable_me_16x16(init_data_ptr->enc_mode, init_data_ptr->rtc_tune)
-#endif
-#if TUNE_ENABLE_ME_8X8
         ? svt_aom_get_enable_me_8x8(init_data_ptr->enc_mode, init_data_ptr->rtc_tune, resolution)
             ? SQUARE_PU_COUNT
-#else
-        ? svt_aom_get_enable_me_8x8(init_data_ptr->enc_mode, init_data_ptr->rtc_tune) ? SQUARE_PU_COUNT
-#endif
             : MAX_SB64_PU_COUNT_NO_8X8
         : MAX_SB64_PU_COUNT_WO_16X16;
 
@@ -137,18 +122,10 @@ void recon_coef_dctor(EbPtr p) {
 
     EB_DELETE(obj->recon_pic_16bit);
     EB_DELETE(obj->recon_pic);
-#if FTR_RES_ON_FLY4
     for (uint16_t sb_index = 0; sb_index < obj->init_b64_total_count; ++sb_index) {
-#else
-    for (uint16_t sb_index = 0; sb_index < obj->b64_total_count; ++sb_index) {
-#endif
         EB_DELETE(obj->quantized_coeff[sb_index]); // OMK2
     }
-#if FTR_RES_ON_FLY4
     EB_DELETE_PTR_ARRAY(obj->quantized_coeff, obj->init_b64_total_count);
-#else
-    EB_DELETE_PTR_ARRAY(obj->quantized_coeff, obj->b64_total_count);
-#endif
 }
 static void picture_control_set_dctor(EbPtr p) {
     PictureControlSet *obj      = (PictureControlSet *)p;
@@ -290,7 +267,6 @@ EbErrorType rtime_alloc_palette_tokens(SequenceControlSet *scs, PictureControlSe
 
     return EB_ErrorNone;
 }
-#if FTR_RES_ON_FLY4
 /*
 recon_coef_update_param: update the parameters in EncDecSet for changing the resolution on the fly
 */
@@ -330,7 +306,6 @@ EbErrorType recon_coef_update_param(EncDecSet *object_ptr, SequenceControlSet *s
 
     return EB_ErrorNone;
 }
-#endif
 static EbErrorType recon_coef_ctor(EncDecSet *object_ptr, EbPtr object_init_data_ptr) {
     PictureControlSetInitData *init_data_ptr = (PictureControlSetInitData *)object_init_data_ptr;
 
@@ -391,12 +366,8 @@ static EbErrorType recon_coef_ctor(EncDecSet *object_ptr, EbPtr object_init_data
     // SB Array
     // object_ptr->sb_total_count          = picture_sb_width * picture_sb_height;
     object_ptr->b64_total_count = picture_sb_width * picture_sb_height;
-#if FTR_RES_ON_FLY4
     object_ptr->init_b64_total_count = object_ptr->b64_total_count;
     EB_ALLOC_PTR_ARRAY(object_ptr->quantized_coeff, object_ptr->init_b64_total_count);
-#else
-    EB_ALLOC_PTR_ARRAY(object_ptr->quantized_coeff, object_ptr->b64_total_count);
-#endif
 
     //object_ptr->sb_total_count_pix = all_sb;
 
@@ -411,11 +382,7 @@ static EbErrorType recon_coef_ctor(EncDecSet *object_ptr, EbPtr object_init_data
     coeff_init_data.top_padding        = 0;
     coeff_init_data.bot_padding        = 0;
     coeff_init_data.split_mode         = FALSE;
-#if FTR_RES_ON_FLY4
     for (sb_index = 0; sb_index < object_ptr->init_b64_total_count; ++sb_index) {
-#else
-    for (sb_index = 0; sb_index < object_ptr->b64_total_count; ++sb_index) {
-#endif
         EB_NEW(object_ptr->quantized_coeff[sb_index], //OMK2
                svt_picture_buffer_desc_ctor,
                (EbPtr)&coeff_init_data);
@@ -430,7 +397,6 @@ uint32_t svt_aom_get_out_buffer_size(uint32_t picture_width, uint32_t picture_he
     else
         return (uint32_t)(EB_OUTPUTSTREAMBUFFERSIZE_MACRO(picture_width * picture_height));
 }
-#if FTR_RES_ON_FLY4
 /*
 pcs_update_param: update the parameters in PictureParentControlSet for changing the resolution on the fly
 */
@@ -466,12 +432,8 @@ EbErrorType pcs_update_param(PictureControlSet *pcs) {
     if (svt_aom_get_enable_restoration(scs->static_config.enc_mode,
                                        scs->static_config.enable_restoration_filtering,
                                        scs->input_resolution,
-#if OPT_SG
                                        scs->static_config.fast_decode,
                                        scs->static_config.qp)) {
-#else
-                                       scs->static_config.fast_decode)) {
-#endif
         set_restoration_unit_size(scs->max_input_luma_width, scs->max_input_luma_height, 1, 1, pcs->rst_info);
     }
     pcs->frame_width  = scs->max_input_luma_width;
@@ -508,7 +470,6 @@ EbErrorType pcs_update_param(PictureControlSet *pcs) {
     pcs->mi_stride = picture_sb_w * (scs->sb_size >> MI_SIZE_LOG2);
     return EB_ErrorNone;
 }
-#endif
 
 static EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object_init_data_ptr) {
     PictureControlSetInitData *init_data_ptr = (PictureControlSetInitData *)object_init_data_ptr;
@@ -536,10 +497,8 @@ static EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr
 
     uint32_t output_buffer_size = svt_aom_get_out_buffer_size(init_data_ptr->picture_width,
                                                               init_data_ptr->picture_height);
-#if FTR_RES_ON_FLY4
     object_ptr->frame_width  = init_data_ptr->picture_width;
     object_ptr->frame_height = init_data_ptr->picture_height;
-#endif
     object_ptr->tile_row_count    = init_data_ptr->tile_row_count;
     object_ptr->tile_column_count = init_data_ptr->tile_column_count;
 
@@ -567,18 +526,11 @@ static EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr
     object_ptr->temp_lf_recon_pic                 = (EbPictureBufferDesc *)NULL;
     object_ptr->scaled_input_pic                  = (EbPictureBufferDesc *)NULL;
 
-#if OPT_SG
     if (svt_aom_get_enable_restoration(init_data_ptr->enc_mode,
                                        init_data_ptr->static_config.enable_restoration_filtering,
                                        init_data_ptr->input_resolution,
                                        init_data_ptr->static_config.fast_decode,
                                        init_data_ptr->static_config.qp)) {
-#else
-    if (svt_aom_get_enable_restoration(init_data_ptr->enc_mode,
-                                       init_data_ptr->static_config.enable_restoration_filtering,
-                                       init_data_ptr->input_resolution,
-                                       init_data_ptr->static_config.fast_decode)) {
-#endif
         set_restoration_unit_size(
             init_data_ptr->picture_width, init_data_ptr->picture_height, 1, 1, object_ptr->rst_info);
 
@@ -611,18 +563,11 @@ static EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr
 
     // SB Array
     object_ptr->b64_total_count = picture_sb_width * picture_sb_height;
-#if FTR_RES_ON_FLY4
     object_ptr->init_b64_total_count = object_ptr->b64_total_count;
     EB_MALLOC_ARRAY(object_ptr->sb_intra, object_ptr->init_b64_total_count);
     EB_MALLOC_ARRAY(object_ptr->sb_skip, object_ptr->init_b64_total_count);
     EB_MALLOC_ARRAY(object_ptr->sb_64x64_mvp, object_ptr->init_b64_total_count);
     EB_MALLOC_ARRAY(object_ptr->b64_me_qindex, object_ptr->init_b64_total_count);
-#else
-    EB_MALLOC_ARRAY(object_ptr->sb_intra, object_ptr->b64_total_count);
-    EB_MALLOC_ARRAY(object_ptr->sb_skip, object_ptr->b64_total_count);
-    EB_MALLOC_ARRAY(object_ptr->sb_64x64_mvp, object_ptr->b64_total_count);
-    EB_MALLOC_ARRAY(object_ptr->b64_me_qindex, object_ptr->b64_total_count);
-#endif
 
     sb_origin_x = 0;
     sb_origin_y = 0;
@@ -1138,53 +1083,24 @@ static EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr
     for (uint8_t is_base = 0; is_base <= 1; is_base++) {
         for (uint8_t is_islice = 0; is_islice <= 1; is_islice++) {
             for (uint8_t coeff_lvl = 0; coeff_lvl <= HIGH_LVL + 1; coeff_lvl++) {
-#if OPT_NSQ_QP
-#if TUNE_NSQ_HIGH_RES
                 for (EbInputResolution res = INPUT_SIZE_240p_RANGE; res <= INPUT_SIZE_8K_RANGE; res++) {
-#endif
                     // min QP is 1 b/c 0 is lossless and is not supported
                     for (uint8_t qp = 1; qp <= MAX_QP_VALUE; qp++) {
                         if (!disallow_4x4)
                             break;
-#if TUNE_NSQ_HIGH_RES
                         disallow_4x4 = MIN(
                             disallow_4x4,
                             (svt_aom_get_nsq_level(init_data_ptr->enc_mode, is_base, coeff_lvl, qp, res) == 0 ? 1 : 0));
                     }
                 }
-#else
-                    disallow_4x4 = MIN(
-                        disallow_4x4,
-                        (svt_aom_get_nsq_level(init_data_ptr->enc_mode, is_base, coeff_lvl, qp) == 0 ? 1 : 0));
-                }
-#endif
-#else
-#if OPT_MR_M0
-                disallow_4x4 = MIN(disallow_4x4,
-                                   (svt_aom_get_nsq_level(init_data_ptr->enc_mode, is_base, coeff_lvl) == 0 ? 1 : 0));
-#else
-                disallow_4x4 = MIN(
-                    disallow_4x4,
-                    (svt_aom_get_nsq_level(init_data_ptr->enc_mode, is_islice, is_base, coeff_lvl) == 0 ? 1 : 0));
-#endif
-#endif
             }
         }
     }
-#if TUNE_4X4
     for (uint8_t is_islice = 0; is_islice <= 1; is_islice++) {
         for (uint8_t is_base = 0; is_base <= 1; is_base++) {
-#if CLN_MISC_II
             disallow_4x4 = MIN(disallow_4x4, svt_aom_get_disallow_4x4(init_data_ptr->enc_mode, is_base));
-#else
-            disallow_4x4 = MIN(disallow_4x4, svt_aom_get_disallow_4x4(init_data_ptr->enc_mode, is_base, is_islice));
-#endif
         }
     }
-#else
-    for (SliceType slice_type = 0; slice_type < IDR_SLICE + 1; slice_type++)
-        disallow_4x4 = MIN(disallow_4x4, svt_aom_get_disallow_4x4(init_data_ptr->enc_mode, slice_type));
-#endif
 
     object_ptr->disallow_4x4_all_frames = disallow_4x4;
 
@@ -1311,7 +1227,6 @@ static void picture_parent_control_set_dctor(EbPtr ptr) {
     EB_DELETE(obj->quarter_src_pic);
     EB_DELETE(obj->sixteenth_src_pic);
 }
-#if FTR_RES_ON_FLY4
 /*
 ppcs_update_param: update the parameters in PictureParentControlSet for changing the resolution on the fly
 */
@@ -1383,7 +1298,6 @@ EbErrorType ppcs_update_param(PictureParentControlSet *ppcs) {
 
     return return_error;
 }
-#endif
 static EbErrorType picture_parent_control_set_ctor(PictureParentControlSet *object_ptr, EbPtr object_init_data_ptr) {
     PictureControlSetInitData *init_data_ptr = (PictureControlSetInitData *)object_init_data_ptr;
     EbErrorType                return_error  = EB_ErrorNone;
@@ -1557,19 +1471,11 @@ static EbErrorType picture_parent_control_set_ctor(PictureParentControlSet *obje
     EB_CREATE_MUTEX(object_ptr->pcs_total_rate_mutex);
     EbInputResolution resolution;
     svt_aom_derive_input_resolution(&resolution, init_data_ptr->picture_width * init_data_ptr->picture_height);
-#if CLN_MISC
     object_ptr->enable_me_16x16 = svt_aom_get_enable_me_16x16(init_data_ptr->enc_mode);
-#else
-    object_ptr->enable_me_16x16 = svt_aom_get_enable_me_16x16(init_data_ptr->enc_mode, init_data_ptr->rtc_tune);
-#endif
 
     // 8x8 can only be used if 16x16 is enabled
     object_ptr->enable_me_8x8 = object_ptr->enable_me_16x16
-#if TUNE_ENABLE_ME_8X8
         ? svt_aom_get_enable_me_8x8(init_data_ptr->enc_mode, init_data_ptr->rtc_tune, resolution)
-#else
-        ? svt_aom_get_enable_me_8x8(init_data_ptr->enc_mode, init_data_ptr->rtc_tune)
-#endif
         : 0;
     EB_NEW(object_ptr->dg_detector, svt_aom_dg_detector_seg_ctor);
 
@@ -1606,11 +1512,7 @@ static EbErrorType picture_parent_control_set_ctor(PictureParentControlSet *obje
 }
 static void me_dctor(EbPtr p) {
     MotionEstimationData *obj = (MotionEstimationData *)p;
-#if FTR_RES_ON_FLY4
     EB_DELETE_PTR_ARRAY(obj->me_results, obj->init_b64_total_count);
-#else
-    EB_DELETE_PTR_ARRAY(obj->me_results, obj->b64_total_count);
-#endif
     if (obj->ois_mb_results)
         EB_FREE_2D(obj->ois_mb_results);
     if (obj->tpl_stats)
@@ -1626,7 +1528,6 @@ static void me_dctor(EbPtr p) {
     if (obj->ssim_rdmult_scaling_factors)
         EB_FREE_ARRAY(obj->ssim_rdmult_scaling_factors);
 }
-#if FTR_RES_ON_FLY4
 /*
 me_update_param: update the parameters in MotionEstimationData for changing the resolution on the fly
 */
@@ -1636,7 +1537,6 @@ EbErrorType me_update_param(MotionEstimationData *me_data, SequenceControlSet *s
 
     return return_error;
 }
-#endif
 static EbErrorType me_ctor(MotionEstimationData *object_ptr, EbPtr object_init_data_ptr) {
     PictureControlSetInitData *init_data_ptr = (PictureControlSetInitData *)object_init_data_ptr;
     EbErrorType                return_error  = EB_ErrorNone;
@@ -1649,9 +1549,7 @@ static EbErrorType me_ctor(MotionEstimationData *object_ptr, EbPtr object_init_d
     object_ptr->dctor           = me_dctor;
     uint32_t sb_total_count     = picture_sb_width * picture_sb_height;
     object_ptr->b64_total_count = sb_total_count;
-#if FTR_RES_ON_FLY4
     object_ptr->init_b64_total_count = sb_total_count;
-#endif
 
     EB_ALLOC_PTR_ARRAY(object_ptr->me_results, sb_total_count);
 

@@ -335,17 +335,11 @@ static void svt_ext_eight_sad_calculation_8x8_16x16(
 
 void svt_ext_all_sad_calculation_8x8_16x16_c(uint8_t *src, uint32_t src_stride, uint8_t *ref,
                                              uint32_t ref_stride, uint32_t mv,
-#if !OPT_TF_8X8_BLOCKS
-                                             uint8_t out_8x8,
-#endif
                                              uint32_t *p_best_sad_8x8, uint32_t *p_best_sad_16x16,
                                              uint32_t *p_best_mv8x8, uint32_t *p_best_mv16x16,
                                              uint32_t p_eight_sad16x16[16][8],
                                              uint32_t p_eight_sad8x8[64][8], Bool sub_sad) {
     static const char offsets[16] = {0, 1, 4, 5, 2, 3, 6, 7, 8, 9, 12, 13, 10, 11, 14, 15};
-#if !OPT_TF_8X8_BLOCKS
-    (void)out_8x8;
-#endif
     //---- 16x16 : 0, 1, 4, 5, 2, 3, 6, 7, 8, 9, 12, 13, 10, 11, 14, 15
     for (int y = 0; y < 4; y++) {
         for (int x = 0; x < 4; x++) {
@@ -456,7 +450,6 @@ static void open_loop_me_get_eight_search_point_results_block(
     uint16_t curr_mv_2 = (((uint16_t)x_search_index << 2));
     uint32_t curr_mv   = curr_mv_1 | curr_mv_2;
 
-#if OPT_TF_8X8_BLOCKS
     svt_ext_all_sad_calculation_8x8_16x16(me_ctx->b64_src_ptr,
                                           me_ctx->b64_src_stride,
                                           ref_ptr,
@@ -469,21 +462,6 @@ static void open_loop_me_get_eight_search_point_results_block(
                                           me_ctx->p_eight_sad16x16,
                                           me_ctx->p_eight_sad8x8,
                                           sub_sad);
-#else
-    svt_ext_all_sad_calculation_8x8_16x16(me_ctx->b64_src_ptr,
-                                          me_ctx->b64_src_stride,
-                                          ref_ptr,
-                                          ref_luma_stride,
-                                          curr_mv,
-                                          me_ctx->me_type != ME_MCTF,
-                                          me_ctx->p_best_sad_8x8,
-                                          me_ctx->p_best_sad_16x16,
-                                          me_ctx->p_best_mv8x8,
-                                          me_ctx->p_best_mv16x16,
-                                          me_ctx->p_eight_sad16x16,
-                                          me_ctx->p_eight_sad8x8,
-                                          sub_sad);
-#endif
 
     svt_ext_eight_sad_calculation_32x32_64x64(me_ctx->p_eight_sad16x16,
                                               me_ctx->p_best_sad_32x32,
@@ -1442,12 +1420,10 @@ static void integer_search_b64(PictureParentControlSet *pcs, uint32_t b64_index,
 
                 uint32_t me_8x8_cost_var = (uint32_t)(sum_ofsq_dist_8x8 / 64);
 
-#if OPT_ME_8x8
                 if (me_8x8_cost_var > me_ctx->me_8x8_var_ctrls.me_sr_mult2_th) {
                     search_area_width = (MAX(1, search_area_width * 3 / 2) + 7) & ~0x7;
                     search_area_height = MAX(1, search_area_height * 3 / 2);
                 }
-#endif
 
                 if (me_8x8_cost_var < me_ctx->me_8x8_var_ctrls.me_sr_div4_th) {
                     search_area_width = (MAX(1, search_area_width >> 2) + 7) & ~0x7;

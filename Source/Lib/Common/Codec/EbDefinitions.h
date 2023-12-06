@@ -44,12 +44,7 @@ extern "C" {
 #define MAX_TPL_EXT_GROUP_SIZE MAX_TPL_GROUP_SIZE
 #define OUT_Q_ADVANCE(h) ((h == REFERENCE_QUEUE_MAX_DEPTH - 1) ? 0 : h + 1)
 #define MIN_LAD_MG 1
-#if OPT_VBR6
 #define RC_DEFAULT_LAD_MG 2 // default look ahead value for rate control
-#else
-#define RC_DEFAULT_LAD_MG_MT 2 // default look ahead value for rate control in Multi-threaded mode
-#define RC_DEFAULT_LAD_MG_LP1 1 // default look ahead value for rate control in LP 1
-#endif
 void svt_aom_assert_err(uint32_t condition, char *err_msg);
 
 #define TPL_DEP_COST_SCALE_LOG2 4
@@ -61,13 +56,9 @@ void svt_aom_assert_err(uint32_t condition, char *err_msg);
 
 #define ALT_REF_QP_THRESH 20
 // Q threshold for high precision mv.
-#if OPT_HP_MV
 #define HIGH_PRECISION_MV_QTHRESH_0 128
 #define HIGH_PRECISION_MV_QTHRESH_1 196
 #define HIGH_PRECISION_REF_PERC_TH 50
-#else
-#define HIGH_PRECISION_MV_QTHRESH 128
-#endif
 // Actions in the second pass: Frame and SB QP assignment and temporal filtering strenght change
 #define AOM_INTERP_EXTEND 4
 #define AOM_LEFT_TOP_MARGIN_PX(subsampling) ((AOM_BORDER_IN_PIXELS >> subsampling) - AOM_INTERP_EXTEND)
@@ -87,9 +78,7 @@ void svt_aom_assert_err(uint32_t condition, char *err_msg);
 
 #define INVALID_LUMA 256
 
-#if CLN_CMPOUND
 #define NEAREST_NEAR_MV_CNT 4 // 1 nearest + 3 near
-#endif
 typedef struct SharpnessCtrls {
     uint8_t scene_transition;
     uint8_t tf;
@@ -204,10 +193,8 @@ typedef struct TfControls {
     // Specifies the 32x32 prediction error(after subpel) under which the subpel for the 16x16
     // block(s) is bypassed
     uint64_t pred_error_32x32_th;
-#if OPT_TF_8X8_BLOCKS
     // If true, check 8x8 blocks for TF prediction
     bool enable_8x8_pred;
-#endif
 
     // Specifies whether to exit ME after HME or not (0: perform both HME and Full-Pel search, else
     // if the HME distortion is less than me_exit_th then exit after HME(i.e. do not perform the
@@ -222,10 +209,8 @@ typedef struct TfControls {
     uint8_t subpel_early_exit;
     // Specifies whether to skip reference frame e.g. 1 = use all frames, 2 = use every other frame, 4 = use 1/4 frames, etc.
     uint8_t ref_frame_factor;
-#if OPT_Q_TF
     // Specifies whether to tune the params using qp (0: OFF, 1: ON)
     uint8_t qp_opt;
-#endif
 } TfControls;
 typedef enum GM_LEVEL {
     GM_FULL   = 0, // Exhaustive search mode.
@@ -768,16 +753,7 @@ typedef enum IfsLevel {
     IFS_MDS2, // IFS @ md_stage_2()
     IFS_MDS3, // IFS @ md_stage_3()
 } IfsLevel;
-#if OPT_PRE_MDS0_SEARCH
 typedef enum DistortionType { SAD, VAR, SSD, DIST_TYPES } DistortionType;
-#else
-typedef enum Mds0DistortionType {
-    MDS0_SAD, // Use SAD at MDS0
-    MDS0_VAR, // Use variance at MDS0
-    MDS0_SSD, // Use SSD at MDS0
-    MDS0_DIST_TYPES
-} Mds0DistortionType;
-#endif
 // Profile 0.  8-bit and 10-bit 4:2:0 and 4:0:0 only.
 // Profile 1.  8-bit and 10-bit 4:4:4
 // Profile 2.  8-bit and 10-bit 4:2:2
@@ -832,7 +808,6 @@ typedef enum ATTRIBUTE_PACKED {
 } PartitionType;
 
 #define MAX_NUM_BLOCKS_ALLOC 4421
-#if OPT_REORDER_GEOM
 typedef enum ATTRIBUTE_PACKED {
     PART_N,
     PART_H,
@@ -856,31 +831,6 @@ static const PartitionType from_shape_to_part[EXT_PARTITION_TYPES] = {PARTITION_
                                                                       PARTITION_VERT_A,
                                                                       PARTITION_VERT_B,
                                                                       PARTITION_SPLIT};
-#else
-typedef enum ATTRIBUTE_PACKED {
-    PART_N,
-    PART_H,
-    PART_V,
-    PART_HA,
-    PART_HB,
-    PART_VA,
-    PART_VB,
-    PART_H4,
-    PART_V4,
-    PART_S
-} Part;
-
-static const PartitionType from_shape_to_part[EXT_PARTITION_TYPES] = {PARTITION_NONE,
-                                                                      PARTITION_HORZ,
-                                                                      PARTITION_VERT,
-                                                                      PARTITION_HORZ_A,
-                                                                      PARTITION_HORZ_B,
-                                                                      PARTITION_VERT_A,
-                                                                      PARTITION_VERT_B,
-                                                                      PARTITION_HORZ_4,
-                                                                      PARTITION_VERT_4,
-                                                                      PARTITION_SPLIT};
-#endif
 
 static const uint8_t mi_size_wide[BlockSizeS_ALL] = {1,  1,  2,  2,  2,  4, 4, 4, 8, 8, 8,
                                                      16, 16, 16, 32, 32, 1, 4, 2, 8, 4, 16};
@@ -2193,11 +2143,7 @@ typedef uint8_t EbModeType;
 #define INTRA_MODE 2
 
 #define INVALID_MODE 0xFFu
-#if TUNE_SHIFT_PRESETS
 #define SPEED_CONTROL_INIT_MOD ENC_M5;
-#else
-#define SPEED_CONTROL_INIT_MOD ENC_M4;
-#endif
 typedef enum ATTRIBUTE_PACKED {
     REF_LIST_0 = 0,
     REF_LIST_1 = 1,

@@ -2161,15 +2161,8 @@ uint32_t get_passes(int32_t argc, char *const argv[], EncPass enc_pass[MAX_ENC_P
     // Determine the number of passes in CRF mode
     if (rc_mode == 0) {
         if (passes != 1) {
-#if DIS_UNSUPPORTED_MODES
             fprintf(stderr, "[SVT-Error]: Multipass CRF is not supported.\n\n");
             return 0;
-#else
-            passes     = 1;
-            fprintf(stderr,
-                    "[SVT-Warning]: Multipass CRF is not supported. Switching to "
-                    "1-pass encoding\n\n");
-#endif
         }
         multi_pass_mode = passes == 2 ? TWO_PASS_IPP_FINAL : SINGLE_PASS;
     }
@@ -2179,17 +2172,8 @@ uint32_t get_passes(int32_t argc, char *const argv[], EncPass enc_pass[MAX_ENC_P
             multi_pass_mode = SINGLE_PASS;
         else if (passes > 1) {
             if (enc_mode > ENC_M12) {
-#if DIS_UNSUPPORTED_MODES
                 fprintf(stderr, "[SVT-Error]:  Multipass VBR is not supported for preset %d.\n\n", enc_mode);
                 return 0;
-#else
-                fprintf(stderr,
-                        "[SVT-Warning]: Multipass VBR is not supported for preset %d. Switching to "
-                        "1-pass encoding\n\n",
-                        enc_mode);
-                passes          = 1;
-                multi_pass_mode = SINGLE_PASS;
-#endif
             } else {
                 passes          = 3;
                 multi_pass_mode = THREE_PASS_IPP_SAMEPRED_FINAL;
@@ -2197,13 +2181,8 @@ uint32_t get_passes(int32_t argc, char *const argv[], EncPass enc_pass[MAX_ENC_P
         }
     } else {
         if (passes > 1) {
-#if DIS_UNSUPPORTED_MODES
             fprintf(stderr, "[SVT-Error]: Multipass CBR is not supported.\n\n");
             return 0;
-#else
-            fprintf(stderr, "[SVT-Warning]: Multipass CBR is not supported. Switching to 1-pass encoding\n\n");
-            passes = 1;
-#endif
         }
         multi_pass_mode = SINGLE_PASS;
     }

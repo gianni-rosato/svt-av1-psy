@@ -104,9 +104,7 @@ typedef struct MemMapFile {
 #ifdef _WIN32
     HANDLE map_handle; //file mapping handle
 #endif
-#if FTR_RES_ON_FLY_APP
     uint64_t cur_offset; // the current offset from the file start
-#endif
 } MemMapFile;
 
 // list of frames that are forced to be key frames

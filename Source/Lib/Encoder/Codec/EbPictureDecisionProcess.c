@@ -2768,9 +2768,7 @@ void initialize_overlay_frame(PictureParentControlSet     *pcs) {
     pcs->slice_type = P_SLICE;
     // set the overlay frame as non reference frame with max temporal layer index
     pcs->temporal_layer_index = (uint8_t)pcs->hierarchical_levels;
-#if CLN_IS_REF
     pcs->is_highest_layer = true;
-#endif
     pcs->ref_list0_count = 1;
     pcs->ref_list1_count = 0;
 
@@ -2825,17 +2823,12 @@ Bool svt_aom_is_delayed_intra(PictureParentControlSet *pcs) {
     else
         return 0;
 }
-#if OPT_VBR3
 void first_pass_frame_end_one_pass(PictureParentControlSet *pcs);
-#endif
 /*
   Performs first pass in ME process
 */
 static void process_first_pass_frame(
     SequenceControlSet      *scs, PictureParentControlSet *pcs, PictureDecisionContext  *pd_ctx) {
-#if !OPT_VBR3
-    int16_t seg_idx;
-#endif
 
     // Initialize Segments
     pcs->first_pass_seg_column_count = (uint8_t)(scs->me_segment_column_count_array[0]);
@@ -2844,27 +2837,19 @@ static void process_first_pass_frame(
     pcs->first_pass_seg_total_count = (uint16_t)(pcs->first_pass_seg_column_count  * pcs->first_pass_seg_row_count);
     pcs->first_pass_seg_acc = 0;
     svt_aom_first_pass_sig_deriv_multi_processes(scs, pcs);
-#if OPT_VBR3
     if (scs->lap_rc) {
         first_pass_frame_end_one_pass(pcs);
     }
     else {
-#endif
     if (pcs->me_data_wrapper == NULL) {
         EbObjectWrapper               *me_wrapper;
         svt_get_empty_object(pd_ctx->me_fifo_ptr, &me_wrapper);
         pcs->me_data_wrapper = me_wrapper;
         pcs->pa_me_data = (MotionEstimationData *)me_wrapper->object_ptr;
-#if FTR_RES_ON_FLY5
         me_update_param(pcs->pa_me_data, scs);
-#endif
     }
 
-#if OPT_VBR3
         for (int16_t seg_idx = 0; seg_idx < pcs->first_pass_seg_total_count; ++seg_idx) {
-#else
-    for (seg_idx = 0; seg_idx < pcs->first_pass_seg_total_count; ++seg_idx) {
-#endif
 
         EbObjectWrapper               *out_results_wrapper;
         PictureDecisionResults        *out_results;
@@ -2882,9 +2867,7 @@ static void process_first_pass_frame(
     svt_release_object(pcs->me_data_wrapper);
     pcs->me_data_wrapper = (EbObjectWrapper *)NULL;
     pcs->pa_me_data = NULL;
-#if OPT_VBR3
     }
-#endif
 }
 void svt_aom_pack_highbd_pic(const EbPictureBufferDesc *pic_ptr, uint16_t *buffer_16bit[3], uint32_t ss_x,
     uint32_t ss_y, Bool include_padding);
@@ -2988,11 +2971,9 @@ static int ref_pics_modulation(
             break;
         }
     }
-#if OPT_Q_OFFSET_TF
     // Modulate offset using qp
     if (pcs->tf_ctrls.qp_opt)
         offset = (offset * CLIP3(100, 1000, (int)(int)(45 * pcs->scs->static_config.qp) - 1000)) / 1000;
-#endif
     return offset;
 }
 
@@ -3153,12 +3134,10 @@ static EbErrorType derive_tf_window_params(
             int32_t q_index = QUEUE_GET_NEXT_SPOT(pcs->pic_decision_reorder_queue_idx, pic_i + 1);
             if (enc_ctx->picture_decision_reorder_queue[q_index]->ppcs_wrapper != NULL) {
                 PictureParentControlSet* pcs_itr = (PictureParentControlSet *)enc_ctx->picture_decision_reorder_queue[q_index]->ppcs_wrapper->object_ptr;
-#if FTR_RES_ON_FLY7
                 // if resolution has changed, and the pcs with new resolution should not be used in temporal filtering
                 if (pcs_itr->frame_width != pcs->frame_width ||
                     pcs_itr->frame_height != pcs->frame_height)
                     break;
-#endif
                 pcs->temp_filt_pcs_list[pic_i + num_past_pics + 1] = pcs_itr;
                 actual_future_pics++;
             }
@@ -3171,14 +3150,10 @@ static EbErrorType derive_tf_window_params(
             for (int pic_i_future = pic_i; pic_i_future < num_future_pics; pic_i_future++) {
                 for (uint32_t pic_i_pa = 0; pic_i_pa < enc_ctx->pre_assignment_buffer_count; pic_i_pa++) {
                     PictureParentControlSet* pcs_itr = (PictureParentControlSet*)enc_ctx->pre_assignment_buffer[pic_i_pa]->object_ptr;
-#if FTR_RES_ON_FLY7
                     // if resolution has changed, and the pcs with new resolution should not be used in temporal filtering
                     if (pcs_itr->picture_number == pcs->picture_number + pic_i_future + 1 &&
                         pcs_itr->frame_width == pcs->frame_width &&
                         pcs_itr->frame_height == pcs->frame_height) {
-#else
-                    if (pcs_itr->picture_number == pcs->picture_number + pic_i_future + 1) {
-#endif
                         pcs->temp_filt_pcs_list[pic_i_future + num_past_pics + 1] = pcs_itr;
                         actual_future_pics++;
                         break; //exist the pre-ass loop, go search the next
@@ -3234,12 +3209,10 @@ static EbErrorType derive_tf_window_params(
             for (pic_i = 0; pic_i < num_future_pics; pic_i++) {
                 int32_t idx_1 = search_this_pic(pd_ctx->mg_pictures_array, pd_ctx->mg_size, pcs->picture_number + pic_i + 1);
                 if (idx_1 >= 0) {
-#if FTR_RES_ON_FLY7
                     // if resolution has changed, and the pcs with new resolution should not be used in temporal filtering
                     if (pd_ctx->mg_pictures_array[idx_1]->frame_width != pcs->frame_width ||
                         pd_ctx->mg_pictures_array[idx_1]->frame_height != pcs->frame_height)
                         break;
-#endif
                     pcs->temp_filt_pcs_list[pic_i + 1] = pd_ctx->mg_pictures_array[idx_1];
                     uint8_t active_region_cnt = 0;
                     pd_ctx->mg_pictures_array[idx_1]->tf_ahd_error_to_central = calc_ahd(
@@ -3274,12 +3247,10 @@ static EbErrorType derive_tf_window_params(
                     int32_t q_index = QUEUE_GET_NEXT_SPOT(pcs->pic_decision_reorder_queue_idx, pic_i + 1);
                     if (enc_ctx->picture_decision_reorder_queue[q_index]->ppcs_wrapper != NULL) {
                         PictureParentControlSet* pcs_itr = (PictureParentControlSet *)enc_ctx->picture_decision_reorder_queue[q_index]->ppcs_wrapper->object_ptr;
-#if FTR_RES_ON_FLY7
                         // if resolution has changed, and the pcs with new resolution should not be used in temporal filtering
                         if (pcs_itr->frame_width != pcs->frame_width ||
                             pcs_itr->frame_height != pcs->frame_height)
                             break;
-#endif
                         pcs->temp_filt_pcs_list[pic_i + num_past_pics + 1] = pcs_itr;
                         uint8_t active_region_cnt = 0;
                         pcs_itr->tf_ahd_error_to_central = calc_ahd(
@@ -3316,12 +3287,10 @@ static EbErrorType derive_tf_window_params(
                 for (int pic_itr = 0; pic_itr <= num_past_pics; pic_itr++) {
                     int32_t idx = search_this_pic(pd_ctx->mg_pictures_array, pd_ctx->mg_size, pcs->picture_number - num_past_pics + pic_itr);
                     if (idx >= 0) {
-#if FTR_RES_ON_FLY7
                         // if resolution has changed, and the pcs with new resolution should not be used in temporal filtering
                         if (pd_ctx->mg_pictures_array[idx]->frame_width != pcs->frame_width ||
                             pd_ctx->mg_pictures_array[idx]->frame_height != pcs->frame_height)
                             break;
-#endif
                         pcs->temp_filt_pcs_list[pic_itr] = pd_ctx->mg_pictures_array[idx];
                         uint8_t active_region_cnt = 0;
                         pd_ctx->mg_pictures_array[idx]->tf_ahd_error_to_central = calc_ahd(
@@ -3340,12 +3309,10 @@ static EbErrorType derive_tf_window_params(
                     int32_t q_index = QUEUE_GET_NEXT_SPOT(pcs->pic_decision_reorder_queue_idx, pic_i + 1);
                     if (enc_ctx->picture_decision_reorder_queue[q_index]->ppcs_wrapper != NULL) {
                         PictureParentControlSet* pcs_itr = (PictureParentControlSet *)enc_ctx->picture_decision_reorder_queue[q_index]->ppcs_wrapper->object_ptr;
-#if FTR_RES_ON_FLY7
                         // if resolution has changed, and the pcs with new resolution should not be used in temporal filtering
                         if (pcs_itr->frame_width != pcs->frame_width ||
                             pcs_itr->frame_height != pcs->frame_height)
                             break;
-#endif
                         pcs->temp_filt_pcs_list[pic_i + num_past_pics + 1] = pcs_itr;
                         uint8_t active_region_cnt = 0;
                         pcs_itr->tf_ahd_error_to_central = calc_ahd(
@@ -3365,14 +3332,10 @@ static EbErrorType derive_tf_window_params(
                     for (int pic_i_future = pic_i; pic_i_future < num_future_pics; pic_i_future++) {
                         for (uint32_t pic_i_pa = 0; pic_i_pa < enc_ctx->pre_assignment_buffer_count; pic_i_pa++) {
                             PictureParentControlSet* pcs_itr = (PictureParentControlSet*)enc_ctx->pre_assignment_buffer[pic_i_pa]->object_ptr;
-#if FTR_RES_ON_FLY7
                             // if resolution has changed, and the pcs with new resolution should not be used in temporal filtering
                             if (pcs_itr->picture_number == pcs->picture_number + pic_i_future + 1 &&
                                 pcs_itr->frame_width == pcs->frame_width &&
                                 pcs_itr->frame_height == pcs->frame_height) {
-#else
-                            if (pcs_itr->picture_number == pcs->picture_number + pic_i_future + 1) {
-#endif
                                 pcs->temp_filt_pcs_list[pic_i_future + num_past_pics + 1] = pcs_itr;
                                 uint8_t active_region_cnt = 0;
                                 pcs_itr->tf_ahd_error_to_central = calc_ahd(
@@ -3439,9 +3402,7 @@ static void low_delay_store_tf_pictures(
         svt_object_inc_live_count(pcs->p_pcs_wrapper_ptr, 1);
         svt_object_inc_live_count(pcs->input_pic_wrapper, 1);
         svt_object_inc_live_count(pcs->pa_ref_pic_wrapper, 1);
-#if FTR_RES_ON_FLY3
         svt_object_inc_live_count(pcs->scs_wrapper, 1);
-#endif
         if (pcs->y8b_wrapper)
             svt_object_inc_live_count(pcs->y8b_wrapper, 1);
     }
@@ -3463,9 +3424,7 @@ static void low_delay_release_tf_pictures(
             svt_release_object(past_pcs->y8b_wrapper);
 
         svt_release_object(past_pcs->pa_ref_pic_wrapper);
-#if FTR_RES_ON_FLY3
         svt_release_object(past_pcs->scs_wrapper);
-#endif
         //ppcs should be the last one to release
         svt_release_object(past_pcs->p_pcs_wrapper_ptr);
     }
@@ -3594,9 +3553,7 @@ static void send_picture_out(
             svt_get_empty_object(ctx->me_fifo_ptr, &me_wrapper);
             pcs->me_data_wrapper = me_wrapper;
             pcs->pa_me_data = (MotionEstimationData *)me_wrapper->object_ptr;
-#if FTR_RES_ON_FLY5
             me_update_param(pcs->pa_me_data, scs);
-#endif
             //printf("[%ld]: Got me data [NORMAL] %p\n", pcs->picture_number, pcs->pa_me_data);
         }
 
@@ -4152,7 +4109,6 @@ static uint32_t get_pic_idx_in_mg(SequenceControlSet* scs, PictureParentControlS
         pic_idx_in_mg = pic_idx - ctx->mini_gop_start_index[mini_gop_index];
     }
     else {
-#if FTR_KF_ON_FLY
         uint64_t distance_to_last_idr = pcs->picture_number - scs->enc_ctx->last_idr_picture;
         // For low delay P or low delay b case, get the the picture_index by mini_gop size
         if (scs->static_config.intra_period_length >= 0) {
@@ -4165,18 +4121,6 @@ static uint32_t get_pic_idx_in_mg(SequenceControlSet* scs, PictureParentControlS
                 (uint32_t)((distance_to_last_idr - 1) % pcs->pred_struct_ptr->pred_struct_period);
         }
         pcs->frame_offset = distance_to_last_idr;
-#else
-        // For low delay P or low delay b case, get the the picture_index by mini_gop size
-        if (scs->static_config.intra_period_length >= 0) {
-            pic_idx_in_mg = (pcs->picture_number == 0) ? 0 :
-                (uint32_t)(((pcs->picture_number - 1) % (scs->static_config.intra_period_length + 1)) % pcs->pred_struct_ptr->pred_struct_period);
-        }
-        else {
-            // intra-period=-1 case, no gop
-            pic_idx_in_mg = (pcs->picture_number == 0) ? 0 :
-                (uint32_t)((pcs->picture_number - 1) % pcs->pred_struct_ptr->pred_struct_period);
-        }
-#endif
     }
 
     return pic_idx_in_mg;
@@ -4755,25 +4699,17 @@ void* svt_aom_picture_decision_kernel(void *input_ptr) {
                 pcs->idr_flag =
                     (scs->static_config.intra_refresh_type != SVT_AV1_KF_REFRESH) ?
                     pcs->idr_flag :
-#if FTR_KF_ON_FLY
                     enc_ctx->intra_period_position == (uint32_t)scs->static_config.intra_period_length ?
 
-#else
-                    ((enc_ctx->intra_period_position == (uint32_t)scs->static_config.intra_period_length) ||
-                    (pcs->scene_change_flag == TRUE) ||
-                        (scs->static_config.force_key_frames && pcs->input_ptr->pic_type == EB_AV1_KEY_PICTURE)) ?
-#endif
                     TRUE :
                     pcs->idr_flag;
             }
-#if FTR_KF_ON_FLY
             pcs->idr_flag =
                 (scs->static_config.intra_refresh_type != SVT_AV1_KF_REFRESH) ?
                 pcs->idr_flag :
                 (pcs->scene_change_flag == TRUE ||  pcs->input_ptr->pic_type == EB_AV1_KEY_PICTURE) ?
                 TRUE :
                 pcs->idr_flag;
-#endif
             enc_ctx->pre_assignment_buffer_eos_flag = (pcs->end_of_sequence_flag) ? (uint32_t)TRUE : enc_ctx->pre_assignment_buffer_eos_flag;
 
             // Histogram data to be used at the next input (N + 1)
@@ -4791,11 +4727,7 @@ void* svt_aom_picture_decision_kernel(void *input_ptr) {
             enc_ctx->intra_period_position =
                 ((enc_ctx->intra_period_position == (uint32_t)scs->static_config.intra_period_length) ||
                 (pcs->scene_change_flag == TRUE) ||
-#if FTR_KF_ON_FLY
                     pcs->input_ptr->pic_type == EB_AV1_KEY_PICTURE) ?
-#else
-                    (scs->static_config.force_key_frames && pcs->input_ptr->pic_type == EB_AV1_KEY_PICTURE)) ?
-#endif
                 0 : enc_ctx->intra_period_position + 1;
 
 #if LAD_MG_PRINT
@@ -4859,9 +4791,7 @@ void* svt_aom_picture_decision_kernel(void *input_ptr) {
                                 svt_release_object(pcs->overlay_ppcs_ptr->input_pic_wrapper);
                                 // release the pa_reference_picture
                                 svt_release_object(pcs->overlay_ppcs_ptr->pa_ref_pic_wrapper);
-#if FTR_RES_ON_FLY3
                                 svt_release_object(pcs->overlay_ppcs_ptr->scs_wrapper);
-#endif
                                 // release the parent pcs
                                 // Note: this release will recycle ppcs to empty fifo if not live_count+1 in ResourceCoordination.
                                 svt_release_object(pcs->overlay_ppcs_ptr->p_pcs_wrapper_ptr);
@@ -4881,9 +4811,7 @@ void* svt_aom_picture_decision_kernel(void *input_ptr) {
                                 assert(!pcs->is_overlay);
                                 pcs->pred_struct_index = (uint8_t)enc_ctx->pred_struct_position;
                                 pcs->temporal_layer_index = (uint8_t)pred_position_ptr->temporal_layer_index;
-#if CLN_IS_REF
                                 pcs->is_highest_layer = (pcs->temporal_layer_index == pcs->hierarchical_levels);
-#endif
                                 switch (pcs->slice_type) {
                                 case I_SLICE:
 
@@ -5045,9 +4973,7 @@ void* svt_aom_picture_decision_kernel(void *input_ptr) {
         }
 
         if (scs->static_config.enable_overlays == TRUE) {
-#if FTR_RES_ON_FLY3
             svt_release_object(((PictureParentControlSet*)in_results_ptr->pcs_wrapper->object_ptr)->scs_wrapper);
-#endif
             // release ppcs, since live_count + 1 before post in ResourceCoordination
             svt_release_object(in_results_ptr->pcs_wrapper);
         }

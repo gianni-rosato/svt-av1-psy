@@ -56,21 +56,12 @@
 #include "mcomp.h"
 
 using svt_av1_test_tool::SVTRandom;  // to generate the random
-#if CLN_MISC_II && OPT_TF_8X8_BLOCKS
 extern "C" void svt_ext_all_sad_calculation_8x8_16x16_c(
     uint8_t *src, uint32_t src_stride, uint8_t *ref, uint32_t ref_stride,
     uint32_t mv, uint32_t *p_best_sad_8x8, uint32_t *p_best_sad_16x16,
     uint32_t *p_best_mv8x8, uint32_t *p_best_mv16x16,
     uint32_t p_eight_sad16x16[16][8], uint32_t p_eight_sad8x8[64][8],
     Bool sub_sad);
-#else
-extern "C" void svt_ext_all_sad_calculation_8x8_16x16_c(
-    uint8_t *src, uint32_t src_stride, uint8_t *ref, uint32_t ref_stride,
-    uint32_t mv, uint8_t out_8x8, uint32_t *p_best_sad_8x8,
-    uint32_t *p_best_sad_16x16, uint32_t *p_best_mv8x8,
-    uint32_t *p_best_mv16x16, uint32_t p_eight_sad16x16[16][8],
-    uint32_t p_eight_sad8x8[64][8], Bool sub_sad);
-#endif
 extern "C" void svt_ext_eigth_sad_calculation_nsq_c(
     uint32_t p_sad8x8[64][8], uint32_t p_sad16x16[16][8],
     uint32_t p_sad32x32[4][8], uint32_t *p_best_sad_64x32,
@@ -828,21 +819,12 @@ typedef void (*get_eight_sad_32_64_func)(uint16_t *p_sad16x16,
                                          uint32_t *p_best_sad_64x64,
                                          uint32_t *p_best_mv32x32,
                                          uint32_t *p_best_mv64x64, uint32_t mv);
-#if CLN_MISC_II && OPT_TF_8X8_BLOCKS
 typedef void (*svt_ext_all_sad_calculation_8x8_16x16_fn)(
     uint8_t *src, uint32_t src_stride, uint8_t *ref, uint32_t ref_stride,
     uint32_t mv, uint32_t *p_best_sad_8x8, uint32_t *p_best_sad_16x16,
     uint32_t *p_best_mv8x8, uint32_t *p_best_mv16x16,
     uint32_t p_eight_sad16x16[16][8], uint32_t p_eight_sad8x8[64][8],
     Bool sub_sad);
-#else
-typedef void (*svt_ext_all_sad_calculation_8x8_16x16_fn)(
-    uint8_t *src, uint32_t src_stride, uint8_t *ref, uint32_t ref_stride,
-    uint32_t mv, uint8_t out_8x8, uint32_t *p_best_sad_8x8,
-    uint32_t *p_best_sad_16x16, uint32_t *p_best_mv8x8,
-    uint32_t *p_best_mv16x16, uint32_t p_eight_sad16x16[16][8],
-    uint32_t p_eight_sad8x8[64][8], Bool sub_sad);
-#endif
 
 typedef void (*svt_ext_eight_sad_calculation_32x32_64x64_fn)(
     uint32_t p_sad16x16[16][8], uint32_t *p_best_sad_32x32,
@@ -905,9 +887,6 @@ class Allsad_CalculationTest
                                                 ref1_aligned_,
                                                 ref1_stride_,
                                                 0,
-#if !(CLN_MISC_II && OPT_TF_8X8_BLOCKS)
-                                                1,
-#endif
 
                                                 best_sad8x8[0],
                                                 best_sad16x16[0],
@@ -922,9 +901,6 @@ class Allsad_CalculationTest
                 ref1_aligned_,
                 ref1_stride_,
                 0,
-#if !(CLN_MISC_II && OPT_TF_8X8_BLOCKS)
-                1,
-#endif
                 best_sad8x8[1],
                 best_sad16x16[1],
                 best_mv8x8[1],
@@ -971,9 +947,6 @@ class Allsad_CalculationTest
                                                 ref1_aligned_,
                                                 ref1_stride_,
                                                 0,
-#if !(CLN_MISC_II && OPT_TF_8X8_BLOCKS)
-                                                1,
-#endif
                                                 best_sad8x8[0],
                                                 best_sad16x16[0],
                                                 best_mv8x8[0],
@@ -987,9 +960,6 @@ class Allsad_CalculationTest
                 ref1_aligned_,
                 ref1_stride_,
                 0,
-#if !(CLN_MISC_II && OPT_TF_8X8_BLOCKS)
-                1,
-#endif
                 best_sad8x8[1],
                 best_sad16x16[1],
                 best_mv8x8[1],

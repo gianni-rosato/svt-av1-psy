@@ -75,17 +75,10 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet *scs) {
         SVT_ERROR("Instance %u: Multi-passes is not support with Low Delay mode \n", channel_number + 1);
         return_error = EB_ErrorBadParameter;
     }
-#if CLN_VBR
     if (config->vbr_bias_pct != 100) {
         SVT_WARN("Instance %u: The bias percentage is being ignored and will be deprecated in the up coming release \n",
                  channel_number + 1);
     }
-#else
-    if (config->vbr_bias_pct > 100) {
-        SVT_ERROR("Instance %u: The bias percentage must be [0, 100]  \n", channel_number + 1);
-        return_error = EB_ErrorBadParameter;
-    }
-#endif
 
     if (config->maximum_buffer_size_ms < 20 || config->maximum_buffer_size_ms > 10000) {
         SVT_ERROR("Instance %u: The maximum buffer size must be between [20, 10000]\n", channel_number + 1);
@@ -171,7 +164,6 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet *scs) {
         SVT_ERROR("Instance %u: Force key frame is only supported with RA CRF/CQP mode\n", channel_number + 1);
         return_error = EB_ErrorBadParameter;
     }
-#if DIS_UNSUPPORTED_MODES
     if (config->rate_control_mode != SVT_AV1_RC_MODE_CQP_OR_CRF && (config->max_bit_rate != 0)) {
         SVT_ERROR("Instance %u: Max Bitrate only supported with CRF mode\n", channel_number + 1);
         return_error = EB_ErrorBadParameter;
@@ -184,13 +176,6 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet *scs) {
         SVT_ERROR("VBR Rate control is currently not supported for SVT_AV1_PRED_LOW_DELAY_B, use CBR mode\n");
         return_error = EB_ErrorBadParameter;
     }
-#else
-    if (config->rate_control_mode != SVT_AV1_RC_MODE_CQP_OR_CRF && (config->target_bit_rate >= config->max_bit_rate) &&
-        (config->max_bit_rate != 0)) {
-        SVT_ERROR("Instance %u: Max Bitrate must be greater than Target Bitrate\n", channel_number + 1);
-        return_error = EB_ErrorBadParameter;
-    }
-#endif
 
     if (scs->max_input_luma_width > 16384) {
         SVT_ERROR("Instance %u: Source Width must be less than or equal to 16384\n", channel_number + 1);
@@ -742,13 +727,8 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet *scs) {
     }
 
     if (config->pass > 1 && config->rate_control_mode == SVT_AV1_RC_MODE_CQP_OR_CRF) {
-#if DIS_UNSUPPORTED_MODES
         SVT_ERROR("Instance %u: CRF does not support Multi-pass. Use single pass\n", channel_number + 1);
         return_error = EB_ErrorBadParameter;
-#else
-        SVT_WARN("Instance %u: CRF does not support Multi-pass. Switching to single pass\n", channel_number + 1);
-        config->pass = ENC_SINGLE_PASS;
-#endif
     }
     // color description
     if (config->color_primaries == 0 || config->color_primaries == 3 ||
@@ -863,16 +843,6 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet *scs) {
                   channel_number + 1);
         return_error = EB_ErrorBadParameter;
     }
-#if !FIX_RECON_COPIES
-    if (config->encoder_bit_depth == 10 && (config->stat_report == 1 || config->recon_enabled == 1) &&
-        config->enc_mode >= ENC_M10) {
-        SVT_WARN(
-            "If encoding 10-bit video using any preset greater than M9 there will be a mismatch "
-            "between the encoded files if either --enable-stat-report is 0 or 1 or a recon file "
-            "(-o) "
-            "is or is not specified in the command line\n");
-    }
-#endif
     if (config->startup_mg_size != 0 && config->startup_mg_size != 2 && config->startup_mg_size != 3 &&
         config->startup_mg_size != 4) {
         SVT_ERROR("Instance %u: Startup MG size supported [0, 2, 3, 4]\n", channel_number + 1);
@@ -957,13 +927,8 @@ EbErrorType svt_av1_set_default_params(EbSvtAv1EncConfiguration *config_ptr) {
 #endif
     config_ptr->vbr_min_section_pct = 0;
     config_ptr->vbr_max_section_pct = 2000;
-#if OPT_VBR6
     config_ptr->under_shoot_pct = (uint32_t)DEFAULT;
     config_ptr->over_shoot_pct  = (uint32_t)DEFAULT;
-#else
-    config_ptr->under_shoot_pct = 25;
-    config_ptr->over_shoot_pct  = 25;
-#endif
     config_ptr->mbr_over_shoot_pct       = 50;
     config_ptr->gop_constraint_rc        = 0;
     config_ptr->maximum_buffer_size_ms   = 1000; // default settings for CBR
@@ -1732,11 +1697,7 @@ static EbErrorType str_to_sframe_mode(const char *nptr, EbSFrameMode *out) {
     return EB_ErrorBadParameter;
 }
 
-#if CLN_MISC_II && DIS_UNSUPPORTED_MODES
 static EbErrorType str_to_rc_mode(const char *nptr, uint32_t *out, uint8_t *aq_mode) {
-#else
-static EbErrorType str_to_rc_mode(const char *nptr, uint32_t *out, uint8_t *aq_mode, uint8_t *pred_structure) {
-#endif
     // separate rc mode enum to distinguish between cqp and crf modes
     enum rc_modes {
         RC_MODE_ZERO = 0, // unique mode in case user passes a literal 0
@@ -1781,9 +1742,6 @@ static EbErrorType str_to_rc_mode(const char *nptr, uint32_t *out, uint8_t *aq_m
         break;
     case RC_MODE_VBR: *out = SVT_AV1_RC_MODE_VBR; break;
     case RC_MODE_CBR: *out = SVT_AV1_RC_MODE_CBR;
-#if !DIS_UNSUPPORTED_MODES
-        *pred_structure = SVT_AV1_PRED_LOW_DELAY_B;
-#endif
         break;
     default: SVT_ERROR("Invalid rc mode: %s\n", nptr); return EB_ErrorBadParameter;
     }
@@ -1872,12 +1830,7 @@ EB_API EbErrorType svt_av1_enc_parse_parameter(EbSvtAv1EncConfiguration *config_
     if (!strcmp(name, "rc"))
         return str_to_rc_mode(value,
                               &config_struct->rate_control_mode,
-#if CLN_MISC_II && DIS_UNSUPPORTED_MODES
                               &config_struct->enable_adaptive_quantization);
-#else
-                              &config_struct->enable_adaptive_quantization,
-                              &config_struct->pred_structure);
-#endif
 
     // custom enum fields
     if (!strcmp(name, "profile"))

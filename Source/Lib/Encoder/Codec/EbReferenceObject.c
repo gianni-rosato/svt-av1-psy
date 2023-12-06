@@ -93,7 +93,6 @@ static void svt_reference_object_dctor(EbPtr p) {
     EB_DELETE(obj->quarter_input_picture);
     EB_DELETE(obj->sixteenth_input_picture);
 }
-#if FTR_RES_ON_FLY4
 /*
 svt_reference_param_update: update the parameters in EbReferenceObject for changing the resolution on the fly
 */
@@ -178,7 +177,6 @@ EbErrorType svt_reference_param_update(EbReferenceObject *ref_object, SequenceCo
     ref_object->mi_cols = ref_object->reference_picture->width >> MI_SIZE_LOG2;
     return EB_ErrorNone;
 }
-#endif
 /*****************************************
  * svt_picture_buffer_desc_ctor
  *  Initializes the Buffer Descriptor's
@@ -316,7 +314,6 @@ static void svt_tpl_reference_object_dctor(EbPtr p) {
     EbTplReferenceObject *obj = (EbTplReferenceObject *)p;
     EB_DELETE(obj->ref_picture_ptr);
 }
-#if FTR_RES_ON_FLY4
 /*
 svt_pa_reference_param_update: update the parameters in EbPaReferenceObject for changing the resolution on the fly
 */
@@ -390,7 +387,6 @@ EbErrorType svt_pa_reference_param_update(EbPaReferenceObject *pa_ref_obj, Seque
                                    (EbPtr)&sixteenth_pic_buf_desc_init_data);
     return EB_ErrorNone;
 }
-#endif
 /*****************************************
  * svt_pa_reference_object_ctor
  *  Initializes the Buffer Descriptor's
@@ -434,7 +430,6 @@ EbErrorType svt_pa_reference_object_creator(EbPtr *object_dbl_ptr, EbPtr object_
 
     return EB_ErrorNone;
 }
-#if FTR_RES_ON_FLY4
 /*
 svt_tpl_reference_param_update: update the parameters in tpl_ref_obj for changing the resolution on the fly
 */
@@ -470,7 +465,6 @@ EbErrorType svt_tpl_reference_param_update(EbTplReferenceObject *tpl_ref_obj, Se
 
     return EB_ErrorNone;
 }
-#endif
 EbErrorType svt_tpl_reference_object_ctor(EbTplReferenceObject *tpl_ref_obj_, EbPtr object_init_data_ptr) {
     EbPictureBufferDescInitData *picture_buffer_desc_init_data_ptr = (EbPictureBufferDescInitData *)
         object_init_data_ptr;

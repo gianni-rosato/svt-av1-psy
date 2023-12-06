@@ -312,7 +312,6 @@ const MiniGopStats* svt_aom_get_mini_gop_stats(const uint32_t mini_gop_index) {
     return &mini_gop_stats_array[mini_gop_index];
 }
 
-#if OPT_REORDER_GEOM
 static uint32_t ns_quarter_off_mult[9 /*Up to 9 part*/][2 /*x+y*/][4 /*Up to 4 ns blocks per part*/] = {
     //9 means not used.
 
@@ -347,37 +346,6 @@ static uint32_t ns_quarter_size_mult[9 /*Up to 9 part*/][2 /*h+v*/][4 /*Up to 4 
     /*P=5*/ {{2, 2, 2, 9}, {2, 2, 4, 9}},
     /*P=6*/ {{2, 2, 2, 9}, {4, 2, 2, 9}}};
 
-#else
-static uint32_t ns_quarter_off_mult[9 /*Up to 9 part*/][2 /*x+y*/][4 /*Up to 4 ns blocks per part*/] = {
-    //9 means not used.
-
-    //          |   x   |     |   y   |
-
-    /*P=0*/ {{0, 9, 9, 9}, {0, 9, 9, 9}},
-    /*P=1*/ {{0, 0, 9, 9}, {0, 2, 9, 9}},
-    /*P=2*/ {{0, 2, 9, 9}, {0, 0, 9, 9}},
-    /*P=3*/ {{0, 2, 0, 9}, {0, 0, 2, 9}},
-    /*P=4*/ {{0, 0, 2, 9}, {0, 2, 2, 9}},
-    /*P=5*/ {{0, 0, 2, 9}, {0, 2, 0, 9}},
-    /*P=6*/ {{0, 2, 2, 9}, {0, 0, 2, 9}},
-    /*P=7*/ {{0, 0, 0, 0}, {0, 1, 2, 3}},
-    /*P=8*/ {{0, 1, 2, 3}, {0, 0, 0, 0}}};
-
-static uint32_t ns_quarter_size_mult[9 /*Up to 9 part*/][2 /*h+v*/][4 /*Up to 4 ns blocks per part*/] = {
-    //9 means not used.
-
-    //          |   h   |     |   v   |
-
-    /*P=0*/ {{4, 9, 9, 9}, {4, 9, 9, 9}},
-    /*P=1*/ {{4, 4, 9, 9}, {2, 2, 9, 9}},
-    /*P=2*/ {{2, 2, 9, 9}, {4, 4, 9, 9}},
-    /*P=3*/ {{2, 2, 4, 9}, {2, 2, 2, 9}},
-    /*P=4*/ {{4, 2, 2, 9}, {2, 2, 2, 9}},
-    /*P=5*/ {{2, 2, 2, 9}, {2, 2, 4, 9}},
-    /*P=6*/ {{2, 2, 2, 9}, {4, 2, 2, 9}},
-    /*P=7*/ {{4, 4, 4, 4}, {1, 1, 1, 1}},
-    /*P=8*/ {{1, 1, 1, 1}, {4, 4, 4, 4}}};
-#endif
 static BlockSize hvsize_to_bsize[/*H*/ 6][/*V*/ 6] = {
     {BLOCK_4X4, BLOCK_4X8, BLOCK_4X16, BLOCK_INVALID, BLOCK_INVALID, BLOCK_INVALID},
     {BLOCK_8X4, BLOCK_8X8, BLOCK_8X16, BLOCK_8X32, BLOCK_INVALID, BLOCK_INVALID},
@@ -409,12 +377,10 @@ static INLINE TxSize av1_get_tx_size(BlockSize bsize, int32_t plane /*, const Ma
     return av1_get_max_uv_txsize(/*mbmi->*/ bsize, subsampling_x, subsampling_y);
 }
 
-#if OPT_REORDER_GEOM
 static uint32_t get_num_ns_per_part(uint32_t part_it, uint32_t sq_size) {
     uint32_t tot_num_ns_per_part = part_it < 1 ? 1 : part_it < 3 ? 2 : part_it < 5 && sq_size < 128 ? 4 : 3;
     return tot_num_ns_per_part;
 }
-#endif
 
 static void md_scan_all_blks(uint32_t* idx_mds, uint32_t sq_size, uint32_t x, uint32_t y, int32_t is_last_quadrant,
                              uint8_t quad_it, uint8_t min_nsq_bsize) {
@@ -426,11 +392,7 @@ static void md_scan_all_blks(uint32_t* idx_mds, uint32_t sq_size, uint32_t x, ui
     uint32_t halfsize  = sq_size / 2;
     uint32_t quartsize = sq_size / 4;
 
-#if OPT_REORDER_GEOM
     uint32_t max_part_updated = sq_size == 128 ? MIN(max_part, (uint32_t)(max_part < 9 && max_part > 3 ? 3 : 7))
-#else
-    uint32_t max_part_updated = sq_size == 128 ? MIN(max_part, 7)
-#endif
         : sq_size == 8 ? MIN(max_part, 3)
         :
 
@@ -442,11 +404,7 @@ static void md_scan_all_blks(uint32_t* idx_mds, uint32_t sq_size, uint32_t x, ui
     sqi_mds = *idx_mds;
 
     for (part_it = 0; part_it < max_part_updated; part_it++) {
-#if OPT_REORDER_GEOM
         uint32_t tot_num_ns_per_part = get_num_ns_per_part(part_it, sq_size);
-#else
-        uint32_t tot_num_ns_per_part = part_it < 1 ? 1 : part_it < 3 ? 2 : part_it < 7 ? 3 : 4;
-#endif
 
         for (nsq_it = 0; nsq_it < tot_num_ns_per_part; nsq_it++) {
             svt_aom_blk_geom_mds[*idx_mds].depth = sq_size == max_sb / 1 ? 0
@@ -460,18 +418,12 @@ static void md_scan_all_blks(uint32_t* idx_mds, uint32_t sq_size, uint32_t x, ui
             svt_aom_blk_geom_mds[*idx_mds].is_last_quadrant = is_last_quadrant;
             svt_aom_blk_geom_mds[*idx_mds].quadi            = quad_it;
 
-#if OPT_REORDER_GEOM
             // part_it >= 3 for 128x128 blocks corresponds to HA/HB/VA/VB shapes since H4/V4 are not allowed
             // for 128x128 blocks.  Therefore, need to offset part_it by 2 to not index H4/V4 shapes.
             uint32_t part_it_idx                 = part_it >= 3 && sq_size == 128 ? part_it + 2 : part_it;
             svt_aom_blk_geom_mds[*idx_mds].shape = (Part)part_it_idx;
             svt_aom_blk_geom_mds[*idx_mds].org_x = x + quartsize * ns_quarter_off_mult[part_it_idx][0][nsq_it];
             svt_aom_blk_geom_mds[*idx_mds].org_y = y + quartsize * ns_quarter_off_mult[part_it_idx][1][nsq_it];
-#else
-            svt_aom_blk_geom_mds[*idx_mds].shape   = (Part)part_it;
-            svt_aom_blk_geom_mds[*idx_mds].org_x   = x + quartsize * ns_quarter_off_mult[part_it][0][nsq_it];
-            svt_aom_blk_geom_mds[*idx_mds].org_y   = y + quartsize * ns_quarter_off_mult[part_it][1][nsq_it];
-#endif
 
             svt_aom_blk_geom_mds[*idx_mds].d1i     = d1_it++;
             svt_aom_blk_geom_mds[*idx_mds].sqi_mds = sqi_mds;
@@ -488,13 +440,8 @@ static void md_scan_all_blks(uint32_t* idx_mds, uint32_t sq_size, uint32_t x, ui
                 ns_depth_offset[svt_aom_geom_idx][svt_aom_blk_geom_mds[*idx_mds].depth];
             svt_aom_blk_geom_mds[*idx_mds].totns = tot_num_ns_per_part;
             svt_aom_blk_geom_mds[*idx_mds].nsi   = nsq_it;
-#if OPT_REORDER_GEOM
             svt_aom_blk_geom_mds[*idx_mds].bwidth  = quartsize * ns_quarter_size_mult[part_it_idx][0][nsq_it];
             svt_aom_blk_geom_mds[*idx_mds].bheight = quartsize * ns_quarter_size_mult[part_it_idx][1][nsq_it];
-#else
-            svt_aom_blk_geom_mds[*idx_mds].bwidth  = quartsize * ns_quarter_size_mult[part_it][0][nsq_it];
-            svt_aom_blk_geom_mds[*idx_mds].bheight = quartsize * ns_quarter_size_mult[part_it][1][nsq_it];
-#endif
             svt_aom_blk_geom_mds[*idx_mds].bsize =
                 hvsize_to_bsize[svt_log2f(svt_aom_blk_geom_mds[*idx_mds].bwidth) - 2]
                                [svt_log2f(svt_aom_blk_geom_mds[*idx_mds].bheight) - 2];
@@ -1302,11 +1249,7 @@ static uint32_t count_total_num_of_active_blks(uint8_t min_nsq_bsize) {
                : depth_it == 4              ? max_sb / 16
                                             : max_sb / 32;
 
-#if OPT_REORDER_GEOM
         uint32_t max_part_updated = sq_size == 128 ? MIN(max_part, (uint32_t)(max_part < 9 && max_part > 3 ? 3 : 7))
-#else
-        uint32_t max_part_updated = sq_size == 128 ? MIN(max_part, 7)
-#endif
             : sq_size == 8 ? MIN(max_part, 3)
             : sq_size == 4 ? 1
                            : max_part;
@@ -1315,11 +1258,7 @@ static uint32_t count_total_num_of_active_blks(uint8_t min_nsq_bsize) {
         for (sq_it_y = 0; sq_it_y < tot_num_sq; sq_it_y++) {
             for (sq_it_x = 0; sq_it_x < tot_num_sq; sq_it_x++) {
                 for (part_it = 0; part_it < max_part_updated; part_it++) {
-#if OPT_REORDER_GEOM
                     uint32_t tot_num_ns_per_part = get_num_ns_per_part(part_it, sq_size);
-#else
-                    uint32_t tot_num_ns_per_part = part_it < 1 ? 1 : part_it < 3 ? 2 : part_it < 7 ? 3 : 4;
-#endif
 
                     for (nsq_it = 0; nsq_it < tot_num_ns_per_part; nsq_it++) depth_scan_idx++;
                 }
@@ -1392,7 +1331,6 @@ void svt_aom_build_blk_geom(GeomIndex geom) {
     } else if (geom == GEOM_5) {
         max_sb    = 64;
         max_depth = 5;
-#if OPT_REMOVE_HVAB_GEOM
         max_part        = 5;
         max_block_count = 849;
         min_nsq_bsize   = 0;
@@ -1402,7 +1340,6 @@ void svt_aom_build_blk_geom(GeomIndex geom) {
         max_part        = 9;
         max_block_count = 1101;
         min_nsq_bsize   = 0;
-#if OPT_GEOM_SB12B_B4
     } else if (geom == GEOM_7) {
         max_sb          = 128;
         max_depth       = 6;
@@ -1416,27 +1353,6 @@ void svt_aom_build_blk_geom(GeomIndex geom) {
         max_block_count = 2377;
         min_nsq_bsize   = 0;
     }
-#else
-    } else {
-        max_sb          = 128;
-        max_depth       = 6;
-        max_part        = 9;
-        max_block_count = 4421;
-        min_nsq_bsize   = 0;
-    }
-#endif
-#else
-        max_part        = 9;
-        max_block_count = 1101;
-        min_nsq_bsize   = 0;
-    } else {
-        max_sb          = 128;
-        max_depth       = 6;
-        max_part        = 9;
-        max_block_count = 4421;
-        min_nsq_bsize   = 0;
-    }
-#endif
     //(0)compute total number of blocks using the information provided
     max_num_active_blocks = count_total_num_of_active_blks(min_nsq_bsize);
     if (max_num_active_blocks != max_block_count)

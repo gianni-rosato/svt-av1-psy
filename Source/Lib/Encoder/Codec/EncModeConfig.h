@@ -18,34 +18,16 @@ uint8_t svt_aom_set_nic_controls(ModeDecisionContext *ctx, uint8_t nic_level);
 uint8_t svt_aom_set_chroma_controls(ModeDecisionContext *ctx, uint8_t uv_level);
 uint8_t svt_aom_get_update_cdf_level(EncMode enc_mode, SliceType is_islice, uint8_t is_base);
 uint8_t svt_aom_get_chroma_level(EncMode enc_mode);
-#if FIX_RECON_COPIES
 uint8_t svt_aom_get_bypass_encdec(EncMode enc_mode, uint8_t encoder_bit_depth);
-#else
-uint8_t svt_aom_get_bypass_encdec(EncMode enc_mode, uint8_t hbd_md, uint8_t encoder_bit_depth);
-#endif
-#if OPT_NIC_QP
 uint8_t svt_aom_get_nic_level(EncMode enc_mode, uint8_t is_base, uint8_t hierarchical_levels, uint32_t qp,
                               bool rtc_tune);
-#else
-uint8_t svt_aom_get_nic_level(EncMode enc_mode, uint8_t is_base, uint8_t hierarchical_levels, bool rtc_tune);
-#endif
 
 void svt_aom_set_depth_ctrls(PictureControlSet *pcs, ModeDecisionContext *ctx, uint8_t depth_level);
-#if CLN_MISC
 uint8_t svt_aom_get_enable_me_16x16(EncMode enc_mode);
-#else
-uint8_t svt_aom_get_enable_me_16x16(EncMode enc_mode, bool rtc_tune);
-#endif
-#if OPT_COEFF_LVL
 uint8_t svt_aom_get_predict_frame_coeff_lvl(EncMode enc_mode);
 void    svt_aom_set_frame_coeff_lvl(PictureControlSet *pcs, uint8_t lvl);
-#endif
 Bool svt_aom_is_ref_same_size(PictureControlSet *pcs, uint8_t list_idx, uint8_t ref_idx);
-#if TUNE_ENABLE_ME_8X8
 uint8_t svt_aom_get_enable_me_8x8(EncMode enc_mode, bool rtc_tune, EbInputResolution input_resolution);
-#else
-uint8_t svt_aom_get_enable_me_8x8(EncMode enc_mode, bool rtc_tune);
-#endif
 void    svt_aom_set_tpl_extended_controls(PictureParentControlSet *pcs, uint8_t tpl_level);
 void    svt_aom_sig_deriv_mode_decision_config(SequenceControlSet *scs, PictureControlSet *pcs);
 void    svt_aom_first_pass_sig_deriv_mode_decision_config(PictureControlSet *pcs);
@@ -72,66 +54,18 @@ uint8_t svt_aom_derive_gm_level(PictureParentControlSet *pcs, bool super_res_off
 
 void svt_aom_set_gm_controls(PictureParentControlSet *pcs, uint8_t gm_level);
 
-#if FIX_MEM_ALLOC_ON_THE_FLY
 uint8_t svt_aom_get_enable_sg(EncMode enc_mode, uint8_t input_resolution, Bool fast_decode, uint16_t qp);
 uint8_t svt_aom_get_enable_restoration(EncMode enc_mode, int8_t config_enable_restoration, uint8_t input_resolution,
                                        Bool fast_decode, uint16_t qp);
-#else
-#if OPT_SG
-uint8_t svt_aom_get_enable_sg(EncMode enc_mode, uint8_t input_resolution, Bool fast_decode, uint8_t qp);
-#else
-uint8_t svt_aom_get_enable_sg(EncMode enc_mode, uint8_t input_resolution, Bool fast_decode);
-#endif
-
-#if OPT_SG
-uint8_t svt_aom_get_enable_restoration(EncMode enc_mode, int8_t config_enable_restoration, uint8_t input_resolution,
-                                       Bool fast_decode, uint8_t qp);
-#else
-uint8_t svt_aom_get_enable_restoration(EncMode enc_mode, int8_t config_enable_restoration, uint8_t input_resolution,
-                                       Bool fast_decode);
-#endif
-#endif
 
 void svt_aom_set_dist_based_ref_pruning_controls(ModeDecisionContext *ctx, uint8_t dist_based_ref_pruning_level);
 
-#if TUNE_4X4
-#if CLN_MISC_II
 bool svt_aom_get_disallow_4x4(EncMode enc_mode, uint8_t is_base);
-#else
-bool    svt_aom_get_disallow_4x4(EncMode enc_mode, uint8_t is_base, uint8_t is_islice);
-#endif
-#else
-bool    svt_aom_get_disallow_4x4(EncMode enc_mode, SliceType slice_type);
-#endif
 
-#if OPT_MR_M0
-#if OPT_NSQ_QP
-#if TUNE_NSQ_HIGH_RES
 uint8_t svt_aom_get_nsq_level(EncMode enc_mode, uint8_t is_base, InputCoeffLvl coeff_lvl, uint32_t qp,
                               uint8_t input_resolution);
-#else
-uint8_t svt_aom_get_nsq_level(EncMode enc_mode, uint8_t is_base, InputCoeffLvl coeff_lvl, uint32_t qp);
-#endif
-#else
-uint8_t svt_aom_get_nsq_level(EncMode enc_mode, uint8_t is_base, InputCoeffLvl coeff_lvl);
-#endif
-#else
-uint8_t svt_aom_get_nsq_level(EncMode enc_mode, uint8_t is_islice, uint8_t is_base, InputCoeffLvl coeff_lvl);
-#endif
 uint8_t get_inter_compound_level(EncMode enc_mode);
-#if CLN_MISC_II
-#if OPT_FI && !TUNE_M5_III
-uint8_t get_filter_intra_level(EncMode enc_mode, uint8_t is_base);
-#else
 uint8_t get_filter_intra_level(EncMode enc_mode);
-#endif
-#else
-#if OPT_FI
-uint8_t get_filter_intra_level(EncMode enc_mode, uint8_t is_base);
-#else
-uint8_t get_filter_intra_level(EncMode enc_mode);
-#endif
-#endif
 uint8_t svt_aom_get_inter_intra_level(EncMode enc_mode, uint8_t is_base, uint8_t transition_present);
 uint8_t svt_aom_get_obmc_level(EncMode enc_mode, uint8_t fast_decode, EbInputResolution input_resolution);
 
@@ -139,6 +73,4 @@ void    svt_aom_set_nsq_ctrls(ModeDecisionContext *ctx, uint8_t nsq_level, uint8
                               uint8_t *min_nsq_bsize);
 uint8_t svt_aom_get_tpl_synthesizer_block_size(int8_t tpl_level, uint32_t picture_width, uint32_t picture_height);
 
-#if FTR_RES_ON_FLY6
 void svt_aom_set_mfmv_config(SequenceControlSet *scs);
-#endif

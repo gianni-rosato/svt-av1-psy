@@ -98,7 +98,6 @@ static void get_ref_skip_percentage(PictureControlSet *pcs, uint8_t *skip_area) 
     *skip_area = skip_perc;
 }
 
-#if OPT_HP_MV
 // hp_area will be set to the % of hp area in two nearest ref frames
 static void get_ref_hp_percentage(PictureControlSet *pcs, int16_t *hp_area) {
     assert(hp_area != NULL);
@@ -107,15 +106,8 @@ static void get_ref_hp_percentage(PictureControlSet *pcs, int16_t *hp_area) {
         return;
     }
 
-#if !CLN_MISC_II
-    int8_t hp_perc_l0 = -1;
-#endif
     EbReferenceObject *ref_obj_l0 = (EbReferenceObject *)pcs->ref_pic_ptr_array[REF_LIST_0][0]->object_ptr;
-#if CLN_MISC_II
     int8_t hp_perc_l0 = ref_obj_l0->slice_type == I_SLICE ? -1 : ref_obj_l0->hp_coded_area;
-#else
-    hp_perc_l0 = ref_obj_l0->slice_type == I_SLICE ? -1 : ref_obj_l0->hp_coded_area;
-#endif
 
     int8_t hp_perc_l1 = -1;
     if (pcs->slice_type == B_SLICE) {
@@ -131,7 +123,6 @@ static void get_ref_hp_percentage(PictureControlSet *pcs, int16_t *hp_area) {
     else
         *hp_area = (hp_perc_l0 + hp_perc_l1) >> 1;
 }
-#endif
 
 static void free_private_data_list(EbBufferHeaderType *p) {
     EbPrivDataNode *p_node = (EbPrivDataNode *)p->p_app_private;
@@ -554,13 +545,8 @@ static int get_cqp_kf_boost_from_r0(double r0, int frames_to_key, EbInputResolut
         factor = AOMMAX(factor, 4.0);
     }
     const int is_720p_or_smaller = input_resolution <= INPUT_SIZE_720p_RANGE;
-#if OPT_VBR6
     const int boost = is_720p_or_smaller ? (int)rint(3 * (75.0 + 17.0 * factor) / r0)
                                          : (int)rint(4 * (75.0 + 17.0 * factor) / r0);
-#else
-    const int     boost                = is_720p_or_smaller ? (int)rint(3 * (75.0 + 17.0 * factor) / 2 / r0)
-                                                            : (int)rint(2 * (75.0 + 17.0 * factor) / r0);
-#endif
     return boost;
 }
 
@@ -726,9 +712,7 @@ static void adjust_active_best_and_worst_quality_org(PictureControlSet *pcs, RAT
     TWO_PASS *const     twopass              = &scs->twopass;
     // Extension to max or min Q if undershoot or overshoot is outside
     // the permitted range.
-#if OPT_VBR6
     if (pcs->ppcs->transition_present != 1) {
-#endif
         if (frame_is_intra_only(pcs->ppcs) || (scs->static_config.gop_constraint_rc && pcs->ppcs->is_ref) ||
             (pcs->ppcs->temporal_layer_index < 2 && scs->is_short_clip) || (pcs->ppcs->is_ref && !scs->is_short_clip)) {
             active_best_quality -= (twopass->extend_minq + twopass->extend_minq_fast);
@@ -737,9 +721,7 @@ static void adjust_active_best_and_worst_quality_org(PictureControlSet *pcs, RAT
             active_best_quality -= (twopass->extend_minq + twopass->extend_minq_fast) / 2;
             active_worst_quality += twopass->extend_maxq;
         }
-#if OPT_VBR6
     }
-#endif
     // Static forced key frames Q restrictions dealt with elsewhere.
     const int qdelta = av1_frame_type_qdelta_org(pcs->ppcs, rc, active_worst_quality, bit_depth);
 
@@ -805,7 +787,6 @@ static int crf_qindex_calc(PictureControlSet *pcs, RATE_CONTROL *rc, int qindex)
     int                      active_worst_quality = qindex;
     rc->arf_q                                     = 0;
     int q;
-#if CLN_IS_REF
     const uint8_t temporal_layer      = ppcs->temporal_layer_index;
     const uint8_t hierarchical_levels = ppcs->hierarchical_levels;
     const int     leaf_frame          = ppcs->is_highest_layer;
@@ -814,17 +795,6 @@ static int crf_qindex_calc(PictureControlSet *pcs, RATE_CONTROL *rc, int qindex)
                        : (temporal_layer == 0)                      ? GF_ARF_STD
                        : !leaf_frame                                ? GF_ARF_LOW
                                                                     : INTER_NORMAL;
-#else
-    const uint8_t is_ref               = ppcs->is_ref;
-    const uint8_t temporal_layer       = ppcs->temporal_layer_index;
-    const uint8_t hierarchical_levels  = ppcs->hierarchical_levels;
-    const int     is_intrl_arf_boost   = (temporal_layer > 0 && is_ref);
-    const int     leaf_frame           = temporal_layer < hierarchical_levels ? 0 : 1;
-    const int     rf_level             = (frame_is_intra_only(ppcs)) ? KF_STD
-                        : (temporal_layer == 0)                      ? GF_ARF_STD
-                        : is_ref                                     ? GF_ARF_LOW
-                                                                     : INTER_NORMAL;
-#endif
 
     const int bit_depth = scs->static_config.encoder_bit_depth;
 
@@ -1054,9 +1024,6 @@ int svt_aom_compute_rd_mult_based_on_qindex(EbBitDepth bit_depth, SvtAv1FrameUpd
 //                                                               128, 144, 144,
 //                                                               128 };
 static const int rd_frame_type_factor[SVT_AV1_FRAME_UPDATE_TYPES] = {140, 180, 128, 140, 164, 164, 140};
-#if !CLN_MISC_II
-static const int rd_frame_type_factor_ld[SVT_AV1_FRAME_UPDATE_TYPES] = {128, 164, 128, 128, 164, 164, 128};
-#endif
 
 /*
  * Set the sse lambda based on the bit_depth, then update based on frame position.
@@ -1097,7 +1064,6 @@ int svt_aom_compute_rd_mult(PictureControlSet *pcs, uint8_t q_index, uint8_t me_
     return (int)rdmult;
 }
 
-#if OPT_FAST_LAMBDA
 int svt_aom_compute_fast_lambda(PictureControlSet *pcs, uint8_t q_index, uint8_t me_q_index, uint8_t bit_depth) {
     FrameType frame_type = pcs->ppcs->frm_hdr.frame_type;
     // To set gf_update_type based on current TL vs. the max TL (e.g. for 5L, max TL is 4)
@@ -1135,7 +1101,6 @@ int svt_aom_compute_fast_lambda(PictureControlSet *pcs, uint8_t q_index, uint8_t
     }
     return (int)rdmult;
 }
-#endif
 
 static void sb_setup_lambda(PictureControlSet *pcs, SuperBlock *sb_ptr) {
     const Av1Common *const   cm       = pcs->ppcs->av1_cm;
@@ -1549,7 +1514,6 @@ static void process_tpl_stats_frame_kf_gfu_boost(PictureControlSet *pcs) {
         // Scale r0 based on the GOP structure
         ppcs->r0 = ppcs->r0 / tpl_hl_islice_div_factor[hierarchical_levels];
 
-#if OPT_VBR6
         // when frames_to_key not available, i.e. in 1 pass encoding
         rc->kf_boost = get_cqp_kf_boost_from_r0(ppcs->r0, rc->frames_to_key, scs->input_resolution);
 
@@ -1557,62 +1521,8 @@ static void process_tpl_stats_frame_kf_gfu_boost(PictureControlSet *pcs) {
             MIN_BOOST_COMBINE_FACTOR, MAX_GFUBOOST_FACTOR, ppcs->r0, rc->frames_to_key);
         int max_boost = 10000; // ppcs->used_tpl_frame_num * KB;
         rc->kf_boost  = AOMMIN(rc->kf_boost, max_boost);
-#else
-        // when frames_to_key not available, i.e. in 1 pass encoding
-        rc->kf_boost  = get_cqp_kf_boost_from_r0(ppcs->r0, rc->frames_to_key, scs->input_resolution);
-        int max_boost = ppcs->used_tpl_frame_num * KB;
-        rc->kf_boost  = AOMMIN(rc->kf_boost, max_boost);
-#endif
     }
 }
-#if !OPT_VBR4
-static void get_intra_q_and_bounds(PictureControlSet *pcs, int *active_best, int *active_worst, int is_fwd_kf) {
-    SequenceControlSet *scs     = pcs->ppcs->scs;
-    EncodeContext      *enc_ctx = scs->enc_ctx;
-    RATE_CONTROL       *rc      = &enc_ctx->rc;
-    TWO_PASS *const     twopass = &scs->twopass;
-    int                 active_best_quality;
-    int                 active_worst_quality = *active_worst;
-    const int           bit_depth            = scs->static_config.encoder_bit_depth;
-    if (is_fwd_kf) {
-        // Handle the special case for forward reference key frames.
-        // Increase the boost because this keyframe is used as a forward and
-        // backward reference.
-        const int    qindex         = rc->last_boosted_qindex;
-        const double last_boosted_q = svt_av1_convert_qindex_to_q(qindex, bit_depth);
-        const int    delta_qindex   = svt_av1_compute_qdelta(last_boosted_q, last_boosted_q * 0.25, bit_depth);
-        active_best_quality         = AOMMAX(qindex + delta_qindex, rc->best_quality);
-    } else {
-        // Not forced keyframe.
-        double q_adj_factor = 1.0;
-        double q_val;
-        rc->worst_quality = MAXQ;
-        rc->best_quality  = MINQ;
-
-        // Baseline value derived from cpi->active_worst_quality and kf boost.
-        active_best_quality = get_kf_active_quality_tpl(rc, active_worst_quality, bit_depth);
-        if (twopass->kf_zeromotion_pct >= STATIC_KF_GROUP_THRESH) {
-            active_best_quality /= 3;
-        }
-        if (pcs->ppcs->sc_class1 && scs->passes == 1 &&
-            (enc_ctx->rc_cfg.mode == AOM_VBR || enc_ctx->rc_cfg.mode == AOM_CBR))
-            active_best_quality /= 2;
-        // Allow somewhat lower kf minq with small image formats.
-        if (pcs->ppcs->input_resolution <= INPUT_SIZE_240p_RANGE)
-            q_adj_factor -= (pcs->ppcs->tune_tpl_for_chroma) ? 0.2 : 0.15;
-        // Make a further adjustment based on the kf zero motion measure.
-
-        // Convert the adjustment factor to a qindex delta
-        // on active_best_quality.
-        q_val = svt_av1_convert_qindex_to_q(active_best_quality, bit_depth);
-        active_best_quality += svt_av1_compute_qdelta(q_val, q_val * q_adj_factor, bit_depth);
-    }
-
-    *active_best  = active_best_quality;
-    *active_worst = active_worst_quality;
-    return;
-}
-#endif
 
 // Returns |active_best_quality| for an inter frame.
 // The returning active_best_quality could further be adjusted in
@@ -2093,11 +2003,6 @@ static int rc_pick_q_and_bounds(PictureControlSet *pcs) {
             rc->arf_q = qindex_from_qstep_ratio;
         active_best_quality  = clamp(qindex_from_qstep_ratio, rc->best_quality, rc->active_worst_quality);
         active_worst_quality = (active_best_quality + (3 * active_worst_quality) + 2) / 4;
-#if !OPT_VBR4
-    } else if (frame_is_intra_only(pcs->ppcs)) {
-        const int is_fwd_kf = pcs->ppcs->frm_hdr.frame_type == KEY_FRAME && pcs->ppcs->frm_hdr.show_frame == 0;
-        get_intra_q_and_bounds(pcs, &active_best_quality, &active_worst_quality, is_fwd_kf);
-#endif
     } else {
         const int pyramid_level = pcs->ppcs->layer_depth;
         if ((pyramid_level <= 1) || (pyramid_level > MAX_ARF_LAYERS)) {
@@ -3071,10 +2976,8 @@ void *svt_aom_rate_control_kernel(void *input_ptr) {
             get_ref_intra_percentage(pcs, &pcs->ref_intra_percentage);
             // Get skip % in ref frame
             get_ref_skip_percentage(pcs, &pcs->ref_skip_percentage);
-#if OPT_HP_MV
             // Get hp % in ref frame
             get_ref_hp_percentage(pcs, &pcs->ref_hp_percentage);
-#endif
             FrameHeader *frm_hdr = &pcs->ppcs->frm_hdr;
             rc                   = &scs->enc_ctx->rc;
             if (scs->passes > 1 && scs->static_config.max_bit_rate)
@@ -3105,22 +3008,16 @@ void *svt_aom_rate_control_kernel(void *input_ptr) {
             } else {
                 if (!is_superres_recode_task) {
                     if (scs->static_config.rate_control_mode) {
-#if FTR_RATE_ON_FLY
                         if (pcs->picture_number == 0 || pcs->ppcs->seq_param_changed) {
-#else
-                        if (pcs->picture_number == 0) {
-#endif
                             set_rc_buffer_sizes(scs);
                             av1_rc_init(scs);
                         }
-#if OPT_VBR2
                         int32_t update_type = pcs->ppcs->update_type;
                         if (pcs->ppcs->tpl_ctrls.enable && pcs->ppcs->r0 != 0 &&
                             (update_type == SVT_AV1_KF_UPDATE || update_type == SVT_AV1_GF_UPDATE ||
                              update_type == SVT_AV1_ARF_UPDATE)) {
                             process_tpl_stats_frame_kf_gfu_boost(pcs);
                         }
-#endif
                         svt_block_on_mutex(scs->enc_ctx->stat_file_mutex);
                         restore_param(pcs->ppcs, pcs->ppcs->rate_control_param_ptr);
 
@@ -3138,11 +3035,9 @@ void *svt_aom_rate_control_kernel(void *input_ptr) {
                 if (scs->static_config.rate_control_mode == SVT_AV1_RC_MODE_CQP_OR_CRF) {
                     // if RC mode is 0,  fixed QP is used
                     // QP scaling based on POC number for Flat IPPP structure
-#if FTR_RATE_ON_FLY
                     // make sure no run to run is cause
                     if (pcs->ppcs->seq_param_changed)
                         rc->active_worst_quality = quantizer_to_qindex[(uint8_t)scs->static_config.qp];
-#endif
                     frm_hdr->quantization_params.base_q_idx = quantizer_to_qindex[pcs->picture_qp];
                     if (pcs->ppcs->qp_on_the_fly == TRUE) {
                         pcs->picture_qp = (uint8_t)CLIP3((int32_t)scs->static_config.min_qp_allowed,
@@ -3222,14 +3117,6 @@ void *svt_aom_rate_control_kernel(void *input_ptr) {
                 } else {
                     // ***Rate Control***
                     int32_t new_qindex;
-#if !OPT_VBR2
-                    int32_t update_type = pcs->ppcs->update_type;
-                    if (pcs->ppcs->tpl_ctrls.enable && pcs->ppcs->r0 != 0 &&
-                        (update_type == SVT_AV1_KF_UPDATE || update_type == SVT_AV1_GF_UPDATE ||
-                         update_type == SVT_AV1_ARF_UPDATE)) {
-                        process_tpl_stats_frame_kf_gfu_boost(pcs);
-                    }
-#endif
                     // Qindex calculating
                     if (scs->static_config.rate_control_mode == SVT_AV1_RC_MODE_CBR)
                         new_qindex = rc_pick_q_and_bounds_no_stats_cbr(pcs);
@@ -3276,7 +3163,6 @@ void *svt_aom_rate_control_kernel(void *input_ptr) {
                                                              (uint8_t)(ref_qp - 4));
                         }
                     }
-#if OPT_VBR6
                     else if ((int32_t)pcs->temporal_layer_index == 0 && pcs->ppcs->transition_present != 1 &&
                              pcs->slice_type != I_SLICE) {
                         uint32_t sb_index;
@@ -3307,7 +3193,6 @@ void *svt_aom_rate_control_kernel(void *input_ptr) {
                         }
                     }
 
-#endif
                     frm_hdr->quantization_params.base_q_idx = quantizer_to_qindex[pcs->picture_qp];
                 }
                 if (pcs->ppcs->slice_type == I_SLICE) {
@@ -3470,9 +3355,7 @@ void *svt_aom_rate_control_kernel(void *input_ptr) {
             free_private_data_list((EbBufferHeaderType *)ppcs->input_pic_wrapper->object_ptr);
 
             svt_release_object(ppcs->input_pic_wrapper);
-#if FTR_RES_ON_FLY3
             svt_release_object(ppcs->scs_wrapper);
-#endif
             svt_release_object(rc_tasks->pcs_wrapper);
 
             // Release Rate Control Tasks

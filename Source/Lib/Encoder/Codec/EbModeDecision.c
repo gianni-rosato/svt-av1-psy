@@ -31,9 +31,7 @@
 #include "EbLog.h"
 #include "EbResize.h"
 #include "mcomp.h"
-#if OPT_CMPOUND
 #include "EbSourceBasedOperationsProcess.h"
-#endif
 #define INC_MD_CAND_CNT(cnt, max_can_count)                  \
     MULTI_LINE_MACRO_BEGIN                                   \
     if (cnt + 1 < max_can_count)                             \
@@ -77,7 +75,6 @@ int svt_aom_filter_intra_allowed_bsize(uint8_t enable_filter_intra, BlockSize bs
 int svt_aom_filter_intra_allowed(uint8_t enable_filter_intra, BlockSize bsize, uint8_t palette_size, uint32_t mode) {
     return mode == DC_PRED && palette_size == 0 && svt_aom_filter_intra_allowed_bsize(enable_filter_intra, bsize);
 }
-#if CLN_ME_OFFSET
 /*
 Get the ME offset for a given block(the offset used to locate the PA MVs from the parent PCS).
 */
@@ -146,7 +143,6 @@ uint32_t svt_aom_get_me_block_offset(const BlockGeom *const blk_geom, uint8_t en
 
     return me_block_offset;
 }
-#endif
 //Given one reference frame identified by the pair (list_index,ref_index)
 //indicate if ME data is valid
 uint8_t svt_aom_is_me_data_present(uint32_t me_block_offset, uint32_t me_cand_offset, const MeSbResults *me_results,
@@ -178,20 +174,14 @@ uint8_t svt_aom_is_me_data_present(uint32_t me_block_offset, uint32_t me_cand_of
 static Bool warped_motion_mode_allowed(PictureControlSet *pcs, ModeDecisionContext *ctx) {
     FrameHeader *frm_hdr = &pcs->ppcs->frm_hdr;
     return frm_hdr->allow_warped_motion && has_overlappable_candidates(ctx->blk_ptr) && ctx->blk_geom->bwidth >= 8 &&
-#if OPT_Q_WARP
         ctx->blk_geom->bheight >= 8 && ctx->wm_ctrls.enabled && ctx->do_warp;
-#else
-        ctx->blk_geom->bheight >= 8 && ctx->wm_ctrls.enabled && ctx->inject_new_warp;
-#endif
 }
 MotionMode svt_aom_obmc_motion_mode_allowed(
     const PictureControlSet *pcs, struct ModeDecisionContext *ctx, const BlockSize bsize,
     uint8_t          situation, // 0: candidate(s) preparation, 1: data preparation, 2: simple translation face-off
     MvReferenceFrame rf0, MvReferenceFrame rf1, PredictionMode mode) {
-#if OPT_Q_OBMC
     if (!ctx->do_obmc)
         return SIMPLE_TRANSLATION;
-#endif
     if (ctx->obmc_ctrls.trans_face_off && !situation)
         return SIMPLE_TRANSLATION;
     // check if should cap the max block size for obmc
@@ -1151,7 +1141,6 @@ static void bipred_3x3_candidates_injection(const SequenceControlSet *scs, Pictu
                                          list1_ref_index))
                     continue;
 
-#if OPT_BIPRED3x3
                 int8_t best_list = -1;
                 int    diff      = ((int)ctx->post_subpel_me_mv_cost[me_block_results_ptr->ref0_list][list0_ref_index] -
                             (int)ctx->post_subpel_me_mv_cost[me_block_results_ptr->ref1_list][list1_ref_index]) *
@@ -1172,14 +1161,9 @@ static void bipred_3x3_candidates_injection(const SequenceControlSet *scs, Pictu
                 }
 
                 if (best_list == -1 || best_list == me_block_results_ptr->ref0_list) {
-#endif
                     // (Best_L0, 8 Best_L1 neighbors)
                     for (uint32_t bipred_index = 0; bipred_index < BIPRED_3x3_REFINMENT_POSITIONS; ++bipred_index) {
-#if OPT_BIPRED3x3
                         if (!ctx->bipred3x3_ctrls.search_diag) {
-#else
-                    if (ctx->bipred3x3_injection >= 2) {
-#endif
                             if (allow_refinement_flag[bipred_index] == 0)
                                 continue;
                         }
@@ -1242,18 +1226,12 @@ static void bipred_3x3_candidates_injection(const SequenceControlSet *scs, Pictu
                                                  to_inj_mv1,
                                                  1,
                                                  pcs->ppcs->frm_hdr.allow_high_precision_mv)) {
-#if CLN_CMPOUND
                                 ctx->cmp_store.pred0_cnt = 0;
                                 ctx->cmp_store.pred1_cnt = 0;
-#endif
                                 Bool mask_done = 0;
                                 for (MD_COMP_TYPE cur_type = MD_COMP_AVG; cur_type < tot_comp_types; cur_type++) {
-#if OPT_CMPOUND
                                     if (ctx->inter_comp_ctrls.no_sym_dist && cur_type == MD_COMP_DIST &&
                                         list0_ref_index == 0 && list1_ref_index == 0)
-#else
-                                if (ctx->inter_comp_ctrls.no_dist && cur_type == MD_COMP_DIST)
-#endif
                                         continue;
                                     if (!is_valid_bi_type(ctx,
                                                           cur_type,
@@ -1298,17 +1276,11 @@ static void bipred_3x3_candidates_injection(const SequenceControlSet *scs, Pictu
                             }
                         }
                     }
-#if OPT_BIPRED3x3
                 }
                 if (best_list == -1 || best_list == me_block_results_ptr->ref1_list) {
-#endif
                     // (8 Best_L0 neighbors, Best_L1) :
                     for (uint32_t bipred_index = 0; bipred_index < BIPRED_3x3_REFINMENT_POSITIONS; ++bipred_index) {
-#if OPT_BIPRED3x3
                         if (!ctx->bipred3x3_ctrls.search_diag) {
-#else
-                    if (ctx->bipred3x3_injection >= 2) {
-#endif
                             if (allow_refinement_flag[bipred_index] == 0)
                                 continue;
                         }
@@ -1376,18 +1348,12 @@ static void bipred_3x3_candidates_injection(const SequenceControlSet *scs, Pictu
                                                  to_inj_mv1,
                                                  1,
                                                  pcs->ppcs->frm_hdr.allow_high_precision_mv)) {
-#if CLN_CMPOUND
                                 ctx->cmp_store.pred0_cnt = 0;
                                 ctx->cmp_store.pred1_cnt = 0;
-#endif
                                 Bool mask_done = 0;
                                 for (MD_COMP_TYPE cur_type = MD_COMP_AVG; cur_type < tot_comp_types; cur_type++) {
-#if OPT_CMPOUND
                                     if (ctx->inter_comp_ctrls.no_sym_dist && cur_type == MD_COMP_DIST &&
                                         list0_ref_index == 0 && list1_ref_index == 0)
-#else
-                                if (ctx->inter_comp_ctrls.no_dist && cur_type == MD_COMP_DIST)
-#endif
                                         continue;
                                     if (!is_valid_bi_type(ctx,
                                                           cur_type,
@@ -1431,9 +1397,7 @@ static void bipred_3x3_candidates_injection(const SequenceControlSet *scs, Pictu
                             }
                         }
                     }
-#if OPT_BIPRED3x3
                 }
-#endif
             }
         }
     }
@@ -1646,7 +1610,6 @@ static bool skip_mvp_compound_on_ref_types(ModeDecisionContext *ctx, MvReference
     return skip_comp;
 }
 
-#if OPT_CMPOUND
 static uint32_t get_comp_th(uint32_t qp) {
     float qpf = (float)(qp);
     //3
@@ -1657,7 +1620,6 @@ static uint32_t get_comp_th(uint32_t qp) {
     else
         return 15;
 }
-#endif
 
 /*********************************************************************
 **********************************************************************
@@ -1689,7 +1651,6 @@ static void inject_mvp_candidates_ii(const SequenceControlSet *scs, PictureContr
     BlockSize              bsize       = ctx->blk_geom->bsize; // bloc size
     //all of ref pairs: (1)single-ref List0  (2)single-ref List1  (3)compound Bi-Dir List0-List1  (4)compound Uni-Dir List0-List0  (5)compound Uni-Dir List1-List1
 
-#if OPT_CMPOUND
     int is_blk_flat = 0;
     if (ctx->inter_comp_ctrls.tot_comp_types >= MD_COMP_WEDGE && ctx->inter_comp_ctrls.mvp_no_wdg_var_th) {
         EbPictureBufferDesc *in_pic  = pcs->ppcs->enhanced_pic;
@@ -1698,7 +1659,6 @@ static void inject_mvp_candidates_ii(const SequenceControlSet *scs, PictureContr
         const uint32_t blk_var = svt_aom_get_perpixel_variance(src_buf, in_pic->stride_y, bsize);
         is_blk_flat            = blk_var < ctx->inter_comp_ctrls.mvp_no_wdg_var_th;
     }
-#endif
 
     for (uint32_t ref_it = 0; ref_it < ctx->tot_ref_frame_types; ++ref_it) {
         MvReferenceFrame ref_pair = ctx->ref_frame_type_arr[ref_it];
@@ -1904,13 +1864,11 @@ static void inject_mvp_candidates_ii(const SequenceControlSet *scs, PictureContr
             uint8_t list_idx_0 = get_list_idx(rf[0]);
             uint8_t list_idx_1 = get_list_idx(rf[1]);
 
-#if CLN_CMPOUND
             ctx->cmp_store.pred0_cnt       = 0;
             ctx->cmp_store.pred1_cnt       = 0;
             const uint32_t is_low_cmplxity = MIN(ctx->md_me_dist, ctx->md_pme_dist) /
                     (ctx->blk_geom->bwidth * ctx->blk_geom->bheight) <
                 get_comp_th(scs->static_config.qp);
-#endif
 
             // Always consider the 2 closet ref frames (i.e. ref_idx=0) @ MVP cand generation
             if (!is_valid_bipred_ref(ctx, NRST_NEAR_GROUP, list_idx_0, ref_idx_0, list_idx_1, ref_idx_1))
@@ -1947,7 +1905,6 @@ static void inject_mvp_candidates_ii(const SequenceControlSet *scs, PictureContr
                         (rf[1] == frm_hdr->skip_mode_params.ref_frame_idx_1);
                     Bool mask_done = 0;
                     for (MD_COMP_TYPE cur_type = MD_COMP_AVG; cur_type < tot_comp_types; cur_type++) {
-#if OPT_CMPOUND
                         if (ctx->inter_comp_ctrls.mvp_no_cmp_low_cmplx && cur_type != MD_COMP_AVG && is_low_cmplxity)
                             break;
                         if (ctx->inter_comp_ctrls.mvp_no_diff_nsq && cur_type == MD_COMP_DIFF0 &&
@@ -1959,13 +1916,6 @@ static void inject_mvp_candidates_ii(const SequenceControlSet *scs, PictureContr
                         if (ctx->inter_comp_ctrls.mvp_no_wdg_var_th && cur_type == MD_COMP_WEDGE && is_blk_flat)
                             continue;
 
-#else
-
-                        if (ctx->inter_comp_ctrls.no_dist && cur_type == MD_COMP_DIST)
-
-                            continue;
-
-#endif
 
                         if (!is_valid_bi_type(ctx, cur_type, list_idx_0, ref_idx_0, list_idx_1, ref_idx_1))
 
@@ -2047,7 +1997,6 @@ static void inject_mvp_candidates_ii(const SequenceControlSet *scs, PictureContr
                     if (inj_mv) {
                         Bool mask_done = 0;
                         for (MD_COMP_TYPE cur_type = MD_COMP_AVG; cur_type < tot_comp_types; cur_type++) {
-#if OPT_CMPOUND
                             if (ctx->inter_comp_ctrls.mvp_no_cmp_low_cmplx && cur_type != MD_COMP_AVG &&
                                 is_low_cmplxity)
                                 break;
@@ -2059,10 +2008,6 @@ static void inject_mvp_candidates_ii(const SequenceControlSet *scs, PictureContr
                                 continue;
                             if (ctx->inter_comp_ctrls.mvp_no_wdg_var_th && cur_type == MD_COMP_WEDGE && is_blk_flat)
                                 continue;
-#else
-                            if (ctx->inter_comp_ctrls.no_dist && cur_type == MD_COMP_DIST)
-                                continue;
-#endif
                             if (!is_valid_bi_type(ctx, cur_type, list_idx_0, ref_idx_0, list_idx_1, ref_idx_1))
                                 continue;
                             cand_array[cand_idx].pred_mode             = NEAR_NEARMV;
@@ -2162,18 +2107,12 @@ static void inject_new_nearest_new_comb_candidates(const SequenceControlSet *scs
                         svt_aom_is_me_data_present(
                                  ctx->me_block_offset, ctx->me_cand_offset, me_results, get_list_idx(rf[1]), ref_idx_1);
                     if (inj_mv) {
-#if CLN_CMPOUND
                         ctx->cmp_store.pred0_cnt = 0;
                         ctx->cmp_store.pred1_cnt = 0;
-#endif
                         Bool mask_done = 0;
                         for (MD_COMP_TYPE cur_type = MD_COMP_AVG; cur_type < tot_comp_types; cur_type++) {
-#if OPT_CMPOUND
                             if (ctx->inter_comp_ctrls.no_sym_dist && cur_type == MD_COMP_DIST && ref_idx_0 == 0 &&
                                 ref_idx_1 == 0)
-#else
-                            if (ctx->inter_comp_ctrls.no_dist && cur_type == MD_COMP_DIST)
-#endif
                                 continue;
                             if (!is_valid_bi_type(ctx, cur_type, list_idx_0, ref_idx_0, list_idx_1, ref_idx_1))
                                 continue;
@@ -2245,18 +2184,12 @@ static void inject_new_nearest_new_comb_candidates(const SequenceControlSet *scs
                     inj_mv              = inj_mv &&
                         svt_aom_is_me_data_present(ctx->me_block_offset, ctx->me_cand_offset, me_results, 0, ref_idx_0);
                     if (inj_mv) {
-#if CLN_CMPOUND
                         ctx->cmp_store.pred0_cnt = 0;
                         ctx->cmp_store.pred1_cnt = 0;
-#endif
                         Bool mask_done = 0;
                         for (MD_COMP_TYPE cur_type = MD_COMP_AVG; cur_type < tot_comp_types; cur_type++) {
-#if OPT_CMPOUND
                             if (ctx->inter_comp_ctrls.no_sym_dist && cur_type == MD_COMP_DIST && ref_idx_0 == 0 &&
                                 ref_idx_1 == 0)
-#else
-                            if (ctx->inter_comp_ctrls.no_dist && cur_type == MD_COMP_DIST)
-#endif
                                 continue;
                             if (!is_valid_bi_type(ctx, cur_type, list_idx_0, ref_idx_0, list_idx_1, ref_idx_1))
                                 continue;
@@ -2318,18 +2251,12 @@ static void inject_new_nearest_new_comb_candidates(const SequenceControlSet *scs
                             svt_aom_is_me_data_present(
                                      ctx->me_block_offset, ctx->me_cand_offset, me_results, 0, ref_idx_0);
                         if (inj_mv) {
-#if CLN_CMPOUND
                             ctx->cmp_store.pred0_cnt = 0;
                             ctx->cmp_store.pred1_cnt = 0;
-#endif
                             Bool mask_done = 0;
                             for (MD_COMP_TYPE cur_type = MD_COMP_AVG; cur_type < tot_comp_types; cur_type++) {
-#if OPT_CMPOUND
                                 if (ctx->inter_comp_ctrls.no_sym_dist && cur_type == MD_COMP_DIST && ref_idx_0 == 0 &&
                                     ref_idx_1 == 0)
-#else
-                                if (ctx->inter_comp_ctrls.no_dist && cur_type == MD_COMP_DIST)
-#endif
                                     continue;
                                 if (!is_valid_bi_type(ctx, cur_type, list_idx_0, ref_idx_0, list_idx_1, ref_idx_1))
                                     continue;
@@ -2390,18 +2317,12 @@ static void inject_new_nearest_new_comb_candidates(const SequenceControlSet *scs
                                                        get_list_idx(rf[1]),
                                                        ref_idx_1);
                         if (inj_mv) {
-#if CLN_CMPOUND
                             ctx->cmp_store.pred0_cnt = 0;
                             ctx->cmp_store.pred1_cnt = 0;
-#endif
                             Bool mask_done = 0;
                             for (MD_COMP_TYPE cur_type = MD_COMP_AVG; cur_type < tot_comp_types; cur_type++) {
-#if OPT_CMPOUND
                                 if (ctx->inter_comp_ctrls.no_sym_dist && cur_type == MD_COMP_DIST && ref_idx_0 == 0 &&
                                     ref_idx_1 == 0)
-#else
-                                if (ctx->inter_comp_ctrls.no_dist && cur_type == MD_COMP_DIST)
-#endif
                                     continue;
                                 if (!is_valid_bi_type(ctx, cur_type, list_idx_0, ref_idx_0, list_idx_1, ref_idx_1))
                                     continue;
@@ -2445,11 +2366,7 @@ uint8_t svt_aom_wm_motion_refinement(PictureControlSet *pcs, ModeDecisionContext
                                      ModeDecisionCandidateBuffer *cand_bf, ModeDecisionCandidate *cand,
                                      uint8_t list_idx, int shut_approx) {
     PictureParentControlSet *ppcs = pcs->ppcs;
-#if OPT_WARP_REFINEMENT
     const MV neighbors[9] = {{0, 0}, {0, -1}, {1, 0}, {0, 1}, {-1, 0}, {-1, 1}, {1, 1}, {1, -1}, {-1, -1}};
-#else
-    const MV neighbors[5]   = {{0, 0}, {0, -1}, {1, 0}, {0, 1}, {-1, 0}};
-#endif
 
     // Set info used to get MV cost
     int     *mvjcost       = ctx->md_rate_est_ctx->nmv_vec_cost;
@@ -2475,28 +2392,12 @@ uint8_t svt_aom_wm_motion_refinement(PictureControlSet *pcs, ModeDecisionContext
     ref_mv.col = cand->pred_mv[list_idx].x;
     ref_mv.row = cand->pred_mv[list_idx].y;
 
-#if OPT_WARP_REFINEMENT
     int max_iterations = ctx->wm_ctrls.refinement_iterations;
-#else
-    int      max_iterations = ctx->wm_ctrls.refinement_iterations;
-#endif
-#if !OPT_Q_WARP
-    if (ctx->inject_new_warp == 2)
-        max_iterations = MIN(max_iterations, 2);
-#endif
     int tot_checked_pos = 0;
-#if OPT_WARP_REFINEMENT
     uint32_t mv_record[256];
-#else
-    uint32_t mv_record[64];
-#endif
     for (int iter = 0; iter < max_iterations; iter++) {
         // search the (0,0) offset position only for the first search iteration
-#if OPT_WARP_REFINEMENT
         for (int i = (iter ? 1 : 0); i < (ctx->wm_ctrls.refine_diag ? 9 : 5); i++) {
-#else
-        for (int i = (iter ? 1 : 0); i < 5; i++) {
-#endif
             Mv test_mv = (Mv){{search_centre_mv.x + (neighbors[i].col << mv_prec_shift),
                                search_centre_mv.y + (neighbors[i].row << mv_prec_shift)}};
 
@@ -3557,18 +3458,12 @@ static void inject_new_candidates(const SequenceControlSet *scs, struct ModeDeci
                         if (!ctx->corrupted_mv_check ||
                             is_valid_mv_diff(
                                 best_pred_mv, to_inj_mv0, to_inj_mv1, 1, pcs->ppcs->frm_hdr.allow_high_precision_mv)) {
-#if CLN_CMPOUND
                             ctx->cmp_store.pred0_cnt = 0;
                             ctx->cmp_store.pred1_cnt = 0;
-#endif
                             Bool mask_done = 0;
                             for (MD_COMP_TYPE cur_type = MD_COMP_AVG; cur_type < tot_comp_types; cur_type++) {
-#if OPT_CMPOUND
                                 if (ctx->inter_comp_ctrls.no_sym_dist && cur_type == MD_COMP_DIST &&
                                     list0_ref_index == 0 && list1_ref_index == 0)
-#else
-                                if (ctx->inter_comp_ctrls.no_dist && cur_type == MD_COMP_DIST)
-#endif
                                     continue;
                                 if (!is_valid_bi_type(ctx,
                                                       cur_type,
@@ -3765,12 +3660,8 @@ static void inject_global_candidates(const SequenceControlSet *scs, struct ModeD
                 uint8_t to_inject_ref_type = av1_ref_frame_type(rf);
 
                 for (MD_COMP_TYPE cur_type = MD_COMP_AVG; cur_type < tot_comp_types; cur_type++) {
-#if OPT_CMPOUND
                     if (ctx->inter_comp_ctrls.no_sym_dist && cur_type == MD_COMP_DIST && ref_idx_0 == 0 &&
                         ref_idx_1 == 0)
-#else
-                    if (ctx->inter_comp_ctrls.no_dist && cur_type == MD_COMP_DIST)
-#endif
                         continue;
                     if (!is_valid_bi_type(ctx, cur_type, list_idx_0, ref_idx_0, list_idx_1, ref_idx_1))
                         continue;
@@ -4004,18 +3895,12 @@ static void inject_pme_candidates(
                         if (!ctx->corrupted_mv_check ||
                             is_valid_mv_diff(
                                 best_pred_mv, to_inj_mv0, to_inj_mv1, 1, pcs->ppcs->frm_hdr.allow_high_precision_mv)) {
-#if CLN_CMPOUND
                             ctx->cmp_store.pred0_cnt = 0;
                             ctx->cmp_store.pred1_cnt = 0;
-#endif
                             Bool mask_done = 0;
                             for (MD_COMP_TYPE cur_type = MD_COMP_AVG; cur_type < tot_comp_types; cur_type++) {
-#if OPT_CMPOUND
                                 if (ctx->inter_comp_ctrls.no_sym_dist && cur_type == MD_COMP_DIST && ref_idx_0 == 0 &&
                                     ref_idx_1 == 0)
-#else
-                                if (ctx->inter_comp_ctrls.no_dist && cur_type == MD_COMP_DIST)
-#endif
                                     continue;
 
                                 if (!is_valid_bi_type(ctx, cur_type, list_idx_0, ref_idx_0, list_idx_1, ref_idx_1))
@@ -4144,11 +4029,7 @@ void svt_aom_inject_inter_candidates(PictureControlSet *pcs, ModeDecisionContext
         inject_global_candidates(scs, ctx, pcs, is_compound_enabled, allow_bipred, &cand_total_cnt);
     }
     if (is_compound_enabled) {
-#if OPT_BIPRED3x3
         if (ctx->bipred3x3_ctrls.enabled && allow_bipred && pcs->slice_type == B_SLICE)
-#else
-        if (allow_bipred && ctx->bipred3x3_injection > 0 && pcs->slice_type == B_SLICE)
-#endif
             //----------------------
             // Bipred2Nx2N
             //----------------------
@@ -4704,14 +4585,7 @@ static INLINE void eliminate_candidate_based_on_pme_me_results(ModeDecisionConte
         const uint32_t best_me_distotion = MIN(MIN(ctx->pme_res[0][0].dist, ctx->pme_res[1][0].dist), ctx->md_me_dist);
         if (best_me_distotion < th) {
             *dc_cand_only_flag = ctx->cand_reduction_ctrls.cand_elimination_ctrls.dc_only ? 1 : *dc_cand_only_flag;
-#if !OPT_Q_WARP
-            ctx->inject_new_warp = ctx->cand_reduction_ctrls.cand_elimination_ctrls.inject_new_warp ? 0 : ctx->inject_new_warp;
-#endif
         }
-#if !OPT_Q_WARP
-        else
-            ctx->inject_new_warp = ctx->cand_reduction_ctrls.cand_elimination_ctrls.inject_new_warp ? 2 : ctx->inject_new_warp;
-#endif
         if (ctx->updated_enable_pme && ctx->md_subpel_me_ctrls.enabled) {
         const int32_t me_pme_distance = ((int32_t)ctx->md_me_dist - (int32_t)MIN(ctx->pme_res[0][0].dist, ctx->pme_res[1][0].dist));
         if (me_pme_distance >= 0)
@@ -4774,11 +4648,7 @@ void generate_md_stage_0_cand_light_pd1(
     if (ctx->intra_ctrls.enable_intra && ctx->blk_geom->sq_size < 128) {
         uint8_t dc_cand_only_flag = (ctx->intra_ctrls.intra_mode_end == DC_PRED);
         if (ctx->cand_reduction_ctrls.cand_elimination_ctrls.enabled && ctx->cand_reduction_ctrls.cand_elimination_ctrls.dc_only && !dc_cand_only_flag && ctx->md_subpel_me_ctrls.enabled) {
-#if CLN_IS_REF
             uint32_t th = pcs->ppcs->temporal_layer_index == 0 ? 10 : !pcs->ppcs->is_highest_layer ? 30 : 200;
-#else
-            uint32_t th = pcs->ppcs->temporal_layer_index == 0 ? 10 : pcs->ppcs->is_ref ? 30 : 200;
-#endif
             th *= (ctx->blk_geom->bheight * ctx->blk_geom->bwidth * ctx->cand_reduction_ctrls.cand_elimination_ctrls.th_multiplier);
             if (ctx->md_me_dist < th)
                 dc_cand_only_flag = 1;
@@ -4820,15 +4690,12 @@ EbErrorType generate_md_stage_0_cand(
     ctx->injected_mv_count = 0;
     ctx->inject_new_me = 1;
     ctx->inject_new_pme = 1;
-#if OPT_Q_OBMC
     ctx->do_obmc = 1;
     if (ctx->obmc_ctrls.qp_dist_early_exit) {
         uint16_t th = (ctx->obmc_ctrls.qp_dist_early_exit * (63 - pcs->scs->static_config.qp)) >> 1;
         if ((MIN(ctx->md_me_dist, ctx->md_pme_dist) / (ctx->blk_geom->bwidth * ctx->blk_geom->bheight)) < th)
             ctx->do_obmc = 0;
     }
-#endif
-#if OPT_Q_WARP
     ctx->do_warp = 1;
     if (ctx->wm_ctrls.qp_dist_early_exit)
     {
@@ -4836,20 +4703,11 @@ EbErrorType generate_md_stage_0_cand(
         if ((MIN(ctx->md_me_dist, ctx->md_pme_dist) / (ctx->blk_geom->bwidth * ctx->blk_geom->bheight)) < th)
             ctx->do_warp = 0;
     }
-#else
-    ctx->inject_new_warp = 1;
-#endif
     uint8_t dc_cand_only_flag = ctx->intra_ctrls.enable_intra && (ctx->intra_ctrls.intra_mode_end == DC_PRED);
     if (ctx->cand_reduction_ctrls.cand_elimination_ctrls.enabled)
-#if CLN_IS_REF
         eliminate_candidate_based_on_pme_me_results(ctx,
             !pcs->ppcs->is_highest_layer,
             &dc_cand_only_flag);
-#else
-        eliminate_candidate_based_on_pme_me_results(ctx,
-            pcs->ppcs->is_ref,
-            &dc_cand_only_flag);
-#endif
     //----------------------
     // Intra
      if (ctx->intra_ctrls.enable_intra) {
@@ -5070,13 +4928,8 @@ void svt_aom_product_full_mode_decision_light_pd1(
         int32_t* src_ptr;
         int32_t* dst_ptr;
 
-#if FIX_BYPASS_ED_COEFF
         uint16_t bwidth = ctx->blk_geom->tx_width[blk_ptr->tx_depth];
         uint16_t bheight = ctx->blk_geom->tx_height[blk_ptr->tx_depth];
-#else
-        uint16_t  bwidth = MIN(ctx->blk_geom->tx_width[blk_ptr->tx_depth], 32);
-        uint16_t  bheight = MIN(ctx->blk_geom->tx_height[blk_ptr->tx_depth], 32);
-#endif
 
         if (ctx->md_local_blk_unit[ctx->blk_geom->blkidx_mds].y_has_coeff[txb_itr]) {
             src_ptr = &(((int32_t*)cand_bf->quant->buffer_y)[txb_1d_offset]);
@@ -5183,13 +5036,7 @@ uint32_t svt_aom_product_full_mode_decision(
     ModeDecisionCandidateBuffer* cand_bf = buffer_ptr_array[lowest_cost_index];
     ModeDecisionCandidate* cand = cand_bf->cand;
     PredictionUnit* pu_ptr = blk_ptr->prediction_unit_array;
-#if OPT_PD0_NSQ
     blk_ptr->total_rate = cand_bf->total_rate;
-#else
-    if (ctx->pd_pass == PD_PASS_1) {
-        blk_ptr->total_rate = cand_bf->total_rate;
-    }
-#endif
     if (!(ctx->pd_pass == PD_PASS_1 && ctx->pred_depth_only && ctx->md_disallow_nsq)) {
         if (ctx->blk_lambda_tuning) {
             // When lambda tuning is on, lambda of each block is set separately, however at interdepth decision the sb lambda is used
@@ -5341,10 +5188,6 @@ uint32_t svt_aom_product_full_mode_decision(
     uint16_t txb_itr = 0;
     uint16_t tu_total_count = ctx->blk_geom->txb_count[blk_ptr->tx_depth];
     int32_t txb_1d_offset = 0, txb_1d_offset_uv = 0;
-#if !FIX_BYPASS_ED_COEFF
-    ctx->md_local_blk_unit[ctx->blk_geom->blkidx_mds].quantized_dc[1][0] = cand_bf->quantized_dc[1][0];
-    ctx->md_local_blk_unit[ctx->blk_geom->blkidx_mds].quantized_dc[2][0] = cand_bf->quantized_dc[2][0];
-#endif
     do {
         TransformUnit *txb_ptr = &blk_ptr->txb_array[txb_itr];
         ctx->md_local_blk_unit[ctx->blk_geom->blkidx_mds].y_has_coeff[txb_itr] = (Bool)(((cand_bf->y_has_coeff) & (1 << txb_itr)) > 0);
@@ -5353,22 +5196,15 @@ uint32_t svt_aom_product_full_mode_decision(
         txb_ptr->transform_type[PLANE_TYPE_Y] = cand->transform_type[txb_itr];
         txb_ptr->transform_type[PLANE_TYPE_UV] = cand->transform_type_uv;
         ctx->md_local_blk_unit[ctx->blk_geom->blkidx_mds].quantized_dc[0][txb_itr] = cand_bf->quantized_dc[0][txb_itr];
-#if FIX_BYPASS_ED_COEFF
         ctx->md_local_blk_unit[ctx->blk_geom->blkidx_mds].quantized_dc[1][txb_itr] = cand_bf->quantized_dc[1][txb_itr];
         ctx->md_local_blk_unit[ctx->blk_geom->blkidx_mds].quantized_dc[2][txb_itr] = cand_bf->quantized_dc[2][txb_itr];
-#endif
 
         if (ctx->bypass_encdec && ctx->pd_pass == PD_PASS_1) {
             txb_ptr->nz_coef_count[0] = cand_bf->eob[0][txb_itr];
             txb_ptr->nz_coef_count[1] = cand_bf->eob[1][txb_itr];
             txb_ptr->nz_coef_count[2] = cand_bf->eob[2][txb_itr];
-#if FIX_BYPASS_ED_COEFF
             uint16_t  bwidth = ctx->blk_geom->tx_width[blk_ptr->tx_depth];
             uint16_t  bheight = ctx->blk_geom->tx_height[blk_ptr->tx_depth];
-#else
-            uint16_t  bwidth = MIN(ctx->blk_geom->tx_width[blk_ptr->tx_depth], 32);
-            uint16_t  bheight = MIN(ctx->blk_geom->tx_height[blk_ptr->tx_depth], 32);
-#endif
             int32_t* src_ptr = &(((int32_t*)cand_bf->quant->buffer_y)[txb_1d_offset]);
             int32_t* dst_ptr = &(((int32_t*)ctx->blk_ptr->coeff_tmp->buffer_y)[txb_1d_offset]);
 

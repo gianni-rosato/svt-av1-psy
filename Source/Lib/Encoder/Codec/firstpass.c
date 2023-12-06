@@ -134,64 +134,20 @@ static AOM_INLINE void output_stats(SequenceControlSet *scs, const FIRSTPASS_STA
 }
 void svt_av1_twopass_zero_stats(FIRSTPASS_STATS *section) {
     section->frame              = 0.0;
-#if !OPT_VBR4
-    section->weight             = 0.0;
-#endif
     section->intra_error        = 0.0;
     section->coded_error        = 0.0;
-#if !OPT_VBR4
-    section->sr_coded_error     = 0.0;
-#endif
-#if !OPT_VBR_2P
-    section->pcnt_inter         = 0.0;
-    section->pcnt_motion        = 0.0;
-#endif
-#if !OPT_VBR4
-    section->pcnt_second_ref    = 0.0;
-    section->pcnt_neutral       = 0.0;
-#endif
     section->intra_skip_pct     = 0.0;
     section->inactive_zone_rows = 0.0;
-#if !OPT_VBR4
-    section->inactive_zone_cols = 0.0;
-    section->mvr_abs = 0.0;
-    section->mvc_abs = 0.0;
-#endif
-#if !OPT_VBR_2P
-    section->mv_in_out_count = 0.0;
-#endif
     section->count    = 0.0;
     section->duration = 1.0;
     memset(&section->stat_struct, 0, sizeof(StatStruct));
 }
 void svt_av1_accumulate_stats(FIRSTPASS_STATS *section, const FIRSTPASS_STATS *frame) {
     section->frame += frame->frame;
-#if !OPT_VBR4
-    section->weight += frame->weight;
-#endif
     section->intra_error += frame->intra_error;
     section->coded_error += frame->coded_error;
-#if !OPT_VBR4
-    section->sr_coded_error += frame->sr_coded_error;
-#endif
-#if !OPT_VBR_2P
-    section->pcnt_inter += frame->pcnt_inter;
-    section->pcnt_motion += frame->pcnt_motion;
-#endif
-#if !OPT_VBR4
-    section->pcnt_second_ref += frame->pcnt_second_ref;
-    section->pcnt_neutral += frame->pcnt_neutral;
-#endif
     section->intra_skip_pct += frame->intra_skip_pct;
     section->inactive_zone_rows += frame->inactive_zone_rows;
-#if !OPT_VBR4
-    section->inactive_zone_cols += frame->inactive_zone_cols;
-    section->mvr_abs += frame->mvr_abs;
-    section->mvc_abs += frame->mvc_abs;
-#endif
-#if !OPT_VBR_2P
-    section->mv_in_out_count += frame->mv_in_out_count;
-#endif
     section->count += frame->count;
     section->duration += frame->duration;
 }
@@ -211,49 +167,6 @@ void svt_av1_end_first_pass(PictureParentControlSet *pcs) {
 }
 #define UL_INTRA_THRESH 50
 #define INVALID_ROW -1
-#if !OPT_VBR_2P
-// Accumulates motion vector stats.
-// Modifies member variables of "stats".
-static void accumulate_mv_stats(const MV best_mv, const FULLPEL_MV mv, const int mb_row, const int mb_col,
-                         const int mb_rows, const int mb_cols, MV *last_mv, FRAME_STATS *stats) {
-    if (is_zero_mv(&best_mv))
-        return;
-
-    ++stats->mv_count;
-
-    *last_mv = best_mv;
-
-    // Does the row vector point inwards or outwards?
-    if (mb_row < mb_rows / 2) {
-        if (mv.row > 0) {
-            --stats->sum_in_vectors;
-        } else if (mv.row < 0) {
-            ++stats->sum_in_vectors;
-        }
-    } else if (mb_row > mb_rows / 2) {
-        if (mv.row > 0) {
-            ++stats->sum_in_vectors;
-        } else if (mv.row < 0) {
-            --stats->sum_in_vectors;
-        }
-    }
-
-    // Does the col vector point inwards or outwards?
-    if (mb_col < mb_cols / 2) {
-        if (mv.col > 0) {
-            --stats->sum_in_vectors;
-        } else if (mv.col < 0) {
-            ++stats->sum_in_vectors;
-        }
-    } else if (mb_col > mb_cols / 2) {
-        if (mv.col > 0) {
-            ++stats->sum_in_vectors;
-        } else if (mv.col < 0) {
-            --stats->sum_in_vectors;
-        }
-    }
-}
-#endif
 // Updates the first pass stats of this frame.
 // Input:
 //   cpi: the encoder setting. Only a few params in it will be used.
@@ -298,53 +211,17 @@ static void update_firstpass_stats(PictureParentControlSet *pcs, const FRAME_STA
         fps       = stats_out->stat[frame_number - 1];
         fps.frame = frame_number;
     } else {
-#if !OPT_VBR4
-        fps.weight = stats->intra_factor * stats->brightness_factor;
-#endif
         fps.frame = frame_number;
         fps.coded_error    = (double)(stats->coded_error >> 8) + min_err;
-#if !OPT_VBR4
-        fps.sr_coded_error = (double)(stats->sr_coded_error >> 8) + min_err;
-#endif
         fps.intra_error     = (double)(stats->intra_error >> 8) + min_err;
         // if blocks are skipped, the errors need to be updated
         if (bypass_blk_step == 2) {
             fps.coded_error *= 3;
-#if !OPT_VBR4
-            fps.sr_coded_error *= 3;
-#endif
             fps.intra_error *= 3;
         }
         fps.count           = 1.0;
-#if !OPT_VBR_2P
-        fps.pcnt_inter      = (double)stats->inter_count / num_mbs;
-#endif
-#if !OPT_VBR4
-        fps.pcnt_second_ref = (double)stats->second_ref_count / num_mbs;
-        fps.pcnt_neutral       = (double)stats->neutral_count / num_mbs;
-#endif
         fps.intra_skip_pct     = (double)stats->intra_skip_count / num_mbs;
         fps.inactive_zone_rows = (double)stats->image_data_start_row;
-#if !OPT_VBR4
-        fps.inactive_zone_cols = (double)0; // TODO(paulwilkins): fix
-#endif
-#if !OPT_VBR_2P
-        if (stats->mv_count > 0) {
-#if !OPT_VBR4
-            fps.mvr_abs = (double)stats->sum_mvr_abs / stats->mv_count;
-            fps.mvc_abs = (double)stats->sum_mvc_abs / stats->mv_count;
-#endif
-            fps.mv_in_out_count = (double)stats->sum_in_vectors / (stats->mv_count * 2);
-            fps.pcnt_motion = (double)stats->mv_count / num_mbs;
-        } else {
-#if !OPT_VBR4
-            fps.mvr_abs = 0.0;
-            fps.mvc_abs = 0.0;
-#endif
-            fps.mv_in_out_count = 0.0;
-            fps.pcnt_motion = 0.0;
-        }
-#endif
         // TODO(paulwilkins):  Handle the case when duration is set to 0, or
         // something less than the full time between subsequent values of
         // cpi->source_time_stamp.
@@ -384,37 +261,13 @@ static FRAME_STATS accumulate_frame_stats(FRAME_STATS *mb_stats, int mb_rows, in
                 if ((sb_index_x % (uint32_t)bypass_blk_step != 0) ||
                     (sb_index_y % (uint32_t)bypass_blk_step != 0))
                     continue;
-#if !OPT_VBR4
-            stats.brightness_factor += mb_stat.brightness_factor;
-#endif
             stats.coded_error += mb_stat.coded_error;
             if (stats.image_data_start_row == INVALID_ROW &&
                 mb_stat.image_data_start_row != INVALID_ROW) {
                 stats.image_data_start_row = mb_stat.image_data_start_row;
             }
-#if !OPT_VBR_2P
-            stats.inter_count += mb_stat.inter_count;
-#endif
             stats.intra_error += mb_stat.intra_error;
-#if !OPT_VBR4
-            stats.intra_factor += mb_stat.intra_factor;
-#endif
             stats.intra_skip_count += mb_stat.intra_skip_count;
-#if !OPT_VBR_2P
-            stats.mv_count += mb_stat.mv_count;
-#endif
-#if !OPT_VBR4
-            stats.neutral_count += mb_stat.neutral_count;
-            stats.second_ref_count += mb_stat.second_ref_count;
-            stats.sr_coded_error += mb_stat.sr_coded_error;
-#endif
-#if !OPT_VBR_2P
-            stats.sum_in_vectors += mb_stat.sum_in_vectors;
-#endif
-#if !OPT_VBR4
-            stats.sum_mvc += mb_stat.sum_mvc;
-            stats.sum_mvc_abs += mb_stat.sum_mvc_abs;
-#endif
         }
     }
     return stats;
@@ -459,7 +312,6 @@ void setup_firstpass_data_seg(PictureParentControlSet *ppcs, int32_t segment_ind
         }
     }
 }
-#if OPT_VBR3
 void first_pass_frame_end_one_pass(PictureParentControlSet *pcs) {
 
     SequenceControlSet *scs = pcs->scs;
@@ -483,7 +335,6 @@ void first_pass_frame_end_one_pass(PictureParentControlSet *pcs) {
     twopass->stats_buf_ctx->stats_in_end_write++;
     svt_release_mutex(twopass->stats_buf_ctx->stats_in_write_mutex);
 }
-#endif
 static void first_pass_frame_end(PictureParentControlSet *pcs, uint8_t skip_frame,
                           uint8_t bypass_blk_step, const double ts_duration) {
     SequenceControlSet *scs = pcs->scs;
@@ -507,15 +358,6 @@ static void first_pass_frame_end(PictureParentControlSet *pcs, uint8_t skip_fram
             stats.intra_skip_count = AOMMAX(
                 0, stats.intra_skip_count - (stats.image_data_start_row * (int)mb_cols * 2));
         }
-#if !OPT_VBR4
-        uint32_t step = (uint32_t)bypass_blk_step;
-        const int num_mbs = (mb_rows / step) * (mb_cols / step);
-        /*(cpi->oxcf.resize_cfg.resize_mode != RESIZE_NONE)
-        ? cpi->initial_mbs
-        : mi_params->MBs;*/
-        stats.intra_factor      = stats.intra_factor / (double)num_mbs;
-        stats.brightness_factor = stats.brightness_factor / (double)num_mbs;
-#endif
     } else {
         memset(&stats, 0, sizeof(stats));
     }
@@ -642,22 +484,6 @@ static int open_loop_firstpass_intra_prediction(
     } else if ((mb_col > 0) && (stats->image_data_start_row == INVALID_ROW)) {
         stats->image_data_start_row = mb_row;
     }
-#if !OPT_VBR4
-    // aom_clear_system_state();
-    //22025 is (exp(10) -1) equivalent to (log1p((double)this_intra_error) < 10.0)
-    if (this_intra_error < 22025)
-        stats->intra_factor += 1.5 - log1p((double)this_intra_error) * 0.05;
-    else
-        stats->intra_factor += 1.0;
-
-    int level_sample = input_pic->buffer_y[input_origin_index];
-
-    //8102 is (exp(9) -1) equivalent to (log1p((double)this_intra_error) < 9.0)
-    if ((level_sample < DARK_THRESH) && (this_intra_error < 8102))
-        stats->brightness_factor += 1.0 + (0.01 * (DARK_THRESH - level_sample));
-    else
-        stats->brightness_factor += 1.0;
-#endif
     // Intrapenalty below deals with situations where the intra and inter
     // error scores are very low (e.g. a plain black frame).
     // We do not have special cases in first pass for 0,0 and nearest etc so
@@ -680,24 +506,10 @@ static int open_loop_firstpass_intra_prediction(
 *    this_inter_error
 ***************************************************************************/
 static int open_loop_firstpass_inter_prediction(
-#if OPT_VBR_2P
     PictureParentControlSet *ppcs, uint32_t me_sb_addr, uint32_t blk_org_x,
     uint32_t blk_org_y, uint8_t bwidth, uint8_t bheight, EbPictureBufferDesc *input_pic,
     uint32_t input_origin_index, const int this_intra_error, int raw_motion_err,
     int down_step) {
-#else
-    PictureParentControlSet *ppcs, uint32_t me_sb_addr, uint32_t blk_org_x,
-    uint32_t blk_org_y, uint8_t bwidth, uint8_t bheight, EbPictureBufferDesc *input_pic,
-    uint32_t input_origin_index, const int this_intra_error, MV *last_mv, int raw_motion_err,
-    FRAME_STATS *stats, int down_step) {
-    int32_t        mb_row  = blk_org_y >> 4;
-    int32_t        mb_col  = blk_org_x >> 4;
-    const uint32_t mb_cols = (ppcs->scs->max_input_luma_width + FORCED_BLK_SIZE - 1) /
-        FORCED_BLK_SIZE;
-    const uint32_t mb_rows = (ppcs->scs->max_input_luma_height + FORCED_BLK_SIZE -
-                              1) /
-        FORCED_BLK_SIZE;
-#endif
     int                   this_inter_error           = this_intra_error;
     FULLPEL_MV            mv                         = kZeroFullMv;
     EbSpatialFullDistType spatial_full_dist_type_fun = svt_spatial_full_distortion_kernel;
@@ -803,63 +615,17 @@ static int open_loop_firstpass_inter_prediction(
         }
 
         if (gf_motion_error < motion_error && gf_motion_error < this_intra_error) {
-#if !OPT_VBR4
-            ++stats->second_ref_count;
-#endif
             motion_error = gf_motion_error;
         }
-#if !OPT_VBR4
-        // In accumulating a score for the 2nd reference frame take the
-        // best of the motion predicted score and the intra coded error
-        // (just as will be done for) accumulation of "coded_error" for
-        // the last frame.
-        if (ppcs->first_pass_ref_count > 1 && (gf_motion_error < motion_error * 3)) {
-            stats->sr_coded_error += AOMMIN(gf_motion_error, this_intra_error);
-        } else {
-            stats->sr_coded_error += motion_error;
-        }
-#endif
 
     }
-#if !OPT_VBR4
-    else {
-        stats->sr_coded_error += motion_error;
-    }
-#endif
 
     // Start by assuming that intra mode is best.
     if (motion_error <= this_intra_error) {
 #ifdef ARCH_X86_64
         aom_clear_system_state();
 #endif
-#if !OPT_VBR4
-        // Keep a count of cases where the inter and intra were very close
-        // and very low. This helps with scene cut detection for example in
-        // cropped clips with black bars at the sides or top and bottom.
-        if (((this_intra_error - INTRA_MODE_PENALTY) * 9 <= motion_error * 10) &&
-            (this_intra_error < (2 * INTRA_MODE_PENALTY))) {
-            stats->neutral_count += 1.0;
-            // Also track cases where the intra is not much worse than the inter
-            // and use this in limiting the GF/arf group length.
-        } else if ((this_intra_error > NCOUNT_INTRA_THRESH) &&
-                   (this_intra_error < (NCOUNT_INTRA_FACTOR * motion_error))) {
-            stats->neutral_count += (double)motion_error /
-                DOUBLE_DIVIDE_CHECK((double)this_intra_error);
-        }
-#endif
-#if !OPT_VBR_2P
-        const MV best_mv = get_mv_from_fullmv(&mv);
-#endif
         this_inter_error = motion_error;
-#if !OPT_VBR4
-        stats->sum_mvr_abs += abs(best_mv.row);
-        stats->sum_mvc += best_mv.col;
-        stats->sum_mvc_abs += abs(best_mv.col);
-#endif
-#if !OPT_VBR_2P
-        ++stats->inter_count;
-        accumulate_mv_stats(best_mv, mv, mb_row, mb_col, mb_rows, mb_cols, last_mv, stats);
-#endif
     }
 
     return this_inter_error;
@@ -976,7 +742,6 @@ static EbErrorType first_pass_frame_seg(PictureParentControlSet *ppcs, int32_t s
                 last_mv = first_top_mv;
 
             if (ppcs->first_pass_ref_count) {
-#if OPT_VBR_2P
                 this_inter_error = open_loop_firstpass_inter_prediction(
                     ppcs,
                     me_sb_addr,
@@ -990,32 +755,12 @@ static EbErrorType first_pass_frame_seg(PictureParentControlSet *ppcs, int32_t s
                     ppcs->firstpass_data
                     .raw_motion_err_list[blk_index_y * blk_cols + blk_index_x],
                     down_step);
-#else
-                this_inter_error = open_loop_firstpass_inter_prediction(
-                    ppcs,
-                    me_sb_addr,
-                    blk_org_x,
-                    blk_org_y,
-                    blk_width,
-                    blk_height,
-                    input_pic,
-                    input_origin_index,
-                    this_intra_error,
-                    &last_mv,
-                    ppcs->firstpass_data
-                        .raw_motion_err_list[blk_index_y * blk_cols + blk_index_x],
-                    mb_stats,
-                    down_step);
-#endif
 
                 if (blk_org_x == 0)
                     first_top_mv = last_mv;
 
                 mb_stats->coded_error += this_inter_error;
             } else {
-#if !OPT_VBR4
-                mb_stats->sr_coded_error += this_intra_error;
-#endif
                 mb_stats->coded_error += this_intra_error;
             }
         }

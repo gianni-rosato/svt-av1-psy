@@ -1574,9 +1574,7 @@ void svt_aom_full_cost(PictureControlSet *pcs, ModeDecisionContext *ctx, struct 
             cand_bf->y_has_coeff        = 0;
             cand_bf->u_has_coeff        = 0;
             cand_bf->v_has_coeff        = 0;
-#if FIX_NZ_COEFF_SKIP
             cand_bf->cnt_nz_coeff = 0;
-#endif
 
             // For inter modes, signalling skip means no TX depth is used and the TX type will be DCT_DCT
             cand_bf->cand->tx_depth          = 0;
@@ -1630,9 +1628,7 @@ void svt_aom_full_cost(PictureControlSet *pcs, ModeDecisionContext *ctx, struct 
             cand_bf->y_has_coeff     = 0;
             cand_bf->u_has_coeff     = 0;
             cand_bf->v_has_coeff     = 0;
-#if FIX_NZ_COEFF_SKIP
             cand_bf->cnt_nz_coeff = 0;
-#endif
             cand_bf->cand->tx_depth = 0;
             assert(DCT_DCT == 0);
             memset(cand_bf->cand->transform_type, DCT_DCT, 16 * sizeof(cand_bf->cand->transform_type[0]));

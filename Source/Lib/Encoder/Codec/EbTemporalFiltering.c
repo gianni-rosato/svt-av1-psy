@@ -60,7 +60,6 @@ static const uint32_t subblock_xy_16x16[N_16X16_BLOCKS][2] = {{0, 0},
 static const uint32_t idx_32x32_to_idx_16x16[4][4]         = {
     {0, 1, 4, 5}, {2, 3, 6, 7}, {8, 9, 12, 13}, {10, 11, 14, 15}};
 
-#if OPT_TF_8X8_BLOCKS
 static const uint32_t subblock_xy_8x8[N_8X8_BLOCKS][2] = {
     {0, 0}, {0, 1}, {0, 2}, {0, 3}, {0, 4}, {0, 5}, {0, 6}, {0, 7},
     {1, 0}, {1, 1}, {1, 2}, {1, 3}, {1, 4}, {1, 5}, {1, 6}, {1, 7},
@@ -78,7 +77,6 @@ static const uint32_t idx_32x32_to_idx_8x8[4][4][4] = {
     { {32, 33, 40, 41}, {34, 35, 42, 43}, {48, 49, 56, 57}, {50, 51, 58, 59} },
     { {36, 37, 44, 45}, {38, 39, 46, 47}, {52, 53, 60, 61}, {54, 55, 62, 63} }
 };
-#endif
 
 int32_t svt_aom_get_frame_update_type(SequenceControlSet *scs, PictureParentControlSet *pcs);
 int32_t svt_av1_compute_qdelta_fp(int32_t qstart_fp8, int32_t qtarget_fp8, EbBitDepth bit_depth);
@@ -249,9 +247,7 @@ static void derive_tf_32x32_block_split_flag(MeContext *me_ctx) {
     // by to-filter frame.
     if (block_error == INT_MAX) {
         me_ctx->tf_32x32_block_split_flag[idx_32x32] = 0;
-#if OPT_TF_8X8_BLOCKS
         memset(&me_ctx->tf_16x16_block_split_flag[idx_32x32][0], 0, sizeof(me_ctx->tf_16x16_block_split_flag[idx_32x32][0]) * 4);
-#endif
     }
 
     int min_subblock_error = INT_MAX;
@@ -260,7 +256,6 @@ static void derive_tf_32x32_block_split_flag(MeContext *me_ctx) {
     for (int i = 0; i < 4; ++i) {
         subblock_errors[i] = (int)me_ctx->tf_16x16_block_error[idx_32x32 * 4 + i];
 
-#if OPT_TF_8X8_BLOCKS
         if (me_ctx->tf_ctrls.enable_8x8_pred) {
             // check 8x8
             int error_8x8 = 0;
@@ -274,18 +269,13 @@ static void derive_tf_32x32_block_split_flag(MeContext *me_ctx) {
             }
             else { // Do split.
                 me_ctx->tf_16x16_block_split_flag[idx_32x32][i] = 1;
-#if CLN_MISC_II
                 me_ctx->tf_16x16_block_error[idx_32x32 * 4 + i] = error_8x8;
                 subblock_errors[i]                              = error_8x8;
-#else
-                subblock_errors[i] = me_ctx->tf_16x16_block_error[idx_32x32 * 4 + i] = error_8x8;
-#endif
             }
         }
         else {
             me_ctx->tf_16x16_block_split_flag[idx_32x32][i] = 0;
         }
-#endif
 
         sum_subblock_error += subblock_errors[i];
         min_subblock_error = AOMMIN(min_subblock_error, subblock_errors[i]);
@@ -1013,11 +1003,7 @@ void svt_av1_apply_zz_based_temporal_filter_planewise_medium_hbd_c(
 static void svt_av1_apply_temporal_filter_planewise_medium_partial_c(
     struct MeContext *me_ctx, const uint8_t *y_src, int y_src_stride, const uint8_t *y_pre,
     int y_pre_stride, unsigned int block_width, unsigned int block_height, uint32_t *y_accum,
-#if OPT_TF_FACTOR_LARGE_BLOCKS
     uint16_t *y_count, uint32_t tf_decay_factor_fp16, uint32_t luma_window_error_quad_fp8[4],
-#else
-    uint16_t *y_count, const uint32_t tf_decay_factor_fp16, uint32_t luma_window_error_quad_fp8[4],
-#endif
     int is_chroma) {
     unsigned int i, j, subblock_idx;
 
@@ -1047,9 +1033,7 @@ static void svt_av1_apply_temporal_filter_planewise_medium_partial_c(
             block_error_fp8[i] = (uint32_t)(me_ctx->tf_16x16_block_error[idx_32x32 * 4 + i]);
         }
     } else {
-#if OPT_TF_FACTOR_LARGE_BLOCKS
         tf_decay_factor_fp16 <<= 1;
-#endif
         int32_t col = me_ctx->tf_32x32_mv_x[idx_32x32];
         int32_t row = me_ctx->tf_32x32_mv_y[idx_32x32];
 
@@ -1202,11 +1186,7 @@ void svt_av1_apply_temporal_filter_planewise_medium_c(
 static void svt_av1_apply_temporal_filter_planewise_medium_hbd_partial_c(
     struct MeContext *me_ctx, const uint16_t *y_src, int y_src_stride, const uint16_t *y_pre,
     int y_pre_stride, unsigned int block_width, unsigned int block_height, uint32_t *y_accum,
-#if OPT_TF_FACTOR_LARGE_BLOCKS
     uint16_t *y_count, uint32_t tf_decay_factor_fp16, uint32_t luma_window_error_quad_fp8[4],
-#else
-    uint16_t *y_count, const uint32_t tf_decay_factor_fp16, uint32_t luma_window_error_quad_fp8[4],
-#endif
     int is_chroma, uint32_t encoder_bit_depth) {
     unsigned int i, j, subblock_idx;
     // Decay factors for non-local mean approach.
@@ -1237,9 +1217,7 @@ static void svt_av1_apply_temporal_filter_planewise_medium_hbd_partial_c(
                                             4);
         }
     } else {
-#if OPT_TF_FACTOR_LARGE_BLOCKS
         tf_decay_factor_fp16 <<= 1;
-#endif
         int32_t col = me_ctx->tf_32x32_mv_x[idx_32x32];
         int32_t row = me_ctx->tf_32x32_mv_y[idx_32x32];
         //const float  distance = sqrtf((float)col*col + row*row);
@@ -1944,7 +1922,6 @@ static void tf_16x16_sub_pel_search(PictureParentControlSet *pcs, MeContext *me_
         }
 }
 
-#if OPT_TF_8X8_BLOCKS
 static void tf_8x8_sub_pel_search(PictureParentControlSet *pcs, MeContext *me_ctx,
                                     PictureParentControlSet *pcs_ref,
                                     EbPictureBufferDesc *pic_ptr_ref, EbByte *pred,
@@ -2373,7 +2350,6 @@ static void tf_8x8_sub_pel_search(PictureParentControlSet *pcs, MeContext *me_ct
         }
     }
 }
-#endif
 
 uint64_t svt_check_position_64x64(TF_SUBPEL_SEARCH_PARAMS  tf_sp_param,
                                   PictureParentControlSet *pcs, MeContext *me_ctx,
@@ -4110,13 +4086,8 @@ static void tf_64x64_inter_prediction(PictureParentControlSet *pcs, MeContext *m
                                   bsize,
                                   pcs->scs->seq_header.sb_size == BLOCK_128X128);
 
-#if FIX_TF_64X64_PRED
     const int32_t bw                 = mi_size_wide[BLOCK_64X64];
     const int32_t bh                 = mi_size_high[BLOCK_64X64];
-#else
-    const int32_t bw                 = mi_size_wide[BLOCK_32X32];
-    const int32_t bh                 = mi_size_high[BLOCK_32X32];
-#endif
     blk_ptr.av1xd->mb_to_top_edge    = -(int32_t)((mirow * MI_SIZE) * 8);
     blk_ptr.av1xd->mb_to_bottom_edge = ((pcs->av1_cm->mi_rows - bw - mirow) * MI_SIZE) * 8;
     blk_ptr.av1xd->mb_to_left_edge   = -(int32_t)((micol * MI_SIZE) * 8);
@@ -4211,12 +4182,8 @@ static void tf_32x32_inter_prediction(PictureParentControlSet *pcs, MeContext *m
 
     uint32_t idx_32x32 = me_ctx->idx_32x32;
     if (me_ctx->tf_32x32_block_split_flag[idx_32x32]) {
-#if !CLN_MISC_II
-        uint32_t bsize = 16;
-#endif
 
         for (uint32_t idx_16x16 = 0; idx_16x16 < 4; idx_16x16++) {
-#if OPT_TF_8X8_BLOCKS
             if (me_ctx->tf_16x16_block_split_flag[idx_32x32][idx_16x16]) {
                 uint32_t bsize = 8;
 
@@ -4283,10 +4250,7 @@ static void tf_32x32_inter_prediction(PictureParentControlSet *pcs, MeContext *m
                 }
             }
             else {
-#if CLN_MISC_II
             uint32_t bsize = 16;
-#endif
-#endif
             uint32_t pu_index = idx_32x32_to_idx_16x16[idx_32x32][idx_16x16];
 
             uint32_t idx_y          = subblock_xy_16x16[pu_index][0];
@@ -4347,9 +4311,7 @@ static void tf_32x32_inter_prediction(PictureParentControlSet *pcs, MeContext *m
                                  (uint8_t)encoder_bit_depth,
                                  0); // is_16bit_pipeline
         }
-#if OPT_TF_8X8_BLOCKS
         }
-#endif
     } else {
         uint32_t bsize = 32;
 
@@ -4519,9 +4481,7 @@ static void convert_64x64_info_to_32x32_info(
     ctx->tf_32x32_block_split_flag[1] = 0;
     ctx->tf_32x32_block_split_flag[2] = 0;
     ctx->tf_32x32_block_split_flag[3] = 0;
-#if OPT_TF_8X8_BLOCKS
     memset(ctx->tf_16x16_block_split_flag, 0, sizeof(ctx->tf_16x16_block_split_flag[0][0]) * 4 * 4);
-#endif
 
     // Update the 32x32 block-error
     for (int block_row = 0; block_row < 2; block_row++) {
@@ -4844,11 +4804,7 @@ static EbErrorType produce_temporally_filtered_pic(
                 // Use ahd-error to central/avg to identify/skip outlier ref-frame(s)
                 if (frame_index != index_center) {
                     uint32_t low_ahd_err = centre_pcs->aligned_width * centre_pcs->aligned_height;
-#if OPT_TF_AHD_TH
                     uint8_t th = (centre_pcs->slice_type == I_SLICE) ? 20 : 40;
-#else
-                    uint8_t th = (centre_pcs->slice_type == I_SLICE) ? 10 : 20;
-#endif
                     if (pcs_list[frame_index]->tf_ahd_error_to_central > low_ahd_err && // error to central high enough
                        ((int) (((int) pcs_list[frame_index]->tf_ahd_error_to_central - (int) centre_pcs->tf_avg_ahd_error) * 100)) > (th * (int) centre_pcs->tf_avg_ahd_error)) // ahd_error_to_central higher than tf_avg_ahd_error by x%
                         continue;
@@ -5031,9 +4987,7 @@ static EbErrorType produce_temporally_filtered_pic(
                                     if (ctx->tf_32x32_block_error[ctx->idx_32x32] < centre_pcs->tf_ctrls.pred_error_32x32_th) {
                                         ctx->tf_32x32_block_split_flag[ctx->idx_32x32] =
                                             0;
-#if OPT_TF_8X8_BLOCKS
                                         memset(&ctx->tf_16x16_block_split_flag[ctx->idx_32x32][0], 0, sizeof(ctx->tf_16x16_block_split_flag[ctx->idx_32x32][0]) * 4);
-#endif
                                     } else {
                                         tf_16x16_sub_pel_search(centre_pcs,
                                             ctx,
@@ -5052,7 +5006,6 @@ static EbErrorType produce_temporally_filtered_pic(
                                             ? EB_EIGHT_BIT
                                             : encoder_bit_depth);
 
-#if OPT_TF_8X8_BLOCKS
                                         if (ctx->tf_ctrls.enable_8x8_pred) {
                                             tf_8x8_sub_pel_search(centre_pcs,
                                                 ctx,
@@ -5071,7 +5024,6 @@ static EbErrorType produce_temporally_filtered_pic(
                                                 ? EB_EIGHT_BIT
                                                 : encoder_bit_depth);
                                         }
-#endif
 
                                         // Derive tf_32x32_block_split_flag
                                         derive_tf_32x32_block_split_flag(ctx);

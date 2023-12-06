@@ -36,9 +36,7 @@ typedef struct EbReferenceObject {
     SliceType slice_type;
     uint8_t   intra_coded_area; //percentage of intra coded area 0-100%
     uint8_t   skip_coded_area;
-#if OPT_HP_MV
     uint8_t hp_coded_area;
-#endif
     uint8_t              tmp_layer_idx;
     Bool                 is_scene_change;
     uint16_t             pic_avg_variance;
@@ -114,10 +112,8 @@ extern EbErrorType svt_reference_object_reset(EbReferenceObject *obj, SequenceCo
 extern EbErrorType svt_pa_reference_object_creator(EbPtr *object_dbl_ptr, EbPtr object_init_data_ptr);
 extern EbErrorType svt_tpl_reference_object_creator(EbPtr *object_dbl_ptr, EbPtr object_init_data_ptr);
 void               svt_aom_release_pa_reference_objects(SequenceControlSet *scs, PictureParentControlSet *pcs);
-#if FTR_RES_ON_FLY4
 extern EbErrorType svt_pa_reference_param_update(EbPaReferenceObject *pa_ref_obj_, SequenceControlSet *scs);
 extern EbErrorType svt_tpl_reference_param_update(EbTplReferenceObject *tpl_ref_obj, SequenceControlSet *scs);
 extern EbErrorType svt_reference_param_update(EbReferenceObject *ref_object, SequenceControlSet *scs);
-#endif
 
 #endif //EbReferenceObject_h

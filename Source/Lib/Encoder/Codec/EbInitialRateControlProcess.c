@@ -378,7 +378,6 @@ static void process_lad_queue(InitialRateControlContext *ctx, uint8_t pass_thru)
     }
 }
 
-#if OPT_VBR2
 #define LOW_8x8_DIST_VAR_TH 10000
 #define HIGH_8x8_DIST_VAR_TH 50000
 #define MIN_AVG_ME_DIST 1000
@@ -409,18 +408,13 @@ static void set_1pvbr_param(PictureParentControlSet *pcs) {
         if (scs->input_resolution <= INPUT_SIZE_480p_RANGE)
             weight = 1.5 * weight;
         pcs->stat_struct.poc = pcs->picture_number;
-#if OPT_VBR6
         (scs->twopass.stats_buf_ctx->stats_in_start + pcs->picture_number)->stat_struct.total_num_bits = MAX(
             MIN_AVG_ME_DIST, avg_me_dist);
-#else
-        (scs->twopass.stats_buf_ctx->stats_in_start + pcs->picture_number)->stat_struct.total_num_bits = avg_me_dist;
-#endif
         (scs->twopass.stats_buf_ctx->stats_in_start + pcs->picture_number)->coded_error = (double)avg_me_dist *
             pcs->b64_total_count * weight / VBR_CODED_ERROR_FACTOR;
         (scs->twopass.stats_buf_ctx->stats_in_start + pcs->picture_number)->stat_struct.poc = pcs->picture_number;
     }
 }
-#endif
 /* Initial Rate Control Kernel */
 
 /*********************************************************************************
@@ -507,7 +501,6 @@ void *svt_aom_initial_rate_control_kernel(void *input_ptr) {
             // The quant/dequant params derivation is performaed 1 time per sequence assuming the qindex offset(s) are 0
             // then adjusted per TU prior of the quantization at svt_aom_quantize_inv_quantize() depending on the qindex offset(s)
             if (pcs->picture_number == 0) {
-#if FTR_RES_ON_FLY2
                 Quants *const   quants_8bit = &scs->enc_ctx->quants_8bit;
                 Dequants *const deq_8bit    = &scs->enc_ctx->deq_8bit;
                 svt_av1_build_quantizer(EB_EIGHT_BIT, 0, 0, 0, 0, 0, quants_8bit, deq_8bit);
@@ -517,24 +510,11 @@ void *svt_aom_initial_rate_control_kernel(void *input_ptr) {
                     Dequants *const deq_bd    = &scs->enc_ctx->deq_bd;
                     svt_av1_build_quantizer(EB_TEN_BIT, 0, 0, 0, 0, 0, quants_bd, deq_bd);
                 }
-#else
-                Quants *const   quants_8bit = &scs->quants_8bit;
-                Dequants *const deq_8bit    = &scs->deq_8bit;
-                svt_av1_build_quantizer(EB_EIGHT_BIT, 0, 0, 0, 0, 0, quants_8bit, deq_8bit);
-
-                if (scs->static_config.encoder_bit_depth == EB_TEN_BIT) {
-                    Quants *const   quants_bd = &scs->quants_bd;
-                    Dequants *const deq_bd    = &scs->deq_bd;
-                    svt_av1_build_quantizer(EB_TEN_BIT, 0, 0, 0, 0, 0, quants_bd, deq_bd);
-                }
-#endif
             }
-#if OPT_VBR2
             // Set the one pass VBR parameters based on the look ahead data
             if (scs->lap_rc) {
                 set_1pvbr_param(pcs);
             }
-#endif
             // tpl_la can be performed on unscaled frames in super-res q-threshold and auto mode
             if (pcs->tpl_ctrls.enable && !pcs->frame_superres_enabled) {
                 svt_set_cond_var(&pcs->me_ready, 1);

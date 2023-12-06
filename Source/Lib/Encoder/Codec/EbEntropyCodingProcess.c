@@ -255,9 +255,7 @@ void *svt_aom_entropy_coding_kernel(void *input_ptr) {
         }
         svt_release_mutex(pcs->entropy_coding_pic_mutex);
 
-#if TURN_OFF_EC_FIRST_PASS || OPT_VBR4
         if (scs->static_config.pass != ENC_FIRST_PASS && !svt_aom_is_pic_skipped(pcs->ppcs)) {
-#endif
             for (uint32_t y_sb_index = 0; y_sb_index < tile_height_in_sb; ++y_sb_index) {
                 for (uint32_t x_sb_index = 0; x_sb_index < tile_width_in_sb; ++x_sb_index) {
                     uint16_t    sb_index = (uint16_t)((x_sb_index + tile_sb_start_x) +
@@ -275,9 +273,7 @@ void *svt_aom_entropy_coding_kernel(void *input_ptr) {
                     svt_aom_write_sb(context_ptr, sb_ptr, pcs, tile_idx, pcs->ec_info[tile_idx]->ec, coeff_picture_ptr);
                 }
             }
-#if TURN_OFF_EC_FIRST_PASS || OPT_VBR4
         }
-#endif
         Bool pic_ready = TRUE;
 
         // Current tile ready

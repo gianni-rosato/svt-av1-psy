@@ -555,23 +555,16 @@ void svt_aom_recon_output(PictureControlSet *pcs, SequenceControlSet *scs) {
                 recon_w = recon_ptr->max_width; //ALIGN_POWER_OF_TWO(recon_ptr->width, 3);
                 recon_h = recon_ptr->max_height; //ALIGN_POWER_OF_TWO(recon_ptr->height, 3);
             }
-#if FTR_RES_ON_FLY5
             // Keep the recon at full resolution and show the lower resolution video on the top right part
             // Y Recon Samples
             sample_total_count = ((pcs->scs->max_initial_input_luma_width - scs->max_initial_input_pad_right) *
                                   (pcs->scs->max_initial_input_luma_height - scs->max_initial_input_pad_bottom))
                 << is_16bit;
-#else
-            // Y Recon Samples
-            sample_total_count = ((recon_w - scs->pad_right) * (recon_h - scs->pad_bottom)) << is_16bit;
-#endif
             recon_read_ptr = recon_ptr->buffer_y + (recon_ptr->org_y << is_16bit) * recon_ptr->stride_y +
                 (recon_ptr->org_x << is_16bit);
             recon_write_ptr = &(output_recon_ptr->p_buffer[output_recon_ptr->n_filled_len]);
-#if FTR_RES_ON_FLY5
             // Reset the Luma buffer for the case on changing the resolution on the fly
             memset(recon_write_ptr, 0, sample_total_count);
-#endif
             CHECK_REPORT_ERROR((output_recon_ptr->n_filled_len + sample_total_count <= output_recon_ptr->n_alloc_len),
                                enc_ctx->app_callback_ptr,
                                EB_ENC_ROB_OF_ERROR);
@@ -581,11 +574,7 @@ void svt_aom_recon_output(PictureControlSet *pcs, SequenceControlSet *scs) {
                 recon_read_ptr,
                 recon_ptr->stride_y,
                 recon_write_ptr,
-#if FTR_RES_ON_FLY5
                 pcs->scs->max_initial_input_luma_width - scs->pad_right, // use the full res stride
-#else
-                recon_w - scs->pad_right,
-#endif
                 recon_w - scs->pad_right,
                 recon_h - scs->pad_bottom,
                 1 << is_16bit);
@@ -593,26 +582,18 @@ void svt_aom_recon_output(PictureControlSet *pcs, SequenceControlSet *scs) {
             output_recon_ptr->n_filled_len += sample_total_count;
 
             // U Recon Samples
-#if FTR_RES_ON_FLY5
             // Keep the recon at full resolution and show the lower resolution video on the top right part
             sample_total_count =
                 (((pcs->scs->max_initial_input_luma_width + ss_x - scs->max_initial_input_pad_right) >> ss_x) *
                  ((pcs->scs->max_initial_input_luma_height + ss_y - scs->max_initial_input_pad_bottom) >> ss_y))
                 << is_16bit;
-#else
-            sample_total_count =
-                (((recon_w + ss_x - scs->pad_right) >> ss_x) * ((recon_h + ss_y - scs->pad_bottom) >> ss_y))
-                << is_16bit;
-#endif
             recon_read_ptr = recon_ptr->buffer_cb + ((recon_ptr->org_y << is_16bit) >> ss_y) * recon_ptr->stride_cb +
                 ((recon_ptr->org_x << is_16bit) >> ss_x);
             recon_write_ptr = &(output_recon_ptr->p_buffer[output_recon_ptr->n_filled_len]);
 
-#if FTR_RES_ON_FLY5
             // Reset the Chroma buffer for the case on changing the resolution on the fly
             memset(recon_write_ptr, 0, sample_total_count);
 
-#endif
             CHECK_REPORT_ERROR((output_recon_ptr->n_filled_len + sample_total_count <= output_recon_ptr->n_alloc_len),
                                enc_ctx->app_callback_ptr,
                                EB_ENC_ROB_OF_ERROR);
@@ -621,34 +602,22 @@ void svt_aom_recon_output(PictureControlSet *pcs, SequenceControlSet *scs) {
             svt_aom_picture_copy_kernel(recon_read_ptr,
                                         recon_ptr->stride_cb,
                                         recon_write_ptr,
-#if FTR_RES_ON_FLY5
                                         (pcs->scs->max_initial_input_luma_width + ss_x - scs->pad_right) >> ss_x,
-#else
-                                        (recon_w + ss_x - scs->pad_right) >> ss_x,
-#endif
                                         (recon_w + ss_x - scs->pad_right) >> ss_x,
                                         (recon_h + ss_y - scs->pad_bottom) >> ss_y,
                                         1 << is_16bit);
             output_recon_ptr->n_filled_len += sample_total_count;
 
             // V Recon Samples
-#if FTR_RES_ON_FLY5
             sample_total_count =
                 (((pcs->scs->max_initial_input_luma_width + ss_x - scs->max_initial_input_pad_right) >> ss_x) *
                  ((pcs->scs->max_initial_input_luma_height + ss_y - scs->max_initial_input_pad_bottom) >> ss_y))
                 << is_16bit;
-#else
-            sample_total_count =
-                (((recon_w + ss_x - scs->pad_right) >> ss_x) * ((recon_h + ss_y - scs->pad_bottom) >> ss_y))
-                << is_16bit;
-#endif
             recon_read_ptr = recon_ptr->buffer_cr + ((recon_ptr->org_y << is_16bit) >> ss_y) * recon_ptr->stride_cr +
                 ((recon_ptr->org_x << is_16bit) >> ss_x);
             recon_write_ptr = &(output_recon_ptr->p_buffer[output_recon_ptr->n_filled_len]);
-#if FTR_RES_ON_FLY5
             // Reset the Chroma buffer for the case on changing the resolution on the fly
             memset(recon_write_ptr, 0, sample_total_count);
-#endif
             CHECK_REPORT_ERROR((output_recon_ptr->n_filled_len + sample_total_count <= output_recon_ptr->n_alloc_len),
                                enc_ctx->app_callback_ptr,
                                EB_ENC_ROB_OF_ERROR);
@@ -657,11 +626,7 @@ void svt_aom_recon_output(PictureControlSet *pcs, SequenceControlSet *scs) {
             svt_aom_picture_copy_kernel(recon_read_ptr,
                                         recon_ptr->stride_cr,
                                         recon_write_ptr,
-#if FTR_RES_ON_FLY5
                                         (pcs->scs->max_initial_input_luma_width + ss_x - scs->pad_right) >> ss_x,
-#else
-                                        (recon_w + ss_x - scs->pad_right) >> ss_x,
-#endif
                                         (recon_w + ss_x - scs->pad_right) >> ss_x,
                                         (recon_h + ss_y - scs->pad_bottom) >> ss_y,
                                         1 << is_16bit);
@@ -1832,38 +1797,21 @@ void set_block_based_depth_refinement_controls(ModeDecisionContext *ctx, uint8_t
     switch (block_based_depth_refinement_level) {
     case 0: depth_refinement_ctrls->enabled = 0; break;
     case 1: depth_refinement_ctrls->enabled = 1; depth_refinement_ctrls->prune_child_if_not_avail = 1;
-#if OPT_M3_BEYOND_DEPTHS
         depth_refinement_ctrls->parent_to_current_th = 100;
         depth_refinement_ctrls->sub_to_current_th    = 100;
-#else
-        depth_refinement_ctrls->parent_to_current_th = MAX_SIGNED_VALUE;
-        depth_refinement_ctrls->sub_to_current_th = MAX_SIGNED_VALUE;
-#endif
         depth_refinement_ctrls->parent_max_cost_th_mult         = 10;
         depth_refinement_ctrls->cost_band_based_modulation      = 0;
         depth_refinement_ctrls->up_to_2_depth                   = 0;
         depth_refinement_ctrls->limit_4x4_depth                 = 0;
         depth_refinement_ctrls->sub_to_current_pd0_coeff_th     = 0;
         depth_refinement_ctrls->sub_to_current_pd0_coeff_offset = 0;
-#if OPT_DEPTH_REFIN
         depth_refinement_ctrls->lower_depth_split_cost_th = 0;
-#endif
-#if OPT_CHILD_DEPTH_RATE
         depth_refinement_ctrls->split_rate_th = 10;
-#endif
-#if OPT_DR_QP
         depth_refinement_ctrls->q_weight = 10;
-#endif
         break;
-#if OPT_DEPTH_REFIN
     case 2: depth_refinement_ctrls->enabled = 1; depth_refinement_ctrls->prune_child_if_not_avail = 1;
-#if OPT_M3_BEYOND_DEPTHS
         depth_refinement_ctrls->parent_to_current_th = 100;
         depth_refinement_ctrls->sub_to_current_th    = 100;
-#else
-        depth_refinement_ctrls->parent_to_current_th = MAX_SIGNED_VALUE;
-        depth_refinement_ctrls->sub_to_current_th    = MAX_SIGNED_VALUE;
-#endif
         depth_refinement_ctrls->parent_max_cost_th_mult         = 10;
         depth_refinement_ctrls->cost_band_based_modulation      = 0;
         depth_refinement_ctrls->up_to_2_depth                   = 0;
@@ -1871,12 +1819,8 @@ void set_block_based_depth_refinement_controls(ModeDecisionContext *ctx, uint8_t
         depth_refinement_ctrls->sub_to_current_pd0_coeff_th     = 0;
         depth_refinement_ctrls->sub_to_current_pd0_coeff_offset = 0;
         depth_refinement_ctrls->lower_depth_split_cost_th       = 20;
-#if OPT_CHILD_DEPTH_RATE
         depth_refinement_ctrls->split_rate_th = 10;
-#endif
-#if OPT_DR_QP
         depth_refinement_ctrls->q_weight = 10;
-#endif
         break;
     case 3:
         depth_refinement_ctrls->enabled                         = 1;
@@ -1890,12 +1834,8 @@ void set_block_based_depth_refinement_controls(ModeDecisionContext *ctx, uint8_t
         depth_refinement_ctrls->sub_to_current_pd0_coeff_th     = 0;
         depth_refinement_ctrls->sub_to_current_pd0_coeff_offset = 0;
         depth_refinement_ctrls->lower_depth_split_cost_th       = 20;
-#if OPT_CHILD_DEPTH_RATE
         depth_refinement_ctrls->split_rate_th = 10;
-#endif
-#if OPT_DR_QP
         depth_refinement_ctrls->q_weight = 10;
-#endif
         break;
 
     case 4:
@@ -1916,12 +1856,8 @@ void set_block_based_depth_refinement_controls(ModeDecisionContext *ctx, uint8_t
         depth_refinement_ctrls->sub_to_current_pd0_coeff_th     = 0;
         depth_refinement_ctrls->sub_to_current_pd0_coeff_offset = 0;
         depth_refinement_ctrls->lower_depth_split_cost_th       = 20;
-#if OPT_CHILD_DEPTH_RATE
         depth_refinement_ctrls->split_rate_th = 10;
-#endif
-#if OPT_DR_QP
         depth_refinement_ctrls->q_weight = 10;
-#endif
         break;
     case 5:
         depth_refinement_ctrls->enabled                         = 1;
@@ -1941,12 +1877,8 @@ void set_block_based_depth_refinement_controls(ModeDecisionContext *ctx, uint8_t
         depth_refinement_ctrls->sub_to_current_pd0_coeff_th     = 20;
         depth_refinement_ctrls->sub_to_current_pd0_coeff_offset = 20;
         depth_refinement_ctrls->lower_depth_split_cost_th       = 20;
-#if OPT_CHILD_DEPTH_RATE
         depth_refinement_ctrls->split_rate_th = 10;
-#endif
-#if OPT_DR_QP
         depth_refinement_ctrls->q_weight = 10;
-#endif
         break;
     case 6:
         depth_refinement_ctrls->enabled                         = 1;
@@ -1966,12 +1898,8 @@ void set_block_based_depth_refinement_controls(ModeDecisionContext *ctx, uint8_t
         depth_refinement_ctrls->sub_to_current_pd0_coeff_th     = 20;
         depth_refinement_ctrls->sub_to_current_pd0_coeff_offset = 20;
         depth_refinement_ctrls->lower_depth_split_cost_th       = 20;
-#if OPT_CHILD_DEPTH_RATE
         depth_refinement_ctrls->split_rate_th = 10;
-#endif
-#if OPT_DR_QP
         depth_refinement_ctrls->q_weight = 10;
-#endif
         break;
     case 7:
         depth_refinement_ctrls->enabled                         = 1;
@@ -1991,12 +1919,8 @@ void set_block_based_depth_refinement_controls(ModeDecisionContext *ctx, uint8_t
         depth_refinement_ctrls->sub_to_current_pd0_coeff_th     = 20;
         depth_refinement_ctrls->sub_to_current_pd0_coeff_offset = 20;
         depth_refinement_ctrls->lower_depth_split_cost_th       = 20;
-#if OPT_CHILD_DEPTH_RATE
         depth_refinement_ctrls->split_rate_th = 10;
-#endif
-#if OPT_DR_QP
         depth_refinement_ctrls->q_weight = 10;
-#endif
         break;
     case 8:
         depth_refinement_ctrls->enabled                         = 1;
@@ -2016,12 +1940,8 @@ void set_block_based_depth_refinement_controls(ModeDecisionContext *ctx, uint8_t
         depth_refinement_ctrls->sub_to_current_pd0_coeff_th     = 20;
         depth_refinement_ctrls->sub_to_current_pd0_coeff_offset = 20;
         depth_refinement_ctrls->lower_depth_split_cost_th       = 20;
-#if OPT_CHILD_DEPTH_RATE
         depth_refinement_ctrls->split_rate_th = 10;
-#endif
-#if OPT_DR_QP
         depth_refinement_ctrls->q_weight = 10;
-#endif
         break;
     case 9:
         depth_refinement_ctrls->enabled                         = 1;
@@ -2041,12 +1961,8 @@ void set_block_based_depth_refinement_controls(ModeDecisionContext *ctx, uint8_t
         depth_refinement_ctrls->sub_to_current_pd0_coeff_th     = 20;
         depth_refinement_ctrls->sub_to_current_pd0_coeff_offset = 20;
         depth_refinement_ctrls->lower_depth_split_cost_th       = 20;
-#if OPT_CHILD_DEPTH_RATE
         depth_refinement_ctrls->split_rate_th = 10;
-#endif
-#if OPT_DR_QP
         depth_refinement_ctrls->q_weight = 10;
-#endif
         break;
     case 10:
         depth_refinement_ctrls->enabled                         = 1;
@@ -2066,12 +1982,8 @@ void set_block_based_depth_refinement_controls(ModeDecisionContext *ctx, uint8_t
         depth_refinement_ctrls->sub_to_current_pd0_coeff_th     = 20;
         depth_refinement_ctrls->sub_to_current_pd0_coeff_offset = 20;
         depth_refinement_ctrls->lower_depth_split_cost_th       = 20;
-#if OPT_CHILD_DEPTH_RATE
         depth_refinement_ctrls->split_rate_th = 10;
-#endif
-#if OPT_DR_QP
         depth_refinement_ctrls->q_weight = 10;
-#endif
         break;
     case 11:
         depth_refinement_ctrls->enabled                         = 1;
@@ -2091,12 +2003,8 @@ void set_block_based_depth_refinement_controls(ModeDecisionContext *ctx, uint8_t
         depth_refinement_ctrls->sub_to_current_pd0_coeff_th     = 20;
         depth_refinement_ctrls->sub_to_current_pd0_coeff_offset = 20;
         depth_refinement_ctrls->lower_depth_split_cost_th       = 20;
-#if OPT_CHILD_DEPTH_RATE
         depth_refinement_ctrls->split_rate_th = 10;
-#endif
-#if OPT_DR_QP
         depth_refinement_ctrls->q_weight = 10;
-#endif
         break;
     case 12:
         depth_refinement_ctrls->enabled                         = 1;
@@ -2116,12 +2024,8 @@ void set_block_based_depth_refinement_controls(ModeDecisionContext *ctx, uint8_t
         depth_refinement_ctrls->sub_to_current_pd0_coeff_th     = 20;
         depth_refinement_ctrls->sub_to_current_pd0_coeff_offset = 20;
         depth_refinement_ctrls->lower_depth_split_cost_th       = 20;
-#if OPT_CHILD_DEPTH_RATE
         depth_refinement_ctrls->split_rate_th = 10;
-#endif
-#if OPT_DR_QP
         depth_refinement_ctrls->q_weight = 10;
-#endif
         break;
     case 13:
         depth_refinement_ctrls->enabled                         = 1;
@@ -2141,12 +2045,8 @@ void set_block_based_depth_refinement_controls(ModeDecisionContext *ctx, uint8_t
         depth_refinement_ctrls->sub_to_current_pd0_coeff_th     = 20;
         depth_refinement_ctrls->sub_to_current_pd0_coeff_offset = 20;
         depth_refinement_ctrls->lower_depth_split_cost_th       = 20;
-#if OPT_CHILD_DEPTH_RATE
         depth_refinement_ctrls->split_rate_th = 10;
-#endif
-#if OPT_DR_QP
         depth_refinement_ctrls->q_weight = 10;
-#endif
         break;
         // Pred_Only
         // Pred_Only
@@ -2161,261 +2061,16 @@ void set_block_based_depth_refinement_controls(ModeDecisionContext *ctx, uint8_t
         depth_refinement_ctrls->sub_to_current_pd0_coeff_th     = 20;
         depth_refinement_ctrls->sub_to_current_pd0_coeff_offset = 20;
         depth_refinement_ctrls->lower_depth_split_cost_th       = 20;
-#if OPT_CHILD_DEPTH_RATE
 
         depth_refinement_ctrls->split_rate_th = 10;
 
-#endif
 
-#if OPT_DR_QP
 
         depth_refinement_ctrls->q_weight = 10;
 
-#endif
 
         break;
 
-#else
-
-    case 2:
-
-        depth_refinement_ctrls->enabled = 1;
-
-        depth_refinement_ctrls->prune_child_if_not_avail = 1;
-
-        depth_refinement_ctrls->parent_to_current_th = 50;
-
-        depth_refinement_ctrls->sub_to_current_th = 50;
-
-        depth_refinement_ctrls->parent_max_cost_th_mult = 10;
-
-        depth_refinement_ctrls->cost_band_based_modulation = 0;
-
-        depth_refinement_ctrls->up_to_2_depth = 0;
-
-        depth_refinement_ctrls->limit_4x4_depth = 0;
-
-        depth_refinement_ctrls->sub_to_current_pd0_coeff_th = 0;
-
-        depth_refinement_ctrls->sub_to_current_pd0_coeff_offset = 0;
-
-        break;
-
-    case 3:
-
-        depth_refinement_ctrls->enabled = 1;
-
-        depth_refinement_ctrls->prune_child_if_not_avail = 1;
-
-        depth_refinement_ctrls->parent_to_current_th = 50;
-
-        depth_refinement_ctrls->sub_to_current_th = 50;
-
-        depth_refinement_ctrls->parent_max_cost_th_mult = 10;
-
-        depth_refinement_ctrls->cost_band_based_modulation = 1;
-        depth_refinement_ctrls->max_cost_multiplier = 400;
-        depth_refinement_ctrls->max_band_cnt = 4;
-        depth_refinement_ctrls->decrement_per_band[0] = MAX_SIGNED_VALUE;
-        depth_refinement_ctrls->decrement_per_band[1] = 15;
-        depth_refinement_ctrls->decrement_per_band[2] = 10;
-        depth_refinement_ctrls->decrement_per_band[3] = 5;
-        depth_refinement_ctrls->up_to_2_depth = 0;
-        depth_refinement_ctrls->limit_4x4_depth = 0;
-        depth_refinement_ctrls->sub_to_current_pd0_coeff_th = 0;
-        depth_refinement_ctrls->sub_to_current_pd0_coeff_offset = 0;
-        break;
-    case 4:
-        depth_refinement_ctrls->enabled = 1;
-        depth_refinement_ctrls->prune_child_if_not_avail = 1;
-        depth_refinement_ctrls->parent_to_current_th = 50;
-        depth_refinement_ctrls->sub_to_current_th = 50;
-        depth_refinement_ctrls->parent_max_cost_th_mult = 10;
-        depth_refinement_ctrls->cost_band_based_modulation = 1;
-        depth_refinement_ctrls->max_cost_multiplier = 400;
-        depth_refinement_ctrls->max_band_cnt = 4;
-        depth_refinement_ctrls->decrement_per_band[0] = MAX_SIGNED_VALUE;
-        depth_refinement_ctrls->decrement_per_band[1] = 15;
-        depth_refinement_ctrls->decrement_per_band[2] = 10;
-        depth_refinement_ctrls->decrement_per_band[3] = 5;
-        depth_refinement_ctrls->up_to_2_depth = 0;
-        depth_refinement_ctrls->limit_4x4_depth = 0;
-        depth_refinement_ctrls->sub_to_current_pd0_coeff_th = 20;
-        depth_refinement_ctrls->sub_to_current_pd0_coeff_offset = 20;
-        break;
-    case 5:
-        depth_refinement_ctrls->enabled = 1;
-        depth_refinement_ctrls->prune_child_if_not_avail = 1;
-        depth_refinement_ctrls->parent_to_current_th = 25;
-        depth_refinement_ctrls->sub_to_current_th = 25;
-        depth_refinement_ctrls->parent_max_cost_th_mult = 10;
-        depth_refinement_ctrls->cost_band_based_modulation = 1;
-        depth_refinement_ctrls->max_cost_multiplier = 400;
-        depth_refinement_ctrls->max_band_cnt = 4;
-        depth_refinement_ctrls->decrement_per_band[0] = MAX_SIGNED_VALUE;
-        depth_refinement_ctrls->decrement_per_band[1] = 15;
-        depth_refinement_ctrls->decrement_per_band[2] = 10;
-        depth_refinement_ctrls->decrement_per_band[3] = 5;
-        depth_refinement_ctrls->up_to_2_depth = 0;
-        depth_refinement_ctrls->limit_4x4_depth = 15;
-        depth_refinement_ctrls->sub_to_current_pd0_coeff_th = 20;
-        depth_refinement_ctrls->sub_to_current_pd0_coeff_offset = 20;
-        break;
-    case 6:
-        depth_refinement_ctrls->enabled = 1;
-        depth_refinement_ctrls->prune_child_if_not_avail = 1;
-        depth_refinement_ctrls->parent_to_current_th = 20;
-        depth_refinement_ctrls->sub_to_current_th = 20;
-        depth_refinement_ctrls->parent_max_cost_th_mult = 10;
-        depth_refinement_ctrls->cost_band_based_modulation = 1;
-        depth_refinement_ctrls->max_cost_multiplier = 400;
-        depth_refinement_ctrls->max_band_cnt = 4;
-        depth_refinement_ctrls->decrement_per_band[0] = MAX_SIGNED_VALUE;
-        depth_refinement_ctrls->decrement_per_band[1] = MAX_SIGNED_VALUE;
-        depth_refinement_ctrls->decrement_per_band[2] = 10;
-        depth_refinement_ctrls->decrement_per_band[3] = 5;
-        depth_refinement_ctrls->up_to_2_depth = 0;
-        depth_refinement_ctrls->limit_4x4_depth = 15;
-        depth_refinement_ctrls->sub_to_current_pd0_coeff_th = 20;
-        depth_refinement_ctrls->sub_to_current_pd0_coeff_offset = 20;
-        break;
-    case 7:
-        depth_refinement_ctrls->enabled = 1;
-        depth_refinement_ctrls->prune_child_if_not_avail = 1;
-        depth_refinement_ctrls->parent_to_current_th = 15;
-        depth_refinement_ctrls->sub_to_current_th = 15;
-        depth_refinement_ctrls->parent_max_cost_th_mult = 0;
-        depth_refinement_ctrls->cost_band_based_modulation = 1;
-        depth_refinement_ctrls->max_cost_multiplier = 400;
-        depth_refinement_ctrls->max_band_cnt = 4;
-        depth_refinement_ctrls->decrement_per_band[0] = MAX_SIGNED_VALUE;
-        depth_refinement_ctrls->decrement_per_band[1] = MAX_SIGNED_VALUE;
-        depth_refinement_ctrls->decrement_per_band[2] = 10;
-        depth_refinement_ctrls->decrement_per_band[3] = 5;
-        depth_refinement_ctrls->up_to_2_depth = 0;
-        depth_refinement_ctrls->limit_4x4_depth = 15;
-        depth_refinement_ctrls->sub_to_current_pd0_coeff_th = 20;
-        depth_refinement_ctrls->sub_to_current_pd0_coeff_offset = 20;
-        break;
-    case 8:
-        depth_refinement_ctrls->enabled = 1;
-        depth_refinement_ctrls->prune_child_if_not_avail = 1;
-        depth_refinement_ctrls->parent_to_current_th = 10;
-        depth_refinement_ctrls->sub_to_current_th = 10;
-        depth_refinement_ctrls->parent_max_cost_th_mult = 0;
-        depth_refinement_ctrls->cost_band_based_modulation = 1;
-        depth_refinement_ctrls->max_cost_multiplier = 400;
-        depth_refinement_ctrls->max_band_cnt = 4;
-        depth_refinement_ctrls->decrement_per_band[0] = MAX_SIGNED_VALUE;
-        depth_refinement_ctrls->decrement_per_band[1] = MAX_SIGNED_VALUE;
-        depth_refinement_ctrls->decrement_per_band[2] = 10;
-        depth_refinement_ctrls->decrement_per_band[3] = 5;
-        depth_refinement_ctrls->up_to_2_depth = 0;
-        depth_refinement_ctrls->limit_4x4_depth = 15;
-        depth_refinement_ctrls->sub_to_current_pd0_coeff_th = 20;
-        depth_refinement_ctrls->sub_to_current_pd0_coeff_offset = 20;
-        break;
-    case 9:
-        depth_refinement_ctrls->enabled = 1;
-        depth_refinement_ctrls->prune_child_if_not_avail = 1;
-        depth_refinement_ctrls->parent_to_current_th = 5;
-        depth_refinement_ctrls->sub_to_current_th = 5;
-        depth_refinement_ctrls->parent_max_cost_th_mult = 0;
-        depth_refinement_ctrls->cost_band_based_modulation = 1;
-        depth_refinement_ctrls->max_cost_multiplier = 400;
-        depth_refinement_ctrls->max_band_cnt = 4;
-        depth_refinement_ctrls->decrement_per_band[0] = MAX_SIGNED_VALUE;
-        depth_refinement_ctrls->decrement_per_band[1] = MAX_SIGNED_VALUE;
-        depth_refinement_ctrls->decrement_per_band[2] = 10;
-        depth_refinement_ctrls->decrement_per_band[3] = 5;
-        depth_refinement_ctrls->up_to_2_depth = 0;
-        depth_refinement_ctrls->limit_4x4_depth = 15;
-        depth_refinement_ctrls->sub_to_current_pd0_coeff_th = 20;
-        depth_refinement_ctrls->sub_to_current_pd0_coeff_offset = 20;
-        break;
-    case 10:
-        depth_refinement_ctrls->enabled = 1;
-        depth_refinement_ctrls->prune_child_if_not_avail = 1;
-        depth_refinement_ctrls->parent_to_current_th = 5;
-        depth_refinement_ctrls->sub_to_current_th = 5;
-        depth_refinement_ctrls->parent_max_cost_th_mult = 0;
-        depth_refinement_ctrls->cost_band_based_modulation = 1;
-        depth_refinement_ctrls->max_cost_multiplier = 800;
-        depth_refinement_ctrls->max_band_cnt = 4;
-        depth_refinement_ctrls->decrement_per_band[0] = MAX_SIGNED_VALUE;
-        depth_refinement_ctrls->decrement_per_band[1] = MAX_SIGNED_VALUE;
-        depth_refinement_ctrls->decrement_per_band[2] = 10;
-        depth_refinement_ctrls->decrement_per_band[3] = 5;
-        depth_refinement_ctrls->up_to_2_depth = 0;
-        depth_refinement_ctrls->limit_4x4_depth = 15;
-        depth_refinement_ctrls->sub_to_current_pd0_coeff_th = 20;
-        depth_refinement_ctrls->sub_to_current_pd0_coeff_offset = 20;
-        break;
-    case 11:
-        depth_refinement_ctrls->enabled = 1;
-        depth_refinement_ctrls->prune_child_if_not_avail = 1;
-        depth_refinement_ctrls->parent_to_current_th = 5;
-        depth_refinement_ctrls->sub_to_current_th = -50;
-        depth_refinement_ctrls->parent_max_cost_th_mult = 0;
-        depth_refinement_ctrls->cost_band_based_modulation = 1;
-        depth_refinement_ctrls->max_cost_multiplier = 800;
-        depth_refinement_ctrls->max_band_cnt = 4;
-        depth_refinement_ctrls->decrement_per_band[0] = MAX_SIGNED_VALUE;
-        depth_refinement_ctrls->decrement_per_band[1] = MAX_SIGNED_VALUE;
-        depth_refinement_ctrls->decrement_per_band[2] = 10;
-        depth_refinement_ctrls->decrement_per_band[3] = 5;
-        depth_refinement_ctrls->up_to_2_depth = 1;
-        depth_refinement_ctrls->limit_4x4_depth = 15;
-        depth_refinement_ctrls->sub_to_current_pd0_coeff_th = 20;
-        depth_refinement_ctrls->sub_to_current_pd0_coeff_offset = 20;
-        break;
-    case 12:
-        depth_refinement_ctrls->enabled = 1;
-        depth_refinement_ctrls->prune_child_if_not_avail = 1;
-        depth_refinement_ctrls->parent_to_current_th = -25;
-        depth_refinement_ctrls->sub_to_current_th = -50;
-        depth_refinement_ctrls->parent_max_cost_th_mult = 0;
-        depth_refinement_ctrls->cost_band_based_modulation = 1;
-        depth_refinement_ctrls->max_cost_multiplier = 800;
-        depth_refinement_ctrls->max_band_cnt = 4;
-        depth_refinement_ctrls->decrement_per_band[0] = MAX_SIGNED_VALUE;
-        depth_refinement_ctrls->decrement_per_band[1] = MAX_SIGNED_VALUE;
-        depth_refinement_ctrls->decrement_per_band[2] = 10;
-        depth_refinement_ctrls->decrement_per_band[3] = 5;
-        depth_refinement_ctrls->up_to_2_depth = 1;
-        depth_refinement_ctrls->limit_4x4_depth = 15;
-        depth_refinement_ctrls->sub_to_current_pd0_coeff_th = 20;
-        depth_refinement_ctrls->sub_to_current_pd0_coeff_offset = 20;
-
-        break;
-
-        // Pred_Only
-
-        // Pred_Only
-
-    case 13:
-
-        depth_refinement_ctrls->enabled = 1;
-
-        depth_refinement_ctrls->prune_child_if_not_avail = 1;
-
-        depth_refinement_ctrls->parent_to_current_th = MIN_SIGNED_VALUE;
-
-        depth_refinement_ctrls->sub_to_current_th = MIN_SIGNED_VALUE;
-
-        depth_refinement_ctrls->parent_max_cost_th_mult = 0;
-
-        depth_refinement_ctrls->cost_band_based_modulation = 0;
-
-        depth_refinement_ctrls->up_to_2_depth = 0;
-
-        depth_refinement_ctrls->sub_to_current_pd0_coeff_th = 20;
-
-        depth_refinement_ctrls->sub_to_current_pd0_coeff_offset = 20;
-
-        break;
-
-#endif
     }
 }
 
@@ -2578,13 +2233,8 @@ uint32_t svt_aom_get_tot_1d_blks(struct ModeDecisionContext *ctx, const int32_t 
 
     if (!ctx->nsq_ctrls.allow_HVA_HVB && !ctx->nsq_ctrls.allow_HV4)
         tot_d1_blocks = MIN(5, tot_d1_blocks);
-#if OPT_REORDER_GEOM
     else if (!ctx->nsq_ctrls.allow_HVA_HVB)
         tot_d1_blocks = MIN((uint32_t)(sq_size == 128 ? 5 : 13), tot_d1_blocks);
-#else
-    else if (!ctx->nsq_ctrls.allow_HV4)
-        tot_d1_blocks = MIN(17, tot_d1_blocks);
-#endif
 
     return tot_d1_blocks;
 }
@@ -2644,22 +2294,12 @@ static void build_cand_block_array(SequenceControlSet *scs, PictureControlSet *p
             if (tot_d1_blocks > 1 && !results_ptr->consider_block[blk_index + 1])
                 tot_d1_blocks = 1;
 
-#if OPT_REORDER_GEOM
             // If HA/HB/VA/VB and H4/V4 are disallowed, tot_d1_blocks will be
             // capped at 5 in svt_aom_get_tot_1d_blks().  Therefore, if the condition MIN(17, tot_d1_blocks) is
             // hit, tot_d1_blocks will be 5 OR HA/HB/VA/VB will be enabled.  Either case is valid.
             const uint32_t to_test_d1_blocks = !ctx->nsq_ctrls.allow_HV4 ? MIN(17, tot_d1_blocks) : tot_d1_blocks;
-#else
-            // If HA/HB/VA/VB and H4/V4 are disallowed, tot_d1_blocks will be
-            // capped at 5 in svt_aom_get_tot_1d_blks().  Therefore, if the condition MIN(13, tot_d1_blocks) is
-            // hit, tot_d1_blocks will be 5 OR H4/V4 will be enabled.  Either case is valid.
-            const uint32_t to_test_d1_blocks = (ctx->nsq_ctrls.allow_HVA_HVB == 0)
-                ? (blk_geom->sq_size == 128 ? MIN(5, tot_d1_blocks) : MIN(13, tot_d1_blocks))
-                : tot_d1_blocks;
-#endif
 
             for (uint32_t idx = blk_index; idx < (tot_d1_blocks + blk_index); ++idx) {
-#if OPT_REORDER_GEOM
                 if (!ctx->nsq_ctrls.allow_HV4) {
                     // Index of first H4 block is 5; if H4/V4 blocks are skipped increase index to bypass the blocks.
                     // idx is increased by 7, rather than 8, because after continue is exectued, idx will be incremented
@@ -2669,17 +2309,6 @@ static void build_cand_block_array(SequenceControlSet *scs, PictureControlSet *p
                         continue;
                     }
                 }
-#else
-                if (ctx->nsq_ctrls.allow_HVA_HVB == 0) {
-                    // Index of first HA block is 5; if HA/HB/VA/VB blocks are skipped increase index to bypass the blocks.
-                    // idx is increased by 11, rather than 12, because after continue is exectued, idx will be incremented
-                    // by 1 (as part of the for loop).
-                    if ((idx - blk_index) == 5) {
-                        idx += 11;
-                        continue;
-                    }
-                }
-#endif
 
                 //  MD palette info buffer
                 if (pcs->ppcs->palette_level) {
@@ -2731,12 +2360,8 @@ void update_pred_th_offset(ModeDecisionContext *ctx, const BlockGeom *blk_geom, 
         *th_offset = 0;
     }
 }
-#if OPT_DEPTH_REFIN
 static uint8_t is_parent_to_current_deviation_small(PictureControlSet *pcs, ModeDecisionContext *ctx,
                                                     const BlockGeom *blk_geom,
-#else
-static uint8_t is_parent_to_current_deviation_small(ModeDecisionContext *ctx, const BlockGeom *blk_geom,
-#endif
                                                     int64_t th_offset) {
     if (ctx->depth_refinement_ctrls.parent_to_current_th == MAX_SIGNED_VALUE)
         return TRUE;
@@ -2753,7 +2378,6 @@ static uint8_t is_parent_to_current_deviation_small(ModeDecisionContext *ctx, co
             (int64_t)MAX((ctx->md_local_blk_unit[blk_geom->sqi_mds].default_cost * 4), 1);
     }
 
-#if OPT_DEPTH_REFIN
     const uint32_t lower_depth_split_cost_th = ctx->depth_refinement_ctrls.lower_depth_split_cost_th;
     // Skip testing NSQ shapes at parent depth if the rate cost of splitting is very low
     if (lower_depth_split_cost_th && ctx->avail_blk_flag[parent_depth_idx_mds]) {
@@ -2769,22 +2393,14 @@ static uint8_t is_parent_to_current_deviation_small(ModeDecisionContext *ctx, co
         if (split_cost * 10000 < ctx->md_local_blk_unit[parent_depth_idx_mds].default_cost * lower_depth_split_cost_th)
             return FALSE;
     }
-#endif
 
-#if OPT_DR_QP
     int64_t parent_to_current_th = ctx->depth_refinement_ctrls.parent_to_current_th;
     if (ctx->depth_refinement_ctrls.q_weight) {
         const uint32_t mult = ctx->depth_refinement_ctrls.q_weight;
-#if CLN_MISC_II
         const uint32_t cost_part = (uint32_t)MAX(
             (ctx->md_local_blk_unit[blk_geom->sqi_mds].default_cost /
              (uint64_t)(((uint64_t)blk_geom->bwidth * (uint64_t)blk_geom->bheight) << 10)),
             1);
-#else
-        const uint32_t cost_part                     = MAX((ctx->md_local_blk_unit[blk_geom->sqi_mds].default_cost /
-                                        (uint64_t)(((uint64_t)blk_geom->bwidth * (uint64_t)blk_geom->bheight) << 10)),
-                                       1);
-#endif
         const int q_weight_unscaled = (int)((mult * cost_part * ((5 * (int)pcs->ppcs->scs->static_config.qp) - 100)) /
                                             10);
         const uint32_t q_weight     = CLIP3(100, 2000, q_weight_unscaled);
@@ -2793,9 +2409,6 @@ static uint8_t is_parent_to_current_deviation_small(ModeDecisionContext *ctx, co
     }
 
     if (ctx->parent_to_current_deviation <= (parent_to_current_th + th_offset))
-#else
-    if (ctx->parent_to_current_deviation <= (ctx->depth_refinement_ctrls.parent_to_current_th + th_offset))
-#endif
         return TRUE;
     if (ctx->depth_refinement_ctrls.parent_max_cost_th_mult && ctx->avail_blk_flag[parent_depth_idx_mds]) {
         const uint32_t full_lambda = ctx->hbd_md ? ctx->full_lambda_md[EB_10_BIT_MD] : ctx->full_lambda_md[EB_8_BIT_MD];
@@ -2866,14 +2479,11 @@ static uint8_t is_child_to_current_deviation_small(PictureControlSet *pcs, ModeD
             th_offset -= ctx->depth_refinement_ctrls.sub_to_current_pd0_coeff_offset;
     }
 
-#if USE_PRED_MODE
     if (ctx->intra_ctrls.enable_intra && (ctx->blk_ptr->prediction_mode_flag == INTER_MODE)) {
         th_offset -= 20;
         if (ctx->lpd0_ctrls.pd0_level < VERY_LIGHT_PD0 && !ctx->md_local_blk_unit[blk_geom->sqi_mds].y_has_coeff[0])
             th_offset -= 20;
     }
-#endif
-#if OPT_CHILD_DEPTH_RATE
     uint32_t split_cost_th = ctx->depth_refinement_ctrls.split_rate_th;
     // Skip testing child depth if the rate cost of splitting is high
     if (split_cost_th && ctx->avail_blk_flag[blk_geom->sqi_mds]) {
@@ -2897,22 +2507,14 @@ static uint8_t is_child_to_current_deviation_small(PictureControlSet *pcs, ModeD
         if (split_cost * 1000 > ctx->md_local_blk_unit[blk_geom->sqi_mds].default_cost * split_cost_th)
             return FALSE;
     }
-#endif
 
-#if OPT_DR_QP
     int64_t sub_to_current_th = ctx->depth_refinement_ctrls.sub_to_current_th;
     if (ctx->depth_refinement_ctrls.q_weight) {
         const uint32_t mult = ctx->depth_refinement_ctrls.q_weight;
-#if CLN_MISC_II
         const uint32_t cost_part = (uint32_t)MAX(
             (ctx->md_local_blk_unit[blk_geom->sqi_mds].default_cost /
              (uint64_t)(((uint64_t)blk_geom->bwidth * (uint64_t)blk_geom->bheight) << 10)),
             1);
-#else
-        const uint32_t cost_part                     = MAX((ctx->md_local_blk_unit[blk_geom->sqi_mds].default_cost /
-                                        (uint64_t)(((uint64_t)blk_geom->bwidth * (uint64_t)blk_geom->bheight) << 10)),
-                                       1);
-#endif
         const int q_weight_unscaled = (int)((mult * cost_part * ((5 * (int)pcs->ppcs->scs->static_config.qp) - 100)) /
                                             10);
         const uint32_t q_weight     = CLIP3(100, 2000, q_weight_unscaled);
@@ -2921,9 +2523,6 @@ static uint8_t is_child_to_current_deviation_small(PictureControlSet *pcs, ModeD
     }
 
     if (ctx->child_to_current_deviation <= (sub_to_current_th + th_offset))
-#else
-    if (ctx->child_to_current_deviation <= (ctx->depth_refinement_ctrls.sub_to_current_th + th_offset))
-#endif
         return TRUE;
 
     return FALSE;
@@ -3007,13 +2606,7 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs, PictureContro
     while (blk_index < scs->max_block_cnt) {
         const BlockGeom *blk_geom      = get_blk_geom_mds(blk_index);
         uint32_t         tot_d1_blocks = svt_aom_get_tot_1d_blks(ctx, blk_geom->sq_size, !ctx->nsq_ctrls.enabled);
-#if USE_PRED_MODE
-#if CLN_MISC_II
         ctx->blk_ptr = &ctx->md_blk_arr_nsq[blk_index];
-#else
-        BlkStruct     *blk_ptr = ctx->blk_ptr = &ctx->md_blk_arr_nsq[blk_index];
-#endif
-#endif
 
         // if the parent square is inside inject this block
         uint8_t is_blk_allowed = pcs->slice_type != I_SLICE ? 1 : (blk_geom->sq_size < 128) ? 1 : 0;
@@ -3033,15 +2626,7 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs, PictureContro
                     int8_t s_depth = ctx->depth_ctrls.s_depth;
                     int8_t e_depth = ctx->depth_ctrls.e_depth;
 
-#if FIX_DEPTH_R2R && !OPT_M2_BELOW_DEPTHS
-                    // Selected depths should be available, unless they are not valid blocks (e.g. out of bounds).
-                    // Therefore, when blocks are invalid, don't add parent/child.
-                    if (!ctx->avail_blk_flag[blk_geom->sqi_mds]) {
-                        s_depth = e_depth = 0;
-                    }
-#endif
 
-#if OPT_M2_BELOW_DEPTHS
                     // Selected depths should be available, unless they are not valid blocks (e.g. out of bounds).
                     // Therefore, when blocks are invalid, don't add parent/child.
                     if (!ctx->avail_blk_flag[blk_geom->sqi_mds]) {
@@ -3057,7 +2642,6 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs, PictureContro
                             }
                         }
                     }
-#endif
 
                     if (ctx->skip_pd0) {
                         SbGeom *sb_geom = &pcs->ppcs->sb_geom[ctx->sb_index];
@@ -3133,11 +2717,7 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs, PictureContro
                         if (ctx->depth_refinement_ctrls.enabled && s_depth == -1 &&
                             pcs->ppcs->sb_geom[sb_index].block_is_allowed[blk_index] &&
                             blk_geom->sq_size < ((scs->seq_header.sb_size == BLOCK_128X128) ? 128 : 64)) {
-#if OPT_DEPTH_REFIN
                             add_parent_depth = is_parent_to_current_deviation_small(pcs, ctx, blk_geom, th_offset);
-#else
-                            add_parent_depth = is_parent_to_current_deviation_small(ctx, blk_geom, th_offset);
-#endif
                         }
 
                         // Add block indices of lower depth(s)
@@ -3237,22 +2817,12 @@ static EbErrorType build_starting_cand_block_array(SequenceControlSet *scs, Pict
                 ? 1
                 : svt_aom_get_tot_1d_blks(ctx, blk_geom->sq_size, ctx->md_disallow_nsq);
 
-#if OPT_REORDER_GEOM
             // If HA/HB/VA/VB and H4/V4 are disallowed, tot_d1_blocks will be
             // capped at 5 in svt_aom_get_tot_1d_blks().  Therefore, if the condition MIN(17, tot_d1_blocks) is
             // hit, tot_d1_blocks will be 5 OR HA/HB/VA/VB will be enabled.  Either case is valid.
             const uint32_t to_test_d1_blocks = !ctx->nsq_ctrls.allow_HV4 ? MIN(17, tot_d1_blocks) : tot_d1_blocks;
-#else
-            // If HA/HB/VA/VB and H4/V4 are disallowed, tot_d1_blocks will be
-            // capped at 5 in svt_aom_get_tot_1d_blks().  Therefore, if the condition MIN(13, tot_d1_blocks) is
-            // hit, tot_d1_blocks will be 5 OR H4/V4 will be enabled.  Either case is valid.
-            const uint32_t to_test_d1_blocks = (ctx->nsq_ctrls.allow_HVA_HVB == 0)
-                ? (blk_geom->sq_size == 128 ? MIN(5, tot_d1_blocks) : MIN(13, tot_d1_blocks))
-                : tot_d1_blocks;
-#endif
 
             for (uint32_t idx = blk_index; idx < (tot_d1_blocks + blk_index); ++idx) {
-#if OPT_REORDER_GEOM
                 if (!ctx->nsq_ctrls.allow_HV4) {
                     // Index of first H4 block is 5; if H4/V4 blocks are skipped increase index to bypass the blocks.
                     // idx is increased by 7, rather than 8, because after continue is exectued, idx will be incremented
@@ -3262,17 +2832,6 @@ static EbErrorType build_starting_cand_block_array(SequenceControlSet *scs, Pict
                         continue;
                     }
                 }
-#else
-                if (ctx->nsq_ctrls.allow_HVA_HVB == 0) {
-                    // Index of first HA block is 5; if HA/HB/VA/VB blocks are skipped increase index to bypass the blocks.
-                    // idx is increased by 11, rather than 12, because after continue is exectued, idx will be incremented
-                    // by 1 (as part of the for loop).
-                    if ((idx - blk_index) == 5) {
-                        idx += 11;
-                        continue;
-                    }
-                }
-#endif
 
                 //  MD palette info buffer
                 if (pcs->ppcs->palette_level) {
@@ -3377,17 +2936,9 @@ static void exaustive_light_pd1_features(ModeDecisionContext *md_ctx, PicturePar
             md_ctx->inter_intra_comp_ctrls.enabled == 0 && md_ctx->rate_est_ctrls.update_skip_ctx_dc_sign_ctx == 0 &&
             md_ctx->spatial_sse_ctrls.spatial_sse_full_loop_level == 0 && md_ctx->md_sq_me_ctrls.enabled == 0 &&
             md_ctx->md_pme_ctrls.enabled == 0 && md_ctx->txt_ctrls.enabled == 0 &&
-#if OPT_PRE_MDS0_SEARCH
             md_ctx->mds0_ctrls.mds0_dist_type != SSD && md_ctx->unipred3x3_injection == 0 &&
-#else
-            md_ctx->mds0_ctrls.mds0_dist_type != MDS0_SSD && md_ctx->unipred3x3_injection == 0 &&
-#endif
-#if OPT_BIPRED3x3
             md_ctx->bipred3x3_ctrls.enabled == 0 && md_ctx->inter_compound_mode == 0 &&
             md_ctx->md_pic_obmc_level == 0 &&
-#else
-            md_ctx->bipred3x3_injection == 0 && md_ctx->inter_compound_mode == 0 && md_ctx->md_pic_obmc_level == 0 &&
-#endif
             md_ctx->md_filter_intra_level == 0 && md_ctx->new_nearest_near_comb_injection == 0 &&
             md_ctx->md_palette_level == 0 && md_ctx->cand_reduction_ctrls.merge_inter_classes &&
             ppcs->gm_ctrls.enabled == 0 &&
@@ -3406,11 +2957,7 @@ static void exaustive_light_pd1_features(ModeDecisionContext *md_ctx, PicturePar
 }
 /* Light-PD1 classifier used when cost/coeff info is available.  If PD0 is skipped, or the trasnsform is
 not performed, a separate detector (lpd1_detector_skip_pd0) is used. */
-#if FIX_LD_CBR_MODE
 static void lpd1_detector_post_pd0(PictureControlSet *pcs, ModeDecisionContext *md_ctx, bool rtc_tune) {
-#else
-static void lpd1_detector_post_pd0(PictureControlSet *pcs, ModeDecisionContext *md_ctx) {
-#endif
     // the frame size of reference pics are different if enable reference scaling.
     // sb info can not be reused because super blocks are mismatched, so we set
     // the reference pic unavailable to avoid using wrong info
@@ -3458,11 +3005,7 @@ static void lpd1_detector_post_pd0(PictureControlSet *pcs, ModeDecisionContext *
                 const uint64_t low_th      = RDCOST(lambda, rate, (uint64_t)dist << 14);
                 const uint16_t nz_coeff_th = md_ctx->lpd1_ctrls.nz_coeff_th[pd1_lvl];
                 // If the PD0 cost is very high and the number of non-zero coeffs is high, the block is difficult, so should use regular PD1
-#if OPT_LPD1_DET
                 if (pd0_cost > low_th && nz_coeffs >= nz_coeff_th) {
-#else
-                if (pd0_cost > low_th && nz_coeffs > nz_coeff_th) {
-#endif
                     md_ctx->lpd1_ctrls.pd1_level = pd1_lvl - 1;
                 }
 
@@ -3489,7 +3032,6 @@ static void lpd1_detector_post_pd0(PictureControlSet *pcs, ModeDecisionContext *
                 }
 
                 if (pcs->slice_type != I_SLICE) {
-#if FIX_LD_CBR_MODE
                     // lpd1 needs to be optimized for low-delay so that all modes can use the RA version of this check
                     if (rtc_tune) {
                         if (md_ctx->lpd1_ctrls.me_8x8_cost_variance_th[pd1_lvl] < (((uint32_t)~0) >> 1) &&
@@ -3504,23 +3046,6 @@ static void lpd1_detector_post_pd0(PictureControlSet *pcs, ModeDecisionContext *
                                 (md_ctx->lpd1_ctrls.me_8x8_cost_variance_th[pd1_lvl] >> 5) * (73 - pcs->picture_qp))
                             md_ctx->lpd1_ctrls.pd1_level = pd1_lvl - 1;
                     }
-#else
-#if OPT_LPD1_DET
-                    /* me_8x8_cost_variance_th is shifted by 5 then mulitplied by 73 minus pic_qp.  Therefore, the TH must be less than
-                       (((uint32_t)~0) >> 2) to avoid overflow issues from the multiplication. */
-                    if (md_ctx->lpd1_ctrls.me_8x8_cost_variance_th[pd1_lvl] < (((uint32_t)~0) >> 2) &&
-                        pcs->ppcs->me_8x8_cost_variance[md_ctx->sb_index] >
-                            (md_ctx->lpd1_ctrls.me_8x8_cost_variance_th[pd1_lvl] >> 5) * (73 - pcs->picture_qp))
-                        md_ctx->lpd1_ctrls.pd1_level = pd1_lvl - 1;
-#else
-                    /* me_8x8_cost_variance_th is shifted by 5 then mulitplied by the pic QP (max 63).  Therefore, the TH must be less than
-                       (((uint32_t)~0) >> 1) to avoid overflow issues from the multiplication. */
-                    if (md_ctx->lpd1_ctrls.me_8x8_cost_variance_th[pd1_lvl] < (((uint32_t)~0) >> 1) &&
-                        pcs->ppcs->me_8x8_cost_variance[md_ctx->sb_index] >
-                            (md_ctx->lpd1_ctrls.me_8x8_cost_variance_th[pd1_lvl] >> 5) * pcs->picture_qp)
-                        md_ctx->lpd1_ctrls.pd1_level = pd1_lvl - 1;
-#endif
-#endif
                 }
             }
         }
@@ -3529,12 +3054,8 @@ static void lpd1_detector_post_pd0(PictureControlSet *pcs, ModeDecisionContext *
 
 /* Light-PD1 classifier used when cost/coeff info is unavailable.  If PD0 is skipped, or the trasnsform is
 not performed, this detector is used (else lpd1_detector_post_pd0() is used). */
-#if FIX_LD_CBR_MODE
 static void lpd1_detector_skip_pd0(PictureControlSet *pcs, ModeDecisionContext *md_ctx, uint32_t pic_width_in_sb,
                                    bool rtc_tune) {
-#else
-static void lpd1_detector_skip_pd0(PictureControlSet *pcs, ModeDecisionContext *md_ctx, uint32_t pic_width_in_sb) {
-#endif
     if (md_ctx->pd1_lvl_refinement) {
         uint32_t me_8x8_cost_variance = pcs->ppcs->me_8x8_cost_variance[md_ctx->sb_index];
         if (md_ctx->pd1_lvl_refinement == 2) {
@@ -3627,7 +3148,6 @@ static void lpd1_detector_skip_pd0(PictureControlSet *pcs, ModeDecisionContext *
                         if (pcs->ppcs->me_64x64_distortion[md_ctx->sb_index] >
                             md_ctx->lpd1_ctrls.skip_pd0_edge_dist_th[pd1_lvl])
                             md_ctx->lpd1_ctrls.pd1_level = pd1_lvl - 1;
-#if FIX_LD_CBR_MODE
                         // lpd1 needs to be optimized for low-delay so that all modes can use the RA version of this check
                         else if (rtc_tune) {
                             /* me_8x8_cost_variance_th is shifted by 5 then mulitplied by the pic QP (max 63).  Therefore, the TH must be less than
@@ -3644,24 +3164,6 @@ static void lpd1_detector_skip_pd0(PictureControlSet *pcs, ModeDecisionContext *
                                     (md_ctx->lpd1_ctrls.me_8x8_cost_variance_th[pd1_lvl] >> 5) * (73 - pcs->picture_qp))
                                 md_ctx->lpd1_ctrls.pd1_level = pd1_lvl - 1;
                         }
-#else
-#if OPT_LPD1_DET
-                        /* me_8x8_cost_variance_th is shifted by 5 then mulitplied by 73 minus pic_qp.  Therefore, the TH must be less than
-                           (((uint32_t)~0) >> 2) to avoid overflow issues from the multiplication. */
-                        else if (md_ctx->lpd1_ctrls.me_8x8_cost_variance_th[pd1_lvl] < (((uint32_t)~0) >> 2) &&
-                                 pcs->ppcs->me_8x8_cost_variance[md_ctx->sb_index] >
-                                     (md_ctx->lpd1_ctrls.me_8x8_cost_variance_th[pd1_lvl] >> 5) *
-                                         (73 - pcs->picture_qp))
-                            md_ctx->lpd1_ctrls.pd1_level = pd1_lvl - 1;
-#else
-                        /* me_8x8_cost_variance_th is shifted by 5 then mulitplied by the pic QP (max 63).  Therefore, the TH must be less than
-                           (((uint32_t)~0) >> 1) to avoid overflow issues from the multiplication. */
-                        else if (md_ctx->lpd1_ctrls.me_8x8_cost_variance_th[pd1_lvl] < (((uint32_t)~0) >> 1) &&
-                                 pcs->ppcs->me_8x8_cost_variance[md_ctx->sb_index] >
-                                     (md_ctx->lpd1_ctrls.me_8x8_cost_variance_th[pd1_lvl] >> 5) * pcs->picture_qp)
-                            md_ctx->lpd1_ctrls.pd1_level = pd1_lvl - 1;
-#endif
-#endif
                     } else {
                         if (md_ctx->lpd1_ctrls.skip_pd0_me_shift[pd1_lvl] != (uint16_t)~0 &&
                             pcs->ppcs->me_64x64_distortion[md_ctx->sb_index] >
@@ -3886,9 +3388,7 @@ void *svt_aom_mode_decision_kernel(void *input_ptr) {
         uint16_t tile_group_width_in_sb = pcs->ppcs->tile_group_info[ed_ctx->tile_group_index].tile_group_width_in_sb;
         ed_ctx->tot_intra_coded_area    = 0;
         ed_ctx->tot_skip_coded_area     = 0;
-#if OPT_HP_MV
         ed_ctx->tot_hp_coded_area = 0;
-#endif
         // Bypass encdec for the first pass
         if (scs->static_config.pass == ENC_FIRST_PASS || svt_aom_is_pic_skipped(pcs->ppcs)) {
             svt_release_object(pcs->ppcs->me_data_wrapper);
@@ -3937,11 +3437,7 @@ void *svt_aom_mode_decision_kernel(void *input_ptr) {
 
                     svt_aom_estimate_syntax_rate(ed_ctx->md_ctx->rate_est_table,
                                                  pcs->slice_type == I_SLICE ? TRUE : FALSE,
-#if FIX_FI_R2R
                                                  scs->seq_header.filter_intra_level,
-#else
-                                                 pcs->pic_filter_intra_level,
-#endif
                                                  pcs->ppcs->frm_hdr.allow_screen_content_tools,
                                                  pcs->ppcs->enable_restoration,
                                                  pcs->ppcs->frm_hdr.allow_intrabc,
@@ -4037,11 +3533,7 @@ void *svt_aom_mode_decision_kernel(void *input_ptr) {
                             if (pcs->cdf_ctrl.update_se)
                                 svt_aom_estimate_syntax_rate(ed_ctx->md_ctx->rate_est_table,
                                                              pcs->slice_type == I_SLICE,
-#if FIX_FI_R2R
                                                              scs->seq_header.filter_intra_level,
-#else
-                                                             pcs->pic_filter_intra_level,
-#endif
                                                              pcs->ppcs->frm_hdr.allow_screen_content_tools,
                                                              pcs->ppcs->enable_restoration,
                                                              pcs->ppcs->frm_hdr.allow_intrabc,
@@ -4154,11 +3646,7 @@ void *svt_aom_mode_decision_kernel(void *input_ptr) {
                             // This classifier is used for only pd0_level 0 and pd0_level 1
                             // where the cnt_nz_coeff is derived @ PD0
                             if (md_ctx->lpd0_ctrls.pd0_level < VERY_LIGHT_PD0)
-#if FIX_LD_CBR_MODE
                                 lpd1_detector_post_pd0(pcs, md_ctx, rtc_tune);
-#else
-                                lpd1_detector_post_pd0(pcs, md_ctx);
-#endif
                             // Force pred depth only for modes where that is not the default
                             if (md_ctx->lpd1_ctrls.pd1_level > REGULAR_PD1) {
                                 svt_aom_set_depth_ctrls(pcs, md_ctx, 0);
@@ -4172,11 +3660,7 @@ void *svt_aom_mode_decision_kernel(void *input_ptr) {
                         // This classifier is used for the case PD0 is bypassed and for pd0_level 2
                         // where the cnt_nz_coeff is not derived @ PD0
                         if (skip_pd_pass_0 || md_ctx->lpd0_ctrls.pd0_level == VERY_LIGHT_PD0) {
-#if FIX_LD_CBR_MODE
                             lpd1_detector_skip_pd0(pcs, md_ctx, pic_width_in_sb, rtc_tune);
-#else
-                            lpd1_detector_skip_pd0(pcs, md_ctx, pic_width_in_sb);
-#endif
                         }
 
                         // Can only use light-PD1 under the following conditions
@@ -4223,9 +3707,7 @@ void *svt_aom_mode_decision_kernel(void *input_ptr) {
             svt_block_on_mutex(pcs->intra_mutex);
             pcs->intra_coded_area += (uint32_t)ed_ctx->tot_intra_coded_area;
             pcs->skip_coded_area += (uint32_t)ed_ctx->tot_skip_coded_area;
-#if OPT_HP_MV
             pcs->hp_coded_area += (uint32_t)ed_ctx->tot_hp_coded_area;
-#endif
             // Accumulate block selection
             pcs->enc_dec_coded_sb_count += (uint32_t)ed_ctx->coded_sb_count;
             Bool last_sb_flag = (pcs->sb_total_count == pcs->enc_dec_coded_sb_count);

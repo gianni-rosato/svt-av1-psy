@@ -549,7 +549,6 @@ static void tpl_mc_flow_dispenser_sb_generic(EncodeContext *enc_ctx, SequenceCon
     uint8_t *predictor = predictor8;
 
     MacroblockPlane mb_plane;
-#if FTR_RES_ON_FLY2
     mb_plane.quant_qtx       = scs->enc_ctx->quants_8bit.y_quant[qIndex];
     mb_plane.quant_fp_qtx    = scs->enc_ctx->quants_8bit.y_quant_fp[qIndex];
     mb_plane.round_fp_qtx    = scs->enc_ctx->quants_8bit.y_round_fp[qIndex];
@@ -557,26 +556,13 @@ static void tpl_mc_flow_dispenser_sb_generic(EncodeContext *enc_ctx, SequenceCon
     mb_plane.zbin_qtx        = scs->enc_ctx->quants_8bit.y_zbin[qIndex];
     mb_plane.round_qtx       = scs->enc_ctx->quants_8bit.y_round[qIndex];
     mb_plane.dequant_qtx     = scs->enc_ctx->deq_8bit.y_dequant_qtx[qIndex];
-#else
-    mb_plane.quant_qtx       = scs->quants_8bit.y_quant[qIndex];
-    mb_plane.quant_fp_qtx    = scs->quants_8bit.y_quant_fp[qIndex];
-    mb_plane.round_fp_qtx    = scs->quants_8bit.y_round_fp[qIndex];
-    mb_plane.quant_shift_qtx = scs->quants_8bit.y_quant_shift[qIndex];
-    mb_plane.zbin_qtx        = scs->quants_8bit.y_zbin[qIndex];
-    mb_plane.round_qtx       = scs->quants_8bit.y_round[qIndex];
-    mb_plane.dequant_qtx     = scs->deq_8bit.y_dequant_qtx[qIndex];
-#endif
 
     const uint32_t src_stride      = pcs->enhanced_pic->stride_y;
     B64Geom       *b64_geom        = &scs->b64_geom[sb_index];
     const int      aligned16_width = (pcs->aligned_width + 15) >> 4;
 
-#if TUNE_TPL
     const uint8_t disable_intra_pred = (pcs->tpl_ctrls.disable_intra_pred_nref &&
                                         (pcs->temporal_layer_index == pcs->hierarchical_levels));
-#else
-    const uint8_t disable_intra_pred = (pcs->tpl_ctrls.disable_intra_pred_nref && (pcs->tpl_data.is_ref == 0));
-#endif
     const uint8_t intra_dc_sad_path = pcs->tpl_ctrls.use_sad_in_src_search && pcs->tpl_ctrls.intra_mode_end == DC_PRED;
 
     for (uint32_t blk_index = blk_start; blk_index <= blk_end; blk_index++) {
@@ -1831,14 +1817,12 @@ static EbErrorType tpl_mc_flow(EncodeContext *enc_ctx, SequenceControlSet *scs, 
             EbObjectWrapper *ref_pic_wrapper;
             // Get Empty Reference Picture Object
             svt_get_empty_object(scs->enc_ctx->tpl_reference_picture_pool_fifo_ptr, &ref_pic_wrapper);
-#if FTR_RES_ON_FLY5
             // if resolution has changed, and the tpl_reference_picture settings do not match scs settings, update tpl reference params
             if (((EbTplReferenceObject *)ref_pic_wrapper->object_ptr)->ref_picture_ptr->max_width !=
                     scs->max_input_luma_width ||
                 ((EbTplReferenceObject *)ref_pic_wrapper->object_ptr)->ref_picture_ptr->max_height !=
                     scs->max_input_luma_height)
                 svt_tpl_reference_param_update((EbTplReferenceObject *)ref_pic_wrapper->object_ptr, scs);
-#endif
             // Give the new Reference a nominal live_count of 1
             svt_object_inc_live_count(ref_pic_wrapper, 1);
 
@@ -2126,11 +2110,7 @@ static const uint8_t AV1_VAR_OFFS[MAX_SB_SIZE] = {
     128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128,
     128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128,
     128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128};
-#if OPT_CMPOUND
 unsigned int svt_aom_get_perpixel_variance(const uint8_t *buf, uint32_t stride, const int block_size) {
-#else
-static unsigned int aom_av1_get_perpixel_variance(const uint8_t *buf, uint32_t stride, const int block_size) {
-#endif
     unsigned int            var, sse;
     const AomVarianceFnPtr *fn_ptr = &svt_aom_mefn_ptr[block_size];
     var                            = fn_ptr->vf(buf, stride, AV1_VAR_OFFS, 0, &sse);
@@ -2175,11 +2155,7 @@ static void aom_av1_set_mb_ssim_rdmult_scaling(PictureParentControlSet *pcs) {
 
                     const uint8_t *buf = y_buffer + row_offset_y * y_stride + col_offset_y;
 
-#if OPT_CMPOUND
                     var += svt_aom_get_perpixel_variance(buf, y_stride, BLOCK_8X8);
-#else
-                    var += aom_av1_get_perpixel_variance(buf, y_stride, BLOCK_8X8);
-#endif
                     num_of_var += 1.0;
                 }
             }

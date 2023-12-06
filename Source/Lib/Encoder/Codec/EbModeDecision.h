@@ -189,13 +189,11 @@ int svt_is_interintra_allowed(uint8_t enable_inter_intra, BlockSize bsize, Predi
 int svt_aom_filter_intra_allowed_bsize(uint8_t enable_filter_intra, BlockSize bs);
 int svt_aom_filter_intra_allowed(uint8_t enable_filter_intra, BlockSize bsize, uint8_t palette_size, uint32_t mode);
 
-#if CLN_ME_OFFSET
 static const uint32_t me_idx_85[] = {
     0,  1,  5,  21, 22, 29, 30, 6,  23, 24, 31, 32, 9,  37, 38, 45, 46, 10, 39, 40, 47, 48, 2,  7,  25, 26, 33, 34, 8,
     27, 28, 35, 36, 11, 41, 42, 49, 50, 12, 43, 44, 51, 52, 3,  13, 53, 54, 61, 62, 14, 55, 56, 63, 64, 17, 69, 70, 77,
     78, 18, 71, 72, 79, 80, 4,  15, 57, 58, 65, 66, 16, 59, 60, 67, 68, 19, 73, 74, 81, 82, 20, 75, 76, 83, 84};
 uint32_t svt_aom_get_me_block_offset(const BlockGeom *const blk_geom, uint8_t enable_me_8x8, uint8_t enable_me_16x16);
-#endif
 uint8_t svt_aom_is_me_data_present(uint32_t me_block_offset, uint32_t me_cand_offset, const MeSbResults *me_results,
                                    uint8_t list_idx, uint8_t ref_idx);
 

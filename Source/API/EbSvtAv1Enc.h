@@ -500,7 +500,6 @@ typedef struct EbSvtAv1EncConfiguration {
      */
     uint32_t vbr_max_section_pct;
 
-#if OPT_VBR6
     /**
      * @brief UnderShoot Percentage
      *
@@ -513,20 +512,6 @@ typedef struct EbSvtAv1EncConfiguration {
      * Max is 100.
      * Default is 25 for CBR and 50 for VBR.
      */
-#else
-    /**
-     * @brief UnderShoot Percentage
-     *
-     * Only applicable for VBR and CBR.
-     *
-     * Indicates the tolerance of the VBR algorithm to undershoot and is used
-     * as a trigger threshold for more agressive adaptation of Quantization.
-     *
-     * Min is 0.
-     * Max is 100.
-     * Default is 25.
-     */
-#endif
     uint32_t under_shoot_pct;
 
     /**

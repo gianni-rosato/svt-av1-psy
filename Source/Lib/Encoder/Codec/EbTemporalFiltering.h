@@ -82,9 +82,7 @@
 #define TF_QINDEX_CUTOFF 128
 
 #define TF_FILTER_STRENGTH 5
-#if OPT_TF_8X8_BLOCKS
 #define N_8X8_BLOCKS 64
-#endif
 #define N_16X16_BLOCKS 16
 #define N_32X32_BLOCKS 4
 

@@ -119,7 +119,6 @@ EbErrorType svt_picture_buffer_desc_ctor_noy8b(EbPictureBufferDesc *pictureBuffe
 
     return EB_ErrorNone;
 }
-#if FTR_RES_ON_FLY4
 /*****************************************
  * svt_picture_buffer_desc_noy8b_update
  * update the parameters in EbPictureBufferDesc for changing the resolution
@@ -215,7 +214,6 @@ EbErrorType svt_picture_buffer_desc_update(EbPictureBufferDesc *pictureBufferDes
     return EB_ErrorNone;
 }
 
-#endif
 EbErrorType svt_picture_buffer_desc_ctor(EbPictureBufferDesc *pictureBufferDescPtr, const EbPtr object_init_data_ptr) {
     const EbPictureBufferDescInitData *picture_buffer_desc_init_data_ptr = (EbPictureBufferDescInitData *)
         object_init_data_ptr;
@@ -307,7 +305,6 @@ static void svt_recon_picture_buffer_desc_dctor(EbPtr p) {
     if (obj->buffer_enable_mask & PICTURE_BUFFER_DESC_Cr_FLAG)
         EB_FREE_ALIGNED_ARRAY(obj->buffer_cr);
 }
-#if FTR_RES_ON_FLY4
 /*****************************************
 Update the parameters in pictureBufferDescPtr for changing the resolution on the fly
 similar to svt_recon_picture_buffer_desc_ctor, but no allocation is done.
@@ -348,7 +345,6 @@ EbErrorType svt_recon_picture_buffer_desc_update(EbPictureBufferDesc *pictureBuf
 
     return EB_ErrorNone;
 }
-#endif
 /*****************************************
  * svt_recon_picture_buffer_desc_ctor
  *  Initializes the Buffer Descriptor's

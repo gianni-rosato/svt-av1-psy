@@ -107,11 +107,9 @@ static void init_memory_file_map(EbConfig* app_cfg) {
     // app_cfg->mmap.y4m_seq_hdr   = 0; // already initialized to 0 or some value in read_y4m_header()
     app_cfg->mmap.y4m_frm_hdr   = 0;
     app_cfg->mmap.file_frame_it = 0;
-#if FTR_RES_ON_FLY_APP
     // The cur_offset shows the current offset to be read. Initially set to 0 or y4m hdr
     // After each frame, the offset is updated. The changes were made to support changing the resolution on the fly
     app_cfg->mmap.cur_offset = app_cfg->mmap.y4m_seq_hdr;
-#endif
     const int64_t curr_loc = ftello(app_cfg->input_file); // get current fp location
     fseeko(app_cfg->input_file, 0L, SEEK_END); // seek to end of file
     app_cfg->mmap.file_size = ftello(app_cfg->input_file); // get file size

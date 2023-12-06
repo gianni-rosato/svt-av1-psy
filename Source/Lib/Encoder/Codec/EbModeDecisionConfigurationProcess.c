@@ -231,9 +231,7 @@ void mode_decision_configuration_init_qp_update(PictureControlSet *pcs) {
     FrameHeader *frm_hdr  = &pcs->ppcs->frm_hdr;
     pcs->intra_coded_area = 0;
     pcs->skip_coded_area  = 0;
-#if OPT_HP_MV
     pcs->hp_coded_area = 0;
-#endif
     // Init block selection
     // Set reference sg ep
     set_reference_sg_ep(pcs);
@@ -255,11 +253,7 @@ void mode_decision_configuration_init_qp_update(PictureControlSet *pcs) {
     // Initial Rate Estimation of the syntax elements
     svt_aom_estimate_syntax_rate(md_rate_est_ctx,
                                  pcs->slice_type == I_SLICE ? TRUE : FALSE,
-#if FIX_FI_R2R
                                  pcs->ppcs->scs->seq_header.filter_intra_level,
-#else
-                                 pcs->pic_filter_intra_level,
-#endif
                                  pcs->ppcs->frm_hdr.allow_screen_content_tools,
                                  pcs->ppcs->enable_restoration,
                                  pcs->ppcs->frm_hdr.allow_intrabc,
@@ -494,23 +488,6 @@ static void av1_setup_motion_field(Av1Common *cm, PictureControlSet *pcs) {
 EbErrorType svt_av1_hash_table_create(HashTable *p_hash_table);
 void       *rtime_alloc_block_hash_block_is_same(size_t size) { return malloc(size); }
 
-#if !OPT_COEFF_LVL
-// Use me_8x8_distortion and QP to predict the coeff level per frame
-static void predict_frame_coeff_lvl(struct PictureControlSet *pcs) {
-    uint64_t tot_me_8x8_dis = 0;
-    for (uint32_t b64_idx = 0; b64_idx < pcs->b64_total_count; b64_idx++) {
-        tot_me_8x8_dis += pcs->ppcs->me_8x8_distortion[b64_idx];
-    }
-    tot_me_8x8_dis = tot_me_8x8_dis / pcs->picture_qp;
-
-    pcs->coeff_lvl = NORMAL_LVL;
-    if (tot_me_8x8_dis < COEFF_LVL_TH_0) {
-        pcs->coeff_lvl = LOW_LVL;
-    } else if (tot_me_8x8_dis > COEFF_LVL_TH_1) {
-        pcs->coeff_lvl = HIGH_LVL;
-    }
-}
-#endif
 
 /* Mode Decision Configuration Kernel */
 
@@ -578,12 +555,8 @@ void *svt_aom_mode_decision_configuration_kernel(void *input_ptr) {
         pcs->coeff_lvl = INVALID_LVL;
         if (scs->static_config.pass != ENC_FIRST_PASS) {
             if (pcs->slice_type != I_SLICE && !pcs->ppcs->sc_class1) {
-#if OPT_COEFF_LVL
                 uint8_t pfc_lvl = svt_aom_get_predict_frame_coeff_lvl(pcs->enc_mode);
                 svt_aom_set_frame_coeff_lvl(pcs, pfc_lvl);
-#else
-                predict_frame_coeff_lvl(pcs);
-#endif
             }
         }
         // -------
@@ -617,9 +590,7 @@ void *svt_aom_mode_decision_configuration_kernel(void *input_ptr) {
 
         pcs->intra_coded_area = 0;
         pcs->skip_coded_area  = 0;
-#if OPT_HP_MV
         pcs->hp_coded_area = 0;
-#endif
         // Init block selection
         // Set reference sg ep
         set_reference_sg_ep(pcs);
@@ -650,11 +621,7 @@ void *svt_aom_mode_decision_configuration_kernel(void *input_ptr) {
         // Initial Rate Estimation of the syntax elements
         svt_aom_estimate_syntax_rate(md_rate_est_ctx,
                                      pcs->slice_type == I_SLICE ? TRUE : FALSE,
-#if FIX_FI_R2R
                                      scs->seq_header.filter_intra_level,
-#else
-                                     pcs->pic_filter_intra_level,
-#endif
                                      pcs->ppcs->frm_hdr.allow_screen_content_tools,
                                      pcs->ppcs->enable_restoration,
                                      pcs->ppcs->frm_hdr.allow_intrabc,

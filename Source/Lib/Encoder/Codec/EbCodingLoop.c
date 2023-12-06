@@ -2182,12 +2182,8 @@ EB_EXTERN void svt_aom_encode_decode(SequenceControlSet *scs, PictureControlSet 
         }
 
         // Loop over all d1 blocks
-#if OPT_REORDER_GEOM
         uint32_t d1_start_blk = blk_it +
             (blk_geom->sq_size == 128 ? ns_blk_offset_128[blk_ptr->part] : ns_blk_offset[blk_ptr->part]);
-#else
-        uint32_t d1_start_blk = blk_it + ns_blk_offset[blk_ptr->part];
-#endif
         uint32_t num_d1_block = ns_blk_num[blk_ptr->part]; // blk_geom->totns;
         for (uint32_t d1_itr = d1_start_blk; d1_itr < (d1_start_blk + num_d1_block); d1_itr++) {
             if (!pcs->ppcs->sb_geom[sb_addr].block_is_allowed[d1_itr]) {
@@ -2328,12 +2324,8 @@ EB_EXTERN EbErrorType svt_aom_encdec_update(SequenceControlSet *scs, PictureCont
         }
 
         // Loop over all d1 blocks
-#if OPT_REORDER_GEOM
         uint32_t d1_start_blk = blk_it +
             (blk_geom->sq_size == 128 ? ns_blk_offset_128[blk_ptr->part] : ns_blk_offset[blk_ptr->part]);
-#else
-        uint32_t d1_start_blk = blk_it + ns_blk_offset[blk_ptr->part];
-#endif
         uint32_t num_d1_block = ns_blk_num[blk_ptr->part]; // blk_geom->totns;
         for (uint32_t d1_itr = d1_start_blk; d1_itr < (d1_start_blk + num_d1_block); d1_itr++) {
             if (!pcs->ppcs->sb_geom[sb_addr].block_is_allowed[d1_itr]) {
@@ -2352,7 +2344,6 @@ EB_EXTERN EbErrorType svt_aom_encdec_update(SequenceControlSet *scs, PictureCont
                 ctx->tot_intra_coded_area += blk_geom->bwidth * blk_geom->bheight;
                 pcs->sb_intra[sb_addr] = 1;
             } else {
-#if OPT_HP_MV
                 if (pcs->ppcs->frm_hdr.allow_high_precision_mv) {
                     int hp = 0;
 
@@ -2374,7 +2365,6 @@ EB_EXTERN EbErrorType svt_aom_encdec_update(SequenceControlSet *scs, PictureCont
                     if (hp)
                         ctx->tot_hp_coded_area += blk_geom->bwidth * blk_geom->bheight;
                 }
-#endif
                 if (blk_it == 0 && blk_ptr->pred_mode != NEWMV && blk_ptr->pred_mode != NEW_NEWMV) {
                     pcs->sb_64x64_mvp[sb_addr] = 1;
                 }
@@ -2501,19 +2491,11 @@ EB_EXTERN EbErrorType svt_aom_encdec_update(SequenceControlSet *scs, PictureCont
                         int32_t *ep_coeff = ((int32_t *)coeff_buffer_sb->buffer_y) + ctx->coded_area_sb;
                         int32_t *md_coeff = ((int32_t *)blk_ptr->coeff_tmp->buffer_y) + txb_1d_offset;
 
-#if FIX_BYPASS_ED_COEFF
                         if (md_ctx->md_local_blk_unit[blk_geom->blkidx_mds].y_has_coeff[ctx->txb_itr])
                             svt_memcpy(ep_coeff,
                                        md_coeff,
                                        sizeof(int32_t) * blk_geom->tx_height[blk_ptr->tx_depth] *
                                            blk_geom->tx_width[blk_ptr->tx_depth]);
-#else
-                        if (md_ctx->md_local_blk_unit[blk_geom->blkidx_mds].y_has_coeff[ctx->txb_itr])
-                            svt_memcpy(ep_coeff,
-                                       md_coeff,
-                                       sizeof(int32_t) * MIN(blk_geom->tx_height[blk_ptr->tx_depth], 32) *
-                                           MIN(blk_geom->tx_width[blk_ptr->tx_depth], 32));
-#endif
 
                         if (blk_geom->has_uv && uv_pass) {
                             int32_t *ep_coeff_cb = ((int32_t *)coeff_buffer_sb->buffer_cb) + ctx->coded_area_sb_uv;

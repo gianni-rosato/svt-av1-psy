@@ -720,16 +720,8 @@ static int get_obmc_mvpred_var(const IntraBcContext *x, const int32_t *wsrc, con
 }
 static int obmc_refining_search_sad(const IntraBcContext *x, const int32_t *wsrc, const int32_t *mask, MV *ref_mv,
                                     int error_per_bit, int search_range, const AomVarianceFnPtr *fn_ptr,
-#if OPT_OBMC_REFINEMENT
                                     const MV *center_mv, int is_second, uint8_t search_diag) {
-#else
-                                    const MV *center_mv, int is_second) {
-#endif
-#if OPT_OBMC_REFINEMENT
     const MV neighbors[8] = {{-1, 0}, {0, -1}, {0, 1}, {1, 0}, {-1, 1}, {1, 1}, {1, -1}, {-1, -1}};
-#else
-    const MV neighbors[4] = {{-1, 0}, {0, -1}, {0, 1}, {1, 0}};
-#endif
     const struct Buf2D *in_what    = (const struct Buf2D *)(&x->xdplane[0].pre[is_second]);
     const MV            fcenter_mv = {center_mv->row >> 3, center_mv->col >> 3};
     unsigned int        best_sad   = fn_ptr->osdf(
@@ -740,11 +732,7 @@ static int obmc_refining_search_sad(const IntraBcContext *x, const int32_t *wsrc
     for (i = 0; i < search_range; i++) {
         int best_site = -1;
 
-#if OPT_OBMC_REFINEMENT
         for (j = 0; j < (search_diag ? 8 : 4); j++) {
-#else
-        for (j = 0; j < 4; j++) {
-#endif
             const MV mv = {ref_mv->row + neighbors[j].row, ref_mv->col + neighbors[j].col};
             if (is_mv_in(&x->mv_limits, &mv)) {
                 unsigned int sad = fn_ptr->osdf(
@@ -774,21 +762,13 @@ int svt_av1_obmc_full_pixel_search(ModeDecisionContext *ctx, IntraBcContext *x, 
     // obmc_full_pixel_diamond does not provide BDR gain on 360p
     const int32_t *wsrc = ctx->wsrc_buf;
     const int32_t *mask = ctx->mask_buf;
-#if OPT_OBMC_REFINEMENT
     const int search_range = ctx->obmc_ctrls.fpel_search_range;
-#else
-    const int search_range = 8;
-#endif
     *dst_mv              = *mvp_full;
     x->approx_inter_rate = ctx->approx_inter_rate;
     clamp_mv(dst_mv, x->mv_limits.col_min, x->mv_limits.col_max, x->mv_limits.row_min, x->mv_limits.row_max);
     clamp_mv(dst_mv, x->mv_limits.col_min, x->mv_limits.col_max, x->mv_limits.row_min, x->mv_limits.row_max);
-#if OPT_OBMC_REFINEMENT
     int thissme = obmc_refining_search_sad(
         x, wsrc, mask, dst_mv, sadpb, search_range, fn_ptr, ref_mv, is_second, ctx->obmc_ctrls.fpel_search_diag);
-#else
-    int thissme = obmc_refining_search_sad(x, wsrc, mask, dst_mv, sadpb, search_range, fn_ptr, ref_mv, is_second);
-#endif
     if (thissme < INT_MAX)
         thissme = get_obmc_mvpred_var(x, wsrc, mask, dst_mv, ref_mv, fn_ptr, 1, is_second);
 

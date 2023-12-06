@@ -72,19 +72,12 @@ static void mode_decision_context_dctor(EbPtr p) {
     if (obj->rate_est_table)
         EB_FREE_ARRAY(obj->rate_est_table);
 
-#if CLN_CMPOUND
     for (int i = 0; i < NEAREST_NEAR_MV_CNT; i++) {
         if (obj->cmp_store.pred0_buf[i])
             EB_FREE(obj->cmp_store.pred0_buf[i]);
         if (obj->cmp_store.pred1_buf[i])
             EB_FREE(obj->cmp_store.pred1_buf[i]);
     }
-#else
-    if (obj->pred0)
-        EB_FREE(obj->pred0);
-    if (obj->pred1)
-        EB_FREE(obj->pred1);
-#endif
     if (obj->residual1)
         EB_FREE(obj->residual1);
     if (obj->diff10)
@@ -147,22 +140,12 @@ EbErrorType svt_aom_mode_decision_context_ctor(ModeDecisionContext *ctx, EbColor
     uint8_t min_nic_scaling_level = NICS_SCALING_LEVELS - 1;
     for (uint8_t hl = 0; hl < MAX_TEMPORAL_LAYERS; hl++) {
         for (uint8_t is_base = 0; is_base < 2; is_base++) {
-#if FIX_MEM_ALLOC_ON_THE_FLY
             // min QP is 1 b/c 0 is lossless and is not supported
             for (uint8_t qp = 1; qp <= MAX_QP_VALUE; qp++) {
                 uint8_t nic_level         = svt_aom_get_nic_level(enc_mode, is_base, hl, qp, rtc_tune);
                 uint8_t nic_scaling_level = svt_aom_set_nic_controls(NULL, nic_level);
                 min_nic_scaling_level     = MIN(min_nic_scaling_level, nic_scaling_level);
             }
-#else
-#if OPT_NIC_QP
-            uint8_t nic_level         = svt_aom_get_nic_level(enc_mode, is_base, hl, 63, rtc_tune);
-#else
-            uint8_t nic_level = svt_aom_get_nic_level(enc_mode, is_base, hl, rtc_tune);
-#endif
-            uint8_t nic_scaling_level = svt_aom_set_nic_controls(NULL, nic_level);
-            min_nic_scaling_level     = MIN(min_nic_scaling_level, nic_scaling_level);
-#endif
         }
     }
     uint8_t stage1_scaling_num = MD_STAGE_NICS_SCAL_NUM[min_nic_scaling_level][MD_STAGE_1];
@@ -213,15 +196,10 @@ EbErrorType svt_aom_mode_decision_context_ctor(ModeDecisionContext *ctx, EbColor
     // Allocate buffer for inter-inter compound prediction
     if (get_inter_compound_level(enc_mode)) {
         const uint8_t bits = ctx->hbd_md > EB_8_BIT_MD ? 2 : 1;
-#if CLN_CMPOUND
         for (int i = 0; i < NEAREST_NEAR_MV_CNT; i++) {
             EB_MALLOC(ctx->cmp_store.pred0_buf[i], sb_size * sb_size * bits * sizeof(uint8_t));
             EB_MALLOC(ctx->cmp_store.pred1_buf[i], sb_size * sb_size * bits * sizeof(uint8_t));
         }
-#else
-        EB_MALLOC(ctx->pred0, sb_size * sb_size * bits * sizeof(ctx->pred0[0]));
-        EB_MALLOC(ctx->pred1, sb_size * sb_size * bits * sizeof(ctx->pred1[0]));
-#endif
         EB_MALLOC(ctx->residual1, sb_size * sb_size * sizeof(ctx->residual1[0]));
         EB_MALLOC(ctx->diff10, sb_size * sb_size * sizeof(ctx->diff10[0]));
     }
@@ -364,11 +342,7 @@ EbErrorType svt_aom_mode_decision_context_ctor(ModeDecisionContext *ctx, EbColor
         ctx->md_blk_arr_nsq[coded_leaf_index].segment_id = 0;
         const BlockGeom *blk_geom                        = get_blk_geom_mds(coded_leaf_index);
 
-#if FIX_RECON_COPIES
         if (svt_aom_get_bypass_encdec(enc_mode, encoder_bit_depth)) {
-#else
-        if (svt_aom_get_bypass_encdec(enc_mode, ctx->hbd_md, encoder_bit_depth)) {
-#endif
             EbPictureBufferDescInitData init_data;
 
             init_data.buffer_enable_mask = PICTURE_BUFFER_DESC_FULL_MASK;
@@ -509,11 +483,7 @@ void svt_aom_reset_mode_decision_neighbor_arrays(PictureControlSet *pcs, uint16_
             svt_aom_neighbor_array_unit_reset(pcs->md_cb_recon_na[depth][tile_idx]);
             svt_aom_neighbor_array_unit_reset(pcs->md_cr_recon_na[depth][tile_idx]);
         }
-#if FIX_BYPASS_ED_10BIT
         if (pcs->hbd_md > EB_8_BIT_MD || (pcs->scs->encoder_bit_depth > EB_EIGHT_BIT && pcs->pic_bypass_encdec)) {
-#else
-        if (pcs->hbd_md > EB_8_BIT_MD) {
-#endif
             svt_aom_neighbor_array_unit_reset(pcs->md_luma_recon_na_16bit[depth][tile_idx]);
             svt_aom_neighbor_array_unit_reset(pcs->md_tx_depth_1_luma_recon_na_16bit[depth][tile_idx]);
             svt_aom_neighbor_array_unit_reset(pcs->md_tx_depth_2_luma_recon_na_16bit[depth][tile_idx]);
@@ -539,17 +509,9 @@ void svt_aom_reset_mode_decision_neighbor_arrays(PictureControlSet *pcs, uint16_
 // Testing showed that updating SAD lambda based on frame info was not helpful; therefore, the SAD lambda generation is not changed.
 static void av1_lambda_assign_md(PictureControlSet *pcs, ModeDecisionContext *ctx) {
     ctx->full_lambda_md[0] = (uint32_t)svt_aom_compute_rd_mult(pcs, ctx->qp_index, ctx->me_q_index, 8);
-#if OPT_FAST_LAMBDA
     ctx->fast_lambda_md[0] = (uint32_t)svt_aom_compute_fast_lambda(pcs, ctx->qp_index, ctx->me_q_index, 8);
-#else
-    ctx->fast_lambda_md[0] = av1_lambda_mode_decision8_bit_sad[ctx->qp_index];
-#endif
     ctx->full_lambda_md[1] = (uint32_t)svt_aom_compute_rd_mult(pcs, ctx->qp_index, ctx->me_q_index, 10);
-#if OPT_FAST_LAMBDA
     ctx->fast_lambda_md[1] = (uint32_t)svt_aom_compute_fast_lambda(pcs, ctx->qp_index, ctx->me_q_index, 10);
-#else
-    ctx->fast_lambda_md[1] = av1lambda_mode_decision10_bit_sad[ctx->qp_index];
-#endif
 
     if (pcs->scs->stats_based_sb_lambda_modulation) {
         if (pcs->temporal_layer_index > 0) {
