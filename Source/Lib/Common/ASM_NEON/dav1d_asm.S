@@ -25,10 +25,21 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#define PRIVATE_PREFIX svt_dav1d_
-
 #ifndef DAV1D_SRC_ARM_ASM_S
 #define DAV1D_SRC_ARM_ASM_S
+
+/* Apple clang on Apple silicon prefixes underscores to function and variable names,
+ * but only for functions and variables defined in C.
+ * It doesn't do so for functions in assembly files.
+ * The statements below ensures the linker is able to find the symbol it expects.
+ * Note that this doesn't cause a compiler error since the function
+ * declaration uses the names expected at the call sites.
+*/
+#if !defined(__APPLE__) || defined(ARCH_X86_64)
+#define PRIVATE_PREFIX svt_dav1d_
+#else
+#define PRIVATE_PREFIX _svt_dav1d_
+#endif
 
 #if ARCH_AARCH64
 #define x18 do_not_use_x18
