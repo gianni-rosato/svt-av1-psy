@@ -111,6 +111,16 @@ Use native types (`int`, `unsigned`, etc.) for scalar variables where the upper 
 Use sized types (`uint8_t`, `int16_t`, etc.) for vector/array variables where the upper bound of the size matters.\
 Use dynamic types (`pixel`, `coef`, etc.) so multi-bitdepth templating works as it should.
 
+## Nomenclature conventions
+
+With quite a bit of code being shared between libaom, libdav1d and SVT-AV1, build conflicts may arise these libraries are linked
+ statically in the same build. So if your work involved porting code from other libraries (assuming a compatible license), please
+ use the following nomenclature convention:
+
+
+ - Add ```svt_av1``` before any public API (any function that can be accessed outside of the library).
+ - Add ```svt_aom``` before any symbol that won't be publicly accessible.
+
 ## Doxygen Documentation
 
 ``` c
