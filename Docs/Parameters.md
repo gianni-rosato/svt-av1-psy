@@ -321,6 +321,17 @@ Example CLI of reference scaling random access mode:
 > -i input.yuv -b output.ivf --resize-mode 4 --frame-resz-events 5,10,15,20,25,30 --frame-resz-kf-denoms 8,9,10,11,12,13 --frame-resz-denoms 16,15,14,13,12,11
 `--frame-resz-events`, `--frame-resz-kf-denoms` and `--frame-resz-denoms` shall be all set in same amount of parameters in list
 
+## **Updating Encoding Parameters During the Encoding Sessions**
+
+The `--force-key-frames` option is meant to allow the non-uniform placement of key frames within the stream. While this option is currently supported only for the CRF mode via the commandline, using it within the CBR mode
+ can be achieved by passing the command of inserting a keyframe through the API field `EbAv1PictureType pic_type;` in the `EbBufferHeaderType` structure. A sample programming usage of this option can be found in the sample application file EbAppProcessCmd.c
+ tracking the FTR_KF_ON_FLY_SAMPLE macro defined in EbDebugMacros.h. Similarly by setting the field `uint32_t qp;` in the `EbBufferHeaderType` structure at a key frame placement, the encoder will update the sequence
+ QP or CRF level according to the newly defined level (only applicable to CRF mode).
+
+Other options such as updating the Bitrate and resolution during the encoding sessions have been added to the API (starting v1.8.0) by using the abstract structure `EbPrivDataNode` and a programming sample showing its
+ usage can be found by tracking the marcos FTR_RATE_ON_FLY_SAMPLE and FTR_RES_ON_FLY_SAMPLE respectively. In the case of a resolution update request, please note that the encoder library will assume
+ the upscaling and downscaling to have been preformed prior to passing the frames.
+
 ### Color Description Options
 
 | **Configuration file parameter**   | **Command line**             | **Range**    | **Default**   | **Description**                                                                                                                            |
