@@ -1,5 +1,20 @@
 # Changelog
 
+## [1.8.0] - 2023-12-11
+
+Encoder
+- Improve the tradeoffs for the random access mode across presets:
+- Speedup CRF presets M6 to M0 by 17-53% while maintaining similar quality levels
+- Re-adjust CRF presets M7 to M13 for better quality with BD-rate gains ranging from 1-4%
+- Improve the quality and speed of the 1-pass VBR mode
+- More details on the per preset improvements can be found in MR !2143
+- Add API allowing to update bitrate / CRF and Key_frame placement during the encoding session for CBR lowdelay mode and CRF Random Access mode
+- ARM Neon SIMD optimizations for most critical kernels allowing for a 4.5-8x fps speedup vs the c implementation
+
+Cleanup and bug fixes and documentation
+- Various cleanups and functional bug fixes
+- Update the documentation for preset options and individual features
+
 ## [1.7.0] - 2023-08-23
 
 Encoder
