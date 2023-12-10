@@ -159,9 +159,16 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet *scs) {
             "used for benchmarking until fully implemented.\n",
             channel_number + 1);
     if (config->force_key_frames &&
-        (config->rate_control_mode != SVT_AV1_RC_MODE_CQP_OR_CRF ||
-         config->pred_structure != SVT_AV1_PRED_RANDOM_ACCESS)) {
-        SVT_ERROR("Instance %u: Force key frame is only supported with RA CRF/CQP mode\n", channel_number + 1);
+        (config->rate_control_mode == SVT_AV1_RC_MODE_CBR || config->pred_structure != SVT_AV1_PRED_RANDOM_ACCESS)) {
+        SVT_WARN(
+            "Instance %u: Force key frames is now supported for lowdelay but the force_key_frames flag"
+            " does not need to be set be on. Please follow the app samples shown by the FTR_KF_ON_FLY_SAMPLE"
+            " macro on how to use it. force_key_frames will now be set to 0 \n",
+            channel_number + 1);
+        config->force_key_frames = 0;
+    }
+    if (config->force_key_frames && config->rate_control_mode == SVT_AV1_RC_MODE_VBR) {
+        SVT_ERROR("Instance %u: Force key frames is not supported for VBR mode \n", channel_number + 1);
         return_error = EB_ErrorBadParameter;
     }
     if (config->rate_control_mode != SVT_AV1_RC_MODE_CQP_OR_CRF && (config->max_bit_rate != 0)) {
