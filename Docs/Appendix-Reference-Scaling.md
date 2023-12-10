@@ -191,7 +191,10 @@ encoding pipeline. According to internal tests, dynamic mode can be activated
 at about 60% of target bitrate setting compared with the average output
 bitrate in common encoding settings.
 
-Random access of Reference Scaling is allowed either on demand or on the fly. User can set the parameters in list through encoder API for the entire stream (please refer to section of Reference Scaling of [Parameter.md](Parameter.md)), or sends frame resize event as private data with each frame buffer, for example:
+Random access of Reference Scaling is allowed either on demand or on the fly.
+ User can set the parameters in list through encoder API for the entire stream
+ (please refer to section of Reference Scaling of [Parameter.md](Parameter.md)),
+ or sends frame resize event as private data with each frame buffer, for example:
 ~~~
   EbPrivDataNode *node = NULL;
   if (start_resize_frame_nums == processed_frame_count) {
@@ -212,7 +215,7 @@ Random access of Reference Scaling is allowed either on demand or on the fly. Us
 
 ## 5. Notes
 The feature settings that are described in this document were compiled at
-v1.7.0 of the code and may not reflect the current status of the code. The
+v1.8.0 of the code and may not reflect the current status of the code. The
 description in this document represents an example showing how features would
 interact with the SVT architecture. For the most up-to-date settings, it's
 recommended to review the section of the code implementing this feature.

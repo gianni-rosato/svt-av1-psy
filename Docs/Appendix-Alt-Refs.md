@@ -300,6 +300,14 @@ The ALTREF and Overlay picture settings are shown in Table 3.
 | show_frame       | 0                  | 1                   |
 | slice_type       | B_SLICE            | P_SLICE             |
 
+## Notes
+
+The feature settings that are described in this document were compiled at
+v1.8.0 of the code and may not reflect the current status of the code. The
+description in this document represents an example showing how features would
+interact with the SVT architecture. For the most up-to-date settings, it's
+recommended to review the section of the code implementing this feature.
+
 ## References
 
 <a name = "ref-1"> </a>
