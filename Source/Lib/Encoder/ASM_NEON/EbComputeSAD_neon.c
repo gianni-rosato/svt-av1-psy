@@ -525,15 +525,13 @@ static INLINE uint32x4_t sad8xhx4d_neon(const uint8_t *src, uint32_t src_stride,
     uint8x8_t  s;
     uint32_t   i, ref_offset;
 
-    s      = vld1_u8(src);
-    sum[0] = vabdl_u8(s, vld1_u8(ref + 0));
-    sum[1] = vabdl_u8(s, vld1_u8(ref + 1));
-    sum[2] = vabdl_u8(s, vld1_u8(ref + 2));
-    sum[3] = vabdl_u8(s, vld1_u8(ref + 3));
+    sum[0] = vdupq_n_u16(0);
+    sum[1] = vdupq_n_u16(0);
+    sum[2] = vdupq_n_u16(0);
+    sum[3] = vdupq_n_u16(0);
 
-    src += src_stride;
-    ref_offset = ref_stride;
-    i          = h - 1;
+    ref_offset = 0;
+    i          = h;
     do {
         s      = vld1_u8(src);
         sum[0] = vabal_u8(sum[0], s, vld1_u8(ref + 0 + ref_offset));
