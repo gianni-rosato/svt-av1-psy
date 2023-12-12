@@ -697,11 +697,18 @@ int svt_av1_find_best_sub_pixel_tree(void *ictx, MacroBlockD *xd, const struct A
     *bestmv             = start_mv;
     const int is_scaled = 0;
     besterr = svt_upsampled_setup_center_error(bestmv, var_params, mv_cost_params, (unsigned int *)distortion);
+#if CLN_SMALL_SIGS
+    if (ctx != NULL && ms_params->search_stage == SPEL_ME) {
+#else
     if (ctx != NULL && ms_params->search_stage == 0 && bsize < BLOCK_64X64) {
+#endif
         if (ctx->pd_pass == PD_PASS_1 && ctx->md_subpel_me_ctrls.mvp_th > 0) {
             SUBPEL_MOTION_SEARCH_PARAMS par_tmp = *ms_params;
             par_tmp.mv_cost_params.mv_cost_type = MV_COST_NONE;
             unsigned int best_mvperr            = MAX_U32;
+#if OPT_ME_SP_8TH_PEL
+            int best_mvp_idx = 0;
+#endif
             for (int8_t mvp = 0; mvp < ctx->mvp_count[par_tmp.list_idx][par_tmp.ref_idx]; mvp++) {
                 unsigned int mvpdist;
                 unsigned int mvperr = svt_upsampled_setup_center_error(
@@ -709,7 +716,14 @@ int svt_av1_find_best_sub_pixel_tree(void *ictx, MacroBlockD *xd, const struct A
                     &par_tmp.var_params,
                     &par_tmp.mv_cost_params,
                     &mvpdist);
+#if OPT_ME_SP_8TH_PEL
+                if (mvperr < best_mvperr) {
+                    best_mvp_idx = mvp;
+                    best_mvperr = mvperr;
+                }
+#else
                 best_mvperr = MIN(mvperr, best_mvperr);
+#endif
             }
 
             const int     mvp_err   = best_mvperr + 1;
@@ -717,6 +731,14 @@ int svt_av1_find_best_sub_pixel_tree(void *ictx, MacroBlockD *xd, const struct A
             const int32_t deviation = ((me_err - mvp_err) * 100) / me_err;
             if (deviation >= ctx->md_subpel_me_ctrls.mvp_th)
                 round = 1;
+#if OPT_ME_SP_8TH_PEL
+            else if (ABS(bestmv->col - ctx->mvp_array[par_tmp.list_idx][par_tmp.ref_idx][best_mvp_idx].col) >
+                ctx->md_subpel_me_ctrls.hp_mv_th ||
+                ABS(bestmv->row - ctx->mvp_array[par_tmp.list_idx][par_tmp.ref_idx][best_mvp_idx].row) >
+                ctx->md_subpel_me_ctrls.hp_mv_th) {
+                round = MIN(round, 2);
+            }
+#endif
         }
     }
     if (early_neigh_check_exit)

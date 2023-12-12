@@ -34,6 +34,14 @@
 extern "C" {
 #endif // __cplusplus
 
+// svt-09 macros
+#define OPT_TF_PATH                               1 // Clean TF path
+#define OPT_TF_SP_EXIT                            1 // Apply TF subpel_early_exit feature to all bsizes with same TH for all
+#define OPT_COEFF_LVL_NORM                        1 // Normalize the coeff_lvl feature
+#define CLN_SMALL_SIGS                            1 // Remove signals and levels having an insignificant impact on the behaviour
+#define OPT_ME_SP_8TH_PEL                         1 // Optimize ME subpel
+
+
 //FOR DEBUGGING - Do not remove
 #define OPT_LD_LATENCY2         0 // Latency optimization for low delay
 #define LOG_ENC_DONE            0 // log encoder job one

@@ -2502,7 +2502,11 @@ static int md_subpel_search(SUBPEL_STAGE       search_stage, //ME or PME
     ms_params->search_stage                = search_stage;
     ms_params->list_idx                    = list_idx;
     ms_params->ref_idx                     = ref_idx;
+#if CLN_SMALL_SIGS
+    ms_params->allow_hp = pcs->ppcs->frm_hdr.allow_high_precision_mv;
+#else
     ms_params->allow_hp    = md_subpel_ctrls.max_precision == EIGHTH_PEL && pcs->ppcs->frm_hdr.allow_high_precision_mv;
+#endif
     ms_params->forced_stop = md_subpel_ctrls.max_precision;
     // Maximum number of steps in logarithmic subpel search before giving up.
     ms_params->iters_per_step = md_subpel_ctrls.subpel_iters_per_step;

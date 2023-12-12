@@ -205,8 +205,14 @@ typedef struct TfControls {
     // deviation between the 64x64 ME distortion and the sum of the 4 32x32 ME distortions is less
     // than use_pred_64x64_only_th then perform Sub - Pel search for only the 64x64 block
     uint8_t use_pred_64x64_only_th;
+#if OPT_TF_SP_EXIT
+    // Exit the subpel search if per-pixel distortion/variance is less than the TH (i.e. if the search results so far are "good enough")
+    // 0 is off; higher is more aggressive
+    uint8_t subpel_early_exit_th;
+#else
     // Specifies whether to early exit the Sub-Pel search based on a pred-error-th or not
     uint8_t subpel_early_exit;
+#endif
     // Specifies whether to skip reference frame e.g. 1 = use all frames, 2 = use every other frame, 4 = use 1/4 frames, etc.
     uint8_t ref_frame_factor;
     // Specifies whether to tune the params using qp (0: OFF, 1: ON)
@@ -229,8 +235,13 @@ typedef enum SqWeightOffsets {
     AGGRESSIVE_OFFSET_0   = -5,
     AGGRESSIVE_OFFSET_1   = -10
 } SqWeightOffsets;
+#if OPT_COEFF_LVL_NORM
+#define COEFF_LVL_TH_0 (5833 / 48)
+#define COEFF_LVL_TH_1 (16666 / 48)
+#else
 #define COEFF_LVL_TH_0 30000
 #define COEFF_LVL_TH_1 100000
+#endif
 typedef enum InputCoeffLvl {
     LOW_LVL     = 0,
     NORMAL_LVL  = 1,

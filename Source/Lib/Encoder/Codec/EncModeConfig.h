@@ -24,8 +24,10 @@ uint8_t svt_aom_get_nic_level(EncMode enc_mode, uint8_t is_base, uint8_t hierarc
 
 void    svt_aom_set_depth_ctrls(PictureControlSet *pcs, ModeDecisionContext *ctx, uint8_t depth_level);
 uint8_t svt_aom_get_enable_me_16x16(EncMode enc_mode);
+#if !OPT_COEFF_LVL_NORM
 uint8_t svt_aom_get_predict_frame_coeff_lvl(EncMode enc_mode);
 void    svt_aom_set_frame_coeff_lvl(PictureControlSet *pcs, uint8_t lvl);
+#endif
 Bool    svt_aom_is_ref_same_size(PictureControlSet *pcs, uint8_t list_idx, uint8_t ref_idx);
 uint8_t svt_aom_get_enable_me_8x8(EncMode enc_mode, bool rtc_tune, EbInputResolution input_resolution);
 void    svt_aom_set_tpl_extended_controls(PictureParentControlSet *pcs, uint8_t tpl_level);

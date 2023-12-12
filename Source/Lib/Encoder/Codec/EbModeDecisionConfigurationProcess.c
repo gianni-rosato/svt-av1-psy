@@ -488,6 +488,44 @@ static void av1_setup_motion_field(Av1Common *cm, PictureControlSet *pcs) {
 EbErrorType svt_av1_hash_table_create(HashTable *p_hash_table);
 void       *rtime_alloc_block_hash_block_is_same(size_t size) { return malloc(size); }
 
+#if OPT_COEFF_LVL_NORM
+/* Determine the frame complexity level (stored under pcs->coeff_lvl) based
+on the ME distortion and QP. */
+static void set_frame_coeff_lvl(PictureControlSet* pcs) {
+
+    uint64_t tot_me_8x8_dist = 0;
+    for (uint32_t b64_idx = 0; b64_idx < pcs->b64_total_count; b64_idx++) {
+        tot_me_8x8_dist += pcs->ppcs->me_8x8_distortion[b64_idx];
+    }
+    uint64_t me_8x8_dist_per_sb = tot_me_8x8_dist / pcs->b64_total_count;
+    uint64_t cmplx = me_8x8_dist_per_sb / pcs->scs->static_config.qp;
+
+    uint64_t coeff_low_level_th = COEFF_LVL_TH_0;
+    uint64_t coeff_high_level_th = COEFF_LVL_TH_1;
+
+    if (pcs->ppcs->input_resolution <= INPUT_SIZE_240p_RANGE) {
+        coeff_low_level_th = (uint64_t)((double)coeff_low_level_th * 1.7);
+        coeff_high_level_th = (uint64_t)((double)coeff_high_level_th * 1.7);
+    }
+    else if (pcs->ppcs->input_resolution <= INPUT_SIZE_480p_RANGE) {
+        coeff_low_level_th = (uint64_t)((double)coeff_low_level_th * 1.3);
+        coeff_high_level_th = (uint64_t)((double)coeff_high_level_th * 1.3);
+    }
+    else if (pcs->ppcs->input_resolution <= INPUT_SIZE_720p_RANGE) {
+        coeff_low_level_th = (uint64_t)((double)coeff_low_level_th * 1.2);
+        coeff_high_level_th = (uint64_t)((double)coeff_high_level_th * 1.2);
+    }
+
+    pcs->coeff_lvl = NORMAL_LVL;
+    if (cmplx < coeff_low_level_th) {
+        pcs->coeff_lvl = LOW_LVL;
+    }
+    else if (cmplx > coeff_high_level_th) {
+        pcs->coeff_lvl = HIGH_LVL;
+    }
+}
+#endif
+
 /* Mode Decision Configuration Kernel */
 
 /*********************************************************************************
@@ -554,8 +592,12 @@ void *svt_aom_mode_decision_configuration_kernel(void *input_ptr) {
         pcs->coeff_lvl = INVALID_LVL;
         if (scs->static_config.pass != ENC_FIRST_PASS) {
             if (pcs->slice_type != I_SLICE && !pcs->ppcs->sc_class1) {
+#if OPT_COEFF_LVL_NORM
+                set_frame_coeff_lvl(pcs);
+#else
                 uint8_t pfc_lvl = svt_aom_get_predict_frame_coeff_lvl(pcs->enc_mode);
                 svt_aom_set_frame_coeff_lvl(pcs, pfc_lvl);
+#endif
             }
         }
         // -------

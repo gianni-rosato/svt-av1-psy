@@ -444,6 +444,11 @@ typedef struct MdSubPelSearchCtrls {
     uint8_t skip_zz_mv;
     uint8_t min_blk_sz; //blk size below which we skip subpel
     uint8_t mvp_th; // when > 0, use mvp info to skip hpel search. skip if ME is  worse than MVP.
+#if OPT_ME_SP_8TH_PEL
+    // Skip high precision (1/8-Pel) when the ME vs. MVP MV difference (x or y) is larger than the threshold.
+    // MAX_SIGNED_VALUE is off; 0 is safest on TH, higher is more aggressive
+    int hp_mv_th;
+#endif
 } MdSubPelSearchCtrls;
 typedef struct ParentSqCmplxCtrls {
     Bool enabled;
@@ -582,10 +587,12 @@ typedef struct NicCtrls {
 typedef struct CandEliminationCtlrs {
     uint32_t enabled;
     uint8_t  dc_only;
+#if !CLN_SMALL_SIGS
     uint8_t  inject_new_me;
     uint8_t  inject_new_pme;
     // factor to scale base TH by for distortion check
     uint8_t th_multiplier;
+#endif
 } CandEliminationCtlrs;
 typedef struct NsqCtrls {
     // Enable or disable nsq signal. 0: disabled, 1: enabled

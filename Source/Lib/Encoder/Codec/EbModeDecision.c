@@ -4578,13 +4578,16 @@ static INLINE void eliminate_candidate_based_on_pme_me_results(ModeDecisionConte
     uint8_t *dc_cand_only_flag)
 {
     uint32_t th = is_used_as_ref ? 10 : 200;
+#if !CLN_SMALL_SIGS
     th *= ctx->cand_reduction_ctrls.cand_elimination_ctrls.th_multiplier;
+#endif
     if (ctx->updated_enable_pme || ctx->md_subpel_me_ctrls.enabled) {
         th = th * ctx->blk_geom->bheight * ctx->blk_geom->bwidth;
         const uint32_t best_me_distotion = MIN(MIN(ctx->pme_res[0][0].dist, ctx->pme_res[1][0].dist), ctx->md_me_dist);
         if (best_me_distotion < th) {
             *dc_cand_only_flag = ctx->cand_reduction_ctrls.cand_elimination_ctrls.dc_only ? 1 : *dc_cand_only_flag;
         }
+#if !CLN_SMALL_SIGS
         if (ctx->updated_enable_pme && ctx->md_subpel_me_ctrls.enabled) {
         const int32_t me_pme_distance = ((int32_t)ctx->md_me_dist - (int32_t)MIN(ctx->pme_res[0][0].dist, ctx->pme_res[1][0].dist));
         if (me_pme_distance >= 0)
@@ -4592,6 +4595,7 @@ static INLINE void eliminate_candidate_based_on_pme_me_results(ModeDecisionConte
         else
             ctx->inject_new_pme = ctx->cand_reduction_ctrls.cand_elimination_ctrls.inject_new_pme ? 0 : ctx->inject_new_pme;
         }
+#endif
     }
 }
 EbErrorType generate_md_stage_0_cand_light_pd0(
@@ -4648,7 +4652,11 @@ void generate_md_stage_0_cand_light_pd1(
         uint8_t dc_cand_only_flag = (ctx->intra_ctrls.intra_mode_end == DC_PRED);
         if (ctx->cand_reduction_ctrls.cand_elimination_ctrls.enabled && ctx->cand_reduction_ctrls.cand_elimination_ctrls.dc_only && !dc_cand_only_flag && ctx->md_subpel_me_ctrls.enabled) {
             uint32_t th = pcs->ppcs->temporal_layer_index == 0 ? 10 : !pcs->ppcs->is_highest_layer ? 30 : 200;
+#if CLN_SMALL_SIGS
+            th *= (ctx->blk_geom->bheight * ctx->blk_geom->bwidth);
+#else
             th *= (ctx->blk_geom->bheight * ctx->blk_geom->bwidth * ctx->cand_reduction_ctrls.cand_elimination_ctrls.th_multiplier);
+#endif
             if (ctx->md_me_dist < th)
                 dc_cand_only_flag = 1;
         }
