@@ -138,7 +138,7 @@ static void svt_ext_eight_sad_calculation_8x8_16x16_neon(uint8_t *src, uint32_t 
                 (svt_aom_compute8x4_sad_kernel_neon(src, src_stride_sub, ref + search_index, ref_stride_sub)) << 1;
             if (sad8x8_0 < p_best_sad_8x8[0]) {
                 p_best_sad_8x8[0] = (uint32_t)sad8x8_0;
-                x_mv              = _MVXT(mv) + (int16_t)search_index * 4;
+                x_mv              = _MVXT(mv) + (int16_t)search_index;
                 y_mv              = _MVYT(mv);
                 p_best_mv8x8[0]   = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
             }
@@ -148,7 +148,7 @@ static void svt_ext_eight_sad_calculation_8x8_16x16_neon(uint8_t *src, uint32_t 
                 << 1;
             if (sad8x8_1 < p_best_sad_8x8[1]) {
                 p_best_sad_8x8[1] = (uint32_t)sad8x8_1;
-                x_mv              = _MVXT(mv) + (int16_t)search_index * 4;
+                x_mv              = _MVXT(mv) + (int16_t)search_index;
                 y_mv              = _MVYT(mv);
                 p_best_mv8x8[1]   = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
             }
@@ -160,7 +160,7 @@ static void svt_ext_eight_sad_calculation_8x8_16x16_neon(uint8_t *src, uint32_t 
                 << 1;
             if (sad8x8_2 < p_best_sad_8x8[2]) {
                 p_best_sad_8x8[2] = (uint32_t)sad8x8_2;
-                x_mv              = _MVXT(mv) + (int16_t)search_index * 4;
+                x_mv              = _MVXT(mv) + (int16_t)search_index;
                 y_mv              = _MVYT(mv);
                 p_best_mv8x8[2]   = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
             }
@@ -172,7 +172,7 @@ static void svt_ext_eight_sad_calculation_8x8_16x16_neon(uint8_t *src, uint32_t 
                 << 1;
             if (sad8x8_3 < p_best_sad_8x8[3]) {
                 p_best_sad_8x8[3] = (uint32_t)sad8x8_3;
-                x_mv              = _MVXT(mv) + (int16_t)search_index * 4;
+                x_mv              = _MVXT(mv) + (int16_t)search_index;
                 y_mv              = _MVYT(mv);
                 p_best_mv8x8[3]   = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
             }
@@ -180,7 +180,7 @@ static void svt_ext_eight_sad_calculation_8x8_16x16_neon(uint8_t *src, uint32_t 
                 sad8x8_3;
             if (sad16x16 < p_best_sad_16x16[0]) {
                 p_best_sad_16x16[0] = (uint32_t)sad16x16;
-                x_mv                = _MVXT(mv) + (int16_t)search_index * 4;
+                x_mv                = _MVXT(mv) + (int16_t)search_index;
                 y_mv                = _MVYT(mv);
                 p_best_mv16x16[0]   = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
             }
@@ -190,7 +190,7 @@ static void svt_ext_eight_sad_calculation_8x8_16x16_neon(uint8_t *src, uint32_t 
             uint32_t sad8x8_0 = compute8x8_sad_kernel_neon(src, src_stride, ref + search_index, ref_stride);
             if (sad8x8_0 < p_best_sad_8x8[0]) {
                 p_best_sad_8x8[0] = (uint32_t)sad8x8_0;
-                x_mv              = _MVXT(mv) + (int16_t)search_index * 4;
+                x_mv              = _MVXT(mv) + (int16_t)search_index;
                 y_mv              = _MVYT(mv);
                 p_best_mv8x8[0]   = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
             }
@@ -198,7 +198,7 @@ static void svt_ext_eight_sad_calculation_8x8_16x16_neon(uint8_t *src, uint32_t 
             uint32_t sad8x8_1 = (compute8x8_sad_kernel_neon(src + 8, src_stride, ref + 8 + search_index, ref_stride));
             if (sad8x8_1 < p_best_sad_8x8[1]) {
                 p_best_sad_8x8[1] = (uint32_t)sad8x8_1;
-                x_mv              = _MVXT(mv) + (int16_t)search_index * 4;
+                x_mv              = _MVXT(mv) + (int16_t)search_index;
                 y_mv              = _MVYT(mv);
                 p_best_mv8x8[1]   = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
             }
@@ -207,7 +207,7 @@ static void svt_ext_eight_sad_calculation_8x8_16x16_neon(uint8_t *src, uint32_t 
                 src + (src_stride << 3), src_stride, ref + (ref_stride << 3) + search_index, ref_stride));
             if (sad8x8_2 < p_best_sad_8x8[2]) {
                 p_best_sad_8x8[2] = (uint32_t)sad8x8_2;
-                x_mv              = _MVXT(mv) + (int16_t)search_index * 4;
+                x_mv              = _MVXT(mv) + (int16_t)search_index;
                 y_mv              = _MVYT(mv);
                 p_best_mv8x8[2]   = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
             }
@@ -216,7 +216,7 @@ static void svt_ext_eight_sad_calculation_8x8_16x16_neon(uint8_t *src, uint32_t 
                 src + (src_stride << 3) + 8, src_stride, ref + (ref_stride << 3) + 8 + search_index, ref_stride));
             if (sad8x8_3 < p_best_sad_8x8[3]) {
                 p_best_sad_8x8[3] = (uint32_t)sad8x8_3;
-                x_mv              = _MVXT(mv) + (int16_t)search_index * 4;
+                x_mv              = _MVXT(mv) + (int16_t)search_index;
                 y_mv              = _MVYT(mv);
                 p_best_mv8x8[3]   = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
             }
@@ -224,7 +224,7 @@ static void svt_ext_eight_sad_calculation_8x8_16x16_neon(uint8_t *src, uint32_t 
                 sad8x8_3;
             if (sad16x16 < p_best_sad_16x16[0]) {
                 p_best_sad_16x16[0] = (uint32_t)sad16x16;
-                x_mv                = _MVXT(mv) + (int16_t)search_index * 4;
+                x_mv                = _MVXT(mv) + (int16_t)search_index;
                 y_mv                = _MVYT(mv);
                 p_best_mv16x16[0]   = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
             }

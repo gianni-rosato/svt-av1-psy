@@ -2145,13 +2145,13 @@ static void md_nsq_motion_search(PictureControlSet *pcs, ModeDecisionContext *ct
                 svt_aom_is_me_data_present(
                     block_index, block_index * pcs->ppcs->pa_me_data->max_cand, me_results, list_idx, ref_idx)) {
                 if (list_idx == 0) {
-                    mvc_x_array[mvc_count] = (me_results->me_mv_array[block_index * max_refs + ref_idx].x_mv) << 1;
-                    mvc_y_array[mvc_count] = (me_results->me_mv_array[block_index * max_refs + ref_idx].y_mv) << 1;
+                    mvc_x_array[mvc_count] = (me_results->me_mv_array[block_index * max_refs + ref_idx].x_mv) << 3;
+                    mvc_y_array[mvc_count] = (me_results->me_mv_array[block_index * max_refs + ref_idx].y_mv) << 3;
                 } else {
                     mvc_x_array[mvc_count] = (me_results->me_mv_array[block_index * max_refs + max_l0 + ref_idx].x_mv)
-                        << 1;
+                        << 3;
                     mvc_y_array[mvc_count] = (me_results->me_mv_array[block_index * max_refs + max_l0 + ref_idx].y_mv)
-                        << 1;
+                        << 3;
                 }
 
                 mvc_count++;
@@ -2634,8 +2634,8 @@ static void read_refine_me_mvs_light_pd1(PictureControlSet *pcs, EbPictureBuffer
                 const MvCandidate *me_mv_array_base = me_results->me_mv_array +
                     (ctx->me_block_offset * pcs->ppcs->pa_me_data->max_refs + ref);
                 const MvCandidate mv_cand = me_mv_array_base[list ? max_l0 : 0];
-                int16_t           me_mv_x = mv_cand.x_mv << 1;
-                int16_t           me_mv_y = mv_cand.y_mv << 1;
+                int16_t           me_mv_x = mv_cand.x_mv << 3;
+                int16_t           me_mv_y = mv_cand.y_mv << 3;
                 // can only skip if using dc only b/c otherwise need cost at candidate generation
                 const bool skip_subpel = skip_subpel_1 &&
                     (skip_subpel_2 || (skip_zero_mv && me_mv_x == 0 && me_mv_y == 0));
@@ -2733,8 +2733,8 @@ static void read_refine_me_mvs(PictureControlSet *pcs, ModeDecisionContext *ctx)
                     const MvCandidate *me_mv_array_base = me_results->me_mv_array +
                         (ctx->me_block_offset * pcs->ppcs->pa_me_data->max_refs + ref);
                     const MvCandidate mv_cand = me_mv_array_base[list ? max_l0 : 0];
-                    me_mv_x                   = mv_cand.x_mv << 1;
-                    me_mv_y                   = mv_cand.y_mv << 1;
+                    me_mv_x                   = mv_cand.x_mv << 3;
+                    me_mv_y                   = mv_cand.y_mv << 3;
                 }
                 clip_mv_on_pic_boundary(
                     ctx->blk_org_x, ctx->blk_org_y, blk_geom->bwidth, blk_geom->bheight, ref_pic, &me_mv_x, &me_mv_y);

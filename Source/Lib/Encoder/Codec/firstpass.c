@@ -540,12 +540,10 @@ static int open_loop_firstpass_inter_prediction(
         }
         mv.col = (me_results
                       ->me_mv_array[me_mb_offset * ppcs->pa_me_data->max_refs + ref_pic_index]
-                      .x_mv) >>
-            2;
+                      .x_mv);
         mv.row = (me_results
                       ->me_mv_array[me_mb_offset * ppcs->pa_me_data->max_refs + ref_pic_index]
-                      .y_mv) >>
-            2;
+                      .y_mv);
 
         EbPictureBufferDesc *last_input_picture_ptr = ppcs->first_pass_ref_count
             ? ppcs->first_pass_ref_ppcs_ptr[0]->enhanced_pic
@@ -583,13 +581,11 @@ static int open_loop_firstpass_inter_prediction(
             gf_mv.col =
                 (me_results
                      ->me_mv_array[me_mb_offset * ppcs->pa_me_data->max_refs + ref_pic_index]
-                     .x_mv) >>
-                2;
+                     .x_mv);
             gf_mv.row =
                 (me_results
                      ->me_mv_array[me_mb_offset * ppcs->pa_me_data->max_refs + ref_pic_index]
-                     .y_mv) >>
-                2;
+                     .y_mv);
 
             EbPictureBufferDesc *golden_input_picture_ptr =
                 ppcs->first_pass_ref_ppcs_ptr[1]->enhanced_pic;
