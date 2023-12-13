@@ -4205,7 +4205,11 @@ static void set_param_based_on_input(SequenceControlSet *scs)
         SVT_WARN("Fwd key frame is only supported for hierarchical levels 4 at this point. Hierarchical levels are set to 4\n");
     }
     bool disallow_nsq = true;
+#if FIX_NSQ_CTRL
+    uint8_t nsq_geom_level;
+#else
     uint8_t nsq_level;
+#endif
     uint8_t allow_HVA_HVB = 0;
     uint8_t allow_HV4 = 0;
     uint8_t h_v_only = 1;
@@ -4215,6 +4219,17 @@ static void set_param_based_on_input(SequenceControlSet *scs)
     for (uint8_t is_base = 0; is_base <= 1; is_base++) {
             for (uint8_t coeff_lvl = 0; coeff_lvl <= HIGH_LVL + 1; coeff_lvl++)
             {
+#if FIX_NSQ_CTRL
+                nsq_geom_level = svt_aom_get_nsq_geom_level(scs->static_config.enc_mode, is_base, coeff_lvl);
+                disallow_nsq = MIN(disallow_nsq, (nsq_geom_level == 0 ? 1 : 0));
+                uint8_t temp_allow_HVA_HVB = 0, temp_allow_HV4 = 0;
+                svt_aom_set_nsq_geom_ctrls(NULL, nsq_geom_level, &temp_allow_HVA_HVB, &temp_allow_HV4, &min_nsq_bsize);
+                allow_HVA_HVB |= temp_allow_HVA_HVB;
+                allow_HV4 |= temp_allow_HV4;
+                h_v_only = h_v_only && !allow_HVA_HVB && !allow_HV4;
+                no_8x4_4x8 = no_8x4_4x8 && min_nsq_bsize >= 8;
+                no_16x8_8x16 = no_16x8_8x16 && min_nsq_bsize >= 16;
+#else
                 for (EbInputResolution res = INPUT_SIZE_240p_RANGE; res <= INPUT_SIZE_8K_RANGE; res++) {
                     // min QP is 1 b/c 0 is lossless and is not supported
                     for (uint8_t qp = 1; qp <= MAX_QP_VALUE; qp++) {
@@ -4229,6 +4244,7 @@ static void set_param_based_on_input(SequenceControlSet *scs)
                 no_16x8_8x16 = no_16x8_8x16 && min_nsq_bsize >= 16;
                     }
                 }
+#endif
             }
     }
     bool disallow_4x4 = true;

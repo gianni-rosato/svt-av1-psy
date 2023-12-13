@@ -2151,7 +2151,11 @@ static void set_child_to_be_considered(PictureControlSet *pcs, ModeDecisionConte
 
     // All child blocks are same sq_size, so will share the same tot_d1_blocks
     const unsigned int child_default_tot_d1_blocks = get_default_tot_d1_blocks(ctx, child1_blk_geom, disallow_nsq);
+#if FIX_NSQ_CTRL
+    const unsigned int child_tot_d1_blocks = !ctx->nsq_geom_ctrls.enabled ? 1 : child_default_tot_d1_blocks;
+#else
     const unsigned int child_tot_d1_blocks         = !ctx->nsq_ctrls.enabled ? 1 : child_default_tot_d1_blocks;
+#endif
     for (unsigned block_1d_idx = 0; block_1d_idx < child_tot_d1_blocks; block_1d_idx++) {
         results_ptr->consider_block[child_block_idx_1 + block_1d_idx]     = 2;
         results_ptr->refined_split_flag[child_block_idx_1 + block_1d_idx] = FALSE;
@@ -2223,16 +2227,24 @@ static void set_child_to_be_considered(PictureControlSet *pcs, ModeDecisionConte
 }
 uint32_t svt_aom_get_tot_1d_blks(struct ModeDecisionContext *ctx, const int32_t sq_size, const uint8_t disallow_nsq) {
     uint32_t tot_d1_blocks;
-
+#if FIX_NSQ_CTRL
+    tot_d1_blocks = (disallow_nsq) || (sq_size <= ctx->nsq_geom_ctrls.min_nsq_block_size) ? 1
+#else
     tot_d1_blocks = (disallow_nsq) || (sq_size <= ctx->nsq_ctrls.min_nsq_block_size) ? 1
+#endif
         : sq_size == 128                                                             ? 17
         : sq_size > 8                                                                ? 25
         : sq_size == 8                                                               ? 5
                                                                                      : 1;
-
+#if FIX_NSQ_CTRL
+    if (!ctx->nsq_geom_ctrls.allow_HVA_HVB && !ctx->nsq_geom_ctrls.allow_HV4)
+        tot_d1_blocks = MIN(5, tot_d1_blocks);
+    else if (!ctx->nsq_geom_ctrls.allow_HVA_HVB)
+#else
     if (!ctx->nsq_ctrls.allow_HVA_HVB && !ctx->nsq_ctrls.allow_HV4)
         tot_d1_blocks = MIN(5, tot_d1_blocks);
     else if (!ctx->nsq_ctrls.allow_HVA_HVB)
+#endif
         tot_d1_blocks = MIN((uint32_t)(sq_size == 128 ? 5 : 13), tot_d1_blocks);
 
     return tot_d1_blocks;
@@ -2285,7 +2297,11 @@ static void build_cand_block_array(SequenceControlSet *scs, PictureControlSet *p
         }
         // SQ/NSQ block(s) filter based on the block validity
         if (is_block_tagged) {
+#if FIX_NSQ_CTRL
+            uint32_t tot_d1_blocks = !ctx->nsq_geom_ctrls.enabled
+#else
             uint32_t tot_d1_blocks = !ctx->nsq_ctrls.enabled
+#endif
                 ? 1
                 : svt_aom_get_tot_1d_blks(ctx, blk_geom->sq_size, ctx->md_disallow_nsq);
 
@@ -2296,10 +2312,17 @@ static void build_cand_block_array(SequenceControlSet *scs, PictureControlSet *p
             // If HA/HB/VA/VB and H4/V4 are disallowed, tot_d1_blocks will be
             // capped at 5 in svt_aom_get_tot_1d_blks().  Therefore, if the condition MIN(17, tot_d1_blocks) is
             // hit, tot_d1_blocks will be 5 OR HA/HB/VA/VB will be enabled.  Either case is valid.
+#if FIX_NSQ_CTRL
+            const uint32_t to_test_d1_blocks = !ctx->nsq_geom_ctrls.allow_HV4 ? MIN(17, tot_d1_blocks) : tot_d1_blocks;
+
+            for (uint32_t idx = blk_index; idx < (tot_d1_blocks + blk_index); ++idx) {
+                if (!ctx->nsq_geom_ctrls.allow_HV4) {
+#else
             const uint32_t to_test_d1_blocks = !ctx->nsq_ctrls.allow_HV4 ? MIN(17, tot_d1_blocks) : tot_d1_blocks;
 
             for (uint32_t idx = blk_index; idx < (tot_d1_blocks + blk_index); ++idx) {
                 if (!ctx->nsq_ctrls.allow_HV4) {
+#endif
                     // Index of first H4 block is 5; if H4/V4 blocks are skipped increase index to bypass the blocks.
                     // idx is increased by 7, rather than 8, because after continue is exectued, idx will be incremented
                     // by 1 (as part of the for loop).  H4/V4 blocks are not allowed for 128 sq_size, so don't skip.
@@ -2565,7 +2588,11 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs, PictureContro
     uint8_t    use_cost_band_based_modulation =
         (!scs->vq_ctrls.stability_ctrls.depth_refinement ||
          (pcs->slice_type != I_SLICE && pcs->ppcs->me_8x8_cost_variance[ctx->sb_index] < VQ_STABILITY_ME_VAR_TH));
+#if FIX_NSQ_CTRL
+    if (!ctx->nsq_geom_ctrls.enabled) {
+#else
     if (!ctx->nsq_ctrls.enabled) {
+#endif
         if (ctx->disallow_4x4) {
             memset(results_ptr->consider_block, 0, sizeof(uint8_t) * scs->max_block_cnt);
             memset(results_ptr->split_flag, 1, sizeof(uint8_t) * scs->max_block_cnt);
@@ -2603,7 +2630,11 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs, PictureContro
 
     while (blk_index < scs->max_block_cnt) {
         const BlockGeom *blk_geom      = get_blk_geom_mds(blk_index);
+#if FIX_NSQ_CTRL
+        uint32_t         tot_d1_blocks = svt_aom_get_tot_1d_blks(ctx, blk_geom->sq_size, !ctx->nsq_geom_ctrls.enabled);
+#else
         uint32_t         tot_d1_blocks = svt_aom_get_tot_1d_blks(ctx, blk_geom->sq_size, !ctx->nsq_ctrls.enabled);
+#endif
         ctx->blk_ptr                   = &ctx->md_blk_arr_nsq[blk_index];
 
         // if the parent square is inside inject this block
@@ -2752,7 +2783,11 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs, PictureContro
                                                         (int8_t)blk_geom->depth,
                                                         sq_size_idx,
                                                         s_depth,
+#if FIX_NSQ_CTRL
+                                                        !ctx->nsq_geom_ctrls.enabled);
+#else
                                                         !ctx->nsq_ctrls.enabled);
+#endif
 
                         if (e_depth != 0 && add_sub_depth)
                             set_child_to_be_considered(pcs,
@@ -2764,7 +2799,11 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs, PictureContro
                                                        (int8_t)blk_geom->depth,
                                                        sq_size_idx,
                                                        e_depth,
+#if FIX_NSQ_CTRL
+                                                       !ctx->nsq_geom_ctrls.enabled);
+#else
                                                        !ctx->nsq_ctrls.enabled);
+#endif
                     }
                 }
             }
@@ -2810,17 +2849,28 @@ static EbErrorType build_starting_cand_block_array(SequenceControlSet *scs, Pict
         }
         // SQ/NSQ block(s) filter based on the block validity
         if (is_block_tagged) {
+#if FIX_NSQ_CTRL
+            const uint32_t tot_d1_blocks = !ctx->nsq_geom_ctrls.enabled
+#else
             const uint32_t tot_d1_blocks = !ctx->nsq_ctrls.enabled
+#endif
                 ? 1
                 : svt_aom_get_tot_1d_blks(ctx, blk_geom->sq_size, ctx->md_disallow_nsq);
 
             // If HA/HB/VA/VB and H4/V4 are disallowed, tot_d1_blocks will be
             // capped at 5 in svt_aom_get_tot_1d_blks().  Therefore, if the condition MIN(17, tot_d1_blocks) is
             // hit, tot_d1_blocks will be 5 OR HA/HB/VA/VB will be enabled.  Either case is valid.
+#if FIX_NSQ_CTRL
+            const uint32_t to_test_d1_blocks = !ctx->nsq_geom_ctrls.allow_HV4 ? MIN(17, tot_d1_blocks) : tot_d1_blocks;
+
+            for (uint32_t idx = blk_index; idx < (tot_d1_blocks + blk_index); ++idx) {
+                if (!ctx->nsq_geom_ctrls.allow_HV4) {
+#else
             const uint32_t to_test_d1_blocks = !ctx->nsq_ctrls.allow_HV4 ? MIN(17, tot_d1_blocks) : tot_d1_blocks;
 
             for (uint32_t idx = blk_index; idx < (tot_d1_blocks + blk_index); ++idx) {
                 if (!ctx->nsq_ctrls.allow_HV4) {
+#endif
                     // Index of first H4 block is 5; if H4/V4 blocks are skipped increase index to bypass the blocks.
                     // idx is increased by 7, rather than 8, because after continue is exectued, idx will be incremented
                     // by 1 (as part of the for loop).  H4/V4 blocks are not allowed for 128 sq_size, so don't skip.
@@ -2937,7 +2987,11 @@ static void exaustive_light_pd1_features(ModeDecisionContext *md_ctx, PicturePar
             md_ctx->bipred3x3_ctrls.enabled == 0 && md_ctx->inter_compound_mode == 0 &&
             md_ctx->md_pic_obmc_level == 0 && md_ctx->md_filter_intra_level == 0 &&
             md_ctx->new_nearest_near_comb_injection == 0 && md_ctx->md_palette_level == 0 &&
+#if OPT_MERGE_INTER_CANDS
+            ppcs->gm_ctrls.enabled == 0 &&
+#else
             md_ctx->cand_reduction_ctrls.merge_inter_classes && ppcs->gm_ctrls.enabled == 0 &&
+#endif
             // If TXS enabled at picture level, there are necessary context updates that must be added to LPD1
             ppcs->frm_hdr.tx_mode != TX_MODE_SELECT && md_ctx->txs_ctrls.enabled == 0 && md_ctx->pred_depth_only &&
             md_ctx->md_disallow_nsq == TRUE && md_ctx->disallow_4x4 == TRUE && ppcs->scs->super_block_size == 64 &&

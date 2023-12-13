@@ -1083,6 +1083,11 @@ static EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr
     for (uint8_t is_base = 0; is_base <= 1; is_base++) {
         for (uint8_t is_islice = 0; is_islice <= 1; is_islice++) {
             for (uint8_t coeff_lvl = 0; coeff_lvl <= HIGH_LVL + 1; coeff_lvl++) {
+#if FIX_NSQ_CTRL
+                if (!disallow_4x4)
+                    break;
+                disallow_4x4 = MIN(disallow_4x4, (svt_aom_get_nsq_geom_level(init_data_ptr->enc_mode, is_base, coeff_lvl) == 0 ? 1 : 0));
+#else
                 for (EbInputResolution res = INPUT_SIZE_240p_RANGE; res <= INPUT_SIZE_8K_RANGE; res++) {
                     // min QP is 1 b/c 0 is lossless and is not supported
                     for (uint8_t qp = 1; qp <= MAX_QP_VALUE; qp++) {
@@ -1093,6 +1098,7 @@ static EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr
                             (svt_aom_get_nsq_level(init_data_ptr->enc_mode, is_base, coeff_lvl, qp, res) == 0 ? 1 : 0));
                     }
                 }
+#endif
             }
         }
     }

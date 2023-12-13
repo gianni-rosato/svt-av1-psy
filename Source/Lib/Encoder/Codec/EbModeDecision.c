@@ -4765,7 +4765,14 @@ EbErrorType generate_md_stage_0_cand(
     *candidate_total_count_ptr = cand_total_cnt;
 
     memset(ctx->md_stage_0_count, 0, CAND_CLASS_TOTAL * sizeof(uint32_t));
-
+#if OPT_MERGE_INTER_CANDS
+    bool merge_inter_cands = 0;
+    if (ctx->nic_ctrls.pruning_ctrls.merge_inter_cands_mult != (uint8_t)~0) {
+        uint16_t th = (ctx->nic_ctrls.pruning_ctrls.merge_inter_cands_mult * (63 - pcs->scs->static_config.qp)) >> 1;
+        if ((MIN(ctx->md_me_dist, ctx->md_pme_dist) / (ctx->blk_geom->bwidth * ctx->blk_geom->bheight)) < th)
+            merge_inter_cands = 1;
+    }
+#endif
     for (uint32_t cand_i = 0; cand_i < cand_total_cnt; cand_i++) {
         ModeDecisionCandidate * cand_ptr = &ctx->fast_cand_array[cand_i];
         if (is_intra_mode(cand_ptr->pred_mode)) {
@@ -4782,7 +4789,11 @@ EbErrorType generate_md_stage_0_cand(
                   }
         }
         else { // INTER
+#if OPT_MERGE_INTER_CANDS
+            if (cand_ptr->pred_mode == NEWMV || cand_ptr->pred_mode == NEW_NEWMV || merge_inter_cands) {
+#else
             if (cand_ptr->pred_mode == NEWMV || cand_ptr->pred_mode == NEW_NEWMV || ctx->cand_reduction_ctrls.merge_inter_classes) {
+#endif
                 // MV Prediction
                 cand_ptr->cand_class = CAND_CLASS_1;
                 ctx->md_stage_0_count[CAND_CLASS_1]++;

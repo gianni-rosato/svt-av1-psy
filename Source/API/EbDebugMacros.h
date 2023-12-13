@@ -35,12 +35,17 @@ extern "C" {
 #endif // __cplusplus
 
 // svt-09 macros
+#define OPT_NSQ_MV                                1 // Improve the refinement of the NSQ MV(s)
 #define OPT_TF_PATH                               1 // Clean TF path
+#define OPT_Q_PRUNE_TH_WEIGHT                     1 // Modulate mds-pruning th(s) using q and distortion
+#define OPT_OBMC                                  1 // To do
+#define OPT_MERGE_INTER_CANDS                     1 // Perform the inter-candidates merge @ block-basis using q and best PME/ME pred-error, instead of @ input-basis using coeff-level
 #define OPT_TF_SP_EXIT                            1 // Apply TF subpel_early_exit feature to all bsizes with same TH for all
 #define OPT_COEFF_LVL_NORM                        1 // Normalize the coeff_lvl feature
+#define FIX_NSQ_CTRL                              1 // Break the nsq_ctrls into nsq_geom_ctrls and nsq_search_ctrls and use qp-banding for only the nsq_search_level derivation
 #define CLN_SMALL_SIGS                            1 // Remove signals and levels having an insignificant impact on the behaviour
 #define OPT_ME_SP_8TH_PEL                         1 // Optimize ME subpel
-
+#define OPT_NSQ_HIGH_FREQ                         0 // Use more conservative NSQ settings in the presence of a high energy area 
 
 //FOR DEBUGGING - Do not remove
 #define OPT_LD_LATENCY2         0 // Latency optimization for low delay

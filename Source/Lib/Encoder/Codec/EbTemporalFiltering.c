@@ -2019,7 +2019,6 @@ static void tf_16x16_sub_pel_search(PictureParentControlSet* pcs, MeContext* me_
     uint16_t** src_16bit, uint32_t* stride_src,
     uint32_t sb_origin_x, uint32_t sb_origin_y, uint32_t ss_x,
     int encoder_bit_depth) {
-    SequenceControlSet* scs = pcs->scs;
     InterpFilters interp_filters = av1_make_interp_filters(EIGHTTAP_REGULAR, EIGHTTAP_REGULAR);
 
     Bool is_highbd = (encoder_bit_depth == 8) ? (uint8_t)FALSE : (uint8_t)TRUE;
@@ -2144,7 +2143,6 @@ static void tf_8x8_sub_pel_search(PictureParentControlSet* pcs, MeContext* me_ct
     uint16_t** src_16bit, uint32_t* stride_src,
     uint32_t sb_origin_x, uint32_t sb_origin_y, uint32_t ss_x,
     int encoder_bit_depth) {
-    SequenceControlSet* scs = pcs->scs;
     InterpFilters interp_filters = av1_make_interp_filters(EIGHTTAP_REGULAR, EIGHTTAP_REGULAR);
 
     Bool is_highbd = (encoder_bit_depth == 8) ? (uint8_t)FALSE : (uint8_t)TRUE;

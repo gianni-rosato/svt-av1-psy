@@ -356,7 +356,12 @@ typedef struct PictureControlSet {
     uint8_t disallow_4x4_all_frames;
     uint8_t wm_level; // warped motion level
     uint8_t cand_reduction_level;
+#if FIX_NSQ_CTRL
+    uint8_t nsq_geom_level;
+    uint8_t nsq_search_level;
+#else
     uint8_t nsq_level;
+#endif
     uint8_t txt_level;
     uint8_t tx_shortcut_level;
     uint8_t interpolation_search_level;

@@ -54,6 +54,11 @@ EbErrorType svt_aom_largest_coding_unit_ctor(SuperBlock *larget_coding_unit_ptr,
     for (uint8_t is_base = 0; is_base <= 1; is_base++) {
         for (uint8_t is_islice = 0; is_islice <= 1; is_islice++) {
             for (uint8_t coeff_lvl = 0; coeff_lvl <= HIGH_LVL + 1; coeff_lvl++) {
+#if FIX_NSQ_CTRL
+                if (!disallow_nsq)
+                    break;
+                disallow_nsq = MIN(disallow_nsq, (svt_aom_get_nsq_geom_level(enc_mode, is_base, coeff_lvl) == 0 ? 1 : 0));
+#else
                 for (EbInputResolution res = INPUT_SIZE_240p_RANGE; res <= INPUT_SIZE_8K_RANGE; res++) {
                     // min QP is 1 b/c 0 is lossless and is not supported
                     for (uint8_t qp = 1; qp <= MAX_QP_VALUE; qp++) {
@@ -63,6 +68,7 @@ EbErrorType svt_aom_largest_coding_unit_ctor(SuperBlock *larget_coding_unit_ptr,
                                            (svt_aom_get_nsq_level(enc_mode, is_base, coeff_lvl, qp, res) == 0 ? 1 : 0));
                     }
                 }
+#endif
             }
         }
     }

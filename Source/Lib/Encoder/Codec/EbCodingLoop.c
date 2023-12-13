@@ -2721,7 +2721,11 @@ EB_EXTERN EbErrorType svt_aom_encdec_update(SequenceControlSet *scs, PictureCont
         uint32_t       blk_index     = 0;
         while (blk_index < max_block_cnt) {
             const BlockGeom *blk_geom      = get_blk_geom_mds(blk_index);
+#if FIX_NSQ_CTRL
+            const uint32_t   tot_d1_blocks = !md_ctx->nsq_geom_ctrls.enabled
+#else
             const uint32_t   tot_d1_blocks = !md_ctx->nsq_ctrls.enabled
+#endif
                   ? 1
                   : svt_aom_get_tot_1d_blks(md_ctx, blk_geom->sq_size, md_ctx->md_disallow_nsq);
 

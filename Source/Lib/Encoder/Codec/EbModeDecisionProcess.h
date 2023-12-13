@@ -577,6 +577,14 @@ typedef struct NicPruningCtrls {
     // if (best_mds0_distortion/QP < TH) consider only the best candidate after MDS0; 0: OFF,
     // higher: more aggressive.
     uint32_t force_1_cand_th;
+#if OPT_Q_PRUNE_TH_WEIGHT
+    uint16_t mds1_q_weight;
+    uint16_t mds2_q_weight;
+    uint16_t mds3_q_weight;
+#endif
+#if OPT_MERGE_INTER_CANDS
+    uint8_t merge_inter_cands_mult;
+#endif
 } NicPruningCtrls;
 typedef struct NicCtrls {
     NicPruningCtrls pruning_ctrls;
@@ -594,6 +602,61 @@ typedef struct CandEliminationCtlrs {
     uint8_t th_multiplier;
 #endif
 } CandEliminationCtlrs;
+#if FIX_NSQ_CTRL
+typedef struct NsqCtrls {
+    // Enable or disable nsq signal. 0: disabled, 1: enabled
+    uint8_t enabled;
+    // Disables all nsq blocks for below a specified size. e.g. 8 = 8x8, 16 = 16x16
+    uint8_t min_nsq_block_size;
+    // Disallow H4/V4 when off. 0: OFF, 1: ON
+    uint8_t allow_HV4;
+    // Disallow HA/HB/VA/VB NSQ blocks when off. 0: OFF, 1: ON
+    uint8_t allow_HVA_HVB;
+} NsqGeomCtrls;
+typedef struct NsqSearchCtrls {
+    // Set the level for coeff-based NSQ accuracy reduction
+    uint8_t psq_cplx_lvl;
+    // Weighting (expressed as a percentage) applied to square shape costs for determining if a and
+    // b shapes should be skipped. Namely: skip HA, HB, and H4 if h_cost > (weighted sq_cost) skip
+    // VA, VB, and V4 if v_cost > (weighted sq_cost)
+    uint32_t sq_weight;
+    // Skip H/V if the cost of H/V is bigger than the cost of V/H by hv_weight
+    // Only active when sq_weight is used (ie. sq_weight != (uint32_t)~0)
+    uint32_t hv_weight;
+    // max_part0_to_part1_dev is used to:
+    // (1) skip the H_Path if the deviation between the Parent-SQ src-to-recon distortion of (1st quadrant + 2nd quadrant) and the Parent-SQ src-to-recon distortion of (3rd quadrant + 4th quadrant) is less than TH,
+    // (2) skip the V_Path if the deviation between the Parent-SQ src-to-recon distortion of (1st quadrant + 3rd quadrant) and the Parent-SQ src-to-recon distortion of (2nd quadrant + 4th quadrant) is less than TH.
+    uint32_t max_part0_to_part1_dev;
+    // If the rate cost of splitting into NSQ shapes is greater than the percentage threshold of the cost of the SQ block, skip testing the NSQ shape.
+    // split_cost_th is specified as a perentage * 10 (i.e. a value of 70 corresponds to skipping the NSQ shape if the split rate cost is > 7% of the SQ cost).
+    // 0 is off.  Lower values are more aggressive.
+    uint32_t nsq_split_cost_th;
+    // If the rate cost of splitting the SQ into lower depths is smaller than the percentage threshold of the cost of the SQ block, skip testing the NSQ shapes.
+    // depth_split_cost_th is specified as a perentage * 100 (i.e. a value of 700 corresponds to skipping the NSQ shapes if the split rate cost is < 7% of the SQ cost).
+    // 0 is off.  Higher values are more aggressive.
+    uint32_t lower_depth_split_cost_th;
+    // Skip testing H or V if the signaling rate of H/V is significantly higher than the rate of V/H. Specified as a percentage TH. 0 is off, higher is more aggressive.
+    uint32_t H_vs_V_split_rate_th;
+    // For non-H/V partitions, skip testing the partition if its signaling rate cost is significantly higher than the signaling rate cost of the
+    // best partition.  Specified as a percentage TH. 0 is off, higher is more aggressive.
+    uint32_t non_HV_split_rate_th;
+    // Apply an offset to non_HV_split_rate_th
+    bool non_HV_split_rate_modulation;
+    // Offset applied to rate thresholds for 16x16 and smaller block sizes. Higher is more aggressive; 0 is off.
+    uint32_t rate_th_offset_lte16;
+    // If the distortion (or rate) component of the SQ cost is more than component_multiple_th times the rate (or distortion) component, skip the NSQ shapes
+    // 0: off, higher is safer
+    uint32_t component_multiple_th;
+    // Predict the number of non-zero coeff per NSQ shape using a non-conformant txs-search
+    uint8_t psq_txs_lvl;
+    // Whether to use the default or aggressive settings for the sub-Pred_depth block(s) (i.e. not applicable when PRED only)
+    uint8_t sub_depth_block_lvl;
+#if OPT_NSQ_HIGH_FREQ
+    // Whether to use conservative settings for high energy area (not applicable when sb-size=128)
+    uint8_t high_energy_weight;
+#endif
+} NsqSearchCtrls;
+#else
 typedef struct NsqCtrls {
     // Enable or disable nsq signal. 0: disabled, 1: enabled
     uint8_t enabled;
@@ -641,6 +704,7 @@ typedef struct NsqCtrls {
     // Whether to use the default or aggressive settings for the sub-Pred_depth block(s) (i.e. not applicable when PRED only)
     uint8_t sub_depth_block_lvl;
 } NsqCtrls;
+#endif
 typedef struct DepthEarlyExitCtrls {
     // If the rate cost of splitting into lower depths is greater than the percentage threshold of the cost of the parent block, skip testing the lower depth.
     // split_cost_th is specified as a perentage * 10 (i.e. a value of 70 corresponds to skipping the lower depth if the split rate cost is > 7% of the parent cost).
@@ -885,7 +949,9 @@ typedef struct Mds0Ctrls {
     uint16_t mds0_distortion_th;
 } Mds0Ctrls;
 typedef struct CandReductionCtrls {
+#if !OPT_MERGE_INTER_CANDS
     uint8_t            merge_inter_classes;
+#endif
     RedundantCandCtrls redundant_cand_ctrls;
     NearCountCtrls     near_count_ctrls;
     // inject unipred MVP candidates only for the best ME list
@@ -1148,7 +1214,12 @@ typedef struct ModeDecisionContext {
     TxsControls         txs_ctrls;
     TxtControls         txt_ctrls;
     CandReductionCtrls  cand_reduction_ctrls;
+#if FIX_NSQ_CTRL
+    NsqGeomCtrls        nsq_geom_ctrls;
+    NsqSearchCtrls      nsq_search_ctrls;
+#else
     NsqCtrls            nsq_ctrls;
+#endif
     DepthEarlyExitCtrls depth_early_exit_ctrls;
     RdoqCtrls           rdoq_ctrls;
     uint8_t             disallow_4x4;
@@ -1259,6 +1330,9 @@ typedef struct ModeDecisionContext {
     // when MD is done on 8bit, scale palette colors to 10bit (valid when bypass is 1)
     uint8_t scale_palette;
     uint8_t high_freq_present;
+#if OPT_NSQ_HIGH_FREQ  
+    uint32_t b32_satd[4];
+#endif
     // used to signal when the N4 shortcut can be used for rtc, works in conjunction with use_tx_shortcuts_mds3 flag
     uint8_t rtc_use_N4_dct_dct_shortcut;
     // SSIM_LVL_0: off

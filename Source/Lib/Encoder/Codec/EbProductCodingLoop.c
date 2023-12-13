@@ -2113,7 +2113,11 @@ static void derive_me_offsets(const SequenceControlSet *scs, PictureControlSet *
     assert(ctx->me_block_offset != (uint32_t)(-1));
     ctx->me_cand_offset = ctx->me_block_offset * pcs->ppcs->pa_me_data->max_cand;
 }
+#if OPT_NSQ_MV
+#define MAX_MD_NSQ_SARCH_MVC_CNT 6
+#else
 #define MAX_MD_NSQ_SARCH_MVC_CNT 5
+#endif
 static void md_nsq_motion_search(PictureControlSet *pcs, ModeDecisionContext *ctx, EbPictureBufferDesc *input_pic,
                                  uint32_t input_origin_index, uint8_t list_idx, uint8_t ref_idx,
                                  const MeSbResults *me_results, int16_t *me_mv_x, int16_t *me_mv_y) {
@@ -2123,6 +2127,9 @@ static void md_nsq_motion_search(PictureControlSet *pcs, ModeDecisionContext *ct
     int8_t        mvc_count = 0;
     const uint8_t max_refs  = pcs->ppcs->pa_me_data->max_refs;
     const uint8_t max_l0    = pcs->ppcs->pa_me_data->max_l0;
+#if OPT_NSQ_MV 
+    bool is_present;
+#endif
     ctx->enable_psad        = ctx->md_nsq_me_ctrls.enable_psad;
     // SQ MV (default MVC for NSQ)
     mvc_x_array[mvc_count] = *me_mv_x;
@@ -2153,12 +2160,35 @@ static void md_nsq_motion_search(PictureControlSet *pcs, ModeDecisionContext *ct
                     mvc_y_array[mvc_count] = (me_results->me_mv_array[block_index * max_refs + max_l0 + ref_idx].y_mv)
                         << 3;
                 }
-
+#if OPT_NSQ_MV 
+                is_present = 0;
+                for (int16_t mvc_index = 0; mvc_index < mvc_count; mvc_index++) {
+                    if (mvc_x_array[mvc_count] == mvc_x_array[mvc_index] && mvc_y_array[mvc_count] == mvc_y_array[mvc_index]) {
+                        is_present = 1;
+                        break;
+                    }
+                }
+                if (!is_present)
+#endif
                 mvc_count++;
             }
         }
     }
+#if OPT_NSQ_MV
+    mvc_x_array[mvc_count] = 0;
+    mvc_y_array[mvc_count] = 0;
 
+    is_present = 0;
+    for (int16_t mvc_index = 0; mvc_index < mvc_count; mvc_index++) {
+        if (mvc_x_array[mvc_count] == mvc_x_array[mvc_index] && mvc_y_array[mvc_count] == mvc_y_array[mvc_index]) {
+            is_present = 1;
+            break;
+        }
+    }
+    if (!is_present)
+
+        mvc_count++;
+#endif
     // Search Center
     int16_t              search_center_mvx  = mvc_x_array[0];
     int16_t              search_center_mvy  = mvc_y_array[0];
@@ -2208,16 +2238,63 @@ static void md_nsq_motion_search(PictureControlSet *pcs, ModeDecisionContext *ct
                        ctx->md_nsq_me_ctrls.dist_type,
                        search_center_mvx,
                        search_center_mvy,
+#if OPT_NSQ_MV
+                       -(ctx->md_nsq_me_ctrls.full_pel_search_width >> 1),
+                       +(ctx->md_nsq_me_ctrls.full_pel_search_width >> 1),
+                       -(ctx->md_nsq_me_ctrls.full_pel_search_height >> 1),
+                       +(ctx->md_nsq_me_ctrls.full_pel_search_height >> 1),
+                       4,
+#else
                        -(ctx->md_nsq_me_ctrls.full_pel_search_width >> 1),
                        +(ctx->md_nsq_me_ctrls.full_pel_search_width >> 1),
                        -(ctx->md_nsq_me_ctrls.full_pel_search_height >> 1),
                        +(ctx->md_nsq_me_ctrls.full_pel_search_height >> 1),
                        1,
+#endif
                        0,
                        &best_search_mvx,
                        &best_search_mvy,
                        &best_search_cost,
                        hbd_md);
+#if OPT_NSQ_MV
+    md_full_pel_search(pcs,
+        ctx,
+        input_pic,
+        ref_pic,
+        input_origin_index,
+        ctx->md_nsq_me_ctrls.dist_type,
+        best_search_mvx,
+        best_search_mvy,
+        -2,
+        +2,
+        -2,
+        +2,
+        2,
+        0,
+        &best_search_mvx,
+        &best_search_mvy,
+        &best_search_cost,
+        hbd_md);
+
+    md_full_pel_search(pcs,
+        ctx,
+        input_pic,
+        ref_pic,
+        input_origin_index,
+        ctx->md_nsq_me_ctrls.dist_type,
+        best_search_mvx,
+        best_search_mvy,
+        -1,
+        +1,
+        -1,
+        +1,
+        1,
+        0,
+        &best_search_mvx,
+        &best_search_mvy,
+        &best_search_cost,
+        hbd_md);
+#endif
     if (best_search_cost < search_center_cost) {
         *me_mv_x = best_search_mvx;
         *me_mv_y = best_search_mvy;
@@ -7669,13 +7746,25 @@ static void search_best_independent_uv_mode(PictureControlSet *pcs, EbPictureBuf
 static void post_mds0_nic_pruning(PictureControlSet *pcs, ModeDecisionContext *ctx, uint64_t best_md_stage_cost,
                                   uint64_t best_md_stage_dist) {
     const struct NicPruningCtrls pruning_ctrls = ctx->nic_ctrls.pruning_ctrls;
+#if OPT_Q_PRUNE_TH_WEIGHT
+    uint16_t mult = pruning_ctrls.mds1_q_weight;
 
+    uint16_t q_weight = (mult == (uint16_t)~0)
+        ? 1000
+        : CLIP3(1, 1000, (int)(mult * MAX((best_md_stage_cost / ((ctx->blk_geom->bwidth * ctx->blk_geom->bheight) << 10)), 1) * ((5 * pcs->ppcs->scs->static_config.qp) - 50)));
+
+    uint64_t  mds1_class_th = (pruning_ctrls.mds1_class_th * q_weight) / 1000;
+    uint8_t   mds1_band_cnt = pruning_ctrls.mds1_band_cnt;
+    uint16_t  mds1_cand_th_rank_factor = pruning_ctrls.mds1_cand_th_rank_factor;
+    uint64_t  mds1_cand_base_th_intra = (pruning_ctrls.mds1_cand_base_th_intra * q_weight) / 1000;
+    uint64_t  mds1_cand_base_th_inter = (pruning_ctrls.mds1_cand_base_th_inter * q_weight) / 1000;
+#else
     const uint64_t mds1_class_th            = pruning_ctrls.mds1_class_th;
     const uint8_t  mds1_band_cnt            = pruning_ctrls.mds1_band_cnt;
     const uint16_t mds1_cand_th_rank_factor = pruning_ctrls.mds1_cand_th_rank_factor;
     const uint64_t mds1_cand_base_th_intra  = pruning_ctrls.mds1_cand_base_th_intra;
     const uint64_t mds1_cand_base_th_inter  = pruning_ctrls.mds1_cand_base_th_inter;
-
+#endif
     ModeDecisionCandidateBuffer **cand_bf_arr = ctx->cand_bf_ptr_array;
     for (CandClass cidx = CAND_CLASS_0; cidx < CAND_CLASS_TOTAL; cidx++) {
         const uint64_t mds1_cand_th = is_intra_class(cidx) ? mds1_cand_base_th_intra : mds1_cand_base_th_inter;
@@ -7732,11 +7821,24 @@ static void post_mds0_nic_pruning(PictureControlSet *pcs, ModeDecisionContext *c
     }
 }
 // Perform the NIC class pruning and candidate pruning after MSD1
+#if OPT_Q_PRUNE_TH_WEIGHT
+static void post_mds1_nic_pruning(PictureControlSet* pcs, ModeDecisionContext* ctx, uint64_t best_md_stage_cost) {
+    const struct NicPruningCtrls  pruning_ctrls = ctx->nic_ctrls.pruning_ctrls;
+    
+    uint16_t mult = pruning_ctrls.mds2_q_weight;
+
+    uint16_t q_weight = (mult == (uint16_t)~0)
+        ? 1000
+        : CLIP3(1, 1000, (int)(mult * MAX((best_md_stage_cost / (uint64_t)(((uint64_t)ctx->blk_geom->bwidth * (uint64_t)ctx->blk_geom->bheight * (uint64_t)ctx->blk_geom->bwidth * (uint64_t)ctx->blk_geom->bheight) << 10)), 1) * ((5 * pcs->ppcs->scs->static_config.qp) - 50)));
+
+    const uint64_t                mds2_cand_th = (pruning_ctrls.mds2_cand_base_th * q_weight) / 1000;
+    const uint64_t                mds2_class_th = (pruning_ctrls.mds2_class_th * q_weight) / 1000;
+#else
 static void post_mds1_nic_pruning(ModeDecisionContext *ctx, uint64_t best_md_stage_cost) {
     const struct NicPruningCtrls pruning_ctrls = ctx->nic_ctrls.pruning_ctrls;
     const uint64_t               mds2_cand_th  = pruning_ctrls.mds2_cand_base_th;
     const uint64_t               mds2_class_th = pruning_ctrls.mds2_class_th;
-
+#endif
     const uint8_t                 mds2_band_cnt        = pruning_ctrls.mds2_band_cnt;
     const uint16_t                mds2_relative_dev_th = pruning_ctrls.mds2_relative_dev_th;
     ModeDecisionCandidateBuffer **cand_bf_arr          = ctx->cand_bf_ptr_array;
@@ -7797,11 +7899,24 @@ static void post_mds1_nic_pruning(ModeDecisionContext *ctx, uint64_t best_md_sta
     }
 }
 // Perform the NIC class pruning and candidate pruning after MSD2
+#if OPT_Q_PRUNE_TH_WEIGHT
+static void post_mds2_nic_pruning(PictureControlSet* pcs, ModeDecisionContext* ctx, uint64_t best_md_stage_cost) {
+    const struct NicPruningCtrls  pruning_ctrls = ctx->nic_ctrls.pruning_ctrls;
+
+    uint16_t mult = pruning_ctrls.mds3_q_weight;
+
+    uint16_t q_weight = (mult == (uint16_t)~0)
+        ? 1000
+        : CLIP3(1, 1000, (int)(mult * MAX((best_md_stage_cost / (uint64_t)(((uint64_t)ctx->blk_geom->bwidth * (uint64_t)ctx->blk_geom->bheight * (uint64_t)ctx->blk_geom->bwidth * (uint64_t)ctx->blk_geom->bheight) << 10)), 1) * ((5 * pcs->ppcs->scs->static_config.qp) - 50)));
+
+    const uint64_t                mds3_cand_th = (pruning_ctrls.mds3_cand_base_th * q_weight) / 1000;
+    const uint64_t                mds3_class_th = (pruning_ctrls.mds3_class_th * q_weight) / 1000;
+#else
 static void post_mds2_nic_pruning(ModeDecisionContext *ctx, uint64_t best_md_stage_cost) {
     const struct NicPruningCtrls pruning_ctrls = ctx->nic_ctrls.pruning_ctrls;
     const uint64_t               mds3_cand_th  = pruning_ctrls.mds3_cand_base_th;
     const uint64_t               mds3_class_th = pruning_ctrls.mds3_class_th;
-
+#endif
     const uint8_t                 mds3_band_cnt = pruning_ctrls.mds3_band_cnt;
     ModeDecisionCandidateBuffer **cand_bf_arr   = ctx->cand_bf_ptr_array;
     ctx->md_stage_3_total_count                 = 0;
@@ -9273,8 +9388,11 @@ static void md_encode_block(PictureControlSet *pcs, ModeDecisionContext *ctx, ui
         }
     }
     if (ctx->perform_mds1)
+#if OPT_Q_PRUNE_TH_WEIGHT
+        post_mds1_nic_pruning(pcs, ctx, best_md_stage_cost);
+#else
         post_mds1_nic_pruning(ctx, best_md_stage_cost);
-
+#endif
     // 2nd Full-Loop
     best_md_stage_cost = (uint64_t)~0;
     ctx->md_stage      = MD_STAGE_2;
@@ -9306,8 +9424,11 @@ static void md_encode_block(PictureControlSet *pcs, ModeDecisionContext *ctx, ui
     }
 
     if (ctx->perform_mds1) {
+#if OPT_Q_PRUNE_TH_WEIGHT
+        post_mds2_nic_pruning(pcs, ctx, best_md_stage_cost);
+#else
         post_mds2_nic_pruning(ctx, best_md_stage_cost);
-
+#endif
         construct_best_sorted_arrays_md_stage_3(ctx, ctx->best_candidate_index_array);
     } else {
         ctx->md_stage_3_total_count        = 1;
@@ -9382,8 +9503,13 @@ static void md_encode_block(PictureControlSet *pcs, ModeDecisionContext *ctx, ui
     if (perform_md_recon)
         av1_perform_inverse_transform_recon(pcs, ctx, cand_bf, ctx->blk_geom);
     if (ctx->blk_geom->shape == PART_N &&
+#if FIX_NSQ_CTRL
+    ((!ctx->md_disallow_nsq&& ctx->nsq_search_ctrls.max_part0_to_part1_dev&& ctx->blk_geom->bsize >= BLOCK_8X8 &&
+        ctx->blk_geom->sq_size > ctx->nsq_geom_ctrls.min_nsq_block_size) ||
+#else
         ((!ctx->md_disallow_nsq && ctx->nsq_ctrls.max_part0_to_part1_dev && ctx->blk_geom->bsize >= BLOCK_8X8 &&
           ctx->blk_geom->sq_size > ctx->nsq_ctrls.min_nsq_block_size) ||
+#endif
          (ctx->skip_sub_depth_ctrls.enabled && ctx->blk_geom->sq_size <= ctx->skip_sub_depth_ctrls.max_size &&
           ctx->md_blk_arr_nsq[ctx->blk_geom->blkidx_mds].split_flag &&
           (ctx->blk_geom->bsize >= BLOCK_16X16 || (!ctx->disallow_4x4 && ctx->blk_geom->bsize == BLOCK_8X8)))))
@@ -9406,7 +9532,11 @@ static void md_encode_block(PictureControlSet *pcs, ModeDecisionContext *ctx, ui
         copy_recon_md(pcs, ctx, cand_bf);
     }
     if (!ctx->md_disallow_nsq && ctx->nsq_psq_txs_ctrls.enabled && ctx->blk_geom->shape == PART_N &&
+#if FIX_NSQ_CTRL
+        ctx->blk_geom->bsize >= BLOCK_8X8 && ctx->blk_geom->sq_size > ctx->nsq_geom_ctrls.min_nsq_block_size)
+#else
         ctx->blk_geom->bsize >= BLOCK_8X8 && ctx->blk_geom->sq_size > ctx->nsq_ctrls.min_nsq_block_size)
+#endif
         non_normative_txs(pcs, ctx, blk_ptr, cand_bf);
     ctx->avail_blk_flag[blk_ptr->mds_idx] = TRUE;
     ctx->cost_avail[blk_ptr->mds_idx]     = TRUE;
@@ -9421,13 +9551,20 @@ static bool update_skip_nsq_based_on_split_rate(PictureControlSet *pcs, ModeDeci
 
     const uint32_t full_lambda = ctx->hbd_md ? ctx->full_sb_lambda_md[EB_10_BIT_MD]
                                              : ctx->full_sb_lambda_md[EB_8_BIT_MD];
-
+#if FIX_NSQ_CTRL
+    uint32_t nsq_split_cost_th = ctx->nsq_search_ctrls.nsq_split_cost_th;
+#else
     uint32_t nsq_split_cost_th = ctx->nsq_ctrls.nsq_split_cost_th;
+#endif
     // Get the rate cost of splitting into the current NSQ shape.
     // If the cost of the split rate is significant, then the shape is unlikely to be selected.
     if (nsq_split_cost_th) {
         if (blk_geom->sq_size <= 16)
+#if FIX_NSQ_CTRL
+            nsq_split_cost_th = MAX(1, nsq_split_cost_th - ctx->nsq_search_ctrls.rate_th_offset_lte16);
+#else
             nsq_split_cost_th = MAX(1, nsq_split_cost_th - ctx->nsq_ctrls.rate_th_offset_lte16);
+#endif
         const uint64_t part_cost = svt_aom_partition_rate_cost(pcs->ppcs,
                                                                ctx,
                                                                blk_geom->sqi_mds,
@@ -9439,12 +9576,19 @@ static bool update_skip_nsq_based_on_split_rate(PictureControlSet *pcs, ModeDeci
         if (part_cost * 1000 > ctx->md_local_blk_unit[blk_geom->sqi_mds].default_cost * nsq_split_cost_th)
             return true;
     }
-
+#if FIX_NSQ_CTRL
+    uint32_t H_vs_V_split_rate_th = ctx->nsq_search_ctrls.H_vs_V_split_rate_th;
+#else
     uint32_t H_vs_V_split_rate_th = ctx->nsq_ctrls.H_vs_V_split_rate_th;
+#endif
     // Skip H/V if the rate cost of signaling H/V is significantly bigger than the rate cost of signaling V/H
     if (H_vs_V_split_rate_th && (blk_geom->shape == PART_H || blk_geom->shape == PART_V)) {
         if (blk_geom->sq_size <= 16)
+#if FIX_NSQ_CTRL
+            H_vs_V_split_rate_th += ctx->nsq_search_ctrls.rate_th_offset_lte16;
+#else
             H_vs_V_split_rate_th += ctx->nsq_ctrls.rate_th_offset_lte16;
+#endif
         const uint64_t H_rate_cost = svt_aom_partition_rate_cost(pcs->ppcs,
                                                                  ctx,
                                                                  blk_geom->sqi_mds,
@@ -9467,11 +9611,19 @@ static bool update_skip_nsq_based_on_split_rate(PictureControlSet *pcs, ModeDeci
         if (blk_geom->shape == PART_V && V_rate_cost * H_vs_V_split_rate_th > H_rate_cost * 100)
             return true;
     }
+#if FIX_NSQ_CTRL
+    uint32_t non_HV_split_rate_th = ctx->nsq_search_ctrls.non_HV_split_rate_th;
+#else
     uint32_t non_HV_split_rate_th = ctx->nsq_ctrls.non_HV_split_rate_th;
+#endif
     // Skip non-H/V if the rate cost of signaling the shape is significantly bigger than the rate cost of signaling the current best shape
     if (non_HV_split_rate_th && !(blk_geom->shape == PART_H || blk_geom->shape == PART_V)) {
         if (blk_geom->sq_size <= 16)
+#if FIX_NSQ_CTRL
+            non_HV_split_rate_th += ctx->nsq_search_ctrls.rate_th_offset_lte16;
+#else
             non_HV_split_rate_th += ctx->nsq_ctrls.rate_th_offset_lte16;
+#endif
         const uint64_t part_cost = svt_aom_partition_rate_cost(pcs->ppcs,
                                                                ctx,
                                                                blk_geom->sqi_mds,
@@ -9487,8 +9639,11 @@ static bool update_skip_nsq_based_on_split_rate(PictureControlSet *pcs, ModeDeci
                                                                     full_lambda,
                                                                     TRUE, // Use accurate split cost for early exit
                                                                     ctx->md_rate_est_ctx);
-
+#if FIX_NSQ_CTRL
+        if (ctx->nsq_search_ctrls.non_HV_split_rate_modulation) {
+#else
         if (ctx->nsq_ctrls.non_HV_split_rate_modulation) {
+#endif
             const uint64_t ratio = (MAX(part_cost, best_part_cost) * 1000) /
                 ctx->md_local_blk_unit[blk_geom->sqi_mds].default_cost;
 
@@ -9499,11 +9654,19 @@ static bool update_skip_nsq_based_on_split_rate(PictureControlSet *pcs, ModeDeci
         if (part_cost * non_HV_split_rate_th > best_part_cost * 100)
             return true;
     }
+#if FIX_NSQ_CTRL
+    uint32_t lower_depth_split_cost_th = ctx->nsq_search_ctrls.lower_depth_split_cost_th;
+#else
     uint32_t lower_depth_split_cost_th = ctx->nsq_ctrls.lower_depth_split_cost_th;
+#endif
     // Skip testing NSQ shapes at this depth if the rate cost of splitting is very low (assuming a lower depth is available for splitting)
     if (lower_depth_split_cost_th && ctx->md_blk_arr_nsq[blk_geom->sqi_mds].split_flag) {
         if (blk_geom->sq_size <= 16)
+#if FIX_NSQ_CTRL
+            lower_depth_split_cost_th += ctx->nsq_search_ctrls.rate_th_offset_lte16;
+#else
             lower_depth_split_cost_th += ctx->nsq_ctrls.rate_th_offset_lte16;
+#endif
         const uint64_t split_cost = svt_aom_partition_rate_cost(pcs->ppcs,
                                                                 ctx,
                                                                 blk_geom->sqi_mds,
@@ -9515,8 +9678,11 @@ static bool update_skip_nsq_based_on_split_rate(PictureControlSet *pcs, ModeDeci
         if (split_cost * 10000 < ctx->md_local_blk_unit[blk_geom->sqi_mds].default_cost * lower_depth_split_cost_th)
             return true;
     }
+#if FIX_NSQ_CTRL
+    const uint32_t component_multiple_th = ctx->nsq_search_ctrls.component_multiple_th;
+#else
     const uint32_t component_multiple_th = ctx->nsq_ctrls.component_multiple_th;
-
+#endif
     // Skip testing NSQ shapes at this depth if the rate cost of splitting is very low (assuming a lower depth is available for splitting)
     if (component_multiple_th) {
         const uint64_t parent_rate_cost = RDCOST(full_lambda, ctx->md_blk_arr_nsq[blk_geom->sqi_mds].total_rate, 0);
@@ -9532,7 +9698,11 @@ static bool update_skip_nsq_based_on_split_rate(PictureControlSet *pcs, ModeDeci
     return skip_nsq;
 }
 static Bool update_skip_nsq_based_on_sq_recon_dist(ModeDecisionContext *ctx) {
+#if FIX_NSQ_CTRL
+    uint32_t         max_part0_to_part1_dev = ctx->nsq_search_ctrls.max_part0_to_part1_dev;
+#else
     uint32_t         max_part0_to_part1_dev = ctx->nsq_ctrls.max_part0_to_part1_dev;
+#endif
     const BlockGeom *blk_geom               = ctx->blk_geom;
 
     // return immediately if SQ, or NSQ but Parent not available, or max_part0_to_part1_dev is off
@@ -9651,8 +9821,11 @@ static uint8_t update_skip_nsq_shapes(ModeDecisionContext *ctx) {
     const uint16_t   sqi       = blk_geom->sqi_mds;
     const Part       shape     = blk_geom->shape;
     uint8_t          skip_nsq  = 0;
+#if FIX_NSQ_CTRL
+    uint32_t         sq_weight = ctx->nsq_search_ctrls.sq_weight;
+#else
     uint32_t         sq_weight = ctx->nsq_ctrls.sq_weight;
-
+#endif
     // return immediately if the skip nsq threshold is infinite
     if (sq_weight == (uint32_t)~0)
         return skip_nsq;
@@ -9685,8 +9858,11 @@ static uint8_t update_skip_nsq_shapes(ModeDecisionContext *ctx) {
             if (!skip_nsq && ctx->avail_blk_flag[sqi + 3] && ctx->avail_blk_flag[sqi + 4]) {
                 //compute the cost of V partition
                 const uint64_t v_cost   = local_cu_unit[sqi + 3].default_cost + local_cu_unit[sqi + 4].default_cost;
+#if FIX_NSQ_CTRL
+                const uint32_t v_weight = ctx->nsq_search_ctrls.hv_weight;
+#else
                 const uint32_t v_weight = ctx->nsq_ctrls.hv_weight;
-
+#endif
                 //if the cost of H partition is bigger than the V partition by a certain percentage
                 skip_nsq = (h_cost > ((v_cost * v_weight) / 100));
             }
@@ -9715,8 +9891,11 @@ static uint8_t update_skip_nsq_shapes(ModeDecisionContext *ctx) {
             // If not skipping, perform a check on the relative H/V costs
             if (!skip_nsq && ctx->avail_blk_flag[sqi + 1] && ctx->avail_blk_flag[sqi + 2]) {
                 const uint64_t h_cost   = local_cu_unit[sqi + 1].default_cost + local_cu_unit[sqi + 2].default_cost;
+#if FIX_NSQ_CTRL
+                const uint32_t h_weight = ctx->nsq_search_ctrls.hv_weight;
+#else
                 const uint32_t h_weight = ctx->nsq_ctrls.hv_weight;
-
+#endif
                 //if the cost of V partition is bigger than the H partition by a certain percentage
                 skip_nsq = (v_cost > ((h_cost * h_weight) / 100));
             }
@@ -10297,7 +10476,23 @@ static bool eval_sub_depth_skip_cond1(ModeDecisionContext *ctx) {
 
     return FALSE;
 }
+#if FIX_NSQ_CTRL
+static void faster_md_settings(ModeDecisionContext* ctx) {
+    ctx->nsq_search_ctrls.sq_weight = MIN(85, ctx->nsq_search_ctrls.sq_weight);
+    ctx->nsq_search_ctrls.nsq_split_cost_th = MIN(60, ctx->nsq_search_ctrls.nsq_split_cost_th);
+    ctx->nsq_search_ctrls.H_vs_V_split_rate_th = MAX(60, ctx->nsq_search_ctrls.H_vs_V_split_rate_th);
+    ctx->nsq_search_ctrls.non_HV_split_rate_th = MAX(60, ctx->nsq_search_ctrls.non_HV_split_rate_th);
 
+    if (ctx->nsq_search_ctrls.sub_depth_block_lvl >= 2) {
+        ctx->nic_ctrls.scaling_ctrls.stage1_scaling_num = MIN(ctx->nic_ctrls.scaling_ctrls.stage1_scaling_num, 1);
+        ctx->nic_ctrls.scaling_ctrls.stage2_scaling_num = MIN(ctx->nic_ctrls.scaling_ctrls.stage2_scaling_num, 1);
+        ctx->nic_ctrls.scaling_ctrls.stage3_scaling_num = MIN(ctx->nic_ctrls.scaling_ctrls.stage3_scaling_num, 1);
+        ctx->txs_ctrls.enabled = 0;
+    }
+
+    ctx->params_status = 1;
+}
+#else
 static void faster_md_settings(ModeDecisionContext *ctx) {
     ctx->nsq_ctrls.sq_weight            = MIN(85, ctx->nsq_ctrls.sq_weight);
     ctx->nsq_ctrls.nsq_split_cost_th    = MIN(60, ctx->nsq_ctrls.nsq_split_cost_th);
@@ -10313,6 +10508,7 @@ static void faster_md_settings(ModeDecisionContext *ctx) {
 
     ctx->params_status = 1;
 }
+#endif
 /*
  * Determined if a block should be processed, and if so, perform the MD pass on the block.
  */
@@ -10340,7 +10536,11 @@ static void process_block(SequenceControlSet *scs, PictureControlSet *pcs, ModeD
         if (blk_geom->shape != PART_N) {
             // Use agressive setting for the NSQ(s) that belong to the sub-depth(s) of PRED
             if (pcs->slice_type != I_SLICE) {
+#if FIX_NSQ_CTRL
+                if (ctx->nsq_search_ctrls.sub_depth_block_lvl && ctx->pd_pass == PD_PASS_1 && leaf_data_ptr->is_child) {
+#else
                 if (ctx->nsq_ctrls.sub_depth_block_lvl && ctx->pd_pass == PD_PASS_1 && leaf_data_ptr->is_child) {
+#endif
                     faster_md_settings(ctx);
                 }
             }
@@ -10412,7 +10612,38 @@ static void update_d1_data(PictureControlSet *pcs, ModeDecisionContext *ctx, uin
                 blk_geom->sqi_mds);
     }
 }
+#if OPT_NSQ_HIGH_FREQ // 
+static void update_nsq_settings(SequenceControlSet* scs, PictureControlSet* pcs, ModeDecisionContext* ctx) {
 
+    // Reset the NSQ setting if previous-SQ is_high_energy
+    svt_aom_set_nsq_search_ctrls(ctx, pcs->nsq_search_level);
+    set_parent_sq_coeff_area_based_cycles_reduction_ctrls(
+        ctx, pcs->ppcs->input_resolution, ctx->pd_pass == PD_PASS_0 ? 0 : ctx->nsq_search_ctrls.psq_cplx_lvl && ctx->blk_geom->sq_size > ctx->nsq_ctrls.min_nsq_block_size);
+
+    // Derive area energy
+    uint32_t energy = ctx->blk_geom->sq_size < 64
+        ? ctx->b32_satd[(ctx->blk_geom->org_x / 32) + ((ctx->blk_geom->org_y / 32) << 1)]
+        : MAX(ctx->b32_satd[0], MAX(ctx->b32_satd[1], MAX(ctx->b32_satd[2], ctx->b32_satd[3])));
+    int energy_quantizer;
+    // energy-quantizer = f (frame_size) 
+    int input_size = (pcs->ppcs->frame_width * pcs->ppcs->frame_height) / 10000;
+    energy_quantizer = CLIP3(500, 100000, (int)((40000 - (125 * input_size))));
+
+    // energy-quantizer = f (q) 
+    int weight = ctx->nsq_search_ctrls.high_energy_weight * (350 - 5 * scs->static_config.qp);
+    energy_quantizer = CLIP3(500, 100000, (energy_quantizer * weight) / 100);
+
+    int delta = MIN(energy / energy_quantizer, 2);
+    // Update the NSQ setting if SQ is_high_energy
+    if (delta) {
+        const uint8_t is_base = pcs->ppcs->temporal_layer_index == 0;
+        uint8_t nsq_search_level = svt_aom_get_nsq_search_level(MAX(ENC_MR, (int)pcs->ppcs->enc_mode - delta), is_base, pcs->coeff_lvl, scs->static_config.qp);
+        svt_aom_set_nsq_search_ctrls(ctx, nsq_search_level);
+        set_parent_sq_coeff_area_based_cycles_reduction_ctrls(
+            ctx, pcs->ppcs->input_resolution, ctx->pd_pass == PD_PASS_0 ? 0 : ctx->nsq_search_ctrls.psq_cplx_lvl);
+    }
+}
+#endif
 /*
  * Update d2 data (including d2 decision) after processing the last d1 block of a given square.
  */
@@ -10629,6 +10860,11 @@ void svt_aom_mode_decision_sb(SequenceControlSet *scs, PictureControlSet *pcs, M
         const uint8_t              blk_split_flag = mdc_sb_data->split_flag[blk_idx];
         ctx->blk_geom                             = get_blk_geom_mds(blk_idx_mds);
         ctx->blk_ptr                              = &ctx->md_blk_arr_nsq[blk_idx_mds];
+#if OPT_NSQ_HIGH_FREQ
+        // Use more conservative NSQ settings in the presence of a high energy area 
+        if (ctx->nsq_search_ctrls.high_energy_weight && ctx->detect_high_freq_ctrls.enabled && ctx->blk_geom->shape == PART_N && !ctx->md_disallow_nsq)
+            update_nsq_settings(scs, pcs, ctx);
+#endif
         init_block_data(pcs, ctx, blk_split_flag, blk_idx_mds);
 
         if (blk_idx_mds >= next_blkidx_mds) {
