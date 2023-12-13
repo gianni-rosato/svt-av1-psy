@@ -3644,6 +3644,11 @@ void *svt_aom_mode_decision_kernel(void *input_ptr) {
                             // Input : mdc_blk_ptr built @ mdc process (up to 4421)
                             // Output: md_blk_arr_nsq reduced set of block(s)
                             ed_ctx->md_ctx->pd_pass = PD_PASS_0;
+#if CLN_ADD_FIXED_PRED_SIG
+                            // PD0 doesn't have a fixed partition structure, as the main purpose of PD0
+                            // is to determine a prediction for the final prediction structure
+                            md_ctx->fixed_partition = false;
+#endif
                             // skip_intra much be TRUE for non-I_SLICE pictures to use light_pd0 path
                             if (md_ctx->lpd0_ctrls.pd0_level > REGULAR_PD0) {
                                 // [PD_PASS_0] Signal(s) derivation
@@ -3723,6 +3728,11 @@ void *svt_aom_mode_decision_kernel(void *input_ptr) {
                             svt_aom_sig_deriv_enc_dec_light_pd1(pcs, ed_ctx->md_ctx);
                         else
                             svt_aom_sig_deriv_enc_dec(scs, pcs, ed_ctx->md_ctx);
+#if CLN_ADD_FIXED_PRED_SIG
+                        // If there is only one depth and no NSQ shapes tested at PD1, then the partition structure
+                        // is fixed.
+                        md_ctx->fixed_partition = md_ctx->pred_depth_only && md_ctx->md_disallow_nsq;
+#endif
                         if (!skip_pd_pass_0 && pcs->ppcs->multi_pass_pd_level != MULTI_PASS_PD_OFF)
                             build_cand_block_array(
                                 scs, pcs, ed_ctx->md_ctx, pcs->ppcs->sb_geom[sb_index].is_complete_sb);

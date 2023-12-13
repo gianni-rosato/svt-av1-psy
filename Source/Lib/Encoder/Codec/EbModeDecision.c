@@ -4583,7 +4583,11 @@ static INLINE void eliminate_candidate_based_on_pme_me_results(ModeDecisionConte
 #endif
     if (ctx->updated_enable_pme || ctx->md_subpel_me_ctrls.enabled) {
         th = th * ctx->blk_geom->bheight * ctx->blk_geom->bwidth;
+#if CLN_USE_BEST_PME_DIST
+        const uint32_t best_me_distotion = MIN(ctx->md_pme_dist, ctx->md_me_dist);
+#else
         const uint32_t best_me_distotion = MIN(MIN(ctx->pme_res[0][0].dist, ctx->pme_res[1][0].dist), ctx->md_me_dist);
+#endif
         if (best_me_distotion < th) {
             *dc_cand_only_flag = ctx->cand_reduction_ctrls.cand_elimination_ctrls.dc_only ? 1 : *dc_cand_only_flag;
         }
@@ -5055,7 +5059,11 @@ uint32_t svt_aom_product_full_mode_decision(
     ModeDecisionCandidate* cand = cand_bf->cand;
     PredictionUnit* pu_ptr = blk_ptr->prediction_unit_array;
     blk_ptr->total_rate = cand_bf->total_rate;
+#if CLN_ADD_FIXED_PRED_SIG
+    if (!(ctx->pd_pass == PD_PASS_1 && ctx->fixed_partition)) {
+#else
     if (!(ctx->pd_pass == PD_PASS_1 && ctx->pred_depth_only && ctx->md_disallow_nsq)) {
+#endif
         if (ctx->blk_lambda_tuning) {
             // When lambda tuning is on, lambda of each block is set separately, however at interdepth decision the sb lambda is used
             uint32_t full_lambda = ctx->hbd_md ?
@@ -5226,7 +5234,11 @@ uint32_t svt_aom_product_full_mode_decision(
             int32_t* src_ptr = &(((int32_t*)cand_bf->quant->buffer_y)[txb_1d_offset]);
             int32_t* dst_ptr = &(((int32_t*)ctx->blk_ptr->coeff_tmp->buffer_y)[txb_1d_offset]);
 
+#if CLN_ADD_FIXED_PRED_SIG
+            if (ctx->fixed_partition) {
+#else
             if (ctx->pred_depth_only && ctx->md_disallow_nsq) {
+#endif
                 dst_ptr = ((int32_t *)pcs->ppcs->enc_dec_ptr->quantized_coeff[sb_addr]->buffer_y) + ctx->coded_area_sb;
                 ctx->coded_area_sb += bwidth * bheight;
             }
@@ -5244,7 +5256,11 @@ uint32_t svt_aom_product_full_mode_decision(
                 src_ptr = &(((int32_t*)cand_bf->quant->buffer_cb)[txb_1d_offset_uv]);
                 dst_ptr = &(((int32_t*)ctx->blk_ptr->coeff_tmp->buffer_cb)[txb_1d_offset_uv]);
 
+#if CLN_ADD_FIXED_PRED_SIG
+                if (ctx->fixed_partition) {
+#else
                 if (ctx->pred_depth_only && ctx->md_disallow_nsq) {
+#endif
                     dst_ptr = ((int32_t *)pcs->ppcs->enc_dec_ptr->quantized_coeff[sb_addr]->buffer_cb) + ctx->coded_area_sb_uv;
                 }
 
@@ -5255,7 +5271,11 @@ uint32_t svt_aom_product_full_mode_decision(
                 src_ptr = &(((int32_t*)cand_bf->quant->buffer_cr)[txb_1d_offset_uv]);
                 dst_ptr = &(((int32_t*)ctx->blk_ptr->coeff_tmp->buffer_cr)[txb_1d_offset_uv]);
 
+#if CLN_ADD_FIXED_PRED_SIG
+                if (ctx->fixed_partition) {
+#else
                 if (ctx->pred_depth_only && ctx->md_disallow_nsq) {
+#endif
                     dst_ptr = ((int32_t *)pcs->ppcs->enc_dec_ptr->quantized_coeff[sb_addr]->buffer_cr) + ctx->coded_area_sb_uv;
                     ctx->coded_area_sb_uv += bwidth_uv * bheight_uv;
                 }

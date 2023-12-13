@@ -498,7 +498,7 @@ static void set_frame_coeff_lvl(PictureControlSet* pcs) {
         tot_me_8x8_dist += pcs->ppcs->me_8x8_distortion[b64_idx];
     }
     uint64_t me_8x8_dist_per_sb = tot_me_8x8_dist / pcs->b64_total_count;
-    uint64_t cmplx = me_8x8_dist_per_sb / pcs->scs->static_config.qp;
+    uint64_t cmplx = me_8x8_dist_per_sb / MAX(1, pcs->scs->static_config.qp);
 
     uint64_t coeff_low_level_th = COEFF_LVL_TH_0;
     uint64_t coeff_high_level_th = COEFF_LVL_TH_1;

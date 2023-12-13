@@ -91,7 +91,10 @@ static void set_hme_search_params(PictureParentControlSet *pcs, MeContext *me_ct
     // Set number of HME level 0 search regions to use
     me_ctx->num_hme_sa_w = 2;
     me_ctx->num_hme_sa_h = 2;
-
+#if OPT_HME_L0_Q
+    // Whether to modulate HME (w,h) using qp
+    uint8_t q_mult = 0;
+#endif
     // Set HME level 0 min and max search areas
     if (pcs->enc_mode <= ENC_M0) {
         if (input_resolution < INPUT_SIZE_4K_RANGE) {
@@ -105,6 +108,11 @@ static void set_hme_search_params(PictureParentControlSet *pcs, MeContext *me_ct
         me_ctx->hme_l0_sa.sa_min = (SearchArea){32, 32};
         me_ctx->hme_l0_sa.sa_max = (SearchArea){192, 192};
     } else if (pcs->enc_mode <= ENC_M7) {
+#if OPT_HME_L0_Q
+        me_ctx->hme_l0_sa.sa_min = (SearchArea){ 32, 32 };
+        me_ctx->hme_l0_sa.sa_max = (SearchArea){ 192, 192 };
+        q_mult = 3;
+#else
         if (input_resolution <= INPUT_SIZE_1080p_RANGE) {
             if (pcs->sc_class1) {
                 me_ctx->hme_l0_sa.sa_min = (SearchArea){32, 32};
@@ -117,6 +125,7 @@ static void set_hme_search_params(PictureParentControlSet *pcs, MeContext *me_ct
             me_ctx->hme_l0_sa.sa_min = (SearchArea){32, 32};
             me_ctx->hme_l0_sa.sa_max = (SearchArea){192, 192};
         }
+#endif
     } else if ((!rtc_tune && pcs->enc_mode <= ENC_M10) || (rtc_tune && pcs->enc_mode <= ENC_M9)) {
         if (pcs->sc_class1) {
             me_ctx->hme_l0_sa.sa_min = (SearchArea){32, 32};
@@ -125,6 +134,9 @@ static void set_hme_search_params(PictureParentControlSet *pcs, MeContext *me_ct
             me_ctx->hme_l0_sa.sa_min = (SearchArea){16, 16};
             me_ctx->hme_l0_sa.sa_max = (SearchArea){192, 192};
         }
+#if OPT_HME_L0_Q
+        q_mult = 3;
+#endif
     } else {
         if (pcs->sc_class1) {
             me_ctx->hme_l0_sa.sa_min = (SearchArea){32, 32};
@@ -138,7 +150,20 @@ static void set_hme_search_params(PictureParentControlSet *pcs, MeContext *me_ct
                 me_ctx->hme_l0_sa.sa_max = (SearchArea){96, 96};
             }
         }
+#if OPT_HME_L0_Q
+        q_mult = 3;
+#endif
     }
+#if OPT_HME_L0_Q
+    // Modulate the HME search-area using qp
+    if (q_mult) {
+        uint16_t q_weight = CLIP3(500, 1000, ((int)(q_mult * ((8 * pcs->scs->static_config.qp) - 125))));
+        me_ctx->hme_l0_sa.sa_min.width  = MAX(8, (me_ctx->hme_l0_sa.sa_min.width  * q_weight) / 1000);
+        me_ctx->hme_l0_sa.sa_min.height = MAX(8, (me_ctx->hme_l0_sa.sa_min.height * q_weight) / 1000);
+        me_ctx->hme_l0_sa.sa_max.width  = MAX(96, (me_ctx->hme_l0_sa.sa_max.width  * q_weight) / 1000);
+        me_ctx->hme_l0_sa.sa_max.height = MAX(96, (me_ctx->hme_l0_sa.sa_max.height * q_weight) / 1000);
+    }
+#endif
     // Set the HME Level 1 and Level 2 refinement areas
     if (pcs->enc_mode <= ENC_M1) {
         me_ctx->hme_l1_sa = (SearchArea){16, 16};
@@ -3071,8 +3096,15 @@ static EbErrorType svt_aom_check_high_freq(PictureControlSet *pcs, SuperBlock *s
 
     if (pcs->ppcs->me_32x32_distortion[ctx->sb_index] == 0 ||
         pcs->ppcs->me_8x8_cost_variance[ctx->sb_index] < ctx->detect_high_freq_ctrls.me_8x8_sad_var_th)
+#if OPT_NSQ_HIGH_FREQ 
+    {
+        // Set the energy of each 32x32 to 0 as a predictable 64x64 block (estimate for saving cycle(s))
+        ctx->b32_satd[0] = ctx->b32_satd[1] = ctx->b32_satd[2] = ctx->b32_satd[3] = 0;
         return return_error;
-
+    }
+#else
+        return return_error;
+#endif
     EbPictureBufferDesc *input_pic = pcs->ppcs->enhanced_pic;
 
     MotionEstimationData *pa_me_data = pcs->ppcs->pa_me_data;
@@ -4438,7 +4470,7 @@ static void set_rdoq_controls(ModeDecisionContext *ctx, uint8_t rdoq_level, bool
  * Settings for the parent SQ coeff-area based cycles reduction algorithm.
  */
 #if OPT_NSQ_HIGH_FREQ // 
-void set_parent_sq_coeff_area_based_cycles_reduction_ctrls(ModeDecisionContext* ctx, uint8_t resolution, uint8_t cycles_alloc_lvl) {
+void svt_aom_set_parent_sq_coeff_area_based_cycles_reduction_ctrls(ModeDecisionContext* ctx, uint8_t resolution, uint8_t cycles_alloc_lvl) {
 #else
 static void set_parent_sq_coeff_area_based_cycles_reduction_ctrls(ModeDecisionContext *ctx, uint8_t resolution,
                                                                   uint8_t cycles_alloc_lvl) {
@@ -8797,8 +8829,13 @@ void svt_aom_sig_deriv_enc_dec(SequenceControlSet *scs, PictureControlSet *pcs, 
     else
         ctx->redundant_blk = TRUE;
 #if FIX_NSQ_CTRL
+#if OPT_NSQ_HIGH_FREQ
+    svt_aom_set_parent_sq_coeff_area_based_cycles_reduction_ctrls(
+        ctx, input_resolution, pd_pass == PD_PASS_0 ? 0 : ctx->nsq_search_ctrls.psq_cplx_lvl);
+#else
     set_parent_sq_coeff_area_based_cycles_reduction_ctrls(
         ctx, input_resolution, pd_pass == PD_PASS_0 ? 0 : ctx->nsq_search_ctrls.psq_cplx_lvl);
+#endif
     set_sq_txs_ctrls(ctx, ctx->nsq_search_ctrls.psq_txs_lvl);
 #else
     set_parent_sq_coeff_area_based_cycles_reduction_ctrls(
@@ -9008,15 +9045,34 @@ uint8_t svt_aom_get_nsq_geom_level(EncMode enc_mode, uint8_t is_base, InputCoeff
         else // regular
             nsq_geom_level = 2;
     }
+#if OPT_NSQ_HIGH_FREQ // geom
+    else if (enc_mode <= ENC_M6) {
+#else
     else if (enc_mode <= ENC_M7) {
+#endif
         if (coeff_lvl == HIGH_LVL)
             nsq_geom_level = 3;
         else // regular or low
             nsq_geom_level = 2;
     }
+#if OPT_NSQ_HIGH_FREQ // geom
+    else if (enc_mode <= ENC_M7) {
+        if (coeff_lvl == HIGH_LVL)
+            nsq_geom_level = is_base ? 3 : 4;
+        else // regular
+            nsq_geom_level = is_base ? 2 : 3;
+    }
+    else if (enc_mode <= ENC_M8) {
+        if (coeff_lvl == LOW_LVL)
+            nsq_geom_level = 3;
+        else 
+            nsq_geom_level = is_base ? 3 : 4;
+    }
+#else
     else if (enc_mode <= ENC_M8) {
         nsq_geom_level = 3;
     }
+#endif
     else
         nsq_geom_level = 0;
 

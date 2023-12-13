@@ -1533,14 +1533,14 @@ uint32_t    get_mds_idx(uint32_t orgx, uint32_t orgy, uint32_t size, uint32_t us
  * If the searched MV has a better distortion than the passed best_dist, update best_mv_x,
  * best_mv_y, and best_dist.
  */
-static void svt_check_position(TF_SUBPEL_SEARCH_PARAMS tf_sp_param, PictureParentControlSet* pcs,
+static void svt_check_position(TF_SUBPEL_SEARCH_PARAMS* tf_sp_param, PictureParentControlSet* pcs,
     MeContext* me_ctx, BlkStruct* blk_ptr, EbPictureBufferDesc* pic_ptr_ref,
-    EbPictureBufferDesc prediction_ptr, EbByte* pred, uint16_t** pred_16bit,
+    EbPictureBufferDesc* prediction_ptr, EbByte* pred, uint16_t** pred_16bit,
     uint32_t* stride_pred, EbByte* src, uint16_t** src_16bit,
     uint32_t* stride_src, uint64_t* best_dist, int16_t* best_mv_x,
     int16_t* best_mv_y) {
 
-    if (tf_sp_param.subpel_pel_mode >= 2 && tf_sp_param.xd != 0 && tf_sp_param.yd != 0)
+    if (tf_sp_param->subpel_pel_mode >= 2 && tf_sp_param->xd != 0 && tf_sp_param->yd != 0)
         return;
 
     // If the best distortion is already 0, the new point cannot beat it, so no need to test
@@ -1551,21 +1551,21 @@ static void svt_check_position(TF_SUBPEL_SEARCH_PARAMS tf_sp_param, PictureParen
     // If previously checked position is good enough then quit
     if (me_ctx->tf_subpel_early_exit_th) {
         uint64_t dist = *best_dist;
-        if (dist < (((tf_sp_param.bsize * tf_sp_param.bsize) * me_ctx->tf_subpel_early_exit_th) << tf_sp_param.is_highbd))
+        if (dist < (((tf_sp_param->bsize * tf_sp_param->bsize) * me_ctx->tf_subpel_early_exit_th) << tf_sp_param->is_highbd))
             return;
     }
 #else
     // If previously checked position is good enough then quit. Currently only
     // active for 32x32 and 64x64 blocks
-    if (me_ctx->tf_subpel_early_exit && tf_sp_param.bsize >= 32) {
-        const uint64_t dist = tf_sp_param.bsize == 64 ?
+    if (me_ctx->tf_subpel_early_exit && tf_sp_param->bsize >= 32) {
+        const uint64_t dist = tf_sp_param->bsize == 64 ?
             me_ctx->tf_64x64_block_error :
             me_ctx->tf_32x32_block_error[me_ctx->idx_32x32];
-        if (tf_sp_param.bsize == 64)
-            if (dist < (((tf_sp_param.bsize * tf_sp_param.bsize) << 2) << tf_sp_param.is_highbd))
+        if (tf_sp_param->bsize == 64)
+            if (dist < (((tf_sp_param->bsize * tf_sp_param->bsize) << 2) << tf_sp_param->is_highbd))
                 return;
-        else if (tf_sp_param.bsize == 32)
-            if (dist < (((tf_sp_param.bsize * tf_sp_param.bsize) >> 7) << tf_sp_param.is_highbd))
+        else if (tf_sp_param->bsize == 32)
+            if (dist < (((tf_sp_param->bsize * tf_sp_param->bsize) >> 7) << tf_sp_param->is_highbd))
                 return;
     }
 #endif
@@ -1573,76 +1573,76 @@ static void svt_check_position(TF_SUBPEL_SEARCH_PARAMS tf_sp_param, PictureParen
     SequenceControlSet* scs = pcs->scs;
     MvUnit mv_unit;
     mv_unit.pred_direction = UNI_PRED_LIST_0;
-    mv_unit.mv->x = tf_sp_param.mv_x + tf_sp_param.xd;
-    mv_unit.mv->y = tf_sp_param.mv_y + tf_sp_param.yd;
+    mv_unit.mv->x = tf_sp_param->mv_x + tf_sp_param->xd;
+    mv_unit.mv->y = tf_sp_param->mv_y + tf_sp_param->yd;
 
     svt_aom_simple_luma_unipred(
         scs,
         scs->sf_identity,
-        tf_sp_param.interp_filters,
+        tf_sp_param->interp_filters,
         blk_ptr,
         0, //ref_frame_type,
         &mv_unit,
-        tf_sp_param.pu_origin_x,
-        tf_sp_param.pu_origin_y,
-        tf_sp_param.bsize,
-        tf_sp_param.bsize,
+        tf_sp_param->pu_origin_x,
+        tf_sp_param->pu_origin_y,
+        tf_sp_param->bsize,
+        tf_sp_param->bsize,
         pic_ptr_ref,
-        &prediction_ptr,
-        tf_sp_param.local_origin_x,
-        tf_sp_param.local_origin_y,
-        (uint8_t)tf_sp_param.encoder_bit_depth,
-        tf_sp_param.xd == 0 && tf_sp_param.yd == 0 ? tf_sp_param.subsampling_shift : 0);
+        prediction_ptr,
+        tf_sp_param->local_origin_x,
+        tf_sp_param->local_origin_y,
+        (uint8_t)tf_sp_param->encoder_bit_depth,
+        tf_sp_param->xd == 0 && tf_sp_param->yd == 0 ? tf_sp_param->subsampling_shift : 0);
 
     BlockSize block_size = BLOCK_64X64;
-    switch (tf_sp_param.bsize) {
+    switch (tf_sp_param->bsize) {
     case 64:
-        block_size = tf_sp_param.subsampling_shift ? BLOCK_64X32 : BLOCK_64X64;
+        block_size = tf_sp_param->subsampling_shift ? BLOCK_64X32 : BLOCK_64X64;
         break;
     case 32:
-        block_size = tf_sp_param.subsampling_shift ? BLOCK_32X16 : BLOCK_32X32;
+        block_size = tf_sp_param->subsampling_shift ? BLOCK_32X16 : BLOCK_32X32;
         break;
     case 16:
-        block_size = tf_sp_param.subsampling_shift ? BLOCK_16X8 : BLOCK_16X16;
+        block_size = tf_sp_param->subsampling_shift ? BLOCK_16X8 : BLOCK_16X16;
         break;
     case 8:
-        block_size = tf_sp_param.subsampling_shift ? BLOCK_8X4 : BLOCK_8X8;
+        block_size = tf_sp_param->subsampling_shift ? BLOCK_8X4 : BLOCK_8X8;
         break;
     default:
         assert(0);
     }
     uint64_t distortion;
-    if (!tf_sp_param.is_highbd) {
-        uint8_t* pred_y_ptr = pred[C_Y] + tf_sp_param.bsize * tf_sp_param.idx_y * stride_pred[C_Y] +
-            tf_sp_param.bsize * tf_sp_param.idx_x;
-        uint8_t* src_y_ptr = src[C_Y] + tf_sp_param.bsize * tf_sp_param.idx_y * stride_src[C_Y] +
-            tf_sp_param.bsize * tf_sp_param.idx_x;
+    if (!tf_sp_param->is_highbd) {
+        uint8_t* pred_y_ptr = pred[C_Y] + tf_sp_param->bsize * tf_sp_param->idx_y * stride_pred[C_Y] +
+            tf_sp_param->bsize * tf_sp_param->idx_x;
+        uint8_t* src_y_ptr = src[C_Y] + tf_sp_param->bsize * tf_sp_param->idx_y * stride_src[C_Y] +
+            tf_sp_param->bsize * tf_sp_param->idx_x;
         const AomVarianceFnPtr* fn_ptr = &svt_aom_mefn_ptr[block_size];
         unsigned int            sse;
         distortion = fn_ptr->vf(pred_y_ptr,
-            stride_pred[C_Y] << tf_sp_param.subsampling_shift,
+            stride_pred[C_Y] << tf_sp_param->subsampling_shift,
             src_y_ptr,
-            stride_src[C_Y] << tf_sp_param.subsampling_shift,
+            stride_src[C_Y] << tf_sp_param->subsampling_shift,
             &sse)
-            << tf_sp_param.subsampling_shift;
+            << tf_sp_param->subsampling_shift;
     }
     else {
         uint16_t* pred_y_ptr = pred_16bit[C_Y] +
-            tf_sp_param.bsize * tf_sp_param.idx_y * stride_pred[C_Y] +
-            tf_sp_param.bsize * tf_sp_param.idx_x;
+            tf_sp_param->bsize * tf_sp_param->idx_y * stride_pred[C_Y] +
+            tf_sp_param->bsize * tf_sp_param->idx_x;
         uint16_t* src_y_ptr = src_16bit[C_Y] +
-            tf_sp_param.bsize * tf_sp_param.idx_y * stride_src[C_Y] +
-            tf_sp_param.bsize * tf_sp_param.idx_x;
+            tf_sp_param->bsize * tf_sp_param->idx_y * stride_src[C_Y] +
+            tf_sp_param->bsize * tf_sp_param->idx_x;
         const AomVarianceFnPtr* fn_ptr = &svt_aom_mefn_ptr[block_size];
 
         unsigned int sse;
 
         distortion = fn_ptr->vf_hbd_10(CONVERT_TO_BYTEPTR(pred_y_ptr),
-            stride_pred[C_Y] << tf_sp_param.subsampling_shift,
+            stride_pred[C_Y] << tf_sp_param->subsampling_shift,
             CONVERT_TO_BYTEPTR(src_y_ptr),
-            stride_src[C_Y] << tf_sp_param.subsampling_shift,
+            stride_src[C_Y] << tf_sp_param->subsampling_shift,
             &sse)
-            << tf_sp_param.subsampling_shift;
+            << tf_sp_param->subsampling_shift;
     }
 
     // If the new point is better than the old, update MV and distortion
@@ -1658,19 +1658,19 @@ static void svt_check_position(TF_SUBPEL_SEARCH_PARAMS tf_sp_param, PictureParen
  * (best_mv_x, best_mv_y).  The starting point will always be searched, so the
  * starting distortion (passed through best_dist) can be MAX.
  */
-static void tf_subpel_search(TF_SUBPEL_SEARCH_PARAMS tf_sp_param, PictureParentControlSet* pcs,
+static void tf_subpel_search(TF_SUBPEL_SEARCH_PARAMS* tf_sp_param, PictureParentControlSet* pcs,
     MeContext* me_ctx, BlkStruct* blk_ptr, EbPictureBufferDesc* pic_ptr_ref,
-    EbPictureBufferDesc prediction_ptr, EbByte* pred, uint16_t** pred_16bit,
+    EbPictureBufferDesc* prediction_ptr, EbByte* pred, uint16_t** pred_16bit,
     uint32_t* stride_pred, EbByte* src, uint16_t** src_16bit,
     uint32_t* stride_src, uint64_t* best_dist, int16_t* best_mv_x,
     int16_t* best_mv_y) {
 
     // Check centre position
-    tf_sp_param.subpel_pel_mode = pcs->tf_ctrls.half_pel_mode;
-    tf_sp_param.mv_x = *best_mv_x;
-    tf_sp_param.mv_y = *best_mv_y;
-    tf_sp_param.xd = 0;
-    tf_sp_param.yd = 0;
+    tf_sp_param->subpel_pel_mode = pcs->tf_ctrls.half_pel_mode;
+    tf_sp_param->mv_x = *best_mv_x;
+    tf_sp_param->mv_y = *best_mv_y;
+    tf_sp_param->xd = 0;
+    tf_sp_param->yd = 0;
     svt_check_position(tf_sp_param,
         pcs,
         me_ctx,
@@ -1689,16 +1689,16 @@ static void tf_subpel_search(TF_SUBPEL_SEARCH_PARAMS tf_sp_param, PictureParentC
 
     // Perform 1/2 Pel MV Refinement
     if (pcs->tf_ctrls.half_pel_mode) {
-        tf_sp_param.subpel_pel_mode = pcs->tf_ctrls.half_pel_mode;
-        tf_sp_param.mv_x = *best_mv_x;
-        tf_sp_param.mv_y = *best_mv_y;
+        tf_sp_param->subpel_pel_mode = pcs->tf_ctrls.half_pel_mode;
+        tf_sp_param->mv_x = *best_mv_x;
+        tf_sp_param->mv_y = *best_mv_y;
         for (signed short i = -4; i <= 4; i = i + 4) {
             for (signed short j = -4; j <= 4; j = j + 4) {
                 if (i == 0 && j == 0) // point already searched
                     continue;
 
-                tf_sp_param.xd = i;
-                tf_sp_param.yd = j;
+                tf_sp_param->xd = i;
+                tf_sp_param->yd = j;
                 svt_check_position(tf_sp_param,
                     pcs,
                     me_ctx,
@@ -1720,16 +1720,16 @@ static void tf_subpel_search(TF_SUBPEL_SEARCH_PARAMS tf_sp_param, PictureParentC
 
     // Perform 1/4 Pel MV Refinement
     if (pcs->tf_ctrls.quarter_pel_mode) {
-        tf_sp_param.subpel_pel_mode = pcs->tf_ctrls.quarter_pel_mode;
-        tf_sp_param.mv_x = *best_mv_x;
-        tf_sp_param.mv_y = *best_mv_y;
+        tf_sp_param->subpel_pel_mode = pcs->tf_ctrls.quarter_pel_mode;
+        tf_sp_param->mv_x = *best_mv_x;
+        tf_sp_param->mv_y = *best_mv_y;
         for (signed short i = -2; i <= 2; i = i + 2) {
             for (signed short j = -2; j <= 2; j = j + 2) {
                 if (i == 0 && j == 0) // point already searched
                     continue;
 
-                tf_sp_param.xd = i;
-                tf_sp_param.yd = j;
+                tf_sp_param->xd = i;
+                tf_sp_param->yd = j;
                 svt_check_position(tf_sp_param,
                     pcs,
                     me_ctx,
@@ -1751,16 +1751,16 @@ static void tf_subpel_search(TF_SUBPEL_SEARCH_PARAMS tf_sp_param, PictureParentC
 
     // Perform 1/8 Pel MV Refinement
     if (pcs->tf_ctrls.eight_pel_mode) {
-        tf_sp_param.subpel_pel_mode = pcs->tf_ctrls.eight_pel_mode;
-        tf_sp_param.mv_x = *best_mv_x;
-        tf_sp_param.mv_y = *best_mv_y;
+        tf_sp_param->subpel_pel_mode = pcs->tf_ctrls.eight_pel_mode;
+        tf_sp_param->mv_x = *best_mv_x;
+        tf_sp_param->mv_y = *best_mv_y;
         for (signed short i = -1; i <= 1; i++) {
             for (signed short j = -1; j <= 1; j++) {
                 if (i == 0 && j == 0) // point already searched
                     continue;
 
-                tf_sp_param.xd = i;
-                tf_sp_param.yd = j;
+                tf_sp_param->xd = i;
+                tf_sp_param->yd = j;
                 svt_check_position(tf_sp_param,
                     pcs,
                     me_ctx,
@@ -1808,20 +1808,16 @@ static void tf_64x64_sub_pel_search(PictureParentControlSet* pcs, MeContext* me_
     prediction_ptr.stride_cr = (uint16_t)BW >> ss_x;
     if (!is_highbd) {
         assert(src[C_Y] != NULL);
-        if (me_ctx->tf_chroma) {
-            assert(src[C_U] != NULL);
-            assert(src[C_V] != NULL);
-        }
+        assert(IMPLIES(me_ctx->tf_chroma, src[C_U] != NULL));
+        assert(IMPLIES(me_ctx->tf_chroma, src[C_V] != NULL));
         prediction_ptr.buffer_y = pred[C_Y];
         prediction_ptr.buffer_cb = pred[C_U];
         prediction_ptr.buffer_cr = pred[C_V];
     }
     else {
         assert(src_16bit[C_Y] != NULL);
-        if (me_ctx->tf_chroma) {
-            assert(src_16bit[C_U] != NULL);
-            assert(src_16bit[C_V] != NULL);
-        }
+        assert(IMPLIES(me_ctx->tf_chroma, src_16bit[C_U] != NULL));
+        assert(IMPLIES(me_ctx->tf_chroma, src_16bit[C_V] != NULL));
         prediction_ptr.buffer_y = (uint8_t*)pred_16bit[C_Y];
         prediction_ptr.buffer_cb = (uint8_t*)pred_16bit[C_U];
         prediction_ptr.buffer_cr = (uint8_t*)pred_16bit[C_V];
@@ -1878,12 +1874,12 @@ static void tf_64x64_sub_pel_search(PictureParentControlSet* pcs, MeContext* me_
     tf_sp_param.idx_y = 0;
 
     // Check centre position
-    tf_subpel_search(tf_sp_param,
+    tf_subpel_search(&tf_sp_param,
         pcs,
         me_ctx,
         blk_ptr,
         !is_highbd ? pic_ptr_ref : &reference_ptr,
-        prediction_ptr,
+        &prediction_ptr,
         pred,
         pred_16bit,
         stride_pred,
@@ -1922,20 +1918,16 @@ static void tf_32x32_sub_pel_search(PictureParentControlSet* pcs, MeContext* me_
     prediction_ptr.stride_cr = (uint16_t)BW >> ss_x;
     if (!is_highbd) {
         assert(src[C_Y] != NULL);
-        if (me_ctx->tf_chroma) {
-            assert(src[C_U] != NULL);
-            assert(src[C_V] != NULL);
-        }
+        assert(IMPLIES(me_ctx->tf_chroma, src[C_U] != NULL));
+        assert(IMPLIES(me_ctx->tf_chroma, src[C_V] != NULL));
         prediction_ptr.buffer_y = pred[C_Y];
         prediction_ptr.buffer_cb = pred[C_U];
         prediction_ptr.buffer_cr = pred[C_V];
     }
     else {
         assert(src_16bit[C_Y] != NULL);
-        if (me_ctx->tf_chroma) {
-            assert(src_16bit[C_U] != NULL);
-            assert(src_16bit[C_V] != NULL);
-        }
+        assert(IMPLIES(me_ctx->tf_chroma, src_16bit[C_U] != NULL));
+        assert(IMPLIES(me_ctx->tf_chroma, src_16bit[C_V] != NULL));
         prediction_ptr.buffer_y = (uint8_t*)pred_16bit[C_Y];
         prediction_ptr.buffer_cb = (uint8_t*)pred_16bit[C_U];
         prediction_ptr.buffer_cr = (uint8_t*)pred_16bit[C_V];
@@ -1994,12 +1986,12 @@ static void tf_32x32_sub_pel_search(PictureParentControlSet* pcs, MeContext* me_
     tf_sp_param.idx_y = idx_y;
 
     // Perform subpel search for this block
-    tf_subpel_search(tf_sp_param,
+    tf_subpel_search(&tf_sp_param,
         pcs,
         me_ctx,
         blk_ptr,
         !is_highbd ? pic_ptr_ref : &reference_ptr,
-        prediction_ptr,
+        &prediction_ptr,
         pred,
         pred_16bit,
         stride_pred,
@@ -2040,20 +2032,16 @@ static void tf_16x16_sub_pel_search(PictureParentControlSet* pcs, MeContext* me_
 
     if (!is_highbd) {
         assert(src[C_Y] != NULL);
-        if (me_ctx->tf_chroma) {
-            assert(src[C_U] != NULL);
-            assert(src[C_V] != NULL);
-        }
+        assert(IMPLIES(me_ctx->tf_chroma, src[C_U] != NULL));
+        assert(IMPLIES(me_ctx->tf_chroma, src[C_V] != NULL));
         prediction_ptr.buffer_y = pred[C_Y];
         prediction_ptr.buffer_cb = pred[C_U];
         prediction_ptr.buffer_cr = pred[C_V];
     }
     else {
         assert(src_16bit[C_Y] != NULL);
-        if (me_ctx->tf_chroma) {
-            assert(src_16bit[C_U] != NULL);
-            assert(src_16bit[C_V] != NULL);
-        }
+        assert(IMPLIES(me_ctx->tf_chroma, src_16bit[C_U] != NULL));
+        assert(IMPLIES(me_ctx->tf_chroma, src_16bit[C_V] != NULL));
         prediction_ptr.buffer_y = (uint8_t*)pred_16bit[C_Y];
         prediction_ptr.buffer_cb = (uint8_t*)pred_16bit[C_U];
         prediction_ptr.buffer_cr = (uint8_t*)pred_16bit[C_V];
@@ -2118,12 +2106,12 @@ static void tf_16x16_sub_pel_search(PictureParentControlSet* pcs, MeContext* me_
         me_ctx->tf_16x16_mv_y[idx_32x32 * 4 + idx_16x16] = (_MVYT(me_ctx->p_best_mv16x16[mv_index])) << 3;
 
         // Perform subpel search for the block
-        tf_subpel_search(tf_sp_param,
+        tf_subpel_search(&tf_sp_param,
             pcs,
             me_ctx,
             &blk_ptr,
             !is_highbd ? pic_ptr_ref : &reference_ptr,
-            prediction_ptr,
+            &prediction_ptr,
             pred,
             pred_16bit,
             stride_pred,
@@ -2162,20 +2150,16 @@ static void tf_8x8_sub_pel_search(PictureParentControlSet* pcs, MeContext* me_ct
 
     if (!is_highbd) {
         assert(src[C_Y] != NULL);
-        if (me_ctx->tf_chroma) {
-            assert(src[C_U] != NULL);
-            assert(src[C_V] != NULL);
-        }
+        assert(IMPLIES(me_ctx->tf_chroma, src[C_U] != NULL));
+        assert(IMPLIES(me_ctx->tf_chroma, src[C_V] != NULL));
         prediction_ptr.buffer_y = pred[C_Y];
         prediction_ptr.buffer_cb = pred[C_U];
         prediction_ptr.buffer_cr = pred[C_V];
     }
     else {
         assert(src_16bit[C_Y] != NULL);
-        if (me_ctx->tf_chroma) {
-            assert(src_16bit[C_U] != NULL);
-            assert(src_16bit[C_V] != NULL);
-        }
+        assert(IMPLIES(me_ctx->tf_chroma, src_16bit[C_U] != NULL));
+        assert(IMPLIES(me_ctx->tf_chroma, src_16bit[C_V] != NULL));
         prediction_ptr.buffer_y = (uint8_t*)pred_16bit[C_Y];
         prediction_ptr.buffer_cb = (uint8_t*)pred_16bit[C_U];
         prediction_ptr.buffer_cr = (uint8_t*)pred_16bit[C_V];
@@ -2193,7 +2177,6 @@ static void tf_8x8_sub_pel_search(PictureParentControlSet* pcs, MeContext* me_ct
         reference_ptr.buffer_bit_inc_y = NULL;
         reference_ptr.buffer_bit_inc_cb = NULL;
         reference_ptr.buffer_bit_inc_cr = NULL;
-
     }
 
     uint32_t bsize = 8;
@@ -2242,12 +2225,12 @@ static void tf_8x8_sub_pel_search(PictureParentControlSet* pcs, MeContext* me_ct
             me_ctx->tf_8x8_mv_y[idx_32x32 * 16 + 4 * idx_16x16 + idx_8x8] = (_MVYT(me_ctx->p_best_mv8x8[mv_index])) << 3;
 
             // Search subpel for this block
-            tf_subpel_search(tf_sp_param,
+            tf_subpel_search(&tf_sp_param,
                 pcs,
                 me_ctx,
                 &blk_ptr,
                 !is_highbd ? pic_ptr_ref : &reference_ptr,
-                prediction_ptr,
+                &prediction_ptr,
                 pred,
                 pred_16bit,
                 stride_pred,

@@ -45,8 +45,14 @@ extern "C" {
 #define FIX_NSQ_CTRL                              1 // Break the nsq_ctrls into nsq_geom_ctrls and nsq_search_ctrls and use qp-banding for only the nsq_search_level derivation
 #define CLN_SMALL_SIGS                            1 // Remove signals and levels having an insignificant impact on the behaviour
 #define OPT_ME_SP_8TH_PEL                         1 // Optimize ME subpel
-#define OPT_NSQ_HIGH_FREQ                         0 // Use more conservative NSQ settings in the presence of a high energy area 
+#define OPT_NSQ_HIGH_FREQ                         1 // Use more conservative NSQ settings in the presence of a high energy area 
 #define OPT_1P_VBR                                1 // Optimized one-pass VBR
+#define CLN_MVP_DIST_CALC                         1 // Move MVP distortion calc to one place to avoid recomputing
+#define CLN_USE_BEST_PME_DIST                     1 // Use best PME dist in cand. reduction tool, instead of just best of ref_idx 0 cands
+#define CLN_ADD_FIXED_PRED_SIG                    1 // Add signal to track if PDx has a fixed prediction structure
+#define OPT_HME_L0_Q                              1 // Use Q @ the derivation of HME-L0 search-area (w,h)
+#define CLN_NSQ_COPIES                            1 // Cleanup copying of neighbour arrays for NSQ shapes to avoid unnecessary copying
+#define FIX_NSQ_SETTINGS                          1 // Fix when settings are reset in MD loop (settings can be modified by NSQ features)
 
 //FOR DEBUGGING - Do not remove
 #define OPT_LD_LATENCY2         0 // Latency optimization for low delay

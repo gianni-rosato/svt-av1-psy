@@ -803,7 +803,11 @@ static void av1_perform_inverse_transform_recon(PictureControlSet *pcs, ModeDeci
         // into the buffer used for EncDec; avoids copy after this function call.
         // cand_bf->recon is only used to update other buffers after this point.
         if (ctx->bypass_encdec && ctx->pd_pass == PD_PASS_1) {
+#if CLN_ADD_FIXED_PRED_SIG
+            if (ctx->fixed_partition) {
+#else
             if (ctx->pred_depth_only && ctx->md_disallow_nsq) {
+#endif
                 svt_aom_get_recon_pic(pcs, &recon_buffer, ctx->hbd_md);
                 uint16_t org_x = ctx->blk_org_x + (blk_geom->tx_org_x[is_inter][tx_depth][txb_itr] - blk_geom->org_x);
                 uint16_t org_y = ctx->blk_org_y + (blk_geom->tx_org_y[is_inter][tx_depth][txb_itr] - blk_geom->org_y);
@@ -2658,8 +2662,14 @@ static int md_subpel_search(SUBPEL_STAGE       search_stage, //ME or PME
     ms_params->abs_th_mult                      = md_subpel_ctrls.abs_th_mult;
     ms_params->round_dev_th                     = md_subpel_ctrls.round_dev_th;
     ms_params->skip_diag_refinement             = md_subpel_ctrls.skip_diag_refinement;
+#if CLN_MVP_DIST_CALC
+    uint8_t early_exit = (ctx->is_intra_bordered && ctx->cand_reduction_ctrls.use_neighbouring_mode_ctrls.enabled) ||
+        (md_subpel_ctrls.skip_zz_mv && best_mv.as_mv.col == 0 && best_mv.as_mv.row == 0) ||
+        (ctx->blk_geom->sq_size <= md_subpel_ctrls.min_blk_sz);
+#else
     uint8_t early_exit = (ctx->is_intra_bordered && ctx->cand_reduction_ctrls.use_neighbouring_mode_ctrls.enabled) ||
         (md_subpel_ctrls.skip_zz_mv && best_mv.as_mv.col == 0 && best_mv.as_mv.row == 0);
+#endif
 
     int besterr = subpel_search_method(ctx,
                                        xd,
@@ -2778,7 +2788,11 @@ static void read_refine_me_mvs(PictureControlSet *pcs, ModeDecisionContext *ctx)
     const bool          md_nsq_me_enabled  = ctx->md_nsq_me_ctrls.enabled;
     const bool          md_sq_me_enabled   = ctx->md_sq_me_ctrls.enabled;
     MdSubPelSearchCtrls md_subpel_me_ctrls = ctx->md_subpel_me_ctrls;
+#if CLN_MVP_DIST_CALC
+    const bool          do_subpel = md_subpel_me_ctrls.enabled;
+#else
     const bool          do_subpel = md_subpel_me_ctrls.enabled && blk_geom->sq_size > md_subpel_me_ctrls.min_blk_sz;
+#endif
 
     ctx->md_me_dist = (uint32_t)~0;
     for (uint32_t ref_it = 0; ref_it < ctx->tot_ref_frame_types; ++ref_it) {
@@ -2849,7 +2863,31 @@ static void read_refine_me_mvs(PictureControlSet *pcs, ModeDecisionContext *ctx)
                         &me_mv_y);
                     if (ctx->post_subpel_me_mv_cost[list][ref] < ctx->md_me_dist)
                         ctx->md_me_dist = ctx->post_subpel_me_mv_cost[list][ref];
+#if CLN_MVP_DIST_CALC
                 }
+                else if (ctx->updated_enable_pme || ctx->ref_pruning_ctrls.enabled) {
+                    // If full-pel cost for ME MVs will be needed for other features, ensure it is computed when subpel is off
+                    int32_t ref_origin_index = ref_pic->org_x + (ctx->blk_org_x + (ctx->sb_me_mv[blk_geom->blkidx_mds][list][ref][0] >> 3)) +
+                        (ctx->blk_org_y + (ctx->sb_me_mv[blk_geom->blkidx_mds][list][ref][1] >> 3) + ref_pic->org_y) * ref_pic->stride_y;
+                    const AomVarianceFnPtr* fn_ptr = &svt_aom_mefn_ptr[ctx->blk_geom->bsize];
+                    unsigned int            sse;
+                    uint8_t* pred_y = ref_pic->buffer_y + ref_origin_index;
+                    uint8_t* src_y = input_pic->buffer_y + input_origin_index;
+                    ctx->fp_me_dist[list][ref] = fn_ptr->vf(pred_y, ref_pic->stride_y, src_y, input_pic->stride_y, &sse);
+
+                    MV_COST_PARAMS mv_cost_params;
+                    FrameHeader* frm_hdr = &pcs->ppcs->frm_hdr;
+                    uint32_t       rdmult = ctx->full_lambda_md[hbd_md ? EB_10_BIT_MD : EB_8_BIT_MD];
+                    svt_init_mv_cost_params(
+                        &mv_cost_params, ctx, &ctx->ref_mv, frm_hdr->quantization_params.base_q_idx, rdmult, hbd_md);
+                    MV best_mv;
+                    best_mv.col = me_mv_x;
+                    best_mv.row = me_mv_y;
+                    ctx->fp_me_dist[list][ref] += svt_aom_fp_mv_err_cost(&best_mv, &mv_cost_params);
+                }
+#else
+                }
+#endif
                 // Copy ME MV after subpel
                 ctx->sub_me_mv[list][ref].col                     = me_mv_x;
                 ctx->sub_me_mv[list][ref].row                     = me_mv_y;
@@ -2931,7 +2969,11 @@ static Bool get_sb_tpl_inter_stats(PictureControlSet *pcs, ModeDecisionContext *
     }
     return 0;
 }
+#if CLN_MVP_DIST_CALC
+static void perform_md_reference_pruning(PictureControlSet* pcs, ModeDecisionContext* ctx) {
+#else
 void perform_md_reference_pruning(PictureControlSet *pcs, ModeDecisionContext *ctx, EbPictureBufferDesc *input_pic) {
+#endif
     uint32_t early_inter_distortion_array[MAX_NUM_OF_REF_PIC_LIST * REF_LIST_MAX_DEPTH];
     memset(early_inter_distortion_array,
            0xFE,
@@ -2941,13 +2983,14 @@ void perform_md_reference_pruning(PictureControlSet *pcs, ModeDecisionContext *c
            0,
            sizeof(ctx->ref_filtering_res[0][0][0]) * TOT_INTER_GROUP * MAX_NUM_OF_REF_PIC_LIST * REF_LIST_MAX_DEPTH);
     uint32_t min_dist = (uint32_t)~0;
+#if !CLN_MVP_DIST_CALC
     uint8_t  hbd_md   = EB_8_BIT_MD;
 
     input_pic = hbd_md ? pcs->input_frame16bit : pcs->ppcs->enhanced_pic;
-
     // Update input origin
     uint32_t input_origin_index = (ctx->blk_org_y + input_pic->org_y) * input_pic->stride_y +
         (ctx->blk_org_x + input_pic->org_x);
+#endif
     int     use_tpl_info = 0;
     uint8_t sb_max_list0_ref_idx;
     uint8_t sb_max_list1_ref_idx;
@@ -2974,6 +3017,9 @@ void perform_md_reference_pruning(PictureControlSet *pcs, ModeDecisionContext *c
                     offset_tab[list_idx][ref_idx] += ctx->ref_pruning_ctrls.use_tpl_info_offset;
             }
             // Step 1: derive the best MVP in term of distortion
+#if CLN_MVP_DIST_CALC
+            best_mvp_distortion = ctx->best_fp_mvp_dist[list_idx][ref_idx];
+#else
             for (int8_t mvp_index = 0; mvp_index < ctx->mvp_count[list_idx][ref_idx]; mvp_index++) {
                 // MVP Distortion
                 EbReferenceObject *ref_obj = pcs->ref_pic_ptr_array[list_idx][ref_idx]->object_ptr;
@@ -3033,8 +3079,17 @@ void perform_md_reference_pruning(PictureControlSet *pcs, ModeDecisionContext *c
                 if (mvp_distortion < best_mvp_distortion)
                     best_mvp_distortion = mvp_distortion;
             }
+#endif
 
             // Evaluate the PA_ME MVs (if available)
+#if CLN_MVP_DIST_CALC
+            uint32_t           pa_me_distortion = (uint32_t)~0; //any non zero value
+            const MeSbResults* me_results = pcs->ppcs->pa_me_data->me_results[ctx->me_sb_addr];
+            if (svt_aom_is_me_data_present(ctx->me_block_offset, ctx->me_cand_offset, me_results, list_idx, ref_idx)) {
+                //uint32_t pa_me_distortion = ctx->post_subpel_me_mv_cost[][];
+                pa_me_distortion = ctx->fp_me_dist[list_idx][ref_idx];
+            }
+#else
             const MeSbResults *me_results       = pcs->ppcs->pa_me_data->me_results[ctx->me_sb_addr];
             uint32_t           pa_me_distortion = (uint32_t)~0; //any non zero value
             if (svt_aom_is_me_data_present(ctx->me_block_offset, ctx->me_cand_offset, me_results, list_idx, ref_idx)) {
@@ -3101,7 +3156,7 @@ void perform_md_reference_pruning(PictureControlSet *pcs, ModeDecisionContext *c
                                                                       ctx->blk_geom->bheight,
                                                                       ctx->blk_geom->bwidth);
             }
-
+#endif
             // early_inter_distortion_array
             early_inter_distortion_array[list_idx * REF_LIST_MAX_DEPTH + ref_idx] = MIN(pa_me_distortion,
                                                                                         best_mvp_distortion);
@@ -3198,6 +3253,33 @@ static void build_single_ref_mvp_array(PictureControlSet *pcs, ModeDecisionConte
             const uint8_t max_drl_index = svt_aom_get_max_drl_index(xd->ref_mv_count[frame_type], NEARMV);
 
             for (int drli = 0; drli < max_drl_index; drli++) {
+#if CLN_MVP_DIST_CALC
+                MV nearmv =
+                    ctx->md_local_blk_unit[blk_geom->blkidx_mds].ed_ref_mv_stack[frame_type][1 + drli].this_mv.as_mv;
+                nearmv.col = (nearmv.col + 4) & ~0x07;
+                nearmv.row = (nearmv.row + 4) & ~0x07;
+                clip_mv_on_pic_boundary(ctx->blk_org_x,
+                    ctx->blk_org_y,
+                    blk_geom->bwidth,
+                    blk_geom->bheight,
+                    ref_pic,
+                    &nearmv.col,
+                    &nearmv.row);
+
+                bool inj_near_mv = true;
+                for (int idx = 0; idx < mvp_count; idx++) {
+                    if (nearmv.col == ctx->mvp_array[list][ref][idx].col &&
+                        nearmv.row == ctx->mvp_array[list][ref][idx].row) {
+                        inj_near_mv = false;
+                        break;
+                    }
+                }
+                if (inj_near_mv) {
+                    ctx->mvp_array[list][ref][mvp_count].col = nearmv.col;
+                    ctx->mvp_array[list][ref][mvp_count].row = nearmv.row;
+                    mvp_count++;
+                }
+#else
                 const MV nearmv =
                     ctx->md_local_blk_unit[blk_geom->blkidx_mds].ed_ref_mv_stack[frame_type][1 + drli].this_mv.as_mv;
                 if (((nearmv.col + 4) & ~0x07) != ctx->mvp_array[list][ref][0].col &&
@@ -3213,8 +3295,36 @@ static void build_single_ref_mvp_array(PictureControlSet *pcs, ModeDecisionConte
                                             &ctx->mvp_array[list][ref][mvp_count].row);
                     mvp_count++;
                 }
+#endif
             }
             ctx->mvp_count[list][ref] = mvp_count;
+
+#if CLN_MVP_DIST_CALC
+            // Compute the best distortion and save the best MVP index (results used in subpel, PME, and ref pruning)
+            uint32_t best_mvp_cost = (int32_t)~0;
+            uint32_t input_origin_index = (ctx->blk_org_y + input_pic->org_y) * input_pic->stride_y +
+                (ctx->blk_org_x + input_pic->org_x);
+
+            for (int8_t mvp_index = 0; mvp_index < ctx->mvp_count[list][ref]; mvp_index++) {
+                // Set a ref MV (MVP under eval) for the MVP under eval
+                ctx->ref_mv.col = ctx->mvp_array[list][ref][mvp_index].col;
+                ctx->ref_mv.row = ctx->mvp_array[list][ref][mvp_index].row;
+
+                int32_t ref_origin_index = ref_pic->org_x + (ctx->blk_org_x + (ctx->mvp_array[list][ref][mvp_index].col >> 3)) +
+                    (ctx->blk_org_y + (ctx->mvp_array[list][ref][mvp_index].row >> 3) + ref_pic->org_y) * ref_pic->stride_y;
+                const AomVarianceFnPtr* fn_ptr = &svt_aom_mefn_ptr[ctx->blk_geom->bsize];
+                unsigned int            sse;
+                uint8_t* pred_y = ref_pic->buffer_y + ref_origin_index;
+                uint8_t* src_y = input_pic->buffer_y + input_origin_index;
+                uint32_t mvp_cost = fn_ptr->vf(pred_y, ref_pic->stride_y, src_y, input_pic->stride_y, &sse);
+
+                if (mvp_cost < best_mvp_cost) {
+                    ctx->best_fp_mvp_idx[list][ref] = mvp_index;
+                    ctx->best_fp_mvp_dist[list][ref] = mvp_cost;
+                    best_mvp_cost = mvp_cost;
+                }
+            }
+#endif
         }
     }
 }
@@ -3328,6 +3438,9 @@ static void pme_search(PictureControlSet *pcs, ModeDecisionContext *ctx, EbPictu
                 me_mv_x = (me_mv_x + 4) & ~0x07;
                 me_mv_y = (me_mv_y + 4) & ~0x07;
 
+#if CLN_MVP_DIST_CALC
+                me_mv_cost = ctx->fp_me_dist[list_idx][ref_idx];
+#else
                 // Set a ref MV (nearest) for the ME MV
                 ctx->ref_mv.col = ctx->mvp_array[list_idx][ref_idx][0].col;
                 ctx->ref_mv.row = ctx->mvp_array[list_idx][ref_idx][0].row;
@@ -3349,8 +3462,15 @@ static void pme_search(PictureControlSet *pcs, ModeDecisionContext *ctx, EbPictu
                                    &me_mv_y,
                                    &me_mv_cost,
                                    hbd_md);
+#endif
             }
 
+#if CLN_MVP_DIST_CALC
+            // Step 1: derive the best MVP in term of distortion
+            int16_t best_mvp_x = ctx->mvp_array[list_idx][ref_idx][ctx->best_fp_mvp_idx[list_idx][ref_idx]].col;
+            int16_t best_mvp_y = ctx->mvp_array[list_idx][ref_idx][ctx->best_fp_mvp_idx[list_idx][ref_idx]].row;
+            best_mvp_cost = ctx->best_fp_mvp_dist[list_idx][ref_idx];
+#else
             // Step 1: derive the best MVP in term of distortion
             int16_t best_mvp_x = 0;
             int16_t best_mvp_y = 0;
@@ -3386,6 +3506,7 @@ static void pme_search(PictureControlSet *pcs, ModeDecisionContext *ctx, EbPictu
                                    &best_mvp_cost,
                                    hbd_md);
             }
+#endif
             if (me_data_present) {
                 int64_t pme_to_me_cost_dev = (((int64_t)MAX(best_mvp_cost, 1) - (int64_t)MAX(me_mv_cost, 1)) * 100) /
                     (int64_t)MAX(me_mv_cost, 1);
@@ -8188,8 +8309,14 @@ static void copy_recon_md(PictureControlSet *pcs, ModeDecisionContext *ctx, Mode
         EbPictureBufferDesc *recon_ptr       = cand_bf->recon;
         uint32_t             rec_luma_offset = blk_geom->org_x + blk_geom->org_y * recon_ptr->stride_y;
         if (ctx->bypass_encdec && ctx->pd_pass == PD_PASS_1) {
+#if CLN_ADD_FIXED_PRED_SIG
+            // If using a fixed partition structure (only pred depth and no NSQ, can copy directly to final buffer
+            // b/c no d1 or d2 decision
+            if (ctx->fixed_partition) {
+#else
             // If using only pred depth and no NSQ, can copy directly to final buffer b/c no d1 or d2 decision
             if (ctx->pred_depth_only && ctx->md_disallow_nsq) {
+#endif
                 svt_aom_get_recon_pic(pcs, &recon_ptr, ctx->hbd_md);
                 rec_luma_offset = (recon_ptr->org_y + ctx->blk_org_y) * recon_ptr->stride_y +
                     (recon_ptr->org_x + ctx->blk_org_x);
@@ -8201,7 +8328,11 @@ static void copy_recon_md(PictureControlSet *pcs, ModeDecisionContext *ctx, Mode
         // if using 8bit MD and bypassing encdec, need to save 8bit and 10bit recon
         if (ctx->encoder_bit_depth > EB_EIGHT_BIT && ctx->bypass_encdec && !ctx->hbd_md && ctx->pd_pass == PD_PASS_1) {
             // copy 10bit
+#if CLN_ADD_FIXED_PRED_SIG
+            if (ctx->fixed_partition)
+#else
             if (ctx->pred_depth_only && ctx->md_disallow_nsq)
+#endif
                 svt_aom_get_recon_pic(pcs, &recon_ptr, 1);
             else
                 recon_ptr = ctx->blk_ptr->recon_tmp;
@@ -8246,8 +8377,14 @@ static void copy_recon_md(PictureControlSet *pcs, ModeDecisionContext *ctx, Mode
 
     // If bypassing MD, recon is stored in different buffer; need to update the buffer to copy from
     if (ctx->bypass_encdec && ctx->pd_pass == PD_PASS_1) {
+#if CLN_ADD_FIXED_PRED_SIG
+        // If using a fixed partition structure (only pred depth and no NSQ, can copy directly to final buffer
+        // b/c no d1 or d2 decision
+        if (ctx->fixed_partition) {
+#else
         // If using only pred depth and no NSQ, can copy directly to final buffer b/c no d1 or d2 decision
         if (ctx->pred_depth_only && ctx->md_disallow_nsq) {
+#endif
             svt_aom_get_recon_pic(pcs, &recon_ptr, ctx->hbd_md);
             rec_luma_offset = (recon_ptr->org_y + ctx->blk_org_y) * recon_ptr->stride_y +
                 (recon_ptr->org_x + ctx->blk_org_x);
@@ -8264,7 +8401,11 @@ static void copy_recon_md(PictureControlSet *pcs, ModeDecisionContext *ctx, Mode
     // if using 8bit MD and bypassing encdec, need to save 8bit and 10bit recon
     if (ctx->encoder_bit_depth > EB_EIGHT_BIT && ctx->bypass_encdec && !ctx->hbd_md && ctx->pd_pass == PD_PASS_1) {
         // copy 16bit recon
+#if CLN_ADD_FIXED_PRED_SIG
+        if (ctx->fixed_partition)
+#else
         if (ctx->pred_depth_only && ctx->md_disallow_nsq)
+#endif
             svt_aom_get_recon_pic(pcs, &recon_ptr, 1);
         else
             recon_ptr = ctx->blk_ptr->recon_tmp;
@@ -8630,7 +8771,11 @@ static void convert_md_recon_16bit_to_8bit(PictureControlSet *pcs, ModeDecisionC
     uint32_t pred_buf_x_offest_8bit_uv = ROUND_UV(ctx->blk_org_x) >> 1;
     uint32_t pred_buf_y_offest_8bit_uv = ROUND_UV(ctx->blk_org_y) >> 1;
 
+#if CLN_ADD_FIXED_PRED_SIG
+    if (ctx->fixed_partition) {
+#else
     if (ctx->pred_depth_only && ctx->md_disallow_nsq) {
+#endif
         svt_aom_get_recon_pic(pcs, &recon_buffer_16bit, 1);
         pred_buf_x_offest_16bit    = ctx->blk_org_x;
         pred_buf_y_offest_16bit    = ctx->blk_org_y;
@@ -9263,7 +9408,11 @@ static void md_encode_block(PictureControlSet *pcs, ModeDecisionContext *ctx, ui
     }
     // Perform md reference pruning
     if (ctx->ref_pruning_ctrls.enabled)
+#if CLN_MVP_DIST_CALC
+        perform_md_reference_pruning(pcs, ctx);
+#else
         perform_md_reference_pruning(pcs, ctx, input_pic);
+#endif
     // Perform ME search around the best MVP
     if (ctx->updated_enable_pme) {
         pme_search(pcs, ctx, input_pic);
@@ -10249,6 +10398,16 @@ static Bool update_redundant(PictureControlSet *pcs, ModeDecisionContext *ctx) {
         check_redundant_block(blk_geom, ctx, &redundant_blk_avail, &redundant_blk_mds);
 
     if (redundant_blk_avail && ctx->redundant_blk) {
+#if CLN_NSQ_COPIES
+        if (ctx->copied_neigh_arrays && ctx->blk_geom->nsi == 0)
+            svt_aom_copy_neighbour_arrays( //restore [1] in [0] after done last ns block
+                pcs,
+                ctx,
+                1,
+                0,
+                ctx->blk_geom->sqi_mds);
+#endif
+
         // Copy results
         BlkStruct *src_cu = &ctx->md_blk_arr_nsq[redundant_blk_mds];
         BlkStruct *dst_cu = blk_ptr;
@@ -10551,6 +10710,16 @@ static void process_block(SequenceControlSet *scs, PictureControlSet *pcs, ModeD
                 : get_skip_processing_nsq_block(pcs, ctx);
         }
         if (!skip_processing_block) {
+#if CLN_NSQ_COPIES
+            if (ctx->copied_neigh_arrays && blk_geom->nsi == 0)
+                svt_aom_copy_neighbour_arrays( //restore [1] in [0] after done last ns block
+                    pcs,
+                    ctx,
+                    1,
+                    0,
+                    blk_geom->sqi_mds);
+#endif
+#if !FIX_NSQ_SETTINGS
             // Reset settings, in case they were over-written by previous block
             // Only reset settings when features that change settings are used.
             if (ctx->params_status == 1 && ctx->blk_geom->shape == PART_N) {
@@ -10558,6 +10727,7 @@ static void process_block(SequenceControlSet *scs, PictureControlSet *pcs, ModeD
                 svt_aom_sig_deriv_block(pcs, ctx);
                 ctx->params_status = 0;
             }
+#endif
             // Encode the block
             md_encode_block(pcs, ctx, sb_addr, in_pic);
         }
@@ -10566,8 +10736,13 @@ static void process_block(SequenceControlSet *scs, PictureControlSet *pcs, ModeD
 /*
  * Update d1 data (including d1 decision) after each processed block, determine if should use early exit.
  */
+#if CLN_NSQ_COPIES
+static void update_d1_data(PictureControlSet *pcs, ModeDecisionContext *ctx, uint32_t blk_idx_mds, Bool *skip_next_nsq,
+                           uint8_t *d1_blk_count, uint32_t tot_d1_blocks) {
+#else
 static void update_d1_data(PictureControlSet *pcs, ModeDecisionContext *ctx, uint32_t blk_idx_mds, Bool *skip_next_nsq,
                            uint8_t *d1_blk_count) {
+#endif
     const BlockGeom *blk_geom = ctx->blk_geom;
     BlkStruct       *blk_ptr  = ctx->blk_ptr;
 
@@ -10600,6 +10775,22 @@ static void update_d1_data(PictureControlSet *pcs, ModeDecisionContext *ctx, uin
             *skip_next_nsq = 1;
     }
 
+#if CLN_NSQ_COPIES
+    if (blk_geom->shape != PART_N && !(*skip_next_nsq)) {
+        if (blk_geom->nsi + 1 < blk_geom->totns) {
+            // plus 1 for SQ (b/c don't need to copy neighs for SQ and only SQ has totns == 1
+            if (!ctx->copied_neigh_arrays && (tot_d1_blocks > (blk_geom->totns + 1) || ctx->md_blk_arr_nsq[blk_geom->sqi_mds].split_flag)) {
+                svt_aom_copy_neighbour_arrays( //save a clean neigh in [1], encode uses [0], reload the clean in [0] after done last ns block in a partition
+                    pcs,
+                    ctx,
+                    0,
+                    1,
+                    ctx->blk_geom->sqi_mds);
+                ctx->copied_neigh_arrays = 1;
+            }
+            md_update_all_neighbour_arrays(pcs, ctx, blk_idx_mds);
+        }
+#else
     if (blk_geom->shape != PART_N) {
         if (blk_geom->nsi + 1 < blk_geom->totns)
             md_update_all_neighbour_arrays(pcs, ctx, blk_idx_mds);
@@ -10610,6 +10801,7 @@ static void update_d1_data(PictureControlSet *pcs, ModeDecisionContext *ctx, uin
                 1,
                 0,
                 blk_geom->sqi_mds);
+#endif
     }
 }
 #if OPT_NSQ_HIGH_FREQ // 
@@ -10617,8 +10809,8 @@ static void update_nsq_settings(SequenceControlSet* scs, PictureControlSet* pcs,
 
     // Reset the NSQ setting if previous-SQ is_high_energy
     svt_aom_set_nsq_search_ctrls(ctx, pcs->nsq_search_level);
-    set_parent_sq_coeff_area_based_cycles_reduction_ctrls(
-        ctx, pcs->ppcs->input_resolution, ctx->pd_pass == PD_PASS_0 ? 0 : ctx->nsq_search_ctrls.psq_cplx_lvl && ctx->blk_geom->sq_size > ctx->nsq_ctrls.min_nsq_block_size);
+    svt_aom_set_parent_sq_coeff_area_based_cycles_reduction_ctrls(
+        ctx, pcs->ppcs->input_resolution, ctx->pd_pass == PD_PASS_0 ? 0 : ctx->nsq_search_ctrls.psq_cplx_lvl);
 
     // Derive area energy
     uint32_t energy = ctx->blk_geom->sq_size < 64
@@ -10639,7 +10831,7 @@ static void update_nsq_settings(SequenceControlSet* scs, PictureControlSet* pcs,
         const uint8_t is_base = pcs->ppcs->temporal_layer_index == 0;
         uint8_t nsq_search_level = svt_aom_get_nsq_search_level(MAX(ENC_MR, (int)pcs->ppcs->enc_mode - delta), is_base, pcs->coeff_lvl, scs->static_config.qp);
         svt_aom_set_nsq_search_ctrls(ctx, nsq_search_level);
-        set_parent_sq_coeff_area_based_cycles_reduction_ctrls(
+        svt_aom_set_parent_sq_coeff_area_based_cycles_reduction_ctrls(
             ctx, pcs->ppcs->input_resolution, ctx->pd_pass == PD_PASS_0 ? 0 : ctx->nsq_search_ctrls.psq_cplx_lvl);
     }
 }
@@ -10853,6 +11045,9 @@ void svt_aom_mode_decision_sb(SequenceControlSet *scs, PictureControlSet *pcs, M
     ctx->params_status            = 0;
     bool     skip_h_v_path        = FALSE;
     uint16_t next_blkidx_mds      = 0;
+#if CLN_NSQ_COPIES
+    ctx->copied_neigh_arrays = 0;
+#endif
     // Iterate over all blocks which are flagged to be considered
     for (uint32_t blk_idx = 0; blk_idx < leaf_count; blk_idx++) {
         uint32_t                   blk_idx_mds    = leaf_data_array[blk_idx].mds_idx;
@@ -10866,6 +11061,15 @@ void svt_aom_mode_decision_sb(SequenceControlSet *scs, PictureControlSet *pcs, M
             update_nsq_settings(scs, pcs, ctx);
 #endif
         init_block_data(pcs, ctx, blk_split_flag, blk_idx_mds);
+
+#if FIX_NSQ_SETTINGS
+        // Reset settings, in case they were over-written by previous block
+        // Only reset settings when features that change settings are used.
+        if (ctx->params_status == 1 && first_d1_blk) {
+            svt_aom_sig_deriv_enc_dec(scs, pcs, ctx);
+            ctx->params_status = 0;
+        }
+#endif
 
         if (blk_idx_mds >= next_blkidx_mds) {
             md_skip_sub_depths = 0;
@@ -10898,7 +11102,7 @@ void svt_aom_mode_decision_sb(SequenceControlSet *scs, PictureControlSet *pcs, M
 
                 ctx->blk_geom = get_blk_geom_mds(blk_idx_mds);
             }
-
+#if !CLN_NSQ_COPIES
             if (!skip_h_v_path)
                 svt_aom_copy_neighbour_arrays( //save a clean neigh in [1], encode uses [0], reload the clean in [0] after done last ns block in a partition
                     pcs,
@@ -10906,17 +11110,37 @@ void svt_aom_mode_decision_sb(SequenceControlSet *scs, PictureControlSet *pcs, M
                     0,
                     1,
                     ctx->blk_geom->sqi_mds);
+#endif
         }
         // If using pred_depth only and NSQ off, no need to update cost with skip flag
+#if CLN_ADD_FIXED_PRED_SIG
+        // TODO: update this to check ctx->fixed_partition ot avoid calling update_d1_data when
+        // a fixed partition structure is used
         if (ctx->pd_pass == PD_PASS_1 && ctx->md_disallow_nsq && ctx->pred_depth_only) {
+#else
+        if (ctx->pd_pass == PD_PASS_1 && ctx->md_disallow_nsq && ctx->pred_depth_only) {
+#endif
             ctx->md_blk_arr_nsq[blk_idx_mds].part        = PARTITION_NONE;
             ctx->md_blk_arr_nsq[blk_idx_mds].best_d1_blk = blk_idx_mds;
         } else if (ctx->blk_geom->shape == PART_N || !skip_h_v_path)
+#if CLN_NSQ_COPIES
+            update_d1_data(pcs, ctx, blk_idx_mds, &md_early_exit_nsq, &d1_blk_count, leaf_data_ptr->tot_d1_blocks);
+#else
             update_d1_data(pcs, ctx, blk_idx_mds, &md_early_exit_nsq, &d1_blk_count);
+#endif
 
         // Check if the current block is the last at a given d1 level; if so update d2 info
         d1_blocks_accumlated = (first_d1_blk == 1) ? 1 : d1_blocks_accumlated + 1;
         if (d1_blocks_accumlated == leaf_data_ptr->tot_d1_blocks) {
+#if CLN_NSQ_COPIES
+            if (ctx->copied_neigh_arrays && ctx->md_blk_arr_nsq[ctx->blk_geom->sqi_mds].split_flag)
+                svt_aom_copy_neighbour_arrays( //restore [1] in [0] after done last ns block
+                    pcs,
+                    ctx,
+                    1,
+                    0,
+                    ctx->blk_geom->sqi_mds);
+#endif
             // Perform d2 inter-depth decision after final d1 block
             update_d2_decision(pcs, ctx);
             if (ctx->skip_sub_depth_ctrls.enabled &&
@@ -10931,6 +11155,9 @@ void svt_aom_mode_decision_sb(SequenceControlSet *scs, PictureControlSet *pcs, M
             first_d1_blk  = 1;
             d1_blk_count  = 0;
             skip_h_v_path = FALSE;
+#if CLN_NSQ_COPIES
+            ctx->copied_neigh_arrays = 0;
+#endif
         } else if (first_d1_blk) {
             first_d1_blk = 0;
         }

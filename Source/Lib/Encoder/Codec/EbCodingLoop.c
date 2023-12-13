@@ -2380,7 +2380,11 @@ EB_EXTERN EbErrorType svt_aom_encdec_update(SequenceControlSet *scs, PictureCont
             pcs->ppcs->pcs_total_rate += blk_ptr->total_rate;
             svt_release_mutex(pcs->ppcs->pcs_total_rate_mutex);
             // Copy recon to EncDec buffers if EncDec was bypassed;  if used pred depth only and NSQ is OFF data was copied directly to EncDec buffers in MD
+#if CLN_ADD_FIXED_PRED_SIG
+            if (md_ctx->bypass_encdec && !(md_ctx->fixed_partition)) {
+#else
             if (md_ctx->bypass_encdec && !(md_ctx->pred_depth_only && md_ctx->md_disallow_nsq)) {
+#endif
                 if (md_ctx->encoder_bit_depth > EB_EIGHT_BIT) {
                     uint32_t recon_luma_offset = (recon_buffer->org_y + ctx->blk_org_y) * recon_buffer->stride_y +
                         (recon_buffer->org_x + ctx->blk_org_x);
@@ -2464,7 +2468,11 @@ EB_EXTERN EbErrorType svt_aom_encdec_update(SequenceControlSet *scs, PictureCont
 
             // Loop over TX units only if needed
             if (pcs->cdf_ctrl.update_coef ||
+#if CLN_ADD_FIXED_PRED_SIG
+                (md_ctx->bypass_encdec && !(md_ctx->fixed_partition))) {
+#else
                 (md_ctx->bypass_encdec && !(md_ctx->pred_depth_only && md_ctx->md_disallow_nsq))) {
+#endif
                 ctx->is_inter = (blk_ptr->prediction_mode_flag == INTER_MODE || blk_ptr->use_intrabc);
 
                 // Initialize the Transform Loop
@@ -2487,7 +2495,11 @@ EB_EXTERN EbErrorType svt_aom_encdec_update(SequenceControlSet *scs, PictureCont
                         (blk_geom->tx_org_y[ctx->is_inter][blk_ptr->tx_depth][ctx->txb_itr] - blk_geom->org_y);
 
                     // Copy quantized coeffs to EncDec buffers if EncDec was bypassed;  if used pred depth only and NSQ is OFF data was copied directly to EncDec buffers in MD
+#if CLN_ADD_FIXED_PRED_SIG
+                    if (md_ctx->bypass_encdec && !(md_ctx->fixed_partition)) {
+#else
                     if (md_ctx->bypass_encdec && !(md_ctx->pred_depth_only && md_ctx->md_disallow_nsq)) {
+#endif
                         int32_t *ep_coeff = ((int32_t *)coeff_buffer_sb->buffer_y) + ctx->coded_area_sb;
                         int32_t *md_coeff = ((int32_t *)blk_ptr->coeff_tmp->buffer_y) + txb_1d_offset;
 

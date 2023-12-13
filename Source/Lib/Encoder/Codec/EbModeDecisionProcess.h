@@ -1004,6 +1004,9 @@ typedef struct ModeDecisionContext {
     uint8_t                      *avail_blk_flag;
     uint8_t                      *cost_avail;
     MdcSbData                    *mdc_sb_array;
+#if CLN_NSQ_COPIES
+    bool copied_neigh_arrays;
+#endif
     MvReferenceFrame              ref_frame_type_arr[MODE_CTX_REF_FRAMES];
     uint8_t                       tot_ref_frame_types;
 
@@ -1244,6 +1247,11 @@ typedef struct ModeDecisionContext {
     MV mvp_array[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH][MAX_MVP_CANIDATES];
     // Count of all nearest/near MVs for a block for single ref case
     int8_t mvp_count[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
+#if CLN_MVP_DIST_CALC
+    uint16_t best_fp_mvp_idx[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
+    uint32_t best_fp_mvp_dist[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
+    uint32_t fp_me_dist[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
+#endif
     // Start/end position for MD sparse search
     int16_t         sprs_lev0_start_x;
     int16_t         sprs_lev0_end_x;
@@ -1277,6 +1285,13 @@ typedef struct ModeDecisionContext {
     Bool bypass_encdec;
     // Indicates whether only pred depth refinement is used in PD1 (set per SB)
     Bool pred_depth_only;
+#if CLN_ADD_FIXED_PRED_SIG
+    // If true, indicates that there is a fixed partition structure for the current PD pass. When
+    // the partition strucutre is fixed, there is no SQ/NSQ (d1) decision and no inter-depth (d2) decision.
+    // When the partition structure in PD1 is fixed and EncDec is bypassed, the recon pic and QP info
+    // can be written directly to final buffers instead of temporary buffers to be copied in EncDec.
+    bool fixed_partition;
+#endif
     // Indicates whether only pred depth refinement is used in PD1 (set per frame) Per frame is
     // necessary because some shortcuts can only be taken if the whole frame uses pred depth only
     Bool                pic_pred_depth_only;
