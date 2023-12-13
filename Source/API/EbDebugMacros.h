@@ -46,6 +46,7 @@ extern "C" {
 #define CLN_SMALL_SIGS                            1 // Remove signals and levels having an insignificant impact on the behaviour
 #define OPT_ME_SP_8TH_PEL                         1 // Optimize ME subpel
 #define OPT_NSQ_HIGH_FREQ                         0 // Use more conservative NSQ settings in the presence of a high energy area 
+#define OPT_1P_VBR                                1 // Optimized one-pass VBR
 
 //FOR DEBUGGING - Do not remove
 #define OPT_LD_LATENCY2         0 // Latency optimization for low delay

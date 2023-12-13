@@ -377,8 +377,9 @@ static void process_lad_queue(InitialRateControlContext *ctx, uint8_t pass_thru)
         }
     }
 }
-
+#if !OPT_1P_VBR
 #define LOW_8x8_DIST_VAR_TH 10000
+#endif
 #define HIGH_8x8_DIST_VAR_TH 50000
 #define MIN_AVG_ME_DIST 1000
 #define VBR_CODED_ERROR_FACTOR 30
@@ -402,8 +403,10 @@ static void set_1pvbr_param(PictureParentControlSet *pcs) {
         double weight = 1;
         if (avg_variance_me_dist > HIGH_8x8_DIST_VAR_TH)
             weight = 1.5;
+#if !OPT_1P_VBR
         else if (avg_variance_me_dist < LOW_8x8_DIST_VAR_TH)
             weight = 0.75;
+#endif
 
         if (scs->input_resolution <= INPUT_SIZE_480p_RANGE)
             weight = 1.5 * weight;

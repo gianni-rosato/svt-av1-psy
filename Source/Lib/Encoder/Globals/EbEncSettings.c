@@ -911,8 +911,11 @@ EbErrorType svt_av1_set_default_params(EbSvtAv1EncConfiguration *config_ptr) {
     config_ptr->target_bit_rate        = 2000000;
     config_ptr->max_bit_rate           = 0;
     config_ptr->max_qp_allowed         = 63;
+#if OPT_1P_VBR
+    config_ptr->min_qp_allowed         = 4;
+#else
     config_ptr->min_qp_allowed         = 1;
-
+#endif
     config_ptr->enable_adaptive_quantization = 2;
     config_ptr->enc_mode                     = 10;
     config_ptr->intra_period_length          = -2;

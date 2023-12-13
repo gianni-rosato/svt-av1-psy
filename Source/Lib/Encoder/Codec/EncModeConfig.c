@@ -1006,8 +1006,16 @@ void svt_aom_set_tpl_extended_controls(PictureParentControlSet *pcs, uint8_t tpl
                                                     : 1.6;
         }
     }
+#if OPT_1P_VBR
+    if (scs->static_config.rate_control_mode == 1) {
+        tpl_ctrls->r0_adjust_factor *= 1.25;
+        tpl_ctrls->r0_adjust_factor = MIN(3, tpl_ctrls->r0_adjust_factor);
+    }
+#else
     if (scs->static_config.rate_control_mode == 1)
         tpl_ctrls->r0_adjust_factor *= 1.25;
+#endif
+
 }
 
 static void set_cdef_controls(PictureParentControlSet *pcs, uint8_t cdef_level, Bool fast_decode) {
