@@ -342,7 +342,11 @@ static void process_lad_queue(InitialRateControlContext *ctx, uint8_t pass_thru)
         }
 
         if (send_out) {
+#if OPT_MPASS_VBR7
+            if (head_pcs->scs->static_config.pass == ENC_FIRST_PASS ||
+#else
             if (head_pcs->scs->static_config.pass == ENC_MIDDLE_PASS ||
+#endif
                 head_pcs->scs->static_config.pass == ENC_LAST_PASS || head_pcs->scs->lap_rc) {
                 head_pcs->stats_in_offset = head_pcs->decode_order;
                 svt_block_on_mutex(head_pcs->scs->twopass.stats_buf_ctx->stats_in_write_mutex);

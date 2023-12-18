@@ -849,7 +849,9 @@ typedef struct PictureParentControlSet {
     int8_t               is_gm_on; //-1 invalid, 1: gm on in one of the ref frames,  0:gm off for all ref frames
     uint16_t             me_processed_b64_count;
     EbHandle             me_processed_b64_mutex;
+#if !OPT_MPASS_VBR2
     FirstPassData        firstpass_data;
+#endif
     double               ts_duration;
     double               r0;
     // track pictures that are processd in two different TPL groups
@@ -1069,6 +1071,7 @@ typedef struct PictureParentControlSet {
     int                             low_cr_seen;
     uint64_t                        pcs_total_rate;
     EbHandle                        pcs_total_rate_mutex;
+#if !OPT_MPASS_VBR5
     int16_t                         first_pass_seg_total_count;
     uint8_t                         first_pass_seg_column_count;
     uint8_t                         first_pass_seg_row_count;
@@ -1077,6 +1080,7 @@ typedef struct PictureParentControlSet {
     EbHandle                        first_pass_mutex;
     struct PictureParentControlSet *first_pass_ref_ppcs_ptr[2];
     uint8_t                         first_pass_ref_count;
+#endif
     uint8_t                         first_pass_done;
     uint8_t                         first_frame_in_minigop;
     TplControls                     tpl_ctrls;
@@ -1196,7 +1200,9 @@ typedef struct PictureControlSetInitData {
     uint8_t    enable_tpl_la;
     uint8_t    tpl_synth_size;
     uint8_t    in_loop_ois;
+#if !OPT_MPASS_VBR4
     uint8_t    pass;
+#endif
     uint32_t   rate_control_mode;
     Av1Common *av1_cm;
     uint16_t   init_max_block_cnt;
@@ -1206,15 +1212,19 @@ typedef struct PictureControlSetInitData {
     uint8_t enable_adaptive_quantization;
     uint8_t calc_hist;
     uint8_t tpl_lad_mg;
+#if !OPT_MPASS_VBR4
     uint8_t skip_frame_first_pass;
     uint8_t ipp_ds;
     uint8_t bypass_blk_step;
     uint8_t dist_ds;
     uint8_t ipp_was_ds;
+#endif
     uint8_t final_pass_preset;
+#if !OPT_MPASS_VBR4
     uint8_t bypass_zz_check;
     uint8_t use8blk;
     uint8_t reduce_me_search;
+#endif
     uint8_t input_resolution;
     uint8_t calculate_variance;
     Bool    is_scale;

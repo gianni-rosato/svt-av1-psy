@@ -574,7 +574,11 @@ void *svt_aom_mode_decision_configuration_kernel(void *input_ptr) {
         pcs->min_me_clpx               = 0;
         pcs->max_me_clpx               = 0;
         pcs->avg_me_clpx               = 0;
+#if OPT_MPASS_VBR4
+        if (pcs->slice_type != I_SLICE) {
+#else
         if (scs->static_config.pass != ENC_FIRST_PASS && pcs->slice_type != I_SLICE) {
+#endif
             uint32_t b64_idx;
             uint64_t avg_me_clpx = 0;
             uint64_t min_dist    = (uint64_t)~0;
@@ -590,6 +594,16 @@ void *svt_aom_mode_decision_configuration_kernel(void *input_ptr) {
             pcs->avg_me_clpx = avg_me_clpx / pcs->ppcs->b64_total_count;
         }
         pcs->coeff_lvl = INVALID_LVL;
+#if OPT_MPASS_VBR4
+        if (pcs->slice_type != I_SLICE && !pcs->ppcs->sc_class1) {
+#if OPT_COEFF_LVL_NORM
+            set_frame_coeff_lvl(pcs);
+#else
+            uint8_t pfc_lvl = svt_aom_get_predict_frame_coeff_lvl(pcs->enc_mode);
+            svt_aom_set_frame_coeff_lvl(pcs, pfc_lvl);
+#endif
+        }
+#else
         if (scs->static_config.pass != ENC_FIRST_PASS) {
             if (pcs->slice_type != I_SLICE && !pcs->ppcs->sc_class1) {
 #if OPT_COEFF_LVL_NORM
@@ -600,6 +614,7 @@ void *svt_aom_mode_decision_configuration_kernel(void *input_ptr) {
 #endif
             }
         }
+#endif
         // -------
         // Scale references if resolution of the reference is different than the input
         // super-res reference frame size is same as original input size, only check current frame scaled flag;
@@ -621,9 +636,11 @@ void *svt_aom_mode_decision_configuration_kernel(void *input_ptr) {
         FrameHeader *frm_hdr = &pcs->ppcs->frm_hdr;
         pcs->rtc_tune        = (scs->static_config.pred_structure == SVT_AV1_PRED_LOW_DELAY_B) ? true : false;
         // Mode Decision Configuration Kernel Signal(s) derivation
+#if !OPT_MPASS_VBR4
         if (scs->static_config.pass == ENC_FIRST_PASS)
             svt_aom_first_pass_sig_deriv_mode_decision_config(pcs);
         else
+#endif
             svt_aom_sig_deriv_mode_decision_config(scs, pcs);
 
         if (pcs->slice_type != I_SLICE && scs->mfmv_enabled)
@@ -668,11 +685,17 @@ void *svt_aom_mode_decision_configuration_kernel(void *input_ptr) {
                                      pcs->ppcs->frm_hdr.allow_intrabc,
                                      &pcs->md_frame_context);
         // Initial Rate Estimation of the Motion vectors
+#if OPT_MPASS_VBR4
+        svt_aom_estimate_mv_rate(pcs, md_rate_est_ctx, &pcs->md_frame_context);
+        // Initial Rate Estimation of the quantized coefficients
+        svt_aom_estimate_coefficients_rate(md_rate_est_ctx, &pcs->md_frame_context);
+#else
         if (scs->static_config.pass != ENC_FIRST_PASS) {
             svt_aom_estimate_mv_rate(pcs, md_rate_est_ctx, &pcs->md_frame_context);
             // Initial Rate Estimation of the quantized coefficients
             svt_aom_estimate_coefficients_rate(md_rate_est_ctx, &pcs->md_frame_context);
         }
+#endif
         if (frm_hdr->allow_intrabc) {
             int            i;
             int            speed = 1;

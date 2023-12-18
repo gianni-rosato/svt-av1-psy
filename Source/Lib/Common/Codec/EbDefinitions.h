@@ -36,7 +36,9 @@ extern "C" {
 
 #define TASK_PAME 0
 #define TASK_TFME 1
+#if !OPT_MPASS_VBR5
 #define TASK_FIRST_PASS_ME 2
+#endif
 #define TASK_SUPERRES_RE_ME 3
 #define TASK_DG_DETECTOR_HME 4
 #define MAX_TPL_GROUP_SIZE 512 //enough to cover 6L gop

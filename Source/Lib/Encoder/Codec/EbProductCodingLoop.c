@@ -10238,7 +10238,11 @@ static EbPictureBufferDesc *pad_hbd_pictures(SequenceControlSet *scs, PictureCon
 
         ctx->hbd_pack_done = 1;
     }
+#if OPT_MPASS_VBR4
+    return pcs->input_frame16bit;
+#else
     return ((scs->static_config.pass != ENC_FIRST_PASS) ? pcs->input_frame16bit : in_pic);
+#endif
 }
 
 /*
@@ -10779,7 +10783,7 @@ static void update_d1_data(PictureControlSet *pcs, ModeDecisionContext *ctx, uin
     if (blk_geom->shape != PART_N && !(*skip_next_nsq)) {
         if (blk_geom->nsi + 1 < blk_geom->totns) {
             // plus 1 for SQ (b/c don't need to copy neighs for SQ and only SQ has totns == 1
-            if (!ctx->copied_neigh_arrays && (tot_d1_blocks > (blk_geom->totns + 1) || ctx->md_blk_arr_nsq[blk_geom->sqi_mds].split_flag)) {
+            if (!ctx->copied_neigh_arrays && ((tot_d1_blocks > ((uint32_t)blk_geom->totns + 1)) || ctx->md_blk_arr_nsq[blk_geom->sqi_mds].split_flag)) {
                 svt_aom_copy_neighbour_arrays( //save a clean neigh in [1], encode uses [0], reload the clean in [0] after done last ns block in a partition
                     pcs,
                     ctx,

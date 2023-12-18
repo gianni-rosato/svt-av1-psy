@@ -262,8 +262,12 @@ static void print_summary(const EncContext* const enc_context) {
         const EbConfig*         app_cfg = c->app_cfg;
         if (c->exit_cond == APP_ExitConditionFinished && c->return_error == EB_ErrorNone &&
             (app_cfg->config.pass == 0 ||
+#if OPT_MPASS_VBR6
+             app_cfg->config.pass == 2)) {
+#else
              (app_cfg->config.pass == 2 && app_cfg->config.rate_control_mode == SVT_AV1_RC_MODE_CQP_OR_CRF) ||
              app_cfg->config.pass == 3)) {
+#endif
 #if LOG_ENC_DONE
             tot_frames_done = (int)app_cfg->performance_context.frame_count;
 #endif
@@ -438,6 +442,14 @@ static void enc_channel_step(EncChannel* c, EncApp* enc_app, EncContext* enc_con
             c->exit_cond = (AppExitConditionType)(c->exit_cond_output | c->exit_cond_input);
     }
 }
+#if OPT_MPASS_VBR6
+static const char* get_pass_name(EncPass enc_pass) {
+    switch (enc_pass) {
+        case ENC_FIRST_PASS: return "Pass 1/2 ";
+        case ENC_SECOND_PASS: return "Pass 2/2 ";
+        default: return "";
+    }
+#else
 static const char* get_pass_name(EncPass enc_pass, int32_t passes) {
     if (passes == 3) {
         switch (enc_pass) {
@@ -453,6 +465,7 @@ static const char* get_pass_name(EncPass enc_pass, int32_t passes) {
         default: return "";
         }
     }
+#endif
 }
 static void enc_channel_start(EncChannel* c) {
     if (c->return_error == EB_ErrorNone) {
@@ -477,7 +490,11 @@ static EbErrorType encode(EncApp* enc_app, EncContext* enc_context) {
     for (uint32_t inst_cnt = 0; inst_cnt < num_channels; ++inst_cnt)
         enc_channel_start(enc_context->channels + inst_cnt);
     print_warnnings(enc_context);
+#if OPT_MPASS_VBR6
+    fprintf(stderr, "%sEncoding          ", get_pass_name(enc_pass));
+#else
     fprintf(stderr, "%sEncoding          ", get_pass_name(enc_pass, enc_context->passes));
+#endif
 
     while (has_active_channel(enc_context)) {
         for (uint32_t inst_cnt = 0; inst_cnt < num_channels; ++inst_cnt) {

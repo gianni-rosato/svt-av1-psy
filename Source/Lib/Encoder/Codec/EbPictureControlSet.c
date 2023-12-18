@@ -1185,6 +1185,7 @@ static void picture_parent_control_set_dctor(EbPtr ptr) {
         }
         EB_FREE_PTR_ARRAY(obj->picture_histogram, MAX_NUMBER_OF_REGIONS_IN_WIDTH);
     }
+#if !OPT_MPASS_VBR2
     {
         if (obj->firstpass_data.mb_stats)
             EB_FREE_ARRAY(obj->firstpass_data.mb_stats);
@@ -1192,6 +1193,7 @@ static void picture_parent_control_set_dctor(EbPtr ptr) {
             EB_FREE_ARRAY(obj->firstpass_data.raw_motion_err_list);
     }
 
+#endif
     EB_FREE_ARRAY(obj->rc_me_distortion);
     EB_FREE_ARRAY(obj->stationary_block_present_sb);
     EB_FREE_ARRAY(obj->rc_me_allow_gm);
@@ -1216,8 +1218,10 @@ static void picture_parent_control_set_dctor(EbPtr ptr) {
     EB_DESTROY_MUTEX(obj->debug_mutex);
     EB_FREE_ARRAY(obj->tile_group_info);
     EB_DESTROY_MUTEX(obj->pa_me_done.mutex);
+#if !OPT_MPASS_VBR5
     EB_DESTROY_SEMAPHORE(obj->first_pass_done_semaphore);
     EB_DESTROY_MUTEX(obj->first_pass_mutex);
+#endif
     if (obj->is_pcs_sb_params)
         svt_pcs_sb_structs_dctor(obj);
     if (obj->frame_superres_enabled || obj->frame_resize_enabled) {
@@ -1378,6 +1382,7 @@ static EbErrorType picture_parent_control_set_ctor(PictureParentControlSet *obje
         }
     }
 
+#if !OPT_MPASS_VBR2
     if (init_data_ptr->pass == ENC_FIRST_PASS ||
         (init_data_ptr->rate_control_mode && init_data_ptr->pass == ENC_SINGLE_PASS)) {
         const uint16_t picture_width_in_mb  = (uint16_t)((init_data_ptr->picture_width + 15) / 16);
@@ -1386,6 +1391,7 @@ static EbErrorType picture_parent_control_set_ctor(PictureParentControlSet *obje
         EB_MALLOC_ARRAY(object_ptr->firstpass_data.raw_motion_err_list,
                         (uint32_t)(picture_width_in_mb * picture_height_in_mb));
     }
+#endif
     object_ptr->r0 = 0;
 
     EB_MALLOC_ARRAY(object_ptr->rc_me_distortion, object_ptr->b64_total_count);
@@ -1405,8 +1411,10 @@ static EbErrorType picture_parent_control_set_ctor(PictureParentControlSet *obje
     EB_MALLOC_ARRAY(object_ptr->av1_cm, 1);
 
     EB_CREATE_MUTEX(object_ptr->pa_me_done.mutex);
+#if !OPT_MPASS_VBR5
     EB_CREATE_SEMAPHORE(object_ptr->first_pass_done_semaphore, 0, 1);
     EB_CREATE_MUTEX(object_ptr->first_pass_mutex);
+#endif
 
     EB_CREATE_SEMAPHORE(object_ptr->tpl_disp_done_semaphore, 0, 1);
     EB_CREATE_MUTEX(object_ptr->tpl_disp_mutex);

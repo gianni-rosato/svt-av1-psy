@@ -24,12 +24,20 @@ extern "C" {
 #endif
 typedef enum EncPass {
     ENC_SINGLE_PASS, //single pass mode
+#if OPT_MPASS_VBR7
     ENC_FIRST_PASS, // first pass of multi pass mode
+    ENC_LAST_PASS, // last pass of multi pass mode
+    MAX_ENCODE_PASS = 2,
+#else
+#if !OPT_MPASS_VBR6
+    ENC_FIRST_PASS, // first pass of multi pass mode
+#endif
     ENC_MIDDLE_PASS, // middle pass of multi pass mode
     ENC_LAST_PASS, // last pass of multi pass mode
     MAX_ENCODE_PASS = 3,
+#endif
 } EncPass;
-
+#if !OPT_MPASS_VBR4
 typedef struct IppPassControls {
     uint8_t skip_frame_first_pass; // Enable the ability to skip frame
     uint8_t ds; // use downsampled input
@@ -39,9 +47,16 @@ typedef struct IppPassControls {
     uint8_t use8blk;
     uint8_t reduce_me_search; //Reduce HME_ME SR areas
 } IppPassControls;
+#endif
+#if OPT_MPASS_VBR8
+typedef struct FirstPassControls {
+    uint8_t ds; // use downsampled input
+} FirstPassControls;
+#else
 typedef struct MidPassControls {
     uint8_t ds; // use downsampled input
 } MidPassControls;
+#endif
 
 typedef struct BitstreamLevel {
     uint8_t major;
@@ -254,9 +269,17 @@ typedef struct SequenceControlSet {
     // less than 200 frames or gop_constraint_rc is set, used in VBR and set in multipass encode
     uint8_t         is_short_clip;
     uint8_t         passes;
+#if !OPT_MPASS_VBR4
     IppPassControls ipp_pass_ctrls;
+#endif
+#if OPT_MPASS_VBR8
+    FirstPassControls first_pass_ctrls;
+#else
     MidPassControls mid_pass_ctrls;
+#endif
+#if !OPT_MPASS_VBR4
     uint8_t         ipp_was_ds;
+#endif
     uint8_t         final_pass_preset;
     /* Palette Mode
     *

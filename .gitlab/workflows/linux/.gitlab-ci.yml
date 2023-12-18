@@ -293,7 +293,7 @@ Linux RC Test:
           ./Bin/Release/SvtAv1EncApp \
             --preset 8 --lp 7 \
             --rc 1 --tbr "$target" \
-            -i "$clip" \
+            -n 300 -i "$clip" \
             --undershoot-pct 10 \
             --overshoot-pct 5 2>&1 |
             awk '$1" "$2 == "Total Frames" {getline; print $5}'

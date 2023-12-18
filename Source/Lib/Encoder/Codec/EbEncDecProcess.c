@@ -508,7 +508,11 @@ void svt_aom_recon_output(PictureControlSet *pcs, SequenceControlSet *scs) {
             const uint16_t ss_x         = (color_format == EB_YUV444 ? 1 : 2) - 1;
             const uint16_t ss_y         = (color_format >= EB_YUV422 ? 1 : 2) - 1;
             // FGN: Create a buffer if needed, copy the reconstructed picture and run the film grain synthesis algorithm
+#if OPT_MPASS_VBR4
+            if (scs->seq_header.film_grain_params_present &&
+#else
             if ((scs->static_config.pass != ENC_FIRST_PASS) && scs->seq_header.film_grain_params_present &&
+#endif
                 pcs->ppcs->frm_hdr.film_grain_params.apply_grain) {
                 AomFilmGrain *film_grain_ptr;
 
@@ -3440,7 +3444,11 @@ void *svt_aom_mode_decision_kernel(void *input_ptr) {
         ed_ctx->tot_skip_coded_area     = 0;
         ed_ctx->tot_hp_coded_area       = 0;
         // Bypass encdec for the first pass
+#if OPT_MPASS_VBR4
+        if (svt_aom_is_pic_skipped(pcs->ppcs)) {
+#else
         if (scs->static_config.pass == ENC_FIRST_PASS || svt_aom_is_pic_skipped(pcs->ppcs)) {
+#endif
             svt_release_object(pcs->ppcs->me_data_wrapper);
             pcs->ppcs->me_data_wrapper = (EbObjectWrapper *)NULL;
             pcs->ppcs->pa_me_data      = NULL;

@@ -134,20 +134,28 @@ static AOM_INLINE void output_stats(SequenceControlSet *scs, const FIRSTPASS_STA
 }
 void svt_av1_twopass_zero_stats(FIRSTPASS_STATS *section) {
     section->frame              = 0.0;
+#if !OPT_MPASS_VBR2
     section->intra_error        = 0.0;
+#endif
     section->coded_error        = 0.0;
+#if !OPT_MPASS_VBR2
     section->intra_skip_pct     = 0.0;
     section->inactive_zone_rows = 0.0;
+#endif
     section->count    = 0.0;
     section->duration = 1.0;
     memset(&section->stat_struct, 0, sizeof(StatStruct));
 }
 void svt_av1_accumulate_stats(FIRSTPASS_STATS *section, const FIRSTPASS_STATS *frame) {
     section->frame += frame->frame;
+#if !OPT_MPASS_VBR2
     section->intra_error += frame->intra_error;
+#endif
     section->coded_error += frame->coded_error;
+#if !OPT_MPASS_VBR2
     section->intra_skip_pct += frame->intra_skip_pct;
     section->inactive_zone_rows += frame->inactive_zone_rows;
+#endif
     section->count += frame->count;
     section->duration += frame->duration;
 }
@@ -165,6 +173,70 @@ void svt_av1_end_first_pass(PictureParentControlSet *pcs) {
         svt_release_mutex(twopass->stats_buf_ctx->stats_in_write_mutex);
     }
 }
+#if OPT_MPASS_VBR2
+// Updates the first pass stats of this frame.
+// Input:
+//   stats: stats accumulated for this frame.
+//   frame_number: current frame number.
+//   ts_duration: Duration of the frame / collection of frames.
+// Updates:
+//   twopass->total_stats: the accumulated stats.
+//   twopass->stats_buf_ctx->stats_in_end: the pointer to the current stats,
+//                                         update its value and its position
+//                                         in the buffer.
+void update_firstpass_stats(PictureParentControlSet *pcs, const int frame_number,
+    const double ts_duration, StatStruct *stat_struct) {
+    SequenceControlSet *scs = pcs->scs;
+    TWO_PASS *          twopass = &scs->twopass;
+
+    svt_block_on_mutex(twopass->stats_buf_ctx->stats_in_write_mutex);
+
+    FIRSTPASS_STATS *this_frame_stats = twopass->stats_buf_ctx->stats_in_end_write;
+    FIRSTPASS_STATS  fps;
+    fps.frame = frame_number;
+    fps.coded_error = 0;
+#if !OPT_MPASS_VBR2
+    fps.intra_error = 0;
+#endif
+    fps.count = 1.0;
+    // TODO(paulwilkins):  Handle the case when duration is set to 0, or
+    // something less than the full time between subsequent values of
+    // cpi->source_time_stamp.
+    fps.duration = (double)ts_duration;
+    memset(&fps.stat_struct, 0, sizeof(StatStruct));
+#if OPT_MPASS_VBR3
+    fps.stat_struct.poc     = stat_struct->poc;
+    fps.stat_struct.qindex = stat_struct->qindex;
+    fps.stat_struct.total_num_bits = stat_struct->total_num_bits;
+    fps.stat_struct.temporal_layer_index = stat_struct->temporal_layer_index;
+    fps.stat_struct.worst_qindex = stat_struct->worst_qindex;
+#endif
+    // We will store the stats inside the persistent twopass struct (and NOT the
+    // local variable 'fps'), and then cpi->output_pkt_list will point to it.
+    *this_frame_stats = fps;
+    output_stats(scs, &fps, pcs->picture_number);
+    if (twopass->stats_buf_ctx->total_stats != NULL &&
+#if OPT_MPASS_VBR3 & !OPT_MPASS_VBR7
+        scs->static_config.pass == ENC_MIDDLE_PASS) {
+#else
+        scs->static_config.pass == ENC_FIRST_PASS) {
+#endif
+        svt_av1_accumulate_stats(twopass->stats_buf_ctx->total_stats, &fps);
+    }
+    /*In the case of two pass, first pass uses it as a circular buffer,
+   * when LAP is enabled it is used as a linear buffer*/
+    twopass->stats_buf_ctx->stats_in_end_write++;
+#if OPT_MPASS_VBR3 & !OPT_MPASS_VBR7
+    if (scs->static_config.pass == ENC_MIDDLE_PASS &&
+#else
+    if (scs->static_config.pass == ENC_FIRST_PASS &&
+#endif
+        (twopass->stats_buf_ctx->stats_in_end_write >= twopass->stats_buf_ctx->stats_in_buf_end)) {
+        twopass->stats_buf_ctx->stats_in_end_write = twopass->stats_buf_ctx->stats_in_start;
+    }
+    svt_release_mutex(twopass->stats_buf_ctx->stats_in_write_mutex);
+}
+#else
 #define UL_INTRA_THRESH 50
 #define INVALID_ROW -1
 // Updates the first pass stats of this frame.
@@ -245,7 +317,8 @@ static void update_firstpass_stats(PictureParentControlSet *pcs, const FRAME_STA
     }
     svt_release_mutex(twopass->stats_buf_ctx->stats_in_write_mutex);
 }
-
+#endif
+#if !OPT_MPASS_VBR2
 static FRAME_STATS accumulate_frame_stats(FRAME_STATS *mb_stats, int mb_rows, int mb_cols,
                                           uint8_t bypass_blk_step) {
     FRAME_STATS stats = {0};
@@ -312,6 +385,7 @@ void setup_firstpass_data_seg(PictureParentControlSet *ppcs, int32_t segment_ind
         }
     }
 }
+#endif
 void first_pass_frame_end_one_pass(PictureParentControlSet *pcs) {
 
     SequenceControlSet *scs = pcs->scs;
@@ -335,16 +409,22 @@ void first_pass_frame_end_one_pass(PictureParentControlSet *pcs) {
     twopass->stats_buf_ctx->stats_in_end_write++;
     svt_release_mutex(twopass->stats_buf_ctx->stats_in_write_mutex);
 }
+#if !OPT_MPASS_VBR5
 static void first_pass_frame_end(PictureParentControlSet *pcs, uint8_t skip_frame,
                           uint8_t bypass_blk_step, const double ts_duration) {
+#if OPT_MPASS_VBR2 //anaghin
+    StatStruct stat_struct = { 0 };
+    update_firstpass_stats(
+        pcs,
+        (const int)pcs->picture_number,
+        ts_duration,
+        &stat_struct);
+#else
     SequenceControlSet *scs = pcs->scs;
     const uint32_t      mb_cols = (scs->max_input_luma_width + 16 - 1) / 16;
     const uint32_t      mb_rows = (scs->max_input_luma_height + 16 - 1) / 16;
-
     FRAME_STATS *mb_stats = pcs->firstpass_data.mb_stats;
-
     FRAME_STATS stats;
-
     if (!skip_frame) {
         stats = accumulate_frame_stats(mb_stats, mb_rows, mb_cols, bypass_blk_step);
         // Clamp the image start to rows/2. This number of rows is discarded top
@@ -368,13 +448,15 @@ static void first_pass_frame_end(PictureParentControlSet *pcs, uint8_t skip_fram
         skip_frame,
         bypass_blk_step,
         ts_duration);
+#endif
 
 }
+#endif
 
+#if !OPT_MPASS_VBR2
 #define LOW_MOTION_ERROR_THRESH 25
 #define MOTION_ERROR_THRESH 500
 void set_tf_controls(PictureParentControlSet *pcs, uint8_t tf_level);
-
 /***************************************************************************
 * Computes and returns the intra pred error of a block using src.
 * intra pred error: sum of squared error of the intra predicted residual.
@@ -903,6 +985,8 @@ static EbErrorType first_pass_me(PictureParentControlSet *  ppcs,
     }
     return EB_ErrorNone;
 }
+#endif
+#if !OPT_MPASS_VBR5
 /************************************************************************************
 * Performs the first pass based on open loop data.
 * Source frames are used for Intra and Inter prediction.
@@ -914,10 +998,15 @@ void open_loop_first_pass(PictureParentControlSet *  ppcs,
     // Perform the me for the first pass for each segment
 
     me_context_ptr->me_ctx->bypass_blk_step =
+#if OPT_MPASS_VBR4
+        1;
+#else
         ppcs->scs->ipp_pass_ctrls.bypass_blk_step
         ?
         ((ppcs->scs->input_resolution < INPUT_SIZE_360p_RANGE) ? 1 : 2)
         : 1;
+#endif
+#if !OPT_MPASS_VBR2
     if (!me_context_ptr->me_ctx->skip_frame)
         if (ppcs->first_pass_ref_count)
             first_pass_me(ppcs, me_context_ptr, segment_index);
@@ -927,7 +1016,9 @@ void open_loop_first_pass(PictureParentControlSet *  ppcs,
         first_pass_frame_seg(
             ppcs, segment_index, me_context_ptr->me_ctx->bypass_blk_step);
     }
+#endif
     svt_block_on_mutex(ppcs->first_pass_mutex);
+#if !OPT_MPASS_VBR5
     ppcs->first_pass_seg_acc++;
     if (ppcs->first_pass_seg_acc == ppcs->first_pass_seg_total_count) {
         first_pass_frame_end(ppcs,
@@ -939,7 +1030,8 @@ void open_loop_first_pass(PictureParentControlSet *  ppcs,
         // Signal that the first pass is done
         svt_post_semaphore(ppcs->first_pass_done_semaphore);
     }
-
+#endif
     svt_release_mutex(ppcs->first_pass_mutex);
 }
+#endif
 // clang-format on

@@ -19,8 +19,10 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+#if !OPT_MPASS_VBR4
 #define FORCED_BLK_SIZE 16
 #define FIRST_PASS_Q 10.0
+#endif
 
 #define DOUBLE_DIVIDE_CHECK(x) ((x) < 0 ? (x)-0.000001 : (x) + 0.000001)
 
@@ -35,14 +37,17 @@ typedef struct {
    * No real meaning for a collection of frames.
    */
     double frame;
+#if !OPT_MPASS_VBR2
     /*!
    * Intra prediction error.
    */
     double intra_error;
+#endif
     /*!
    * Best of intra pred error and inter pred error using last frame as ref.
    */
     double coded_error;
+#if !OPT_MPASS_VBR2
     /*!
    * Percentage of blocks that have almost no intra error residual
    * (i.e. are in effect completely flat and untextured in the intra
@@ -55,6 +60,7 @@ typedef struct {
    * Image mask rows top and bottom.
    */
     double inactive_zone_rows;
+#endif
     /*!
    * Duration of the frame / collection of frames.
    */
@@ -117,6 +123,7 @@ typedef struct {
 
 /*!\cond */
 
+#if !OPT_MPASS_VBR2
 // This structure contains several key parameters to be accumulated for this
 // frame.
 typedef struct {
@@ -142,6 +149,7 @@ typedef struct {
     // the ith MB in raster scan order.
     int *raw_motion_err_list;
 } FirstPassData;
+#endif
 struct AV1EncoderConfig;
 struct TileDataEnc;
 

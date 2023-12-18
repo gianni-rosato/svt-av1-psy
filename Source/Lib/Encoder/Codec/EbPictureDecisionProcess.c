@@ -1318,7 +1318,11 @@ static void set_ref_list_counts(PictureParentControlSet* pcs) {
             is_sc ? (is_base ? mrp_ctrls->sc_base_ref_list1_count : mrp_ctrls->sc_non_base_ref_list1_count)
             : (is_base ? mrp_ctrls->base_ref_list1_count    : mrp_ctrls->non_base_ref_list1_count));
     // Old assert fails when M13 uses non-zero mrp
+#if OPT_MPASS_VBR4
+    assert(!(pcs->ref_list1_count == 0 && pcs->scs->static_config.pred_structure == SVT_AV1_PRED_RANDOM_ACCESS));
+#else
     assert(!(pcs->ref_list1_count == 0 && pcs->scs->static_config.pred_structure == SVT_AV1_PRED_RANDOM_ACCESS && pcs->scs->static_config.pass != ENC_FIRST_PASS));
+#endif
 }
 static INLINE void update_ref_poc_array(uint8_t* ref_dpb_idx, uint64_t* ref_poc_array, DpbEntry* dpb) {
     ref_poc_array[LAST]  = dpb[ref_dpb_idx[LAST]].picture_number;
@@ -2824,22 +2828,27 @@ Bool svt_aom_is_delayed_intra(PictureParentControlSet *pcs) {
         return 0;
 }
 void first_pass_frame_end_one_pass(PictureParentControlSet *pcs);
+#if !OPT_MPASS_VBR5
 /*
   Performs first pass in ME process
 */
 static void process_first_pass_frame(
     SequenceControlSet      *scs, PictureParentControlSet *pcs, PictureDecisionContext  *pd_ctx) {
-
+#if !OPT_MPASS_VBR5
     // Initialize Segments
     pcs->first_pass_seg_column_count = (uint8_t)(scs->me_segment_column_count_array[0]);
     pcs->first_pass_seg_row_count = (uint8_t)(scs->me_segment_row_count_array[0]);
 
     pcs->first_pass_seg_total_count = (uint16_t)(pcs->first_pass_seg_column_count  * pcs->first_pass_seg_row_count);
     pcs->first_pass_seg_acc = 0;
+#endif
+#if !OPT_MPASS_VBR4
     svt_aom_first_pass_sig_deriv_multi_processes(scs, pcs);
+#endif
     if (scs->lap_rc) {
         first_pass_frame_end_one_pass(pcs);
     }
+#if !OPT_MPASS_VBR5
     else {
     if (pcs->me_data_wrapper == NULL) {
         EbObjectWrapper               *me_wrapper;
@@ -2868,7 +2877,9 @@ static void process_first_pass_frame(
     pcs->me_data_wrapper = (EbObjectWrapper *)NULL;
     pcs->pa_me_data = NULL;
     }
+#endif
 }
+#endif
 void svt_aom_pack_highbd_pic(const EbPictureBufferDesc *pic_ptr, uint16_t *buffer_16bit[3], uint32_t ss_x,
     uint32_t ss_y, Bool include_padding);
 #define HIGH_BAND 250000
@@ -3844,8 +3855,11 @@ static void set_gf_group_param(PictureParentControlSet *ppcs) {
     set_frame_update_type(ppcs);
     set_layer_depth(ppcs);
 }
-
+#if OPT_MPASS_VBR5
+static void process_first_pass(SequenceControlSet* scs, EncodeContext* enc_ctx) {
+#else
 static void process_first_pass(SequenceControlSet* scs, EncodeContext* enc_ctx, PictureDecisionContext* ctx) {
+#endif
     for (unsigned int window_index = 0; window_index < scs->scd_delay + 1; window_index++) {
         unsigned int entry_index = QUEUE_GET_NEXT_SPOT(enc_ctx->picture_decision_reorder_queue_head_index, window_index);
         PictureDecisionReorderEntry   *first_pass_queue_entry = enc_ctx->picture_decision_reorder_queue[entry_index];
@@ -3854,6 +3868,9 @@ static void process_first_pass(SequenceControlSet* scs, EncodeContext* enc_ctx, 
 
         PictureParentControlSet *first_pass_pcs = (PictureParentControlSet*)first_pass_queue_entry->ppcs_wrapper->object_ptr;
         if (!first_pass_pcs->first_pass_done) {
+#if OPT_MPASS_VBR5
+            first_pass_frame_end_one_pass(first_pass_pcs);
+#else
             int32_t temp_entry_index = QUEUE_GET_PREVIOUS_SPOT(entry_index);
             first_pass_pcs->first_pass_ref_ppcs_ptr[0] = first_pass_queue_entry->picture_number > 0 ?
                 (PictureParentControlSet *)enc_ctx->picture_decision_reorder_queue[temp_entry_index]->ppcs_wrapper->object_ptr : NULL;
@@ -3861,8 +3878,8 @@ static void process_first_pass(SequenceControlSet* scs, EncodeContext* enc_ctx, 
             first_pass_pcs->first_pass_ref_ppcs_ptr[1] = first_pass_queue_entry->picture_number > 1 ?
                 (PictureParentControlSet *)enc_ctx->picture_decision_reorder_queue[temp_entry_index]->ppcs_wrapper->object_ptr : NULL;
             first_pass_pcs->first_pass_ref_count = first_pass_queue_entry->picture_number > 1 ? 2 : first_pass_queue_entry->picture_number > 0 ? 1 : 0;
-
             process_first_pass_frame(scs, first_pass_pcs, ctx);
+#endif
             first_pass_pcs->first_pass_done = 1;
         }
     }
@@ -4010,6 +4027,7 @@ static void perform_sc_detection(SequenceControlSet* scs, PictureParentControlSe
     if (pcs->slice_type == I_SLICE) {
         // If running multi-threaded mode, perform SC detection in svt_aom_picture_analysis_kernel, else in svt_aom_picture_decision_kernel
         if (scs->static_config.logical_processors == 1) {
+#if !OPT_MPASS_VBR4
             int copy_frame = 1;
             if (pcs->scs->ipp_pass_ctrls.skip_frame_first_pass)
                 copy_frame = (((pcs->picture_number % 8) == 0) || ((pcs->picture_number % 8) == 6) || ((pcs->picture_number % 8) == 7));
@@ -4017,7 +4035,9 @@ static void perform_sc_detection(SequenceControlSet* scs, PictureParentControlSe
             if ((scs->static_config.pass != ENC_FIRST_PASS || copy_frame) == 0) {
                 pcs->sc_class0 = pcs->sc_class1 = pcs->sc_class2 = 0;
             }
-            else if (scs->static_config.screen_content_mode == 2) // auto detect
+            else
+#endif
+                if (scs->static_config.screen_content_mode == 2) // auto detect
             {
                 // SC Detection is OFF for 4K and higher
                 if (scs->input_resolution <= INPUT_SIZE_1080p_RANGE)
@@ -4165,9 +4185,11 @@ static void init_pic_settings(SequenceControlSet* scs, PictureParentControlSet* 
     copy_tf_params(scs, pcs);
     // TODO: put this in EbMotionEstimationProcess?
     // ME Kernel Multi-Processes Signal(s) derivation
+#if !OPT_MPASS_VBR4
     if (scs->static_config.pass == ENC_FIRST_PASS)
         svt_aom_first_pass_sig_deriv_multi_processes(scs, pcs);
     else
+#endif
         svt_aom_sig_deriv_multi_processes(scs, pcs, ctx);
 
     update_count_try(scs, pcs);
@@ -4650,9 +4672,16 @@ void* svt_aom_picture_decision_kernel(void *input_ptr) {
         queue_entry_ptr = enc_ctx->picture_decision_reorder_queue[enc_ctx->picture_decision_reorder_queue_head_index];
 
         while (queue_entry_ptr->ppcs_wrapper != NULL) {
-
+#if OPT_MPASS_VBR4
+            if (scs->lap_rc) {
+#else
             if (scs->static_config.pass == ENC_FIRST_PASS || scs->lap_rc) {
+#endif
+#if OPT_MPASS_VBR5
+                process_first_pass(scs, enc_ctx);
+#else
                 process_first_pass(scs, enc_ctx, ctx);
+#endif
             }
 
             pcs = (PictureParentControlSet*)queue_entry_ptr->ppcs_wrapper->object_ptr;
@@ -4682,7 +4711,6 @@ void* svt_aom_picture_decision_kernel(void *input_ptr) {
                 ctx->prev_delayed_intra = NULL;
 
             release_prev_picture_from_reorder_queue(enc_ctx);
-
             // If the Intra period length is 0, then introduce an intra for every picture
             if (scs->static_config.intra_period_length == 0)
                 pcs->cra_flag = TRUE;

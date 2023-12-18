@@ -2248,6 +2248,7 @@ void svt_aom_sig_deriv_multi_processes(SequenceControlSet *scs, PictureParentCon
     else
         pcs->update_ref_count = 1;
 }
+#if !OPT_MPASS_VBR4
 /*set the skip_frame flag for ipp*/
 static void svt_aom_set_skip_frame_in_ipp(PictureParentControlSet *pcs, MeContext *me_ctx) {
     me_ctx->skip_frame             = 0;
@@ -2279,6 +2280,7 @@ static void svt_aom_set_skip_frame_in_ipp(PictureParentControlSet *pcs, MeContex
             me_ctx->skip_frame = 0;
     }
 }
+#endif
 
 /******************************************************
 * GM controls
@@ -2459,6 +2461,7 @@ void svt_aom_set_gm_controls(PictureParentControlSet *pcs, uint8_t gm_level) {
     if (gm_level)
         assert((gm_ctrls->match_sz & 1) == 1);
 }
+#if !OPT_MPASS_VBR4
 /************************************************
  * Set ME/HME Params for the first pass encoding
  ************************************************/
@@ -2679,6 +2682,7 @@ void svt_aom_first_pass_sig_deriv_me(SequenceControlSet *scs, PictureParentContr
     svt_aom_set_prehme_ctrls(me_ctx, 0);
     svt_aom_set_skip_frame_in_ipp(pcs, me_ctx);
 };
+#endif
 static void set_inter_comp_controls(ModeDecisionContext *ctx, uint8_t inter_comp_mode) {
     InterCompCtrls *inter_comp_ctrls = &ctx->inter_comp_ctrls;
 
@@ -10235,8 +10239,11 @@ void svt_aom_sig_deriv_mode_decision_config(SequenceControlSet *scs, PictureCont
     */
     // for the low delay enhance base layer frames, lower the enc_mode to improve the quality
     set_pic_lpd0_lvl(pcs, (pcs->ppcs->ld_enhanced_base_frame) ? enc_mode - 1 : enc_mode);
-
+#if OPT_MPASS_VBR7
+    if (pcs->ppcs->sc_class1 || scs->static_config.pass == ENC_FIRST_PASS)
+#else
     if (pcs->ppcs->sc_class1 || scs->static_config.pass == ENC_MIDDLE_PASS)
+#endif
         pcs->pic_skip_pd0 = 0;
     else if (enc_mode <= ENC_M13)
         pcs->pic_skip_pd0 = 0;

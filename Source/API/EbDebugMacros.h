@@ -45,7 +45,7 @@ extern "C" {
 #define FIX_NSQ_CTRL                              1 // Break the nsq_ctrls into nsq_geom_ctrls and nsq_search_ctrls and use qp-banding for only the nsq_search_level derivation
 #define CLN_SMALL_SIGS                            1 // Remove signals and levels having an insignificant impact on the behaviour
 #define OPT_ME_SP_8TH_PEL                         1 // Optimize ME subpel
-#define OPT_NSQ_HIGH_FREQ                         1 // Use more conservative NSQ settings in the presence of a high energy area 
+#define OPT_NSQ_HIGH_FREQ                         1 // Use more conservative NSQ settings in the presence of a high energy area
 #define OPT_1P_VBR                                1 // Optimized one-pass VBR
 #define CLN_MVP_DIST_CALC                         1 // Move MVP distortion calc to one place to avoid recomputing
 #define CLN_USE_BEST_PME_DIST                     1 // Use best PME dist in cand. reduction tool, instead of just best of ref_idx 0 cands
@@ -54,6 +54,17 @@ extern "C" {
 #define CLN_NSQ_COPIES                            1 // Cleanup copying of neighbour arrays for NSQ shapes to avoid unnecessary copying
 #define FIX_NSQ_SETTINGS                          1 // Fix when settings are reset in MD loop (settings can be modified by NSQ features)
 
+#define OPT_MPASS_VBR_PACKAGE                     1 // Optimized Multi-pass VBR
+#if OPT_MPASS_VBR_PACKAGE
+#define OPT_MPASS_VBR1                            1 // Remove the dependancy of IPP and middle pass
+#define OPT_MPASS_VBR2                            1 // Lossless optimization for multiPASS VBR
+#define OPT_MPASS_VBR3                            1 // Lossless optimization for multiPASS VBR, remove IPP pass
+#define OPT_MPASS_VBR4                            1 // Lossless optimization for multiPASS VBR, remove ENC_FIRST_PASS
+#define OPT_MPASS_VBR5                            1 // Lossless optimization for multiPASS VBR, remove FIRST PASSME
+#define OPT_MPASS_VBR6                            1 // Lossless optimization for multiPASS VBR, Shift passes
+#define OPT_MPASS_VBR7                            1 // Lossless optimization for multiPASS VBR, replace ENC_MIDDLE_PASS by ENC_FIRST_PASS
+#define OPT_MPASS_VBR8                            1 // Lossless optimization for multiPASS VBR, refactor mid_pass
+#endif
 //FOR DEBUGGING - Do not remove
 #define OPT_LD_LATENCY2         0 // Latency optimization for low delay
 #define LOG_ENC_DONE            0 // log encoder job one

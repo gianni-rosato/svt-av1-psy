@@ -2177,6 +2177,7 @@ void *svt_aom_picture_analysis_kernel(void *input_ptr) {
         // results.
         if (!pcs->is_overlay) {
             input_pic      = pcs->enhanced_pic;
+#if !OPT_MPASS_VBR4
             int copy_frame = 1;
             if (pcs->scs->ipp_pass_ctrls.skip_frame_first_pass == 1)
                 copy_frame = (((pcs->picture_number % 8) == 0) || ((pcs->picture_number % 8) == 6) ||
@@ -2185,7 +2186,9 @@ void *svt_aom_picture_analysis_kernel(void *input_ptr) {
                 copy_frame = ((pcs->picture_number < 7) || ((pcs->picture_number % 8) == 0) ||
                               ((pcs->picture_number % 8) == 6) || ((pcs->picture_number % 8) == 7));
             // Bypass copy for the unecessary picture in IPPP pass
-            if (scs->static_config.pass != ENC_FIRST_PASS || copy_frame) {
+            if (scs->static_config.pass != ENC_FIRST_PASS || copy_frame)
+#endif
+            {
                 // Padding for input pictures
                 svt_aom_pad_input_pictures(scs, input_pic);
 
@@ -2232,7 +2235,10 @@ void *svt_aom_picture_analysis_kernel(void *input_ptr) {
                 pcs->ds_pics.sixteenth_picture_ptr = pa_ref_obj_->sixteenth_downsampled_picture_ptr;
             }
             // Gathering statistics of input picture, including Variance Calculation, Histogram Bins
-            if (scs->static_config.pass != ENC_FIRST_PASS) {
+#if !OPT_MPASS_VBR4
+            if (scs->static_config.pass != ENC_FIRST_PASS)
+#endif
+            {
                 svt_aom_gathering_picture_statistics(
                     scs, pcs, input_padded_pic, (EbPictureBufferDesc *)pa_ref_obj_->sixteenth_downsampled_picture_ptr);
 
@@ -2240,9 +2246,12 @@ void *svt_aom_picture_analysis_kernel(void *input_ptr) {
             }
             // If running multi-threaded mode, perform SC detection in svt_aom_picture_analysis_kernel, else in svt_aom_picture_decision_kernel
             if (scs->static_config.logical_processors != 1) {
+#if !OPT_MPASS_VBR4
                 if ((scs->static_config.pass != ENC_FIRST_PASS || copy_frame) == 0) {
                     pcs->sc_class0 = pcs->sc_class1 = pcs->sc_class2 = 0;
-                } else if (scs->static_config.screen_content_mode == 2) { // auto detect
+                } else
+#endif
+                if (scs->static_config.screen_content_mode == 2) { // auto detect
                     // SC Detection is OFF for 4K and higher
                     if (scs->input_resolution <= INPUT_SIZE_1080p_RANGE)
                         svt_aom_is_screen_content(pcs);

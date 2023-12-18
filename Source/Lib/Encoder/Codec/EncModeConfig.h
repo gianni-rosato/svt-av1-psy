@@ -32,17 +32,27 @@ Bool    svt_aom_is_ref_same_size(PictureControlSet *pcs, uint8_t list_idx, uint8
 uint8_t svt_aom_get_enable_me_8x8(EncMode enc_mode, bool rtc_tune, EbInputResolution input_resolution);
 void    svt_aom_set_tpl_extended_controls(PictureParentControlSet *pcs, uint8_t tpl_level);
 void    svt_aom_sig_deriv_mode_decision_config(SequenceControlSet *scs, PictureControlSet *pcs);
+#if !OPT_MPASS_VBR4
 void    svt_aom_first_pass_sig_deriv_mode_decision_config(PictureControlSet *pcs);
+#endif
 void    svt_aom_sig_deriv_block(PictureControlSet *pcs, ModeDecisionContext *ctx);
 void    svt_aom_sig_deriv_pre_analysis_pcs(PictureParentControlSet *pcs);
+#if !OPT_MPASS_VBR4
 void    svt_aom_first_pass_sig_deriv_pre_analysis_pcs(PictureParentControlSet *pcs);
+#endif
 void    svt_aom_sig_deriv_pre_analysis_scs(SequenceControlSet *scs);
+#if !OPT_MPASS_VBR4
 void    svt_aom_first_pass_sig_deriv_pre_analysis_scs(SequenceControlSet *scs);
+#endif
 void    svt_aom_sig_deriv_multi_processes(SequenceControlSet *scs, PictureParentControlSet *pcs,
                                           PictureDecisionContext *context_ptr);
+#if !OPT_MPASS_VBR4
 void    svt_aom_first_pass_sig_deriv_multi_processes(SequenceControlSet *scs, PictureParentControlSet *pcs);
+#endif
 void    svt_aom_sig_deriv_me_tf(PictureParentControlSet *pcs, MeContext *me_ctx);
+#if !OPT_MPASS_VBR4
 void    svt_aom_first_pass_sig_deriv_me(SequenceControlSet *scs, PictureParentControlSet *pcs, MeContext *me_ctx);
+#endif
 
 void svt_aom_sig_deriv_enc_dec_light_pd1(PictureControlSet *pcs, ModeDecisionContext *ctx);
 void svt_aom_sig_deriv_enc_dec_light_pd0(SequenceControlSet *scs, PictureControlSet *pcs, ModeDecisionContext *ctx);

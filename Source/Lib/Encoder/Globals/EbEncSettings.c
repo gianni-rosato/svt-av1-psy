@@ -575,7 +575,11 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet *scs) {
                   SUPERRES_AUTO);
         return_error = EB_ErrorBadParameter;
     }
+#if OPT_MPASS_VBR4 & !OPT_MPASS_VBR8
+    if (config->superres_mode > 0 && ((config->rc_stats_buffer.sz ))) {
+#else
     if (config->superres_mode > 0 && ((config->rc_stats_buffer.sz || config->pass == ENC_FIRST_PASS))) {
+#endif
         SVT_ERROR("Instance %u: superres is not supported for 2-pass\n", channel_number + 1);
         return_error = EB_ErrorBadParameter;
     }
@@ -1038,12 +1042,17 @@ void svt_av1_print_lib_params(SequenceControlSet *scs) {
     EbSvtAv1EncConfiguration *config = &scs->static_config;
 
     SVT_INFO("-------------------------------------------\n");
-
+#if !OPT_MPASS_VBR6 | OPT_MPASS_VBR7
     if (config->pass == ENC_FIRST_PASS)
         SVT_INFO("SVT [config]: preset \t\t\t\t\t\t\t: Pass 1\n");
-    else if (config->pass == ENC_MIDDLE_PASS)
+    else
+#endif
+#if !OPT_MPASS_VBR7
+        if (config->pass == ENC_MIDDLE_PASS)
         SVT_INFO("SVT [config]: preset \t\t\t\t\t\t\t: Pass 2\n");
-    else {
+    else
+#endif
+    {
         SVT_INFO("SVT [config]: %s\ttier %s\tlevel %s\n",
                  config->profile == MAIN_PROFILE               ? "main profile"
                      : config->profile == HIGH_PROFILE         ? "high profile"

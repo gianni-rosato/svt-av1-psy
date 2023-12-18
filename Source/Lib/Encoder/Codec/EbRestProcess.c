@@ -660,7 +660,10 @@ void *svt_aom_rest_kernel(void *input_ptr) {
             superres_recode = pcs->ppcs->superres_total_recode_loop > 0 ? TRUE : FALSE;
 
             // Pad the reference picture and set ref POC
-            if (scs->static_config.pass != ENC_FIRST_PASS) {
+#if !OPT_MPASS_VBR4
+            if (scs->static_config.pass != ENC_FIRST_PASS)
+#endif
+            {
                 if (pcs->ppcs->is_ref == TRUE)
                     pad_ref_and_set_flags(pcs, scs);
                 else {

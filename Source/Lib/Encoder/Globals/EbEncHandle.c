@@ -580,9 +580,12 @@ static EbErrorType load_default_buffer_configuration_settings(
         const uint8_t dpb_frames = REF_FRAMES; // up to dpb_frame refs from prev MGs can be used (AV1 spec allows holding up to 8 frames for references)
         min_ref = (scs->enable_dec_order) ? dpb_frames + 1 : num_ref_from_cur_mg + num_ref_lad_mgs + dpb_frames;
         min_tpl_ref = dpb_frames + 1; // TPL pictures are processed in decode order
+#if !OPT_MPASS_VBR4
         if (scs->static_config.pass == ENC_FIRST_PASS)
             min_me = min_parent;
-        else if (scs->tpl_level) {
+        else
+#endif
+            if (scs->tpl_level) {
             // PictureDecisionContext.mg_size = mg_size + overlay; see EbPictureDecisionProcess.c line 5680
             min_me = 1 +                  // potential delay I
                      lad_mg_pictures +    // 16 + 1 ME data used in store_tpl_pictures() at line 5717
@@ -1577,16 +1580,20 @@ EB_API EbErrorType svt_av1_enc_init(EbComponentType *svt_enc_component)
         input_data.in_loop_ois = enc_handle_ptr->scs_instance_array[instance_index]->scs->in_loop_ois;
         input_data.enc_dec_segment_col = (uint16_t)enc_handle_ptr->scs_instance_array[instance_index]->scs->tpl_segment_col_count_array;
         input_data.enc_dec_segment_row = (uint16_t)enc_handle_ptr->scs_instance_array[instance_index]->scs->tpl_segment_row_count_array;
+#if !OPT_MPASS_VBR4
         input_data.pass = enc_handle_ptr->scs_instance_array[instance_index]->scs->static_config.pass;
         input_data.skip_frame_first_pass = enc_handle_ptr->scs_instance_array[instance_index]->scs->ipp_pass_ctrls.skip_frame_first_pass;
         input_data.bypass_blk_step = enc_handle_ptr->scs_instance_array[instance_index]->scs->ipp_pass_ctrls.bypass_blk_step;
         input_data.ipp_ds = enc_handle_ptr->scs_instance_array[instance_index]->scs->ipp_pass_ctrls.ds;
         input_data.dist_ds = enc_handle_ptr->scs_instance_array[instance_index]->scs->ipp_pass_ctrls.dist_ds;
         input_data.ipp_was_ds = enc_handle_ptr->scs_instance_array[instance_index]->scs->ipp_was_ds;
+#endif
         input_data.final_pass_preset = enc_handle_ptr->scs_instance_array[instance_index]->scs->final_pass_preset;
+#if !OPT_MPASS_VBR4
         input_data.bypass_zz_check = enc_handle_ptr->scs_instance_array[instance_index]->scs->ipp_pass_ctrls.bypass_zz_check;
         input_data.use8blk = enc_handle_ptr->scs_instance_array[instance_index]->scs->ipp_pass_ctrls.use8blk;
         input_data.reduce_me_search = enc_handle_ptr->scs_instance_array[instance_index]->scs->ipp_pass_ctrls.reduce_me_search;
+#endif
         input_data.rate_control_mode = enc_handle_ptr->scs_instance_array[instance_index]->scs->static_config.rate_control_mode;
         MrpCtrls* mrp_ctrl = &(enc_handle_ptr->scs_instance_array[0]->scs->mrp_ctrls);
         input_data.ref_count_used_list0 =
@@ -2597,7 +2604,11 @@ static void update_look_ahead(SequenceControlSet *scs) {
         SVT_WARN("Lookahead distance is not long enough to get best bdrate trade off. Force the look_ahead_distance to be %d\n",
             scs->static_config.look_ahead_distance);
     }
+#if OPT_MPASS_VBR7
+    else if (scs->lad_mg > scs->tpl_lad_mg && (scs->static_config.rate_control_mode == SVT_AV1_RC_MODE_CQP_OR_CRF || scs->static_config.pass == ENC_FIRST_PASS || scs->static_config.pass == ENC_LAST_PASS)) {
+#else
     else if (scs->lad_mg > scs->tpl_lad_mg && (scs->static_config.rate_control_mode == SVT_AV1_RC_MODE_CQP_OR_CRF || scs->static_config.pass == ENC_MIDDLE_PASS || scs->static_config.pass == ENC_LAST_PASS)) {
+#endif
         scs->lad_mg = scs->tpl_lad_mg;
         scs->static_config.look_ahead_distance = (1 + mg_size) * (scs->lad_mg + 1) + scs->scd_delay + eos_delay;
         SVT_WARN("For CRF or 2PASS RC mode, the maximum needed Lookahead distance is %d. Force the look_ahead_distance to be %d\n",
@@ -3399,7 +3410,15 @@ static void derive_vq_params(SequenceControlSet* scs) {
         vq_ctrl->stability_ctrls.depth_refinement = 0;
     }
     // Do not use scene_transition if LD or 1st pass or middle pass
+#if OPT_MPASS_VBR4
+#if OPT_MPASS_VBR7
+    if (scs->static_config.pred_structure != SVT_AV1_PRED_RANDOM_ACCESS || scs->static_config.pass == ENC_FIRST_PASS)
+#else
+    if (scs->static_config.pred_structure != SVT_AV1_PRED_RANDOM_ACCESS || scs->static_config.pass == ENC_MIDDLE_PASS)
+#endif
+#else
     if (scs->static_config.pred_structure != SVT_AV1_PRED_RANDOM_ACCESS || scs->static_config.pass == ENC_FIRST_PASS || scs->static_config.pass == ENC_MIDDLE_PASS)
+#endif
         vq_ctrl->sharpness_ctrls.scene_transition = 0;
 }
 /*
@@ -3408,7 +3427,11 @@ static void derive_vq_params(SequenceControlSet* scs) {
 static void derive_tf_params(SequenceControlSet *scs) {
     const EbInputResolution resolution = scs->input_resolution;
     // Do not perform TF if LD or 1 Layer or 1st pass
+#if OPT_MPASS_VBR4
+    Bool do_tf = scs->static_config.enable_tf && scs->static_config.hierarchical_levels >= 1;
+#else
     Bool do_tf = scs->static_config.enable_tf && scs->static_config.hierarchical_levels >= 1 && scs->static_config.pass != ENC_FIRST_PASS;
+#endif
     const EncMode enc_mode = scs->static_config.enc_mode;
     const uint32_t hierarchical_levels = scs->static_config.hierarchical_levels;
     uint8_t tf_level = 0;
@@ -3747,7 +3770,7 @@ static void set_mrp_ctrl(SequenceControlSet* scs, uint8_t mrp_level) {
         mrp_ctrl->use_best_references         = 0;
     }
 }
-
+#if !OPT_MPASS_VBR4
 void set_ipp_pass_ctrls(
     SequenceControlSet* scs,
     uint8_t ipp_pass_level) {
@@ -3800,7 +3823,29 @@ void set_ipp_pass_ctrls(
     if (scs->static_config.pass == ENC_SINGLE_PASS && scs->static_config.hierarchical_levels <= 2 && scs->static_config.enc_mode >= ENC_M8)
         ipp_pass_ctrls->bypass_blk_step = 1;
 }
+#endif
+#if OPT_MPASS_VBR8
+static void set_first_pass_ctrls(
+    SequenceControlSet* scs,
+    uint8_t first_pass_level) {
 
+    FirstPassControls* first_pass_ctrls = &scs->first_pass_ctrls;
+    switch (first_pass_level) {
+
+    case 0:
+        first_pass_ctrls->ds = 0;
+        break;
+
+    case 1:
+        first_pass_ctrls->ds = 1;
+        break;
+
+    default:
+        assert(0);
+        break;
+    }
+}
+#else
 static void set_mid_pass_ctrls(
     SequenceControlSet* scs,
     uint8_t mid_pass_level) {
@@ -3821,7 +3866,12 @@ static void set_mid_pass_ctrls(
         break;
     }
 }
+#endif
+#if OPT_MPASS_VBR4
+static uint8_t get_tpl_level(int8_t enc_mode, uint8_t pred_structure, uint8_t superres_mode, uint8_t resize_mode,
+#else
 static uint8_t get_tpl_level(int8_t enc_mode, int32_t pass, int32_t lap_rc, uint8_t pred_structure, uint8_t superres_mode, uint8_t resize_mode,
+#endif
     uint8_t aq_mode, SvtAv1RcMode rc_mode) {
 
     uint8_t tpl_level;
@@ -3834,9 +3884,11 @@ static uint8_t get_tpl_level(int8_t enc_mode, int32_t pass, int32_t lap_rc, uint
         SVT_WARN("TPL is disabled in low delay applications.\n");
         tpl_level = 0;
     }
+#if !OPT_MPASS_VBR4
     else if (pass == ENC_FIRST_PASS && lap_rc == 0) {
         tpl_level = 0;
     }
+#endif
     // allow TPL with auto-dual and auto-all
     else if (superres_mode > SUPERRES_NONE && superres_mode != SUPERRES_AUTO && superres_mode != SUPERRES_QTHRESH) {
         SVT_WARN("TPL will be disabled when super resolution is enabled!\n");
@@ -3873,26 +3925,44 @@ void set_multi_pass_params(SequenceControlSet *scs)
 
     // Update passes
     if (scs->static_config.pass != ENC_SINGLE_PASS)
+
+#if OPT_MPASS_VBR6
+        scs->passes = 2;
+#else
+#if 0//OPT_MPASS_VBR3
+        scs->passes = (scs->static_config.rate_control_mode == SVT_AV1_RC_MODE_VBR) ? 2 : 2;
+#else
         scs->passes = (scs->static_config.rate_control_mode == SVT_AV1_RC_MODE_VBR) ? 3 : 2;
+#endif
+#endif
     else
         scs->passes = 1;
-
+#if !OPT_MPASS_VBR6
     if (config->rate_control_mode == SVT_AV1_RC_MODE_CQP_OR_CRF && config->pass == 2)
         scs->static_config.pass = 3; //use last pass for 2nd pass CRF
+#endif
 
     switch (config->pass) {
 
         case ENC_SINGLE_PASS: {
+#if !OPT_MPASS_VBR4
             if (config->enc_mode <= ENC_M9)
                 set_ipp_pass_ctrls(scs, 0);
             else
                 set_ipp_pass_ctrls(scs, 1);
+#endif
+#if OPT_MPASS_VBR8
+            set_first_pass_ctrls(scs, 0);
+#else
             set_mid_pass_ctrls(scs, 0);
+#endif
+#if !OPT_MPASS_VBR4
             scs->ipp_was_ds = 0;
+#endif
             scs->final_pass_preset = config->enc_mode;
             break;
         }
-
+#if !OPT_MPASS_VBR4
         case ENC_FIRST_PASS: {
             if (config->enc_mode <= ENC_M5)
                 set_ipp_pass_ctrls(scs, 0);
@@ -3914,14 +3984,30 @@ void set_multi_pass_params(SequenceControlSet *scs)
             scs->static_config.hierarchical_levels = 0;
             break;
         }
-
+#endif
+#if OPT_MPASS_VBR7
+        case ENC_FIRST_PASS: {
+#else
         case ENC_MIDDLE_PASS: {
+#endif
+#if !OPT_MPASS_VBR4
             set_ipp_pass_ctrls(scs, 0);
+#endif
             if (config->enc_mode <= ENC_M10)
+#if OPT_MPASS_VBR8
+                set_first_pass_ctrls(scs, 0);
+#else
                 set_mid_pass_ctrls(scs, 0);
+#endif
             else
+#if OPT_MPASS_VBR8
+                set_first_pass_ctrls(scs, 1);
+#else
                 set_mid_pass_ctrls(scs, 1);
+#endif
+#if !OPT_MPASS_VBR4
             scs->ipp_was_ds = 0;
+#endif
             scs->final_pass_preset = config->enc_mode;
             if (scs->final_pass_preset <= ENC_M8)
                 scs->static_config.enc_mode = ENC_M11;
@@ -3937,12 +4023,14 @@ void set_multi_pass_params(SequenceControlSet *scs)
         }
 
         case ENC_LAST_PASS: {
+#if !OPT_MPASS_VBR4
             set_ipp_pass_ctrls(scs, 0);
             // Please make sure that ipp_was_ds is ON only when ipp_ctrls->ipp_ds is ON
             if (config->enc_mode <= ENC_M10)
                 scs->ipp_was_ds = 0;
             else
                 scs->ipp_was_ds = config->rate_control_mode == SVT_AV1_RC_MODE_CQP_OR_CRF ? 1 : 0;
+#endif
             scs->final_pass_preset = config->enc_mode;
             scs->static_config.intra_refresh_type = SVT_AV1_KF_REFRESH;
             break;
@@ -3954,7 +4042,15 @@ void set_multi_pass_params(SequenceControlSet *scs)
     }
 
     int do_downsample =
+#if OPT_MPASS_VBR4
+#if OPT_MPASS_VBR8
+        (scs->first_pass_ctrls.ds) && scs->max_input_luma_width >= 128 && scs->max_input_luma_height >= 128
+#else
+        (scs->mid_pass_ctrls.ds) && scs->max_input_luma_width >= 128 && scs->max_input_luma_height >= 128
+#endif
+#else
         (scs->mid_pass_ctrls.ds || scs->ipp_pass_ctrls.ds) && scs->max_input_luma_width >= 128 && scs->max_input_luma_height >= 128
+#endif
         ? 1
         : 0;
 
@@ -3967,8 +4063,11 @@ void set_multi_pass_params(SequenceControlSet *scs)
     if (scs->lap_rc) {
         scs->static_config.intra_refresh_type = SVT_AV1_KF_REFRESH;
     }
-
+#if OPT_MPASS_VBR7
+    if (scs->static_config.pass == ENC_FIRST_PASS && scs->final_pass_preset > ENC_M8)
+#else
     if (scs->static_config.pass == ENC_MIDDLE_PASS && scs->final_pass_preset > ENC_M8)
+#endif
         scs->rc_stat_gen_pass_mode = 1;
     else
         scs->rc_stat_gen_pass_mode = 0;
@@ -4024,7 +4123,11 @@ static void set_param_based_on_input(SequenceControlSet *scs)
     // superres_mode and resize_mode may be updated,
     // so should call get_tpl_level() after validate_scaling_params()
     validate_scaling_params(scs);
+#if OPT_MPASS_VBR4
+    scs->tpl_level = get_tpl_level(scs->static_config.enc_mode, scs->static_config.pred_structure, scs->static_config.superres_mode, scs->static_config.resize_mode, scs->static_config.enable_adaptive_quantization, scs->static_config.rate_control_mode);
+#else
     scs->tpl_level = get_tpl_level(scs->static_config.enc_mode, scs->static_config.pass, scs->lap_rc, scs->static_config.pred_structure, scs->static_config.superres_mode, scs->static_config.resize_mode, scs->static_config.enable_adaptive_quantization, scs->static_config.rate_control_mode);
+#endif
     uint16_t subsampling_x = scs->subsampling_x;
     uint16_t subsampling_y = scs->subsampling_y;
     // Update picture width, and picture height
@@ -4075,8 +4178,17 @@ static void set_param_based_on_input(SequenceControlSet *scs)
                 "This mode retains a significant amount of memory, much more than other modes!\n");
         }
     }
+#if OPT_MPASS_VBR1
+    // Set initial qp for vbr and middle pass
+#if OPT_MPASS_VBR7
+    if ((scs->static_config.rate_control_mode == SVT_AV1_RC_MODE_VBR) || (scs->static_config.pass == ENC_FIRST_PASS)) {
+#else
+    if ((scs->static_config.rate_control_mode == SVT_AV1_RC_MODE_VBR) || (scs->static_config.pass == ENC_MIDDLE_PASS)) {
+#endif
+#else
     // Set initial qp for single pass vbr
     if (scs->static_config.rate_control_mode == SVT_AV1_RC_MODE_VBR) {
+#endif
         if (scs->static_config.qp != DEFAULT_QP) {
             SVT_WARN("The input q value is ignored in vbr mode %d\n", scs->static_config.qp);
         }
@@ -4096,7 +4208,9 @@ static void set_param_based_on_input(SequenceControlSet *scs)
         else
             scs->static_config.qp = 30;
     }
-
+#if 1//OPT_MPASS_VBR3
+        SVT_WARN("The new q value is %d\n", scs->static_config.qp);
+#endif
     scs->initial_qp = scs->static_config.qp;
     svt_aom_derive_input_resolution(
         &scs->input_resolution,
@@ -4129,7 +4243,11 @@ static void set_param_based_on_input(SequenceControlSet *scs)
     scs->scd_delay = MAX(scd_delay_islice, scd_delay_base);
     // Update the scd_delay based on SCD, 1first pass
     // Delay needed for SCD , 1first pass of (2pass and 1pass VBR)
+#if OPT_MPASS_VBR4
+    if (scs->static_config.scene_change_detection || scs->vq_ctrls.sharpness_ctrls.scene_transition || scs->lap_rc)
+#else
     if (scs->static_config.scene_change_detection || scs->vq_ctrls.sharpness_ctrls.scene_transition || scs->static_config.pass == ENC_FIRST_PASS || scs->lap_rc)
+#endif
         scs->scd_delay = MAX(scs->scd_delay, 2);
 
     // no future minigop is used for lowdelay prediction structure
@@ -4165,7 +4283,9 @@ static void set_param_based_on_input(SequenceControlSet *scs)
     // In two pass encoding, the first pass uses sb size=64. Also when tpl is used
     // in 240P resolution, sb size is set to 64
     if (scs->static_config.pred_structure == SVT_AV1_PRED_LOW_DELAY_B ||
+#if !OPT_MPASS_VBR4
         scs->static_config.pass == ENC_FIRST_PASS ||
+#endif
         (scs->tpl_level && scs->input_resolution == INPUT_SIZE_240p_RANGE))
         scs->super_block_size = 64;
     else
@@ -4180,7 +4300,11 @@ static void set_param_based_on_input(SequenceControlSet *scs)
         else
             scs->super_block_size = 64;
     // When switch frame is on, all renditions must have same super block size. See spec 5.5.1, 5.9.15.
+#if OPT_MPASS_VBR4
+    if (scs->static_config.sframe_dist != 0)
+#else
     if (scs->static_config.pass != ENC_FIRST_PASS && scs->static_config.sframe_dist != 0)
+#endif
         scs->super_block_size = 64;
     // Set config info related to SB size
     if (scs->super_block_size == 128) {
@@ -4352,8 +4476,10 @@ static void set_param_based_on_input(SequenceControlSet *scs)
         scs->over_boundary_block_mode = 1;
     else
         scs->over_boundary_block_mode = scs->over_bndry_blk;
+#if !OPT_MPASS_VBR4
     if (scs->static_config.pass == ENC_FIRST_PASS)
         scs->over_boundary_block_mode = 0;
+#endif
     svt_aom_set_mfmv_config(scs);
 
     uint8_t list0_only_base_lvl = 0;
@@ -4577,12 +4703,14 @@ static void copy_api_from_app(
 
     // MD Parameters
     scs->enable_hbd_mode_decision = ((EbSvtAv1EncConfiguration*)config_struct)->encoder_bit_depth > 8 ? DEFAULT : 0;
-
+#if !OPT_MPASS_VBR4
     if (scs->static_config.pass == ENC_FIRST_PASS) {
         scs->static_config.tile_rows = 0;
         scs->static_config.tile_columns = 0;
     }
-    else {
+    else
+#endif
+    {
         if (((EbSvtAv1EncConfiguration*)config_struct)->tile_rows == DEFAULT && ((EbSvtAv1EncConfiguration*)config_struct)->tile_columns == DEFAULT) {
 
             scs->static_config.tile_rows = 0;
@@ -4700,10 +4828,12 @@ static void copy_api_from_app(
     // Thresholds
     scs->static_config.high_dynamic_range_input = ((EbSvtAv1EncConfiguration*)config_struct)->high_dynamic_range_input;
     scs->static_config.screen_content_mode = ((EbSvtAv1EncConfiguration*)config_struct)->screen_content_mode;
+#if !OPT_MPASS_VBR4
     // SC detection is OFF for first pass in M8
     uint8_t disable_sc_detection = (scs->static_config.pass == ENC_FIRST_PASS) ? 1 : 0;
     if (disable_sc_detection)
         scs->static_config.screen_content_mode = 0;
+#endif
 
     // Annex A parameters
     scs->static_config.profile = ((EbSvtAv1EncConfiguration*)config_struct)->profile;
@@ -5164,9 +5294,11 @@ static EbErrorType copy_frame_buffer(
             src += source_luma_stride;
             dst += luma_stride;
         }
-
+#if !OPT_MPASS_VBR8
 #define ENCODE_FIRST_PASS 1
-        if (pass != ENCODE_FIRST_PASS) {
+        if (pass != ENCODE_FIRST_PASS)
+#endif
+        {
             src = input_ptr->cb;
             dst = input_pic->buffer_cb + chroma_buffer_offset;
             for (unsigned i = 0; i < source_chroma_height; i++) {
@@ -5374,7 +5506,19 @@ static void copy_input_buffer(SequenceControlSet* scs, EbBufferHeaderType* dst,
     dst->size         = src->size;
     dst->qp           = src->qp;
     dst->pic_type     = src->pic_type;
-
+#if OPT_MPASS_VBR4
+#if OPT_MPASS_VBR8
+    if (scs->first_pass_ctrls.ds) {
+#else
+    if (scs->mid_pass_ctrls.ds) {
+#endif
+        // Copy the picture buffer
+        if (src->p_buffer != NULL)
+            downsample_copy_frame_buffer(
+                scs, dst->p_buffer, dst_y8b->p_buffer, src->p_buffer, pass);
+    }
+    else if (pass != ENCODE_FIRST_PASS) {
+#else
     int copy_frame = 1;
     if (scs->ipp_pass_ctrls.skip_frame_first_pass == 1)
         copy_frame = (((src->pts % 8) == 0) || ((src->pts % 8) == 6) || ((src->pts % 8) == 7));
@@ -5387,6 +5531,7 @@ static void copy_input_buffer(SequenceControlSet* scs, EbBufferHeaderType* dst,
             downsample_copy_frame_buffer(
                 scs, dst->p_buffer, dst_y8b->p_buffer, src->p_buffer, pass);
     } else if (pass != ENCODE_FIRST_PASS || copy_frame) {
+#endif
         // Bypass copy for the unecessary picture in IPPP pass
         // Copy the picture buffer
         if (src->p_buffer != NULL) {
@@ -5571,7 +5716,11 @@ EB_API EbErrorType svt_av1_enc_send_picture(
             lib_reg_hdr,
             lib_y8b_hdr,
             app_hdr,
+#if OPT_MPASS_VBR4
+            0);
+#else
             enc_handle_ptr->scs_instance_array[0]->scs->static_config.pass == ENC_FIRST_PASS);
+#endif
     }
 
     //Take a new App-RessCoord command
