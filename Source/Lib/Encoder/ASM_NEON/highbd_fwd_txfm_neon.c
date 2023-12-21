@@ -1,4 +1,5 @@
 /*
+ * Copyright (c) 2019, Intel Corporation
  * Copyright (c) 2023, Alliance for Open Media. All rights reserved
  *
  * This source code is subject to the terms of the BSD 2 Clause License and
@@ -15,6 +16,7 @@
 #include "EbInvTransforms.h"
 #include "EbTransforms.h"
 #include "transpose_neon.h"
+#include "EbDefinitions.h"
 
 void svt_aom_transform_config(TxType tx_type, TxSize tx_size, Txfm2dFlipCfg *cfg);
 
@@ -134,7 +136,6 @@ static void fdct4x4_neon(int32x4_t *in, int32x4_t *out, int bit, const int num_c
     int32x4_t       u0, u1, u2, u3;
     int32x4_t       v0, v2;
     const int32x4_t v_bit = vdupq_n_s32(-bit);
-    ;
 
     int endidx = 3 * num_col;
     s0         = vaddq_s32(in[0], in[endidx]);
@@ -3809,4 +3810,745 @@ void svt_av1_fwd_txfm2d_64x64_neon(int16_t *input, int32_t *output, uint32_t str
     }
     default: assert(0);
     }
+}
+
+#define REVERSE_FLIP_LR_8_NEON(temp, x, y) \
+    do {                                   \
+        int16x4_t t = temp[x];             \
+        temp[x]     = vrev64_s16(temp[y]); \
+        temp[y]     = vrev64_s16(t);       \
+    } while (0)
+
+static INLINE void load_buffer_4x8_in_8x8(const int16_t *input, int32x4_t *in, int32_t stride, int32_t flipud,
+                                          int32_t fliplr, int32_t shift, int32_t step) {
+    int16x4_t temp[8];
+
+    if (!flipud) {
+        temp[0] = vld1_s16(input + 0 * stride);
+        temp[1] = vld1_s16(input + 0 * stride + 4);
+        temp[2] = vld1_s16(input + 1 * stride);
+        temp[3] = vld1_s16(input + 1 * stride + 4);
+        temp[4] = vld1_s16(input + 2 * stride);
+        temp[5] = vld1_s16(input + 2 * stride + 4);
+        temp[6] = vld1_s16(input + 3 * stride);
+        temp[7] = vld1_s16(input + 3 * stride + 4);
+
+    } else {
+        temp[0] = vld1_s16(input + 7 * stride);
+        temp[1] = vld1_s16(input + 7 * stride + 4);
+        temp[2] = vld1_s16(input + 6 * stride);
+        temp[3] = vld1_s16(input + 6 * stride + 4);
+        temp[4] = vld1_s16(input + 5 * stride);
+        temp[5] = vld1_s16(input + 5 * stride + 4);
+        temp[6] = vld1_s16(input + 4 * stride);
+        temp[7] = vld1_s16(input + 4 * stride + 4);
+    }
+
+    if (fliplr) {
+        REVERSE_FLIP_LR_8_NEON(temp, 0, 1);
+        REVERSE_FLIP_LR_8_NEON(temp, 2, 3);
+        REVERSE_FLIP_LR_8_NEON(temp, 4, 5);
+        REVERSE_FLIP_LR_8_NEON(temp, 6, 7);
+    }
+
+    int32x4_t vshift = vdupq_n_s32(shift);
+
+    in[0 * step]     = vshlq_s32(vmovl_s16(temp[0]), vshift);
+    in[0 * step + 1] = vshlq_s32(vmovl_s16(temp[1]), vshift);
+    in[2 * step]     = vshlq_s32(vmovl_s16(temp[2]), vshift);
+    in[2 * step + 1] = vshlq_s32(vmovl_s16(temp[3]), vshift);
+    in[4 * step]     = vshlq_s32(vmovl_s16(temp[4]), vshift);
+    in[4 * step + 1] = vshlq_s32(vmovl_s16(temp[5]), vshift);
+    in[6 * step]     = vshlq_s32(vmovl_s16(temp[6]), vshift);
+    in[6 * step + 1] = vshlq_s32(vmovl_s16(temp[7]), vshift);
+}
+
+static AOM_FORCE_INLINE void load_buffer_4x16_in_16x16(const int16_t *input, int32x4_t *out, int32_t stride,
+                                                       int32_t flipud, int32_t fliplr, int32_t shift) {
+    // Load 2 4x8 blocks
+    if (flipud) {
+        const int16_t *top_l = input + 8 * stride;
+        const int16_t *top_r = input + 8 * stride + 8;
+
+        if (fliplr) {
+            load_buffer_4x8_in_8x8(top_r, &out[0], stride, flipud, fliplr, shift, 2); // load first 4 columns
+            load_buffer_4x8_in_8x8(top_l, &out[2], stride, flipud, fliplr, shift, 2); // load second 4 columns
+        } else {
+            load_buffer_4x8_in_8x8(top_l, &out[0], stride, flipud, fliplr, shift, 2); // load first 4 columns
+            load_buffer_4x8_in_8x8(top_r, &out[2], stride, flipud, fliplr, shift, 2); // load second 4 columns
+        }
+    } else {
+        const int16_t *top_l = input;
+        const int16_t *top_r = input + 8;
+
+        if (fliplr) {
+            load_buffer_4x8_in_8x8(top_r, &out[0], stride, flipud, fliplr, shift, 2); // load first 4 columns
+            load_buffer_4x8_in_8x8(top_l, &out[2], stride, flipud, fliplr, shift, 2); // load second 4 columns
+        } else {
+            load_buffer_4x8_in_8x8(top_l, &out[0], stride, flipud, fliplr, shift, 2); // load first 4 columns
+            load_buffer_4x8_in_8x8(top_r, &out[2], stride, flipud, fliplr, shift, 2); // load second 4 columns
+        }
+    }
+}
+
+static void fidtx16x16_N4_neon(const int32x4_t *restrict in, int32x4_t *restrict out, int8_t bit, int32_t col_num,
+                               int32_t step) {
+    (void)bit;
+    const int32_t bits = 12; // new_sqrt2_bits = 12
+    const int32_t sqrt = 2 * 5793; // 2 * new_sqrt2
+
+    const int32x4_t newsqrt   = vdupq_n_s32(sqrt);
+    const int32x4_t rounding  = vdupq_n_s32(1 << (bits - 1));
+    int32_t         num_iters = 16 * col_num;
+    int32x4_t       temp0, temp1;
+    int32x4_t       vbits = vdupq_n_s32(-bits); // sign because we use vshlq_s32 to shift right
+
+    for (int32_t i = 0; i < num_iters / 4; i += step) {
+        temp0          = vmulq_s32(in[2 * i], newsqrt);
+        temp1          = vmulq_s32(in[2 * i + 1], newsqrt);
+        temp0          = vaddq_s32(temp0, rounding);
+        temp1          = vaddq_s32(temp1, rounding);
+        out[2 * i]     = vshlq_s32(temp0, vbits);
+        out[2 * i + 1] = vshlq_s32(temp1, vbits);
+    }
+}
+
+static INLINE void write_buffer_16x16_N4(const int32x4_t *res, int32_t *output) {
+    int32_t fact = -1, index = 0;
+
+    const int32x4_t zero = vdupq_n_s32(0);
+
+    for (int32_t i = 0; i < 2; i++) {
+        vst1q_s32((output + (++fact) * 16), res[2 * (index)]);
+        vst1q_s32((output + fact * 16 + 4), zero);
+        vst1q_s32((output + fact * 16 + 8), zero);
+        vst1q_s32((output + fact * 16 + 12), zero);
+
+        index += 2;
+
+        vst1q_s32((output + (++fact) * 16), res[2 * (index)]);
+        vst1q_s32((output + fact * 16 + 4), zero);
+        vst1q_s32((output + fact * 16 + 8), zero);
+        vst1q_s32((output + fact * 16 + 12), zero);
+
+        index += 2;
+    }
+
+    EB_MEMSET((output + (++fact) * 16), 0, 768);
+}
+
+static void fdct16x16_N4_neon(const int32x4_t *restrict in, int32x4_t *restrict out, int8_t bit, const int32_t col_num,
+                              int32_t size) {
+    const int32_t  *cospi    = cospi_arr(bit);
+    const int32x4_t cospi32  = vdupq_n_s32(cospi[32]);
+    const int32x4_t cospim32 = vdupq_n_s32(-cospi[32]);
+    const int32x4_t cospi48  = vdupq_n_s32(cospi[48]);
+    const int32x4_t cospim48 = vdupq_n_s32(-cospi[48]);
+    const int32x4_t cospim16 = vdupq_n_s32(-cospi[16]);
+    const int32x4_t cospi56  = vdupq_n_s32(cospi[56]);
+    const int32x4_t cospi8   = vdupq_n_s32(cospi[8]);
+    const int32x4_t cospi60  = vdupq_n_s32(cospi[60]);
+    const int32x4_t cospi4   = vdupq_n_s32(cospi[4]);
+    const int32x4_t cospi12  = vdupq_n_s32(cospi[12]);
+    const int32x4_t cospi52  = vdupq_n_s32(cospi[52]);
+    const int32x4_t rnding   = vdupq_n_s32(1 << (bit - 1));
+    const int32x4_t vbit     = vdupq_n_s32(-bit); // sign because we use vshlq_s32 to shift right
+
+    int32x4_t u[16], v[16], x;
+    int32_t   col;
+
+    for (col = 0; col < size; ++col) {
+        // stage 0
+        // stage 1
+
+        u[0]  = vaddq_s32(in[0 * col_num + col], in[15 * col_num + col]);
+        u[15] = vsubq_s32(in[0 * col_num + col], in[15 * col_num + col]);
+        u[1]  = vaddq_s32(in[1 * col_num + col], in[14 * col_num + col]);
+        u[14] = vsubq_s32(in[1 * col_num + col], in[14 * col_num + col]);
+        u[2]  = vaddq_s32(in[2 * col_num + col], in[13 * col_num + col]);
+        u[13] = vsubq_s32(in[2 * col_num + col], in[13 * col_num + col]);
+        u[3]  = vaddq_s32(in[3 * col_num + col], in[12 * col_num + col]);
+        u[12] = vsubq_s32(in[3 * col_num + col], in[12 * col_num + col]);
+        u[4]  = vaddq_s32(in[4 * col_num + col], in[11 * col_num + col]);
+        u[11] = vsubq_s32(in[4 * col_num + col], in[11 * col_num + col]);
+        u[5]  = vaddq_s32(in[5 * col_num + col], in[10 * col_num + col]);
+        u[10] = vsubq_s32(in[5 * col_num + col], in[10 * col_num + col]);
+        u[6]  = vaddq_s32(in[6 * col_num + col], in[9 * col_num + col]);
+        u[9]  = vsubq_s32(in[6 * col_num + col], in[9 * col_num + col]);
+        u[7]  = vaddq_s32(in[7 * col_num + col], in[8 * col_num + col]);
+        u[8]  = vsubq_s32(in[7 * col_num + col], in[8 * col_num + col]);
+
+        // stage 2
+
+        v[0] = vaddq_s32(u[0], u[7]);
+        v[7] = vsubq_s32(u[0], u[7]);
+        v[1] = vaddq_s32(u[1], u[6]);
+        v[6] = vsubq_s32(u[1], u[6]);
+        v[2] = vaddq_s32(u[2], u[5]);
+        v[5] = vsubq_s32(u[2], u[5]);
+        v[3] = vaddq_s32(u[3], u[4]);
+        v[4] = vsubq_s32(u[3], u[4]);
+        v[8] = u[8];
+        v[9] = u[9];
+
+        v[10] = vmulq_s32(u[10], cospim32);
+        x     = vmulq_s32(u[13], cospi32);
+        v[10] = vaddq_s32(v[10], x);
+        v[10] = vaddq_s32(v[10], rnding);
+        v[10] = vshlq_s32(v[10], vbit);
+
+        v[13] = vmulq_s32(u[10], cospi32);
+        x     = vmulq_s32(u[13], cospim32);
+        v[13] = vsubq_s32(v[13], x);
+        v[13] = vaddq_s32(v[13], rnding);
+        v[13] = vshlq_s32(v[13], vbit);
+
+        v[11] = vmulq_s32(u[11], cospim32);
+        x     = vmulq_s32(u[12], cospi32);
+        v[11] = vaddq_s32(v[11], x);
+        v[11] = vaddq_s32(v[11], rnding);
+        v[11] = vshlq_s32(v[11], vbit);
+
+        v[12] = vmulq_s32(u[11], cospi32);
+        x     = vmulq_s32(u[12], cospim32);
+        v[12] = vsubq_s32(v[12], x);
+        v[12] = vaddq_s32(v[12], rnding);
+        v[12] = vshlq_s32(v[12], vbit);
+        v[14] = u[14];
+        v[15] = u[15];
+
+        // stage 3
+
+        u[0] = vaddq_s32(v[0], v[3]);
+        u[1] = vaddq_s32(v[1], v[2]);
+        u[4] = v[4];
+
+        u[5] = vmulq_s32(v[5], cospim32);
+        x    = vmulq_s32(v[6], cospi32);
+        u[5] = vaddq_s32(u[5], x);
+        u[5] = vaddq_s32(u[5], rnding);
+        u[5] = vshlq_s32(u[5], vbit);
+
+        u[6] = vmulq_s32(v[5], cospi32);
+        x    = vmulq_s32(v[6], cospim32);
+        u[6] = vsubq_s32(u[6], x);
+        u[6] = vaddq_s32(u[6], rnding);
+        u[6] = vshlq_s32(u[6], vbit);
+
+        u[7]  = v[7];
+        u[8]  = vaddq_s32(v[8], v[11]);
+        u[11] = vsubq_s32(v[8], v[11]);
+        u[9]  = vaddq_s32(v[9], v[10]);
+        u[10] = vsubq_s32(v[9], v[10]);
+        u[12] = vsubq_s32(v[15], v[12]);
+        u[15] = vaddq_s32(v[15], v[12]);
+        u[13] = vsubq_s32(v[14], v[13]);
+        u[14] = vaddq_s32(v[14], v[13]);
+
+        // stage 4
+
+        u[0] = vmulq_s32(u[0], cospi32);
+        u[1] = vmulq_s32(u[1], cospi32);
+        v[0] = vaddq_s32(u[0], u[1]);
+        v[0] = vaddq_s32(v[0], rnding);
+        v[0] = vshlq_s32(v[0], vbit);
+
+        v[4] = vaddq_s32(u[4], u[5]);
+        v[7] = vaddq_s32(u[7], u[6]);
+        v[8] = u[8];
+
+        v[9] = vmulq_s32(u[9], cospim16);
+        x    = vmulq_s32(u[14], cospi48);
+        v[9] = vaddq_s32(v[9], x);
+        v[9] = vaddq_s32(v[9], rnding);
+        v[9] = vshlq_s32(v[9], vbit);
+
+        v[14] = vmulq_s32(u[9], cospi48);
+        x     = vmulq_s32(u[14], cospim16);
+        v[14] = vsubq_s32(v[14], x);
+        v[14] = vaddq_s32(v[14], rnding);
+        v[14] = vshlq_s32(v[14], vbit);
+
+        v[10] = vmulq_s32(u[10], cospim48);
+        x     = vmulq_s32(u[13], cospim16);
+        v[10] = vaddq_s32(v[10], x);
+        v[10] = vaddq_s32(v[10], rnding);
+        v[10] = vshlq_s32(v[10], vbit);
+
+        v[13] = vmulq_s32(u[10], cospim16);
+        x     = vmulq_s32(u[13], cospim48);
+        v[13] = vsubq_s32(v[13], x);
+        v[13] = vaddq_s32(v[13], rnding);
+        v[13] = vshlq_s32(v[13], vbit);
+
+        v[11] = u[11];
+        v[12] = u[12];
+        v[15] = u[15];
+
+        // stage 5
+
+        u[0] = v[0];
+
+        u[4] = vmulq_s32(v[4], cospi56);
+        x    = vmulq_s32(v[7], cospi8);
+        u[4] = vaddq_s32(u[4], x);
+        u[4] = vaddq_s32(u[4], rnding);
+        u[4] = vshlq_s32(u[4], vbit);
+
+        u[8]  = vaddq_s32(v[8], v[9]);
+        u[11] = vaddq_s32(v[11], v[10]);
+        u[12] = vaddq_s32(v[12], v[13]);
+        u[15] = vaddq_s32(v[15], v[14]);
+
+        // stage 6
+
+        v[0] = u[0];
+        v[4] = u[4];
+
+        v[8] = vmulq_s32(u[8], cospi60);
+        x    = vmulq_s32(u[15], cospi4);
+        v[8] = vaddq_s32(v[8], x);
+        v[8] = vaddq_s32(v[8], rnding);
+        v[8] = vshlq_s32(v[8], vbit);
+
+        v[12] = vmulq_s32(u[11], cospi52);
+        x     = vmulq_s32(u[12], cospi12);
+        v[12] = vsubq_s32(x, v[12]);
+        v[12] = vaddq_s32(v[12], rnding);
+        v[12] = vshlq_s32(v[12], vbit);
+
+        out[0 * col_num + col] = v[0];
+        out[1 * col_num + col] = v[8];
+        out[2 * col_num + col] = v[4];
+        out[3 * col_num + col] = v[12];
+    }
+}
+
+static INLINE int32x4_t half_btf_small(const int32x4_t *w0, const int32x4_t *n0, const int32x4_t *w1,
+                                       const int32x4_t *n1, const int32x4_t *rounding, int32_t bit) {
+    const int32x4_t vbit = vdupq_n_s32(-bit); // sign because we use vshlq_s32 to shift right
+    int32x4_t       x, y;
+    x = vmulq_s32(*w0, *n0);
+    y = vmulq_s32(*w1, *n1);
+    x = vaddq_s32(x, y);
+    x = vaddq_s32(x, *rounding);
+    x = vshlq_s32(x, vbit);
+
+    return x;
+}
+
+static void fadst16x16_N4_neon(const int32x4_t *restrict in, int32x4_t *restrict out, int8_t bit, const int32_t col_num,
+                               int32_t size) {
+    const int32_t  *cospi    = cospi_arr(bit);
+    const int32x4_t cospi32  = vdupq_n_s32(cospi[32]);
+    const int32x4_t cospi48  = vdupq_n_s32(cospi[48]);
+    const int32x4_t cospi16  = vdupq_n_s32(cospi[16]);
+    const int32x4_t cospim16 = vdupq_n_s32(-cospi[16]);
+    const int32x4_t cospim48 = vdupq_n_s32(-cospi[48]);
+    const int32x4_t cospi8   = vdupq_n_s32(cospi[8]);
+    const int32x4_t cospi56  = vdupq_n_s32(cospi[56]);
+    const int32x4_t cospim56 = vdupq_n_s32(-cospi[56]);
+    const int32x4_t cospim8  = vdupq_n_s32(-cospi[8]);
+    const int32x4_t cospi24  = vdupq_n_s32(cospi[24]);
+    const int32x4_t cospim24 = vdupq_n_s32(-cospi[24]);
+    const int32x4_t cospim40 = vdupq_n_s32(-cospi[40]);
+    const int32x4_t cospi40  = vdupq_n_s32(cospi[40]);
+    const int32x4_t cospi62  = vdupq_n_s32(cospi[62]);
+    const int32x4_t cospim2  = vdupq_n_s32(-cospi[2]);
+    const int32x4_t cospi54  = vdupq_n_s32(cospi[54]);
+    const int32x4_t cospim10 = vdupq_n_s32(-cospi[10]);
+    const int32x4_t cospi50  = vdupq_n_s32(cospi[50]);
+    const int32x4_t cospi14  = vdupq_n_s32(cospi[14]);
+    const int32x4_t cospi58  = vdupq_n_s32(cospi[58]);
+    const int32x4_t cospi6   = vdupq_n_s32(cospi[6]);
+    const int32x4_t rnding   = vdupq_n_s32(1 << (bit - 1));
+    const int32x4_t vbit     = vdupq_n_s32(-bit); // sign because we use vshlq_s32 to shift right
+
+    int32x4_t u[16], v[16], x, y;
+    int32_t   col;
+
+    for (col = 0; col < size; ++col) {
+        // stage 0
+        // stage 1
+
+        u[0]  = in[0 * col_num + col];
+        u[1]  = vnegq_s32(in[15 * col_num + col]);
+        u[2]  = vnegq_s32(in[7 * col_num + col]);
+        u[3]  = in[8 * col_num + col];
+        u[4]  = vnegq_s32(in[3 * col_num + col]);
+        u[5]  = in[12 * col_num + col];
+        u[6]  = in[4 * col_num + col];
+        u[7]  = vnegq_s32(in[11 * col_num + col]);
+        u[8]  = vnegq_s32(in[1 * col_num + col]);
+        u[9]  = in[14 * col_num + col];
+        u[10] = in[6 * col_num + col];
+        u[11] = vnegq_s32(in[9 * col_num + col]);
+        u[12] = in[2 * col_num + col];
+        u[13] = vnegq_s32(in[13 * col_num + col]);
+        u[14] = vnegq_s32(in[5 * col_num + col]);
+        u[15] = in[10 * col_num + col];
+
+        // stage 2
+
+        v[0] = u[0];
+        v[1] = u[1];
+
+        x    = vmulq_s32(u[2], cospi32);
+        y    = vmulq_s32(u[3], cospi32);
+        v[2] = vaddq_s32(x, y);
+        v[2] = vaddq_s32(v[2], rnding);
+        v[2] = vshlq_s32(v[2], vbit);
+
+        v[3] = vsubq_s32(x, y);
+        v[3] = vaddq_s32(v[3], rnding);
+        v[3] = vshlq_s32(v[3], vbit);
+
+        v[4] = u[4];
+        v[5] = u[5];
+
+        x    = vmulq_s32(u[6], cospi32);
+        y    = vmulq_s32(u[7], cospi32);
+        v[6] = vaddq_s32(x, y);
+        v[6] = vaddq_s32(v[6], rnding);
+        v[6] = vshlq_s32(v[6], vbit);
+
+        v[7] = vsubq_s32(x, y);
+        v[7] = vaddq_s32(v[7], rnding);
+        v[7] = vshlq_s32(v[7], vbit);
+
+        v[8] = u[8];
+        v[9] = u[9];
+
+        x     = vmulq_s32(u[10], cospi32);
+        y     = vmulq_s32(u[11], cospi32);
+        v[10] = vaddq_s32(x, y);
+        v[10] = vaddq_s32(v[10], rnding);
+        v[10] = vshlq_s32(v[10], vbit);
+
+        v[11] = vsubq_s32(x, y);
+        v[11] = vaddq_s32(v[11], rnding);
+        v[11] = vshlq_s32(v[11], vbit);
+
+        v[12] = u[12];
+        v[13] = u[13];
+
+        x     = vmulq_s32(u[14], cospi32);
+        y     = vmulq_s32(u[15], cospi32);
+        v[14] = vaddq_s32(x, y);
+        v[14] = vaddq_s32(v[14], rnding);
+        v[14] = vshlq_s32(v[14], vbit);
+
+        v[15] = vsubq_s32(x, y);
+        v[15] = vaddq_s32(v[15], rnding);
+        v[15] = vshlq_s32(v[15], vbit);
+
+        // stage 3
+
+        u[0]  = vaddq_s32(v[0], v[2]);
+        u[1]  = vaddq_s32(v[1], v[3]);
+        u[2]  = vsubq_s32(v[0], v[2]);
+        u[3]  = vsubq_s32(v[1], v[3]);
+        u[4]  = vaddq_s32(v[4], v[6]);
+        u[5]  = vaddq_s32(v[5], v[7]);
+        u[6]  = vsubq_s32(v[4], v[6]);
+        u[7]  = vsubq_s32(v[5], v[7]);
+        u[8]  = vaddq_s32(v[8], v[10]);
+        u[9]  = vaddq_s32(v[9], v[11]);
+        u[10] = vsubq_s32(v[8], v[10]);
+        u[11] = vsubq_s32(v[9], v[11]);
+        u[12] = vaddq_s32(v[12], v[14]);
+        u[13] = vaddq_s32(v[13], v[15]);
+        u[14] = vsubq_s32(v[12], v[14]);
+        u[15] = vsubq_s32(v[13], v[15]);
+
+        // stage 4
+
+        v[0]  = u[0];
+        v[1]  = u[1];
+        v[2]  = u[2];
+        v[3]  = u[3];
+        v[4]  = half_btf_small(&cospi16, &u[4], &cospi48, &u[5], &rnding, bit);
+        v[5]  = half_btf_small(&cospi48, &u[4], &cospim16, &u[5], &rnding, bit);
+        v[6]  = half_btf_small(&cospim48, &u[6], &cospi16, &u[7], &rnding, bit);
+        v[7]  = half_btf_small(&cospi16, &u[6], &cospi48, &u[7], &rnding, bit);
+        v[8]  = u[8];
+        v[9]  = u[9];
+        v[10] = u[10];
+        v[11] = u[11];
+        v[12] = half_btf_small(&cospi16, &u[12], &cospi48, &u[13], &rnding, bit);
+        v[13] = half_btf_small(&cospi48, &u[12], &cospim16, &u[13], &rnding, bit);
+        v[14] = half_btf_small(&cospim48, &u[14], &cospi16, &u[15], &rnding, bit);
+        v[15] = half_btf_small(&cospi16, &u[14], &cospi48, &u[15], &rnding, bit);
+
+        // stage 5
+
+        u[0]  = vaddq_s32(v[0], v[4]);
+        u[1]  = vaddq_s32(v[1], v[5]);
+        u[2]  = vaddq_s32(v[2], v[6]);
+        u[3]  = vaddq_s32(v[3], v[7]);
+        u[4]  = vsubq_s32(v[0], v[4]);
+        u[5]  = vsubq_s32(v[1], v[5]);
+        u[6]  = vsubq_s32(v[2], v[6]);
+        u[7]  = vsubq_s32(v[3], v[7]);
+        u[8]  = vaddq_s32(v[8], v[12]);
+        u[9]  = vaddq_s32(v[9], v[13]);
+        u[10] = vaddq_s32(v[10], v[14]);
+        u[11] = vaddq_s32(v[11], v[15]);
+        u[12] = vsubq_s32(v[8], v[12]);
+        u[13] = vsubq_s32(v[9], v[13]);
+        u[14] = vsubq_s32(v[10], v[14]);
+        u[15] = vsubq_s32(v[11], v[15]);
+
+        // stage 6
+
+        v[0]  = u[0];
+        v[1]  = u[1];
+        v[2]  = u[2];
+        v[3]  = u[3];
+        v[4]  = u[4];
+        v[5]  = u[5];
+        v[6]  = u[6];
+        v[7]  = u[7];
+        v[8]  = half_btf_small(&cospi8, &u[8], &cospi56, &u[9], &rnding, bit);
+        v[9]  = half_btf_small(&cospi56, &u[8], &cospim8, &u[9], &rnding, bit);
+        v[10] = half_btf_small(&cospi40, &u[10], &cospi24, &u[11], &rnding, bit);
+        v[11] = half_btf_small(&cospi24, &u[10], &cospim40, &u[11], &rnding, bit);
+        v[12] = half_btf_small(&cospim56, &u[12], &cospi8, &u[13], &rnding, bit);
+        v[13] = half_btf_small(&cospi8, &u[12], &cospi56, &u[13], &rnding, bit);
+        v[14] = half_btf_small(&cospim24, &u[14], &cospi40, &u[15], &rnding, bit);
+        v[15] = half_btf_small(&cospi40, &u[14], &cospi24, &u[15], &rnding, bit);
+
+        // stage 7
+
+        u[0]  = vaddq_s32(v[0], v[8]);
+        u[1]  = vaddq_s32(v[1], v[9]);
+        u[2]  = vaddq_s32(v[2], v[10]);
+        u[3]  = vaddq_s32(v[3], v[11]);
+        u[12] = vsubq_s32(v[4], v[12]);
+        u[13] = vsubq_s32(v[5], v[13]);
+        u[14] = vsubq_s32(v[6], v[14]);
+        u[15] = vsubq_s32(v[7], v[15]);
+
+        // stage 8
+        v[1]  = half_btf_small(&cospi62, &u[0], &cospim2, &u[1], &rnding, bit);
+        v[3]  = half_btf_small(&cospi54, &u[2], &cospim10, &u[3], &rnding, bit);
+        v[12] = half_btf_small(&cospi50, &u[12], &cospi14, &u[13], &rnding, bit);
+        v[14] = half_btf_small(&cospi58, &u[14], &cospi6, &u[15], &rnding, bit);
+
+        // stage 9
+        out[0 * col_num + col] = v[1];
+        out[1 * col_num + col] = v[14];
+        out[2 * col_num + col] = v[3];
+        out[3 * col_num + col] = v[12];
+    }
+}
+
+static INLINE void transpose_4x4_in_16x16_neon(const int32x4_t *restrict in, int32x4_t *restrict out) {
+    int32x4_t u0, u1, u2, u3;
+
+    u0 = vzip1q_s32(in[0], in[4]);
+    u1 = vzip2q_s32(in[0], in[4]);
+    u2 = vzip1q_s32(in[8], in[12]);
+    u3 = vzip2q_s32(in[8], in[12]);
+
+    out[0]  = vreinterpretq_s32_s64(vzip1q_s64(vreinterpretq_s64_s32(u0), vreinterpretq_s64_s32(u2)));
+    out[4]  = vreinterpretq_s32_s64(vzip2q_s64(vreinterpretq_s64_s32(u0), vreinterpretq_s64_s32(u2)));
+    out[8]  = vreinterpretq_s32_s64(vzip1q_s64(vreinterpretq_s64_s32(u1), vreinterpretq_s64_s32(u3)));
+    out[12] = vreinterpretq_s32_s64(vzip2q_s64(vreinterpretq_s64_s32(u1), vreinterpretq_s64_s32(u3)));
+}
+
+static AOM_FORCE_INLINE void col_txfm_16x16_N4_rounding(int32x4_t *in, int32_t shift) {
+    const int32x4_t vshift = vdupq_n_s32(shift);
+    col_txfm_8x8_rounding(&in[0], &vshift);
+}
+
+#define TRANSPOSE_2X4X4_NEON(in, x0, x2, x4, x6, out, y0, y1, y2, y3, y4, y5, y6, y7)                      \
+    do {                                                                                                   \
+        int32x4_t u0, u1, u2, u3, u4, u5, u6, u7;                                                          \
+        u0 = vzip1q_s32(in[x0], in[x2]);                                                                   \
+        u1 = vzip2q_s32(in[x0], in[x2]);                                                                   \
+        u2 = vzip1q_s32(in[x0 + 1], in[x2 + 1]);                                                           \
+        u3 = vzip2q_s32(in[x0 + 1], in[x2 + 1]);                                                           \
+        u4 = vzip1q_s32(in[x4], in[x6]);                                                                   \
+        u5 = vzip2q_s32(in[x4], in[x6]);                                                                   \
+        u6 = vzip1q_s32(in[x4 + 1], in[x6 + 1]);                                                           \
+        u7 = vzip2q_s32(in[x4 + 1], in[x6 + 1]);                                                           \
+                                                                                                           \
+        out[y0] = vreinterpretq_s32_s64(vzip1q_s64(vreinterpretq_s64_s32(u0), vreinterpretq_s64_s32(u4))); \
+        out[y1] = vreinterpretq_s32_s64(vzip1q_s64(vreinterpretq_s64_s32(u2), vreinterpretq_s64_s32(u6))); \
+        out[y2] = vreinterpretq_s32_s64(vzip2q_s64(vreinterpretq_s64_s32(u0), vreinterpretq_s64_s32(u4))); \
+        out[y3] = vreinterpretq_s32_s64(vzip2q_s64(vreinterpretq_s64_s32(u2), vreinterpretq_s64_s32(u6))); \
+        out[y4] = vreinterpretq_s32_s64(vzip1q_s64(vreinterpretq_s64_s32(u1), vreinterpretq_s64_s32(u5))); \
+        out[y5] = vreinterpretq_s32_s64(vzip1q_s64(vreinterpretq_s64_s32(u3), vreinterpretq_s64_s32(u7))); \
+        out[y6] = vreinterpretq_s32_s64(vzip2q_s64(vreinterpretq_s64_s32(u1), vreinterpretq_s64_s32(u5))); \
+        out[y7] = vreinterpretq_s32_s64(vzip2q_s64(vreinterpretq_s64_s32(u3), vreinterpretq_s64_s32(u7))); \
+    } while (0)
+
+/*
+ *    Transpose top left block of size 8x8 in 16x16 block
+ */
+static INLINE void transpose_8x8_in_16x16_neon(const int32x4_t *restrict in, int32x4_t *restrict out) {
+    TRANSPOSE_2X4X4_NEON(in, 0, 4, 8, 12, out, 0, 16, 4, 20, 8, 24, 12, 28);
+    TRANSPOSE_2X4X4_NEON(in, 16, 20, 24, 28, out, 1, 17, 5, 21, 9, 25, 13, 29);
+}
+
+void svt_av1_fwd_txfm2d_16x16_N4_neon(int16_t *input, int32_t *coeff, uint32_t stride, TxType tx_type, uint8_t bd) {
+    int32x4_t     in[64], out[64];
+    const int8_t *shift   = fwd_txfm_shift_ls[TX_16X16];
+    const int32_t txw_idx = get_txw_idx(TX_16X16);
+    const int32_t txh_idx = get_txh_idx(TX_16X16);
+    const int32_t col_num = 2;
+
+    switch (tx_type) {
+    case IDTX:
+        load_buffer_4x16_in_16x16(input, in, stride, 0, 0, shift[0]);
+        fidtx16x16_N4_neon(in, out, fwd_cos_bit_col[txw_idx][txh_idx], col_num, 2);
+        col_txfm_16x16_N4_rounding(out, shift[1]);
+        fidtx16x16_N4_neon(out, in, fwd_cos_bit_row[txw_idx][txh_idx], col_num, 2);
+        write_buffer_16x16_N4(in, coeff);
+        break;
+    case DCT_DCT:
+        load_buffer_16x16(input, in, stride, 0, 0, shift[0]);
+        fdct16x16_N4_neon(in, out, fwd_cos_bit_col[txw_idx][txh_idx], 2 * col_num, 2 * col_num);
+        col_txfm_16x16_N4_rounding(out, shift[1]);
+        transpose_8x8_in_16x16_neon(out, in); // top-left -> top-left
+        transpose_8x8_in_16x16_neon(out + 2, in + 32); // top-right -> bottom-left
+        fdct16x16_N4_neon(in, out, fwd_cos_bit_row[txw_idx][txh_idx], 2 * col_num, 2);
+        transpose_4x4_in_16x16_neon(out, in);
+        write_buffer_16x16_N4(in, coeff);
+        break;
+    case ADST_DCT:
+        load_buffer_16x16(input, in, stride, 0, 0, shift[0]);
+        fadst16x16_N4_neon(in, out, fwd_cos_bit_col[txw_idx][txh_idx], 2 * col_num, 2 * col_num);
+        col_txfm_16x16_N4_rounding(out, shift[1]);
+        transpose_8x8_in_16x16_neon(out, in); // top-left -> top-left
+        transpose_8x8_in_16x16_neon(out + 2, in + 32); // top-right -> bottom-left
+        fdct16x16_N4_neon(in, out, fwd_cos_bit_row[txw_idx][txh_idx], 2 * col_num, 2);
+        transpose_4x4_in_16x16_neon(out, in);
+        write_buffer_16x16_N4(in, coeff);
+        break;
+    case DCT_ADST:
+        load_buffer_16x16(input, in, stride, 0, 0, shift[0]);
+        fdct16x16_N4_neon(in, out, fwd_cos_bit_col[txw_idx][txh_idx], 2 * col_num, 2 * col_num);
+        col_txfm_16x16_N4_rounding(out, shift[1]);
+        transpose_8x8_in_16x16_neon(out, in); // top-left -> top-left
+        transpose_8x8_in_16x16_neon(out + 2, in + 32); // top-right -> bottom-left
+        fadst16x16_N4_neon(in, out, fwd_cos_bit_row[txw_idx][txh_idx], 2 * col_num, 2);
+        transpose_4x4_in_16x16_neon(out, in);
+        write_buffer_16x16_N4(in, coeff);
+        break;
+    case ADST_ADST:
+        load_buffer_16x16(input, in, stride, 0, 0, shift[0]);
+        fadst16x16_N4_neon(in, out, fwd_cos_bit_col[txw_idx][txh_idx], 2 * col_num, 2 * col_num);
+        col_txfm_16x16_N4_rounding(out, shift[1]);
+        transpose_8x8_in_16x16_neon(out, in); // top-left -> top-left
+        transpose_8x8_in_16x16_neon(out + 2, in + 32); // top-right -> bottom-left
+        fadst16x16_N4_neon(in, out, fwd_cos_bit_row[txw_idx][txh_idx], 2 * col_num, 2);
+        transpose_4x4_in_16x16_neon(out, in);
+        write_buffer_16x16_N4(in, coeff);
+        break;
+    case DCT_FLIPADST:
+        load_buffer_16x16(input, in, stride, 0, 1, shift[0]);
+        fdct16x16_N4_neon(in, out, fwd_cos_bit_col[txw_idx][txh_idx], 2 * col_num, 2 * col_num);
+        col_txfm_16x16_N4_rounding(out, shift[1]);
+        transpose_8x8_in_16x16_neon(out, in); // top-left -> top-left
+        transpose_8x8_in_16x16_neon(out + 2, in + 32); // top-right -> bottom-left
+        fadst16x16_N4_neon(in, out, fwd_cos_bit_row[txw_idx][txh_idx], 2 * col_num, 2);
+        transpose_4x4_in_16x16_neon(out, in);
+        write_buffer_16x16_N4(in, coeff);
+        break;
+    case FLIPADST_DCT:
+        load_buffer_16x16(input, in, stride, 1, 0, shift[0]);
+        fadst16x16_N4_neon(in, out, fwd_cos_bit_col[txw_idx][txh_idx], 2 * col_num, 2 * col_num);
+        col_txfm_16x16_N4_rounding(out, shift[1]);
+        transpose_8x8_in_16x16_neon(out, in); // top-left -> top-left
+        transpose_8x8_in_16x16_neon(out + 2, in + 32); // top-right -> bottom-left
+        fdct16x16_N4_neon(in, out, fwd_cos_bit_row[txw_idx][txh_idx], 2 * col_num, 2);
+        transpose_4x4_in_16x16_neon(out, in);
+        write_buffer_16x16_N4(in, coeff);
+        break;
+    case FLIPADST_FLIPADST:
+        load_buffer_16x16(input, in, stride, 1, 1, shift[0]);
+        fadst16x16_N4_neon(in, out, fwd_cos_bit_col[txw_idx][txh_idx], 2 * col_num, 2 * col_num);
+        col_txfm_16x16_N4_rounding(out, shift[1]);
+        transpose_8x8_in_16x16_neon(out, in); // top-left -> top-left
+        transpose_8x8_in_16x16_neon(out + 2, in + 32); // top-right -> bottom-left
+        fadst16x16_N4_neon(in, out, fwd_cos_bit_row[txw_idx][txh_idx], 2 * col_num, 2);
+        transpose_4x4_in_16x16_neon(out, in);
+        write_buffer_16x16_N4(in, coeff);
+        break;
+    case ADST_FLIPADST:
+        load_buffer_16x16(input, in, stride, 0, 1, shift[0]);
+        fadst16x16_N4_neon(in, out, fwd_cos_bit_col[txw_idx][txh_idx], 2 * col_num, 2 * col_num);
+        col_txfm_16x16_N4_rounding(out, shift[1]);
+        transpose_8x8_in_16x16_neon(out, in); // top-left -> top-left
+        transpose_8x8_in_16x16_neon(out + 2, in + 32); // top-right -> bottom-left
+        fadst16x16_N4_neon(in, out, fwd_cos_bit_row[txw_idx][txh_idx], 2 * col_num, 2);
+        transpose_4x4_in_16x16_neon(out, in);
+        write_buffer_16x16_N4(in, coeff);
+        break;
+    case FLIPADST_ADST:
+        load_buffer_16x16(input, in, stride, 1, 0, shift[0]);
+        fadst16x16_N4_neon(in, out, fwd_cos_bit_col[txw_idx][txh_idx], 2 * col_num, 2 * col_num);
+        col_txfm_16x16_N4_rounding(out, shift[1]);
+        transpose_8x8_in_16x16_neon(out, in); // top-left -> top-left
+        transpose_8x8_in_16x16_neon(out + 2, in + 32); // top-right -> bottom-left
+        fadst16x16_N4_neon(in, out, fwd_cos_bit_row[txw_idx][txh_idx], 2 * col_num, 2);
+        transpose_4x4_in_16x16_neon(out, in);
+        write_buffer_16x16_N4(in, coeff);
+        break;
+    case V_DCT:
+        load_buffer_16x16(input, in, stride, 0, 0, shift[0]);
+        fdct16x16_N4_neon(in, out, fwd_cos_bit_col[txw_idx][txh_idx], 2 * col_num, 2);
+        col_txfm_16x16_N4_rounding(out, shift[1]);
+        fidtx16x16_N4_neon(out, in, fwd_cos_bit_row[txw_idx][txh_idx], col_num, 2);
+        write_buffer_16x16_N4(in, coeff);
+        break;
+    case H_DCT:
+        load_buffer_4x16_in_16x16(input, out, stride, 0, 0, shift[0]);
+        fidtx16x16_N4_neon(out, in, fwd_cos_bit_col[txw_idx][txh_idx], col_num, 1);
+        col_txfm_16x16_N4_rounding(in, shift[1]);
+        transpose_8x8_in_16x16_neon(in, out); // top-left -> top-left
+        transpose_8x8_in_16x16_neon(in + 2, out + 32); // top-right -> bottom-left
+        fdct16x16_N4_neon(out, in, fwd_cos_bit_row[txw_idx][txh_idx], 2 * col_num, 2);
+        transpose_4x4_in_16x16_neon(in, out);
+        write_buffer_16x16_N4(out, coeff);
+        break;
+    case V_ADST:
+        load_buffer_16x16(input, in, stride, 0, 0, shift[0]);
+        fadst16x16_N4_neon(in, out, fwd_cos_bit_col[txw_idx][txh_idx], 2 * col_num, 2);
+        col_txfm_16x16_N4_rounding(out, shift[1]);
+        fidtx16x16_N4_neon(out, in, fwd_cos_bit_row[txw_idx][txh_idx], col_num, 2);
+        write_buffer_16x16_N4(in, coeff);
+        break;
+    case H_ADST:
+        load_buffer_4x16_in_16x16(input, out, stride, 0, 0, shift[0]);
+        fidtx16x16_N4_neon(out, in, fwd_cos_bit_col[txw_idx][txh_idx], col_num, 1);
+        col_txfm_16x16_N4_rounding(in, shift[1]);
+        transpose_8x8_in_16x16_neon(in, out); // top-left -> top-left
+        transpose_8x8_in_16x16_neon(in + 2, out + 32); // top-right -> bottom-left
+        fadst16x16_N4_neon(out, in, fwd_cos_bit_row[txw_idx][txh_idx], 2 * col_num, 2);
+        transpose_4x4_in_16x16_neon(in, out);
+        write_buffer_16x16_N4(out, coeff);
+        break;
+    case V_FLIPADST:
+        load_buffer_16x16(input, in, stride, 1, 0, shift[0]);
+        fadst16x16_N4_neon(in, out, fwd_cos_bit_col[txw_idx][txh_idx], 2 * col_num, 2 * col_num);
+        col_txfm_16x16_N4_rounding(out, shift[1]);
+        fidtx16x16_N4_neon(out, in, fwd_cos_bit_row[txw_idx][txh_idx], col_num, 2);
+        write_buffer_16x16_N4(in, coeff);
+        break;
+    case H_FLIPADST:
+        load_buffer_4x16_in_16x16(input, out, stride, 0, 1, shift[0]);
+        fidtx16x16_N4_neon(out, in, fwd_cos_bit_col[txw_idx][txh_idx], col_num, 1);
+        col_txfm_16x16_N4_rounding(in, shift[1]);
+        transpose_8x8_in_16x16_neon(in, out); // top-left -> top-left
+        transpose_8x8_in_16x16_neon(in + 2, out + 32); // top-right -> bottom-left
+        fadst16x16_N4_neon(out, in, fwd_cos_bit_row[txw_idx][txh_idx], 2 * col_num, 2);
+        transpose_4x4_in_16x16_neon(in, out);
+        write_buffer_16x16_N4(out, coeff);
+        break;
+    default: assert(0);
+    }
+    (void)bd;
 }

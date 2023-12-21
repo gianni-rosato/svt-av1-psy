@@ -454,6 +454,9 @@ typedef int16_t InterpKernel[SUBPEL_TAPS];
 #ifdef ARCH_X86_64
 extern void RunEmms();
 #define aom_clear_system_state() RunEmms()
+#else
+#define aom_clear_system_state() \
+    {}
 #endif
 
 /* Shift down with rounding for use when n >= 0, value >= 0 */

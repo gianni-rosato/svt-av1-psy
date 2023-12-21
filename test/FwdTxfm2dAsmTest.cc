@@ -51,6 +51,8 @@ using svt_av1_test_tool::SVTRandom;
 namespace {
 using FwdTxfm2dAsmParam = std::tuple<int, int>;
 
+#ifdef ARCH_X86_64
+
 static const FwdTxfm2dFunc fwd_txfm_2d_avx2_func[TX_SIZES_ALL] = {
     NULL,
     svt_av1_fwd_txfm2d_8x8_avx2,
@@ -156,32 +158,6 @@ static const FwdTxfm2dFunc fwd_txfm_2d_N4_sse4_1_func[TX_SIZES_ALL] = {
     svt_av1_fwd_txfm2d_64x16_N4_sse4_1,
 };
 
-static const FwdTxfm2dFunc fwd_txfm_2d_N2_c_func[TX_SIZES_ALL] = {
-    svt_aom_transform_two_d_4x4_N2_c,   svt_aom_transform_two_d_8x8_N2_c,
-    svt_aom_transform_two_d_16x16_N2_c, svt_aom_transform_two_d_32x32_N2_c,
-    svt_aom_transform_two_d_64x64_N2_c, svt_av1_fwd_txfm2d_4x8_N2_c,
-    svt_av1_fwd_txfm2d_8x4_N2_c,        svt_av1_fwd_txfm2d_8x16_N2_c,
-    svt_av1_fwd_txfm2d_16x8_N2_c,       svt_av1_fwd_txfm2d_16x32_N2_c,
-    svt_av1_fwd_txfm2d_32x16_N2_c,      svt_av1_fwd_txfm2d_32x64_N2_c,
-    svt_av1_fwd_txfm2d_64x32_N2_c,      svt_av1_fwd_txfm2d_4x16_N2_c,
-    svt_av1_fwd_txfm2d_16x4_N2_c,       svt_av1_fwd_txfm2d_8x32_N2_c,
-    svt_av1_fwd_txfm2d_32x8_N2_c,       svt_av1_fwd_txfm2d_16x64_N2_c,
-    svt_av1_fwd_txfm2d_64x16_N2_c,
-};
-
-static const FwdTxfm2dFunc fwd_txfm_2d_N4_c_func[TX_SIZES_ALL] = {
-    svt_aom_transform_two_d_4x4_N4_c,   svt_aom_transform_two_d_8x8_N4_c,
-    svt_aom_transform_two_d_16x16_N4_c, svt_aom_transform_two_d_32x32_N4_c,
-    svt_aom_transform_two_d_64x64_N4_c, svt_av1_fwd_txfm2d_4x8_N4_c,
-    svt_av1_fwd_txfm2d_8x4_N4_c,        svt_av1_fwd_txfm2d_8x16_N4_c,
-    svt_av1_fwd_txfm2d_16x8_N4_c,       svt_av1_fwd_txfm2d_16x32_N4_c,
-    svt_av1_fwd_txfm2d_32x16_N4_c,      svt_av1_fwd_txfm2d_32x64_N4_c,
-    svt_av1_fwd_txfm2d_64x32_N4_c,      svt_av1_fwd_txfm2d_4x16_N4_c,
-    svt_av1_fwd_txfm2d_16x4_N4_c,       svt_av1_fwd_txfm2d_8x32_N4_c,
-    svt_av1_fwd_txfm2d_32x8_N4_c,       svt_av1_fwd_txfm2d_16x64_N4_c,
-    svt_av1_fwd_txfm2d_64x16_N4_c,
-};
-
 #if EN_AVX512_SUPPORT
 static const FwdTxfm2dFunc fwd_txfm_2d_avx512_func[TX_SIZES_ALL] = {
     NULL,
@@ -235,6 +211,48 @@ static const FwdTxfm2dFunc fwd_txfm_2d_N4_asm512_func[TX_SIZES_ALL] = {
 };
 #endif /*EN_AVX512_SUPPORT*/
 
+#endif
+
+#ifdef ARCH_AARCH64
+
+static const FwdTxfm2dFunc fwd_txfm_2d_N4_neon_func[TX_SIZES_ALL] = {
+    NULL, NULL, svt_av1_fwd_txfm2d_16x16_N4_neon,
+    NULL, NULL, NULL,
+    NULL, NULL, NULL,
+    NULL, NULL, NULL,
+    NULL, NULL, NULL,
+    NULL, NULL, NULL,
+    NULL,
+};
+
+#endif /* ARCH_AARCH64*/
+
+static const FwdTxfm2dFunc fwd_txfm_2d_N2_c_func[TX_SIZES_ALL] = {
+    svt_aom_transform_two_d_4x4_N2_c,   svt_aom_transform_two_d_8x8_N2_c,
+    svt_aom_transform_two_d_16x16_N2_c, svt_aom_transform_two_d_32x32_N2_c,
+    svt_aom_transform_two_d_64x64_N2_c, svt_av1_fwd_txfm2d_4x8_N2_c,
+    svt_av1_fwd_txfm2d_8x4_N2_c,        svt_av1_fwd_txfm2d_8x16_N2_c,
+    svt_av1_fwd_txfm2d_16x8_N2_c,       svt_av1_fwd_txfm2d_16x32_N2_c,
+    svt_av1_fwd_txfm2d_32x16_N2_c,      svt_av1_fwd_txfm2d_32x64_N2_c,
+    svt_av1_fwd_txfm2d_64x32_N2_c,      svt_av1_fwd_txfm2d_4x16_N2_c,
+    svt_av1_fwd_txfm2d_16x4_N2_c,       svt_av1_fwd_txfm2d_8x32_N2_c,
+    svt_av1_fwd_txfm2d_32x8_N2_c,       svt_av1_fwd_txfm2d_16x64_N2_c,
+    svt_av1_fwd_txfm2d_64x16_N2_c,
+};
+
+static const FwdTxfm2dFunc fwd_txfm_2d_N4_c_func[TX_SIZES_ALL] = {
+    svt_aom_transform_two_d_4x4_N4_c,   svt_aom_transform_two_d_8x8_N4_c,
+    svt_aom_transform_two_d_16x16_N4_c, svt_aom_transform_two_d_32x32_N4_c,
+    svt_aom_transform_two_d_64x64_N4_c, svt_av1_fwd_txfm2d_4x8_N4_c,
+    svt_av1_fwd_txfm2d_8x4_N4_c,        svt_av1_fwd_txfm2d_8x16_N4_c,
+    svt_av1_fwd_txfm2d_16x8_N4_c,       svt_av1_fwd_txfm2d_16x32_N4_c,
+    svt_av1_fwd_txfm2d_32x16_N4_c,      svt_av1_fwd_txfm2d_32x64_N4_c,
+    svt_av1_fwd_txfm2d_64x32_N4_c,      svt_av1_fwd_txfm2d_4x16_N4_c,
+    svt_av1_fwd_txfm2d_16x4_N4_c,       svt_av1_fwd_txfm2d_8x32_N4_c,
+    svt_av1_fwd_txfm2d_32x8_N4_c,       svt_av1_fwd_txfm2d_16x64_N4_c,
+    svt_av1_fwd_txfm2d_64x16_N4_c,
+};
+
 /**
  * @brief Unit test for fwd tx 2d avx2 functions:
  * - svt_av1_fwd_txfm2d_{4, 8, 16, 32, 64}x{4, 8, 16, 32, 64}_avx2
@@ -280,6 +298,8 @@ class FwdTxfm2dAsmTest : public ::testing::TestWithParam<FwdTxfm2dAsmParam> {
         delete rnd_;
         aom_clear_system_state();
     }
+
+#ifdef ARCH_X86_64
 
     void run_match_test_avx2() {
         FwdTxfm2dFunc test_func = fwd_txfm_2d_avx2_func[tx_size_];
@@ -378,7 +398,21 @@ class FwdTxfm2dAsmTest : public ::testing::TestWithParam<FwdTxfm2dAsmParam> {
             run_speed_test("N4 AVX512 AVX2", test_func, ref_func);
         }
     }
-#endif /*EN_AVX512_SUPPORT*/
+#endif /* EN_AVX512_SUPPORT */
+
+#endif /* ARCH_X86_64 */
+
+#ifdef ARCH_AARCH64
+
+    void run_match_test_neon_N4() {
+        FwdTxfm2dFunc test_func_neon = fwd_txfm_2d_N4_neon_func[tx_size_];
+        FwdTxfm2dFunc test_func_c = fwd_txfm_2d_N4_c_func[tx_size_];
+        FwdTxfm2dFunc ref_func = fwd_txfm_2d_c_func[tx_size_];
+        execute_test(test_func_neon, ref_func, N4_SHAPE);
+        execute_test(test_func_c, ref_func, N4_SHAPE);
+    }
+
+#endif /* ARCH_AARCH64 */
 
   private:
     void execute_test(FwdTxfm2dFunc test_func, FwdTxfm2dFunc ref_func,
@@ -545,6 +579,8 @@ class FwdTxfm2dAsmTest : public ::testing::TestWithParam<FwdTxfm2dAsmParam> {
     int32_t *output_ref_;  /**< aligned address for output ref */
 };
 
+#ifdef ARCH_X86_64
+
 TEST_P(FwdTxfm2dAsmTest, match_test_avx2) {
     run_match_test_avx2();
 }
@@ -601,7 +637,18 @@ TEST_P(FwdTxfm2dAsmTest, DISABLED_speed_test_512) {
         speed_test_512();
     }
 }
-#endif
+#endif /* EN_AVX512_SUPPORT */
+
+#endif /* ARCH_X86_64 */
+
+#ifdef ARCH_AARCH64
+
+TEST_P(FwdTxfm2dAsmTest, match_test_neon_N4) {
+    run_match_test_neon_N4();
+}
+
+#endif /* ARCH_AARCH64 */
+
 INSTANTIATE_TEST_CASE_P(
     TX, FwdTxfm2dAsmTest,
     ::testing::Combine(::testing::Range(static_cast<int>(TX_4X4),
