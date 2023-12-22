@@ -51,43 +51,14 @@ typedef struct MdEncPassCuData {
     uint64_t chroma_distortion;
 } MdEncPassCuData;
 
+#if CLN_MOVE_PAL_BUFF
+typedef struct PALETTE_BUFFER {
+#else
 typedef struct {
+#endif
     uint8_t best_palette_color_map[MAX_PALETTE_SQUARE];
     int     kmeans_data_buf[2 * MAX_PALETTE_SQUARE];
 } PALETTE_BUFFER;
-typedef struct MdBlkStruct {
-    unsigned             mdc_array_index : 7;
-    unsigned             cnt_nz_coeff : 12;
-    unsigned             top_neighbor_depth : 8;
-    unsigned             left_neighbor_depth : 8;
-    unsigned             full_dist : 32;
-    uint64_t             rec_dist_per_quadrant[4];
-    PartitionContextType left_neighbor_partition;
-    PartitionContextType above_neighbor_partition;
-    uint64_t             cost;
-    // Similar to cost but does not get updated @ svt_aom_d1_non_square_block_decision() and
-    // svt_aom_d2_inter_depth_block_decision()
-    uint64_t default_cost;
-    uint64_t best_intra_new_cost;
-    // to be used in MD and EncDec
-    CandidateMv ed_ref_mv_stack[MODE_CTX_REF_FRAMES][MAX_REF_MV_STACK_SIZE];
-    // only for MD
-    uint8_t  *neigh_left_recon[3];
-    uint8_t  *neigh_top_recon[3];
-    uint16_t *neigh_left_recon_16bit[3];
-    uint16_t *neigh_top_recon_16bit[3];
-    int32_t   quantized_dc[3][MAX_TXB_COUNT];
-
-    // wm
-    EbWarpedMotionParams wm_params_l0;
-    EbWarpedMotionParams wm_params_l1;
-    // txb
-    uint8_t  u_has_coeff[TRANSFORM_UNIT_MAX_COUNT];
-    uint8_t  v_has_coeff[TRANSFORM_UNIT_MAX_COUNT];
-    uint8_t  y_has_coeff[TRANSFORM_UNIT_MAX_COUNT];
-    uint16_t min_nz_h;
-    uint16_t min_nz_v;
-} MdBlkStruct;
 
 struct ModeDecisionCandidate;
 struct ModeDecisionCandidateBuffer;
@@ -999,11 +970,15 @@ typedef struct ModeDecisionContext {
     ModeDecisionCandidateBuffer  *cand_bf_tx_depth_2;
     MdRateEstimationContext      *md_rate_est_ctx;
     MdRateEstimationContext      *rate_est_table;
-    MdBlkStruct                  *md_local_blk_unit;
+    //MdBlkStruct                  *md_local_blk_unit;
     BlkStruct                    *md_blk_arr_nsq;
     uint8_t                      *avail_blk_flag;
     uint8_t                      *cost_avail;
+#if CLN_MDC_ARRAY
+    MdcSbData                    mdc_sb_array;
+#else
     MdcSbData                    *mdc_sb_array;
+#endif
 #if CLN_NSQ_COPIES
     bool copied_neigh_arrays;
 #endif
@@ -1048,9 +1023,15 @@ typedef struct ModeDecisionContext {
     SuperBlock      *sb_ptr;
     BlkStruct       *blk_ptr;
     const BlockGeom *blk_geom;
+#if CLN_MOVE_PAL_BUFF
+    // MD palette search
+    PALETTE_BUFFER*  palette_buffer;
+    PaletteInfo*     palette_cand_array;
+#else
     PALETTE_BUFFER   palette_buffer;
     PaletteInfo      palette_cand_array[MAX_PAL_CAND];
     // MD palette search
+#endif
     uint8_t *palette_size_array_0;
     // simple geometry 64x64SB, Sq only, no 4xN
     uint8_t          sb64_sq_no4xn_geom;
@@ -1080,9 +1061,13 @@ typedef struct ModeDecisionContext {
     uint8_t intra_luma_left_ctx;
     uint8_t intra_luma_top_ctx;
 
+#if CLN_MOVE_CFL_BUFF
+    int16_t* pred_buf_q3;
+#else
     // Hsan: both MD and EP to use pred_buf_q3 (kept 1, and removed the 2nd)
     EB_ALIGN(64)
     int16_t pred_buf_q3[CFL_BUF_SQUARE];
+#endif
     // Track all MVs that are prepared for candidates prior to MDS0. Used to avoid MV duplication.
     Mv **injected_mvs;
     // Track the reference types for each MV
@@ -1119,12 +1104,22 @@ typedef struct ModeDecisionContext {
     Bool                 spatial_sse_full_loop_level;
     Bool                 blk_skip_decision;
     int8_t               rdoq_level;
+#if CLN_SB_ME_MV
+    int16_t              sb_me_mv[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX][2];
+    // Store ME MV of the square to use with NSQ shapes; 4x4 will also use the 8x8 ME MVs
+    int16_t              sq_sb_me_mv[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX][2];
+#else
     int16_t              sb_me_mv[BLOCK_MAX_COUNT_SB_128][MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX][2];
+#endif
     MV                   fp_me_mv[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
     MV                   sub_me_mv[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
     uint32_t             post_subpel_me_mv_cost[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
     int16_t              best_pme_mv[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX][2];
     int8_t               valid_pme_mv[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX];
+#if CLN_BLK_STRUCT
+    // Store MVP during MD search - only results are forwarded to encdec
+    CandidateMv          ref_mv_stack[MODE_CTX_REF_FRAMES][MAX_REF_MV_STACK_SIZE];
+#endif
     EbPictureBufferDesc *input_sample16bit_buffer;
     // set to 1 once the packing of 10bit source is done for each SB
     uint8_t  hbd_pack_done;
@@ -1228,7 +1223,9 @@ typedef struct ModeDecisionContext {
     uint8_t             disallow_4x4;
     uint8_t             md_disallow_nsq;
     uint8_t             params_status; // specifies the status of MD parameters; 0: default, 1: modified
+#if !CLN_MD_LOOP
     bool                d1_skip_flag[25];
+#endif
     // was parent_sq_coeff_area_based_cycles_reduction_ctrls
     ParentSqCmplxCtrls   psq_cplx_ctrls;
     NsqPsqTxsCtrls       nsq_psq_txs_ctrls;
@@ -1347,6 +1344,9 @@ typedef struct ModeDecisionContext {
     uint8_t high_freq_present;
 #if OPT_NSQ_HIGH_FREQ  
     uint32_t b32_satd[4];
+#endif
+#if CLN_QUAD_REC
+    uint64_t             rec_dist_per_quadrant[4];
 #endif
     // used to signal when the N4 shortcut can be used for rtc, works in conjunction with use_tx_shortcuts_mds3 flag
     uint8_t rtc_use_N4_dct_dct_shortcut;

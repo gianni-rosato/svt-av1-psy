@@ -18,6 +18,7 @@
 extern "C" {
 #endif
 #pragma pack(push, 1)
+#if !CLN_BLK_STRUCT_2 // TODO: Remove this file
 typedef struct PredictionUnit {
     Mv      mv[MAX_NUM_OF_REF_PIC_LIST]; // 16-bytes
     uint8_t inter_pred_direction_index;
@@ -45,6 +46,7 @@ typedef struct EcPredictionUnit {
     uint8_t    cfl_alpha_idx; // Index of the alpha Cb and alpha Cr combination
     uint8_t    cfl_alpha_signs; // Joint sign of alpha Cb and alpha Cr
 } EcPredictionUnit;
+#endif
 #pragma pack(pop)
 
 #ifdef __cplusplus

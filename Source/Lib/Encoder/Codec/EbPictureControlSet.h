@@ -164,19 +164,50 @@ struct PredictionUnit;
 
 typedef struct EbMdcLeafData {
     uint32_t mds_idx;
+#if CLN_MD_LOOP
+    // array containing all shapes to be tested for the current SQ block
+    Part shapes[PART_S];
+    // total number of shapes to test for the current SQ block
+    uint8_t tot_shapes;
+#else
     uint32_t tot_d1_blocks; // how many d1 bloks every parent square would have
+#endif
     bool     is_child; // does is it belong to the child depth(s); relative to PRED (the output of PD0)
 } EbMdcLeafData;
 
+#if CLN_MDC_ARRAY
+typedef struct MdcSbData {
+    uint32_t leaf_count;
+    EbMdcLeafData* leaf_data_array;
+    Bool* split_flag;
+    uint8_t* refined_split_flag;
+    // 0: do not encode, 1: current or parent depth(s), 2: child depth(s)
+    uint8_t* consider_block;
+} MdcSbData;
+#else
 typedef struct MdcSbData {
     uint32_t      leaf_count;
+#if CLN_MD_LOOP
+    // leaf_data_array and split_flag are stored only for SQ shapes and passed to MD. They are indexed
+    // using a leaf index, which is simply a count of all blocks added to the array so far.  Since only
+    // SQ blocks are added to the array, the max number of entries is the max number of SQ blocks.
+    EbMdcLeafData leaf_data_array[SQ_BLOCK_MAX_COUNT_SB_128];
+    Bool          split_flag[SQ_BLOCK_MAX_COUNT_SB_128];
+
+    // refined_split_flag and consider_block are used in the depth refinement stage, and are indexed
+    // using the block mds index, so the array needs to hold all possible values for block mds index
+    uint8_t refined_split_flag[BLOCK_MAX_COUNT_SB_128];
+    // 0: do not encode, 1: current or parent depth(s), 2: child depth(s)
+    uint8_t consider_block[BLOCK_MAX_COUNT_SB_128];
+#else
     EbMdcLeafData leaf_data_array[BLOCK_MAX_COUNT_SB_128];
     Bool          split_flag[BLOCK_MAX_COUNT_SB_128];
     uint8_t
         consider_block[BLOCK_MAX_COUNT_SB_128]; // 0: do not encode, 1: current or parent depth(s), 2: child depth(s)
     uint8_t refined_split_flag[BLOCK_MAX_COUNT_SB_128];
+#endif
 } MdcSbData;
-
+#endif
 /**************************************
  * Picture Control Set
  **************************************/

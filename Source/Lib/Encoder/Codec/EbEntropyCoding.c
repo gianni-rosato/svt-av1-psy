@@ -1118,7 +1118,11 @@ static void encode_intra_luma_mode_kf_av1(FRAME_CONTEXT *frame_context, AomWrite
 
     if (bsize >= BLOCK_8X8 && av1_is_directional_mode(mbmi->block_mi.mode)) {
         aom_write_symbol(ec_writer,
+#if CLN_BLK_STRUCT_2
+                         blk_ptr->angle_delta[PLANE_TYPE_Y] + MAX_ANGLE_DELTA,
+#else
                          blk_ptr->prediction_unit_array[0].angle_delta[PLANE_TYPE_Y] + MAX_ANGLE_DELTA,
+#endif
                          frame_context->angle_delta_cdf[luma_mode - V_PRED],
                          2 * MAX_ANGLE_DELTA + 1);
     }
@@ -1135,7 +1139,11 @@ static void encode_intra_luma_mode_nonkey_av1(FRAME_CONTEXT *frame_context, AomW
 
     if (bsize >= BLOCK_8X8 && av1_is_directional_mode(mbmi->block_mi.mode)) {
         aom_write_symbol(ec_writer,
+#if CLN_BLK_STRUCT_2
+                         blk_ptr->angle_delta[PLANE_TYPE_Y] + MAX_ANGLE_DELTA,
+#else
                          blk_ptr->prediction_unit_array[0].angle_delta[PLANE_TYPE_Y] + MAX_ANGLE_DELTA,
+#endif
                          frame_context->angle_delta_cdf[luma_mode - V_PRED],
                          2 * MAX_ANGLE_DELTA + 1);
     }
@@ -1168,13 +1176,22 @@ static void encode_intra_chroma_mode_av1(FRAME_CONTEXT *frame_context, AomWriter
 
     if (chroma_mode == UV_CFL_PRED)
         write_cfl_alphas(frame_context,
+#if CLN_BLK_STRUCT_2
+                         blk_ptr->cfl_alpha_idx,
+                         blk_ptr->cfl_alpha_signs,
+#else
                          blk_ptr->prediction_unit_array->cfl_alpha_idx,
                          blk_ptr->prediction_unit_array->cfl_alpha_signs,
+#endif
                          ec_writer);
 
     if (bsize >= BLOCK_8X8 && av1_is_directional_mode(get_uv_mode(mbmi->block_mi.uv_mode))) {
         aom_write_symbol(ec_writer,
+#if CLN_BLK_STRUCT_2
+                         blk_ptr->angle_delta[PLANE_TYPE_UV] + MAX_ANGLE_DELTA,
+#else
                          blk_ptr->prediction_unit_array[0].angle_delta[PLANE_TYPE_UV] + MAX_ANGLE_DELTA,
+#endif
                          frame_context->angle_delta_cdf[chroma_mode - V_PRED],
                          2 * MAX_ANGLE_DELTA + 1);
     }
@@ -1243,7 +1260,11 @@ static void write_is_inter(const EcBlkStruct *blk_ptr, FRAME_CONTEXT *frame_cont
 *   checks the motion modes that are allowed for the current block
 *********************************************************************/
 MotionMode svt_aom_motion_mode_allowed(const PictureControlSet *pcs, uint16_t num_proj_ref,
+#if CLN_BLK_STRUCT_2
+                                       uint32_t overlappable_neighbors, const BlockSize bsize, MvReferenceFrame rf0,
+#else
                                        uint32_t *overlappable_neighbors, const BlockSize bsize, MvReferenceFrame rf0,
+#endif
                                        MvReferenceFrame rf1, PredictionMode mode) {
     FrameHeader *frm_hdr = &pcs->ppcs->frm_hdr;
     if (!frm_hdr->is_motion_mode_switchable)
@@ -1257,8 +1278,13 @@ MotionMode svt_aom_motion_mode_allowed(const PictureControlSet *pcs, uint16_t nu
     if (is_motion_variation_allowed_bsize(bsize) && is_inter_singleref_mode(mode) && rf1 != INTRA_FRAME &&
         !(rf1 > INTRA_FRAME)) // is_motion_variation_allowed_compound
     {
+#if CLN_BLK_STRUCT_2
+        if (overlappable_neighbors == 0)
+            return SIMPLE_TRANSLATION;
+#else
         if (overlappable_neighbors[0] == 0 && overlappable_neighbors[1] == 0)
             return SIMPLE_TRANSLATION;
+#endif
 
         if (frm_hdr->allow_warped_motion &&
             /* TODO(JS): when scale is added, put: !av1_is_scaled(&(xd->block_refs[0]->sf)) && */
@@ -1281,8 +1307,13 @@ static void write_motion_mode(FRAME_CONTEXT *frame_context, AomWriter *ec_writer
                               PictureControlSet *pcs) {
     MotionMode last_motion_mode_allowed = svt_aom_motion_mode_allowed(
         pcs,
+#if CLN_BLK_STRUCT_2
+        blk_ptr->num_proj_ref,
+        blk_ptr->overlappable_neighbors,
+#else
         blk_ptr->prediction_unit_array[0].num_proj_ref,
         blk_ptr->prediction_unit_array[0].overlappable_neighbors,
+#endif
         bsize,
         rf0,
         rf1,
@@ -1659,7 +1690,11 @@ static void write_mb_interp_filter(BlockSize bsize, MvReferenceFrame rf0, MvRefe
         !av1_is_interp_needed(rf0,
                               rf1,
                               mbmi->block_mi.skip_mode,
+#if CLN_BLK_STRUCT_2
+                              blk_ptr->motion_mode,
+#else
                               blk_ptr->prediction_unit_array[0].motion_mode,
+#endif
                               mbmi->block_mi.mode,
                               bsize,
                               pcs)) {
@@ -5079,7 +5114,11 @@ static EbErrorType write_modes_b(PictureControlSet *pcs, EntropyCodingContext *e
                 MvReferenceFrame *rf         = mbmi->block_mi.ref_frame;
                 int16_t           mode_ctx   = svt_aom_mode_context_analyzer(blk_ptr->inter_mode_ctx, rf);
                 PredictionMode    inter_mode = mbmi->block_mi.mode;
+#if CLN_BLK_STRUCT_2
+                const int32_t is_compound = (blk_ptr->inter_pred_direction_index == BI_PRED);
+#else
                 const int32_t is_compound = (blk_ptr->prediction_unit_array[0].inter_pred_direction_index == BI_PRED);
+#endif
 
                 // If segment skip is not enabled code the mode.
                 if (is_inter_compound_mode(inter_mode)) {
@@ -5157,7 +5196,11 @@ static EbErrorType write_modes_b(PictureControlSet *pcs, EntropyCodingContext *e
                                       ec_writer,
                                       bsize,
                                       mbmi,
+#if CLN_BLK_STRUCT_2
+                                      blk_ptr->motion_mode,
+#else
                                       blk_ptr->prediction_unit_array[0].motion_mode,
+#endif
                                       rf[0],
                                       rf[1],
                                       blk_ptr,
@@ -5199,9 +5242,15 @@ static EbErrorType write_modes_b(PictureControlSet *pcs, EntropyCodingContext *e
                             assert(mbmi->block_mi.compound_idx == 1);
                         }
                     } else {
+#if CLN_BLK_STRUCT_2
+                        assert(pcs->ppcs->frm_hdr.reference_mode != SINGLE_REFERENCE &&
+                               is_inter_compound_mode(mbmi->block_mi.mode) &&
+                               blk_ptr->motion_mode == SIMPLE_TRANSLATION);
+#else
                         assert(pcs->ppcs->frm_hdr.reference_mode != SINGLE_REFERENCE &&
                                is_inter_compound_mode(mbmi->block_mi.mode) &&
                                blk_ptr->prediction_unit_array[0].motion_mode == SIMPLE_TRANSLATION);
+#endif
                         assert(masked_compound_used);
                         // compound_diffwtd, wedge
                         assert(blk_ptr->interinter_comp.type == COMPOUND_WEDGE ||

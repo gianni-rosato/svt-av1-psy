@@ -65,6 +65,34 @@ extern "C" {
 #define OPT_MPASS_VBR7                            1 // Lossless optimization for multiPASS VBR, replace ENC_MIDDLE_PASS by ENC_FIRST_PASS
 #define OPT_MPASS_VBR8                            1 // Lossless optimization for multiPASS VBR, refactor mid_pass
 #endif
+
+#define OPT_NSQ_INCOMP                            1 // Optimize how NSQ is used for incomplete SBs
+                                                    // Enable NSQ shapes to be used in LPD0 (all sizes) and LPD1 (8x8 and higher) for incomplete blocks when the SQ is not allowed.
+                                                    // When nsq geom is enabled, incomplete blocks will always use NSQ shapes (when SQ is disallowed), even when md_disallow_nsq is true.
+                                                    // TODO: change md_disallow_nsq to disallow search, or add enabled signal to nsq_search_ctrls.
+
+#define TUNE_M11_M13                              1 // tune m11-m13 lp8
+#define TUNE_M9_M10                               1 // tune m9-m10 lp8
+#define TUNE_MR                                   1 // Temporary mr candidate
+#define TUNE_M0_M1                                1 // tune m0-m1 lp8
+#define TUNE_M7_M8                                1 // tune m7-m8 lp8
+#define TUNE_M2                                   1 // tune m2 lp8
+#define TUNE_M5_M6                                1 // tune m5-m6 lp8 fd
+#define TUNE_M3_M4                                1 // tune m3-m4 lp8
+
+#define CLN_MD_LOOP                               1 // Cleanup how NSQ is processed in MD
+#define OPT_NSQ_MEM                               1 // Optimize memory of NSQ blocks in MD search
+                                                    // Merge MdBlkStruct with BlkStruct - no macros
+#define CLN_BLK_STRUCT                            1 // Cleanup fields of BlkStruct
+#define CLN_SB_ME_MV                              1 // Cleanup how MVs are store in MD ctx
+#define CLN_MDC_ARRAY                             1 // Allocate MD scan array for the correct number of blocks
+#define CLN_QUAD_REC                              1 // Move rec_dist_per_quadrant from BlkStruct to MD ctx. Fix redundant blocks using incorrect data for SQ blocks.
+#define CLN_BLK_STRUCT_2                          1 // Remove prediction_unit_array from BlkStruct
+#define CLN_BLK_STRUCT_3                          1 // Reorder fields of BlkStruct
+#define CLN_MOVE_CFL_BUFF                         1 // Allocate temp cfl buffer on heap
+#define CLN_MOVE_PAL_BUFF                         1 // Allocate PALETTE_BUFFER on heap
+#define FIX_REDUND_PAL                            1 // Add missing copies for palette for redundant blocks
+
 //FOR DEBUGGING - Do not remove
 #define OPT_LD_LATENCY2         0 // Latency optimization for low delay
 #define LOG_ENC_DONE            0 // log encoder job one

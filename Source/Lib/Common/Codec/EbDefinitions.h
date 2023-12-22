@@ -325,6 +325,13 @@ enum {
 //  Delta QP support
 #define ADD_DELTA_QP_SUPPORT 1 // Add delta QP support
 #define BLOCK_MAX_COUNT_SB_128 4421
+#if !CLN_MDC_ARRAY
+#if CLN_MD_LOOP
+// Total count of square blocks when all block sizes allowed
+// There are 32*32=1024 4x4 blocks, 16*16=256 8x8 blocks, etc.
+#define SQ_BLOCK_MAX_COUNT_SB_128 1365
+#endif
+#endif
 
 #define MAX_TXB_COUNT 16 // Maximum number of transform blocks per depth
 #define MAX_LAD 120 // max lookahead-distance 2x60fps

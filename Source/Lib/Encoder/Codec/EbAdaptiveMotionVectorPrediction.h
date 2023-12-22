@@ -50,8 +50,12 @@ Bool        svt_aom_warped_motion_parameters(PictureControlSet *pcs, BlkStruct *
                                              uint8_t min_neighbour_perc, uint8_t corner_perc_bias, uint16_t lower_band_th,
                                              uint16_t upper_band_th, Bool shut_approx);
 static INLINE Bool has_overlappable_candidates(const BlkStruct *blk_ptr) {
+#if CLN_BLK_STRUCT_2
+    return (blk_ptr->overlappable_neighbors != 0);
+#else
     return (blk_ptr->prediction_unit_array[0].overlappable_neighbors[0] != 0 ||
             blk_ptr->prediction_unit_array[0].overlappable_neighbors[1] != 0);
+#endif
 }
 
 void svt_av1_count_overlappable_neighbors(const PictureControlSet *pcs, BlkStruct *blk_ptr, const BlockSize bsize,

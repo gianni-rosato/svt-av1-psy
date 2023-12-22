@@ -1133,8 +1133,12 @@ uint64_t svt_aom_inter_fast_cost(PictureControlSet *pcs, struct ModeDecisionCont
     const BlockGeom       *blk_geom     = ctx->blk_geom;
     BlkStruct             *blk_ptr      = ctx->blk_ptr;
     ModeDecisionCandidate *cand         = cand_bf->cand;
+#if CLN_BLK_STRUCT
+    CandidateMv* ref_mv_stack = &(ctx->ref_mv_stack[cand->ref_frame_type][0]);
+#else
     CandidateMv           *ref_mv_stack = &(
-        ctx->md_local_blk_unit[blk_geom->blkidx_mds].ed_ref_mv_stack[cand->ref_frame_type][0]);
+        blk_ptr->ed_ref_mv_stack[cand->ref_frame_type][0]);
+#endif
 
     if (ctx->approx_inter_rate)
         return av1_inter_fast_cost_light(
@@ -1317,6 +1321,17 @@ uint64_t svt_aom_inter_fast_cost(PictureControlSet *pcs, struct ModeDecisionCont
     if (is_inter && frm_hdr->is_motion_mode_switchable && rf[1] != INTRA_FRAME) {
         MotionMode motion_mode_rd                      = cand->motion_mode;
         BlockSize  bsize                               = blk_geom->bsize;
+#if CLN_BLK_STRUCT_2
+        blk_ptr->num_proj_ref = cand->num_proj_ref;
+        MotionMode last_motion_mode_allowed = svt_aom_motion_mode_allowed(
+            pcs,
+            blk_ptr->num_proj_ref,
+            blk_ptr->overlappable_neighbors,
+            bsize,
+            rf[0],
+            rf[1],
+            inter_mode);
+#else
         blk_ptr->prediction_unit_array[0].num_proj_ref = cand->num_proj_ref;
         MotionMode last_motion_mode_allowed            = svt_aom_motion_mode_allowed(
             pcs,
@@ -1326,6 +1341,7 @@ uint64_t svt_aom_inter_fast_cost(PictureControlSet *pcs, struct ModeDecisionCont
             rf[0],
             rf[1],
             inter_mode);
+#endif
         switch (last_motion_mode_allowed) {
         case SIMPLE_TRANSLATION: break;
         case OBMC_CAUSAL:
@@ -1669,13 +1685,13 @@ void svt_aom_coding_loop_context_generation(PictureControlSet *pcs, ModeDecision
         ctx->skip_mode_ctx = av1_get_skip_mode_context(xd);
     }
     // Generate Partition context
-    ctx->md_local_blk_unit[blk_ptr->mds_idx].above_neighbor_partition =
+    blk_ptr->above_neighbor_partition =
         (((PartitionContext *)leaf_partition_na->top_array)[partition_above_neighbor_index].above ==
          (char)INVALID_NEIGHBOR_DATA)
         ? 0
         : ((PartitionContext *)leaf_partition_na->top_array)[partition_above_neighbor_index].above;
 
-    ctx->md_local_blk_unit[blk_ptr->mds_idx].left_neighbor_partition =
+    blk_ptr->left_neighbor_partition =
         (((PartitionContext *)leaf_partition_na->left_array)[partition_left_neighbor_index].left ==
          (char)INVALID_NEIGHBOR_DATA)
         ? 0
@@ -1999,14 +2015,14 @@ uint64_t svt_aom_partition_rate_cost(PictureParentControlSet *pcs, ModeDecisionC
     if (!has_rows && !has_cols) {
         return 0;
     }
-    const PartitionContextType left_ctx  = ctx->md_local_blk_unit[blk_mds_idx].left_neighbor_partition ==
+    const PartitionContextType left_ctx  = ctx->md_blk_arr_nsq[blk_mds_idx].left_neighbor_partition ==
             (char)(INVALID_NEIGHBOR_DATA)
          ? 0
-         : ctx->md_local_blk_unit[blk_mds_idx].left_neighbor_partition;
-    const PartitionContextType above_ctx = ctx->md_local_blk_unit[blk_mds_idx].above_neighbor_partition ==
+         : ctx->md_blk_arr_nsq[blk_mds_idx].left_neighbor_partition;
+    const PartitionContextType above_ctx = ctx->md_blk_arr_nsq[blk_mds_idx].above_neighbor_partition ==
             (char)(INVALID_NEIGHBOR_DATA)
         ? 0
-        : ctx->md_local_blk_unit[blk_mds_idx].above_neighbor_partition;
+        : ctx->md_blk_arr_nsq[blk_mds_idx].above_neighbor_partition;
     const int                  bsl       = mi_size_wide_log2[bsize] - mi_size_wide_log2[BLOCK_8X8];
     assert(bsl >= 0);
 

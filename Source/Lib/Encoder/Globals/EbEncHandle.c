@@ -4208,7 +4208,7 @@ static void set_param_based_on_input(SequenceControlSet *scs)
         else
             scs->static_config.qp = 30;
     }
-#if 1//OPT_MPASS_VBR3
+#if 0//OPT_MPASS_VBR3
         SVT_WARN("The new q value is %d\n", scs->static_config.qp);
 #endif
     scs->initial_qp = scs->static_config.qp;
@@ -4522,7 +4522,11 @@ static void set_param_based_on_input(SequenceControlSet *scs)
         }
     }
     else {
+#if TUNE_M2
+        if (scs->static_config.enc_mode <= ENC_M2) {
+#else
         if (scs->static_config.enc_mode <= ENC_M1) {
+#endif
             mrp_level = 2;
         }
         else if (scs->static_config.enc_mode <= ENC_M4) {
@@ -4531,9 +4535,11 @@ static void set_param_based_on_input(SequenceControlSet *scs)
         else if (scs->static_config.enc_mode <= ENC_M5) {
             mrp_level = 6;
         }
+#if !TUNE_M5_M6
         else if (scs->static_config.enc_mode <= ENC_M6) {
             mrp_level = 7;
         }
+#endif
         // any changes for preset ENC_M8 and higher should be separated for VBR and CRF in the control structure below
         else if (scs->static_config.rate_control_mode != SVT_AV1_RC_MODE_VBR) {
             if (scs->static_config.enc_mode <= ENC_M12)

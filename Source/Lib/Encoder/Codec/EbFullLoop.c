@@ -2417,7 +2417,7 @@ uint64_t svt_aom_d1_non_square_block_decision(PictureControlSet *pcs, ModeDecisi
         // Don't apply check to first block because nsq_cost_avail must be set to 0 for disallowed blocks
         if (!pcs->ppcs->sb_geom[ctx->sb_index].block_is_allowed[first_blk_idx + blk_it] && blk_it)
             continue;
-        tot_cost += ctx->md_local_blk_unit[first_blk_idx + blk_it].cost;
+        tot_cost += ctx->md_blk_arr_nsq[first_blk_idx + blk_it].cost;
         assert(IMPLIES(ctx->avail_blk_flag[first_blk_idx + blk_it], ctx->cost_avail[first_blk_idx + blk_it]));
         nsq_cost_avail &= ctx->cost_avail[first_blk_idx + blk_it];
     }
@@ -2432,10 +2432,10 @@ uint64_t svt_aom_d1_non_square_block_decision(PictureControlSet *pcs, ModeDecisi
     tot_cost += split_cost;
     if (nsq_cost_avail &&
         (d1_block_itr == 0 || !ctx->cost_avail[ctx->blk_geom->sqi_mds] ||
-         (tot_cost < ctx->md_local_blk_unit[ctx->blk_geom->sqi_mds].cost))) {
+         (tot_cost < ctx->md_blk_arr_nsq[ctx->blk_geom->sqi_mds].cost))) {
         ctx->cost_avail[ctx->blk_geom->sqi_mds] = 1;
         //store best partition cost in parent square
-        ctx->md_local_blk_unit[ctx->blk_geom->sqi_mds].cost     = tot_cost;
+        ctx->md_blk_arr_nsq[ctx->blk_geom->sqi_mds].cost     = tot_cost;
         ctx->md_blk_arr_nsq[ctx->blk_geom->sqi_mds].part        = from_shape_to_part[ctx->blk_geom->shape];
         ctx->md_blk_arr_nsq[ctx->blk_geom->sqi_mds].best_d1_blk = first_blk_idx;
     }
@@ -2463,10 +2463,10 @@ static void compute_depth_costs(ModeDecisionContext *ctx, PictureParentControlSe
     uint32_t curr_depth_blk1_mds = curr_depth_mds - 2 * step;
     uint32_t curr_depth_blk2_mds = curr_depth_mds - 1 * step;
     uint32_t curr_depth_blk3_mds = curr_depth_mds;
-    ctx->md_local_blk_unit[above_depth_mds].left_neighbor_partition =
-        ctx->md_local_blk_unit[curr_depth_blk0_mds].left_neighbor_partition;
-    ctx->md_local_blk_unit[above_depth_mds].above_neighbor_partition =
-        ctx->md_local_blk_unit[curr_depth_blk0_mds].above_neighbor_partition;
+    ctx->md_blk_arr_nsq[above_depth_mds].left_neighbor_partition =
+        ctx->md_blk_arr_nsq[curr_depth_blk0_mds].left_neighbor_partition;
+    ctx->md_blk_arr_nsq[above_depth_mds].above_neighbor_partition =
+        ctx->md_blk_arr_nsq[curr_depth_blk0_mds].above_neighbor_partition;
 
     // Get split rate for current depth
     above_split_rate = svt_aom_partition_rate_cost(
@@ -2494,13 +2494,13 @@ static void compute_depth_costs(ModeDecisionContext *ctx, PictureParentControlSe
         (ctx->cost_avail[curr_depth_blk1_mds] || !blk1_within_pic) &&
         (ctx->cost_avail[curr_depth_blk2_mds] || !blk2_within_pic) &&
         (ctx->cost_avail[curr_depth_blk3_mds] || !blk3_within_pic)) {
-        uint64_t blk0_cost = ctx->cost_avail[curr_depth_blk0_mds] ? ctx->md_local_blk_unit[curr_depth_blk0_mds].cost
+        uint64_t blk0_cost = ctx->cost_avail[curr_depth_blk0_mds] ? ctx->md_blk_arr_nsq[curr_depth_blk0_mds].cost
                                                                   : 0;
-        uint64_t blk1_cost = ctx->cost_avail[curr_depth_blk1_mds] ? ctx->md_local_blk_unit[curr_depth_blk1_mds].cost
+        uint64_t blk1_cost = ctx->cost_avail[curr_depth_blk1_mds] ? ctx->md_blk_arr_nsq[curr_depth_blk1_mds].cost
                                                                   : 0;
-        uint64_t blk2_cost = ctx->cost_avail[curr_depth_blk2_mds] ? ctx->md_local_blk_unit[curr_depth_blk2_mds].cost
+        uint64_t blk2_cost = ctx->cost_avail[curr_depth_blk2_mds] ? ctx->md_blk_arr_nsq[curr_depth_blk2_mds].cost
                                                                   : 0;
-        uint64_t blk3_cost = ctx->cost_avail[curr_depth_blk3_mds] ? ctx->md_local_blk_unit[curr_depth_blk3_mds].cost
+        uint64_t blk3_cost = ctx->cost_avail[curr_depth_blk3_mds] ? ctx->md_blk_arr_nsq[curr_depth_blk3_mds].cost
                                                                   : 0;
         *curr_depth_cost   = blk0_cost + blk1_cost + blk2_cost + blk3_cost + above_split_rate;
     } else {
@@ -2508,7 +2508,7 @@ static void compute_depth_costs(ModeDecisionContext *ctx, PictureParentControlSe
     }
 
     // Compute above depth cost
-    *above_depth_cost = ctx->cost_avail[above_depth_mds] ? ctx->md_local_blk_unit[above_depth_mds].cost : MAX_MODE_COST;
+    *above_depth_cost = ctx->cost_avail[above_depth_mds] ? ctx->md_blk_arr_nsq[above_depth_mds].cost : MAX_MODE_COST;
     // 128x128 in ISLICE should not have a cost available
     assert(
         IMPLIES((pcs->slice_type == I_SLICE && above_depth_mds == 0 && pcs->scs->seq_header.sb_size == BLOCK_128X128),
@@ -2546,12 +2546,12 @@ uint32_t svt_aom_d2_inter_depth_block_decision(PictureControlSet *pcs, ModeDecis
                 ctx->md_blk_arr_nsq[parent_depth_idx_mds].split_flag = TRUE;
             } else if (((parent_bias * parent_depth_cost) / 1000) <= current_depth_cost) {
                 ctx->md_blk_arr_nsq[parent_depth_idx_mds].split_flag = FALSE;
-                ctx->md_local_blk_unit[parent_depth_idx_mds].cost    = parent_depth_cost;
+                ctx->md_blk_arr_nsq[parent_depth_idx_mds].cost    = parent_depth_cost;
                 last_blk_index                                       = parent_depth_idx_mds;
                 ctx->cost_avail[parent_depth_idx_mds]                = 1;
                 assert(parent_depth_cost != MAX_MODE_COST);
             } else {
-                ctx->md_local_blk_unit[parent_depth_idx_mds].cost    = current_depth_cost;
+                ctx->md_blk_arr_nsq[parent_depth_idx_mds].cost    = current_depth_cost;
                 ctx->md_blk_arr_nsq[parent_depth_idx_mds].part       = PARTITION_SPLIT;
                 ctx->md_blk_arr_nsq[parent_depth_idx_mds].split_flag = TRUE;
                 ctx->cost_avail[parent_depth_idx_mds]                = 1;
@@ -2583,11 +2583,11 @@ void svt_aom_compute_depth_costs_md_skip_light_pd0(PictureParentControlSet *pcs,
         uint32_t curr_depth_cur_blk_mds = ctx->blk_geom->sqi_mds - i * step;
         if (!ctx->cost_avail[curr_depth_cur_blk_mds])
             continue;
-        *curr_depth_cost += ctx->md_local_blk_unit[curr_depth_cur_blk_mds].cost;
+        *curr_depth_cost += ctx->md_blk_arr_nsq[curr_depth_cur_blk_mds].cost;
     }
     // Parent neighbour arrays should be set in case parent depth was not allowed
-    ctx->md_local_blk_unit[above_depth_mds].left_neighbor_partition  = INVALID_NEIGHBOR_DATA;
-    ctx->md_local_blk_unit[above_depth_mds].above_neighbor_partition = INVALID_NEIGHBOR_DATA;
+    ctx->md_blk_arr_nsq[above_depth_mds].left_neighbor_partition  = INVALID_NEIGHBOR_DATA;
+    ctx->md_blk_arr_nsq[above_depth_mds].above_neighbor_partition = INVALID_NEIGHBOR_DATA;
     *curr_depth_cost += svt_aom_partition_rate_cost(pcs,
                                                     ctx,
                                                     above_depth_mds,
@@ -2596,7 +2596,7 @@ void svt_aom_compute_depth_costs_md_skip_light_pd0(PictureParentControlSet *pcs,
                                                     TRUE, // Use accurate split cost for early exit
                                                     ctx->md_rate_est_ctx);
 
-    *above_depth_cost = ctx->md_local_blk_unit[above_depth_mds].cost;
+    *above_depth_cost = ctx->md_blk_arr_nsq[above_depth_mds].cost;
 }
 void svt_aom_compute_depth_costs_md_skip(ModeDecisionContext *ctx, PictureParentControlSet *pcs,
                                          uint32_t above_depth_mds, uint32_t step, uint64_t *above_depth_cost,
@@ -2617,7 +2617,7 @@ void svt_aom_compute_depth_costs_md_skip(ModeDecisionContext *ctx, PictureParent
 
         if (!ctx->cost_avail[curr_depth_cur_blk_mds])
             continue;
-        *curr_depth_cost += ctx->md_local_blk_unit[curr_depth_cur_blk_mds].cost;
+        *curr_depth_cost += ctx->md_blk_arr_nsq[curr_depth_cur_blk_mds].cost;
     }
     /*
     ___________
@@ -2629,10 +2629,10 @@ void svt_aom_compute_depth_costs_md_skip(ModeDecisionContext *ctx, PictureParent
     */
     // current depth blocks
     uint32_t curr_depth_blk0_mds = ctx->blk_geom->sqi_mds - ctx->blk_geom->quadi * step;
-    ctx->md_local_blk_unit[above_depth_mds].left_neighbor_partition =
-        ctx->md_local_blk_unit[curr_depth_blk0_mds].left_neighbor_partition;
-    ctx->md_local_blk_unit[above_depth_mds].above_neighbor_partition =
-        ctx->md_local_blk_unit[curr_depth_blk0_mds].above_neighbor_partition;
+    ctx->md_blk_arr_nsq[above_depth_mds].left_neighbor_partition =
+        ctx->md_blk_arr_nsq[curr_depth_blk0_mds].left_neighbor_partition;
+    ctx->md_blk_arr_nsq[above_depth_mds].above_neighbor_partition =
+        ctx->md_blk_arr_nsq[curr_depth_blk0_mds].above_neighbor_partition;
 
     above_split_rate = svt_aom_partition_rate_cost(pcs,
                                                    ctx,
@@ -2643,5 +2643,5 @@ void svt_aom_compute_depth_costs_md_skip(ModeDecisionContext *ctx, PictureParent
                                                    ctx->md_rate_est_ctx);
 
     *curr_depth_cost += above_split_rate;
-    *above_depth_cost = ctx->md_local_blk_unit[above_depth_mds].cost;
+    *above_depth_cost = ctx->md_blk_arr_nsq[above_depth_mds].cost;
 }
