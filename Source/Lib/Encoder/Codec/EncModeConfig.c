@@ -48,8 +48,6 @@ uint8_t svt_aom_get_gm_core_level(EncMode enc_mode, bool super_res_off) {
     if (super_res_off) {
         if (enc_mode <= ENC_MR)
             gm_level = 1;
-        else if (enc_mode <= ENC_M0)
-            gm_level = 2;
         else if (enc_mode <= ENC_M2)
             gm_level = 2;
         else if (enc_mode <= ENC_M3)
