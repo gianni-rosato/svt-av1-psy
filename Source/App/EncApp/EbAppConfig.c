@@ -656,7 +656,7 @@ ConfigEntry config_entry_options[] = {
     {SINGLE_INPUT,
      PRESET_TOKEN,
      "Encoder preset, presets < 0 are for debugging. Higher presets means faster encodes, but with "
-     "a quality tradeoff, default is 10 [-1-13]",
+     "a quality tradeoff, default is 10 [-2-13]",
      set_cfg_generic_token},
 
     {SINGLE_INPUT,
@@ -2130,8 +2130,8 @@ uint32_t get_passes(int32_t argc, char *const argv[], EncPass enc_pass[MAX_ENC_P
     }
     if (find_token(argc, argv, PRESET_TOKEN, config_string) == 0) {
         enc_mode = strtol(config_string, NULL, 0);
-        if (enc_mode > MAX_ENC_PRESET || enc_mode < -1) {
-            fprintf(stderr, "Error: EncoderMode must be in the range of [-1-%d]\n", MAX_ENC_PRESET);
+        if (enc_mode > MAX_ENC_PRESET || enc_mode < -2) {
+            fprintf(stderr, "Error: EncoderMode must be in the range of [-2-%d]\n", MAX_ENC_PRESET);
             return 0;
         }
     }
