@@ -1123,6 +1123,7 @@ int32_t svt_aom_noise_model_get_grain_parameters(AomNoiseModel *const noise_mode
 
     film_grain->apply_grain       = 1;
     film_grain->update_parameters = 1;
+    film_grain->photon_noise      = 0;
 
     film_grain->ar_coeff_lag = noise_model->params.lag;
 
