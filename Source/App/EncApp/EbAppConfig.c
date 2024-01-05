@@ -180,6 +180,10 @@
 #define CHROMA_SAMPLE_POSITION_TOKEN "--chroma-sample-position"
 #define MASTERING_DISPLAY_TOKEN "--mastering-display"
 #define CONTENT_LIGHT_LEVEL_TOKEN "--content-light"
+
+// "Implement fgs-table option for photon noise" was co-authored by:
+// quietvoid: https://github.com/quietvoid/
+// Peter Frost: https://github.com/badcf00d <mail@pfrost.me>
 #define FGS_TABLE_TOKEN "--fgs-table"
 
 #define SFRAME_DIST_TOKEN "--sframe-dist"
