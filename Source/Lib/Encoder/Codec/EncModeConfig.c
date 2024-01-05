@@ -3118,9 +3118,9 @@ static EbErrorType svt_aom_check_high_freq(PictureControlSet *pcs, SuperBlock *s
             mv[REF_LIST_0] = (Mv){{0, 0}};
             if (inter_direction == 0) {
                 const int16_t mv_x = (me_results->me_mv_array[ctx->me_block_offset * max_refs + list0_ref_index].x_mv)
-                    << 1;
+                    << 3;
                 const int16_t mv_y = (me_results->me_mv_array[ctx->me_block_offset * max_refs + list0_ref_index].y_mv)
-                    << 1;
+                    << 3;
                 mv[REF_LIST_0] = (Mv){{mv_x, mv_y}};
                 ref_frame_type = svt_get_ref_frame_type(REF_LIST_0, list0_ref_index);
             }
@@ -3132,9 +3132,9 @@ static EbErrorType svt_aom_check_high_freq(PictureControlSet *pcs, SuperBlock *s
             if (is_compound_enabled) {
                 if (inter_direction == 1) {
                     const int16_t mv_x =
-                        (me_results->me_mv_array[ctx->me_block_offset * max_refs + max_l0 + list0_ref_index].x_mv) << 1;
+                        (me_results->me_mv_array[ctx->me_block_offset * max_refs + max_l0 + list0_ref_index].x_mv) << 3;
                     const int16_t mv_y =
-                        (me_results->me_mv_array[ctx->me_block_offset * max_refs + max_l0 + list0_ref_index].y_mv) << 1;
+                        (me_results->me_mv_array[ctx->me_block_offset * max_refs + max_l0 + list0_ref_index].y_mv) << 3;
                     mv[REF_LIST_1] = (Mv){{mv_x, mv_y}};
                     ref_frame_type = svt_get_ref_frame_type(REF_LIST_1, list1_ref_index);
                 }

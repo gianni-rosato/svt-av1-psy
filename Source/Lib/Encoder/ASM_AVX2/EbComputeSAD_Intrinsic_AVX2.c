@@ -4276,8 +4276,7 @@ void svt_ext_all_sad_calculation_8x8_16x16_avx2(uint8_t *src, uint32_t src_strid
             const __m128i minpos23   = _mm_unpacklo_epi16(minpos2, minpos3);
             const __m128i minpos0123 = _mm_unpacklo_epi32(minpos01, minpos23);
             const __m128i sad8x8     = _mm_unpacklo_epi16(minpos0123, _mm_setzero_si128());
-            const __m128i pos0123    = _mm_unpackhi_epi16(minpos0123, _mm_setzero_si128());
-            const __m128i pos8x8     = _mm_slli_epi32(pos0123, 2);
+            const __m128i pos8x8     = _mm_unpackhi_epi16(minpos0123, _mm_setzero_si128());
 
             __m128i       best_sad8x8 = _mm_loadu_si128((__m128i *)(p_best_sad_8x8 + start_8x8_pos));
             const __m128i mask        = _mm_cmplt_epi32(sad8x8, best_sad8x8);
@@ -4301,8 +4300,7 @@ void svt_ext_all_sad_calculation_8x8_16x16_avx2(uint8_t *src, uint32_t src_strid
             if (min16x16 < p_best_sad_16x16[start_16x16_pos]) {
                 p_best_sad_16x16[start_16x16_pos] = min16x16;
 
-                const __m128i pos               = _mm_srli_si128(minpos16x16, 2);
-                const __m128i pos16x16          = _mm_slli_epi32(pos, 2);
+                const __m128i pos16x16          = _mm_srli_si128(minpos16x16, 2);
                 const __m128i mv16x16           = _mm_add_epi16(mvs, pos16x16);
                 p_best_mv16x16[start_16x16_pos] = _mm_extract_epi32(mv16x16, 0);
             }
@@ -4379,7 +4377,7 @@ void svt_ext_eight_sad_calculation_32x32_64x64_avx2(uint32_t p_sad16x16[16][8], 
     *((__m256i *)p_sad64x64) = _mm256_add_epi32(tmp8, tmp9);
 
     DECLARE_ALIGNED(32, uint32_t, computed_idx[8]);
-    __m256i search_idx_avx2  = _mm256_setr_epi32(0, 4, 8, 12, 16, 20, 24, 28);
+    __m256i search_idx_avx2  = _mm256_setr_epi32(0, 1, 2, 3, 4, 5, 6, 7);
     __m256i mv_avx2          = _mm256_set1_epi32(mv);
     __m256i new_mv_avx2      = _mm256_add_epi32(search_idx_avx2, mv_avx2);
     new_mv_avx2              = _mm256_and_si256(new_mv_avx2, _mm256_set1_epi32(0xffff));

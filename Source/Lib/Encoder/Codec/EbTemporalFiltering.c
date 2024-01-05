@@ -1622,12 +1622,12 @@ static void tf_16x16_sub_pel_search(PictureParentControlSet *pcs, MeContext *me_
             mv_unit.mv->x     = _MVXT(me_ctx->p_best_mv16x16[mv_index]);
             mv_unit.mv->y     = _MVYT(me_ctx->p_best_mv16x16[mv_index]);
             // AV1 MVs are always in 1/8th pel precision.
-            mv_unit.mv->x = mv_unit.mv->x << 1;
-            mv_unit.mv->y = mv_unit.mv->y << 1;
+            mv_unit.mv->x = mv_unit.mv->x << 3;
+            mv_unit.mv->y = mv_unit.mv->y << 3;
 
             me_ctx->tf_16x16_block_error[idx_32x32 * 4 + idx_16x16] = INT_MAX;
-            signed short mv_x      = (_MVXT(me_ctx->p_best_mv16x16[mv_index])) << 1;
-            signed short mv_y      = (_MVYT(me_ctx->p_best_mv16x16[mv_index])) << 1;
+            signed short mv_x      = (_MVXT(me_ctx->p_best_mv16x16[mv_index])) << 3;
+            signed short mv_y      = (_MVYT(me_ctx->p_best_mv16x16[mv_index])) << 3;
             signed short best_mv_x = mv_x;
             signed short best_mv_y = mv_y;
 
@@ -2018,12 +2018,12 @@ static void tf_8x8_sub_pel_search(PictureParentControlSet *pcs, MeContext *me_ct
             mv_unit.mv->x = _MVXT(me_ctx->p_best_mv8x8[mv_index]);
             mv_unit.mv->y = _MVYT(me_ctx->p_best_mv8x8[mv_index]);
             // AV1 MVs are always in 1/8th pel precision.
-            mv_unit.mv->x = mv_unit.mv->x << 1;
-            mv_unit.mv->y = mv_unit.mv->y << 1;
+            mv_unit.mv->x = mv_unit.mv->x << 3;
+            mv_unit.mv->y = mv_unit.mv->y << 3;
 
             me_ctx->tf_8x8_block_error[idx_32x32 * 16 + 4 * idx_16x16 + idx_8x8] = INT_MAX;
-            signed short mv_x = (_MVXT(me_ctx->p_best_mv8x8[mv_index])) << 1;
-            signed short mv_y = (_MVYT(me_ctx->p_best_mv8x8[mv_index])) << 1;
+            signed short mv_x = (_MVXT(me_ctx->p_best_mv8x8[mv_index])) << 3;
+            signed short mv_y = (_MVYT(me_ctx->p_best_mv8x8[mv_index])) << 3;
             signed short best_mv_x = mv_x;
             signed short best_mv_y = mv_y;
 
@@ -2584,10 +2584,10 @@ static void tf_64x64_sub_pel_search(PictureParentControlSet *pcs, MeContext *me_
     me_ctx->tf_64x64_block_error   = INT_MAX;
 
     signed short mv_x = mv_unit.mv->x = (me_ctx->tf_use_pred_64x64_only_th == (uint8_t)~0)
-        ? me_ctx->search_results[0][0].hme_sc_x << 3 : (_MVXT(me_ctx->p_best_mv64x64[0])) << 1;
+        ? me_ctx->search_results[0][0].hme_sc_x << 3 : (_MVXT(me_ctx->p_best_mv64x64[0])) << 3;
 
     signed short mv_y = mv_unit.mv->y = (me_ctx->tf_use_pred_64x64_only_th == (uint8_t)~0)
-        ? me_ctx->search_results[0][0].hme_sc_y << 3 : (_MVYT(me_ctx->p_best_mv64x64[0])) << 1;
+        ? me_ctx->search_results[0][0].hme_sc_y << 3 : (_MVYT(me_ctx->p_best_mv64x64[0])) << 3;
 
     BlkStruct *blk_ptr = &blk_struct;
     signed short            best_mv_x = mv_x;
@@ -3351,11 +3351,11 @@ static void tf_32x32_sub_pel_search(PictureParentControlSet *pcs, MeContext *me_
     mv_unit.mv->x     = _MVXT(me_ctx->p_best_mv32x32[mv_index]);
     mv_unit.mv->y     = _MVYT(me_ctx->p_best_mv32x32[mv_index]);
     // AV1 MVs are always in 1/8th pel precision.
-    mv_unit.mv->x                                = mv_unit.mv->x << 1;
-    mv_unit.mv->y                                = mv_unit.mv->y << 1;
+    mv_unit.mv->x                                = mv_unit.mv->x << 3;
+    mv_unit.mv->y                                = mv_unit.mv->y << 3;
     me_ctx->tf_32x32_block_error[idx_32x32] = INT_MAX;
-    signed short            mv_x      = (_MVXT(me_ctx->p_best_mv32x32[mv_index])) << 1;
-    signed short            mv_y      = (_MVYT(me_ctx->p_best_mv32x32[mv_index])) << 1;
+    signed short            mv_x      = (_MVXT(me_ctx->p_best_mv32x32[mv_index])) << 3;
+    signed short            mv_y      = (_MVYT(me_ctx->p_best_mv32x32[mv_index])) << 3;
     signed short            best_mv_x = mv_x;
     signed short            best_mv_y = mv_y;
     TF_SUBPEL_SEARCH_PARAMS tf_sp_param;

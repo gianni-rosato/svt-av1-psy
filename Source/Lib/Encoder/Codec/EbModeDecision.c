@@ -2832,9 +2832,9 @@ static void inject_new_candidates_light_pd0(struct ModeDecisionContext *ctx, Pic
         ************* */
         if (inter_direction == 0) {
             const int16_t to_inject_mv_x = (me_results->me_mv_array[me_block_offset * max_refs + list0_ref_index].x_mv)
-                << 1;
+                << 3;
             const int16_t to_inject_mv_y = (me_results->me_mv_array[me_block_offset * max_refs + list0_ref_index].y_mv)
-                << 1;
+                << 3;
             uint8_t to_inject_ref_type = svt_get_ref_frame_type(REF_LIST_0, list0_ref_index);
 
             cand_array[cand_total_cnt].pred_mode = NEWMV;
@@ -2853,9 +2853,9 @@ static void inject_new_candidates_light_pd0(struct ModeDecisionContext *ctx, Pic
            ************* */
             if (inter_direction == 1) {
                 const int16_t to_inject_mv_x =
-                    (me_results->me_mv_array[me_block_offset * max_refs + max_l0 + list0_ref_index].x_mv) << 1;
+                    (me_results->me_mv_array[me_block_offset * max_refs + max_l0 + list0_ref_index].x_mv) << 3;
                 const int16_t to_inject_mv_y =
-                    (me_results->me_mv_array[me_block_offset * max_refs + max_l0 + list0_ref_index].y_mv) << 1;
+                    (me_results->me_mv_array[me_block_offset * max_refs + max_l0 + list0_ref_index].y_mv) << 3;
 
                 uint8_t to_inject_ref_type = svt_get_ref_frame_type(REF_LIST_1, list1_ref_index);
 
@@ -2877,10 +2877,10 @@ static void inject_new_candidates_light_pd0(struct ModeDecisionContext *ctx, Pic
                         (me_block_results_ptr->ref0_list > 0 ? max_l0 : 0) + list0_ref_index;
                     const uint32_t ref1_offset = me_block_offset * max_refs +
                         (me_block_results_ptr->ref1_list > 0 ? max_l0 : 0) + list1_ref_index;
-                    const int16_t to_inject_mv_x_l0  = (me_results->me_mv_array[ref0_offset].x_mv) << 1;
-                    const int16_t to_inject_mv_y_l0  = (me_results->me_mv_array[ref0_offset].y_mv) << 1;
-                    const int16_t to_inject_mv_x_l1  = (me_results->me_mv_array[ref1_offset].x_mv) << 1;
-                    const int16_t to_inject_mv_y_l1  = (me_results->me_mv_array[ref1_offset].y_mv) << 1;
+                    const int16_t to_inject_mv_x_l0  = (me_results->me_mv_array[ref0_offset].x_mv) << 3;
+                    const int16_t to_inject_mv_y_l0  = (me_results->me_mv_array[ref0_offset].y_mv) << 3;
+                    const int16_t to_inject_mv_x_l1  = (me_results->me_mv_array[ref1_offset].x_mv) << 3;
+                    const int16_t to_inject_mv_y_l1  = (me_results->me_mv_array[ref1_offset].y_mv) << 3;
                     uint8_t       to_inject_ref_type = av1_ref_frame_type((const MvReferenceFrame[]){
                         svt_get_ref_frame_type(me_block_results_ptr->ref0_list, list0_ref_index),
                         svt_get_ref_frame_type(me_block_results_ptr->ref1_list, list1_ref_index)});
