@@ -196,7 +196,6 @@ typedef struct AV1EncoderConfig {
     int use_highbitdepth;
     //aom_chroma_sample_position_t chroma_sample_position;
     int         film_grain_test_vector;
-    const char *film_grain_table_filename;
 
     // Configuration related to color.
     //ColorCfg color_cfg;

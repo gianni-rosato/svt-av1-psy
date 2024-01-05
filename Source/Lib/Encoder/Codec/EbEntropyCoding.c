@@ -3088,17 +3088,21 @@ static void write_film_grain_params(PictureParentControlSet *pcs, struct AomWrit
             (EbReferenceObject *)pcs->child_pcs->ref_pic_ptr_array[REF_LIST_0][0]->object_ptr;
         int32_t ref_idx         = 0;
         pars->update_parameters = 1;
-        if (svt_aom_film_grain_params_equal(&ref_obj_0->film_grain_params, pars)) {
-            pars->update_parameters = 0;
-            ref_idx                 = get_ref_frame_map_idx(pcs, LAST_FRAME);
-        } else if (pcs->child_pcs->slice_type == B_SLICE) {
-            EbReferenceObject *ref_obj_1 =
-                (EbReferenceObject *)pcs->child_pcs->ref_pic_ptr_array[REF_LIST_1][0]->object_ptr;
-            if (svt_aom_film_grain_params_equal(&ref_obj_1->film_grain_params, pars)) {
+
+        if (!pars->photon_noise) {
+            if (svt_aom_film_grain_params_equal(&ref_obj_0->film_grain_params, pars)) {
                 pars->update_parameters = 0;
-                ref_idx = get_ref_frame_map_idx(pcs, ALTREF_FRAME); //todo: will it always be ALF_REF in L1?
+                ref_idx                 = get_ref_frame_map_idx(pcs, LAST_FRAME);
+            } else if (pcs->child_pcs->slice_type == B_SLICE) {
+                EbReferenceObject *ref_obj_1 =
+                    (EbReferenceObject *)pcs->child_pcs->ref_pic_ptr_array[REF_LIST_1][0]->object_ptr;
+                if (svt_aom_film_grain_params_equal(&ref_obj_1->film_grain_params, pars)) {
+                    pars->update_parameters = 0;
+                    ref_idx = get_ref_frame_map_idx(pcs, ALTREF_FRAME); //todo: will it always be ALF_REF in L1?
+                }
             }
         }
+
         svt_aom_wb_write_bit(wb, pars->update_parameters);
         if (!pars->update_parameters) {
             svt_aom_wb_write_literal(wb, ref_idx, 3);

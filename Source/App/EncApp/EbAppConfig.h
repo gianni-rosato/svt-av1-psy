@@ -186,6 +186,8 @@ typedef struct EbConfig {
 
     // Instance Index
     uint8_t instance_idx;
+
+    char *fgs_table_path;
 } EbConfig;
 
 typedef struct EncChannel {

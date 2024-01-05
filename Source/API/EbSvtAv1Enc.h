@@ -931,6 +931,7 @@ typedef struct EbSvtAv1EncConfiguration {
     Bool    enable_roi_map;
     uint8_t padding[64 - sizeof(Bool)];
 
+    AomFilmGrain *fgs_table;
 } EbSvtAv1EncConfiguration;
 
 /**

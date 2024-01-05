@@ -18,7 +18,6 @@
 #include "EbCodingLoop.h"
 #include "EbSvtAv1ErrorCodes.h"
 #include "EbUtility.h"
-#include "grainSynthesis.h"
 //To fix warning C4013: 'svt_convert_16bit_to_8bit' undefined; assuming extern returning int
 #include "common_dsp_rtcd.h"
 #include "EbRateDistortionCost.h"
