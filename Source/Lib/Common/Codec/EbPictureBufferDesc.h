@@ -15,7 +15,6 @@
 #include <stdio.h>
 
 #include "EbDefinitions.h"
-#include "grainSynthesis.h"
 #include "EbSvtAv1Formats.h"
 #include "EbObject.h"
 #ifdef __cplusplus
