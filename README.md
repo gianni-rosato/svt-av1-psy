@@ -4,9 +4,14 @@ SVT-AV1-PSY is the Scalable Video Technology for AV1 (SVT-AV1 Encoder and Decode
 
 Added features:
 
-- `--fgs-table` argument for providing a film grain table for synthetic film grain (similar to aomenc's `--film-grain-table=` argument).
-- `--variance-boost-strength` \[SOON\] Provides control over our augmented AQ mode 2 which can utilize variance information in each frame for more consistent quality under high/low contrast scenes. Five curve options are provided, and the default is curve 3. `1: mild, 2: gentle, 3: medium, 4: aggressive, 5: extreme` | [More Info](https://gitlab.com/AOMediaCodec/SVT-AV1/-/issues/2105#note_1710523453)
-- `--new-variance-octile` \[SOON\] Enables a new 8x8-based variance algorithm and picks an 8x8 variance value per superblock to use as a boost. Lower values enable detecting more false negatives, at the expense of false positives (bitrate increase). There are four options. `0: disabled, use 64x64 variance algorithm instead 1: enabled, 1st octile 4: enabled, median 8: enabled, maximum`. The default is 4.
+- `--fgs-table`
+argument for providing a film grain table for synthetic film grain (similar to aomenc's `--film-grain-table=` argument).
+- `--variance-boost-strength`
+\[SOON\] Provides control over our augmented AQ mode 2 which can utilize variance information in each frame for more consistent quality under high/low contrast scenes. Five curve options are provided, and the default is curve 3. `1: mild, 2: gentle, 3: medium, 4: aggressive, 5: extreme` | [More Info](https://gitlab.com/AOMediaCodec/SVT-AV1/-/issues/2105#note_1710523453)
+- `--new-variance-octile`
+\[SOON\] Enables a new 8x8-based variance algorithm and picks an 8x8 variance value per superblock to use as a boost. Lower values enable detecting more false negatives, at the expense of false positives (bitrate increase). There are four options. 0: disabled, use 64x64 variance algorithm instead 1: enabled, 1st octile 4: enabled, median 8: enabled, maximum. The default is 4.
+- Preset -2
+A terrifically slow encoding mode for research purposes.
 
 We are not in any way affiliated with the Alliance for Open Media or contributors to the upstream SVT-AV1 project.
 
