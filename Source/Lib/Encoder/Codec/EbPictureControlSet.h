@@ -1214,6 +1214,8 @@ typedef struct PictureControlSetInitData {
     uint8_t calculate_variance;
     Bool    is_scale;
     bool    rtc_tune;
+    uint8_t variance_boost_strength;
+    uint8_t new_variance_octile;
 } PictureControlSetInitData;
 
 typedef struct Av1Comp {
