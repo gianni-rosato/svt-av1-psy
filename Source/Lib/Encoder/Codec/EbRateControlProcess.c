@@ -1367,10 +1367,10 @@ static int av1_get_deltaq_sb_variance_boost(
     // scale boost depending on base qindex, gentle (strength 2) curve (lower base_q_idx = lower boost)
     // sb variance  approximate deltaq boost (@ base_q_idx 255)
     // 256          0
-    // 64           25
-    // 16           50
-    // 4            75
-    // 1            100
+    // 64           22
+    // 16           44
+    // 4            66
+    // 1            88
 
     // copy sb 8x8 variance values to an array for ordering
     uint16_t ordered_variances[64];
@@ -1406,16 +1406,16 @@ static int av1_get_deltaq_sb_variance_boost(
     switch (strength)
     {
         case 1: // mild strength, crossover at 256 variance
-            max_boost = (-10 * log2((double)variance) + 80) * 0.75;
+            max_boost = (-10 * log2((double)variance) + 80) * 0.65;
             break;
         case 2: // gentle strength, crossover at 256 variance
-            max_boost = (-10 * log2((double)variance) + 80) * 1.25;
+            max_boost = (-10 * log2((double)variance) + 80) * 1.1;
             break;
         case 3: // medium strength, crossover at 256 variance
-            max_boost = (-10 * log2((double)variance) + 80) * 1.75;
+            max_boost = (-10 * log2((double)variance) + 80) * 1.6;
             break;
         case 4: // aggressive strength, crossover at 256 variance
-            max_boost = (-10 * log2((double)variance) + 80) * 3;
+            max_boost = (-10 * log2((double)variance) + 80) * 2.5;
             break;
         case 5: // extreme strength, crossover at 512 variance
             max_boost = (-20 * log2((double)variance) + 180) * 1.25;
@@ -1454,10 +1454,10 @@ static int av1_get_deltaq_sb_variance_boost_classic(
     // scale boost depending on base qindex, gentle (strength 2) curve (lower base_q_idx = lower boost)
     // sb variance  approximate deltaq boost (@ base_q_idx 255)
     // 256          0
-    // 64           25
-    // 16           50
-    // 4            75
-    // 1            100
+    // 64           22
+    // 16           44
+    // 4            66
+    // 1            88
 
     // variance = 0 areas are either completely flat patches or very fine gradients
     // SVT-AV1 doesn't have enough resolution to tell them apart, so let's assume they're not flat and boost them
@@ -1472,16 +1472,16 @@ static int av1_get_deltaq_sb_variance_boost_classic(
     switch (strength)
     {
         case 1: // mild strength, crossover at 256 variance
-            max_boost = (-10 * log2((double)variance) + 80) * 0.75;
+            max_boost = (-10 * log2((double)variance) + 80) * 0.65;
             break;
         case 2: // gentle strength, crossover at 256 variance
-            max_boost = (-10 * log2((double)variance) + 80) * 1.25;
+            max_boost = (-10 * log2((double)variance) + 80) * 1.1;
             break;
         case 3: // medium strength, crossover at 256 variance
-            max_boost = (-10 * log2((double)variance) + 80) * 1.75;
+            max_boost = (-10 * log2((double)variance) + 80) * 1.6;
             break;
         case 4: // aggressive strength, crossover at 256 variance
-            max_boost = (-10 * log2((double)variance) + 80) * 3;
+            max_boost = (-10 * log2((double)variance) + 80) * 2.5;
             break;
         case 5: // extreme strength, crossover at 512 variance
             max_boost = (-20 * log2((double)variance) + 180) * 1.25;
