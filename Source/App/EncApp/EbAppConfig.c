@@ -1394,8 +1394,8 @@ ConfigEntry config_entry[] = {
     {SINGLE_INPUT, NEW_VARIANCE_OCTILE_TOKEN, "NewVarianceOctile", set_cfg_generic_token},
 
     // Temporal filtering adjustment
-    {SINGLE_INPUT, TF_FILTER_STRENGTH_TOKEN, "TemporalFilteringStrength", set_cfg_generic_token}
-    {SINGLE_INPUT, TF_STRENGTH_THRESHOLD_TOKEN, "TemporalFilteringStregthThreshold", set_cfg_generic_token}
+    {SINGLE_INPUT, TF_FILTER_STRENGTH_TOKEN, "TemporalFilteringStrength", set_cfg_generic_token},
+    {SINGLE_INPUT, TF_STRENGTH_THRESHOLD_TOKEN, "TemporalFilteringStregthThreshold", set_cfg_generic_token},
 
     // Termination
     {SINGLE_INPUT, NULL, NULL, NULL}};

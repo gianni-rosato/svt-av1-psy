@@ -12,7 +12,6 @@
 #ifndef EbPictureControlSet_h
 #define EbPictureControlSet_h
 
-#include <cstdint>
 #include "EbSvtAv1Enc.h"
 #include "EbDefinitions.h"
 #include "EbSystemResourceManager.h"
