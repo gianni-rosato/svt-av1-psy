@@ -876,6 +876,16 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet *scs) {
         return_error = EB_ErrorBadParameter;
     }
 
+    if (config->temporal_filtering_strength > 10) {
+        SVT_ERROR("Instance %u: Temporal filtering strength must be between 1 and 10\n", channel_number + 1);
+        return_error = EB_ErrorBadParameter;
+    }
+
+    if (config->temporal_strength_threshold > 10) {
+        SVT_ERROR("Instance %u: Temporal strength threshold must be between 1 and 10\n", channel_number + 1);
+        return_error = EB_ErrorBadParameter;
+    }
+
     return return_error;
 }
 
@@ -1024,6 +1034,8 @@ EbErrorType svt_av1_set_default_params(EbSvtAv1EncConfiguration *config_ptr) {
     config_ptr->enable_roi_map                    = false;
     config_ptr->variance_boost_strength           = 3;
     config_ptr->new_variance_octile               = 4;
+    config_ptr->temporal_filtering_strength       = 2;
+    config_ptr->temporal_strength_threshold       = 5;
     return return_error;
 }
 
@@ -1987,6 +1999,8 @@ EB_API EbErrorType svt_av1_enc_parse_parameter(EbSvtAv1EncConfiguration *config_
         {"startup-mg-size", &config_struct->startup_mg_size},
         {"variance-boost-strength", &config_struct->variance_boost_strength},
         {"new-variance-octile", &config_struct->new_variance_octile},
+        {"temporal_filtering_strength", &config_struct->temporal_filtering_strength},
+        {"temporal_strength_threshold", &config_struct->temporal_strength_threshold},
     };
     const size_t uint8_opts_size = sizeof(uint8_opts) / sizeof(uint8_opts[0]);
 

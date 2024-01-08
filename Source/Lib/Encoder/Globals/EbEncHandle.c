@@ -1614,6 +1614,8 @@ EB_API EbErrorType svt_av1_enc_init(EbComponentType *svt_enc_component)
         input_data.static_config = enc_handle_ptr->scs_instance_array[instance_index]->scs->static_config;
         input_data.variance_boost_strength = enc_handle_ptr->scs_instance_array[instance_index]->scs->static_config.variance_boost_strength;
         input_data.new_variance_octile = enc_handle_ptr->scs_instance_array[instance_index]->scs->static_config.new_variance_octile;
+        input_data.temporal_filtering_strength = enc_handle_ptr->scs_instance_array[instance_index]->scs->static_config.temporal_filtering_strength;
+        input_data.temporal_strength_threshold = enc_handle_ptr->scs_instance_array[instance_index]->scs->static_config.temporal_strength_threshold;
 
         EB_NEW(
             enc_handle_ptr->picture_parent_control_set_pool_ptr_array[instance_index],

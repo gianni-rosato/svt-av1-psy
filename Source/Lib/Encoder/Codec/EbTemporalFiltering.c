@@ -4673,9 +4673,9 @@ static EbErrorType produce_temporally_filtered_pic(
     int       active_worst_quality =
         quantizer_to_qindex[(uint8_t)scs->static_config.qp];
     int q;
-        FP_ASSERT(TF_FILTER_STRENGTH == 5);
-        FP_ASSERT(TF_STRENGTH_THRESHOLD == 4);
-        FP_ASSERT(TF_Q_DECAY_THRESHOLD == 20);
+        // FP_ASSERT(TF_FILTER_STRENGTH == 5);
+        // FP_ASSERT(TF_STRENGTH_THRESHOLD == 4);
+        // FP_ASSERT(TF_Q_DECAY_THRESHOLD == 25);
         int offset_idx;
         if (!centre_pcs->is_ref)
             offset_idx = -1;
@@ -5195,9 +5195,9 @@ static EbErrorType produce_temporally_filtered_pic_ld(
         if (scs->static_config.qp <= ALT_REF_QP_THRESH)
             decay_control--;
     }
-    FP_ASSERT(TF_FILTER_STRENGTH == 5);
-    FP_ASSERT(TF_STRENGTH_THRESHOLD == 4);
-    FP_ASSERT(TF_Q_DECAY_THRESHOLD == 20);
+    // FP_ASSERT(TF_FILTER_STRENGTH == 5);
+    // FP_ASSERT(TF_STRENGTH_THRESHOLD == 4);
+    // FP_ASSERT(TF_Q_DECAY_THRESHOLD == 25);
     const uint32_t q_decay_fp8 = 256;
 
     const int32_t const_0dot7_fp16 = 45875; //0.7

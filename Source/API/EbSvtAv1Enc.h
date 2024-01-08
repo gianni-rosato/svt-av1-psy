@@ -953,6 +953,19 @@ typedef struct EbSvtAv1EncConfiguration {
        Default is 4
     */
     uint8_t new_variance_octile;
+
+    /**
+     * @brief Manually adjust temporal filtering parameters
+     *
+     * Sets values in EbTemporalFiltering.c as manually specified by the user to adjust the temporal filter's strength and
+     * the threshold for using motion search distance to adjust the filtering weight.
+     *
+     * Default is 2 for temporal filtering strength [1-10]
+     * Default is 5 for temporal filtering strength threshold [1-10]
+     */
+    uint8_t temporal_filtering_strength;
+    uint8_t temporal_strength_threshold;
+
 } EbSvtAv1EncConfiguration;
 
 /**
