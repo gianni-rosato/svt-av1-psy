@@ -1424,16 +1424,19 @@ static int av1_get_deltaq_sb_variance_boost(
 
     max_boost = CLIP3(0, VAR_BOOST_MAX_UNSCALED_DELTAQ_RANGE, max_boost);
 
-    // current scale boost algorithm, accurate across all CRFs
+    // current scale boost algorithm (with bias), accurate across all CRFs
     int32_t base_q = svt_av1_convert_qindex_to_q_fp8(base_q_idx, bit_depth);
     int32_t target_q = (int32_t)(base_q / pow(1.018, max_boost));
 
-    int32_t scaled_boost = (int32_t)(base_q_idx * -svt_av1_compute_qdelta_fp(base_q, target_q, bit_depth) / 255);
+    int32_t scaled_boost = (int32_t)((base_q_idx + 40) * -svt_av1_compute_qdelta_fp(base_q, target_q, bit_depth) / (255 + 40));
     scaled_boost = AOMMIN(VAR_BOOST_MAX_DELTAQ_RANGE, scaled_boost);
 
 #if DEBUG_VAR_BOOST
-    // previous scale boost algorithm, inaccurate for low CRFs (calculated here for debugging purposes)
-    int32_t old_scaled_boost = (int32_t)(base_q_idx * max_boost / 255);
+    // previous scale boost algorithm, not enough for very low CRFs
+    int32_t old_base_q = svt_av1_convert_qindex_to_q_fp8(base_q_idx, bit_depth);
+    int32_t old_target_q = (int32_t)(old_base_q / pow(1.018, max_boost));
+
+    int32_t old_scaled_boost = (int32_t)(base_q_idx * -svt_av1_compute_qdelta_fp(old_base_q, old_target_q, bit_depth) / 255);
     old_scaled_boost = AOMMIN(VAR_BOOST_MAX_DELTAQ_RANGE, old_scaled_boost);
 
     SVT_INFO("Variance: %d, Strength: %d, Max boost: %f, Old scaled boost: %d, Scaled boost: %d, Base q: %d, Target q: %d\n", variance, strength, max_boost, old_scaled_boost, scaled_boost, base_q, target_q);
@@ -1485,19 +1488,22 @@ static int av1_get_deltaq_sb_variance_boost_classic(
             break;
     }
 
-    max_boost = CLIP3(0, 120, max_boost);
+    max_boost = CLIP3(0, VAR_BOOST_MAX_UNSCALED_DELTAQ_RANGE, max_boost);
 
-    // current scale boost algorithm, accurate across all CRFs
+    // current scale boost algorithm (with bias), accurate across all CRFs
     int32_t base_q = svt_av1_convert_qindex_to_q_fp8(base_q_idx, bit_depth);
     int32_t target_q = (int32_t)(base_q / pow(1.018, max_boost));
 
-    int32_t scaled_boost = (int32_t)(base_q_idx * -svt_av1_compute_qdelta_fp(base_q, target_q, bit_depth) / 255);
-    scaled_boost = AOMMIN(80, scaled_boost);
+    int32_t scaled_boost = (int32_t)((base_q_idx + 40) * -svt_av1_compute_qdelta_fp(base_q, target_q, bit_depth) / (255 + 40));
+    scaled_boost = AOMMIN(VAR_BOOST_MAX_DELTAQ_RANGE, scaled_boost);
 
 #if DEBUG_VAR_BOOST
-    // previous scale boost algorithm, inaccurate for low CRFs (calculated here for debugging purposes)
-    int32_t old_scaled_boost = (int32_t)(base_q_idx * max_boost / 255);
-    old_scaled_boost = AOMMIN(80, old_scaled_boost);
+    // previous scale boost algorithm, not enough for very low CRFs
+    int32_t old_base_q = svt_av1_convert_qindex_to_q_fp8(base_q_idx, bit_depth);
+    int32_t old_target_q = (int32_t)(old_base_q / pow(1.018, max_boost));
+
+    int32_t old_scaled_boost = (int32_t)(base_q_idx * -svt_av1_compute_qdelta_fp(old_base_q, old_target_q, bit_depth) / 255);
+    old_scaled_boost = AOMMIN(VAR_BOOST_MAX_DELTAQ_RANGE, old_scaled_boost);
 
     SVT_INFO("Variance: %d, Strength: %d, Max boost: %f, Old scaled boost: %d, Scaled boost: %d, Base q: %d, Target q: %d\n", variance, strength, max_boost, old_scaled_boost, scaled_boost, base_q, target_q);
 #endif
