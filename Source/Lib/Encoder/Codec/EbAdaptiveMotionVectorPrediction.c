@@ -1191,7 +1191,11 @@ void svt_aom_generate_av1_mvp_table(ModeDecisionContext *ctx, BlkStruct *blk_ptr
                           ctx,
                           symteric_refs,
                           mv_ref0,
+#if CLN_INTER_MODE_CTX
+                          &ctx->inter_mode_ctx[ref_frame]);
+#else
                           &blk_ptr->inter_mode_ctx[ref_frame]);
+#endif
     }
 }
 void svt_aom_get_av1_mv_pred_drl(ModeDecisionContext *ctx, BlkStruct *blk_ptr, MvReferenceFrame ref_frame,

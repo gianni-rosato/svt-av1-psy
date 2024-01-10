@@ -978,7 +978,11 @@ static uint64_t av1_inter_fast_cost_light(struct ModeDecisionContext *ctx, BlkSt
     MvReferenceFrame     rf[2];
     av1_set_ref_frame(rf, cand->ref_frame_type);
     const uint8_t  is_compound  = is_inter_compound_mode(cand->pred_mode);
+#if CLN_INTER_MODE_CTX
+    const uint32_t mode_context = svt_aom_mode_context_analyzer(ctx->inter_mode_ctx[cand->ref_frame_type], rf);
+#else
     const uint32_t mode_context = svt_aom_mode_context_analyzer(blk_ptr->inter_mode_ctx[cand->ref_frame_type], rf);
+#endif
     uint64_t       reference_picture_bits_num = 0;
     reference_picture_bits_num                = ctx->estimate_ref_frames_num_bits[cand->ref_frame_type];
     if (is_compound) {
@@ -1163,7 +1167,11 @@ uint64_t svt_aom_inter_fast_cost(PictureControlSet *pcs, struct ModeDecisionCont
     MvReferenceFrame rf[2];
     av1_set_ref_frame(rf, cand->ref_frame_type);
     const uint8_t is_compound  = is_inter_compound_mode(cand->pred_mode);
+#if CLN_INTER_MODE_CTX
+    uint32_t      mode_context = svt_aom_mode_context_analyzer(ctx->inter_mode_ctx[cand->ref_frame_type], rf);
+#else
     uint32_t      mode_context = svt_aom_mode_context_analyzer(blk_ptr->inter_mode_ctx[cand->ref_frame_type], rf);
+#endif
     uint64_t      reference_picture_bits_num = 0;
 
     //Reference Type and Mode Bit estimation
@@ -1597,8 +1605,13 @@ void svt_aom_full_cost(PictureControlSet *pcs, ModeDecisionContext *ctx, struct 
             cand_bf->cand->transform_type_uv = DCT_DCT;
             assert(DCT_DCT == 0);
             memset(cand_bf->cand->transform_type, DCT_DCT, 16 * sizeof(cand_bf->cand->transform_type[0]));
+#if CLN_QUANT_ONE_BYTE
+            memset(&cand_bf->quant_dc, 0, sizeof(QuantDcData));
+            memset(&cand_bf->eob, 0, sizeof(EobData));
+#else
             memset(cand_bf->quantized_dc, 0, 3 * 16 * sizeof(cand_bf->quantized_dc[0][0]));
             memset(cand_bf->eob, 0, 3 * 16 * sizeof(cand_bf->eob[0][0]));
+#endif
         }
     }
 
@@ -1649,8 +1662,13 @@ void svt_aom_full_cost(PictureControlSet *pcs, ModeDecisionContext *ctx, struct 
             assert(DCT_DCT == 0);
             memset(cand_bf->cand->transform_type, DCT_DCT, 16 * sizeof(cand_bf->cand->transform_type[0]));
             cand_bf->cand->transform_type_uv = DCT_DCT;
+#if CLN_QUANT_ONE_BYTE
+            memset(&cand_bf->quant_dc, 0, sizeof(QuantDcData));
+            memset(&cand_bf->eob, 0, sizeof(EobData));
+#else
             memset(cand_bf->quantized_dc, 0, 3 * 16 * sizeof(cand_bf->quantized_dc[0][0]));
             memset(cand_bf->eob, 0, 3 * 16 * sizeof(cand_bf->eob[0][0]));
+#endif
         }
     }
 

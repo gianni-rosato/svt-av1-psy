@@ -334,6 +334,9 @@ enum {
 #endif
 
 #define MAX_TXB_COUNT 16 // Maximum number of transform blocks per depth
+#if CLN_TX_DATA
+#define MAX_TXB_COUNT_UV 4 // Maximum number of transform blocks per depth for chroma planes
+#endif
 #define MAX_LAD 120 // max lookahead-distance 2x60fps
 #define ROUND_UV(x) (((x) >> 3) << 3)
 #define AV1_PROB_COST_SHIFT 9
@@ -1268,8 +1271,10 @@ typedef struct {
 
     /*!< Specifies the type of mask to be used during blending. */
     DIFFWTD_MASK_TYPE mask_type;
+#if !CLN_SEG_MASK
     // Temp buffer used for inter prediction
     uint8_t *seg_mask;
+#endif
 } InterInterCompoundData;
 typedef enum ATTRIBUTE_PACKED {
     FILTER_DC_PRED,
@@ -1279,6 +1284,7 @@ typedef enum ATTRIBUTE_PACKED {
     FILTER_PAETH_PRED,
     FILTER_INTRA_MODES,
 } FilterIntraMode;
+#if !CLN_SEG_MASK
 typedef struct {
     /*!< Specifies how the two predictions should be blended together. */
     CompoundType type;
@@ -1292,6 +1298,7 @@ typedef struct {
     /*!< Specifies the type of mask to be used during blending. */
     DIFFWTD_MASK_TYPE mask_type;
 } EcInterInterCompoundData;
+#endif
 static const PredictionMode fimode_to_intramode[FILTER_INTRA_MODES] = {DC_PRED, V_PRED, H_PRED, D157_PRED, PAETH_PRED};
 #define DIRECTIONAL_MODES 8
 #define MAX_ANGLE_DELTA 3
@@ -2201,10 +2208,12 @@ typedef struct {
     PaletteModeInfo pmi;
     uint8_t  *color_idx_map;
 } PaletteInfo;
+#if !CLN_EC_PAL_STRUCT
 typedef struct {
     PaletteModeInfo pmi;
     uint8_t* color_idx_map;
 } EcPaletteInfo;
+#endif
 /** The EbHandle type is used to define OS object handles for threads,
 semaphores, mutexs, etc.
 */

@@ -168,6 +168,25 @@ typedef struct IntraBcContext {
     // be removed)
     uint8_t approx_inter_rate;
 } IntraBcContext;
+#if CLN_TX_DATA
+typedef struct EobData {
+    uint16_t y[MAX_TXB_COUNT];
+    uint16_t u[MAX_TXB_COUNT_UV];
+    uint16_t v[MAX_TXB_COUNT_UV];
+} EobData;
+
+typedef struct QuantDcData {
+#if CLN_QUANT_ONE_BYTE
+    uint8_t y[MAX_TXB_COUNT];
+    uint8_t u[MAX_TXB_COUNT_UV];
+    uint8_t v[MAX_TXB_COUNT_UV];
+#else
+    int32_t y[MAX_TXB_COUNT];
+    int32_t u[MAX_TXB_COUNT_UV];
+    int32_t v[MAX_TXB_COUNT_UV];
+#endif
+} QuantDcData;
+#endif
 
 #if CLN_BLK_STRUCT_3
 typedef struct BlkStruct {
@@ -189,11 +208,21 @@ typedef struct BlkStruct {
     uint64_t default_cost;
     uint64_t total_rate;
     uint32_t full_dist;
+#if CLN_TX_DATA
+    QuantDcData quant_dc;
+    EobData eob;
+    TxType tx_type[MAX_TXB_COUNT];
+    TxType tx_type_uv;
+    uint16_t y_has_coeff;
+    uint8_t u_has_coeff;
+    uint8_t v_has_coeff;
+#else
     TransformUnit txb_array[TRANSFORM_UNIT_MAX_COUNT];
     int32_t quantized_dc[3][MAX_TXB_COUNT];
     uint8_t  u_has_coeff[TRANSFORM_UNIT_MAX_COUNT];
     uint8_t  v_has_coeff[TRANSFORM_UNIT_MAX_COUNT];
     uint8_t  y_has_coeff[TRANSFORM_UNIT_MAX_COUNT];
+#endif
     PaletteInfo* palette_info;
     uint8_t palette_mem; // status of palette info alloc
     uint8_t palette_size[2];
@@ -216,7 +245,11 @@ typedef struct BlkStruct {
     InterInterCompoundData interinter_comp;
     uint32_t               interp_filters;
     uint8_t                interintra_wedge_index;
+#if CLN_INTER_MODE_CTX
+    int16_t inter_mode_ctx;
+#else
     int16_t inter_mode_ctx[MODE_CTX_REF_FRAMES];
+#endif
     // equivalent of leaf_index in the nscu context. we will keep both for now and use the right one
     // on a case by case basis.
     uint16_t mds_idx;
@@ -251,13 +284,13 @@ typedef struct BlkStruct {
     // wm
     EbWarpedMotionParams wm_params_l0;
     EbWarpedMotionParams wm_params_l1;
+#if !CLN_BLK_STRUCT_4
     // non-normative txs
     uint16_t min_nz_h;
     uint16_t min_nz_v;
+#endif
 
     unsigned cnt_nz_coeff : 12;
-    unsigned top_neighbor_depth : 8;
-    unsigned left_neighbor_depth : 8;
     unsigned prediction_mode_flag : 2;
     // ec; skip coeff only. as defined in section 6.10.11 of the av1 text
     unsigned block_has_coeff : 1;
@@ -365,9 +398,55 @@ typedef struct BlkStruct {
     uint16_t min_nz_v;
 } BlkStruct;
 #endif
-
+#if CLN_EC_BLK_STRUCT
 typedef struct EcBlkStruct {
+    MacroBlockD* av1xd;
+    EobData eob;
+    TxType tx_type[MAX_TXB_COUNT];
+    TxType tx_type_uv;
+
+    PaletteInfo* palette_info;
+    uint8_t palette_size[2];
+    IntMv predmv[2];
+    InterInterCompoundData interinter_comp;
+
+    // Intra Mode
+    int8_t angle_delta[PLANE_TYPES];
+    // Inter Mode
+    MotionMode motion_mode;
+    uint16_t   num_proj_ref;
+    uint32_t   overlappable_neighbors;
+    uint8_t    cfl_alpha_idx; // Index of the alpha Cb and alpha Cr combination
+    uint8_t    cfl_alpha_signs; // Joint sign of alpha Cb and alpha Cr
+    uint8_t    interintra_wedge_index;
+
+    int16_t inter_mode_ctx;
+    // equivalent of leaf_index in the nscu context. we will keep both for now and use the right one
+    // on a case by case basis.
+    uint16_t mds_idx;
+
+    uint8_t qindex;
+
+    uint8_t drl_index;
+    // Store the drl ctx in coding loop to avoid storing final_ref_mv_stack and ref_mv_count for EC
+    int8_t drl_ctx[2];
+    // Store the drl ctx in coding loop to avoid storing final_ref_mv_stack and ref_mv_count for EC
+    int8_t drl_ctx_near[2];
+
+    InterIntraMode interintra_mode;
+    uint8_t        is_interintra_used;
+    uint8_t        use_wedge_interintra;
+    uint8_t        filter_intra_mode;
+} EcBlkStruct;
+#else
+typedef struct EcBlkStruct {
+#if CLN_TX_DATA
+    EobData eob;
+    TxType tx_type[MAX_TXB_COUNT];
+    TxType tx_type_uv;
+#else
     EcTransformUnit          txb_array[TRANSFORM_UNIT_MAX_COUNT]; // ec
+#endif
 #if CLN_BLK_STRUCT_2
     uint8_t inter_pred_direction_index;
 
@@ -382,12 +461,20 @@ typedef struct EcBlkStruct {
 #else
     EcPredictionUnit         prediction_unit_array[MAX_NUM_OF_PU_PER_CU]; // ec
 #endif
+#if CLN_EC_PAL_STRUCT
+    PaletteInfo* palette_info;
+#else
     EcPaletteInfo           *palette_info; // ec
+#endif
     uint8_t                  palette_mem; // status of palette info alloc
     uint8_t                  palette_size[2];
     IntMv                    predmv[2]; // ec
     MacroBlockD             *av1xd;
+#if CLN_SEG_MASK
+    InterInterCompoundData interinter_comp; // ec
+#else
     EcInterInterCompoundData interinter_comp; // ec
+#endif
     uint8_t                  interintra_wedge_index; // ec
 
     int16_t inter_mode_ctx;
@@ -409,6 +496,7 @@ typedef struct EcBlkStruct {
     uint8_t        use_wedge_interintra; // ec
     uint8_t        filter_intra_mode; // ec
 } EcBlkStruct;
+#endif
 
 typedef struct TplStats {
     int64_t  srcrf_dist;

@@ -2791,8 +2791,13 @@ static uint8_t is_child_to_current_deviation_small(PictureControlSet *pcs, ModeD
     if (ctx->intra_ctrls.enable_intra && (ctx->blk_ptr->prediction_mode_flag == INTER_MODE)) {
 #endif
         th_offset -= 20;
+#if CLN_TX_DATA
+        if (ctx->lpd0_ctrls.pd0_level < VERY_LIGHT_PD0 && !ctx->md_blk_arr_nsq[blk_geom->sqi_mds].y_has_coeff)
+            th_offset -= 20;
+#else
         if (ctx->lpd0_ctrls.pd0_level < VERY_LIGHT_PD0 && !ctx->md_blk_arr_nsq[blk_geom->sqi_mds].y_has_coeff[0])
             th_offset -= 20;
+#endif
     }
     uint32_t split_cost_th = ctx->depth_refinement_ctrls.split_rate_th;
     // Skip testing child depth if the rate cost of splitting is high
@@ -3405,7 +3410,11 @@ static void exaustive_light_pd1_features(ModeDecisionContext *md_ctx, PicturePar
             md_ctx->spatial_sse_ctrls.spatial_sse_full_loop_level == 0 && md_ctx->md_sq_me_ctrls.enabled == 0 &&
             md_ctx->md_pme_ctrls.enabled == 0 && md_ctx->txt_ctrls.enabled == 0 &&
             md_ctx->mds0_ctrls.mds0_dist_type != SSD && md_ctx->unipred3x3_injection == 0 &&
+#if OPT_BLOCK_SETTINGS
+            md_ctx->bipred3x3_ctrls.enabled == 0 && md_ctx->inter_comp_ctrls.tot_comp_types == 1 &&
+#else
             md_ctx->bipred3x3_ctrls.enabled == 0 && md_ctx->inter_compound_mode == 0 &&
+#endif
             md_ctx->md_pic_obmc_level == 0 && md_ctx->md_filter_intra_level == 0 &&
             md_ctx->new_nearest_near_comb_injection == 0 && md_ctx->md_palette_level == 0 &&
 #if OPT_MERGE_INTER_CANDS

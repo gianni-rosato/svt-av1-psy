@@ -16,6 +16,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+#if !CLN_TX_DATA // TODO: Remove this file
 #define TRANSFORM_UNIT_MAX_COUNT 16
 #pragma pack(push, 1)
 typedef struct TransformUnit {
@@ -28,6 +29,7 @@ typedef struct EcTransformUnit {
     TxType   transform_type[PLANE_TYPES];
 } EcTransformUnit;
 #pragma pack(pop)
+#endif
 #ifdef __cplusplus
 }
 #endif

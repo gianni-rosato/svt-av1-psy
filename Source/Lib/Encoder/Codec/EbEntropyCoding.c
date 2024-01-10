@@ -488,7 +488,11 @@ static int32_t av1_write_coeffs_txb_1d(PictureParentControlSet *ppcs, FRAME_CONT
     (void)pu_index;
     (void)coeff_stride;
     const TxSize           txs_ctx    = (TxSize)((txsize_sqr_map[tx_size] + txsize_sqr_up_map[tx_size] + 1) >> 1);
+#if CLN_TX_DATA
+    TxType                 tx_type = component_type == COMPONENT_LUMA ? blk_ptr->tx_type[txb_index] : blk_ptr->tx_type_uv;
+#else
     TxType                 tx_type    = blk_ptr->txb_array[txb_index].transform_type[component_type];
+#endif
     const ScanOrder *const scan_order = &av1_scan_orders[tx_size][tx_type];
     const int16_t *const   scan       = scan_order->scan;
     int32_t                c;
@@ -504,6 +508,10 @@ static int32_t av1_write_coeffs_txb_1d(PictureParentControlSet *ppcs, FRAME_CONT
 
     aom_write_symbol(ec_writer, eob == 0, frame_context->txb_skip_cdf[txs_ctx][txb_skip_ctx], 2);
 
+#if CLN_TX_DATA
+    assert(IMPLIES((component_type == 0 && eob == 0), tx_type == DCT_DCT));
+    assert(IMPLIES((is_inter_mode(mbmi->block_mi.mode) && component_type == 0 && eob == 0 && txb_index == 0), blk_ptr->tx_type_uv == DCT_DCT));
+#else
     if (component_type == 0 && eob == 0) {
         // INTER. Chroma follows Luma in transform type
         if (is_inter_mode(mbmi->block_mi.mode)) {
@@ -514,6 +522,7 @@ static int32_t av1_write_coeffs_txb_1d(PictureParentControlSet *ppcs, FRAME_CONT
         }
         assert(tx_type == DCT_DCT);
     }
+#endif
     if (eob == 0)
         return 0;
     svt_av1_txb_init_levels(coeff_buffer_ptr, width, height, levels);
@@ -668,7 +677,11 @@ static EbErrorType av1_encode_tx_coef_y(PictureControlSet *pcs, EntropyCodingCon
                                                       COMPONENT_LUMA,
                                                       txb_skip_ctx,
                                                       dc_sign_ctx,
+#if CLN_TX_DATA
+                                                      blk_ptr->eob.y[txb_itr]);
+#else
                                                       blk_ptr->txb_array[txb_itr].nz_coef_count[0]);
+#endif
 
         // Update the luma Dc Sign Level Coeff Neighbor Array
         uint8_t dc_sign_level_coeff = (uint8_t)cul_level_y;
@@ -735,7 +748,11 @@ static EbErrorType av1_encode_tx_coef_uv(PictureControlSet *pcs, EntropyCodingCo
                                                            COMPONENT_CHROMA,
                                                            txb_skip_ctx,
                                                            dc_sign_ctx,
+#if CLN_TX_DATA
+                                                           blk_ptr->eob.u[tx_index]);
+#else
                                                            blk_ptr->txb_array[tx_index].nz_coef_count[1]);
+#endif
 
             // cr
             coeff_buffer = (int32_t *)coeff_ptr->buffer_cr + ec_ctx->coded_area_sb_uv;
@@ -767,7 +784,11 @@ static EbErrorType av1_encode_tx_coef_uv(PictureControlSet *pcs, EntropyCodingCo
                                                            COMPONENT_CHROMA,
                                                            txb_skip_ctx,
                                                            dc_sign_ctx,
+#if CLN_TX_DATA
+                                                           blk_ptr->eob.v[tx_index]);
+#else
                                                            blk_ptr->txb_array[tx_index].nz_coef_count[2]);
+#endif
             // Update the cb Dc Sign Level Coeff Neighbor Array
             uint8_t dc_sign_level_coeff = (uint8_t)cul_level_cb;
             svt_aom_neighbor_array_unit_mode_write(
@@ -878,7 +899,11 @@ static EbErrorType av1_encode_coeff_1d(PictureControlSet *pcs, EntropyCodingCont
                                                       COMPONENT_LUMA,
                                                       txb_skip_ctx,
                                                       dc_sign_ctx,
+#if CLN_TX_DATA
+                                                      blk_ptr->eob.y[txb_itr]);
+#else
                                                       blk_ptr->txb_array[txb_itr].nz_coef_count[0]);
+#endif
             }
 
             if (blk_geom->has_uv) {
@@ -913,7 +938,11 @@ static EbErrorType av1_encode_coeff_1d(PictureControlSet *pcs, EntropyCodingCont
                                                            COMPONENT_CHROMA,
                                                            txb_skip_ctx,
                                                            dc_sign_ctx,
+#if CLN_TX_DATA
+                                                           blk_ptr->eob.u[txb_itr]);
+#else
                                                            blk_ptr->txb_array[txb_itr].nz_coef_count[1]);
+#endif
                 }
 
                 // cr
@@ -947,7 +976,11 @@ static EbErrorType av1_encode_coeff_1d(PictureControlSet *pcs, EntropyCodingCont
                                                            COMPONENT_CHROMA,
                                                            txb_skip_ctx,
                                                            dc_sign_ctx,
+#if CLN_TX_DATA
+                                                           blk_ptr->eob.v[txb_itr]);
+#else
                                                            blk_ptr->txb_array[txb_itr].nz_coef_count[2]);
+#endif
                 }
             }
 
@@ -4758,6 +4791,30 @@ void svt_av1_update_segmentation_map(PictureControlSet *pcs, BlockSize bsize, ui
     for (y = 0; y < ymis; ++y)
         for (x = 0; x < xmis; ++x) segment_ids[mi_offset + y * cm->mi_cols + x] = segment_id;
 }
+#if CLN_EC_BLK_STRUCT
+void write_segment_id(PictureControlSet *pcs, FRAME_CONTEXT *frame_context, AomWriter *ecWriter, BlockSize bsize,
+                      uint32_t blk_org_x, uint32_t blk_org_y, EcBlkStruct *blk_ptr, Bool skip_coeff) {
+    SegmentationParams *segmentation_params = &pcs->ppcs->frm_hdr.segmentation_params;
+    if (!segmentation_params->segmentation_enabled)
+        return;
+    MbModeInfo* mbmi = get_mbmi(pcs, blk_org_x, blk_org_y);
+    int       cdf_num;
+    const int spatial_pred = svt_av1_get_spatial_seg_prediction(pcs, blk_ptr->av1xd, blk_org_x, blk_org_y, &cdf_num);
+    if (skip_coeff) {
+        //        SVT_LOG("BlockY = %d, BlockX = %d \n", blk_org_y>>2, blk_org_x>>2);
+        svt_av1_update_segmentation_map(pcs, bsize, blk_org_x, blk_org_y, spatial_pred);
+        mbmi->block_mi.segment_id = spatial_pred;
+        return;
+    }
+    const int coded_id = svt_av1_neg_interleave(
+        mbmi->block_mi.segment_id, spatial_pred, segmentation_params->last_active_seg_id + 1);
+    struct segmentation_probs *segp     = &frame_context->seg;
+    AomCdfProb                *pred_cdf = segp->spatial_pred_seg_cdf[cdf_num];
+    aom_write_symbol(ecWriter, coded_id, pred_cdf, MAX_SEGMENTS);
+    svt_av1_update_segmentation_map(pcs, bsize, blk_org_x, blk_org_y, mbmi->block_mi.segment_id);
+    //    SVT_LOG("BlockY = %d, BlockX = %d, Segmentation  spatial_pred = %d, skip_coeff = %d, coded_id = %d, pred_cdf = %d \n", blk_org_y>>2, blk_org_x>>2, spatial_pred, skip_coeff, coded_id, *pred_cdf);
+}
+#else
 void write_segment_id(PictureControlSet *pcs, FRAME_CONTEXT *frame_context, AomWriter *ecWriter, BlockSize bsize,
                       uint32_t blk_org_x, uint32_t blk_org_y, EcBlkStruct *blk_ptr, Bool skip_coeff) {
     SegmentationParams *segmentation_params = &pcs->ppcs->frm_hdr.segmentation_params;
@@ -4779,6 +4836,7 @@ void write_segment_id(PictureControlSet *pcs, FRAME_CONTEXT *frame_context, AomW
     svt_av1_update_segmentation_map(pcs, bsize, blk_org_x, blk_org_y, blk_ptr->segment_id);
     //    SVT_LOG("BlockY = %d, BlockX = %d, Segmentation  spatial_pred = %d, skip_coeff = %d, coded_id = %d, pred_cdf = %d \n", blk_org_y>>2, blk_org_x>>2, spatial_pred, skip_coeff, coded_id, *pred_cdf);
 }
+#endif
 static void write_inter_segment_id(PictureControlSet *pcs, FRAME_CONTEXT *frame_context, AomWriter *ecWriter,
                                    const BlockGeom *blockGeom, uint32_t blk_org_x, uint32_t blk_org_y,
                                    EcBlkStruct *blk_ptr, Bool skip, int pre_skip) {
@@ -5114,10 +5172,14 @@ static EbErrorType write_modes_b(PictureControlSet *pcs, EntropyCodingContext *e
                 MvReferenceFrame *rf         = mbmi->block_mi.ref_frame;
                 int16_t           mode_ctx   = svt_aom_mode_context_analyzer(blk_ptr->inter_mode_ctx, rf);
                 PredictionMode    inter_mode = mbmi->block_mi.mode;
+#if CLN_EC_BLK_STRUCT
+                const int32_t is_compound = is_inter_compound_mode(inter_mode);
+#else
 #if CLN_BLK_STRUCT_2
                 const int32_t is_compound = (blk_ptr->inter_pred_direction_index == BI_PRED);
 #else
                 const int32_t is_compound = (blk_ptr->prediction_unit_array[0].inter_pred_direction_index == BI_PRED);
+#endif
 #endif
 
                 // If segment skip is not enabled code the mode.

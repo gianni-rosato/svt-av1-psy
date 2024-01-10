@@ -75,6 +75,12 @@ int svt_aom_filter_intra_allowed_bsize(uint8_t enable_filter_intra, BlockSize bs
 int svt_aom_filter_intra_allowed(uint8_t enable_filter_intra, BlockSize bsize, uint8_t palette_size, uint32_t mode) {
     return mode == DC_PRED && palette_size == 0 && svt_aom_filter_intra_allowed_bsize(enable_filter_intra, bsize);
 }
+#if OPT_BLOCK_SETTINGS
+// returns the max inter-inter compound type based on settings and block size
+static MD_COMP_TYPE get_tot_comp_types_bsize(MD_COMP_TYPE tot_comp_types, BlockSize bsize) {
+    return (svt_aom_get_wedge_params_bits(bsize) == 0) ? MIN(tot_comp_types, MD_COMP_WEDGE) : tot_comp_types;
+}
+#endif
 /*
 Get the ME offset for a given block(the offset used to locate the PA MVs from the parent PCS).
 */
@@ -1154,8 +1160,14 @@ static void bipred_3x3_candidates_injection(const SequenceControlSet *scs, Pictu
     uint32_t               mi_col              = ctx->blk_org_x >> MI_SIZE_LOG2;
 
     if (is_compound_enabled) {
+#if OPT_BLOCK_SETTINGS
+        MD_COMP_TYPE tot_comp_types =
+            get_tot_comp_types_bsize((ctx->inter_comp_ctrls.do_3x3_bi == 0) ? MD_COMP_DIST : ctx->inter_comp_ctrls.tot_comp_types,
+                ctx->blk_geom->bsize);
+#else
         MD_COMP_TYPE tot_comp_types = (ctx->inter_comp_ctrls.do_3x3_bi == 0) ? MD_COMP_DIST
                                                                              : ctx->inter_comp_ctrls.tot_comp_types;
+#endif
         /**************
        NEW_NEWMV
        ************* */
@@ -1983,10 +1995,19 @@ static void inject_mvp_candidates_ii(const SequenceControlSet *scs, PictureContr
                 continue;
             {
                 //NEAREST_NEAREST
+#if OPT_BLOCK_SETTINGS
+                MD_COMP_TYPE tot_comp_types =
+                    get_tot_comp_types_bsize((ctx->inter_comp_ctrls.do_nearest_nearest == 0) ||
+                        skip_mvp_compound_on_ref_types(ctx, rf)
+                        ? MD_COMP_DIST
+                        : ctx->inter_comp_ctrls.tot_comp_types,
+                        ctx->blk_geom->bsize);
+#else
                 MD_COMP_TYPE tot_comp_types = (ctx->inter_comp_ctrls.do_nearest_nearest == 0) ||
                         skip_mvp_compound_on_ref_types(ctx, rf)
                     ? MD_COMP_DIST
                     : ctx->inter_comp_ctrls.tot_comp_types;
+#endif
 #if CLN_BLK_STRUCT
                 int16_t      to_inject_mv_x_l0 =
                     ctx->ref_mv_stack[ref_pair][0].this_mv.as_mv.col;
@@ -2076,9 +2097,17 @@ static void inject_mvp_candidates_ii(const SequenceControlSet *scs, PictureContr
                 }
 
                 //NEAR_NEAR
+#if OPT_BLOCK_SETTINGS
+                tot_comp_types =
+                    get_tot_comp_types_bsize((ctx->inter_comp_ctrls.do_near_near == 0) || skip_mvp_compound_on_ref_types(ctx, rf)
+                        ? MD_COMP_DIST
+                        : ctx->inter_comp_ctrls.tot_comp_types,
+                        ctx->blk_geom->bsize);
+#else
                 tot_comp_types = (ctx->inter_comp_ctrls.do_near_near == 0) || skip_mvp_compound_on_ref_types(ctx, rf)
                     ? MD_COMP_DIST
                     : ctx->inter_comp_ctrls.tot_comp_types;
+#endif
                 max_drl_index  = svt_aom_get_max_drl_index(xd->ref_mv_count[ref_pair], NEAR_NEARMV);
                 uint8_t cap_max_drl_index = 0;
                 if (ctx->cand_reduction_ctrls.near_count_ctrls.enabled)
@@ -2170,9 +2199,17 @@ static void inject_new_nearest_new_comb_candidates(const SequenceControlSet *scs
     uint32_t               mi_row   = ctx->blk_org_y >> MI_SIZE_LOG2;
     uint32_t               mi_col   = ctx->blk_org_x >> MI_SIZE_LOG2;
 
+#if OPT_BLOCK_SETTINGS
+    MD_COMP_TYPE tot_comp_types =
+        get_tot_comp_types_bsize((ctx->inter_comp_ctrls.do_nearest_near_new == 0)
+            ? MD_COMP_DIST
+            : ctx->inter_comp_ctrls.tot_comp_types,
+            ctx->blk_geom->bsize);
+#else
     MD_COMP_TYPE tot_comp_types = (ctx->inter_comp_ctrls.do_nearest_near_new == 0)
         ? MD_COMP_DIST
         : ctx->inter_comp_ctrls.tot_comp_types;
+#endif
     //all of ref pairs: (1)single-ref List0  (2)single-ref List1  (3)compound Bi-Dir List0-List1  (4)compound Uni-Dir List0-List0  (5)compound Uni-Dir List1-List1
     for (uint32_t ref_it = 0; ref_it < ctx->tot_ref_frame_types; ++ref_it) {
         MvReferenceFrame ref_pair = ctx->ref_frame_type_arr[ref_it];
@@ -3272,8 +3309,15 @@ static void inject_new_candidates(const SequenceControlSet *scs, struct ModeDeci
     uint32_t               mi_row           = ctx->blk_org_y >> MI_SIZE_LOG2;
     uint32_t               mi_col           = ctx->blk_org_x >> MI_SIZE_LOG2;
     BlockSize              bsize            = ctx->blk_geom->bsize; // bloc size
+#if OPT_BLOCK_SETTINGS
+    MD_COMP_TYPE tot_comp_types =
+        get_tot_comp_types_bsize((ctx->inter_comp_ctrls.do_me == 0) ? MD_COMP_DIST
+            : ctx->inter_comp_ctrls.tot_comp_types,
+            ctx->blk_geom->bsize);
+#else
     MD_COMP_TYPE           tot_comp_types   = (ctx->inter_comp_ctrls.do_me == 0) ? MD_COMP_DIST
                                                                                  : ctx->inter_comp_ctrls.tot_comp_types;
+#endif
     for (uint8_t me_candidate_index = 0; me_candidate_index < total_me_cnt; ++me_candidate_index) {
         const MeCandidate *me_block_results_ptr = &me_block_results[me_candidate_index];
         const uint8_t      inter_direction      = me_block_results_ptr->direction;
@@ -3804,7 +3848,13 @@ static void inject_global_candidates(const SequenceControlSet *scs, struct ModeD
             }
         } else if (is_compound_enabled && allow_bipred) {
             // Warped prediction is only compatible with MD_COMP_AVG and MD_COMP_DIST
+#if OPT_BLOCK_SETTINGS
+            MD_COMP_TYPE tot_comp_types =
+                get_tot_comp_types_bsize(MIN(ctx->inter_comp_ctrls.tot_comp_types, MD_COMP_DIFF0),
+                    ctx->blk_geom->bsize);
+#else
             MD_COMP_TYPE tot_comp_types = MIN(ctx->inter_comp_ctrls.tot_comp_types, MD_COMP_DIFF0);
+#endif
             uint8_t      ref_idx_0      = get_ref_frame_idx(rf[0]);
             uint8_t      ref_idx_1      = get_ref_frame_idx(rf[1]);
             uint8_t      list_idx_0     = get_list_idx(rf[0]);
@@ -3896,8 +3946,15 @@ static void inject_pme_candidates(
     IntMv                  best_pred_mv[2] = {{0}, {0}};
     uint32_t               cand_total_cnt  = (*candidate_total_cnt);
     BlockSize              bsize           = ctx->blk_geom->bsize; // bloc size
+#if OPT_BLOCK_SETTINGS
+    MD_COMP_TYPE tot_comp_types =
+        get_tot_comp_types_bsize((ctx->inter_comp_ctrls.do_pme == 0) ? MD_COMP_DIST
+            : ctx->inter_comp_ctrls.tot_comp_types,
+            ctx->blk_geom->bsize);
+#else
     MD_COMP_TYPE           tot_comp_types  = (ctx->inter_comp_ctrls.do_pme == 0) ? MD_COMP_DIST
                                                                                  : ctx->inter_comp_ctrls.tot_comp_types;
+#endif
     MacroBlockD           *xd              = ctx->blk_ptr->av1xd;
     int32_t                umv0tile        = derive_rmv_setting(pcs->ppcs->scs, pcs->ppcs);
     uint32_t               mi_row          = ctx->blk_org_y >> MI_SIZE_LOG2;
@@ -5100,6 +5157,10 @@ void svt_aom_product_full_mode_decision_light_pd1(
         blk_ptr->motion_mode = SIMPLE_TRANSLATION;
         blk_ptr->num_proj_ref = cand->num_proj_ref;
 
+#if CLN_INTER_MODE_CTX
+        // Store winning inter_mode_ctx in blk to avoid storing for all ref frames for EC
+        blk_ptr->inter_mode_ctx = ctx->inter_mode_ctx[blk_ptr->ref_frame_type];
+#endif
         // Store drl_ctx in blk to avoid storing final_ref_mv_stack for EC
         if (blk_ptr->pred_mode == NEWMV || blk_ptr->pred_mode == NEW_NEWMV) {
             for (uint8_t idx = 0; idx < 2; ++idx) {
@@ -5235,6 +5296,33 @@ void svt_aom_product_full_mode_decision_light_pd1(
 
     const uint16_t txb_itr = 0;
     const int32_t txb_1d_offset = 0, txb_1d_offset_uv = 0;
+#if CLN_TX_DATA
+    blk_ptr->y_has_coeff = cand_bf->y_has_coeff;
+    blk_ptr->u_has_coeff = cand_bf->u_has_coeff;
+    blk_ptr->v_has_coeff = cand_bf->v_has_coeff;
+    blk_ptr->tx_type[txb_itr] = cand->transform_type[txb_itr];
+    blk_ptr->tx_type_uv = cand->transform_type_uv;
+#if CLN_QUANT_ONE_BYTE
+    blk_ptr->quant_dc.y[txb_itr] = cand_bf->quant_dc.y[txb_itr];
+    blk_ptr->quant_dc.u[txb_itr] = cand_bf->quant_dc.u[txb_itr];
+    blk_ptr->quant_dc.v[txb_itr] = cand_bf->quant_dc.v[txb_itr];
+#else
+    blk_ptr->quant_dc.y[txb_itr] = cand_bf->quantized_dc[0][txb_itr];
+    blk_ptr->quant_dc.u[txb_itr] = cand_bf->quantized_dc[1][txb_itr];
+    blk_ptr->quant_dc.v[txb_itr] = cand_bf->quantized_dc[2][txb_itr];
+#endif
+
+    if (ctx->bypass_encdec) {
+#if CLN_QUANT_ONE_BYTE
+        blk_ptr->eob.y[txb_itr] = cand_bf->eob.y[txb_itr];
+        blk_ptr->eob.u[txb_itr] = cand_bf->eob.u[txb_itr];
+        blk_ptr->eob.v[txb_itr] = cand_bf->eob.v[txb_itr];
+#else
+        blk_ptr->eob.y[txb_itr] = cand_bf->eob[0][txb_itr];
+        blk_ptr->eob.u[txb_itr] = cand_bf->eob[1][txb_itr];
+        blk_ptr->eob.v[txb_itr] = cand_bf->eob[2][txb_itr];
+#endif
+#else
     ctx->blk_ptr->quantized_dc[0][txb_itr] = cand_bf->quantized_dc[0][txb_itr];
     ctx->blk_ptr->quantized_dc[1][0] = cand_bf->quantized_dc[1][0];
     ctx->blk_ptr->quantized_dc[2][0] = cand_bf->quantized_dc[2][0];
@@ -5249,13 +5337,19 @@ void svt_aom_product_full_mode_decision_light_pd1(
         txb_ptr->nz_coef_count[0] = cand_bf->eob[0][txb_itr];
         txb_ptr->nz_coef_count[1] = cand_bf->eob[1][txb_itr];
         txb_ptr->nz_coef_count[2] = cand_bf->eob[2][txb_itr];
+#endif
         int32_t* src_ptr;
         int32_t* dst_ptr;
 
         uint16_t bwidth = ctx->blk_geom->tx_width[blk_ptr->tx_depth];
         uint16_t bheight = ctx->blk_geom->tx_height[blk_ptr->tx_depth];
 
+#if CLN_TX_DATA
+        // only one TX unit, so no need to bitmask
+        if (blk_ptr->y_has_coeff) {
+#else
         if (ctx->blk_ptr->y_has_coeff[txb_itr]) {
+#endif
             src_ptr = &(((int32_t*)cand_bf->quant->buffer_y)[txb_1d_offset]);
             dst_ptr = ((int32_t *)pcs->ppcs->enc_dec_ptr->quantized_coeff[sb_addr]->buffer_y) + ctx->coded_area_sb;
             svt_memcpy(dst_ptr, src_ptr, bheight * bwidth * sizeof(int32_t));
@@ -5266,14 +5360,24 @@ void svt_aom_product_full_mode_decision_light_pd1(
         uint16_t bheight_uv = ctx->blk_geom->tx_height_uv[blk_ptr->tx_depth];
 
         // Cb
+#if CLN_TX_DATA
+        // only one TX unit, so no need to bitmask
+        if (blk_ptr->u_has_coeff) {
+#else
         if (ctx->blk_ptr->u_has_coeff[txb_itr]) {
+#endif
             src_ptr = &(((int32_t*)cand_bf->quant->buffer_cb)[txb_1d_offset_uv]);
             dst_ptr = ((int32_t *)pcs->ppcs->enc_dec_ptr->quantized_coeff[sb_addr]->buffer_cb) + ctx->coded_area_sb_uv;
             svt_memcpy(dst_ptr, src_ptr, bheight_uv * bwidth_uv * sizeof(int32_t));
         }
 
         // Cr
+#if CLN_TX_DATA
+        // only one TX unit, so no need to bitmask
+        if (blk_ptr->v_has_coeff) {
+#else
         if (ctx->blk_ptr->v_has_coeff[txb_itr]) {
+#endif
             src_ptr = &(((int32_t*)cand_bf->quant->buffer_cr)[txb_1d_offset_uv]);
             dst_ptr = ((int32_t *)pcs->ppcs->enc_dec_ptr->quantized_coeff[sb_addr]->buffer_cr) + ctx->coded_area_sb_uv;
             svt_memcpy(dst_ptr, src_ptr, bheight_uv * bwidth_uv * sizeof(int32_t));
@@ -5451,6 +5555,10 @@ uint32_t svt_aom_product_full_mode_decision(
         }
 
         if (ctx->pd_pass == PD_PASS_1) {
+#if CLN_INTER_MODE_CTX
+            // Store winning inter_mode_ctx in blk to avoid storing for all ref frames for EC
+            blk_ptr->inter_mode_ctx = ctx->inter_mode_ctx[blk_ptr->ref_frame_type];
+#endif
             // Store drl_ctx in blk to avoid storing final_ref_mv_stack for EC
             if (blk_ptr->pred_mode == NEWMV || blk_ptr->pred_mode == NEW_NEWMV) {
                 for (uint8_t idx = 0; idx < 2; ++idx) {
@@ -5623,9 +5731,92 @@ uint32_t svt_aom_product_full_mode_decision(
         cand_bf->v_has_coeff = 0;
     }
 
+#if CLN_QUANT_ONE_BYTE
+    blk_ptr->y_has_coeff = cand_bf->y_has_coeff;
+    blk_ptr->u_has_coeff = cand_bf->u_has_coeff;
+    blk_ptr->v_has_coeff = cand_bf->v_has_coeff;
+    svt_memcpy(blk_ptr->tx_type, cand->transform_type, sizeof(TxType) * MAX_TXB_COUNT);
+    blk_ptr->tx_type_uv = cand->transform_type_uv;
+    svt_memcpy(&blk_ptr->quant_dc, &cand_bf->quant_dc, sizeof(QuantDcData));
+    svt_memcpy(&blk_ptr->eob, &cand_bf->eob, sizeof(EobData));
+
+    // If bypassing EncDec, save recon/coeff
+    if (ctx->bypass_encdec && ctx->pd_pass == PD_PASS_1) {
+        const uint16_t tu_total_count = ctx->blk_geom->txb_count[blk_ptr->tx_depth];
+        int32_t txb_1d_offset = 0, txb_1d_offset_uv = 0;
+        for (uint16_t txb_itr = 0; txb_itr < tu_total_count; txb_itr++) {
+            const bool uv_pass = (blk_ptr->tx_depth == 0 || txb_itr == 0);
+
+            uint16_t  bwidth = ctx->blk_geom->tx_width[blk_ptr->tx_depth];
+            uint16_t  bheight = ctx->blk_geom->tx_height[blk_ptr->tx_depth];
+            int32_t* src_ptr = &(((int32_t*)cand_bf->quant->buffer_y)[txb_1d_offset]);
+            int32_t* dst_ptr = &(((int32_t*)ctx->blk_ptr->coeff_tmp->buffer_y)[txb_1d_offset]);
+
+            if (ctx->fixed_partition) {
+                dst_ptr = ((int32_t*)pcs->ppcs->enc_dec_ptr->quantized_coeff[sb_addr]->buffer_y) + ctx->coded_area_sb;
+                ctx->coded_area_sb += bwidth * bheight;
+            }
+
+            if (blk_ptr->y_has_coeff & (1 << txb_itr))
+                svt_memcpy(dst_ptr, src_ptr, bheight * bwidth * sizeof(int32_t));
+
+            txb_1d_offset += bwidth * bheight;
+
+            if (ctx->blk_geom->has_uv && uv_pass) {
+                // Cb
+                uint16_t bwidth_uv = ctx->blk_geom->tx_width_uv[blk_ptr->tx_depth];
+                uint16_t bheight_uv = ctx->blk_geom->tx_height_uv[blk_ptr->tx_depth];
+                src_ptr = &(((int32_t*)cand_bf->quant->buffer_cb)[txb_1d_offset_uv]);
+                dst_ptr = &(((int32_t*)ctx->blk_ptr->coeff_tmp->buffer_cb)[txb_1d_offset_uv]);
+
+                if (ctx->fixed_partition) {
+                    dst_ptr = ((int32_t*)pcs->ppcs->enc_dec_ptr->quantized_coeff[sb_addr]->buffer_cb) + ctx->coded_area_sb_uv;
+                }
+
+                if (blk_ptr->u_has_coeff & (1 << txb_itr))
+                    svt_memcpy(dst_ptr, src_ptr, bheight_uv * bwidth_uv * sizeof(int32_t));
+
+                // Cr
+                src_ptr = &(((int32_t*)cand_bf->quant->buffer_cr)[txb_1d_offset_uv]);
+                dst_ptr = &(((int32_t*)ctx->blk_ptr->coeff_tmp->buffer_cr)[txb_1d_offset_uv]);
+
+                if (ctx->fixed_partition) {
+                    dst_ptr = ((int32_t*)pcs->ppcs->enc_dec_ptr->quantized_coeff[sb_addr]->buffer_cr) + ctx->coded_area_sb_uv;
+                    ctx->coded_area_sb_uv += bwidth_uv * bheight_uv;
+                }
+
+                if (blk_ptr->v_has_coeff & (1 << txb_itr))
+                    svt_memcpy(dst_ptr, src_ptr, bheight_uv * bwidth_uv * sizeof(int32_t));
+
+                txb_1d_offset_uv += bwidth_uv * bheight_uv;
+            }
+        }
+    }
+#else
     uint16_t txb_itr = 0;
     uint16_t tu_total_count = ctx->blk_geom->txb_count[blk_ptr->tx_depth];
     int32_t txb_1d_offset = 0, txb_1d_offset_uv = 0;
+#if CLN_TX_DATA
+    blk_ptr->y_has_coeff = cand_bf->y_has_coeff;
+    blk_ptr->u_has_coeff = cand_bf->u_has_coeff;
+    blk_ptr->v_has_coeff = cand_bf->v_has_coeff;
+    blk_ptr->tx_type_uv = cand->transform_type_uv;
+    do {
+        const bool uv_pass = (blk_ptr->tx_depth == 0 || txb_itr == 0);
+        blk_ptr->tx_type[txb_itr] = cand->transform_type[txb_itr];
+        blk_ptr->quant_dc.y[txb_itr] = cand_bf->quantized_dc[0][txb_itr];
+        if (uv_pass) {
+            blk_ptr->quant_dc.u[txb_itr] = cand_bf->quantized_dc[1][txb_itr];
+            blk_ptr->quant_dc.v[txb_itr] = cand_bf->quantized_dc[2][txb_itr];
+        }
+
+        if (ctx->bypass_encdec && ctx->pd_pass == PD_PASS_1) {
+            blk_ptr->eob.y[txb_itr] = cand_bf->eob[0][txb_itr];
+            if (uv_pass) {
+                blk_ptr->eob.u[txb_itr] = cand_bf->eob[1][txb_itr];
+                blk_ptr->eob.v[txb_itr] = cand_bf->eob[2][txb_itr];
+            }
+#else
     do {
         TransformUnit *txb_ptr = &blk_ptr->txb_array[txb_itr];
         ctx->blk_ptr->y_has_coeff[txb_itr] = (Bool)(((cand_bf->y_has_coeff) & (1 << txb_itr)) > 0);
@@ -5641,6 +5832,7 @@ uint32_t svt_aom_product_full_mode_decision(
             txb_ptr->nz_coef_count[0] = cand_bf->eob[0][txb_itr];
             txb_ptr->nz_coef_count[1] = cand_bf->eob[1][txb_itr];
             txb_ptr->nz_coef_count[2] = cand_bf->eob[2][txb_itr];
+#endif
             uint16_t  bwidth = ctx->blk_geom->tx_width[blk_ptr->tx_depth];
             uint16_t  bheight = ctx->blk_geom->tx_height[blk_ptr->tx_depth];
             int32_t* src_ptr = &(((int32_t*)cand_bf->quant->buffer_y)[txb_1d_offset]);
@@ -5655,13 +5847,22 @@ uint32_t svt_aom_product_full_mode_decision(
                 ctx->coded_area_sb += bwidth * bheight;
             }
 
+#if CLN_TX_DATA
+            if (blk_ptr->y_has_coeff & (1 << txb_itr))
+                svt_memcpy(dst_ptr, src_ptr, bheight * bwidth * sizeof(int32_t));
+#else
             if (ctx->blk_ptr->y_has_coeff[txb_itr])
                 svt_memcpy(dst_ptr, src_ptr, bheight * bwidth * sizeof(int32_t));
+#endif
 
             txb_1d_offset += bwidth * bheight;
 
 
+#if CLN_TX_DATA
+            if (ctx->blk_geom->has_uv && uv_pass) {
+#else
             if (ctx->blk_geom->has_uv && (blk_ptr->tx_depth == 0 || txb_itr == 0)) {
+#endif
                 // Cb
                 uint16_t bwidth_uv = ctx->blk_geom->tx_width_uv[blk_ptr->tx_depth];
                 uint16_t bheight_uv = ctx->blk_geom->tx_height_uv[blk_ptr->tx_depth];
@@ -5676,8 +5877,13 @@ uint32_t svt_aom_product_full_mode_decision(
                     dst_ptr = ((int32_t *)pcs->ppcs->enc_dec_ptr->quantized_coeff[sb_addr]->buffer_cb) + ctx->coded_area_sb_uv;
                 }
 
+#if CLN_TX_DATA
+                if (blk_ptr->u_has_coeff & (1 << txb_itr))
+                    svt_memcpy(dst_ptr, src_ptr, bheight_uv * bwidth_uv * sizeof(int32_t));
+#else
                 if (ctx->blk_ptr->u_has_coeff[txb_itr])
                     svt_memcpy(dst_ptr, src_ptr, bheight_uv * bwidth_uv * sizeof(int32_t));
+#endif
 
                 // Cr
                 src_ptr = &(((int32_t*)cand_bf->quant->buffer_cr)[txb_1d_offset_uv]);
@@ -5692,14 +5898,20 @@ uint32_t svt_aom_product_full_mode_decision(
                     ctx->coded_area_sb_uv += bwidth_uv * bheight_uv;
                 }
 
+#if CLN_TX_DATA
+                if (blk_ptr->v_has_coeff & (1 << txb_itr))
+                    svt_memcpy(dst_ptr, src_ptr, bheight_uv * bwidth_uv * sizeof(int32_t));
+#else
                 if (ctx->blk_ptr->v_has_coeff[txb_itr])
                     svt_memcpy(dst_ptr, src_ptr, bheight_uv * bwidth_uv * sizeof(int32_t));
+#endif
 
                 txb_1d_offset_uv += bwidth_uv * bheight_uv;
             }
         }
         ++txb_itr;
     } while (txb_itr < tu_total_count);
+#endif
 
     return lowest_cost_index;
 }

@@ -79,6 +79,7 @@ extern "C" {
 #define TUNE_M2                                   1 // tune m2 lp8
 #define TUNE_M5_M6                                1 // tune m5-m6 lp8 fd
 #define TUNE_M3_M4                                1 // tune m3-m4 lp8
+#define TUNE_M5_M6_2                              1 // speed alignment m5-m6 lp8 fd 2
 
 #define CLN_MD_LOOP                               1 // Cleanup how NSQ is processed in MD
 #define OPT_NSQ_MEM                               1 // Optimize memory of NSQ blocks in MD search
@@ -92,6 +93,20 @@ extern "C" {
 #define CLN_MOVE_CFL_BUFF                         1 // Allocate temp cfl buffer on heap
 #define CLN_MOVE_PAL_BUFF                         1 // Allocate PALETTE_BUFFER on heap
 #define FIX_REDUND_PAL                            1 // Add missing copies for palette for redundant blocks
+#define CLN_SEG_MASK                              1 // Remove seg_mask* from InterInterCompoundData and remove the now identical EcInterInterCompoundData
+#define CLN_INTER_MODE_CTX                        1 // Move inter_mode_ctx array to MD ctx and save only the winning result in blk_ptr
+#define CLN_BLK_STRUCT_4                          1 // Move min_mz_h/v to ctx
+#define OPT_COEFF_LVL_NOISE                       1 // Use the input noise-level @ the derivation of the coeff-level low/high bands
+#define OPT_COEFF_LVL_TPL                         0 // Use the tpl-error for the derivation of the coeff-level
+#define OPT_BLOCK_SETTINGS                        1 // Adopt same nic scaling per bsize and remove sig_deriv_block
+#define CLN_UNUSED_SETTING                        1 // Remove unused setting in update_md_settings
+#define CLN_TX_DATA                               1 // Cleanup TX info in BlkStruct
+#define CLN_EC_PAL_STRUCT                         1 // Remove EcPaletteInfo becuase it's the same as PaletteInfo
+#define CLN_QUANT_ONE_BYTE                        1 // Update MD cand buff to use new Eob and QuantDc structs; save quant DC is single byte, since that's how it's used
+
+#define TUNE_LPD1                                 1 // tune m10-m11 lpd1 level
+#define CLN_QUANT_FUNC                            1 // Remove useless arguments from quantization function
+#define CLN_EC_BLK_STRUCT                         1 // Cleanup fields in EcBlkStruct
 
 //FOR DEBUGGING - Do not remove
 #define OPT_LD_LATENCY2         0 // Latency optimization for low delay

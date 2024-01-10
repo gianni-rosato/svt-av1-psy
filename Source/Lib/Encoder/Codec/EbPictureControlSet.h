@@ -474,6 +474,9 @@ typedef struct PictureControlSet {
     // different with input frame when reference scaling is enabled
     EbPictureBufferDesc *scaled_input_pic;
     bool                 rtc_tune;
+#if OPT_COEFF_LVL_TPL
+    int64_t tpl_error;
+#endif
 } PictureControlSet;
 
 // To optimize based on the max input size

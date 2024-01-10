@@ -915,8 +915,13 @@ void svt_aom_update_stats(PictureControlSet *pcs, BlkStruct *blk_ptr, int mi_row
         MvReferenceFrame     rf[2];
 #if CLN_BLK_STRUCT_2
         av1_set_ref_frame(rf, blk_ptr->ref_frame_type);
+#if CLN_INTER_MODE_CTX
+        const int16_t mode_ctx = svt_aom_mode_context_analyzer(
+            blk_ptr->inter_mode_ctx, rf);
+#else
         const int16_t mode_ctx = svt_aom_mode_context_analyzer(
             blk_ptr->inter_mode_ctx[blk_ptr->ref_frame_type], rf);
+#endif
 #else
         av1_set_ref_frame(rf, blk_ptr->prediction_unit_array[0].ref_frame_type);
         const int16_t mode_ctx = svt_aom_mode_context_analyzer(

@@ -1101,7 +1101,9 @@ typedef struct ModeDecisionContext {
     uint8_t              svt_aom_inject_inter_candidates;
     uint8_t             *cfl_temp_luma_recon;
     uint16_t            *cfl_temp_luma_recon16bit;
+#if !OPT_BLOCK_SETTINGS
     Bool                 spatial_sse_full_loop_level;
+#endif
     Bool                 blk_skip_decision;
     int8_t               rdoq_level;
 #if CLN_SB_ME_MV
@@ -1119,6 +1121,10 @@ typedef struct ModeDecisionContext {
 #if CLN_BLK_STRUCT
     // Store MVP during MD search - only results are forwarded to encdec
     CandidateMv          ref_mv_stack[MODE_CTX_REF_FRAMES][MAX_REF_MV_STACK_SIZE];
+#endif
+#if CLN_INTER_MODE_CTX
+    // Store inter_mode_ctx for each reference during MD search - only ctx for winning ref frame is forwarded to encdec
+    int16_t inter_mode_ctx[MODE_CTX_REF_FRAMES];
 #endif
     EbPictureBufferDesc *input_sample16bit_buffer;
     // set to 1 once the packing of 10bit source is done for each SB
@@ -1255,7 +1261,9 @@ typedef struct ModeDecisionContext {
     int16_t         sprs_lev0_start_y;
     int16_t         sprs_lev0_end_y;
     NicCtrls        nic_ctrls;
+#if !OPT_BLOCK_SETTINGS
     uint8_t         inter_compound_mode;
+#endif
     MV              ref_mv;
     uint16_t        sb_index;
     uint64_t        mds0_best_cost;
@@ -1347,6 +1355,11 @@ typedef struct ModeDecisionContext {
 #endif
 #if CLN_QUAD_REC
     uint64_t             rec_dist_per_quadrant[4];
+#endif
+#if CLN_BLK_STRUCT_4
+    // non-normative txs
+    uint16_t min_nz_h;
+    uint16_t min_nz_v;
 #endif
     // used to signal when the N4 shortcut can be used for rtc, works in conjunction with use_tx_shortcuts_mds3 flag
     uint8_t rtc_use_N4_dct_dct_shortcut;

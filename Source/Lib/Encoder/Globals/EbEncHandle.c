@@ -4533,7 +4533,11 @@ static void set_param_based_on_input(SequenceControlSet *scs)
             mrp_level = 5;
         }
         else if (scs->static_config.enc_mode <= ENC_M5) {
+#if TUNE_M5_M6_2
+            mrp_level = 7;
+#else
             mrp_level = 6;
+#endif
         }
 #if !TUNE_M5_M6
         else if (scs->static_config.enc_mode <= ENC_M6) {
