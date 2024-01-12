@@ -940,7 +940,6 @@ typedef struct EbSvtAv1EncConfiguration {
         2: gentle boost
         3: medium boost
         4: aggressive boost
-        5: maximum boost
        Default is 2 (gentle curve) */
     uint8_t variance_boost_strength;
 
