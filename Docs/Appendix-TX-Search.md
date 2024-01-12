@@ -173,7 +173,7 @@ and Figure 1 below summarize the available PF sizes.
 | ----------------    | -------------------------                     |
 | ```DEFAULT_SHAPE``` | Full Block (regular TX)                       |
 | ```N2_SHAPE```      | Quarter block (half width x half height)      |
-| ```N4_SHAPE```      | Eighth block (quarter width x quarter height) |
+| ```N4_SHAPE```      | Sixteenth block (quarter width x quarter height) |
 | ```ONLY_DC_SHAPE``` | DC position only – not recommended            |
 
 

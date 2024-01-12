@@ -2043,7 +2043,7 @@ static void md_full_pel_search(PictureControlSet *pcs, ModeDecisionContext *ctx,
                                              input_pic->stride_y,
                                              &sse);
                 }
-            } else if (dist_type == 1) {
+            } else if (dist_type == SSD) {
                 EbSpatialFullDistType spatial_full_dist_type_fun = hbd_md ? svt_full_distortion_kernel16_bits
                                                                           : svt_spatial_full_distortion_kernel;
 
