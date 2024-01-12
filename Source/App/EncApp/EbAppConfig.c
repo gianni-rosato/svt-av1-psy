@@ -1206,11 +1206,11 @@ ConfigEntry config_entry_tf_adjust[] = {
     // Adjust temporal filtering
     {SINGLE_INPUT,
      TF_FILTER_STRENGTH_TOKEN,
-     "Temporal filtering strength, default is 2 [1-10]",
+     "Temporal filtering strength, default is 1 [1-10]",
      set_cfg_generic_token},
     {SINGLE_INPUT,
      TF_STRENGTH_THRESHOLD_TOKEN,
-     "Threshold for using motion search distance to adjust temporal filtering weight, default is 5 [1-10]",
+     "Threshold for using motion search distance to adjust temporal filtering weight, default is 1 [1-10]",
      set_cfg_generic_token},
     // Termination
     {SINGLE_INPUT, NULL, NULL, NULL}};

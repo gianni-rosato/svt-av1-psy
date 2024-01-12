@@ -4692,6 +4692,10 @@ static void copy_api_from_app(
     // Variance boost
     scs->static_config.variance_boost_strength = config_struct->variance_boost_strength;
     scs->static_config.new_variance_octile = config_struct->new_variance_octile;
+
+    // TF Strength
+    scs->static_config.temporal_filtering_strength = config_struct->temporal_filtering_strength;
+    scs->static_config.temporal_strength_threshold = config_struct->temporal_strength_threshold;
     return;
 }
 

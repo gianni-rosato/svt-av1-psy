@@ -1034,8 +1034,8 @@ EbErrorType svt_av1_set_default_params(EbSvtAv1EncConfiguration *config_ptr) {
     config_ptr->enable_roi_map                    = false;
     config_ptr->variance_boost_strength           = 3;
     config_ptr->new_variance_octile               = 4;
-    config_ptr->temporal_filtering_strength       = 2;
-    config_ptr->temporal_strength_threshold       = 5;
+    config_ptr->temporal_filtering_strength       = 1;
+    config_ptr->temporal_strength_threshold       = 1;
     return return_error;
 }
 
@@ -1147,6 +1147,12 @@ void svt_av1_print_lib_params(SequenceControlSet *scs) {
             SVT_INFO("SVT [config]: AQ mode / variance boost strength / sample size\t\t: %d / %d / 64x64\n",
                     config->enable_adaptive_quantization,
                     config->variance_boost_strength);
+        }
+
+        if (config->temporal_filtering_strength) {
+            SVT_INFO("SVT [config]: TF strength / TF strength threshold \t\t\t\t: %d / %d\n",
+                    config->temporal_filtering_strength,
+                    config->temporal_strength_threshold);
         }
 
         if (config->film_grain_denoise_strength != 0) {
@@ -1999,8 +2005,8 @@ EB_API EbErrorType svt_av1_enc_parse_parameter(EbSvtAv1EncConfiguration *config_
         {"startup-mg-size", &config_struct->startup_mg_size},
         {"variance-boost-strength", &config_struct->variance_boost_strength},
         {"new-variance-octile", &config_struct->new_variance_octile},
-        {"temporal_filtering_strength", &config_struct->temporal_filtering_strength},
-        {"temporal_strength_threshold", &config_struct->temporal_strength_threshold},
+        {"tf-strength", &config_struct->temporal_filtering_strength},
+        {"tf-threshold", &config_struct->temporal_strength_threshold},
     };
     const size_t uint8_opts_size = sizeof(uint8_opts) / sizeof(uint8_opts[0]);
 

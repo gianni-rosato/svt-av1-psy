@@ -12,6 +12,7 @@
  * PATENTS file, you can obtain it at https://www.aomedia.org/license/patent-license.
  */
 
+#include <stdint.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -4715,23 +4716,27 @@ static EbErrorType produce_temporally_filtered_pic(
             q_decay_fp8 = MAX(q << 2, 1);
         }
         const int32_t const_0dot7_fp16 = 45875; //0.7
+
+        // set s_decay
+        uint16_t s_decay = (scs->static_config.temporal_filtering_strength / scs->static_config.temporal_strength_threshold) * 10;
+
         /*Calculation of log and dceay_factor possible to move to estimate_noise() and calculate one time for GOP*/
         //decay_control * (0.7 + log1p(noise_levels[C_Y]))
         int32_t n_decay_fp10 = (decay_control[C_Y] * (const_0dot7_fp16 + noise_levels_log1p_fp16[C_Y])) /
             ((int32_t)1 << 6);
         //2 * n_decay * n_decay * q_decay * (s_decay always is 1);
         ctx->tf_decay_factor_fp16[C_Y] = (uint32_t)(
-            (((((int64_t)n_decay_fp10) * ((int64_t)n_decay_fp10))) * q_decay_fp8) >> 11);
+            (((((int64_t)n_decay_fp10) * ((int64_t)n_decay_fp10))) * q_decay_fp8 * (s_decay / 10)) >> 11);
 
         if (ctx->tf_chroma) {
             n_decay_fp10 = (decay_control[C_U] * (const_0dot7_fp16 + noise_levels_log1p_fp16[C_U])) /
                 ((int32_t)1 << 6);
             ctx->tf_decay_factor_fp16[C_U] = (uint32_t)(
-                (((((int64_t)n_decay_fp10) * ((int64_t)n_decay_fp10))) * q_decay_fp8) >> 11);
+                (((((int64_t)n_decay_fp10) * ((int64_t)n_decay_fp10))) * q_decay_fp8 * (s_decay / 10)) >> 11);
             n_decay_fp10 = (decay_control[C_V] * (const_0dot7_fp16 + noise_levels_log1p_fp16[C_V])) /
                 ((int32_t)1 << 6);
             ctx->tf_decay_factor_fp16[C_V] = (uint32_t)(
-                (((((int64_t)n_decay_fp10) * ((int64_t)n_decay_fp10))) * q_decay_fp8) >> 11);
+                (((((int64_t)n_decay_fp10) * ((int64_t)n_decay_fp10))) * q_decay_fp8 * (s_decay / 10)) >> 11);
         }
     for (uint32_t blk_row = y_b64_start_idx; blk_row < y_b64_end_idx; blk_row++) {
         for (uint32_t blk_col = x_b64_start_idx; blk_col < x_b64_end_idx; blk_col++) {
@@ -5200,6 +5205,8 @@ static EbErrorType produce_temporally_filtered_pic_ld(
     // FP_ASSERT(TF_Q_DECAY_THRESHOLD == 25);
     const uint32_t q_decay_fp8 = 256;
 
+    uint16_t s_decay = (scs->static_config.temporal_filtering_strength / scs->static_config.temporal_strength_threshold) * 10;
+
     const int32_t const_0dot7_fp16 = 45875; //0.7
     /*Calculation of log and dceay_factor possible to move to estimate_noise() and calculate one time for GOP*/
     //decay_control * (0.7 + log1p(noise_levels[C_Y]))
@@ -5207,18 +5214,18 @@ static EbErrorType produce_temporally_filtered_pic_ld(
         ((int32_t)1 << 6);
     //2 * n_decay * n_decay * q_decay * (s_decay always is 1);
     ctx->tf_decay_factor_fp16[C_Y] = (uint32_t)(
-        (((((int64_t)n_decay_fp10) * ((int64_t)n_decay_fp10))) * q_decay_fp8) >> 11);
+        (((((int64_t)n_decay_fp10) * ((int64_t)n_decay_fp10))) * q_decay_fp8 * (s_decay / 10)) >> 11);
 
     if (ctx->tf_chroma) {
         n_decay_fp10 = (decay_control * (const_0dot7_fp16 + noise_levels_log1p_fp16[C_U])) /
             ((int32_t)1 << 6);
         ctx->tf_decay_factor_fp16[C_U] = (uint32_t)(
-            (((((int64_t)n_decay_fp10) * ((int64_t)n_decay_fp10))) * q_decay_fp8) >> 11);
+            (((((int64_t)n_decay_fp10) * ((int64_t)n_decay_fp10))) * q_decay_fp8 * (s_decay / 10)) >> 11);
 
         n_decay_fp10 = (decay_control * (const_0dot7_fp16 + noise_levels_log1p_fp16[C_V])) /
             ((int32_t)1 << 6);
         ctx->tf_decay_factor_fp16[C_V] = (uint32_t)(
-            (((((int64_t)n_decay_fp10) * ((int64_t)n_decay_fp10))) * q_decay_fp8) >> 11);
+            (((((int64_t)n_decay_fp10) * ((int64_t)n_decay_fp10))) * q_decay_fp8 * (s_decay / 10)) >> 11);
     }
     for (uint32_t blk_row = y_b64_start_idx; blk_row < y_b64_end_idx; blk_row++) {
         for (uint32_t blk_col = x_b64_start_idx; blk_col < x_b64_end_idx; blk_col++) {
