@@ -866,8 +866,8 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet *scs) {
         return_error = EB_ErrorBadParameter;
     }
 
-    if (config->variance_boost_strength > 5) {
-        SVT_ERROR("Instance %u: Variance boost strength must be between 0 and 5\n", channel_number + 1);
+    if (config->variance_boost_strength > 4) {
+        SVT_ERROR("Instance %u: Variance boost strength must be between 0 and 4\n", channel_number + 1);
         return_error = EB_ErrorBadParameter;
     }
 
@@ -1022,8 +1022,8 @@ EbErrorType svt_av1_set_default_params(EbSvtAv1EncConfiguration *config_ptr) {
     config_ptr->frame_scale_evts.resize_kf_denoms = NULL;
     config_ptr->frame_scale_evts.start_frame_nums = NULL;
     config_ptr->enable_roi_map                    = false;
-    config_ptr->variance_boost_strength           = 3;
-    config_ptr->new_variance_octile               = 4;
+    config_ptr->variance_boost_strength           = 2;
+    config_ptr->new_variance_octile               = 6;
     return return_error;
 }
 

@@ -1188,11 +1188,11 @@ ConfigEntry config_entry_variance_boost[] = {
     // Variance boost
     {SINGLE_INPUT,
      VARIANCE_BOOST_STRENGTH_TOKEN,
-     "Variance boost strength, default is 3 [0-5]",
+     "Variance boost strength, default is 2 [0-4]",
      set_cfg_generic_token},
     {SINGLE_INPUT,
      NEW_VARIANCE_OCTILE_TOKEN,
-     "Octile for new 8x8 variance algorithm. Set to 0 to use 64x64 variance algorithm, default is 4 (median) [0-8]",
+     "Octile for new 8x8 variance algorithm. Set to 0 to use 64x64 variance algorithm, default is 6 [0-8]",
      set_cfg_generic_token},
     // Termination
     {SINGLE_INPUT, NULL, NULL, NULL}};

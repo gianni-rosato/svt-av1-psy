@@ -4079,7 +4079,7 @@ static void set_param_based_on_input(SequenceControlSet *scs)
     }
 
     if (scs->static_config.variance_boost_strength >= 4) {
-        SVT_WARN("Aggressive variance boost strength used, ensure source content is lightly noised or noise-free to avoid artifacts\n");
+        SVT_WARN("Aggressive variance boost strength used. This is a curve that's only useful under very specific situations. Use with caution!\n");
     }
     if (scs->static_config.variance_boost_strength && scs->static_config.enable_adaptive_quantization == 1) {
         scs->static_config.enable_adaptive_quantization = 0;
