@@ -1417,9 +1417,6 @@ static int av1_get_deltaq_sb_variance_boost(
         case 4: // aggressive strength, crossover at 256 variance
             max_boost = (-10 * log2((double)variance) + 80) * 2.5;
             break;
-        case 5: // extreme strength, crossover at 512 variance
-            max_boost = (-20 * log2((double)variance) + 180) * 1.25;
-            break;
     }
 
     max_boost = CLIP3(0, VAR_BOOST_MAX_UNSCALED_DELTAQ_RANGE, max_boost);
@@ -1482,9 +1479,6 @@ static int av1_get_deltaq_sb_variance_boost_classic(
             break;
         case 4: // aggressive strength, crossover at 256 variance
             max_boost = (-10 * log2((double)variance) + 80) * 2.5;
-            break;
-        case 5: // extreme strength, crossover at 512 variance
-            max_boost = (-20 * log2((double)variance) + 180) * 1.25;
             break;
     }
 

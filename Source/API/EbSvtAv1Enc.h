@@ -941,7 +941,7 @@ typedef struct EbSvtAv1EncConfiguration {
         3: medium boost
         4: aggressive boost
         5: maximum boost
-       Default is 3 (medium curve) */
+       Default is 2 (gentle curve) */
     uint8_t variance_boost_strength;
 
     /* @brief Enables the new 8x8-based variance algorithm, and picks an 8x8 variance value per superblock to determine boost
@@ -950,7 +950,7 @@ typedef struct EbSvtAv1EncConfiguration {
         1: enabled, 1st octile
         4: enabled, median
         8: enabled, maximum
-       Default is 4
+       Default is 6
     */
     uint8_t new_variance_octile;
 } EbSvtAv1EncConfiguration;
