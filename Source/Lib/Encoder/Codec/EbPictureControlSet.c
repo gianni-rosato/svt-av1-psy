@@ -232,9 +232,9 @@ typedef struct InitData {
     uint32_t            max_picture_width;
     uint32_t            max_picture_height;
     uint32_t            unit_size;
-    uint32_t            granularity_normal;
-    uint32_t            granularity_top_left;
-    uint32_t            type_mask;
+    uint8_t             granularity_normal;
+    uint8_t             granularity_top_left;
+    uint8_t             type_mask;
 } InitData;
 
 #define DIM(array) (sizeof(array) / sizeof(array[0]))
