@@ -992,6 +992,37 @@ typedef enum ATTRIBUTE_PACKED {
     TX_TYPES_1D,
 } TxType1D;
 
+#if CLN_TXTYPE_WIN
+#ifdef _MSC_VER
+typedef uint8_t TxType;
+enum ATTRIBUTE_PACKED {
+#else
+typedef enum ATTRIBUTE_PACKED {
+#endif
+    DCT_DCT, // DCT  in both horizontal and vertical
+    ADST_DCT, // ADST in vertical, DCT in horizontal
+    DCT_ADST, // DCT  in vertical, ADST in horizontal
+    ADST_ADST, // ADST in both directions
+    FLIPADST_DCT,
+    DCT_FLIPADST,
+    FLIPADST_FLIPADST,
+    ADST_FLIPADST,
+    FLIPADST_ADST,
+    IDTX,
+    V_DCT,
+    H_DCT,
+    V_ADST,
+    H_ADST,
+    V_FLIPADST,
+    H_FLIPADST,
+    TX_TYPES,
+    INVALID_TX_TYPE,
+#ifdef _MSC_VER
+};
+#else
+} TxType;
+#endif
+#else
 typedef enum ATTRIBUTE_PACKED {
     DCT_DCT, // DCT  in both horizontal and vertical
     ADST_DCT, // ADST in vertical, DCT in horizontal
@@ -1012,6 +1043,7 @@ typedef enum ATTRIBUTE_PACKED {
     TX_TYPES,
     INVALID_TX_TYPE,
 } TxType;
+#endif
 
 #define MAX_TX_TYPE_GROUP 6
 static const TxType tx_type_group[MAX_TX_TYPE_GROUP][TX_TYPES]    = {{DCT_DCT, INVALID_TX_TYPE},

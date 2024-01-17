@@ -492,55 +492,6 @@ void       *rtime_alloc_block_hash_block_is_same(size_t size) { return malloc(si
 #if OPT_COEFF_LVL_NOISE
 int32_t svt_aom_noise_log1p_fp16(int32_t noise_level_fp16);
 #endif
-#if OPT_COEFF_LVL_TPL
-void get_tpl_error(PictureControlSet* pcs) {
-    int64_t tot_error = 0;
-
-    PictureParentControlSet* ppcs = pcs->ppcs;
-    Av1Common* cm = ppcs->av1_cm;
-    SequenceControlSet* scs = ppcs->scs;
-    const int32_t       shift = ppcs->tpl_ctrls.synth_blk_size == 8 ? 1 : ppcs->tpl_ctrls.synth_blk_size == 16 ? 2 : 3;
-    const int32_t       step = 1 << (shift);
-    const int32_t       col_step_sr = coded_to_superres_mi(step, ppcs->superres_denom);
-    // Super-res upscaled size should be used here.
-    const int32_t mi_cols_sr = ((ppcs->enhanced_unscaled_pic->width + 15) / 16) << 2; // picture column boundary
-    const int32_t mi_rows = ((ppcs->enhanced_unscaled_pic->height + 15) / 16) << 2; // picture row boundary
-
-    // If superres scale down is on, should use scaled width instead of full size
-    const int32_t  sb_mi_sz = (int32_t)(scs->sb_size >> 2);
-    const uint32_t picture_sb_width = (uint32_t)((ppcs->aligned_width + scs->sb_size - 1) / scs->sb_size);
-    const uint32_t picture_sb_height = (uint32_t)((ppcs->aligned_height + scs->sb_size - 1) / scs->sb_size);
-    const int32_t  mi_high = sb_mi_sz; // sb size in 4x4 units
-    const int32_t  mi_wide = sb_mi_sz;
-    for (uint32_t sb_y = 0; sb_y < picture_sb_height; ++sb_y) {
-        for (uint32_t sb_x = 0; sb_x < picture_sb_width; ++sb_x) {
-            uint16_t  mi_row = ppcs->sb_geom[sb_y * picture_sb_width + sb_x].org_y >> 2;
-            uint16_t  mi_col = ppcs->sb_geom[sb_y * picture_sb_width + sb_x].org_x >> 2;
-            int64_t   recrf_dist_sum = 0;
-            int64_t   mc_dep_delta_sum = 0;
-            const int mi_col_sr = coded_to_superres_mi(mi_col, ppcs->superres_denom);
-            const int mi_col_end_sr = coded_to_superres_mi(mi_col + mi_wide, ppcs->superres_denom);
-            const int row_step = step;
-
-            // loop all mb in the sb
-            for (int row = mi_row; row < mi_row + mi_high; row += row_step) {
-                for (int col = mi_col_sr; col < mi_col_end_sr; col += col_step_sr) {
-                    if (row >= mi_rows || col >= mi_cols_sr) {
-                        continue;
-                    }
-
-                    int       index = (row >> shift) * (mi_cols_sr >> shift) + (col >> shift);
-                    TplStats* tpl_stats_ptr = ppcs->pa_me_data->tpl_stats[index];
-                    recrf_dist_sum += tpl_stats_ptr->recrf_dist;
-                }
-            }
-            tot_error += recrf_dist_sum;
-        }
-    }
-    pcs->tpl_error = tot_error;
-    return ;
-}
-#endif
 #if OPT_COEFF_LVL_NORM
 /* Determine the frame complexity level (stored under pcs->coeff_lvl) based
 on the ME distortion and QP. */
@@ -560,25 +511,6 @@ static void set_frame_coeff_lvl(PictureControlSet* pcs) {
 
     noise_level_fp16 = svt_aom_noise_log1p_fp16(noise_level_fp16);
 #endif
-#if OPT_COEFF_LVL_TPL
-    uint64_t cmplx;
-    uint64_t coeff_low_level_th = 0;
-    uint64_t coeff_high_level_th = (uint64_t)~0;
-    if (pcs->slice_type == I_SLICE && pcs->ppcs->tpl_ctrls.enable) {
-        cmplx = (pcs->tpl_error / pcs->b64_total_count);
-        coeff_low_level_th = 2500000;
-    }
-    else if (pcs->slice_type != I_SLICE) {
-        uint64_t tot_me_8x8_dist = 0;
-        for (uint32_t b64_idx = 0; b64_idx < pcs->b64_total_count; b64_idx++) {
-            tot_me_8x8_dist += pcs->ppcs->me_8x8_distortion[b64_idx];
-        }
-        uint64_t me_8x8_dist_per_sb = tot_me_8x8_dist / pcs->b64_total_count;
-        cmplx = me_8x8_dist_per_sb / MAX(1, pcs->scs->static_config.qp);
-        coeff_low_level_th = COEFF_LVL_TH_0;
-        coeff_high_level_th = COEFF_LVL_TH_1;
-    }
-#else
         uint64_t tot_me_8x8_dist = 0;
         for (uint32_t b64_idx = 0; b64_idx < pcs->b64_total_count; b64_idx++) {
             tot_me_8x8_dist += pcs->ppcs->me_8x8_distortion[b64_idx];
@@ -587,7 +519,6 @@ static void set_frame_coeff_lvl(PictureControlSet* pcs) {
         uint64_t cmplx = me_8x8_dist_per_sb / MAX(1, pcs->scs->static_config.qp);
         uint64_t coeff_low_level_th = COEFF_LVL_TH_0;
         uint64_t coeff_high_level_th = COEFF_LVL_TH_1;
-#endif
     if (pcs->ppcs->input_resolution <= INPUT_SIZE_240p_RANGE) {
         coeff_low_level_th = (uint64_t)((double)coeff_low_level_th * 1.7);
         coeff_high_level_th = (uint64_t)((double)coeff_high_level_th * 1.7);
@@ -602,7 +533,6 @@ static void set_frame_coeff_lvl(PictureControlSet* pcs) {
     }
 
 #if OPT_COEFF_LVL_NOISE
-#if 1
     if (noise_level_fp16 < 26572 /*FLOAT2FP(log1p(0.5), 16, int32_t)*/) {
         coeff_low_level_th = (uint64_t)((double)coeff_low_level_th * 0.7);
         coeff_high_level_th = (uint64_t)((double)coeff_high_level_th * 0.7);
@@ -611,11 +541,6 @@ static void set_frame_coeff_lvl(PictureControlSet* pcs) {
         coeff_low_level_th = (uint64_t)((double)coeff_low_level_th * 1.05);
         coeff_high_level_th = (uint64_t)((double)coeff_high_level_th * 1.05);
     }
-#else
-    uint64_t weight = CLIP3(100000, 2000000,8 * noise_level_fp16 + 550000);
-    coeff_low_level_th = (uint64_t)((double)coeff_low_level_th * weight) / 1000000;
-    coeff_high_level_th = (uint64_t)((double)coeff_high_level_th * weight) / 1000000;
-#endif
 #endif
     pcs->coeff_lvl = NORMAL_LVL;
     if (cmplx < coeff_low_level_th) {
@@ -695,18 +620,10 @@ void *svt_aom_mode_decision_configuration_kernel(void *input_ptr) {
             pcs->max_me_clpx = max_dist;
             pcs->avg_me_clpx = avg_me_clpx / pcs->ppcs->b64_total_count;
         }
-#if OPT_COEFF_LVL_TPL
-        if (pcs->ppcs->tpl_ctrls.enable) {
-            get_tpl_error(pcs);
-        }
-#endif
         pcs->coeff_lvl = INVALID_LVL;
 #if OPT_MPASS_VBR4
-#if OPT_COEFF_LVL_TPL
-        if (!pcs->ppcs->sc_class1) {
-#else
+
         if (pcs->slice_type != I_SLICE && !pcs->ppcs->sc_class1) {
-#endif
 #if OPT_COEFF_LVL_NORM
             set_frame_coeff_lvl(pcs);
 #else

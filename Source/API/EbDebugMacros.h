@@ -64,6 +64,7 @@ extern "C" {
 #define OPT_MPASS_VBR6                            1 // Lossless optimization for multiPASS VBR, Shift passes
 #define OPT_MPASS_VBR7                            1 // Lossless optimization for multiPASS VBR, replace ENC_MIDDLE_PASS by ENC_FIRST_PASS
 #define OPT_MPASS_VBR8                            1 // Lossless optimization for multiPASS VBR, refactor mid_pass
+#define FIX_REMOVE_PASS3                          1 // Change bounds of --pass to exclude pass 3, which has been removed
 #endif
 
 #define OPT_NSQ_INCOMP                            1 // Optimize how NSQ is used for incomplete SBs
@@ -97,7 +98,6 @@ extern "C" {
 #define CLN_INTER_MODE_CTX                        1 // Move inter_mode_ctx array to MD ctx and save only the winning result in blk_ptr
 #define CLN_BLK_STRUCT_4                          1 // Move min_mz_h/v to ctx
 #define OPT_COEFF_LVL_NOISE                       1 // Use the input noise-level @ the derivation of the coeff-level low/high bands
-#define OPT_COEFF_LVL_TPL                         0 // Use the tpl-error for the derivation of the coeff-level
 #define OPT_BLOCK_SETTINGS                        1 // Adopt same nic scaling per bsize and remove sig_deriv_block
 #define CLN_UNUSED_SETTING                        1 // Remove unused setting in update_md_settings
 #define CLN_TX_DATA                               1 // Cleanup TX info in BlkStruct
@@ -107,6 +107,41 @@ extern "C" {
 #define TUNE_LPD1                                 1 // tune m10-m11 lpd1 level
 #define CLN_QUANT_FUNC                            1 // Remove useless arguments from quantization function
 #define CLN_EC_BLK_STRUCT                         1 // Cleanup fields in EcBlkStruct
+#define CLN_MD_DISALLOW_NSQ                       1 // Cleanup md_disallow_nsq signal to refer only to the nsq search
+#define OPT_CHECK_SKIP_NSQ_ONCE                   1 // Only call get_skip_processing_nsq_block and faster_md_settings_nsq for the first block in an NSQ shape
+#define FIX_NSQ_HIGH_ENERGY                       1 // Move resetting of signals in MD to not overwrite NSQ settings when high_energy_weight is enabled
+#define CLN_TXTYPE_WIN                            1 // Force TxType type to be 1 byte on windows to save memory in EcBlkStruct
+
+#define OPT_SB128                                 1 // sb128 = f(resolution)
+#define CLN_ENCDEC_FUNCS                          1 // Merge 8bit/16bit encdec functions
+#define FIX_RECON_PADDING                         1 // Fix recon buffer padding (top padding is set to bottom and vice-versa)
+#define TUNE_M12_II                               1 // tune m12 lp8
+#define CLN_SKIP_PD0_SIG                          1 // Remove skip_pd0 signal because not used for skipping PD0
+
+#define TUNE_M5_2                                 1 // tune m5 lp1
+#define TUNE_M6                                   1 // tune m6 lp1
+#define OPT_DEPTH_FEAT_128                        1 // enable depth removal and other depth shortcut relying on ME info when using 128x128 SB
+#define OPT_USE_FAST_TX_PATH_B64                  1 // Use optimized DCT_DCT only path for block sizes <= 64 (instead of checking SB size)
+#define OPT_DR_COEFF_LVL                          1 // Set depth removal level using coeff_level
+
+#define DIS_DLF_SG_QP                             1 // remove fd dlf / sg qp bands
+#define DIS_COMP_QP                               1 // remove get_th_qp bands
+#define TUNE_TPL_LVL                              1 // Use tpl-group cplx @ the derivation of the tpl-params-lvl
+
+#define TUNE_M3_M4_2                              1 // tune def m3-m4 lp1
+#define FIX_PSQ_TXS_UPDATE                        1 // Fix updating psq_txs ctrls from high-frequency NSQ feature
+
+#define TUNE_M7_M8_2                              1 // tune def m7-m8 lp1
+#define TUNE_M9_M10_2                             1 // tune def m9-m10 lp1
+#define TUNE_M0                                   1 // tune def M0 lp1
+#define TUNE_M1                                   1 // tune def M1 lp1
+
+#define TUNE_M5_M6_3                              1 // tune fd m5-m6 lp1
+#define FIX_REDUND                                1 // Fix updates for redundant blocks
+#define OPT_PALETTE_MEM                           1 // Only allocate palette memory for blocks where palette is allowed
+#define TUNE_LD                                   1 // Tune LD NSC settings
+#define CLN_REMOVE_UNUSED_ARGS                    1 // Removed unused args from RDOQ func
+#define CLN_M13_CHECKS                            1 // Remove checks on <=M13 because they're useless
 
 //FOR DEBUGGING - Do not remove
 #define OPT_LD_LATENCY2         0 // Latency optimization for low delay

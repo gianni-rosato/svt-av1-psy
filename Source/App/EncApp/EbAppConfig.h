@@ -208,7 +208,7 @@ typedef struct EncChannel {
 typedef enum MultiPassModes {
     SINGLE_PASS, //single pass mode
 #if OPT_MPASS_VBR6
-    TWO_PASS_SAMEPRED_FINAL, // two pass: Same Pred + final
+    TWO_PASS, // two pass: Same Pred + final
 #else
     TWO_PASS_IPP_FINAL, // two pass: IPP + final
     THREE_PASS_IPP_SAMEPRED_FINAL, // three pass: IPP + Same Pred + final

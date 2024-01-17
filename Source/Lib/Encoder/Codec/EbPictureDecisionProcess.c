@@ -3200,6 +3200,7 @@ static EbErrorType derive_tf_window_params(
             if (centre_pcs->hierarchical_levels != pcs->temp_filt_pcs_list[0]->hierarchical_levels ||
                 centre_pcs->hierarchical_levels != pd_ctx->mg_pictures_array[idx]->hierarchical_levels) {
                 centre_pcs->hierarchical_levels = pcs->temp_filt_pcs_list[0]->hierarchical_levels = pd_ctx->mg_pictures_array[idx]->hierarchical_levels;
+#if !TUNE_TPL_LVL
                 // tpl setting are updated if hierarchical level has changed
                 svt_aom_set_tpl_extended_controls(centre_pcs, scs->tpl_level);
                 centre_pcs->r0_based_qps_qpm = centre_pcs->tpl_ctrls.enable &&
@@ -3214,6 +3215,7 @@ static EbErrorType derive_tf_window_params(
                     assert(centre_pcs->temporal_layer_index != 0);
                     centre_pcs->r0_based_qps_qpm = 0;
                 }
+#endif
             }
             num_future_pics = MIN((uint8_t)num_future_pics, svt_aom_tf_max_ref_per_struct(pcs->hierarchical_levels, 0, 1));
             uint32_t pic_i;

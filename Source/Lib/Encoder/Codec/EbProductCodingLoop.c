@@ -7318,7 +7318,11 @@ static void full_loop_core(PictureControlSet *pcs, ModeDecisionContext *ctx, Mod
         end_tx_depth   = 0;
     }
     // Check if should perform TX type search
+#if OPT_USE_FAST_TX_PATH_B64
+    if (ctx->blk_geom->sq_size <= 64 && start_tx_depth == 0 && end_tx_depth == 0 && // TXS off
+#else
     if (pcs->scs->super_block_size == 64 && start_tx_depth == 0 && end_tx_depth == 0 && // TXS off
+#endif
         !pcs->ppcs->sc_class1 && // Can't be SC b/c SC tries DCT_DCT and IDTX when only_dct_dct is 1
         search_dct_dct_only(pcs,
                             ctx,
@@ -7849,7 +7853,9 @@ static void move_blk_data_redund(PictureControlSet *pcs, ModeDecisionContext *ct
     dst->qindex               = src->qindex;
     dst->skip_mode            = src->skip_mode;
     dst->tx_depth             = src->tx_depth;
+#if !FIX_REDUND
     //CHKN    MacroBlockD*  av1xd;
+#endif
     svt_memcpy(dst->av1xd, src->av1xd, sizeof(MacroBlockD));
 
 #if CLN_INTER_MODE_CTX
@@ -7861,14 +7867,19 @@ static void move_blk_data_redund(PictureControlSet *pcs, ModeDecisionContext *ct
     svt_memcpy(dst->inter_mode_ctx, src->inter_mode_ctx, MODE_CTX_REF_FRAMES * sizeof(int16_t));
 #endif
 
+#if !FIX_REDUND
     //CHKN uint8_t  drl_index;
     //CHKN PredictionMode               pred_mode;
+#endif
     dst->drl_index = src->drl_index;
     dst->pred_mode = src->pred_mode;
 
+#if !FIX_REDUND
     //CHKN IntMv  predmv[2];
+#endif
 
     svt_memcpy(dst->predmv, src->predmv, 2 * sizeof(IntMv));
+#if !FIX_REDUND
     //CHKN int16_t                        luma_txb_skip_context;
     //CHKN int16_t                        luma_dc_sign_context;
     //CHKN int16_t                        cb_txb_skip_context;
@@ -7878,6 +7889,7 @@ static void move_blk_data_redund(PictureControlSet *pcs, ModeDecisionContext *ct
     //CHKN uint8_t                         reference_mode_context;
     //CHKN uint8_t                         compoud_reference_type_context;
     //CHKN uint32_t                        partitionContext;
+#endif
     dst->interp_filters = src->interp_filters;
 
     dst->part            = src->part;
@@ -7919,6 +7931,55 @@ static void move_blk_data_redund(PictureControlSet *pcs, ModeDecisionContext *ct
     svt_memcpy(dst->ed_ref_mv_stack, src->ed_ref_mv_stack, sizeof(CandidateMv) * MODE_CTX_REF_FRAMES * MAX_REF_MV_STACK_SIZE);
 #endif
     // only for MD
+#if FIX_REDUND
+    uint16_t bwidth = ctx->blk_geom->bwidth;
+    uint16_t bheight = ctx->blk_geom->bheight;
+    uint16_t bwidth_uv = ctx->blk_geom->bwidth_uv;
+    uint16_t bheight_uv = ctx->blk_geom->bheight_uv;
+    // if using 8bit MD and bypassing encdec, need to save 8bit and 10bit recon
+    const bool save_both_recon = ctx->encoder_bit_depth > EB_EIGHT_BIT && ctx->bypass_encdec && !ctx->hbd_md && ctx->pd_pass == PD_PASS_1;
+    if (save_both_recon || !ctx->hbd_md) {
+        svt_memcpy(dst->neigh_left_recon[0],
+            src->neigh_left_recon[0],
+            bheight);
+        svt_memcpy(dst->neigh_left_recon[1],
+            src->neigh_left_recon[1],
+            bheight_uv);
+        svt_memcpy(dst->neigh_left_recon[2],
+            src->neigh_left_recon[2],
+            bheight_uv);
+        svt_memcpy(dst->neigh_top_recon[0],
+            src->neigh_top_recon[0],
+            bwidth);
+        svt_memcpy(dst->neigh_top_recon[1],
+            src->neigh_top_recon[1],
+            bwidth_uv);
+        svt_memcpy(dst->neigh_top_recon[2],
+            src->neigh_top_recon[2],
+            bwidth_uv);
+    }
+    if (save_both_recon || ctx->hbd_md) {
+        uint16_t sz = sizeof(uint16_t);
+        svt_memcpy(dst->neigh_left_recon_16bit[0],
+            src->neigh_left_recon_16bit[0],
+            bheight * sz);
+        svt_memcpy(dst->neigh_left_recon_16bit[1],
+            src->neigh_left_recon_16bit[1],
+            bheight_uv * sz);
+        svt_memcpy(dst->neigh_left_recon_16bit[2],
+            src->neigh_left_recon_16bit[2],
+            bheight_uv * sz);
+        svt_memcpy(dst->neigh_top_recon_16bit[0],
+            src->neigh_top_recon_16bit[0],
+            bwidth * sz);
+        svt_memcpy(dst->neigh_top_recon_16bit[1],
+            src->neigh_top_recon_16bit[1],
+            bwidth_uv * sz);
+        svt_memcpy(dst->neigh_top_recon_16bit[2],
+            src->neigh_top_recon_16bit[2],
+            bwidth_uv * sz);
+    }
+#else
     dst->neigh_left_recon[0] = src->neigh_left_recon[0];
     dst->neigh_left_recon[1] = src->neigh_left_recon[1];
     dst->neigh_left_recon[2] = src->neigh_left_recon[2];
@@ -7931,6 +7992,7 @@ static void move_blk_data_redund(PictureControlSet *pcs, ModeDecisionContext *ct
     dst->neigh_top_recon_16bit[0] = src->neigh_top_recon_16bit[0];
     dst->neigh_top_recon_16bit[1] = src->neigh_top_recon_16bit[1];
     dst->neigh_top_recon_16bit[2] = src->neigh_top_recon_16bit[2];
+#endif
 #if !CLN_TX_DATA
     svt_memcpy(dst->quantized_dc, src->quantized_dc, sizeof(int32_t) * 3 * MAX_TXB_COUNT);
 #endif
@@ -8847,6 +8909,7 @@ static void md_encode_block_light_pd0(PictureControlSet *pcs, ModeDecisionContex
         ctx->me_block_offset = svt_aom_get_me_block_offset(
             ctx->blk_geom, pcs->ppcs->enable_me_8x8, pcs->ppcs->enable_me_16x16);
         ctx->me_cand_offset = ctx->me_block_offset * pcs->ppcs->pa_me_data->max_cand;
+
     }
 
     generate_md_stage_0_cand_light_pd0(ctx, &fast_candidate_total_count, pcs);
@@ -10344,12 +10407,17 @@ static void md_encode_block(PictureControlSet *pcs, ModeDecisionContext *ctx, ui
     if (perform_md_recon)
         av1_perform_inverse_transform_recon(pcs, ctx, cand_bf, ctx->blk_geom);
     if (ctx->blk_geom->shape == PART_N &&
+#if CLN_MD_DISALLOW_NSQ
+    ((!ctx->md_disallow_nsq_search && ctx->nsq_search_ctrls.max_part0_to_part1_dev && ctx->blk_geom->bsize >= BLOCK_8X8 &&
+        ctx->blk_geom->sq_size > ctx->nsq_geom_ctrls.min_nsq_block_size) ||
+#else
 #if FIX_NSQ_CTRL
     ((!ctx->md_disallow_nsq&& ctx->nsq_search_ctrls.max_part0_to_part1_dev&& ctx->blk_geom->bsize >= BLOCK_8X8 &&
         ctx->blk_geom->sq_size > ctx->nsq_geom_ctrls.min_nsq_block_size) ||
 #else
         ((!ctx->md_disallow_nsq && ctx->nsq_ctrls.max_part0_to_part1_dev && ctx->blk_geom->bsize >= BLOCK_8X8 &&
           ctx->blk_geom->sq_size > ctx->nsq_ctrls.min_nsq_block_size) ||
+#endif
 #endif
          (ctx->skip_sub_depth_ctrls.enabled && ctx->blk_geom->sq_size <= ctx->skip_sub_depth_ctrls.max_size &&
           ctx->blk_ptr->split_flag &&
@@ -10372,7 +10440,11 @@ static void md_encode_block(PictureControlSet *pcs, ModeDecisionContext *ctx, ui
     if (!ctx->skip_intra) {
         copy_recon_md(pcs, ctx, cand_bf);
     }
+#if CLN_MD_DISALLOW_NSQ
+    if (!ctx->md_disallow_nsq_search && ctx->nsq_psq_txs_ctrls.enabled && ctx->blk_geom->shape == PART_N &&
+#else
     if (!ctx->md_disallow_nsq && ctx->nsq_psq_txs_ctrls.enabled && ctx->blk_geom->shape == PART_N &&
+#endif
 #if FIX_NSQ_CTRL
         ctx->blk_geom->bsize >= BLOCK_8X8 && ctx->blk_geom->sq_size > ctx->nsq_geom_ctrls.min_nsq_block_size)
 #else
@@ -11045,7 +11117,11 @@ static void init_block_data(PictureControlSet *pcs, ModeDecisionContext *ctx, co
     blk_ptr->above_neighbor_partition = INVALID_NEIGHBOR_DATA;
 #if CLN_MD_LOOP
     //  MD palette info buffer
+#if OPT_PALETTE_MEM
+    if (svt_av1_allow_palette(pcs->ppcs->palette_level, blk_geom->bsize)) {
+#else
     if (pcs->ppcs->palette_level) {
+#endif
         if (blk_ptr->palette_mem == 0) {
             md_rtime_alloc_palette_info(blk_ptr);
             blk_ptr->palette_mem = 1;
@@ -11176,7 +11252,9 @@ static Bool update_redundant(PictureControlSet *pcs, ModeDecisionContext *ctx) {
         return 0;
 #endif
 
+#if !CLN_MD_DISALLOW_NSQ // if nsq is off, redundant_blk will be false, so no need to re-check
     if (!ctx->md_disallow_nsq)
+#endif
         check_redundant_block(blk_geom, ctx, &redundant_blk_avail, &redundant_blk_mds);
 
     if (redundant_blk_avail && ctx->redundant_blk) {
@@ -11197,11 +11275,18 @@ static Bool update_redundant(PictureControlSet *pcs, ModeDecisionContext *ctx) {
         ctx->cost_avail[blk_ptr->mds_idx]     = ctx->cost_avail[redundant_blk_mds];
 
         if (ctx->bypass_encdec && ctx->pd_pass == PD_PASS_1) {
+#if CLN_MD_DISALLOW_NSQ
+            // If a redundant block is being tested, there must be a search over NSQ shapes and/or depth.
+            // Therefore, we save the recon and coeffs under the blk_ptr, instead of writing directly to
+            // a final buffer.  Once the final partition is selected, the recon/coeff will be copied to
+            // the final buffer in svt_aom_encdec_update.
+#else
             // If a redundant block is being tested, NSQ shapes must be enabled.  Therefore, we save
             // the recon and coeffs under the blk_ptr, instead of writing directly to a final buffer.
             // Once the final partition is selected, the recon/coeff will be copied to the final buffer
             // in svt_aom_encdec_update.
             assert(!ctx->md_disallow_nsq);
+#endif
 
             // Copy recon
             uint16_t sz = ctx->encoder_bit_depth > EB_EIGHT_BIT ? sizeof(uint16_t) : sizeof(uint8_t);
@@ -11243,7 +11328,7 @@ static Bool update_redundant(PictureControlSet *pcs, ModeDecisionContext *ctx) {
             src_ptr = &(((int32_t *)redund_blk_ptr->coeff_tmp->buffer_cr)[0]);
             svt_memcpy(dst_ptr, src_ptr, bheight_uv * bwidth_uv * sizeof(int32_t));
         }
-
+#if !FIX_REDUND
         // if using 8bit MD and bypassing encdec, need to save 8bit and 10bit recon
         if (ctx->encoder_bit_depth > EB_EIGHT_BIT && ctx->bypass_encdec && !ctx->hbd_md && ctx->pd_pass == PD_PASS_1) {
             // Copy 10bit arrays
@@ -11326,6 +11411,7 @@ static Bool update_redundant(PictureControlSet *pcs, ModeDecisionContext *ctx) {
                    &redund_blk_ptr->neigh_top_recon_16bit[2],
                    bwidth_uv * sz);
         }
+#endif
         return 1;
     }
     return 0;
@@ -11341,7 +11427,6 @@ static void process_block_light_pd0(SequenceControlSet *scs, PictureControlSet *
     init_block_data(pcs, ctx, blk_split_flag, blk_idx_mds);
     // Check current depth cost; if larger than parent, exit early
     check_curr_to_parent_cost_light_pd0(scs, pcs, ctx, next_non_skip_blk_idx_mds, md_early_exit_sq);
-
     // encode the current block only if it's not redundant
     {
         Bool skip_processing_block = *md_early_exit_sq;
@@ -11350,6 +11435,7 @@ static void process_block_light_pd0(SequenceControlSet *scs, PictureControlSet *
             md_encode_block_light_pd0(pcs, ctx, in_pic);
         }
     }
+
 }
 static bool get_skip_processing_nsq_block(PictureControlSet *pcs, ModeDecisionContext *ctx) {
     int skip_processing_block = FALSE;
@@ -11504,6 +11590,33 @@ static void process_block(PictureControlSet *pcs, ModeDecisionContext *ctx,
 #if !OPT_BLOCK_SETTINGS
     svt_aom_sig_deriv_block(pcs, ctx);
 #endif
+#if OPT_CHECK_SKIP_NSQ_ONCE
+    // If performing NSQ search, take shortcuts to reduce NSQ overhead
+    if (blk_geom->shape != PART_N && blk_geom->nsi == 0) {
+        // Update settings for the NSQ(s) for certain speed features
+        if (pcs->slice_type != I_SLICE) {
+            faster_md_settings_nsq(pcs, ctx, leaf_data_ptr);
+        }
+
+        // call nsq-reduction func if NSQ is on
+        skip_processing_block |= get_skip_processing_nsq_block(pcs, ctx);
+    }
+
+    // encode the current block only if it's not redundant
+    if (!skip_processing_block && (!ctx->redundant_blk || !update_redundant(pcs, ctx))) {
+        if (ctx->copied_neigh_arrays && blk_geom->nsi == 0) {
+            svt_aom_copy_neighbour_arrays( //restore [1] in [0] after done last ns block
+                pcs,
+                ctx,
+                1,
+                0,
+                blk_geom->sqi_mds);
+        }
+
+        // Encode the block
+        md_encode_block(pcs, ctx, ctx->sb_index, in_pic);
+    }
+#else
 
     // encode the current block only if it's not redundant
     if (!ctx->redundant_blk || !update_redundant(pcs, ctx)) {
@@ -11538,6 +11651,7 @@ static void process_block(PictureControlSet *pcs, ModeDecisionContext *ctx,
             md_encode_block(pcs, ctx, ctx->sb_index, in_pic);
         }
     }
+#endif
 }
 #else
 /*
@@ -11713,9 +11827,13 @@ static void update_d1_data(PictureControlSet *pcs, ModeDecisionContext *ctx, uin
 static void update_nsq_settings(SequenceControlSet* scs, PictureControlSet* pcs, ModeDecisionContext* ctx) {
 
     // Reset the NSQ setting if previous-SQ is_high_energy
+#if FIX_PSQ_TXS_UPDATE
+    svt_aom_set_nsq_search_ctrls(ctx, pcs->nsq_search_level, pcs->ppcs->input_resolution);
+#else
     svt_aom_set_nsq_search_ctrls(ctx, pcs->nsq_search_level);
     svt_aom_set_parent_sq_coeff_area_based_cycles_reduction_ctrls(
         ctx, pcs->ppcs->input_resolution, ctx->pd_pass == PD_PASS_0 ? 0 : ctx->nsq_search_ctrls.psq_cplx_lvl);
+#endif
 
     // Derive area energy
     uint32_t energy = ctx->blk_geom->sq_size < 64
@@ -11735,9 +11853,13 @@ static void update_nsq_settings(SequenceControlSet* scs, PictureControlSet* pcs,
     if (delta) {
         const uint8_t is_base = pcs->ppcs->temporal_layer_index == 0;
         uint8_t nsq_search_level = svt_aom_get_nsq_search_level(MAX(ENC_MR, (int)pcs->ppcs->enc_mode - delta), is_base, pcs->coeff_lvl, scs->static_config.qp);
+#if FIX_PSQ_TXS_UPDATE
+        svt_aom_set_nsq_search_ctrls(ctx, nsq_search_level, pcs->ppcs->input_resolution);
+#else
         svt_aom_set_nsq_search_ctrls(ctx, nsq_search_level);
         svt_aom_set_parent_sq_coeff_area_based_cycles_reduction_ctrls(
             ctx, pcs->ppcs->input_resolution, ctx->pd_pass == PD_PASS_0 ? 0 : ctx->nsq_search_ctrls.psq_cplx_lvl);
+#endif
     }
 }
 #endif
@@ -12003,19 +12125,34 @@ void svt_aom_mode_decision_sb(SequenceControlSet *scs, PictureControlSet *pcs, M
         ctx->blk_geom                             = get_blk_geom_mds(base_blk_idx_mds);
         ctx->blk_ptr                              = &ctx->md_blk_arr_nsq[base_blk_idx_mds];
 
-        assert(base_blk_idx_mds == ctx->blk_geom->sqi_mds);
-        init_block_data(pcs, ctx, blk_split_flag, base_blk_idx_mds);
-
-        // Use more conservative NSQ settings in the presence of a high energy area
-        if (ctx->nsq_search_ctrls.high_energy_weight && ctx->detect_high_freq_ctrls.enabled && !ctx->md_disallow_nsq)
-            update_nsq_settings(scs, pcs, ctx);
-
+#if FIX_NSQ_HIGH_ENERGY
         // Reset settings, in case they were over-written by previous block
         // Only reset settings when features that change settings are used.
         if (ctx->params_status == 1) {
             svt_aom_sig_deriv_enc_dec(scs, pcs, ctx);
             ctx->params_status = 0;
         }
+#endif
+
+        assert(base_blk_idx_mds == ctx->blk_geom->sqi_mds);
+        init_block_data(pcs, ctx, blk_split_flag, base_blk_idx_mds);
+
+#if CLN_MD_DISALLOW_NSQ
+        // Use more conservative NSQ settings in the presence of a high energy area
+        if (!ctx->md_disallow_nsq_search && ctx->nsq_search_ctrls.high_energy_weight && ctx->detect_high_freq_ctrls.enabled)
+#else
+        // Use more conservative NSQ settings in the presence of a high energy area
+        if (ctx->nsq_search_ctrls.high_energy_weight && ctx->detect_high_freq_ctrls.enabled && !ctx->md_disallow_nsq)
+#endif
+            update_nsq_settings(scs, pcs, ctx);
+#if !FIX_NSQ_HIGH_ENERGY
+        // Reset settings, in case they were over-written by previous block
+        // Only reset settings when features that change settings are used.
+        if (ctx->params_status == 1) {
+            svt_aom_sig_deriv_enc_dec(scs, pcs, ctx);
+            ctx->params_status = 0;
+        }
+#endif
 
         // Check current depth cost; if larger than parent, exit early
         // if using pred depth only, you won't skip, so no need to check

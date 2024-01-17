@@ -1112,8 +1112,13 @@ static INLINE void update_coeff_eob_fast(uint16_t *eob, int shift, const int16_t
 static const int sqrt_tx_pixels_2d[TX_SIZES_ALL] = {
     4, 8, 16, 32, 32, 6, 6, 12, 12, 23, 23, 32, 32, 8, 8, 16, 16, 23, 23};
 
+#if CLN_REMOVE_UNUSED_ARGS
+static void svt_fast_optimize_b(const TranLow *coeff_ptr, const MacroblockPlane *p, TranLow *qcoeff_ptr, TranLow *dqcoeff_ptr,
+                         uint16_t *eob, TxSize tx_size, TxType tx_type)
+#else
 void svt_fast_optimize_b(const TranLow *coeff_ptr, const MacroblockPlane *p, TranLow *qcoeff_ptr, TranLow *dqcoeff_ptr,
                          uint16_t *eob, TxSize tx_size, TxType tx_type)
+#endif
 
 {
     const ScanOrder *const scan_order = &av1_scan_orders[tx_size][tx_type];
@@ -1121,6 +1126,15 @@ void svt_fast_optimize_b(const TranLow *coeff_ptr, const MacroblockPlane *p, Tra
     const int              shift      = av1_get_tx_scale_tab[tx_size];
     update_coeff_eob_fast(eob, shift, p->dequant_qtx, scan, coeff_ptr, qcoeff_ptr, dqcoeff_ptr);
 }
+#if CLN_REMOVE_UNUSED_ARGS
+static void svt_av1_optimize_b(ModeDecisionContext *ctx, int16_t txb_skip_context, int16_t dc_sign_context,
+                        const TranLow *coeff_ptr, const MacroblockPlane *p,
+                        TranLow *qcoeff_ptr, TranLow *dqcoeff_ptr, uint16_t *eob,
+                        const QuantParam *qparam, TxSize tx_size, TxType tx_type, Bool is_inter, uint8_t use_sharpness,
+                        uint8_t delta_q_present, uint8_t picture_qp, uint32_t lambda, int plane)
+
+{
+#else
 void svt_av1_optimize_b(ModeDecisionContext *ctx, int16_t txb_skip_context, int16_t dc_sign_context,
                         const TranLow *coeff_ptr, int32_t stride, intptr_t n_coeffs, const MacroblockPlane *p,
                         TranLow *qcoeff_ptr, TranLow *dqcoeff_ptr, uint16_t *eob, const ScanOrder *sc,
@@ -1131,6 +1145,7 @@ void svt_av1_optimize_b(ModeDecisionContext *ctx, int16_t txb_skip_context, int1
     (void)stride;
     (void)n_coeffs;
     (void)sc;
+#endif
     int                    sharpness  = 0; // No Sharpness
     int                    fast_mode  = (ctx->rdoq_ctrls.eob_fast_y_inter && is_inter && !plane) ||
             (ctx->rdoq_ctrls.eob_fast_y_intra && !is_inter && !plane) ||
@@ -1724,17 +1739,21 @@ int32_t svt_aom_quantize_inv_quantize(PictureControlSet *pcs, ModeDecisionContex
                            txb_skip_context,
                            dc_sign_context,
                            (TranLow *)coeff,
+#if !CLN_REMOVE_UNUSED_ARGS
 #if CLN_QUANT_FUNC
                            NOT_USED_VALUE,
 #else
                            coeff_stride,
 #endif
                            n_coeffs,
+#endif
                            &candidate_plane,
                            quant_coeff,
                            (TranLow *)recon_coeff,
                            eob,
+#if !CLN_REMOVE_UNUSED_ARGS
                            scan_order,
+#endif
                            &qparam,
                            txsize,
                            tx_type,

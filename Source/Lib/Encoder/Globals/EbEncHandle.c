@@ -316,7 +316,10 @@ void svt_aom_asm_set_convolve_hbd_asm_table(void);
 void svt_aom_init_intra_dc_predictors_c_internal(void);
 void svt_aom_init_intra_predictors_internal(void);
 void svt_av1_init_me_luts(void);
-
+#if TUNE_TPL_LVL
+uint8_t svt_aom_get_tpl_group_level(uint8_t tpl, int8_t enc_mode, SvtAv1RcMode rc_mode);
+uint8_t svt_aom_set_tpl_group(PictureParentControlSet* pcs, uint8_t tpl_group_level, uint32_t source_width, uint32_t source_height);
+#endif
 static void enc_switch_to_real_time(){
 #if !defined(_WIN32)
     if (!geteuid())
@@ -585,7 +588,11 @@ static EbErrorType load_default_buffer_configuration_settings(
             min_me = min_parent;
         else
 #endif
+#if TUNE_TPL_LVL
+            if (scs->tpl) {
+#else
             if (scs->tpl_level) {
+#endif
             // PictureDecisionContext.mg_size = mg_size + overlay; see EbPictureDecisionProcess.c line 5680
             min_me = 1 +                  // potential delay I
                      lad_mg_pictures +    // 16 + 1 ME data used in store_tpl_pictures() at line 5717
@@ -670,7 +677,11 @@ static EbErrorType load_default_buffer_configuration_settings(
         max_recon = max_ref;
         // if tpl_la is disabled when super-res fix/random, input speed is much faster than recon output speed,
         // recon_output_fifo might be full and freeze at svt_aom_recon_output()
+#if TUNE_TPL_LVL
+        if (!scs->tpl && scs->static_config.recon_enabled)
+#else
         if (!scs->tpl_level && scs->static_config.recon_enabled)
+#endif
             max_recon = min_recon = MAX(max_ref, 30);
     }
 
@@ -776,15 +787,15 @@ static EbErrorType load_default_buffer_configuration_settings(
     }
     else if (core_count <= PARALLEL_LEVEL_2_RANGE) {
         scs->total_process_init_count += (scs->source_based_operations_process_init_count     = 1);
-        scs->total_process_init_count += (scs->picture_analysis_process_init_count            = clamp(max_pa_proc, 1, max_pa_proc));
-        scs->total_process_init_count += (scs->motion_estimation_process_init_count           = clamp(10, 1, max_me_proc));
-        scs->total_process_init_count += (scs->tpl_disp_process_init_count                    = clamp(max_tpl_proc, 1, max_tpl_proc));
-        scs->total_process_init_count += (scs->mode_decision_configuration_process_init_count = clamp(max_mdc_proc, 1, max_mdc_proc));
-        scs->total_process_init_count += (scs->enc_dec_process_init_count                     = clamp(2, scs->picture_control_set_pool_init_count_child, max_md_proc));
-        scs->total_process_init_count += (scs->entropy_coding_process_init_count              = clamp(max_ec_proc, 1, max_ec_proc));
-        scs->total_process_init_count += (scs->dlf_process_init_count                         = clamp(max_dlf_proc, 1, max_dlf_proc));
-        scs->total_process_init_count += (scs->cdef_process_init_count                        = clamp(max_cdef_proc, 1, max_cdef_proc));
-        scs->total_process_init_count += (scs->rest_process_init_count                        = clamp(4, 1, max_rest_proc));
+        scs->total_process_init_count += (scs->picture_analysis_process_init_count            = clamp(1, 1, max_pa_proc));
+        scs->total_process_init_count += (scs->motion_estimation_process_init_count           = clamp(20, 1, max_me_proc));
+        scs->total_process_init_count += (scs->tpl_disp_process_init_count                    = clamp(6, 1, max_tpl_proc));
+        scs->total_process_init_count += (scs->mode_decision_configuration_process_init_count = clamp(1, 1, max_mdc_proc));
+        scs->total_process_init_count += (scs->enc_dec_process_init_count                     = clamp(3, scs->picture_control_set_pool_init_count_child, max_md_proc));
+        scs->total_process_init_count += (scs->entropy_coding_process_init_count              = clamp(1, 1, max_ec_proc));
+        scs->total_process_init_count += (scs->dlf_process_init_count                         = clamp(1, 1, max_dlf_proc));
+        scs->total_process_init_count += (scs->cdef_process_init_count                        = clamp(6, 1, max_cdef_proc));
+        scs->total_process_init_count += (scs->rest_process_init_count                        = clamp(1, 1, max_rest_proc));
     }
     else if (core_count < PARALLEL_LEVEL_4_RANGE) {
         scs->total_process_init_count += (scs->source_based_operations_process_init_count     = 1);
@@ -1575,8 +1586,11 @@ EB_API EbErrorType svt_av1_enc_init(EbComponentType *svt_enc_component)
         input_data.is_16bit_pipeline = enc_handle_ptr->scs_instance_array[instance_index]->scs->is_16bit_pipeline;
         input_data.non_m8_pad_w = enc_handle_ptr->scs_instance_array[instance_index]->scs->max_input_pad_right;
         input_data.non_m8_pad_h = enc_handle_ptr->scs_instance_array[instance_index]->scs->max_input_pad_bottom;
-
+#if TUNE_TPL_LVL
+        input_data.enable_tpl_la = enc_handle_ptr->scs_instance_array[instance_index]->scs->tpl;
+#else
         input_data.enable_tpl_la = enc_handle_ptr->scs_instance_array[instance_index]->scs->tpl_level;
+#endif
         input_data.in_loop_ois = enc_handle_ptr->scs_instance_array[instance_index]->scs->in_loop_ois;
         input_data.enc_dec_segment_col = (uint16_t)enc_handle_ptr->scs_instance_array[instance_index]->scs->tpl_segment_col_count_array;
         input_data.enc_dec_segment_row = (uint16_t)enc_handle_ptr->scs_instance_array[instance_index]->scs->tpl_segment_row_count_array;
@@ -1605,8 +1619,17 @@ EB_API EbErrorType svt_av1_enc_init(EbComponentType *svt_enc_component)
             MAX(mrp_ctrl->sc_base_ref_list1_count,
                 MAX(mrp_ctrl->base_ref_list1_count,
                     MAX(mrp_ctrl->sc_non_base_ref_list1_count, mrp_ctrl->non_base_ref_list1_count)));
+#if TUNE_TPL_LVL
+        input_data.tpl_synth_size = svt_aom_set_tpl_group(NULL,
+            svt_aom_get_tpl_group_level(
+                1,
+                enc_handle_ptr->scs_instance_array[instance_index]->scs->static_config.enc_mode,
+                enc_handle_ptr->scs_instance_array[instance_index]->scs->static_config.rate_control_mode),
+            input_data.picture_width, input_data.picture_height);
+#else
         input_data.tpl_synth_size = svt_aom_get_tpl_synthesizer_block_size(enc_handle_ptr->scs_instance_array[instance_index]->scs->tpl_level,
             input_data.picture_width, input_data.picture_height);
+#endif
         input_data.enable_adaptive_quantization = enc_handle_ptr->scs_instance_array[instance_index]->scs->static_config.enable_adaptive_quantization;
         input_data.calculate_variance = enc_handle_ptr->scs_instance_array[instance_index]->scs->calculate_variance;
         input_data.calc_hist = enc_handle_ptr->scs_instance_array[instance_index]->scs->calc_hist =
@@ -2605,7 +2628,7 @@ static void update_look_ahead(SequenceControlSet *scs) {
             scs->static_config.look_ahead_distance);
     }
 #if OPT_MPASS_VBR7
-    else if (scs->lad_mg > scs->tpl_lad_mg && (scs->static_config.rate_control_mode == SVT_AV1_RC_MODE_CQP_OR_CRF || scs->static_config.pass == ENC_FIRST_PASS || scs->static_config.pass == ENC_LAST_PASS)) {
+    else if (scs->lad_mg > scs->tpl_lad_mg && (scs->static_config.rate_control_mode == SVT_AV1_RC_MODE_CQP_OR_CRF || scs->static_config.pass == ENC_FIRST_PASS || scs->static_config.pass == ENC_SECOND_PASS)) {
 #else
     else if (scs->lad_mg > scs->tpl_lad_mg && (scs->static_config.rate_control_mode == SVT_AV1_RC_MODE_CQP_OR_CRF || scs->static_config.pass == ENC_MIDDLE_PASS || scs->static_config.pass == ENC_LAST_PASS)) {
 #endif
@@ -3439,8 +3462,13 @@ static void derive_tf_params(SequenceControlSet *scs) {
         if (do_tf == 0)
             tf_level = 0;
         else
+#if CLN_M13_CHECKS
+            tf_level = scs->static_config.screen_content_mode == 1 ? 0 :
+            (enc_mode <= ENC_M9) ? 1 : scs->input_resolution >= INPUT_SIZE_720p_RANGE ? 2 : 0;
+#else
             tf_level = scs->static_config.screen_content_mode == 1 ? 0 :
             (enc_mode <= ENC_M9 ) ? 1 : enc_mode <= ENC_M13 && (scs->input_resolution >= INPUT_SIZE_720p_RANGE) ? 2 : 0;
+#endif
         tf_ld_controls(scs, tf_level);
         return;
     }
@@ -3461,7 +3489,11 @@ static void derive_tf_params(SequenceControlSet *scs) {
     else if (enc_mode <= ENC_M7) {
         tf_level = 4;
     }
+#if TUNE_M9_M10_2
+    else if (enc_mode <= ENC_M8) {
+#else
     else if (enc_mode <= ENC_M9) {
+#endif
         tf_level = resolution <= INPUT_SIZE_720p_RANGE && hierarchical_levels <= 4 ? 5 : 6;
     }
     else if (enc_mode <= ENC_M10) {
@@ -3867,6 +3899,30 @@ static void set_mid_pass_ctrls(
     }
 }
 #endif
+#if TUNE_TPL_LVL
+static uint8_t get_tpl(uint8_t pred_structure, uint8_t superres_mode, uint8_t resize_mode, uint8_t aq_mode) {
+
+    if (aq_mode == 0) {
+        SVT_WARN("TPL is disabled for aq_mode 0\n");
+        return 0;
+}
+    else if (pred_structure == SVT_AV1_PRED_LOW_DELAY_B) {
+        SVT_WARN("TPL is disabled in low delay applications.\n");
+        return 0;
+    }
+    // allow TPL with auto-dual and auto-all
+    else if (superres_mode > SUPERRES_NONE && superres_mode != SUPERRES_AUTO && superres_mode != SUPERRES_QTHRESH) {
+        SVT_WARN("TPL will be disabled when super resolution is enabled!\n");
+        return 0;
+    }
+    else if (resize_mode > RESIZE_NONE) {
+        SVT_WARN("TPL will be disabled when reference scalings (resize) is enabled!\n");
+        return 0;
+    }
+    else
+        return 1;
+}
+#else
 #if OPT_MPASS_VBR4
 static uint8_t get_tpl_level(int8_t enc_mode, uint8_t pred_structure, uint8_t superres_mode, uint8_t resize_mode,
 #else
@@ -3915,7 +3971,7 @@ static uint8_t get_tpl_level(int8_t enc_mode, int32_t pass, int32_t lap_rc, uint
         tpl_level = 9;
     return tpl_level;
 }
-
+#endif
 /*
 * Set multi Pass Params
 */
@@ -3927,13 +3983,9 @@ void set_multi_pass_params(SequenceControlSet *scs)
     if (scs->static_config.pass != ENC_SINGLE_PASS)
 
 #if OPT_MPASS_VBR6
-        scs->passes = 2;
-#else
-#if 0//OPT_MPASS_VBR3
-        scs->passes = (scs->static_config.rate_control_mode == SVT_AV1_RC_MODE_VBR) ? 2 : 2;
+        scs->passes = MAX_ENCODE_PASS;
 #else
         scs->passes = (scs->static_config.rate_control_mode == SVT_AV1_RC_MODE_VBR) ? 3 : 2;
-#endif
 #endif
     else
         scs->passes = 1;
@@ -4021,8 +4073,11 @@ void set_multi_pass_params(SequenceControlSet *scs)
             scs->static_config.max_bit_rate = 0;
             break;
         }
-
+#if OPT_MPASS_VBR7
+        case ENC_SECOND_PASS: {
+#else
         case ENC_LAST_PASS: {
+#endif
 #if !OPT_MPASS_VBR4
             set_ipp_pass_ctrls(scs, 0);
             // Please make sure that ipp_was_ds is ON only when ipp_ctrls->ipp_ds is ON
@@ -4124,7 +4179,11 @@ static void set_param_based_on_input(SequenceControlSet *scs)
     // so should call get_tpl_level() after validate_scaling_params()
     validate_scaling_params(scs);
 #if OPT_MPASS_VBR4
+#if TUNE_TPL_LVL
+    scs->tpl = get_tpl(scs->static_config.pred_structure, scs->static_config.superres_mode, scs->static_config.resize_mode, scs->static_config.enable_adaptive_quantization);
+#else
     scs->tpl_level = get_tpl_level(scs->static_config.enc_mode, scs->static_config.pred_structure, scs->static_config.superres_mode, scs->static_config.resize_mode, scs->static_config.enable_adaptive_quantization, scs->static_config.rate_control_mode);
+#endif
 #else
     scs->tpl_level = get_tpl_level(scs->static_config.enc_mode, scs->static_config.pass, scs->lap_rc, scs->static_config.pred_structure, scs->static_config.superres_mode, scs->static_config.resize_mode, scs->static_config.enable_adaptive_quantization, scs->static_config.rate_control_mode);
 #endif
@@ -4146,8 +4205,13 @@ static void set_param_based_on_input(SequenceControlSet *scs)
     }
     scs->max_initial_input_luma_width   = scs->max_input_luma_width;
     scs->max_initial_input_luma_height  = scs->max_input_luma_height;
+#if FIX_RECON_PADDING
+    scs->max_initial_input_pad_bottom   = scs->max_input_pad_bottom;
+    scs->max_initial_input_pad_right    = scs->max_input_pad_right;
+#else
     scs->max_initial_input_pad_bottom   = scs->max_input_pad_right;
     scs->max_initial_input_pad_right    = scs->max_input_pad_bottom;
+#endif
     scs->chroma_width = scs->max_input_luma_width >> subsampling_x;
     scs->chroma_height = scs->max_input_luma_height >> subsampling_y;
     scs->static_config.source_width = scs->max_input_luma_width;
@@ -4208,9 +4272,6 @@ static void set_param_based_on_input(SequenceControlSet *scs)
         else
             scs->static_config.qp = 30;
     }
-#if 0//OPT_MPASS_VBR3
-        SVT_WARN("The new q value is %d\n", scs->static_config.qp);
-#endif
     scs->initial_qp = scs->static_config.qp;
     svt_aom_derive_input_resolution(
         &scs->input_resolution,
@@ -4263,7 +4324,11 @@ static void set_param_based_on_input(SequenceControlSet *scs)
         // more lookahead MGs may result in disadvantageous trade-offs (speed/BDR/memory).
         if (scs->static_config.look_ahead_distance < mg_size)
             tpl_lad_mg = 0;
+#if TUNE_TPL_LVL
+        else if (scs->tpl)
+#else
         else if (scs->tpl_level)
+#endif
             tpl_lad_mg = 1;
         else
             tpl_lad_mg = 0;
@@ -4286,9 +4351,43 @@ static void set_param_based_on_input(SequenceControlSet *scs)
 #if !OPT_MPASS_VBR4
         scs->static_config.pass == ENC_FIRST_PASS ||
 #endif
+#if TUNE_TPL_LVL
+        (scs->input_resolution == INPUT_SIZE_240p_RANGE))
+#else
         (scs->tpl_level && scs->input_resolution == INPUT_SIZE_240p_RANGE))
+#endif
         scs->super_block_size = 64;
     else
+#if OPT_SB128
+        if (scs->static_config.enc_mode <= ENC_M1)
+            scs->super_block_size = 128;
+        else if (scs->static_config.enc_mode <= ENC_M4) {
+            if (scs->static_config.qp <= 56)
+                scs->super_block_size = 64;
+            else
+                scs->super_block_size = 128;
+        }
+        else if (scs->static_config.enc_mode <= ENC_M5) {
+            if(scs->input_resolution <= INPUT_SIZE_360p_RANGE)
+                scs->super_block_size = 64;
+            else {
+                if (scs->static_config.qp <= 56)
+                    scs->super_block_size = 64;
+                else
+                    scs->super_block_size = 128;
+            }
+        }
+        else if (scs->static_config.enc_mode <= ENC_M7) {
+            if (scs->input_resolution <= INPUT_SIZE_480p_RANGE)
+                scs->super_block_size = 64;
+            else {
+                if (scs->static_config.qp <= 56)
+                    scs->super_block_size = 64;
+                else
+                    scs->super_block_size = 128;
+            }
+        }
+#else
         if (scs->static_config.enc_mode <= ENC_M1)
             scs->super_block_size = 128;
         else if (scs->static_config.enc_mode <= ENC_M6){
@@ -4297,6 +4396,7 @@ static void set_param_based_on_input(SequenceControlSet *scs)
             else
                 scs->super_block_size = 128;
         }
+#endif
         else
             scs->super_block_size = 64;
     // When switch frame is on, all renditions must have same super block size. See spec 5.5.1, 5.9.15.
@@ -4539,11 +4639,9 @@ static void set_param_based_on_input(SequenceControlSet *scs)
             mrp_level = 6;
 #endif
         }
-#if !TUNE_M5_M6
         else if (scs->static_config.enc_mode <= ENC_M6) {
             mrp_level = 7;
         }
-#endif
         // any changes for preset ENC_M8 and higher should be separated for VBR and CRF in the control structure below
         else if (scs->static_config.rate_control_mode != SVT_AV1_RC_MODE_VBR) {
             if (scs->static_config.enc_mode <= ENC_M12)

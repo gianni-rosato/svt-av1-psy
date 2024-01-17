@@ -25,8 +25,8 @@ extern "C" {
 typedef enum EncPass {
     ENC_SINGLE_PASS, //single pass mode
 #if OPT_MPASS_VBR7
-    ENC_FIRST_PASS, // first pass of multi pass mode
-    ENC_LAST_PASS, // last pass of multi pass mode
+    ENC_FIRST_PASS, // first pass of two pass mode
+    ENC_SECOND_PASS, // Second pass of two pass mode
     MAX_ENCODE_PASS = 2,
 #else
 #if !OPT_MPASS_VBR6
@@ -50,7 +50,7 @@ typedef struct IppPassControls {
 #endif
 #if OPT_MPASS_VBR8
 typedef struct FirstPassControls {
-    uint8_t ds; // use downsampled input
+    uint8_t ds; // use downsampled input (0: no downsample, 1: downsample by 1 in each direction)
 } FirstPassControls;
 #else
 typedef struct MidPassControls {
@@ -409,9 +409,15 @@ typedef struct SequenceControlSet {
     *
     * Default is 0. */
     int speed_control_flag;
-
+#if TUNE_TPL_LVL
+    /* TPL
+    *
+    * 0: OFF, 1: ON. */
+    uint8_t tpl;
+#else
     //Flag that will hold the tpl level, set at init time, level 0 is off, other levels are set by preset
     uint8_t tpl_level;
+#endif
     // If true, calculate and store the SB-based variance
     uint8_t calculate_variance;
     // Whether to modulation lambda using TPL stats or/and ME-stats or/and the percentage of INTRA selection at reference frame(s)

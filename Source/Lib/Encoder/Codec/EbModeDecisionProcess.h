@@ -574,9 +574,9 @@ typedef struct CandEliminationCtlrs {
 #endif
 } CandEliminationCtlrs;
 #if FIX_NSQ_CTRL
-typedef struct NsqCtrls {
+typedef struct NsqGeomCtrls {
     // Enable or disable nsq signal. 0: disabled, 1: enabled
-    uint8_t enabled;
+    bool enabled;
     // Disables all nsq blocks for below a specified size. e.g. 8 = 8x8, 16 = 16x16
     uint8_t min_nsq_block_size;
     // Disallow H4/V4 when off. 0: OFF, 1: ON
@@ -585,6 +585,12 @@ typedef struct NsqCtrls {
     uint8_t allow_HVA_HVB;
 } NsqGeomCtrls;
 typedef struct NsqSearchCtrls {
+#if CLN_MD_DISALLOW_NSQ
+    // If enabled, allow multiple NSQ shapes to be searched at MD, and use the below search features (if on) to reduce the
+    // compute overhead. If not enabled, NSQ shapes may still be allowed by nsq_geom_ctrls, but no search will be performed
+    // (therefore, each depth  must specify one block to be tested at MD, whether SQ or NSQ).
+    bool enabled;
+#endif
     // Set the level for coeff-based NSQ accuracy reduction
     uint8_t psq_cplx_lvl;
     // Weighting (expressed as a percentage) applied to square shape costs for determining if a and
@@ -970,7 +976,6 @@ typedef struct ModeDecisionContext {
     ModeDecisionCandidateBuffer  *cand_bf_tx_depth_2;
     MdRateEstimationContext      *md_rate_est_ctx;
     MdRateEstimationContext      *rate_est_table;
-    //MdBlkStruct                  *md_local_blk_unit;
     BlkStruct                    *md_blk_arr_nsq;
     uint8_t                      *avail_blk_flag;
     uint8_t                      *cost_avail;
@@ -1227,7 +1232,11 @@ typedef struct ModeDecisionContext {
     DepthEarlyExitCtrls depth_early_exit_ctrls;
     RdoqCtrls           rdoq_ctrls;
     uint8_t             disallow_4x4;
+#if CLN_MD_DISALLOW_NSQ
+    uint8_t             md_disallow_nsq_search;
+#else
     uint8_t             md_disallow_nsq;
+#endif
     uint8_t             params_status; // specifies the status of MD parameters; 0: default, 1: modified
 #if !CLN_MD_LOOP
     bool                d1_skip_flag[25];
@@ -1345,7 +1354,9 @@ typedef struct ModeDecisionContext {
     // chroma components to compensate at MDS3 of LPD1
     COMPONENT_TYPE lpd1_chroma_comp;
     uint8_t        corrupted_mv_check;
+#if !CLN_SKIP_PD0_SIG
     uint8_t        skip_pd0;
+#endif
     uint8_t        pred_mode_depth_refine;
     // when MD is done on 8bit, scale palette colors to 10bit (valid when bypass is 1)
     uint8_t scale_palette;

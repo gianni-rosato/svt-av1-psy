@@ -103,8 +103,12 @@ EbErrorType svt_aom_rest_context_ctor(EbThreadContext *thread_ctx, const EbEncHa
     if (svt_aom_get_enable_restoration(init_data_ptr->enc_mode,
                                        config->enable_restoration_filtering,
                                        scs->input_resolution,
+#if DIS_DLF_SG_QP
+                                       scs->static_config.fast_decode)) {
+#else
                                        scs->static_config.fast_decode,
                                        scs->static_config.qp)) {
+#endif
         EbPictureBufferDescInitData init_data;
 
         init_data.buffer_enable_mask = PICTURE_BUFFER_DESC_FULL_MASK;
@@ -130,8 +134,13 @@ EbErrorType svt_aom_rest_context_ctor(EbThreadContext *thread_ctx, const EbEncHa
                 context_ptr->org_rec_frame->bit_depth = EB_EIGHT_BIT;
         }
         context_ptr->rst_tmpbuf = NULL;
+#if DIS_DLF_SG_QP
+        if (svt_aom_get_enable_sg(
+                init_data_ptr->enc_mode, scs->input_resolution, scs->static_config.fast_decode))
+#else
         if (svt_aom_get_enable_sg(
                 init_data_ptr->enc_mode, scs->input_resolution, scs->static_config.fast_decode, scs->static_config.qp))
+#endif
             EB_MALLOC_ALIGNED(context_ptr->rst_tmpbuf, RESTORATION_TMPBUF_SIZE);
     }
 

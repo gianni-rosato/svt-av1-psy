@@ -613,7 +613,7 @@ static void gf_group_rate_assingment(PictureParentControlSet *pcs, FIRSTPASS_STA
     // Reset the file position.
     reset_fpf_position(twopass, start_pos);
 #if OPT_MPASS_VBR6
-    if (twopass->passes == 2 && scs->static_config.pass == ENC_LAST_PASS)
+    if (twopass->passes == 2 && scs->static_config.pass == ENC_SECOND_PASS)
 #else
     if (twopass->passes == 3 && scs->static_config.pass == ENC_LAST_PASS)
 #endif

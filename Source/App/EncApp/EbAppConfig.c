@@ -2229,7 +2229,7 @@ uint32_t get_passes(int32_t argc, char *const argv[], EncPass enc_pass[MAX_ENC_P
 #if OPT_MPASS_VBR3
                 passes = 2;
 #if OPT_MPASS_VBR6
-                multi_pass_mode = TWO_PASS_SAMEPRED_FINAL;
+                multi_pass_mode = TWO_PASS;
 #else
                 multi_pass_mode = TWO_PASS_IPP_FINAL;
 #endif
@@ -2251,7 +2251,7 @@ uint32_t get_passes(int32_t argc, char *const argv[], EncPass enc_pass[MAX_ENC_P
     switch (multi_pass_mode) {
     case SINGLE_PASS: enc_pass[0] = ENC_SINGLE_PASS; break;
 #if OPT_MPASS_VBR6
-    case TWO_PASS_SAMEPRED_FINAL:
+    case TWO_PASS:
         enc_pass[0] = ENC_FIRST_PASS;
         enc_pass[1] = ENC_SECOND_PASS;
         break;

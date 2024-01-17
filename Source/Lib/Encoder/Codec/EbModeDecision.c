@@ -1726,12 +1726,16 @@ static bool skip_mvp_compound_on_ref_types(ModeDecisionContext *ctx, MvReference
 static uint32_t get_comp_th(uint32_t qp) {
     float qpf = (float)(qp);
     //3
+#if DIS_COMP_QP
+    return (uint32_t)(-60.6 * qpf + 2440);
+#else
     if (qp <= 32)
         return (uint32_t)(-12.5 * qpf + 900);
     else if (qp < 40)
         return (uint32_t)(-60.6 * qpf + 2440);
     else
         return 15;
+#endif
 }
 
 /*********************************************************************

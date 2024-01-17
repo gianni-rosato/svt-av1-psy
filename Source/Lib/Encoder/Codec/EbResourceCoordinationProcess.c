@@ -547,7 +547,7 @@ void svt_aom_setup_two_pass(SequenceControlSet *scs) {
     scs->twopass.stats_buf_ctx = &enc_ctx->stats_buf_context;
     scs->twopass.stats_in      = scs->twopass.stats_buf_ctx->stats_in_start;
 #if OPT_MPASS_VBR3
-    if (scs->static_config.pass == ENC_LAST_PASS) {
+    if (scs->static_config.pass == ENC_SECOND_PASS) {
 #else
     if (scs->static_config.pass == ENC_MIDDLE_PASS || scs->static_config.pass == ENC_LAST_PASS) {
 #endif
@@ -911,7 +911,7 @@ void *svt_aom_resource_coordination_kernel(void *input_ptr) {
 
             if (scs->enc_ctx->initial_picture) {
 #if OPT_MPASS_VBR7
-                if (scs->static_config.pass == ENC_LAST_PASS)
+                if (scs->static_config.pass == ENC_SECOND_PASS)
 #else
                 if (scs->static_config.pass == ENC_MIDDLE_PASS || scs->static_config.pass == ENC_LAST_PASS)
 #endif
@@ -1124,7 +1124,7 @@ void *svt_aom_resource_coordination_kernel(void *input_ptr) {
             }
 #endif
 #if OPT_MPASS_VBR6
-            if (scs->passes == 2 && !end_of_sequence_flag && scs->static_config.pass == ENC_LAST_PASS &&
+            if (scs->passes == 2 && !end_of_sequence_flag && scs->static_config.pass == ENC_SECOND_PASS &&
 #else
             if (scs->passes == 3 && !end_of_sequence_flag && scs->static_config.pass == ENC_LAST_PASS &&
 #endif

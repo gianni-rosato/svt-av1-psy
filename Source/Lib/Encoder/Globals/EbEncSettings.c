@@ -681,21 +681,35 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet *scs) {
     }
     int pass = config->pass;
 
+#if FIX_REMOVE_PASS3
+    if (pass < 0 || pass > 2) {
+        SVT_ERROR(
+            "Instance %u: %d pass encode is not supported. --pass has a range of [0-2]\n", channel_number + 1, pass);
+        return_error = EB_ErrorBadParameter;
+    }
+#else
     if (pass != 3 && pass != 2 && pass != 1 && pass != 0) {
         SVT_ERROR(
             "Instance %u: %d pass encode is not supported. --pass has a range of [0-3]\n", channel_number + 1, pass);
         return_error = EB_ErrorBadParameter;
     }
+#endif
 
     if (config->intra_refresh_type != 2 && pass > 0) {
         SVT_ERROR("Instance %u: Multi-pass encode only supports closed-gop configurations.\n", channel_number + 1);
         return_error = EB_ErrorBadParameter;
     }
-
+#if FIX_REMOVE_PASS3
+    if (config->pass > 1 && config->rate_control_mode == SVT_AV1_RC_MODE_CQP_OR_CRF) {
+        SVT_ERROR("Instance %u: CRF does not support Multi-pass. Use single pass\n", channel_number + 1);
+        return_error = EB_ErrorBadParameter;
+    }
+#else
     if (pass == 3 && config->rate_control_mode == SVT_AV1_RC_MODE_CQP_OR_CRF) {
         SVT_ERROR("Instance %u: CRF does not support 3-pass\n", channel_number + 1);
         return_error = EB_ErrorBadParameter;
     }
+#endif
 
     if (config->enable_adaptive_quantization == 0 && config->rate_control_mode) {
         SVT_ERROR("Instance %u: Adaptive quantization can not be turned OFF when RC ON\n", channel_number + 1);
@@ -737,10 +751,12 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet *scs) {
             channel_number + 1);
     }
 
+#if !FIX_REMOVE_PASS3
     if (config->pass > 1 && config->rate_control_mode == SVT_AV1_RC_MODE_CQP_OR_CRF) {
         SVT_ERROR("Instance %u: CRF does not support Multi-pass. Use single pass\n", channel_number + 1);
         return_error = EB_ErrorBadParameter;
     }
+#endif
     // color description
     if (config->color_primaries == 0 || config->color_primaries == 3 ||
         (config->color_primaries >= 13 && config->color_primaries <= 21) || config->color_primaries > 22) {
@@ -1096,6 +1112,21 @@ void svt_av1_print_lib_params(SequenceControlSet *scs) {
 
         switch (config->rate_control_mode) {
         case SVT_AV1_RC_MODE_CQP_OR_CRF:
+#if TUNE_TPL_LVL
+            if (config->max_bit_rate)
+                SVT_INFO(
+                    "SVT [config]: BRC mode / %s / max bitrate (kbps)\t\t\t: %s / %d / "
+                    "%d\n",
+                    scs->tpl ? "rate factor" : "CQP Assignment",
+                    scs->tpl ? "capped CRF" : "CQP",
+                    scs->static_config.qp,
+                    (int)config->max_bit_rate / 1000);
+            else
+                SVT_INFO("SVT [config]: BRC mode / %s \t\t\t\t\t: %s / %d \n",
+                    scs->tpl ? "rate factor" : "CQP Assignment",
+                    scs->tpl ? "CRF" : "CQP",
+                    scs->static_config.qp);
+#else
             if (config->max_bit_rate)
                 SVT_INFO(
                     "SVT [config]: BRC mode / %s / max bitrate (kbps)\t\t\t: %s / %d / "
@@ -1109,6 +1140,7 @@ void svt_av1_print_lib_params(SequenceControlSet *scs) {
                          scs->tpl_level ? "rate factor" : "CQP Assignment",
                          scs->tpl_level ? "CRF" : "CQP",
                          scs->static_config.qp);
+#endif
             break;
         case SVT_AV1_RC_MODE_VBR:
             SVT_INFO("SVT [config]: BRC mode / target bitrate (kbps)\t\t\t\t: VBR / %d \n",

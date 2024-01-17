@@ -412,7 +412,9 @@ typedef struct PictureControlSet {
     uint8_t md_pme_level;
     uint8_t mds0_level;
     uint8_t pic_disallow_4x4; // disallow 4x4 at pic level
+#if !CLN_SKIP_PD0_SIG
     uint8_t pic_skip_pd0; // skip_pd0 at pic level
+#endif
     uint8_t pic_disallow_below_16x16; // disallow_below_16x16 signal at pic level
     // depth_removal_level signal at the picture level
     uint8_t pic_depth_removal_level;
@@ -474,9 +476,6 @@ typedef struct PictureControlSet {
     // different with input frame when reference scaling is enabled
     EbPictureBufferDesc *scaled_input_pic;
     bool                 rtc_tune;
-#if OPT_COEFF_LVL_TPL
-    int64_t tpl_error;
-#endif
 } PictureControlSet;
 
 // To optimize based on the max input size
@@ -1176,6 +1175,10 @@ typedef struct PictureParentControlSet {
     uint32_t tf_avg_ahd_error;
     bool     tf_active_region_present;
     bool     seq_param_changed;
+#if TUNE_TPL_LVL
+    uint64_t norm_me_dist;
+    uint8_t tpl_params_ready;
+#endif
 } PictureParentControlSet;
 
 typedef struct TplDispResults {

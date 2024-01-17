@@ -2321,6 +2321,8 @@ static void set_d1_blocks_to_test(PictureControlSet* pcs, ModeDecisionContext* c
     if (ctx->nsq_geom_ctrls.enabled &&
         blk_geom->sq_size > MAX(min_nsq, ctx->nsq_geom_ctrls.min_nsq_block_size) &&
         !pcs->ppcs->sb_geom[ctx->sb_index].block_is_allowed[blk_index]) {
+        // For an incomplete block if SQ shape is not allowed, H or V may still be allowed.  Therefore,
+        // check if H (+1) or V (+3) is allowed, and if so, set to be tested
         if (pcs->ppcs->sb_geom[ctx->sb_index].block_is_allowed[blk_index + 1] ||
             pcs->ppcs->sb_geom[ctx->sb_index].block_is_allowed[blk_index + 3]) {
             inj_hv_incomp = true;
@@ -2336,7 +2338,11 @@ static void set_d1_blocks_to_test(PictureControlSet* pcs, ModeDecisionContext* c
         (!ctx->nsq_geom_ctrls.enabled ||
         (blk_geom->sq_size <= ctx->nsq_geom_ctrls.min_nsq_block_size) ||
          blk_geom->sq_size == 4 ||
+#if CLN_MD_DISALLOW_NSQ
+         (ctx->md_disallow_nsq_search && !inj_hv_incomp) ||
+#else
         (ctx->md_disallow_nsq && !inj_hv_incomp) ||
+#endif
             inj_sq_only_incomp) ? PART_N :
         (blk_geom->sq_size == 8 || inj_hv_incomp) ? PART_V :
         PART_S - 1;
@@ -2382,13 +2388,16 @@ static void build_cand_block_array(SequenceControlSet *scs, PictureControlSet *p
 
         // Initialize here because may not be updated at inter-depth decision for incomplete SBs
         if (!is_complete_sb)
-            ctx->md_blk_arr_nsq[blk_index].part = PARTITION_SPLIT;
+            ctx->md_blk_arr_nsq[blk_index].part = (blk_geom->sq_size > min_sq_size) ? PARTITION_SPLIT
+                                                                                    : PARTITION_NONE;
 
         // SQ/NSQ block(s) filter based on the SQ size
         uint8_t is_block_tagged = (blk_geom->sq_size == 128 && pcs->slice_type == I_SLICE) ||
                 (blk_geom->sq_size < min_sq_size)
             ? 0
             : 1;
+
+#if !CLN_SKIP_PD0_SIG
         if (ctx->skip_pd0) {
             if (ctx->depth_removal_ctrls.disallow_below_64x64)
                 is_block_tagged = (blk_geom->sq_size != 64) ? 0 : is_block_tagged;
@@ -2397,6 +2406,7 @@ static void build_cand_block_array(SequenceControlSet *scs, PictureControlSet *p
             else if (ctx->depth_removal_ctrls.disallow_below_16x16)
                 is_block_tagged = (blk_geom->sq_size != 16) ? 0 : is_block_tagged;
         }
+#endif
         // SQ/NSQ block(s) filter based on the block validity
         if (is_block_tagged) {
             if (first_stage || results_ptr->consider_block[blk_index]) {
@@ -2418,6 +2428,10 @@ static void build_cand_block_array(SequenceControlSet *scs, PictureControlSet *p
                     results_ptr->split_flag[results_ptr->leaf_count++] = results_ptr->refined_split_flag[blk_index];
                 }
             }
+#if CLN_SKIP_PD0_SIG
+        }
+        blk_index += (blk_geom->sq_size > min_sq_size) ? blk_geom->d1_depth_offset : blk_geom->ns_depth_offset;
+#else
             blk_index += blk_geom->d1_depth_offset;
         } else {
             if (ctx->skip_pd0 && ctx->pd_pass == PD_PASS_0)
@@ -2425,6 +2439,7 @@ static void build_cand_block_array(SequenceControlSet *scs, PictureControlSet *p
                                                                                         : PARTITION_NONE;
             blk_index += (blk_geom->sq_size > min_sq_size) ? blk_geom->d1_depth_offset : blk_geom->ns_depth_offset;
         }
+#endif
     }
 }
 #else
@@ -3001,6 +3016,7 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs, PictureContro
 #endif
                     }
 
+#if !CLN_SKIP_PD0_SIG
                     if (ctx->skip_pd0) {
                         SbGeom *sb_geom = &pcs->ppcs->sb_geom[ctx->sb_index];
                         if (ctx->depth_removal_ctrls.disallow_below_64x64) {
@@ -3020,6 +3036,7 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs, PictureContro
                             }
                         }
                     }
+#endif
                     // If multiple depths are selected, perform refinement
                     if (s_depth != 0 || e_depth != 0) {
                         // 4x4 blocks have no children
@@ -3424,7 +3441,11 @@ static void exaustive_light_pd1_features(ModeDecisionContext *md_ctx, PicturePar
 #endif
             // If TXS enabled at picture level, there are necessary context updates that must be added to LPD1
             ppcs->frm_hdr.tx_mode != TX_MODE_SELECT && md_ctx->txs_ctrls.enabled == 0 && md_ctx->pred_depth_only &&
+#if CLN_MD_DISALLOW_NSQ
+            md_ctx->md_disallow_nsq_search == TRUE && md_ctx->disallow_4x4 == TRUE && ppcs->scs->super_block_size == 64 &&
+#else
             md_ctx->md_disallow_nsq == TRUE && md_ctx->disallow_4x4 == TRUE && ppcs->scs->super_block_size == 64 &&
+#endif
             ppcs->ref_list0_count_try == 1 && ppcs->ref_list1_count_try == 1 && md_ctx->cfl_ctrls.enabled == 0 &&
             md_ctx->uv_ctrls.uv_mode == CHROMA_MODE_1) {
             light_pd1 = 1;
@@ -4079,12 +4100,14 @@ void *svt_aom_mode_decision_kernel(void *input_ptr) {
                                                   ed_ctx->md_ctx->depth_removal_ctrls.disallow_below_64x64)
                                 ? 1
                                 : 0;
+#if !CLN_SKIP_PD0_SIG
                         if (ed_ctx->md_ctx->skip_pd0)
                             if (ed_ctx->md_ctx->depth_removal_ctrls.disallow_below_32x32)
                                 skip_pd_pass_0 = 1;
                         if (ed_ctx->md_ctx->skip_pd0)
                             if (ed_ctx->md_ctx->depth_removal_ctrls.disallow_below_16x16)
                                 skip_pd_pass_0 = 1;
+#endif
 
                         // If LPD0 is used, a more conservative level can be set for complex SBs
                         const bool rtc_tune = (scs->static_config.pred_structure == SVT_AV1_PRED_LOW_DELAY_B) ? true
@@ -4201,9 +4224,15 @@ void *svt_aom_mode_decision_kernel(void *input_ptr) {
                         else
                             svt_aom_sig_deriv_enc_dec(scs, pcs, ed_ctx->md_ctx);
 #if CLN_ADD_FIXED_PRED_SIG
+#if CLN_MD_DISALLOW_NSQ
+                        // If there is only one depth and no NSQ search at PD1, then the partition structure
+                        // is fixed.
+                        md_ctx->fixed_partition = md_ctx->pred_depth_only && md_ctx->md_disallow_nsq_search;
+#else
                         // If there is only one depth and no NSQ shapes tested at PD1, then the partition structure
                         // is fixed.
                         md_ctx->fixed_partition = md_ctx->pred_depth_only && md_ctx->md_disallow_nsq;
+#endif
 #endif
 #if CLN_MD_LOOP
                         build_cand_block_array(scs,
