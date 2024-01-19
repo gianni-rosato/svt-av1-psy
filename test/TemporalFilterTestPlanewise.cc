@@ -458,6 +458,8 @@ TEST_P(TemporalFilterTestPlanewise, DISABLED_Speed) {
     }
 }
 
+#ifdef ARCH_X86_64
+
 INSTANTIATE_TEST_CASE_P(
     AVX2_medium, TemporalFilterTestPlanewise,
     ::testing::Combine(
@@ -466,6 +468,18 @@ INSTANTIATE_TEST_CASE_P(
                           svt_av1_apply_temporal_filter_planewise_medium_avx2),
         ::testing::Values(1)));
 
+#endif
+
+#ifdef ARCH_AARCH64
+
+INSTANTIATE_TEST_CASE_P(
+    Neon_medium, TemporalFilterTestPlanewise,
+    ::testing::Combine(
+        ::testing::Values(svt_av1_apply_temporal_filter_planewise_medium_c),
+        ::testing::Values(svt_av1_apply_temporal_filter_planewise_medium_neon),
+        ::testing::Values(1)));
+
+#endif
 class TemporalFilterTestPlanewiseHbd
     : public ::testing::TestWithParam<TemporalFilterWithParamHbd> {
   public:
@@ -939,6 +953,8 @@ TEST_P(TemporalFilterTestPlanewiseHbd, DISABLED_Speed) {
     }
 }
 
+#ifdef ARCH_X86_64
+
 INSTANTIATE_TEST_CASE_P(
     AVX2_medium, TemporalFilterTestPlanewiseHbd,
     ::testing::Combine(
@@ -947,6 +963,8 @@ INSTANTIATE_TEST_CASE_P(
             svt_av1_apply_temporal_filter_planewise_medium_hbd_sse4_1,
             svt_av1_apply_temporal_filter_planewise_medium_hbd_avx2),
         ::testing::Values(1)));
+
+#endif
 
 typedef void (*get_final_filtered_pixels_fn)(
     struct MeContext *me_ctx, EbByte *src_center_ptr_start,
@@ -1086,6 +1104,8 @@ class TemporalFilterTestGetFinalFilteredPixels : public ::testing::Test {
     }
 };
 
+#ifdef ARCH_X86_64
+
 TEST_F(TemporalFilterTestGetFinalFilteredPixels, test_lbd_sse4_1) {
     for (int i = 0; i < 100; ++i) {
         RunTest(false, svt_aom_get_final_filtered_pixels_sse4_1);
@@ -1109,6 +1129,8 @@ TEST_F(TemporalFilterTestGetFinalFilteredPixels, test_hbd_avx2) {
         RunTest(true, svt_aom_get_final_filtered_pixels_avx2);
     }
 }
+
+#endif
 
 typedef void (*apply_filtering_central_fn)(
     struct MeContext *me_ctx, EbPictureBufferDesc *input_picture_ptr_central,
@@ -1255,6 +1277,8 @@ class TemporalFilterTestApplyFilteringCentral : public ::testing::Test {
     }
 };
 
+#ifdef ARCH_X86_64
+
 TEST_F(TemporalFilterTestApplyFilteringCentral, test_lbd_sse4_1) {
     for (int i = 0; i < 100; ++i) {
         RunTest(false, svt_aom_apply_filtering_central_sse4_1, NULL);
@@ -1291,6 +1315,8 @@ int32_t estimate_noise_fp16_avx2_wrapper(const uint16_t *src, int width,
     return svt_estimate_noise_fp16_avx2(
         (const uint8_t *)src, width, height, stride);
 }
+
+#endif
 
 typedef int32_t (*EstimateNoiseFuncFP)(const uint16_t *src, int width,
                                        int height, int stride, int bd);
@@ -1354,6 +1380,8 @@ TEST_P(EstimateNoiseTestFP, fixed_point) {
     RunTest();
 }
 
+#ifdef ARCH_X86_64
+
 INSTANTIATE_TEST_CASE_P(
     AVX2_lbd, EstimateNoiseTestFP,
     ::testing::Combine(::testing::Values(estimate_noise_fp16_c_wrapper),
@@ -1369,6 +1397,8 @@ INSTANTIATE_TEST_CASE_P(
                        ::testing::Values(3840, 1920, 1280, 800, 640, 360),
                        ::testing::Values(2160, 1080, 720, 600, 480, 240),
                        ::testing::Values(10, 12)));
+
+#endif
 
 typedef double (*EstimateNoiseFuncDbl)(const uint16_t *src, int width,
                                        int height, int stride, int bd);

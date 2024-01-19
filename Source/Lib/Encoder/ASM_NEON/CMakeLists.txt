@@ -18,6 +18,7 @@ target_sources(
   PUBLIC pickrst_neon.c
   PUBLIC sad_neon.c
   PUBLIC EbComputeSAD_neon.c
+  PUBLIC EbTemporalFiltering_neon.c
   PUBLIC variance_neon.c
   PUBLIC obmc_sad_neon.c
   PUBLIC obmc_variance_neon.c

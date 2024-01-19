@@ -83,6 +83,7 @@ set(arch_neutral_files
 
 set(multi_arch_files
     FwdTxfm2dAsmTest.cc
+    TemporalFilterTestPlanewise.cc
     )
 
 if(HAVE_X86_PLATFORM)
@@ -118,7 +119,6 @@ if(HAVE_X86_PLATFORM)
         SadTest.cc
         SelfGuidedUtilTest.cc
         SpatialFullDistortionTest.cc
-        TemporalFilterTestPlanewise.cc
         VarianceTest.cc
         WedgeUtilTest.cc
         av1_convolve_scale_test.cc
