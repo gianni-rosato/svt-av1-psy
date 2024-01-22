@@ -60,10 +60,10 @@ $`Chroma_{pred} = \alpha_{AC} * Luma_{recon,AC} + DC_{Chroma}`$
 
 **Details of the implementation**
 
-CfL prediction takes place in MD through the ```cflprediction``` function
-and in the encode pass through the ```Av1EncodeLoop/Av1EncodeLoop16bit``` function. The details of CfL processing in ```cflprediction``` are presented below.
+CfL prediction takes place in MD through the ```cfl_prediction``` function
+and in the encode pass through the ```Av1EncodeLoop/Av1EncodeLoop16bit``` function. The details of CfL processing in ```cfl_prediction``` are presented below.
 
-For an intra coded block, the function ```cflprediction``` is called in MD stage 3 (the final stage) when CfL prediction is allowed and enabled for the block. There are four steps in the function:
+For an intra coded block, the function ```cfl_prediction``` is called in MD stage 3 (the final stage) when CfL prediction is allowed and enabled for the block. There are four steps in the function:
 
 **Step 1**: Generate the non-CfL cost (i.e. the cost of using a non-CfL chroma prediction mode).  If a chroma cost is already available from a previous chroma search, this step can be skipped.  The non-CfL cost is needed for deciding if CfL or non-CfL chroma prediction mode should be selected.
 
