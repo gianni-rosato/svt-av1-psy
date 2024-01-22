@@ -3272,6 +3272,19 @@ static void derive_vq_params(SequenceControlSet* scs) {
         // Stability
         vq_ctrl->stability_ctrls.depth_refinement = 1;
     }
+    else if (scs->static_config.tune == 2) {
+
+        // Sharpness
+        vq_ctrl->sharpness_ctrls.scene_transition = 1;
+        vq_ctrl->sharpness_ctrls.tf               = 1;
+        vq_ctrl->sharpness_ctrls.unipred_bias     = 0;
+        vq_ctrl->sharpness_ctrls.ifs              = 0;
+        vq_ctrl->sharpness_ctrls.cdef             = 1;
+        vq_ctrl->sharpness_ctrls.restoration      = 1;
+        vq_ctrl->sharpness_ctrls.rdoq             = 0;
+        // Stability
+        vq_ctrl->stability_ctrls.depth_refinement = 1;
+    }
     else {
 
         // Sharpness
@@ -3294,6 +3307,7 @@ static void derive_vq_params(SequenceControlSet* scs) {
  */
 static void derive_tf_params(SequenceControlSet *scs) {
     const EbInputResolution resolution = scs->input_resolution;
+    VqCtrls* vq_ctrl = &scs->vq_ctrls;
     // Do not perform TF if LD or 1 Layer or 1st pass
     Bool do_tf = scs->static_config.enable_tf && scs->static_config.hierarchical_levels >= 1 && scs->static_config.pass != ENC_FIRST_PASS;
     const EncMode enc_mode = scs->static_config.enc_mode;
@@ -3311,7 +3325,7 @@ static void derive_tf_params(SequenceControlSet *scs) {
     if (do_tf == 0) {
         tf_level = 0;
     }
-    else if (enc_mode <= ENC_M0) {
+    else if (enc_mode <= ENC_M0 || vq_ctrl->sharpness_ctrls.tf == 1) {
         tf_level = 1;
     }
     else if (enc_mode <= ENC_M4) {
