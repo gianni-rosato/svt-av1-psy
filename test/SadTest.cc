@@ -456,12 +456,16 @@ TEST_P(SADTestSubSample, SADTestSubSample) {
     test_sad_size(BlkSize(128, 128));
 }
 
+#ifdef ARCH_X86_64
+
 INSTANTIATE_TEST_CASE_P(
     SAD, SADTestSubSample,
     ::testing::Combine(
         ::testing::ValuesIn(TEST_PATTERNS),
         ::testing::Values(svt_nxm_sad_kernel_sub_sampled_helper_sse4_1,
                           svt_nxm_sad_kernel_sub_sampled_helper_avx2)));
+
+#endif
 
 /**
  * @brief Unit test for SAD functions include:
@@ -531,11 +535,15 @@ TEST_P(SADTest, SADTest) {
                    sizeof(TEST_BLOCK_SIZES) / sizeof(TEST_BLOCK_SIZES[0]));
 }
 
+#ifdef ARCH_X86_64
+
 INSTANTIATE_TEST_CASE_P(
     SAD, SADTest,
     ::testing::Combine(::testing::ValuesIn(TEST_PATTERNS),
                        ::testing::Values(svt_nxm_sad_kernel_helper_sse4_1,
                                          svt_nxm_sad_kernel_helper_avx2)));
+
+#endif
 
 typedef std::tuple<int16_t, int16_t> SearchArea;
 SearchArea TEST_LOOP_AREAS[] = {
@@ -605,10 +613,12 @@ class sad_LoopTest : public ::testing::WithParamInterface<sad_LoopTestParam>,
 
         Ebsad_LoopKernelNxMType func_c_ = svt_sad_loop_kernel_c;
         Ebsad_LoopKernelNxMType func_o_list[] = {
+#ifdef ARCH_X86_64
             svt_sad_loop_kernel_sse4_1_intrin,
             svt_sad_loop_kernel_avx2_intrin,
 #if EN_AVX512_SUPPORT
             svt_sad_loop_kernel_avx512_intrin
+#endif
 #endif
         };
 
@@ -687,10 +697,12 @@ class sad_LoopTest : public ::testing::WithParamInterface<sad_LoopTestParam>,
 
         Ebsad_LoopKernelNxMType func_c_ = svt_sad_loop_kernel_c;
         Ebsad_LoopKernelNxMType func_o_list[] = {
+#ifdef ARCH_X86_64
             svt_sad_loop_kernel_sse4_1_intrin,
             svt_sad_loop_kernel_avx2_intrin,
 #if EN_AVX512_SUPPORT
             svt_sad_loop_kernel_avx512_intrin
+#endif
 #endif
         };
 
@@ -1046,9 +1058,12 @@ class Allsad_CalculationTest
     }
 };
 
+#ifdef ARCH_X86_64
+
 TEST_P(Allsad_CalculationTest, 8x8_16x16_Test_avx2) {
     check_get_8x8_sad(svt_ext_all_sad_calculation_8x8_16x16_avx2);
 }
+
 TEST_P(Allsad_CalculationTest, 8x8_16x16_Test_sse4_1) {
     check_get_8x8_sad(svt_ext_all_sad_calculation_8x8_16x16_sse4_1);
 }
@@ -1059,6 +1074,17 @@ TEST_P(Allsad_CalculationTest, 32x32_64x64_Test_sse4_1) {
 TEST_P(Allsad_CalculationTest, 32x32_64x64_Test_avx2) {
     check_get_32x32_sad(svt_ext_eight_sad_calculation_32x32_64x64_avx2);
 }
+
+#endif
+
+#ifdef ARCH_AARCH64
+
+TEST_P(Allsad_CalculationTest, 8x8_16x16_Test_neon) {
+    check_get_8x8_sad(svt_ext_all_sad_calculation_8x8_16x16_neon);
+}
+
+#endif
+
 INSTANTIATE_TEST_CASE_P(
     ALLSAD, Allsad_CalculationTest,
     ::testing::Combine(::testing::ValuesIn(TEST_PATTERNS),
@@ -1211,6 +1237,8 @@ class Extsad_CalculationTest
             << "compare sad16x16 error sub_sad true";
     }
 
+#ifdef ARCH_X86_64
+
     void check_get_32x32_sad() {
         uint32_t best_sad32x32[2][4];
         uint32_t best_mv32x32[2][4] = {{0}};
@@ -1254,11 +1282,16 @@ class Extsad_CalculationTest
         EXPECT_EQ(0, memcmp(sad_32x32[0], sad_32x32[1], sizeof(sad_32x32[0])))
             << "compare sad_32x32 error";
     }
+
+#endif
 };
+
+#ifdef ARCH_X86_64
 
 TEST_P(Extsad_CalculationTest, Extsad_8x8Test_avx2) {
     check_get_8x8_sad(svt_ext_sad_calculation_8x8_16x16_avx2_intrin);
 }
+
 TEST_P(Extsad_CalculationTest, Extsad_8x8Test_sse4_1) {
     check_get_8x8_sad(svt_ext_sad_calculation_8x8_16x16_sse4_1_intrin);
 }
@@ -1267,11 +1300,23 @@ TEST_P(Extsad_CalculationTest, Extsad_32x32Test) {
     check_get_32x32_sad();
 }
 
+#endif
+
+#ifdef ARCH_AARCH64
+
+TEST_P(Extsad_CalculationTest, Extsad_8x8Test_neon) {
+    check_get_8x8_sad(svt_ext_sad_calculation_8x8_16x16_neon_intrin);
+}
+
+#endif
+
 INSTANTIATE_TEST_CASE_P(
     EXTSAD, Extsad_CalculationTest,
     ::testing::Combine(::testing::ValuesIn(TEST_PATTERNS),
                        ::testing::ValuesIn(TEST_SAD_PATTERNS)));
+
 using InitializeBuffer_param_t = ::testing::tuple<uint32_t, uint32_t>;
+
 #define MAX_BUFFER_SIZE 100  // const value to simplify
 class InitializeBuffer32
     : public ::testing::TestWithParam<InitializeBuffer_param_t> {
@@ -1295,6 +1340,7 @@ class InitializeBuffer32
     }
 
   protected:
+#ifdef ARCH_X86_64
     void checkWithSize() {
         svt_initialize_buffer_32bits_c(_ref_, count128, count32, value);
         svt_initialize_buffer_32bits_sse2_intrin(
@@ -1303,6 +1349,7 @@ class InitializeBuffer32
         int cmpResult = memcmp(_ref_, _test_, MAX_BUFFER_SIZE);
         EXPECT_EQ(cmpResult, 0);
     }
+#endif
 
   private:
     uint32_t *_ref_;
@@ -1313,9 +1360,13 @@ class InitializeBuffer32
     SVTRandom rnd_;
 };
 
+#ifdef ARCH_X86_64
+
 TEST_P(InitializeBuffer32, InitializeBuffer) {
     checkWithSize();
 }
+
+#endif
 
 INSTANTIATE_TEST_CASE_P(InitializeBuffer32, InitializeBuffer32,
                         ::testing::Combine(::testing::Values(2, 3, 4),
@@ -1461,6 +1512,7 @@ class SADTestSubSample16bit : public ::testing::WithParamInterface<TestPattern>,
     }
 
   protected:
+#ifdef ARCH_X86_64
     void check_sad(int width, int height) {
         uint32_t repeat = 1;
         if (test_pattern_ == RANDOM) {
@@ -1543,7 +1595,10 @@ class SADTestSubSample16bit : public ::testing::WithParamInterface<TestPattern>,
                 time_c / time_o);
         }
     }
+#endif
 };
+
+#ifdef ARCH_X86_64
 
 BlkSize TEST_BLOCK_SAD_SIZES[] = {
     BlkSize(16, 10),   BlkSize(16, 5),   BlkSize(32, 10), BlkSize(32, 20),
@@ -1574,6 +1629,7 @@ TEST_P(SADTestSubSample16bit, DISABLED_Speed) {
         sizeof(TEST_BLOCK_SAD_SIZES) / sizeof(TEST_BLOCK_SAD_SIZES[0]));
 }
 
+#endif
 typedef void (*PmeSadLoopKernel)(
     const struct svt_mv_cost_param *mv_cost_params, uint8_t *src,
     uint32_t src_stride, uint8_t *ref, uint32_t ref_stride,
@@ -1627,8 +1683,11 @@ class PmeSadLoopTest
         prepare_data();
 
         PmeSadLoopKernel func_c_ = svt_pme_sad_loop_kernel_c;
-        PmeSadLoopKernel func_o_list[] = {svt_pme_sad_loop_kernel_sse4_1,
-                                          svt_pme_sad_loop_kernel_avx2};
+        PmeSadLoopKernel func_o_list[] = {
+#ifdef ARCH_X86_64
+            svt_pme_sad_loop_kernel_sse4_1, svt_pme_sad_loop_kernel_avx2
+#endif
+        };
 
         mv_cost_params.ref_mv = &ref_mv;
         mv_cost_params.full_ref_mv = {(int16_t)GET_MV_RAWPEL(23),
@@ -1707,6 +1766,8 @@ class PmeSadLoopTest
                 << search_area_height_ << "]";
         }
     }
+
+#ifdef ARCH_X86_64
 
     void speed_sad(int width, int height) {
         const uint64_t num_loop = 100000;
@@ -1816,6 +1877,8 @@ class PmeSadLoopTest
                search_area_height_,
                time_c / time_o);
     }
+
+#endif
 };
 
 TEST_P(PmeSadLoopTest, PmeSadLoopTest) {
@@ -1826,6 +1889,8 @@ TEST_P(PmeSadLoopTest, PmeSadLoopTest) {
         sizeof(TEST_BLOCK_SIZES_LARGE) / sizeof(TEST_BLOCK_SIZES_LARGE[0]));
 }
 
+#ifdef ARCH_X86_64
+
 TEST_P(PmeSadLoopTest, DISABLED_PmeSadLoopSpeedTest) {
     speed_sad_sizes(TEST_BLOCK_SIZES,
                     sizeof(TEST_BLOCK_SIZES) / sizeof(TEST_BLOCK_SIZES[0]));
@@ -1833,6 +1898,8 @@ TEST_P(PmeSadLoopTest, DISABLED_PmeSadLoopSpeedTest) {
         TEST_BLOCK_SIZES_LARGE,
         sizeof(TEST_BLOCK_SIZES_LARGE) / sizeof(TEST_BLOCK_SIZES_LARGE[0]));
 }
+
+#endif
 
 INSTANTIATE_TEST_CASE_P(
     PME_LOOPSAD, PmeSadLoopTest,

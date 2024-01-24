@@ -13,39 +13,49 @@
 #include "aom_dsp_rtcd.h"
 #include "sum_neon.h"
 
-uint32_t svt_aom_compute8x4_sad_kernel_neon(uint8_t *src_ptr, uint32_t src_stride, uint8_t *ref_ptr,
-                                            uint32_t ref_stride) {
-    uint16x8_t sum = vdupq_n_u16(0);
+void svt_aom_compute8x4_sad_kernel_dual_neon(uint8_t *restrict src_ptr, uint32_t src_stride, uint8_t *restrict ref_ptr,
+                                             uint32_t ref_stride, uint32_t *restrict result_0,
+                                             uint32_t *restrict result_1) {
+    uint16x8_t sum_0 = vdupq_n_u16(0);
+    uint16x8_t sum_1 = vdupq_n_u16(0);
 
-    int i = 4;
-    do {
-        uint8x8_t s = vld1_u8(src_ptr);
-        uint8x8_t r = vld1_u8(ref_ptr);
+    for (unsigned int i = 0; i < 4; ++i) {
+        uint8x8_t s0 = vld1_u8(src_ptr);
+        uint8x8_t r0 = vld1_u8(ref_ptr);
+        sum_0        = vabal_u8(sum_0, s0, r0);
 
-        sum = vabal_u8(sum, s, r);
+        uint8x8_t s1 = vld1_u8(src_ptr + 8);
+        uint8x8_t r1 = vld1_u8(ref_ptr + 8);
+        sum_1        = vabal_u8(sum_1, s1, r1);
 
         src_ptr += src_stride;
         ref_ptr += ref_stride;
-    } while (--i != 0);
+    }
 
-    return horizontal_add_u16x8(sum);
+    *result_0 = vaddlvq_u16(sum_0);
+    *result_1 = vaddlvq_u16(sum_1);
 }
 
-uint32_t compute8x8_sad_kernel_neon(uint8_t *src_ptr, uint32_t src_stride, uint8_t *ref_ptr, uint32_t ref_stride) {
-    uint16x8_t sum = vdupq_n_u16(0);
+void compute8x8_sad_kernel_dual_neon(uint8_t *restrict src_ptr, uint32_t src_stride, uint8_t *restrict ref_ptr,
+                                     uint32_t ref_stride, uint32_t *restrict result_0, uint32_t *restrict result_1) {
+    uint16x8_t sum_0 = vdupq_n_u16(0);
+    uint16x8_t sum_1 = vdupq_n_u16(0);
 
-    int i = 8;
-    do {
-        uint8x8_t s = vld1_u8(src_ptr);
-        uint8x8_t r = vld1_u8(ref_ptr);
+    for (unsigned int i = 0; i < 8; ++i) {
+        uint8x8_t s1 = vld1_u8(src_ptr);
+        uint8x8_t r1 = vld1_u8(ref_ptr);
+        sum_0        = vabal_u8(sum_0, s1, r1);
 
-        sum = vabal_u8(sum, s, r);
+        uint8x8_t s2 = vld1_u8(src_ptr + 8);
+        uint8x8_t r2 = vld1_u8(ref_ptr + 8);
+        sum_1        = vabal_u8(sum_1, s2, r2);
 
         src_ptr += src_stride;
         ref_ptr += ref_stride;
-    } while (--i != 0);
+    }
 
-    return horizontal_add_u16x8(sum);
+    *result_0 = vaddlvq_u16(sum_0);
+    *result_1 = vaddlvq_u16(sum_1);
 }
 
 /*******************************************
@@ -60,27 +70,28 @@ void svt_ext_sad_calculation_8x8_16x16_neon_intrin(uint8_t *src, uint32_t src_st
     uint32_t sad16x16;
 
     if (sub_sad) {
-        p_sad8x8[0] = (svt_aom_compute8x4_sad_kernel_neon(
-                          src + 0 * src_stride + 0, 2 * src_stride, ref + 0 * ref_stride + 0, 2 * ref_stride))
-            << 1;
-        p_sad8x8[1] = (svt_aom_compute8x4_sad_kernel_neon(
-                          src + 0 * src_stride + 8, 2 * src_stride, ref + 0 * ref_stride + 8, 2 * ref_stride))
-            << 1;
-        p_sad8x8[2] = (svt_aom_compute8x4_sad_kernel_neon(
-                          src + 8 * src_stride + 0, 2 * src_stride, ref + 8 * ref_stride + 0, 2 * ref_stride))
-            << 1;
-        p_sad8x8[3] = (svt_aom_compute8x4_sad_kernel_neon(
-                          src + 8 * src_stride + 8, 2 * src_stride, ref + 8 * ref_stride + 8, 2 * ref_stride))
-            << 1;
+        svt_aom_compute8x4_sad_kernel_dual_neon(src + 0 * src_stride + 0,
+                                                2 * src_stride,
+                                                ref + 0 * ref_stride + 0,
+                                                2 * ref_stride,
+                                                &p_sad8x8[0],
+                                                &p_sad8x8[1]);
+        p_sad8x8[0] = p_sad8x8[0] << 1;
+        p_sad8x8[1] = p_sad8x8[1] << 1;
+
+        svt_aom_compute8x4_sad_kernel_dual_neon(src + 8 * src_stride + 0,
+                                                2 * src_stride,
+                                                ref + 8 * ref_stride + 0,
+                                                2 * ref_stride,
+                                                &p_sad8x8[2],
+                                                &p_sad8x8[3]);
+        p_sad8x8[2] = p_sad8x8[2] << 1;
+        p_sad8x8[3] = p_sad8x8[3] << 1;
     } else {
-        p_sad8x8[0] = compute8x8_sad_kernel_neon(
-            src + 0 * src_stride + 0, src_stride, ref + 0 * ref_stride + 0, ref_stride);
-        p_sad8x8[1] = compute8x8_sad_kernel_neon(
-            src + 0 * src_stride + 8, src_stride, ref + 0 * ref_stride + 8, ref_stride);
-        p_sad8x8[2] = compute8x8_sad_kernel_neon(
-            src + 8 * src_stride + 0, src_stride, ref + 8 * ref_stride + 0, ref_stride);
-        p_sad8x8[3] = compute8x8_sad_kernel_neon(
-            src + 8 * src_stride + 8, src_stride, ref + 8 * ref_stride + 8, ref_stride);
+        compute8x8_sad_kernel_dual_neon(
+            src + 0 * src_stride + 0, src_stride, ref + 0 * ref_stride + 0, ref_stride, &p_sad8x8[0], &p_sad8x8[1]);
+        compute8x8_sad_kernel_dual_neon(
+            src + 8 * src_stride + 0, src_stride, ref + 8 * ref_stride + 0, ref_stride, &p_sad8x8[2], &p_sad8x8[3]);
     }
 
     if (p_sad8x8[0] < p_best_sad_8x8[0]) {
@@ -134,8 +145,14 @@ static void svt_ext_eight_sad_calculation_8x8_16x16_neon(uint8_t *src, uint32_t 
         uint32_t src_stride_sub = (src_stride << 1);
         uint32_t ref_stride_sub = (ref_stride << 1);
         for (int search_index = 0; search_index < 8; search_index++) {
-            uint32_t sad8x8_0 =
-                (svt_aom_compute8x4_sad_kernel_neon(src, src_stride_sub, ref + search_index, ref_stride_sub)) << 1;
+            uint32_t sad8x8_0;
+            uint32_t sad8x8_1;
+            svt_aom_compute8x4_sad_kernel_dual_neon(
+                src, src_stride_sub, ref + search_index, ref_stride_sub, &sad8x8_0, &sad8x8_1);
+
+            sad8x8_0 = sad8x8_0 << 1;
+            sad8x8_1 = sad8x8_1 << 1;
+
             if (sad8x8_0 < p_best_sad_8x8[0]) {
                 p_best_sad_8x8[0] = (uint32_t)sad8x8_0;
                 x_mv              = _MVXT(mv) + (int16_t)search_index;
@@ -143,9 +160,6 @@ static void svt_ext_eight_sad_calculation_8x8_16x16_neon(uint8_t *src, uint32_t 
                 p_best_mv8x8[0]   = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
             }
 
-            uint32_t sad8x8_1 =
-                (svt_aom_compute8x4_sad_kernel_neon(src + 8, src_stride_sub, ref + 8 + search_index, ref_stride_sub))
-                << 1;
             if (sad8x8_1 < p_best_sad_8x8[1]) {
                 p_best_sad_8x8[1] = (uint32_t)sad8x8_1;
                 x_mv              = _MVXT(mv) + (int16_t)search_index;
@@ -153,11 +167,17 @@ static void svt_ext_eight_sad_calculation_8x8_16x16_neon(uint8_t *src, uint32_t 
                 p_best_mv8x8[1]   = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
             }
 
-            uint32_t sad8x8_2 = (svt_aom_compute8x4_sad_kernel_neon(src + (src_stride << 3),
-                                                                    src_stride_sub,
-                                                                    ref + (ref_stride << 3) + search_index,
-                                                                    ref_stride_sub))
-                << 1;
+            uint32_t sad8x8_2;
+            uint32_t sad8x8_3;
+            svt_aom_compute8x4_sad_kernel_dual_neon(src + (src_stride << 3),
+                                                    src_stride_sub,
+                                                    ref + (ref_stride << 3) + search_index,
+                                                    ref_stride_sub,
+                                                    &sad8x8_2,
+                                                    &sad8x8_3);
+            sad8x8_2 = sad8x8_2 << 1;
+            sad8x8_3 = sad8x8_3 << 1;
+
             if (sad8x8_2 < p_best_sad_8x8[2]) {
                 p_best_sad_8x8[2] = (uint32_t)sad8x8_2;
                 x_mv              = _MVXT(mv) + (int16_t)search_index;
@@ -165,11 +185,6 @@ static void svt_ext_eight_sad_calculation_8x8_16x16_neon(uint8_t *src, uint32_t 
                 p_best_mv8x8[2]   = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
             }
 
-            uint32_t sad8x8_3 = (svt_aom_compute8x4_sad_kernel_neon(src + (src_stride << 3) + 8,
-                                                                    src_stride_sub,
-                                                                    ref + (ref_stride << 3) + 8 + search_index,
-                                                                    ref_stride_sub))
-                << 1;
             if (sad8x8_3 < p_best_sad_8x8[3]) {
                 p_best_sad_8x8[3] = (uint32_t)sad8x8_3;
                 x_mv              = _MVXT(mv) + (int16_t)search_index;
@@ -187,7 +202,15 @@ static void svt_ext_eight_sad_calculation_8x8_16x16_neon(uint8_t *src, uint32_t 
         }
     } else {
         for (int search_index = 0; search_index < 8; search_index++) {
-            uint32_t sad8x8_0 = compute8x8_sad_kernel_neon(src, src_stride, ref + search_index, ref_stride);
+            uint32_t sad8x8_0, sad8x8_1, sad8x8_2, sad8x8_3;
+            compute8x8_sad_kernel_dual_neon(src, src_stride, ref + search_index, ref_stride, &sad8x8_0, &sad8x8_1);
+            compute8x8_sad_kernel_dual_neon(src + (src_stride << 3),
+                                            src_stride,
+                                            ref + (ref_stride << 3) + search_index,
+                                            ref_stride,
+                                            &sad8x8_2,
+                                            &sad8x8_3);
+
             if (sad8x8_0 < p_best_sad_8x8[0]) {
                 p_best_sad_8x8[0] = (uint32_t)sad8x8_0;
                 x_mv              = _MVXT(mv) + (int16_t)search_index;
@@ -195,7 +218,6 @@ static void svt_ext_eight_sad_calculation_8x8_16x16_neon(uint8_t *src, uint32_t 
                 p_best_mv8x8[0]   = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
             }
 
-            uint32_t sad8x8_1 = (compute8x8_sad_kernel_neon(src + 8, src_stride, ref + 8 + search_index, ref_stride));
             if (sad8x8_1 < p_best_sad_8x8[1]) {
                 p_best_sad_8x8[1] = (uint32_t)sad8x8_1;
                 x_mv              = _MVXT(mv) + (int16_t)search_index;
@@ -203,8 +225,6 @@ static void svt_ext_eight_sad_calculation_8x8_16x16_neon(uint8_t *src, uint32_t 
                 p_best_mv8x8[1]   = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
             }
 
-            uint32_t sad8x8_2 = (compute8x8_sad_kernel_neon(
-                src + (src_stride << 3), src_stride, ref + (ref_stride << 3) + search_index, ref_stride));
             if (sad8x8_2 < p_best_sad_8x8[2]) {
                 p_best_sad_8x8[2] = (uint32_t)sad8x8_2;
                 x_mv              = _MVXT(mv) + (int16_t)search_index;
@@ -212,14 +232,13 @@ static void svt_ext_eight_sad_calculation_8x8_16x16_neon(uint8_t *src, uint32_t 
                 p_best_mv8x8[2]   = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
             }
 
-            uint32_t sad8x8_3 = (compute8x8_sad_kernel_neon(
-                src + (src_stride << 3) + 8, src_stride, ref + (ref_stride << 3) + 8 + search_index, ref_stride));
             if (sad8x8_3 < p_best_sad_8x8[3]) {
                 p_best_sad_8x8[3] = (uint32_t)sad8x8_3;
                 x_mv              = _MVXT(mv) + (int16_t)search_index;
                 y_mv              = _MVYT(mv);
                 p_best_mv8x8[3]   = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
             }
+
             uint32_t sad16x16 = p_eight_sad16x16[start_16x16_pos][search_index] = sad8x8_0 + sad8x8_1 + sad8x8_2 +
                 sad8x8_3;
             if (sad16x16 < p_best_sad_16x16[0]) {

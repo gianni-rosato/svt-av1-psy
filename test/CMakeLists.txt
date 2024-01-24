@@ -85,6 +85,7 @@ set(multi_arch_files
     FwdTxfm2dAsmTest.cc
     TemporalFilterTestPlanewise.cc
     PictureOperatorTest.cc
+    SadTest.cc
     )
 
 if(HAVE_X86_PLATFORM)
@@ -116,7 +117,6 @@ if(HAVE_X86_PLATFORM)
         QuantAsmTest.cc
         ResidualTest.cc
         RestorationPickTest.cc
-        SadTest.cc
         SelfGuidedUtilTest.cc
         SpatialFullDistortionTest.cc
         VarianceTest.cc
