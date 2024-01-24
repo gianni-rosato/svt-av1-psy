@@ -449,8 +449,8 @@ Linux libavif (Static):
       -DCMAKE_BUILD_TYPE="$CMAKE_BUILD_TYPE"
       -DBUILD_SHARED_LIBS="$BUILD_SHARED_LIBS"
       -DCMAKE_INSTALL_PREFIX="$PREFIX_DIR"
-      -DAVIF_CODEC_DAV1D=ON
-      -DAVIF_CODEC_SVT=ON
+      -DAVIF_CODEC_DAV1D=SYSTEM
+      -DAVIF_CODEC_SVT=SYSTEM
       -DAVIF_BUILD_EXAMPLES=ON
       -DAVIF_BUILD_APPS=ON
     - cmake --build libavif-build --config Release --target install
