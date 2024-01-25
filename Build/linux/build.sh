@@ -109,6 +109,8 @@ For each enable-*, there is a disable-* option, and vice versa.
 -t, --toolchain,        Set CMake toolchain file
     toolchain=*
 -v, --verbose, verbose  Print out commands
+    --minimal-build,    Enable minimal build
+    minimal-build
 
 Example usage:
     build.sh -xi debug test
@@ -338,6 +340,7 @@ parse_options() {
             CMAKE_EXTRA_FLAGS="$CMAKE_EXTRA_FLAGS -DCMAKE_TOOLCHAIN_FILE=$toolchain" && shift
             ;;
         verbose) CMAKE_EXTRA_FLAGS="$CMAKE_EXTRA_FLAGS -DCMAKE_VERBOSE_MAKEFILE=1" && shift ;;
+        minimal-build) CMAKE_EXTRA_FLAGS="$CMAKE_EXTRA_FLAGS -DMINIMAL_BUILD=ON" && shift ;;
         *) print_message "Unknown option: $1" && shift ;;
         esac
     done
@@ -381,6 +384,7 @@ else
             toolchain) parse_options toolchain="$2" && shift ;;
             test) parse_options tests && shift ;;
             verbose) parse_options verbose && shift ;;
+            minimal-build) parse_options minimal-build && shift ;;
             asm | bindir | cc | cxx | gen | jobs | pgo-dir | pgo-videos | prefix | sanitizer | target_system)
                 parse_equal_option "$1" "$2"
                 case $1 in
@@ -503,6 +507,7 @@ else
             test) parse_options tests && shift ;;
             toolchain=*) parse_options toolchain="${1#*=}" && shift ;;
             verbose) parse_options verbose && shift ;;
+            minimal-build) parse_options minimal-build && shift ;;
             end) ${IN_SCRIPT:-false} && exit ;;
             *) die "Error, unknown option: $1" ;;
             esac

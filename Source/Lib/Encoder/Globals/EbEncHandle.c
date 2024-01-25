@@ -1521,6 +1521,9 @@ EB_API EbErrorType svt_av1_enc_init(EbComponentType *svt_enc_component)
     svt_aom_asm_set_convolve_hbd_asm_table();
 
     svt_aom_init_intra_predictors_internal();
+    #ifdef MINIMAL_BUILD
+    svt_aom_blk_geom_mds = svt_aom_malloc(MAX_NUM_BLOCKS_ALLOC * sizeof(svt_aom_blk_geom_mds[0]));
+    #endif
     svt_aom_build_blk_geom(enc_handle_ptr->scs_instance_array[0]->scs->svt_aom_geom_idx);
 
     svt_av1_init_me_luts();
@@ -2417,7 +2420,9 @@ EB_API EbErrorType svt_av1_enc_deinit(EbComponentType *svt_enc_component) {
         if (return_error != EB_ErrorNone)
             return return_error;
     }
-
+    #ifdef MINIMAL_BUILD
+    svt_aom_free(svt_aom_blk_geom_mds);
+    #endif
     svt_shutdown_process(handle->input_buffer_resource_ptr);
     svt_shutdown_process(handle->input_cmd_resource_ptr);
     svt_shutdown_process(handle->resource_coordination_results_resource_ptr);

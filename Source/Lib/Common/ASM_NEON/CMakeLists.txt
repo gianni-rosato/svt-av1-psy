@@ -17,10 +17,12 @@ target_sources(
   COMMON_ASM_NEON
   PUBLIC aom_convolve8_neon.c
   PUBLIC av1_inv_txfm_neon.c
+  PUBLIC cdef_filter_block_neon.c
   PUBLIC compound_convolve_neon.c
   PUBLIC compound_convolve_neon.h
   PUBLIC convolve_neon.c
   PUBLIC convolve_neon.h
+  PUBLIC EbPictureOperators_Intrinsic_neon.c
   PUBLIC itx_lbd_neon.h
   PUBLIC mem_neon.h
   PUBLIC sse_neon.c

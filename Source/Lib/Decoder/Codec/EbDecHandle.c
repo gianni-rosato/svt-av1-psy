@@ -534,7 +534,9 @@ EB_API EbErrorType svt_av1_dec_init(EbComponentType *svt_dec_component) {
     svt_aom_asm_set_convolve_hbd_asm_table();
 
     svt_aom_init_intra_predictors_internal();
-
+#ifdef MINIMAL_BUILD
+    svt_aom_blk_geom_mds = svt_aom_malloc(MAX_NUM_BLOCKS_ALLOC * sizeof(svt_aom_blk_geom_mds[0]));
+#endif
     svt_av1_init_wedge_masks();
 
     /************************************
@@ -642,6 +644,9 @@ EB_API EbErrorType svt_av1_dec_deinit(EbComponentType *svt_dec_component) {
         free(tmp_memory_entry);
     } while (memory_entry != dec_handle_ptr->memory_map_init_address && memory_entry);
     free(dec_handle_ptr->memory_map_init_address);
+#ifdef MINIMAL_BUILD
+    svt_aom_free(svt_aom_blk_geom_mds);
+#endif
     return return_error;
 }
 

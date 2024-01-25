@@ -1081,6 +1081,10 @@ extern "C" {
 
     int64_t svt_av1_lowbd_pixel_proj_error_neon(const uint8_t *src8, int32_t width, int32_t height, int32_t src_stride, const uint8_t *dat8, int32_t dat_stride, int32_t *flt0, int32_t flt0_stride, int32_t *flt1, int32_t flt1_stride, int32_t xq[2], const SgrParamsType *params);
 
+    void svt_av1_txb_init_levels_neon(const TranLow *const coeff, const int32_t width, const int32_t height, uint8_t *const levels);
+
+    void svt_av1_get_nz_map_contexts_neon(const uint8_t *const levels, const int16_t *const scan, const uint16_t eob, TxSize tx_size, const TxClass tx_class, int8_t *const coeff_contexts);
+
 #endif
 
 #ifdef ARCH_X86_64

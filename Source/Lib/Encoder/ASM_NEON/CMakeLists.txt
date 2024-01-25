@@ -22,7 +22,8 @@ target_sources(
   PUBLIC obmc_sad_neon.c
   PUBLIC obmc_variance_neon.c
   PUBLIC highbd_fwd_txfm_neon.c
-  PUBLIC av1_quantize_neon.c)
+  PUBLIC av1_quantize_neon.c
+  PUBLIC encodetxb_neon.c)
 target_include_directories(
   ENCODER_ASM_NEON
   PRIVATE ${PROJECT_SOURCE_DIR}/Source/API/

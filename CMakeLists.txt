@@ -60,6 +60,11 @@ check_c_source_compiles("
 int main(void) {}
 " HAVE_ARM_PLATFORM)
 
+option(MINIMAL_BUILD "Enable minimal build" OFF)
+if(MINIMAL_BUILD)
+    add_definitions(-DMINIMAL_BUILD=1)
+endif()
+
 if(NOT COMPILE_C_ONLY AND HAVE_X86_PLATFORM)
     find_program(YASM_EXE yasm)
     option(ENABLE_NASM "Use nasm if available (Uses yasm by default if found)" OFF)
