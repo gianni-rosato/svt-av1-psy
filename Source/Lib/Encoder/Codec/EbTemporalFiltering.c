@@ -4708,11 +4708,21 @@ static EbErrorType produce_temporally_filtered_pic(
         //q_decay = 0.5 * pow((double)q / 64, 2);
         FP_ASSERT(q < (1 << 15));
         uint32_t q_decay_fp8 = 256;
-        if (q >= TF_QINDEX_CUTOFF) {
-            q_decay_fp8 = (q * q) >> 5;
-        }
-        else {
-            q_decay_fp8 = MAX(q << 2, 1);
+        if (scs->static_config.tune == 2) {
+            if (q >= 64) {
+                q_decay_fp8 = (uint32_t)pow((double)q, 4/3);
+            }
+            else {
+                q_decay_fp8 = MAX(q << 2, 1);
+            }
+            
+        } else {
+            if (q >= TF_QINDEX_CUTOFF) {
+                q_decay_fp8 = (q * q) >> 5;
+            }
+            else {
+                q_decay_fp8 = MAX(q << 2, 1);
+            }
         }
         const int32_t const_0dot7_fp16 = 45875; //0.7
         /*Calculation of log and dceay_factor possible to move to estimate_noise() and calculate one time for GOP*/
