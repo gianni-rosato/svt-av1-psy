@@ -635,7 +635,7 @@ uint64_t svt_aom_intra_fast_cost(PictureControlSet *pcs, struct ModeDecisionCont
         cand_bf->fast_luma_rate   = rate;
         cand_bf->fast_chroma_rate = 0;
         uint64_t luma_sad         = (LUMA_WEIGHT * luma_distortion) << AV1_COST_PRECISION;
-        uint64_t chromasad_       = chroma_distortion << AV1_COST_PRECISION;
+        uint64_t chromasad_       = (CHROMA_WEIGHT * chroma_distortion) << AV1_COST_PRECISION;
         uint64_t total_distortion = luma_sad + chromasad_;
 
         return (RDCOST(lambda, rate, total_distortion));
@@ -735,7 +735,7 @@ uint64_t svt_aom_intra_fast_cost(PictureControlSet *pcs, struct ModeDecisionCont
         cand_bf->fast_luma_rate   = luma_rate;
         cand_bf->fast_chroma_rate = chroma_rate;
         luma_sad                  = (LUMA_WEIGHT * luma_distortion) << AV1_COST_PRECISION;
-        chromasad_                = chroma_distortion << AV1_COST_PRECISION;
+        chromasad_                = (CHROMA_WEIGHT * chroma_distortion) << AV1_COST_PRECISION;
         total_distortion          = luma_sad + chromasad_;
 
         rate = luma_rate + chroma_rate;
@@ -1114,7 +1114,7 @@ static uint64_t av1_inter_fast_cost_light(struct ModeDecisionContext *ctx, BlkSt
     cand_bf->fast_luma_rate   = luma_rate;
     cand_bf->fast_chroma_rate = chroma_rate;
     luma_sad                  = (LUMA_WEIGHT * luma_distortion) << AV1_COST_PRECISION;
-    chromasad_                = chroma_distortion << AV1_COST_PRECISION;
+    chromasad_                = (CHROMA_WEIGHT * chroma_distortion) << AV1_COST_PRECISION;
     total_distortion          = luma_sad + chromasad_;
     //if (blk_geom->has_uv == 0 && chromasad_ != 0)
     //    SVT_LOG("svt_aom_inter_fast_cost: Chroma error");
@@ -1368,7 +1368,7 @@ uint64_t svt_aom_inter_fast_cost(PictureControlSet *pcs, struct ModeDecisionCont
     cand_bf->fast_luma_rate   = luma_rate;
     cand_bf->fast_chroma_rate = chroma_rate;
     luma_sad                  = (LUMA_WEIGHT * luma_distortion) << AV1_COST_PRECISION;
-    chromasad_                = chroma_distortion << AV1_COST_PRECISION;
+    chromasad_                = (CHROMA_WEIGHT * chroma_distortion) << AV1_COST_PRECISION;
     total_distortion          = luma_sad + chromasad_;
     if (blk_geom->has_uv == 0 && chromasad_ != 0)
         SVT_ERROR("svt_aom_inter_fast_cost: Chroma error");
