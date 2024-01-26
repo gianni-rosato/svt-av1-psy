@@ -899,6 +899,7 @@ static int crf_qindex_calc(PictureControlSet *pcs, RATE_CONTROL *rc, int qindex)
  * non_base_boost
  * Compute a non-base frame boost.
  ******************************************************/
+#if !TUNE_CQP_CHROMA_SSIM
 static int8_t non_base_boost(PictureControlSet *pcs) {
     int8_t             q_boost      = 0;
     EbReferenceObject *ref_obj_l0   = (EbReferenceObject *)pcs->ref_pic_ptr_array[REF_LIST_0][0]->object_ptr;
@@ -914,6 +915,7 @@ static int8_t non_base_boost(PictureControlSet *pcs) {
     }
     return q_boost;
 }
+#endif
 
 /******************************************************
  * cqp_qindex_calc
@@ -3519,6 +3521,11 @@ void *svt_aom_rate_control_kernel(void *input_ptr) {
                 }
             }
 
+            if (pcs->scs->static_config.tune == 2 && !pcs->ppcs->frm_hdr.delta_q_params.delta_q_present) {
+                // enable sb level qindex when tune 2
+                pcs->ppcs->frm_hdr.delta_q_params.delta_q_present = 1;
+            }
+
             // QPM with tpl_la
             if (scs->static_config.enable_adaptive_quantization == 2 && pcs->ppcs->tpl_ctrls.enable &&
                 pcs->ppcs->r0 != 0) {
@@ -3541,10 +3548,6 @@ void *svt_aom_rate_control_kernel(void *input_ptr) {
                                        scs->static_config.new_variance_octile);
             }
 
-            if (pcs->scs->static_config.tune == 2 && !pcs->ppcs->frm_hdr.delta_q_params.delta_q_present) {
-                // enable sb level qindex when tune 2
-                pcs->ppcs->frm_hdr.delta_q_params.delta_q_present = 1;
-            }
             if (scs->static_config.rate_control_mode && !is_superres_recode_task) {
                 svt_aom_update_rc_counts(pcs->ppcs);
             }
