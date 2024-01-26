@@ -2197,31 +2197,69 @@ static void aom_av1_set_mb_ssim_rdmult_scaling(PictureParentControlSet *pcs) {
             }
         }
     }
-    log_sum = exp(log_sum / (double)(num_rows * num_cols));
-    if (do_print) {
-        fprintf(stdout, "\nlog_sum %.4f\n", log_sum);
-    }
+    if (pcs->scs->vq_ctrls.sharpness_ctrls.rdoq != 1) {
+        log_sum = exp(log_sum / (double)(num_rows * num_cols));
+        if (do_print) {
+            fprintf(stdout, "\nlog_sum %.4f\n", log_sum);
+        }
 
-    if (do_print) {
-        fprintf(stdout, "16x16 block rdmult scaling factors");
-    }
-    double min = 0xfffffff;
-    double max = 0;
-    for (int row = 0; row < num_rows; ++row) {
-        for (int col = 0; col < num_cols; ++col) {
-            const int index = row * num_cols + col;
-            pcs->pa_me_data->ssim_rdmult_scaling_factors[index] /= log_sum;
-            if (pcs->pa_me_data->ssim_rdmult_scaling_factors[index] < min) {
-                min = pcs->pa_me_data->ssim_rdmult_scaling_factors[index];
-            }
-            if (pcs->pa_me_data->ssim_rdmult_scaling_factors[index] > max) {
-                max = pcs->pa_me_data->ssim_rdmult_scaling_factors[index];
-            }
-            if (do_print) {
-                if (col == 0) {
-                    fprintf(stdout, "\n");
+        if (do_print) {
+            fprintf(stdout, "16x16 block rdmult scaling factors");
+        }
+        double min = 0xfffffff;
+        double max = 0;
+        for (int row = 0; row < num_rows; ++row) {
+            for (int col = 0; col < num_cols; ++col) {
+                const int index = row * num_cols + col;
+                pcs->pa_me_data->ssim_rdmult_scaling_factors[index] /= log_sum;
+                if (pcs->pa_me_data->ssim_rdmult_scaling_factors[index] < min) {
+                    min = pcs->pa_me_data->ssim_rdmult_scaling_factors[index];
                 }
-                fprintf(stdout, "%.4f\t", pcs->pa_me_data->ssim_rdmult_scaling_factors[index]);
+                if (pcs->pa_me_data->ssim_rdmult_scaling_factors[index] > max) {
+                    max = pcs->pa_me_data->ssim_rdmult_scaling_factors[index];
+                }
+                if (do_print) {
+                    if (col == 0) {
+                        fprintf(stdout, "\n");
+                    }
+                    fprintf(stdout, "%.4f\t", pcs->pa_me_data->ssim_rdmult_scaling_factors[index]);
+                }
+            }
+        }
+    } else {
+        const int sb_size = pcs->scs->seq_header.sb_size;
+        const int num_mi_w_sb = mi_size_wide[sb_size];
+        const int num_mi_h_sb = mi_size_high[sb_size];
+        const int num_cols_sb =
+            (cm->mi_cols + num_mi_w_sb - 1) / num_mi_w_sb;
+        const int num_rows_sb =
+            (cm->mi_rows + num_mi_h_sb - 1) / num_mi_h_sb;
+        const int num_blk_w = num_mi_w_sb / num_mi_w;
+        const int num_blk_h = num_mi_h_sb / num_mi_h;
+        for (int row = 0; row < num_rows_sb; ++row) {
+            for (int col = 0; col < num_cols_sb; ++col) {
+                double log_sum_sb = 0.0;
+                double blk_count = 0.0;
+                for (int blk_row = row * num_blk_h;
+                    blk_row < (row + 1) * num_blk_h && blk_row < num_rows; ++blk_row) {
+                    for (int blk_col = col * num_blk_w;
+                        blk_col < (col + 1) * num_blk_w && blk_col < num_cols;
+                        ++blk_col) {
+                        const int index = blk_row * num_cols + blk_col;
+                        log_sum_sb += log(pcs->pa_me_data->ssim_rdmult_scaling_factors[index]);
+                        blk_count += 1.0;
+                    }
+                }
+                log_sum_sb = exp(log_sum_sb / blk_count);
+                for (int blk_row = row * num_blk_h;
+                    blk_row < (row + 1) * num_blk_h && blk_row < num_rows; ++blk_row) {
+                    for (int blk_col = col * num_blk_w;
+                        blk_col < (col + 1) * num_blk_w && blk_col < num_cols;
+                        ++blk_col) {
+                        const int index = blk_row * num_cols + blk_col;
+                        pcs->pa_me_data->ssim_rdmult_scaling_factors[index] /= log_sum_sb;
+                    }
+                }
             }
         }
     }
