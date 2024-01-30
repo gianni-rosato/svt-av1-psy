@@ -108,6 +108,7 @@ For each enable-*, there is a disable-* option, and vice versa.
     --test, test        Build Unit Tests
 -t, --toolchain,        Set CMake toolchain file
     toolchain=*
+    --android-ndk,      Set path to android NDK for android builds
 -v, --verbose, verbose  Print out commands
     --minimal-build,    Enable minimal build
     minimal-build
@@ -117,6 +118,9 @@ Example usage:
     build.sh jobs=8 all cc=clang cxx=clang++
     build.sh -j 4 all -t "https://gist.githubusercontent.com/peterspackman/8cf73f7f12ba270aa8192d6911972fe8/raw/mingw-w64-x86_64.cmake"
     build.sh generator=Xcode cc=clang
+
+Options for specifying android build targets -
+    build.sh -s Android -t cmake/toolchains/android_aarch64_toolchain.cmake --android-ndk <Path to NDK>
 EOF
 }
 
@@ -339,6 +343,10 @@ parse_options() {
             esac
             CMAKE_EXTRA_FLAGS="$CMAKE_EXTRA_FLAGS -DCMAKE_TOOLCHAIN_FILE=$toolchain" && shift
             ;;
+        android-ndk=*)
+            CMAKE_EXTRA_FLAGS="$CMAKE_EXTRA_FLAGS -DCMAKE_ANDROID_NDK=${1#*=}"
+            shift
+            ;;
         verbose) CMAKE_EXTRA_FLAGS="$CMAKE_EXTRA_FLAGS -DCMAKE_VERBOSE_MAKEFILE=1" && shift ;;
         minimal-build) CMAKE_EXTRA_FLAGS="$CMAKE_EXTRA_FLAGS -DMINIMAL_BUILD=ON" && shift ;;
         *) print_message "Unknown option: $1" && shift ;;
@@ -385,7 +393,7 @@ else
             test) parse_options tests && shift ;;
             verbose) parse_options verbose && shift ;;
             minimal-build) parse_options minimal-build && shift ;;
-            asm | bindir | cc | cxx | gen | jobs | pgo-dir | pgo-videos | prefix | sanitizer | target_system)
+            asm | bindir | cc | cxx | gen | jobs | pgo-dir | pgo-videos | prefix | sanitizer | target_system | android-ndk)
                 parse_equal_option "$1" "$2"
                 case $1 in
                 *=*) shift ;;
@@ -499,6 +507,7 @@ else
             no-dec) parse_options no-dec && shift ;;
             no-apps) parse_options no-apps && shift ;;
             target_system=*) parse_options target_system="${1#*=}" && shift ;;
+            android-ndk=*) parse_options android-ndk="${1#*=}" && shift ;;
             shared) parse_options shared && shift ;;
             static) parse_options static && shift ;;
             native) parse_options native && shift ;;

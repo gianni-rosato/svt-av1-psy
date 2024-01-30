@@ -43,7 +43,9 @@ add_executable(SvtAv1DecApp
 target_link_libraries(SvtAv1DecApp
     SvtAv1Dec)
 
-if(UNIX)
+if(${CMAKE_SYSTEM_NAME} STREQUAL "Android")
+    target_link_libraries(SvtAv1DecApp ${PLATFORM_LIBS})
+elseif(UNIX)
     target_link_libraries(SvtAv1DecApp
         pthread
         m)

@@ -114,7 +114,7 @@ if(HAVE_X86_PLATFORM)
         PsnrTest.cc
         QuantAsmTest.cc
         ResidualTest.cc
-        RestorationPickTest.cc 
+        RestorationPickTest.cc
         SadTest.cc
         SelfGuidedUtilTest.cc
         SpatialFullDistortionTest.cc

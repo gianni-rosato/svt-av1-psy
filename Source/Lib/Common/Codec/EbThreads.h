@@ -78,7 +78,7 @@ extern EbErrorType svt_destroy_mutex(EbHandle mutex_handle);
 #endif
 #include <sched.h>
 #include <pthread.h>
-#if defined(__linux__)
+#if defined(__linux__) && !defined(__ANDROID__)
 #define EB_CREATE_THREAD(pointer, thread_function, thread_context)                                   \
     do {                                                                                             \
         pointer = svt_create_thread(thread_function, thread_context);                                \
