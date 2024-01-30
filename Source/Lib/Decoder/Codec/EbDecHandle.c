@@ -424,7 +424,7 @@ EbErrorType svt_svt_dec_set_default_parameter(EbSvtAv1DecConfiguration *config_p
 static EbErrorType init_svt_av1_decoder_handle(EbComponentType *hComponent) {
     EbComponentType *svt_dec_component = (EbComponentType *)hComponent;
     SVT_LOG("-------------------------------------------\n");
-    SVT_LOG("SVT [version]:\tSVT-AV1 Decoder Lib %s\n", SVT_AV1_CVS_VERSION);
+    SVT_LOG("SVT [version]:\tSVT-AV1-PSY Decoder Lib %s\n", SVT_AV1_CVS_VERSION);
 #if defined(_MSC_VER) && (_MSC_VER >= 1920)
     SVT_LOG("SVT [build]  :\tVisual Studio 2019");
 #elif defined(_MSC_VER) && (_MSC_VER >= 1910)
