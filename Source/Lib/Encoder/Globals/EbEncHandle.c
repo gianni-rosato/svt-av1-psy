@@ -3308,7 +3308,6 @@ static void derive_vq_params(SequenceControlSet* scs) {
  */
 static void derive_tf_params(SequenceControlSet *scs) {
     const EbInputResolution resolution = scs->input_resolution;
-    VqCtrls* vq_ctrl = &scs->vq_ctrls;
     // Do not perform TF if LD or 1 Layer or 1st pass
     Bool do_tf = scs->static_config.enable_tf && scs->static_config.hierarchical_levels >= 1 && scs->static_config.pass != ENC_FIRST_PASS;
     const EncMode enc_mode = scs->static_config.enc_mode;
