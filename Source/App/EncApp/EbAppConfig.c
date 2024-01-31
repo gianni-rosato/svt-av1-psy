@@ -1377,7 +1377,7 @@ ConfigEntry config_entry[] = {
     {SINGLE_INPUT, VARIANCE_BOOST_STRENGTH_TOKEN, "VarianceBoostStrength", set_cfg_generic_token},
     {SINGLE_INPUT, NEW_VARIANCE_OCTILE_TOKEN, "NewVarianceOctile", set_cfg_generic_token},
 
-    {SINGLE_INPUT, SHARPNESS_TOKEN, "Affects decisions related to mode choosing [0-15]", set_cfg_generic_token},
+    {SINGLE_INPUT, SHARPNESS_TOKEN, "Affects loopfilter deblock sharpness and rate distortion [0-7]", set_cfg_generic_token},
     // Termination
     {SINGLE_INPUT, NULL, NULL, NULL}};
 
