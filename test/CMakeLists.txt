@@ -87,12 +87,12 @@ set(multi_arch_files
     PictureOperatorTest.cc
     SadTest.cc
     selfguided_filter_test.cc
+    CdefTest.cc
     )
 
 if(HAVE_X86_PLATFORM)
     set(x86_arch_files
         AdaptiveScanTest.cc
-        CdefTest.cc
         CompoundUtilTest.cc
         DeblockTest.cc
         EbNoiseModel_test.cc

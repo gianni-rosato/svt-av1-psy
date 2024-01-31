@@ -1143,6 +1143,8 @@ extern "C" {
     void svt_residual_kernel8bit_neon(uint8_t *input, uint32_t input_stride, uint8_t *pred, uint32_t pred_stride, int16_t *residual, uint32_t residual_stride, uint32_t area_width, uint32_t area_height);
 
     void svt_cdef_filter_block_neon(uint8_t *dst8, uint16_t *dst16, int32_t dstride, const uint16_t *in, int32_t pri_strength, int32_t sec_strength, int32_t dir, int32_t pri_damping, int32_t sec_damping, int32_t bsize, int32_t coeff_shift, uint8_t subsampling_factor);
+    uint8_t svt_aom_cdef_find_dir_neon(const uint16_t *img, int32_t stride, int32_t *var, int32_t coeff_shift);
+    void svt_aom_cdef_find_dir_dual_neon(const uint16_t *img1, const uint16_t *img2, int stride, int32_t *var1, int32_t *var2, int32_t coeff_shift, uint8_t *out1, uint8_t *out2);
 
     void svt_aom_cfl_predict_lbd_neon(const int16_t *pred_buf_q3, uint8_t *pred, int32_t pred_stride, uint8_t *dst, int32_t dst_stride, int32_t alpha_q3, int32_t bit_depth, int32_t width, int32_t height);
 
@@ -1361,6 +1363,7 @@ extern "C" {
     void svt_aom_paeth_predictor_64x16_neon(uint8_t *dst, ptrdiff_t stride, const uint8_t *above,const uint8_t *left);
     void svt_aom_paeth_predictor_64x32_neon(uint8_t *dst, ptrdiff_t stride, const uint8_t *above,const uint8_t *left);
     void svt_aom_paeth_predictor_64x64_neon(uint8_t *dst, ptrdiff_t stride, const uint8_t *above,const uint8_t *left);
+
 #endif
 
 #ifdef ARCH_X86_64
