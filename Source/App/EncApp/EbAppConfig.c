@@ -200,6 +200,8 @@
 #define VARIANCE_BOOST_STRENGTH_TOKEN "--variance-boost-strength"
 #define NEW_VARIANCE_OCTILE_TOKEN "--new-variance-octile"
 
+#define SHARPNESS_TOKEN "--sharpness"
+
 static EbErrorType validate_error(EbErrorType err, const char *token, const char *value) {
     switch (err) {
     case EB_ErrorNone: return EB_ErrorNone;
@@ -1049,9 +1051,9 @@ ConfigEntry config_entry_specific[] = {
     // --- end: ALTREF_FILTERING_SUPPORT
     {SINGLE_INPUT,
      TUNE_TOKEN,
-     "Specifies whether to use PSNR or VQ as the tuning metric [0 = VQ, 1 = PSNR, 2 = SSIM], "
+     "Specifies whether to use PSNR or VQ as the tuning metric [0 = VQ, 1 = PSNR, 2 = SSIM, 3 = SSIM w/ subjective qual. tuning], "
      "default is 1 "
-     "[0-2]",
+     "[0-3]",
      set_cfg_generic_token},
     // MD Parameters
     {SINGLE_INPUT,
@@ -1375,6 +1377,7 @@ ConfigEntry config_entry[] = {
     {SINGLE_INPUT, VARIANCE_BOOST_STRENGTH_TOKEN, "VarianceBoostStrength", set_cfg_generic_token},
     {SINGLE_INPUT, NEW_VARIANCE_OCTILE_TOKEN, "NewVarianceOctile", set_cfg_generic_token},
 
+    {SINGLE_INPUT, SHARPNESS_TOKEN, "Affects decisions related to mode choosing [0-15]", set_cfg_generic_token},
     // Termination
     {SINGLE_INPUT, NULL, NULL, NULL}};
 

@@ -715,7 +715,7 @@ typedef struct EbSvtAv1EncConfiguration {
 
     Bool enable_overlays;
     /**
-     * @brief Tune for a particular metric; 0: VQ, 1: PSNR, 2: SSIM.
+     * @brief Tune for a particular metric; 0: VQ, 1: PSNR, 2: SSIM, 3: SSIM with subjective quality tuning.
      *
      * Default is 1.
      */
@@ -952,6 +952,8 @@ typedef struct EbSvtAv1EncConfiguration {
        Default is 6
     */
     uint8_t new_variance_octile;
+
+    uint8_t sharpness;
 } EbSvtAv1EncConfiguration;
 
 /**

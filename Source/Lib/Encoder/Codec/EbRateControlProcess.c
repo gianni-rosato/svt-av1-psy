@@ -810,7 +810,7 @@ static int crf_qindex_calc(PictureControlSet *pcs, RATE_CONTROL *rc, int qindex)
     // r0 scaling
     // TPL may only look at a subset of available pictures in tpl group, which may affect the r0 calcuation.
     // As a result, we defined a factor to adjust r0 (to compensate for TPL not using all available frames).
-    if (frame_is_intra_only(ppcs)) {
+    if (pcs->scs->static_config.tune == 3 ? svt_aom_frame_is_kf_gf_arf(ppcs) : frame_is_intra_only(ppcs)) {
         if (ppcs->tpl_ctrls.r0_adjust_factor) {
             ppcs->r0 /= ppcs->tpl_ctrls.r0_adjust_factor;
         }
@@ -1174,8 +1174,8 @@ static int compute_deltaq(struct PictureParentControlSet *ppcs, RATE_CONTROL *rc
         deltaq = -ppcs->cyclic_refresh.max_qdelta_perc * q / 100;
     }
     // RA uses a scale factor of 4 for the deltaQ range. Found it beneficial for low delay to have a larger deltaQ range, so we scale by 8
-    deltaq = AOMMIN(deltaq, ppcs->frm_hdr.delta_q_params.delta_q_res * 9 * 8 - 1);
-    deltaq = AOMMAX(deltaq, -ppcs->frm_hdr.delta_q_params.delta_q_res * 9 * 8 + 1);
+    deltaq = AOMMIN(deltaq, ppcs->frm_hdr.delta_q_params.delta_q_res * 9 * (ppcs->scs->static_config.tune == 3 ? 16 : 8) - 1);
+    deltaq = AOMMAX(deltaq, -ppcs->frm_hdr.delta_q_params.delta_q_res * 9 * (ppcs->scs->static_config.tune == 3 ? 16 : 8) + 1);
     return deltaq;
 }
 static int av1_estimate_bits_at_q(FrameType frame_type, int q, int mbs, double correction_factor, EbBitDepth bit_depth,
@@ -1336,8 +1336,8 @@ static void generate_b64_me_qindex_map(PictureControlSet *pcs) {
                     : 0;
             }
 
-            offset                      = AOMMIN(offset, pcs->ppcs->frm_hdr.delta_q_params.delta_q_res * 9 * 4 - 1);
-            offset                      = AOMMAX(offset, -pcs->ppcs->frm_hdr.delta_q_params.delta_q_res * 9 * 4 + 1);
+            offset                      = AOMMIN(offset, pcs->ppcs->frm_hdr.delta_q_params.delta_q_res * 9 * (pcs->ppcs->scs->static_config.tune == 3 ? 8 : 4) - 1);
+            offset                      = AOMMAX(offset, -pcs->ppcs->frm_hdr.delta_q_params.delta_q_res * 9 * (pcs->ppcs->scs->static_config.tune == 3 ? 8 : 4) + 1);
             pcs->b64_me_qindex[b64_idx] = CLIP3(
                 pcs->ppcs->frm_hdr.delta_q_params.delta_q_res,
                 255 - pcs->ppcs->frm_hdr.delta_q_params.delta_q_res,
@@ -1561,7 +1561,7 @@ void svt_variance_adjust_qp(PictureControlSet *pcs, uint8_t strength, uint8_t va
 
 #if DEBUG_VAR_BOOST_QP
     // previous calculation method that always set frame qindex to half the available deltaq range, even when not needed
-    int old_new_base_q_idx = (int)min_qindex + (pcs->ppcs->frm_hdr.delta_q_params.delta_q_res * 9 * 4 - 1);
+    int old_new_base_q_idx = (int)min_qindex + (pcs->ppcs->frm_hdr.delta_q_params.delta_q_res * 9 * (pcs->ppcs->scs->static_config.tune == 3 ? 8 : 4) - 1);
     old_new_base_q_idx = AOMMIN(old_new_base_q_idx, MAX_Q_INDEX);
 
     SVT_INFO("old qidx %d, min_qidx %d, max_qidx %d, delta_q_res %d, new qidx %d, new (old algo) %d, range %d\n",
@@ -1623,8 +1623,8 @@ void svt_aom_sb_qp_derivation_tpl_la(PictureControlSet *pcs) {
                                                    ppcs_ptr->frm_hdr.quantization_params.base_q_idx,
                                                    beta,
                                                    pcs->ppcs->slice_type == I_SLICE);
-            offset         = AOMMIN(offset, pcs->ppcs->frm_hdr.delta_q_params.delta_q_res * 9 * 4 - 1);
-            offset         = AOMMAX(offset, -pcs->ppcs->frm_hdr.delta_q_params.delta_q_res * 9 * 4 + 1);
+            offset         = AOMMIN(offset, pcs->ppcs->frm_hdr.delta_q_params.delta_q_res * 9 * (pcs->ppcs->scs->static_config.tune == 3 ? 8 : 4) - 1);
+            offset         = AOMMAX(offset, -pcs->ppcs->frm_hdr.delta_q_params.delta_q_res * 9 * (pcs->ppcs->scs->static_config.tune == 3 ? 8 : 4) + 1);
             sb_ptr->qindex = CLIP3(1, // q_index 0 is lossless, and is currently not supported in SVT-AV1
                                    MAXQ,
                                    ((int16_t)ppcs_ptr->frm_hdr.quantization_params.base_q_idx + (int16_t)offset));
@@ -3521,10 +3521,6 @@ void *svt_aom_rate_control_kernel(void *input_ptr) {
                 }
             }
 
-            if (pcs->scs->static_config.tune == 2 && !pcs->ppcs->frm_hdr.delta_q_params.delta_q_present) {
-                // enable sb level qindex when tune 2
-                pcs->ppcs->frm_hdr.delta_q_params.delta_q_present = 1;
-            }
 
             // QPM with tpl_la
             if (scs->static_config.enable_adaptive_quantization == 2 && pcs->ppcs->tpl_ctrls.enable &&
@@ -3539,6 +3535,11 @@ void *svt_aom_rate_control_kernel(void *input_ptr) {
                     SuperBlock *sb_ptr = pcs->sb_ptr_array[sb_addr];
                     sb_ptr->qindex     = frm_hdr->quantization_params.base_q_idx;
                 }
+            }
+
+            if ((pcs->scs->static_config.tune == 2 || pcs->scs->static_config.tune == 3) && !pcs->ppcs->frm_hdr.delta_q_params.delta_q_present) {
+                // enable sb level qindex when tune 2
+                pcs->ppcs->frm_hdr.delta_q_params.delta_q_present = 1;
             }
 
             // adjust sb qps based on variance

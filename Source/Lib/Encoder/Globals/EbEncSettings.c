@@ -545,15 +545,15 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet *scs) {
         return_error = EB_ErrorBadParameter;
     }
 
-    if (config->tune > 2) {
+    if (config->tune > 3) {
         SVT_ERROR(
-            "Instance %u: Invalid tune flag [0 - 2, 0 for VQ, 1 for PSNR and 2 for SSIM], your "
+            "Instance %u: Invalid tune flag [0 - 2, 0 for VQ, 1 for PSNR, 2 for SSIM, and 3 for SSIM with subjective qual. tuning], your "
             "input: %d\n",
             channel_number + 1,
             config->tune);
         return_error = EB_ErrorBadParameter;
     }
-    if (config->tune == 2) {
+    if (config->tune == 2 || config->tune == 3) {
         if (config->rate_control_mode != 0 || config->pred_structure != SVT_AV1_PRED_RANDOM_ACCESS) {
             SVT_ERROR("Instance %u: tune SSIM only supports CRF rate control mode currently\n",
                       channel_number + 1,
@@ -561,7 +561,7 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet *scs) {
             return_error = EB_ErrorBadParameter;
         } else {
             SVT_WARN(
-                "Instance %u: tune ssim (2) is supported for testing and debugging purposes."
+                "Instance %u: tune ssim (2 || 3) is supported for testing and debugging purposes."
                 "This configuration should not be used for any benchmarking analysis at this stage\n",
                 channel_number + 1);
         }
@@ -810,8 +810,8 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet *scs) {
     }
 
     if (config->pred_structure == 1) {
-        if (config->tune == 0) {
-            SVT_WARN("Instance %u: Tune 0 is not applicable for low-delay, tune will be forced to 1.\n",
+        if (config->tune == 0 || config->tune == 3) {
+            SVT_WARN("Instance %u: Tune 0 and Tune 3 are not applicable for low-delay, tune will be forced to 1.\n",
                      channel_number + 1);
             config->tune = 1;
         }
@@ -838,10 +838,10 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet *scs) {
             "consider using --fast-decode 1, especially if the intended decoder is running with "
             "limited multi-threading capabilities.\n");
     }
-    if (config->tune == 0 && config->fast_decode > 0) {
+    if ((config->tune == 0 || config->tune == 3) && config->fast_decode > 0) {
         SVT_WARN(
             "--fast - decode has been developed and optimized with --tune 1. "
-            "Please use it with caution when encoding with --tune 0. You can also consider using "
+            "Please use it with caution when encoding with --tune 0 or 3. You can also consider using "
             "--tile-columns 1 if you are targeting a high quality encode and a multi-core "
             "high-performance decoder HW\n");
     }
@@ -873,6 +873,11 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet *scs) {
 
     if (config->new_variance_octile > 8) {
         SVT_ERROR("Instance %u: New (8x8) variance octile must be between 0 and 8\n", channel_number + 1);
+        return_error = EB_ErrorBadParameter;
+    }
+
+    if (config->sharpness > 7) {
+        SVT_ERROR("Instance %u: Sharpness level must be between 0 and 7.\n", channel_number + 1);
         return_error = EB_ErrorBadParameter;
     }
 
@@ -1024,6 +1029,7 @@ EbErrorType svt_av1_set_default_params(EbSvtAv1EncConfiguration *config_ptr) {
     config_ptr->enable_roi_map                    = false;
     config_ptr->variance_boost_strength           = 2;
     config_ptr->new_variance_octile               = 6;
+    config_ptr->sharpness               = 0;
     return return_error;
 }
 
@@ -1081,7 +1087,8 @@ void svt_av1_print_lib_params(SequenceControlSet *scs) {
                  config->enc_mode,
                  config->tune == 0       ? "VQ"
                      : config->tune == 1 ? "PSNR"
-                                         : "SSIM",
+                         : config->tune == 2 ? "SSIM"
+                                             : "SSIM w/ subjective qual. tuning",
                  config->pred_structure == 1       ? "low delay"
                      : config->pred_structure == 2 ? "random access"
                                                    : "Unknown pred structure");
@@ -1142,6 +1149,12 @@ void svt_av1_print_lib_params(SequenceControlSet *scs) {
                      1,
                      config->film_grain_denoise_apply,
                      config->film_grain_denoise_strength);
+        }
+
+        if (config->sharpness != 0) {
+            SVT_INFO("SVT [config]: Sharpness / level \t\t: %d / %d\n",
+                     1,
+                     config->sharpness);
         }
     }
 #ifdef DEBUG_BUFFERS
@@ -1987,6 +2000,7 @@ EB_API EbErrorType svt_av1_enc_parse_parameter(EbSvtAv1EncConfiguration *config_
         {"startup-mg-size", &config_struct->startup_mg_size},
         {"variance-boost-strength", &config_struct->variance_boost_strength},
         {"new-variance-octile", &config_struct->new_variance_octile},
+        {"sharpness", &config_struct->sharpness},
     };
     const size_t uint8_opts_size = sizeof(uint8_opts) / sizeof(uint8_opts[0]);
 

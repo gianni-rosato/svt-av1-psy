@@ -632,7 +632,7 @@ uint64_t svt_aom_intra_fast_cost(PictureControlSet *pcs, struct ModeDecisionCont
             &mv, &ref_mv, ctx->md_rate_est_ctx->dv_joint_cost, dvcost, MV_COST_WEIGHT_SUB);
 
         rate                      = mv_rate + ctx->md_rate_est_ctx->intrabc_fac_bits[cand->use_intrabc];
-        cand_bf->fast_luma_rate   = rate;
+        cand_bf->fast_luma_rate   = RATE_WEIGHT * rate;
         cand_bf->fast_chroma_rate = 0;
         uint64_t luma_sad         = (LUMA_WEIGHT * luma_distortion) << AV1_COST_PRECISION;
         uint64_t chromasad_       = (CHROMA_WEIGHT * chroma_distortion) << AV1_COST_PRECISION;
@@ -732,8 +732,8 @@ uint64_t svt_aom_intra_fast_cost(PictureControlSet *pcs, struct ModeDecisionCont
             luma_rate += ctx->md_rate_est_ctx->intrabc_fac_bits[cand->use_intrabc];
         }
         // Keep the Fast Luma and Chroma rate for future use
-        cand_bf->fast_luma_rate   = luma_rate;
-        cand_bf->fast_chroma_rate = chroma_rate;
+        cand_bf->fast_luma_rate   = luma_rate * RATE_WEIGHT;
+        cand_bf->fast_chroma_rate = chroma_rate * RATE_WEIGHT;
         luma_sad                  = (LUMA_WEIGHT * luma_distortion) << AV1_COST_PRECISION;
         chromasad_                = (CHROMA_WEIGHT * chroma_distortion) << AV1_COST_PRECISION;
         total_distortion          = luma_sad + chromasad_;
@@ -1111,8 +1111,8 @@ static uint64_t av1_inter_fast_cost_light(struct ModeDecisionContext *ctx, BlkSt
     //chroma_rate = intra_chroma_mode_bits_num + intra_chroma_ang_mode_bits_num;
 
     // Keep the Fast Luma and Chroma rate for future use
-    cand_bf->fast_luma_rate   = luma_rate;
-    cand_bf->fast_chroma_rate = chroma_rate;
+    cand_bf->fast_luma_rate   = luma_rate * RATE_WEIGHT;
+    cand_bf->fast_chroma_rate = chroma_rate * RATE_WEIGHT;
     luma_sad                  = (LUMA_WEIGHT * luma_distortion) << AV1_COST_PRECISION;
     chromasad_                = (CHROMA_WEIGHT * chroma_distortion) << AV1_COST_PRECISION;
     total_distortion          = luma_sad + chromasad_;
@@ -1365,8 +1365,8 @@ uint64_t svt_aom_inter_fast_cost(PictureControlSet *pcs, struct ModeDecisionCont
     // chroma_rate = intra_chroma_mode_bits_num + intra_chroma_ang_mode_bits_num;
 
     // Keep the Fast Luma and Chroma rate for future use
-    cand_bf->fast_luma_rate   = luma_rate;
-    cand_bf->fast_chroma_rate = chroma_rate;
+    cand_bf->fast_luma_rate   = luma_rate * RATE_WEIGHT;
+    cand_bf->fast_chroma_rate = chroma_rate * RATE_WEIGHT;
     luma_sad                  = (LUMA_WEIGHT * luma_distortion) << AV1_COST_PRECISION;
     chromasad_                = (CHROMA_WEIGHT * chroma_distortion) << AV1_COST_PRECISION;
     total_distortion          = luma_sad + chromasad_;
