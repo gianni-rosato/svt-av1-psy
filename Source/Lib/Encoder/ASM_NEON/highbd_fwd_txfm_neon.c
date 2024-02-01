@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 2019, Intel Corporation
- * Copyright (c) 2023, Alliance for Open Media. All rights reserved
+ * Copyright (c) 2024, Intel Corporation
+ * Copyright (c) 2024, Alliance for Open Media. All rights reserved
  *
  * This source code is subject to the terms of the BSD 2 Clause License and
  * the Alliance for Open Media Patent License 1.0. If the BSD 2 Clause License
@@ -5644,4 +5644,255 @@ void svt_av1_fwd_txfm2d_32x32_N4_neon(int16_t *input, int32_t *output, uint32_t 
         break;
     default: assert(0);
     }
+}
+
+static void fdct8x8_N4_neon(const int32x4_t *in, int32x4_t *out, int8_t bit, const int32_t col_num) {
+    const int32_t  *cospi    = cospi_arr(bit);
+    const int32x4_t cospi32  = vdupq_n_s32(cospi[32]);
+    const int32x4_t cospim32 = vdupq_n_s32(-cospi[32]);
+    const int32x4_t cospi56  = vdupq_n_s32(cospi[56]);
+    const int32x4_t cospi8   = vdupq_n_s32(cospi[8]);
+    int32x4_t       u[16], v[16];
+
+    // stage 0
+    // stage 1
+    u[0]  = vaddq_s32(in[2 * 0 * col_num], in[2 * 7 * col_num]);
+    u[1]  = vaddq_s32(in[2 * 0 * col_num + 1], in[2 * 7 * col_num + 1]);
+    v[14] = vsubq_s32(in[2 * 0 * col_num], in[2 * 7 * col_num]);
+    v[15] = vsubq_s32(in[2 * 0 * col_num + 1], in[2 * 7 * col_num + 1]);
+    u[2]  = vaddq_s32(in[2 * 1 * col_num], in[2 * 6 * col_num]);
+    u[3]  = vaddq_s32(in[2 * 1 * col_num + 1], in[2 * 6 * col_num + 1]);
+    u[12] = vsubq_s32(in[2 * 1 * col_num], in[2 * 6 * col_num]);
+    u[13] = vsubq_s32(in[2 * 1 * col_num + 1], in[2 * 6 * col_num + 1]);
+    u[4]  = vaddq_s32(in[2 * 2 * col_num], in[2 * 5 * col_num]);
+    u[5]  = vaddq_s32(in[2 * 2 * col_num + 1], in[2 * 5 * col_num + 1]);
+    u[10] = vsubq_s32(in[2 * 2 * col_num], in[2 * 5 * col_num]);
+    u[11] = vsubq_s32(in[2 * 2 * col_num + 1], in[2 * 5 * col_num + 1]);
+    u[6]  = vaddq_s32(in[2 * 3 * col_num], in[2 * 4 * col_num]);
+    u[7]  = vaddq_s32(in[2 * 3 * col_num + 1], in[2 * 4 * col_num + 1]);
+    v[8]  = vsubq_s32(in[2 * 3 * col_num], in[2 * 4 * col_num]);
+    v[9]  = vsubq_s32(in[2 * 3 * col_num + 1], in[2 * 4 * col_num + 1]);
+
+    // stage 2
+    v[0] = vaddq_s32(u[0], u[6]);
+    v[1] = vaddq_s32(u[1], u[7]);
+    v[2] = vaddq_s32(u[2], u[4]);
+    v[3] = vaddq_s32(u[3], u[5]);
+
+    v[10] = vmulq_s32(u[10], cospim32);
+    v[11] = vmulq_s32(u[11], cospim32);
+    v[12] = vmulq_s32(u[12], cospi32);
+    v[13] = vmulq_s32(u[13], cospi32);
+    v[10] = vaddq_s32(v[10], v[12]);
+    v[11] = vaddq_s32(v[11], v[13]);
+    v[10] = vrshlq_s32(v[10], vdupq_n_s32(-bit));
+    v[11] = vrshlq_s32(v[11], vdupq_n_s32(-bit));
+
+    u[0]  = vmulq_s32(u[10], cospi32);
+    u[1]  = vmulq_s32(u[11], cospi32);
+    v[12] = vmulq_s32(u[12], cospim32);
+    v[13] = vmulq_s32(u[13], cospim32);
+    v[12] = vsubq_s32(u[0], v[12]);
+    v[13] = vsubq_s32(u[1], v[13]);
+    v[12] = vrshlq_s32(v[12], vdupq_n_s32(-bit));
+    v[13] = vrshlq_s32(v[13], vdupq_n_s32(-bit));
+
+    // stage 3
+    // type 0
+    v[0] = vmulq_s32(v[0], cospi32);
+    v[1] = vmulq_s32(v[1], cospi32);
+    v[2] = vmulq_s32(v[2], cospi32);
+    v[3] = vmulq_s32(v[3], cospi32);
+    u[0] = vaddq_s32(v[0], v[2]);
+    u[1] = vaddq_s32(v[1], v[3]);
+    u[0] = vrshlq_s32(u[0], vdupq_n_s32(-bit));
+    u[1] = vrshlq_s32(u[1], vdupq_n_s32(-bit));
+
+    u[8]  = vaddq_s32(v[8], v[10]);
+    u[9]  = vaddq_s32(v[9], v[11]);
+    u[14] = vaddq_s32(v[14], v[12]);
+    u[15] = vaddq_s32(v[15], v[13]);
+
+    // stage 4
+    // stage 5
+    v[0]                     = vmulq_s32(u[8], cospi56);
+    v[1]                     = vmulq_s32(u[9], cospi56);
+    v[2]                     = vmulq_s32(u[14], cospi8);
+    v[3]                     = vmulq_s32(u[15], cospi8);
+    v[0]                     = vaddq_s32(v[0], v[2]);
+    v[1]                     = vaddq_s32(v[1], v[3]);
+    out[2 * 1 * col_num]     = vrshlq_s32(v[0], vdupq_n_s32(-bit));
+    out[2 * 1 * col_num + 1] = vrshlq_s32(v[1], vdupq_n_s32(-bit));
+
+    out[2 * 0 * col_num]     = u[0];
+    out[2 * 0 * col_num + 1] = u[1];
+}
+
+static INLINE void transpose_8nx8n_N4_quad_neon(const int32x4_t *input, int32x4_t *output, const int32_t width,
+                                                const int32_t height) {
+    const int32_t numcol = height >> 3;
+    const int32_t numrow = width >> 3;
+
+    int32_t calc_numcol = numcol >> 2;
+    int32_t calc_numrow = numrow >> 2;
+    if (!calc_numcol) {
+        calc_numcol = 1;
+    }
+    if (!calc_numrow) {
+        calc_numrow = 1;
+    }
+
+    for (int32_t j = 0; j < calc_numrow; j++) {
+        for (int32_t i = 0; i < calc_numcol; i++) {
+            TRANSPOSE_2X4X4_NEON(input,
+                                 2 * (i * width + j + (numrow * 0)),
+                                 2 * (i * width + j + (numrow * 1)),
+                                 2 * (i * width + j + (numrow * 2)),
+                                 2 * (i * width + j + (numrow * 3)),
+                                 output,
+                                 2 * (j * height + i + (numcol * 0)),
+                                 2 * (j * height + i + (numcol * 4)),
+                                 2 * (j * height + i + (numcol * 1)),
+                                 2 * (j * height + i + (numcol * 5)),
+                                 2 * (j * height + i + (numcol * 2)),
+                                 2 * (j * height + i + (numcol * 6)),
+                                 2 * (j * height + i + (numcol * 3)),
+                                 2 * (j * height + i + (numcol * 7)));
+            TRANSPOSE_2X4X4_NEON(input,
+                                 2 * (i * width + j + (numrow * 4)),
+                                 2 * (i * width + j + (numrow * 5)),
+                                 2 * (i * width + j + (numrow * 6)),
+                                 2 * (i * width + j + (numrow * 7)),
+                                 output,
+                                 2 * (j * height + i + (numcol * 0)) + 1,
+                                 2 * (j * height + i + (numcol * 4)) + 1,
+                                 2 * (j * height + i + (numcol * 1)) + 1,
+                                 2 * (j * height + i + (numcol * 5)) + 1,
+                                 2 * (j * height + i + (numcol * 2)) + 1,
+                                 2 * (j * height + i + (numcol * 6)) + 1,
+                                 2 * (j * height + i + (numcol * 3)) + 1,
+                                 2 * (j * height + i + (numcol * 7)) + 1);
+        }
+    }
+}
+
+static INLINE void load_buffer_16_neon(const int16_t *input, int32x4_t *in, int32_t stride, int32_t shift) {
+    int16x4_t temp[4];
+
+    temp[0] = vld1_s16(input + 0 * stride);
+    temp[1] = vld1_s16(input + 0 * stride + 4);
+    temp[2] = vld1_s16(input + 1 * stride);
+    temp[3] = vld1_s16(input + 1 * stride + 4);
+
+    const int32x4_t vshift = vdupq_n_s32(shift);
+
+    in[0] = vshlq_s32(vmovl_s16(temp[0]), vshift);
+    in[1] = vshlq_s32(vmovl_s16(temp[1]), vshift);
+    in[2] = vshlq_s32(vmovl_s16(temp[2]), vshift);
+    in[3] = vshlq_s32(vmovl_s16(temp[3]), vshift);
+}
+
+static AOM_FORCE_INLINE void col_txfm_32x8_N4_rounding(int32x4_t *in, int32_t shift) {
+    in[0] = vrshlq_s32(in[0], vdupq_n_s32(-shift));
+    in[1] = vrshlq_s32(in[1], vdupq_n_s32(-shift));
+    in[8] = vrshlq_s32(in[8], vdupq_n_s32(-shift));
+    in[9] = vrshlq_s32(in[9], vdupq_n_s32(-shift));
+}
+
+static void fidtx32x8_N2_neon(const int32x4_t *input, int32x4_t *output, int8_t cos_bit, const int32_t col_num,
+                              int32_t row_num) {
+    (void)cos_bit;
+    for (int32_t i = 0; i < row_num; i++) {
+        output[2 * i * col_num]     = vshlq_n_s32(input[2 * i * col_num], 1);
+        output[2 * i * col_num + 1] = vshlq_n_s32(input[2 * i * col_num + 1], 1);
+    }
+}
+
+static AOM_FORCE_INLINE void load_buffer_16x8n(const int16_t *input, int32x4_t *out, int32_t stride, int32_t shift,
+                                               const int32_t height) {
+    for (int32_t col = 0; col < height; col++) {
+        const int16_t *in     = input + col * stride;
+        int32x4_t     *output = out + 2 * col * 4;
+        load_buffer_16_neon(in, output, 8, shift);
+    }
+}
+
+static INLINE void transpose_8nx8n_N4_half_neon(const int32x4_t *input, int32x4_t *output, const int32_t width,
+                                                const int32_t height) {
+    const int32_t numcol      = height >> 3;
+    const int32_t numrow      = width >> 3;
+    int32_t       calc_numcol = numcol >> 2;
+
+    if (!calc_numcol) {
+        calc_numcol = 1;
+    }
+
+    for (int32_t j = 0; j < numrow; j++) {
+        for (int32_t i = 0; i < calc_numcol; i++) {
+            TRANSPOSE_2X4X4_NEON(input,
+                                 2 * (i * width + j + (numrow * 0)),
+                                 2 * (i * width + j + (numrow * 1)),
+                                 2 * (i * width + j + (numrow * 2)),
+                                 2 * (i * width + j + (numrow * 3)),
+                                 output,
+                                 2 * (j * height + i + (numcol * 0)),
+                                 2 * (j * height + i + (numcol * 4)),
+                                 2 * (j * height + i + (numcol * 1)),
+                                 2 * (j * height + i + (numcol * 5)),
+                                 2 * (j * height + i + (numcol * 2)),
+                                 2 * (j * height + i + (numcol * 6)),
+                                 2 * (j * height + i + (numcol * 3)),
+                                 2 * (j * height + i + (numcol * 7)));
+            TRANSPOSE_2X4X4_NEON(input,
+                                 2 * (i * width + j + (numrow * 4)),
+                                 2 * (i * width + j + (numrow * 5)),
+                                 2 * (i * width + j + (numrow * 6)),
+                                 2 * (i * width + j + (numrow * 7)),
+                                 output,
+                                 2 * (j * height + i + (numcol * 0)) + 1,
+                                 2 * (j * height + i + (numcol * 4)) + 1,
+                                 2 * (j * height + i + (numcol * 1)) + 1,
+                                 2 * (j * height + i + (numcol * 5)) + 1,
+                                 2 * (j * height + i + (numcol * 2)) + 1,
+                                 2 * (j * height + i + (numcol * 6)) + 1,
+                                 2 * (j * height + i + (numcol * 3)) + 1,
+                                 2 * (j * height + i + (numcol * 7)) + 1);
+        }
+    }
+}
+
+void svt_av1_fwd_txfm2d_32x8_N4_neon(int16_t *input, int32_t *output, uint32_t stride, TxType tx_type, uint8_t bd) {
+    int32x4_t     in[64];
+    int32x4_t    *outcoef = (int32x4_t *)output;
+    const int8_t *shift   = fwd_txfm_shift_ls[TX_32X8];
+    const int32_t txw_idx = get_txw_idx(TX_32X8);
+    const int32_t txh_idx = get_txh_idx(TX_32X8);
+    int8_t        bitcol  = fwd_cos_bit_col[txw_idx][txh_idx];
+    int8_t        bitrow  = fwd_cos_bit_row[txw_idx][txh_idx];
+
+    const int32_t txfm_size_col = tx_size_wide[TX_32X8];
+    const int32_t txfm_size_row = tx_size_high[TX_32X8];
+    const int32_t num_row       = txfm_size_row >> 3;
+    const int32_t num_col       = txfm_size_col >> 3;
+
+    switch (tx_type) {
+    case IDTX:
+        load_buffer_16x8n(input, in, stride, shift[0], txfm_size_row / 4);
+        fidtx32x8_N2_neon(in, in, bitcol, num_col, 2);
+        col_txfm_32x8_N4_rounding(&in[0], -shift[1]);
+        fidtx_wxh_N4_neon(in, outcoef, 8, 4);
+        clear_buffer_wxh_N4(outcoef, num_col, txfm_size_row);
+        break;
+    case DCT_DCT:
+        load_buffer_32x8n(input, in, stride, 0, 0, shift[0], txfm_size_row);
+        for (int32_t i = 0; i < num_col; i++) { fdct8x8_N4_neon((in + 2 * i), (in + 2 * i), bitcol, num_col); }
+        col_txfm_16x16_N4_rounding(&in[0], shift[1]);
+        transpose_8nx8n_N4_half_neon(in, outcoef, txfm_size_col, txfm_size_row);
+        av1_fdct32_new_N4_neon(outcoef, in, bitrow, 8, num_row);
+        transpose_8nx8n_N4_quad_neon(in, outcoef, txfm_size_row, txfm_size_col);
+        clear_buffer_wxh_N4(outcoef, num_col, txfm_size_row);
+        break;
+    default: assert(0);
+    }
+    (void)bd;
 }

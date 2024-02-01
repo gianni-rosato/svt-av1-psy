@@ -232,7 +232,7 @@ static const FwdTxfm2dFunc fwd_txfm_2d_N4_neon_func[TX_SIZES_ALL] = {
     NULL,
     NULL,
     NULL,
-    NULL,
+    svt_av1_fwd_txfm2d_32x8_N4_neon,
     NULL,
     NULL,
 };
