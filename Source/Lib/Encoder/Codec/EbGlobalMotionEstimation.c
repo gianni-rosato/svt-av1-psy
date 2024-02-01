@@ -16,10 +16,11 @@
 #include "EbGlobalMotionEstimationCost.h"
 #include "EbReferenceObject.h"
 #include "EbMotionEstimationProcess.h"
-#include "EbEncWarpedMotion.h"
+#include "EbWarpedMotion.h"
 #include "EbUtility.h"
 #include "global_motion.h"
 #include "corner_detect.h"
+#include "aom_dsp_rtcd.h"
 // Normalized distortion-based thresholds
 #define GMV_ME_SAD_TH_0 0
 #define GMV_ME_SAD_TH_1 5
@@ -420,13 +421,10 @@ void compute_global_motion(PictureParentControlSet *pcs, int *frm_corners, int n
     unsigned char *det_ref_buffer = det_ref_pic->buffer_y + det_ref_pic->org_x +
         det_ref_pic->org_y * det_ref_pic->stride_y;
 
-    unsigned char *ref_buffer_2b = ref_pic->buffer_bit_inc_y + ref_pic->org_x +
-        ref_pic->org_y * ref_pic->stride_bit_inc_y;
     EbWarpedMotionParams global_motion = default_warp_params;
 
     // TODO: check ref_params
     const EbWarpedMotionParams *ref_params = &default_warp_params;
-
     {
         int inliers_by_motion[RANSAC_NUM_MOTIONS];
 
@@ -474,10 +472,7 @@ void compute_global_motion(PictureParentControlSet *pcs, int *frm_corners, int n
                 if (tmp_wm_params.wmtype != IDENTITY) {
                     const int64_t warp_error = svt_av1_refine_integerized_param(&tmp_wm_params,
                                                                                 tmp_wm_params.wmtype,
-                                                                                FALSE,
-                                                                                EB_EIGHT_BIT,
                                                                                 ref_buffer,
-                                                                                ref_buffer_2b,
                                                                                 ref_pic->width,
                                                                                 ref_pic->height,
                                                                                 ref_pic->stride_y,
@@ -487,7 +482,6 @@ void compute_global_motion(PictureParentControlSet *pcs, int *frm_corners, int n
                                                                                 input_pic->stride_y,
                                                                                 pcs->gm_ctrls.params_refinement_steps,
                                                                                 chess_refn,
-
                                                                                 best_warp_error);
                     if (warp_error < best_warp_error) {
                         best_warp_error = warp_error;
@@ -512,14 +506,8 @@ void compute_global_motion(PictureParentControlSet *pcs, int *frm_corners, int n
             if (global_motion.wmtype == IDENTITY)
                 continue;
 
-            const int64_t ref_frame_error = svt_av1_frame_error(FALSE,
-                                                                EB_EIGHT_BIT,
-                                                                ref_buffer,
-                                                                ref_pic->stride_y,
-                                                                frm_buffer,
-                                                                input_pic->width,
-                                                                input_pic->height,
-                                                                input_pic->stride_y);
+            const int64_t ref_frame_error = svt_av1_calc_frame_error(
+                ref_buffer, ref_pic->stride_y, frm_buffer, input_pic->width, input_pic->height, input_pic->stride_y);
 
             if (ref_frame_error == 0)
                 continue;

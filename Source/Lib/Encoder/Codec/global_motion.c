@@ -129,10 +129,10 @@ static void force_wmtype(EbWarpedMotionParams *wm, TransformationType wmtype) {
     wm->wmtype = wmtype;
 }
 
-int64_t svt_av1_refine_integerized_param(EbWarpedMotionParams *wm, TransformationType wmtype, int use_hbd, int bd,
-                                         uint8_t *ref, uint8_t *ref_2b, int r_width, int r_height, int r_stride,
-                                         uint8_t *dst, int d_width, int d_height, int d_stride, int n_refinements,
-                                         uint8_t chess_refn, int64_t best_frame_error) {
+int64_t svt_av1_refine_integerized_param(EbWarpedMotionParams *wm, TransformationType wmtype, uint8_t *ref, int r_width,
+                                         int r_height, int r_stride, uint8_t *dst, int d_width, int d_height,
+                                         int d_stride, int n_refinements, uint8_t chess_refn,
+                                         int64_t best_frame_error) {
     static const int max_trans_model_params[TRANS_TYPES] = {0, 2, 4, 6};
     const int        border                              = ERRORADV_BORDER;
     int              i                                   = 0, p;
@@ -146,10 +146,7 @@ int64_t svt_av1_refine_integerized_param(EbWarpedMotionParams *wm, Transformatio
 
     force_wmtype(wm, wmtype);
     best_error = svt_av1_warp_error(wm,
-                                    use_hbd,
-                                    bd,
                                     ref,
-                                    ref_2b,
                                     r_width,
                                     r_height,
                                     r_stride,
@@ -161,9 +158,7 @@ int64_t svt_av1_refine_integerized_param(EbWarpedMotionParams *wm, Transformatio
                                     d_stride,
                                     0,
                                     0,
-
                                     chess_refn,
-
                                     best_frame_error);
     best_error = AOMMIN(best_error, best_frame_error);
     step       = 1 << (5 - 1); //initial step=16
@@ -177,10 +172,7 @@ int64_t svt_av1_refine_integerized_param(EbWarpedMotionParams *wm, Transformatio
             // look to the left
             *param     = add_param_offset(p, curr_param, -step);
             step_error = svt_av1_warp_error(wm,
-                                            use_hbd,
-                                            bd,
                                             ref,
-                                            ref_2b,
                                             r_width,
                                             r_height,
                                             r_stride,
@@ -192,9 +184,7 @@ int64_t svt_av1_refine_integerized_param(EbWarpedMotionParams *wm, Transformatio
                                             d_stride,
                                             0,
                                             0,
-
                                             chess_refn,
-
                                             best_error);
             if (step_error < best_error) {
                 best_error = step_error;
@@ -205,10 +195,7 @@ int64_t svt_av1_refine_integerized_param(EbWarpedMotionParams *wm, Transformatio
             // look to the right
             *param     = add_param_offset(p, curr_param, step);
             step_error = svt_av1_warp_error(wm,
-                                            use_hbd,
-                                            bd,
                                             ref,
-                                            ref_2b,
                                             r_width,
                                             r_height,
                                             r_stride,
@@ -220,9 +207,7 @@ int64_t svt_av1_refine_integerized_param(EbWarpedMotionParams *wm, Transformatio
                                             d_stride,
                                             0,
                                             0,
-
                                             chess_refn,
-
                                             best_error);
             if (step_error < best_error) {
                 best_error = step_error;
@@ -236,10 +221,7 @@ int64_t svt_av1_refine_integerized_param(EbWarpedMotionParams *wm, Transformatio
             while (step_dir) {
                 *param     = add_param_offset(p, best_param, step * step_dir);
                 step_error = svt_av1_warp_error(wm,
-                                                use_hbd,
-                                                bd,
                                                 ref,
-                                                ref_2b,
                                                 r_width,
                                                 r_height,
                                                 r_stride,
@@ -251,9 +233,7 @@ int64_t svt_av1_refine_integerized_param(EbWarpedMotionParams *wm, Transformatio
                                                 d_stride,
                                                 0,
                                                 0,
-
                                                 chess_refn,
-
                                                 best_error);
                 if (step_error < best_error) {
                     best_error = step_error;

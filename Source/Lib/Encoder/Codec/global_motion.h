@@ -61,10 +61,9 @@ int svt_av1_is_enough_erroradvantage(double best_erroradvantage, int params_cost
 // Returns the av1_warp_error between "dst" and the result of applying the
 // motion params that result from fine-tuning "wm" to "ref". Note that "wm" is
 // modified in place.
-int64_t svt_av1_refine_integerized_param(EbWarpedMotionParams *wm, TransformationType wmtype, int use_hbd, int bd,
-                                         uint8_t *ref, uint8_t *ref_2b, int r_width, int r_height, int r_stride,
-                                         uint8_t *dst, int d_width, int d_height, int d_stride, int n_refinements,
-                                         uint8_t chess_refn, int64_t best_frame_error);
+int64_t svt_av1_refine_integerized_param(EbWarpedMotionParams *wm, TransformationType wmtype, uint8_t *ref, int r_width,
+                                         int r_height, int r_stride, uint8_t *dst, int d_width, int d_height,
+                                         int d_stride, int n_refinements, uint8_t chess_refn, int64_t best_frame_error);
 
 /*
   Computes "num_motions" candidate global motion parameters between two frames.
