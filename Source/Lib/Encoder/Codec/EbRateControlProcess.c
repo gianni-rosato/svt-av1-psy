@@ -845,14 +845,14 @@ static int crf_qindex_calc(PictureControlSet *pcs, RATE_CONTROL *rc, int qindex)
         assert(r0_weight_idx <= 2);
         double weight = r0_weight[r0_weight_idx];
         // adjust the weight for base layer frames with shorter minigops
-        if (scs->lad_mg && !frame_is_intra_only(ppcs) &&
+        if (scs->lad_mg && (pcs->scs->static_config.tune == 3 ? !svt_aom_frame_is_kf_gf_arf(ppcs) : !frame_is_intra_only(ppcs)) &&
             (ppcs->tpl_group_size < (uint32_t)(2 << pcs->ppcs->hierarchical_levels)))
             weight = MIN(weight + 0.1, 1);
 
         const double qstep_ratio             = sqrt(ppcs->r0) * weight;
         const int    qindex_from_qstep_ratio = svt_av1_get_q_index_from_qstep_ratio(qindex, qstep_ratio, bit_depth);
 
-        if (!frame_is_intra_only(ppcs))
+        if (pcs->scs->static_config.tune == 3 ? !svt_aom_frame_is_kf_gf_arf(ppcs) : !frame_is_intra_only(ppcs))
             rc->arf_q = qindex_from_qstep_ratio;
         active_best_quality  = clamp(qindex_from_qstep_ratio, rc->best_quality, qindex);
         active_worst_quality = (active_best_quality + (3 * active_worst_quality) + 2) / 4;
