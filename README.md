@@ -5,7 +5,7 @@ SVT-AV1-PSY is the Scalable Video Technology for AV1 (SVT-AV1 Encoder and Decode
 ### Feature Additions
 
 - `--fgs-table`
-argument for providing a film grain table for synthetic film grain (similar to aomenc's `--film-grain-table=` argument).
+Argument for providing a film grain table for synthetic film grain (similar to aomenc's `--film-grain-table=` argument).
 - `--variance-boost-strength`
 Provides control over our augmented AQ mode 2 which can utilize variance information in each frame for more consistent quality under high/low contrast scenes. Five curve options are provided, and the default is curve 2. `1: mild, 2: gentle, 3: medium, 4: aggressive`
 - `--new-variance-octile`
