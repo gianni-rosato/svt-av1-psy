@@ -771,7 +771,7 @@ ConfigEntry config_entry_global_options[] = {
      set_cfg_generic_token},
     {SINGLE_INPUT,
      INPUT_DEPTH_TOKEN,
-     "Input video file and output bitstream bit-depth, default is 8 [8, 10]",
+     "Input video file and output bitstream bit-depth, default is 10 [8, 10]",
      set_cfg_generic_token},
     // Latency
     {SINGLE_INPUT,
@@ -944,8 +944,8 @@ ConfigEntry config_entry_rc[] = {
      VBR_MAX_SECTION_PCT_TOKEN,
      "GOP max bitrate (expressed as a percentage of the target rate), default is 2000 [0-10000]",
      set_cfg_generic_token},
-    {SINGLE_INPUT, ENABLE_QM_TOKEN, "Enable quantisation matrices, default is 0 [0-1]", set_cfg_generic_token},
-    {SINGLE_INPUT, MIN_QM_LEVEL_TOKEN, "Min quant matrix flatness, default is 8 [0-15]", set_cfg_generic_token},
+    {SINGLE_INPUT, ENABLE_QM_TOKEN, "Enable quantisation matrices, default is 1 [0-1]", set_cfg_generic_token},
+    {SINGLE_INPUT, MIN_QM_LEVEL_TOKEN, "Min quant matrix flatness, default is 0 [0-15]", set_cfg_generic_token},
     {SINGLE_INPUT, MAX_QM_LEVEL_TOKEN, "Max quant matrix flatness, default is 15 [0-15]", set_cfg_generic_token},
     {SINGLE_INPUT,
      ROI_MAP_FILE_TOKEN,
@@ -1067,8 +1067,8 @@ ConfigEntry config_entry_specific[] = {
     // --- end: ALTREF_FILTERING_SUPPORT
     {SINGLE_INPUT,
      TUNE_TOKEN,
-     "Specifies whether to use PSNR or VQ as the tuning metric [0 = VQ, 1 = PSNR, 2 = SSIM, 3 = SSIM w/ subjective qual. tuning], "
-     "default is 1 "
+     "Specifies whether to use PSNR or VQ as the tuning metric [0 = VQ, 1 = PSNR, 2 = SSIM, 3 = Subjective SSIM], "
+     "default is 2 "
      "[0-3]",
      set_cfg_generic_token},
     // MD Parameters
@@ -1090,7 +1090,7 @@ ConfigEntry config_entry_specific[] = {
 
     {SINGLE_INPUT,
      FILM_GRAIN_DENOISE_APPLY_TOKEN,
-     "Apply denoising when film grain is ON, default is 1 [0: no denoising, film grain data is "
+     "Apply denoising when film grain is ON, default is 0 [0: no denoising, film grain data is "
      "still in frame header, "
      "1: level of denoising is set by the film-grain parameter]",
      set_cfg_generic_token},
@@ -1208,7 +1208,7 @@ ConfigEntry config_entry_color_description[] = {
     // Termination
     {SINGLE_INPUT, NULL, NULL, NULL}};
 
-ConfigEntry config_entry_variance_boost[] = {
+ConfigEntry config_entry_psy[] = {
     // Variance boost
     {SINGLE_INPUT,
      VARIANCE_BOOST_STRENGTH_TOKEN,
@@ -1217,6 +1217,11 @@ ConfigEntry config_entry_variance_boost[] = {
     {SINGLE_INPUT,
      NEW_VARIANCE_OCTILE_TOKEN,
      "Octile for new 8x8 variance algorithm. Set to 0 to use 64x64 variance algorithm, default is 6 [0-8]",
+     set_cfg_generic_token},
+    // Sharpness
+    {SINGLE_INPUT,
+     SHARPNESS_TOKEN,
+     "Affects loopfilter deblock sharpness and rate distortion [0-7]",
      set_cfg_generic_token},
     // Termination
     {SINGLE_INPUT, NULL, NULL, NULL}};
@@ -1400,7 +1405,9 @@ ConfigEntry config_entry[] = {
     {SINGLE_INPUT, VARIANCE_BOOST_STRENGTH_TOKEN, "VarianceBoostStrength", set_cfg_generic_token},
     {SINGLE_INPUT, NEW_VARIANCE_OCTILE_TOKEN, "NewVarianceOctile", set_cfg_generic_token},
 
-    {SINGLE_INPUT, SHARPNESS_TOKEN, "Affects loopfilter deblock sharpness and rate distortion [0-7]", set_cfg_generic_token},
+    // Sharpness
+    {SINGLE_INPUT, SHARPNESS_TOKEN, "Sharpness", set_cfg_generic_token},
+  
     // Termination
     {SINGLE_INPUT, NULL, NULL, NULL}};
 
@@ -2087,8 +2094,8 @@ uint32_t get_help(int32_t argc, char *const argv[]) {
         }
     }
 
-    printf("\nVariance Boost Options:\n");
-    for (ConfigEntry *cd_token_index = config_entry_variance_boost; cd_token_index->token; ++cd_token_index) {
+    printf("\nPsychovisual Options:\n");
+    for (ConfigEntry *cd_token_index = config_entry_psy; cd_token_index->token; ++cd_token_index) {
         switch (check_long(*cd_token_index, cd_token_index[1])) {
         case 1:
             printf("  %s, %-25s    %-25s\n", cd_token_index->token, cd_token_index[1].token, cd_token_index->name);

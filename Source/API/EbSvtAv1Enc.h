@@ -319,7 +319,7 @@ typedef struct EbSvtAv1EncConfiguration {
      * 8 = 8 bit.
      * 10 = 10 bit.
      *
-     * Default is 8. */
+     * Default is 10 for SVT-AV1-PSY, mainline default is 8. */
     uint32_t encoder_bit_depth;
 
     /**
@@ -630,7 +630,7 @@ typedef struct EbSvtAv1EncConfiguration {
     * @brief Determines how much denoising is used.
     * Only applicable when film grain is ON.
     *
-    * 0 is no denoising
+    * 0 is no denoising (default in SVT-AV1-PSY)
     * 1 is full denoising
     */
     uint8_t film_grain_denoise_apply;
@@ -715,9 +715,9 @@ typedef struct EbSvtAv1EncConfiguration {
 
     Bool enable_overlays;
     /**
-     * @brief Tune for a particular metric; 0: VQ, 1: PSNR, 2: SSIM, 3: SSIM with subjective quality tuning.
+     * @brief Tune for a particular metric; 0: VQ, 1: PSNR, 2: SSIM, 3: Subjective SSIM (SSIM with subjective quality tuning).
      *
-     * Default is 1.
+     * Default is 2 (Tune SSIM) for SVT-AV1-PSY. Mainline SVT-AV1 uses 1 (Tune PSNR) as default
      */
     uint8_t tune;
 
@@ -856,14 +856,14 @@ typedef struct EbSvtAv1EncConfiguration {
     /**
      * @brief Signal to the library to enable quantisation matrices
      *
-     * Default is false.
+     * Default is true in SVT-AV1-PSY.
      */
     Bool enable_qm;
     /**
      * @brief Min quant matrix flatness. Applicable when enable_qm is true.
      * Min value is 0.
      * Max value is 15.
-     * Default is 8.
+     * Default is 0.
      */
     uint8_t min_qm_level;
     /**
@@ -953,6 +953,12 @@ typedef struct EbSvtAv1EncConfiguration {
     */
     uint8_t new_variance_octile;
 
+    /* @brief Affects loopfilter deblock sharpness and rate distortion
+     *
+     * Min value is 0 (off).
+     * Max is 7.
+     * Default is 0 (off).
+     */
     uint8_t sharpness;
 } EbSvtAv1EncConfiguration;
 

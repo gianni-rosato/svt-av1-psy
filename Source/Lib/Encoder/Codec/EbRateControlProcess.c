@@ -3536,7 +3536,7 @@ void *svt_aom_rate_control_kernel(void *input_ptr) {
                     sb_ptr->qindex     = frm_hdr->quantization_params.base_q_idx;
                 }
             }
-
+            
             if ((pcs->scs->static_config.tune == 2 || pcs->scs->static_config.tune == 3) && !pcs->ppcs->frm_hdr.delta_q_params.delta_q_present) {
                 // enable sb level qindex when tune 2
                 pcs->ppcs->frm_hdr.delta_q_params.delta_q_present = 1;
