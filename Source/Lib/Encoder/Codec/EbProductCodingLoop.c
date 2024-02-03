@@ -9074,7 +9074,7 @@ static void md_encode_block(PictureControlSet *pcs, ModeDecisionContext *ctx, ui
     BlkStruct *blk_ptr          = ctx->blk_ptr;
     cand_bf_ptr_array           = &(cand_bf_ptr_array_base[0]);
     ctx->blk_lambda_tuning      = pcs->ppcs->blk_lambda_tuning;
-    ctx->tune_ssim_level        = SSIM_LVL_0;
+    ctx->tune_ssim_level        = pcs->scs->static_config.tune == 3 ? SSIM_LVL_3 : SSIM_LVL_0;
     if (pcs->ppcs->frm_hdr.segmentation_params.segmentation_enabled) {
         SuperBlock *sb_ptr = ctx->sb_ptr;
         svt_aom_apply_segmentation_based_quantization(blk_geom, pcs, sb_ptr, blk_ptr);
