@@ -1125,7 +1125,7 @@ void svt_av1_optimize_b(ModeDecisionContext *ctx, int16_t txb_skip_context, int1
                         const TranLow *coeff_ptr, int32_t stride, intptr_t n_coeffs, const MacroblockPlane *p,
                         TranLow *qcoeff_ptr, TranLow *dqcoeff_ptr, uint16_t *eob, const ScanOrder *sc,
                         const QuantParam *qparam, TxSize tx_size, TxType tx_type, Bool is_inter, uint8_t use_sharpness,
-                        uint8_t delta_q_present, uint8_t picture_qp, uint32_t lambda, int plane)
+                        uint8_t delta_q_present, uint8_t picture_qp, uint32_t lambda, int plane, PictureControlSet *pcs)
 
 {
     (void)stride;
@@ -1169,13 +1169,16 @@ void svt_av1_optimize_b(ModeDecisionContext *ctx, int16_t txb_skip_context, int1
             return;
     }
     int       rweight = 100;
-    const int rshift  = 2;
+    const int rshift  = pcs->scs->static_config.sharpness + 2;
     if (use_sharpness && delta_q_present && plane == 0) {
         int diff = ctx->sb_ptr->qindex - quantizer_to_qindex[picture_qp];
-        if (diff < 0) {
+        if (diff < pcs->scs->static_config.sharpness << 1) {
             sharpness = 1;
             rweight   = 0;
         }
+    }
+    if (pcs->scs->static_config.sharpness > 0) {
+        rweight  /= pcs->scs->static_config.sharpness + 1;
     }
     const int64_t  rdmult = (((((int64_t)lambda * plane_rd_mult[is_inter][plane_type]) * rweight) / 100) + 2) >> rshift;
     uint8_t        levels_buf[TX_PAD_2D];
@@ -1687,7 +1690,8 @@ int32_t svt_aom_quantize_inv_quantize(PictureControlSet *pcs, ModeDecisionContex
                            pcs->ppcs->frm_hdr.delta_q_params.delta_q_present,
                            pcs->picture_qp,
                            lambda,
-                           (component_type == COMPONENT_LUMA) ? 0 : 1);
+                           (component_type == COMPONENT_LUMA) ? 0 : 1,
+                           pcs);
     }
 
     *cnt_nz_coeff = *eob;

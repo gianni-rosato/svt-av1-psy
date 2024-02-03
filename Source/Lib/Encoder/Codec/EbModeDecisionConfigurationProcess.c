@@ -81,15 +81,20 @@ void set_global_motion_field(PictureControlSet *pcs) {
 }
 
 void svt_av1_build_quantizer(EbBitDepth bit_depth, int32_t y_dc_delta_q, int32_t u_dc_delta_q, int32_t u_ac_delta_q,
-                             int32_t v_dc_delta_q, int32_t v_ac_delta_q, Quants *const quants, Dequants *const deq) {
+                             int32_t v_dc_delta_q, int32_t v_ac_delta_q, Quants *const quants, Dequants *const deq, PictureParentControlSet *pcs) {
     int32_t i, q, quant_qtx;
 
     for (q = 0; q < QINDEX_RANGE; q++) {
-        const int32_t qzbin_factor     = svt_aom_get_qzbin_factor(q, bit_depth);
-        const int32_t qrounding_factor = q == 0 ? 64 : 48;
-
+        int32_t qzbin_factor     = svt_aom_get_qzbin_factor(q, bit_depth);
+        int32_t qrounding_factor = q == 0 ? 64 : 48;
+        if ((pcs->scs->static_config.tune == 3 || pcs->scs->static_config.sharpness > 0) && q > 0) {
+            qzbin_factor += pcs->scs->static_config.tune == 3 ? (12 + (pcs->scs->static_config.sharpness << 1)) : (pcs->scs->static_config.sharpness << 1);
+            qrounding_factor -= pcs->scs->static_config.tune == 3 ? (12 + (pcs->scs->static_config.sharpness << 1)) : (pcs->scs->static_config.sharpness << 1);
+        }
         for (i = 0; i < 2; ++i) {
             int32_t qrounding_factor_fp = 64;
+            if (pcs->scs->static_config.tune == 3 || pcs->scs->static_config.sharpness > 0)
+                qrounding_factor_fp -= pcs->scs->static_config.tune == 3 ? (12 + (pcs->scs->static_config.sharpness << 1)) : (pcs->scs->static_config.sharpness << 1);
             quant_qtx                   = i == 0 ? svt_aom_dc_quant_qtx(q, y_dc_delta_q, bit_depth)
                                                  : svt_aom_ac_quant_qtx(q, 0, bit_depth);
             svt_aom_invert_quant(&quants->y_quant[q][i], &quants->y_quant_shift[q][i], quant_qtx);

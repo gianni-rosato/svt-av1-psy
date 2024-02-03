@@ -2,18 +2,32 @@
 
 SVT-AV1-PSY is the Scalable Video Technology for AV1 (SVT-AV1 Encoder and Decoder) with perceptual enhancements for psychovisually optimal AV1 encoding. The goal is to create the best encoding implementation for perceptual quality with AV1.
 
-Added features:
+### Feature Additions
 
 - `--fgs-table`
-argument for providing a film grain table for synthetic film grain (similar to aomenc's `--film-grain-table=` argument).
+Argument for providing a film grain table for synthetic film grain (similar to aomenc's `--film-grain-table=` argument).
 - `--variance-boost-strength`
-Provides control over our augmented AQ mode 2 which can utilize variance information in each frame for more consistent quality under high/low contrast scenes. Five curve options are provided, and the default is curve 2. `1: mild, 2: gentle, 3: medium, 4: aggressive` | [More Info](https://gitlab.com/AOMediaCodec/SVT-AV1/-/issues/2105#note_1710523453)
+Provides control over our augmented AQ mode 2 which can utilize variance information in each frame for more consistent quality under high/low contrast scenes. Five curve options are provided, and the default is curve 2. `1: mild, 2: gentle, 3: medium, 4: aggressive`
 - `--new-variance-octile`
 Enables a new 8x8-based variance algorithm and picks an 8x8 variance value per superblock to use as a boost. Lower values enable detecting more false negatives, at the expense of false positives (bitrate increase). There are four options. 0: disabled, use 64x64 variance algorithm instead 1: enabled, 1st octile 4: enabled, median 8: enabled, maximum. The default is 6.
 - Preset -2
 A terrifically slow encoding mode for research purposes.
+- Tune 3
+A new tune based on Tune 2 (SSIM) called SSIM with Subjective Quality Tuning. Generally harms metric performance in exchange for better visual fidelity.
+- `--sharpness`
+A parameter for modifying loopfilter deblock sharpness and rate distortion to improve visual fidelity. The default is 0 (no sharpness).
 
-We are not in any way affiliated with the Alliance for Open Media or contributors to the upstream SVT-AV1 project.
+### Modified Defaults
+
+SVT-AV1-PSY has different defaults than mainline SVT-AV1 in order to provide better visual fidelity out of the box. They include:
+
+- Default 10-bit color depth. Might still produce 8-bit video when given an 8-bit input.
+- Disable film grain denoising by default, as it often harms visual fidelity.
+- Default to Tune 2 instead of Tune 1, as it reliably outperforms Tune 1 on most metrics.
+- Enable quantization matrices by default.
+- Set minimum QM level to 0 by default.
+
+*We are not in any way affiliated with the Alliance for Open Media or any upstream SVT-AV1 project contributors who have not also contributed here.*
 
 # Scalable Video Technology for AV1 (SVT-AV1 Encoder and Decoder)
 

@@ -545,9 +545,9 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet *scs) {
         return_error = EB_ErrorBadParameter;
     }
 
-    if (config->tune > 2) {
+    if (config->tune > 3) {
         SVT_ERROR(
-            "Instance %u: Invalid tune flag [0 - 2, 0 for VQ, 1 for PSNR and 2 for SSIM], your "
+            "Instance %u: Invalid tune flag [0 - 2, 0 for VQ, 1 for PSNR, 2 for SSIM, and 3 for SSIM with subjective qual. tuning], your "
             "input: %d\n",
             channel_number + 1,
             config->tune);
@@ -555,14 +555,22 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet *scs) {
     }
     if (config->tune == 2) {
         if (config->rate_control_mode != 0 || config->pred_structure != SVT_AV1_PRED_RANDOM_ACCESS) {
-            SVT_ERROR("Instance %u: tune SSIM only supports CRF rate control mode currently\n",
+            SVT_ERROR("Instance %u: Tune SSIM only supports the CRF rate control mode currently\n",
+                      channel_number + 1,
+                      config->tune);
+            return_error = EB_ErrorBadParameter;
+        }
+    }
+    if (config->tune == 3) {
+        if (config->rate_control_mode != 0 || config->pred_structure != SVT_AV1_PRED_RANDOM_ACCESS) {
+            SVT_ERROR("Instance %u: Tune Subjective SSIM only supports the CRF rate control mode currently\n",
                       channel_number + 1,
                       config->tune);
             return_error = EB_ErrorBadParameter;
         } else {
             SVT_WARN(
-                "Instance %u: tune ssim (2) is supported for testing and debugging purposes."
-                "This configuration should not be used for any benchmarking analysis at this stage\n",
+                "Instance %u: The Subjective SSIM configuration is considered experimental at this stage. "
+                "Keep in mind for benchmarking analysis that this configuration will likely harm metric performance.\n",
                 channel_number + 1);
         }
     }
@@ -810,8 +818,8 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet *scs) {
     }
 
     if (config->pred_structure == 1) {
-        if (config->tune == 0) {
-            SVT_WARN("Instance %u: Tune 0 is not applicable for low-delay, tune will be forced to 1.\n",
+        if (config->tune == 0 || config->tune == 3) {
+            SVT_WARN("Instance %u: Tune 0 and Tune 3 are not applicable for low-delay, tune will be forced to 1.\n",
                      channel_number + 1);
             config->tune = 1;
         }
@@ -838,10 +846,10 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet *scs) {
             "consider using --fast-decode 1, especially if the intended decoder is running with "
             "limited multi-threading capabilities.\n");
     }
-    if (config->tune == 0 && config->fast_decode > 0) {
+    if ((config->tune == 0 || config->tune == 3) && config->fast_decode > 0) {
         SVT_WARN(
             "--fast - decode has been developed and optimized with --tune 1. "
-            "Please use it with caution when encoding with --tune 0. You can also consider using "
+            "Please use it with caution when encoding with --tune 0 or 3. You can also consider using "
             "--tile-columns 1 if you are targeting a high quality encode and a multi-core "
             "high-performance decoder HW\n");
     }
@@ -876,6 +884,11 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet *scs) {
         return_error = EB_ErrorBadParameter;
     }
 
+    if (config->sharpness > 7) {
+        SVT_ERROR("Instance %u: Sharpness level must be between 0 and 7\n", channel_number + 1);
+        return_error = EB_ErrorBadParameter;
+    }
+
     return return_error;
 }
 
@@ -891,7 +904,7 @@ EbErrorType svt_av1_set_default_params(EbSvtAv1EncConfiguration *config_ptr) {
     }
     config_ptr->frame_rate_numerator     = 60000;
     config_ptr->frame_rate_denominator   = 1000;
-    config_ptr->encoder_bit_depth        = 8;
+    config_ptr->encoder_bit_depth        = 10;
     config_ptr->source_width             = 0;
     config_ptr->source_height            = 0;
     config_ptr->forced_max_frame_width   = 0;
@@ -962,9 +975,9 @@ EbErrorType svt_av1_set_default_params(EbSvtAv1EncConfiguration *config_ptr) {
     config_ptr->tier    = 0;
     config_ptr->level   = 0;
 
-    // Latency
+    // Film grain denoising
     config_ptr->film_grain_denoise_strength = 0;
-    config_ptr->film_grain_denoise_apply    = 1;
+    config_ptr->film_grain_denoise_apply    = 0; // PSY Change
 
     // CPU Flags
     config_ptr->use_cpu_flags = EB_CPU_FLAGS_ALL;
@@ -982,7 +995,7 @@ EbErrorType svt_av1_set_default_params(EbSvtAv1EncConfiguration *config_ptr) {
     // Alt-Ref default values
     config_ptr->enable_tf       = TRUE;
     config_ptr->enable_overlays = FALSE;
-    config_ptr->tune            = 1;
+    config_ptr->tune            = 2; // PSY change
     // Super-resolution default values
     config_ptr->superres_mode      = SUPERRES_NONE;
     config_ptr->superres_denom     = SCALE_NUMERATOR;
@@ -1012,8 +1025,8 @@ EbErrorType svt_av1_set_default_params(EbSvtAv1EncConfiguration *config_ptr) {
     config_ptr->force_key_frames = 0;
 
     // Quant Matrices (QM)
-    config_ptr->enable_qm    = 0;
-    config_ptr->min_qm_level = 8;
+    config_ptr->enable_qm    = 1; // PSY Change
+    config_ptr->min_qm_level = 0; // PSY Change
     config_ptr->max_qm_level = 15;
 
     config_ptr->startup_mg_size                   = 0;
@@ -1022,8 +1035,9 @@ EbErrorType svt_av1_set_default_params(EbSvtAv1EncConfiguration *config_ptr) {
     config_ptr->frame_scale_evts.resize_kf_denoms = NULL;
     config_ptr->frame_scale_evts.start_frame_nums = NULL;
     config_ptr->enable_roi_map                    = false;
-    config_ptr->variance_boost_strength           = 2;
-    config_ptr->new_variance_octile               = 6;
+    config_ptr->variance_boost_strength           = 2; // PSY New Opt
+    config_ptr->new_variance_octile               = 6; // PSY New Opt
+    config_ptr->sharpness                         = 0; // PSY New Opt
     return return_error;
 }
 
@@ -1081,7 +1095,8 @@ void svt_av1_print_lib_params(SequenceControlSet *scs) {
                  config->enc_mode,
                  config->tune == 0       ? "VQ"
                      : config->tune == 1 ? "PSNR"
-                                         : "SSIM",
+                         : config->tune == 2 ? "SSIM"
+                                             : "Subjective SSIM",
                  config->pred_structure == 1       ? "low delay"
                      : config->pred_structure == 2 ? "random access"
                                                    : "Unknown pred structure");
@@ -1142,6 +1157,12 @@ void svt_av1_print_lib_params(SequenceControlSet *scs) {
                      1,
                      config->film_grain_denoise_apply,
                      config->film_grain_denoise_strength);
+        }
+
+        if (config->sharpness != 0) {
+            SVT_INFO("SVT [config]: Sharpness / level \t\t: %d / %d\n",
+                     1,
+                     config->sharpness);
         }
     }
 #ifdef DEBUG_BUFFERS
@@ -1987,6 +2008,7 @@ EB_API EbErrorType svt_av1_enc_parse_parameter(EbSvtAv1EncConfiguration *config_
         {"startup-mg-size", &config_struct->startup_mg_size},
         {"variance-boost-strength", &config_struct->variance_boost_strength},
         {"new-variance-octile", &config_struct->new_variance_octile},
+        {"sharpness", &config_struct->sharpness},
     };
     const size_t uint8_opts_size = sizeof(uint8_opts) / sizeof(uint8_opts[0]);
 

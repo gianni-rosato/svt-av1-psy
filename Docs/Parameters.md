@@ -1,7 +1,10 @@
 [Top level](../README.md)
 
-# SVT-AV1 Parameters
+# NOTICE
 
+Some of the defaults listed here may be incorrect relative to SVT-AV1-PSY. If you want proper information, please run `SvtAv1EncApp --help` on the latest version of SVT-AV1-PSY or see if new changes are logged in this repo's README.
+
+# SVT-AV1 Parameters
 
 ## Configuration File Parameters
 
