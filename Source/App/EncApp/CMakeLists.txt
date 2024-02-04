@@ -14,6 +14,16 @@
 # Include Subdirectories
 include_directories(${PROJECT_SOURCE_DIR}/Source/API/)
 
+if(PKG_CONFIG_FOUND)
+  pkg_check_modules(PC_LIBDOVI libdovi QUIET)
+endif()
+
+find_library(LIBDOVI_LIBRARY NAMES dovi libdovi
+                             PATHS ${PC_LIBDOVI_LIBDIR}
+)
+find_path(LIBDOVI_INCLUDE_DIR NAMES libdovi/rpu_parser.h
+                              PATHS ${PC_LIBDOVI_INCLUDEDIR})
+
 set(all_files
     ../../API/EbDebugMacros.h
     ../../API/EbSvtAv1.h
@@ -37,6 +47,11 @@ set(all_files
     EbTime.h
     )
 
+if(LIBDOVI_FOUND)
+  set(LIBDOVI_INCLUDE_DIRS ${LIBDOVI_INCLUDE_DIR})
+  set(LIBDOVI_LIBRARIES ${LIBDOVI_LIBRARY})
+endif()
+
 # App Source Files
 add_executable(SvtAv1EncApp
     ${all_files})
@@ -48,7 +63,9 @@ endif()
 #********** SET COMPILE FLAGS************
 # Link the Encoder App
 target_link_libraries(SvtAv1EncApp
-        SvtAv1Enc)
+        SvtAv1Enc
+        ${LIBDOVI_LIBRARY})
+
 if(UNIX)
     target_link_libraries(SvtAv1EncApp
         pthread

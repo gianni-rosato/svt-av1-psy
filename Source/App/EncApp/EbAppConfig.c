@@ -180,6 +180,7 @@
 #define CHROMA_SAMPLE_POSITION_TOKEN "--chroma-sample-position"
 #define MASTERING_DISPLAY_TOKEN "--mastering-display"
 #define CONTENT_LIGHT_LEVEL_TOKEN "--content-light"
+#define DOLBY_VISION_RPU_TOKEN "--dolby-vision-rpu"
 
 // "Implement fgs-table option for photon noise" was co-authored by:
 // quietvoid: https://github.com/quietvoid/
@@ -393,6 +394,21 @@ static EbErrorType set_cfg_stat_file(EbConfig *cfg, const char *token, const cha
 }
 static EbErrorType set_cfg_roi_map_file(EbConfig *cfg, const char *token, const char *value) {
     return open_file(&cfg->roi_map_file, token, value, "r");
+}
+static EbErrorType set_cfg_dovi_rpu(EbConfig *cfg, const char *token, const char *value) {
+    printf("Parsing Dolby Vision RPU file...\n");
+    const DoviRpuOpaqueList *rpus = dovi_parse_rpu_bin_file(value);
+    if (rpus->error) {
+        fprintf(stderr, "%s\n", rpus->error);
+        dovi_rpu_list_free(rpus);
+
+        return validate_error(EB_ErrorBadParameter, token, value);
+    }
+
+    printf("Loaded %zu DoVi RPUs\n", rpus->len);
+    cfg->dovi_rpus = rpus;
+
+    return EB_ErrorNone;
 }
 static EbErrorType set_cfg_fgs_table_path(EbConfig *cfg, const char *token, const char *value) {
     EbErrorType ret = EB_ErrorBadParameter;
@@ -1183,6 +1199,12 @@ ConfigEntry config_entry_color_description[] = {
      "Appendix A.2",
      set_cfg_generic_token},
 
+    {SINGLE_INPUT,
+     DOLBY_VISION_RPU_TOKEN,
+     "Set the Dolby Vision RPU path",
+     set_cfg_dovi_rpu},
+
+
     // Termination
     {SINGLE_INPUT, NULL, NULL, NULL}};
 
@@ -1369,6 +1391,7 @@ ConfigEntry config_entry[] = {
     {SINGLE_INPUT, CHROMA_SAMPLE_POSITION_TOKEN, "ChromaSamplePosition", set_cfg_generic_token},
     {SINGLE_INPUT, MASTERING_DISPLAY_TOKEN, "MasteringDisplay", set_cfg_generic_token},
     {SINGLE_INPUT, CONTENT_LIGHT_LEVEL_TOKEN, "ContentLightLevel", set_cfg_generic_token},
+    {SINGLE_INPUT, DOLBY_VISION_RPU_TOKEN, "DolbyVisionRpu", set_cfg_dovi_rpu},
 
     // QM
     {SINGLE_INPUT, ENABLE_QM_TOKEN, "EnableQM", set_cfg_generic_token},
@@ -1400,6 +1423,8 @@ EbConfig *svt_config_ctor() {
     app_cfg->progress            = 1;
     app_cfg->injector_frame_rate = 60;
     app_cfg->roi_map_file        = NULL;
+    app_cfg->dovi_rpus           = NULL;
+
     app_cfg->fgs_table_path      = NULL;
 
     return app_cfg;
@@ -1453,6 +1478,11 @@ void svt_config_dtor(EbConfig *app_cfg) {
     if (app_cfg->roi_map_file) {
         fclose(app_cfg->roi_map_file);
         app_cfg->roi_map_file = (FILE *)NULL;
+    }
+
+    if (app_cfg->dovi_rpus) {
+        dovi_rpu_list_free(app_cfg->dovi_rpus);
+        app_cfg->dovi_rpus = NULL;
     }
 
     if (app_cfg->fgs_table_path) {
