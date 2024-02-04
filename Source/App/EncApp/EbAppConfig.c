@@ -180,7 +180,10 @@
 #define CHROMA_SAMPLE_POSITION_TOKEN "--chroma-sample-position"
 #define MASTERING_DISPLAY_TOKEN "--mastering-display"
 #define CONTENT_LIGHT_LEVEL_TOKEN "--content-light"
+
+#ifdef USE_LIBDOVI
 #define DOLBY_VISION_RPU_TOKEN "--dolby-vision-rpu"
+#endif
 
 // "Implement fgs-table option for photon noise" was co-authored by:
 // quietvoid: https://github.com/quietvoid/
@@ -395,8 +398,10 @@ static EbErrorType set_cfg_stat_file(EbConfig *cfg, const char *token, const cha
 static EbErrorType set_cfg_roi_map_file(EbConfig *cfg, const char *token, const char *value) {
     return open_file(&cfg->roi_map_file, token, value, "r");
 }
+
+#ifdef USE_LIBDOVI
 static EbErrorType set_cfg_dovi_rpu(EbConfig *cfg, const char *token, const char *value) {
-    printf("Parsing Dolby Vision RPU file...\n");
+    printf("Svt[info]: Parsing Dolby Vision RPU file...\n");
     const DoviRpuOpaqueList *rpus = dovi_parse_rpu_bin_file(value);
     if (rpus->error) {
         fprintf(stderr, "%s\n", rpus->error);
@@ -405,11 +410,13 @@ static EbErrorType set_cfg_dovi_rpu(EbConfig *cfg, const char *token, const char
         return validate_error(EB_ErrorBadParameter, token, value);
     }
 
-    printf("Loaded %zu DoVi RPUs\n", rpus->len);
+    printf("Svt[info]: Loaded %zu DoVi RPUs\n", rpus->len);
     cfg->dovi_rpus = rpus;
 
     return EB_ErrorNone;
 }
+#endif
+
 static EbErrorType set_cfg_fgs_table_path(EbConfig *cfg, const char *token, const char *value) {
     EbErrorType ret = EB_ErrorBadParameter;
     FILE *file = NULL;
@@ -1067,7 +1074,7 @@ ConfigEntry config_entry_specific[] = {
     // --- end: ALTREF_FILTERING_SUPPORT
     {SINGLE_INPUT,
      TUNE_TOKEN,
-     "Specifies whether to use PSNR or VQ as the tuning metric [0 = VQ, 1 = PSNR, 2 = SSIM, 3 = Subjective SSIM], "
+     "Specifies which encoder tuning method to use [0 = VQ, 1 = PSNR, 2 = SSIM, 3 = Subjective SSIM], "
      "default is 2 "
      "[0-3]",
      set_cfg_generic_token},
@@ -1199,12 +1206,6 @@ ConfigEntry config_entry_color_description[] = {
      "Appendix A.2",
      set_cfg_generic_token},
 
-    {SINGLE_INPUT,
-     DOLBY_VISION_RPU_TOKEN,
-     "Set the Dolby Vision RPU path",
-     set_cfg_dovi_rpu},
-
-
     // Termination
     {SINGLE_INPUT, NULL, NULL, NULL}};
 
@@ -1223,6 +1224,13 @@ ConfigEntry config_entry_psy[] = {
      SHARPNESS_TOKEN,
      "Affects loopfilter deblock sharpness and rate distortion [0-7]",
      set_cfg_generic_token},
+    // Dolby Vision RPU
+#ifdef USE_LIBDOVI
+    {SINGLE_INPUT,
+     DOLBY_VISION_RPU_TOKEN,
+     "Set the Dolby Vision RPU path",
+     set_cfg_dovi_rpu},
+#endif
     // Termination
     {SINGLE_INPUT, NULL, NULL, NULL}};
 
@@ -1391,7 +1399,6 @@ ConfigEntry config_entry[] = {
     {SINGLE_INPUT, CHROMA_SAMPLE_POSITION_TOKEN, "ChromaSamplePosition", set_cfg_generic_token},
     {SINGLE_INPUT, MASTERING_DISPLAY_TOKEN, "MasteringDisplay", set_cfg_generic_token},
     {SINGLE_INPUT, CONTENT_LIGHT_LEVEL_TOKEN, "ContentLightLevel", set_cfg_generic_token},
-    {SINGLE_INPUT, DOLBY_VISION_RPU_TOKEN, "DolbyVisionRpu", set_cfg_dovi_rpu},
 
     // QM
     {SINGLE_INPUT, ENABLE_QM_TOKEN, "EnableQM", set_cfg_generic_token},
@@ -1407,7 +1414,12 @@ ConfigEntry config_entry[] = {
 
     // Sharpness
     {SINGLE_INPUT, SHARPNESS_TOKEN, "Sharpness", set_cfg_generic_token},
-  
+
+    #ifdef USE_LIBDOVI
+    // Dolby Vision RPU Path
+    {SINGLE_INPUT, DOLBY_VISION_RPU_TOKEN, "DolbyVisionRpu", set_cfg_dovi_rpu},
+    #endif
+
     // Termination
     {SINGLE_INPUT, NULL, NULL, NULL}};
 
@@ -1423,8 +1435,9 @@ EbConfig *svt_config_ctor() {
     app_cfg->progress            = 1;
     app_cfg->injector_frame_rate = 60;
     app_cfg->roi_map_file        = NULL;
+#ifdef USE_LIBDOVI
     app_cfg->dovi_rpus           = NULL;
-
+#endif
     app_cfg->fgs_table_path      = NULL;
 
     return app_cfg;
@@ -1480,10 +1493,12 @@ void svt_config_dtor(EbConfig *app_cfg) {
         app_cfg->roi_map_file = (FILE *)NULL;
     }
 
+#ifdef USE_LIBDOVI
     if (app_cfg->dovi_rpus) {
         dovi_rpu_list_free(app_cfg->dovi_rpus);
         app_cfg->dovi_rpus = NULL;
     }
+#endif
 
     if (app_cfg->fgs_table_path) {
         free(app_cfg->fgs_table_path);

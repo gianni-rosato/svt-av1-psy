@@ -47,9 +47,10 @@ set(all_files
     EbTime.h
     )
 
-if(LIBDOVI_FOUND)
+if(PC_LIBDOVI_FOUND)
   set(LIBDOVI_INCLUDE_DIRS ${LIBDOVI_INCLUDE_DIR})
   set(LIBDOVI_LIBRARIES ${LIBDOVI_LIBRARY})
+  add_compile_definitions(SvtAv1EncApp PRIVATE USE_LIBDOVI)
 endif()
 
 # App Source Files
