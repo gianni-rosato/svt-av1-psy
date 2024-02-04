@@ -18,7 +18,11 @@
 #include <string.h>
 #include <math.h>
 #include <ctype.h>
+
+#ifdef USE_LIBDOVI
 #include "EbSvtAv1Metadata.h"
+#endif
+
 #include "EbAppContext.h"
 #include "EbAppConfig.h"
 #include "EbSvtAv1ErrorCodes.h"
@@ -459,6 +463,7 @@ static EbErrorType retrieve_roi_map_event(SvtAv1RoiMap *roi_map, uint64_t pic_nu
     return EB_ErrorNone;
 }
 
+#ifdef USE_LIBDOVI
 static EbErrorType retrieve_dovi_rpu_for_frame(const DoviRpuOpaqueList *rpus, uint64_t pic_num, EbBufferHeaderType *header_ptr) {
     if (rpus == NULL) {
         return EB_ErrorNone;
@@ -478,6 +483,7 @@ static EbErrorType retrieve_dovi_rpu_for_frame(const DoviRpuOpaqueList *rpus, ui
     dovi_data_free(rpu_payload);
     return EB_ErrorNone;
 }
+#endif
 
 static void free_private_data_list(void *node_head) {
     while (node_head) {
@@ -550,8 +556,9 @@ void process_input_buffer(EncChannel *channel) {
             //  test_update_qp_info(header_ptr->pts, header_ptr);
 #endif
             retrieve_roi_map_event(app_cfg->roi_map, header_ptr->pts, header_ptr);
+#ifdef USE_LIBDOVI
             retrieve_dovi_rpu_for_frame(app_cfg->dovi_rpus, header_ptr->pts, header_ptr);
-
+#endif
             // Send the picture
             if (svt_av1_enc_send_picture(component_handle, header_ptr) != EB_ErrorNone)
                 return_value = APP_ExitConditionFinished;
