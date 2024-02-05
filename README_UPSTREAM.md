@@ -1,37 +1,18 @@
-# SVT-AV1-PSY
+# Scalable Video Technology for AV1 (SVT-AV1 Encoder and Decoder)
 
-SVT-AV1-PSY is the Scalable Video Technology for AV1 (SVT-AV1 Encoder and Decoder) with perceptual enhancements for psychovisually optimal AV1 encoding. The goal is to create the best encoding implementation for perceptual quality with AV1.
+The Scalable Video Technology for AV1 (SVT-AV1 Encoder and Decoder) is an
+AV1-compliant software encoder/decoder library. The work on the SVT-AV1 encoder
+targets the development of a production-quality AV1-encoder with performance
+levels applicable to a wide range of applications, from premium VOD to
+real-time and live encoding/transcoding. The SVT-AV1 decoder implementation
+targets future codec research activities.
 
-### Feature Additions
+The SVT-AV1 project was initially founded by Intel in partnership with Netflix,
+and was then [adopted](https://aomedia.org/press%20releases/aomedia-software-implementation-working-group-to-bring-av1-to-more-video-platforms/)
+by the Alliance of Open Media (AOM) Software Implementation Working Group
+(SIWG), in August 2020, to carry on the group's mission.
 
-- `--fgs-table`
-Argument for providing a film grain table for synthetic film grain (similar to aomenc's `--film-grain-table=` argument).
-- `--variance-boost-strength`
-Provides control over our augmented AQ mode 2 which can utilize variance information in each frame for more consistent quality under high/low contrast scenes. Five curve options are provided, and the default is curve 2. `1: mild, 2: gentle, 3: medium, 4: aggressive`
-- `--new-variance-octile`
-Enables a new 8x8-based variance algorithm and picks an 8x8 variance value per superblock to use as a boost. Lower values enable detecting more false negatives, at the expense of false positives (bitrate increase). There are four options. 0: disabled, use 64x64 variance algorithm instead 1: enabled, 1st octile 4: enabled, median 8: enabled, maximum. The default is 6.
-- Preset -2
-A terrifically slow encoding mode for research purposes.
-- Tune 3
-A new tune based on Tune 2 (SSIM) called SSIM with Subjective Quality Tuning. Generally harms metric performance in exchange for better visual fidelity.
-- `--sharpness`
-A parameter for modifying loopfilter deblock sharpness and rate distortion to improve visual fidelity. The default is 0 (no sharpness).
-
-### Modified Defaults
-
-SVT-AV1-PSY has different defaults than mainline SVT-AV1 in order to provide better visual fidelity out of the box. They include:
-
-- Default 10-bit color depth when given a 10-bit input.
-- Disable film grain denoising by default, as it often harms visual fidelity.
-- Default to Tune 2 instead of Tune 1, as it reliably outperforms Tune 1 in our metrics of choice.
-- Enable quantization matrices by default.
-- Set minimum QM level to 0 by default.
-
-*We are not in any way affiliated with the Alliance for Open Media or any upstream SVT-AV1 project contributors who have not also contributed here.*
-
-# Getting Involved
-
-For more information on SVT-AV1-PSY and this project's mission, see the [PSY Development](Docs/PSY-Development.md) page.
+The canonical URL for this project is at <https://gitlab.com/AOMediaCodec/SVT-AV1>
 
 ## License
 
@@ -41,11 +22,7 @@ Alliance for Open Media Patent License 1.0. See [LICENSE](LICENSE-BSD2.md) and
 under the BSD-3-clause clear license and the Alliance for Open Media Patent
 License 1.0. See [LICENSE](LICENSE.md) and [PATENTS](PATENTS.md) for details.
 
-SVT-AV1-PSY does not feature license modifications from mainline SVT-AV1.
-
 ## Documentation
-
-Keep in mind that these documents are not necessarily up-to-date with the most recent changes in SVT-AV1-PSY. They are a good reference for general usage and understanding of the encoder.
 
 **Guides**
 - [System Requirements](Docs/System-Requirements.md)
@@ -112,3 +89,6 @@ Keep in mind that these documents are not necessarily up-to-date with the most r
 - [Temporal Dependency Model](Docs/Appendix-TPL.md)
 - [Transform Search Appendix](Docs/Appendix-TX-Search.md)
 - [Reference Scaling Appendix](Docs/Appendix-Reference-Scaling.md)
+
+**How Can I Contribute?**
+- [SVT-AV1 Contribution Guide](Docs/Contribute.md)
