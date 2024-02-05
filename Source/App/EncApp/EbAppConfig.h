@@ -15,6 +15,10 @@
 #include <stdio.h>
 #include <stdbool.h>
 
+#ifdef USE_LIBDOVI
+#include <libdovi/rpu_parser.h>
+#endif
+
 #include "EbSvtAv1Enc.h"
 
 #ifdef _WIN32
@@ -186,6 +190,10 @@ typedef struct EbConfig {
 
     // Instance Index
     uint8_t instance_idx;
+
+#ifdef USE_LIBDOVI
+    const DoviRpuOpaqueList *dovi_rpus;
+#endif
 
     char *fgs_table_path;
 } EbConfig;
