@@ -1074,7 +1074,7 @@ ConfigEntry config_entry_specific[] = {
     // --- end: ALTREF_FILTERING_SUPPORT
     {SINGLE_INPUT,
      TUNE_TOKEN,
-     "Specifies which encoder tuning method to use [0 = VQ, 1 = PSNR, 2 = SSIM, 3 = Subjective SSIM], "
+     "Specifies whether to use PSNR, VQ or SSIM as the tuning metric [0 = VQ, 1 = PSNR, 2 = SSIM, 3 = Subjective SSIM], "
      "default is 2 "
      "[0-3]",
      set_cfg_generic_token},
@@ -1177,15 +1177,15 @@ ConfigEntry config_entry_color_description[] = {
     // Color description
     {SINGLE_INPUT,
      COLOR_PRIMARIES_NEW_TOKEN,
-     "Color primaries, refer to Appendix A.2 of the user guide, default is 2 [0-12, 22]",
+     "Color primaries, refer to Appendix A.2 of the user guide, default is 2 (unspecified) [0-12, 22]",
      set_cfg_generic_token},
     {SINGLE_INPUT,
      TRANSFER_CHARACTERISTICS_NEW_TOKEN,
-     "Transfer characteristics, refer to Appendix A.2 of the user guide, default is 2 [0-22]",
+     "Transfer characteristics, refer to Appendix A.2 of the user guide, default is 2 (unspecified) [0-22]",
      set_cfg_generic_token},
     {SINGLE_INPUT,
      MATRIX_COEFFICIENTS_NEW_TOKEN,
-     "Matrix coefficients, refer to Appendix A.2 of the user guide, default is 2 [0-14]",
+     "Matrix coefficients, refer to Appendix A.2 of the user guide, default is 2 (unspecified) [0-14]",
      set_cfg_generic_token},
     {SINGLE_INPUT, COLOR_RANGE_NEW_TOKEN, "Color range, default is 0 [0: Studio, 1: Full]", set_cfg_generic_token},
     {SINGLE_INPUT,
