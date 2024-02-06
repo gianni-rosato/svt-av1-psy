@@ -87,16 +87,28 @@ void svt_av1_build_quantizer(EbBitDepth bit_depth, int32_t y_dc_delta_q, int32_t
     for (q = 0; q < QINDEX_RANGE; q++) {
         int32_t qzbin_factor     = svt_aom_get_qzbin_factor(q, bit_depth);
         int32_t qrounding_factor = q == 0 ? 64 : 48;
-        if ((pcs->scs->static_config.tune == 3 || pcs->scs->static_config.sharpness > 0) && q > 0) {
-            qzbin_factor += pcs->scs->static_config.tune == 3 ? (12 + (pcs->scs->static_config.sharpness << 1)) : (pcs->scs->static_config.sharpness << 1);
-            qrounding_factor -= pcs->scs->static_config.tune == 3 ? (12 + (pcs->scs->static_config.sharpness << 1)) : (pcs->scs->static_config.sharpness << 1);
-        }
         for (i = 0; i < 2; ++i) {
             int32_t qrounding_factor_fp = 64;
-            if (pcs->scs->static_config.tune == 3 || pcs->scs->static_config.sharpness > 0)
-                qrounding_factor_fp -= pcs->scs->static_config.tune == 3 ? (12 + (pcs->scs->static_config.sharpness << 1)) : (pcs->scs->static_config.sharpness << 1);
             quant_qtx                   = i == 0 ? svt_aom_dc_quant_qtx(q, y_dc_delta_q, bit_depth)
                                                  : svt_aom_ac_quant_qtx(q, 0, bit_depth);
+            int32_t diff = quant_qtx - q;
+            if (pcs->scs->static_config.sharpness > 0 && diff < 0) {
+                qzbin_factor -= MIN(pcs->scs->static_config.sharpness, abs(diff)) << 2;
+                qrounding_factor += MIN(pcs->scs->static_config.sharpness, abs(diff)) << 2;
+            } else if (pcs->scs->static_config.sharpness > 0 && diff > 0) {
+                qzbin_factor += MIN(pcs->scs->static_config.sharpness, abs(diff)) << 2;
+                qrounding_factor -= MIN(pcs->scs->static_config.sharpness, abs(diff)) << 2;
+            }
+            if (pcs->scs->static_config.sharpness > 0 && diff < 0) {
+                qrounding_factor_fp += MIN(pcs->scs->static_config.sharpness, abs(diff)) << 2;
+            } else if (pcs->scs->static_config.sharpness > 0 && diff > 0) {
+                qrounding_factor_fp -= MIN(pcs->scs->static_config.sharpness, abs(diff)) << 2;
+            }
+            if (pcs->scs->static_config.sharpness > 0) { // Make sure we don't go negative or some funk shit, worried about this being prone to such in extreme scenarios.
+                qzbin_factor = MIN(MAX(qzbin_factor, 1), 256);
+                qrounding_factor = MIN(MAX(qrounding_factor, 1), 256);
+                qrounding_factor_fp = MIN(MAX(qrounding_factor_fp, 1), 256);
+            }
             svt_aom_invert_quant(&quants->y_quant[q][i], &quants->y_quant_shift[q][i], quant_qtx);
             quants->y_quant_fp[q][i] = (int16_t)((1 << 16) / quant_qtx);
             quants->y_round_fp[q][i] = (int16_t)((qrounding_factor_fp * quant_qtx) >> 7);

@@ -1172,13 +1172,10 @@ void svt_av1_optimize_b(ModeDecisionContext *ctx, int16_t txb_skip_context, int1
     const int rshift  = pcs->scs->static_config.sharpness + 2;
     if (use_sharpness && delta_q_present && plane == 0) {
         int diff = ctx->sb_ptr->qindex - quantizer_to_qindex[picture_qp];
-        if (diff < pcs->scs->static_config.sharpness << 1) {
+        if (diff < 0) {
             sharpness = 1;
             rweight   = 0;
         }
-    }
-    if (pcs->scs->static_config.sharpness > 0) {
-        rweight  /= pcs->scs->static_config.sharpness + 1;
     }
     const int64_t  rdmult = (((((int64_t)lambda * plane_rd_mult[is_inter][plane_type]) * rweight) / 100) + 2) >> rshift;
     uint8_t        levels_buf[TX_PAD_2D];
