@@ -4,17 +4,17 @@ SVT-AV1-PSY is the Scalable Video Technology for AV1 (SVT-AV1 Encoder and Decode
 
 ### Feature Additions
 
-- `--fgs-table`
+- `--fgs-table` (path to file)
 Argument for providing a film grain table for synthetic film grain (similar to aomenc's `--film-grain-table=` argument).
-- `--variance-boost-strength`
-Provides control over our augmented AQ mode 2 which can utilize variance information in each frame for more consistent quality under high/low contrast scenes. Five curve options are provided, and the default is curve 2. `1: mild, 2: gentle, 3: medium, 4: aggressive`
-- `--new-variance-octile`
-Enables a new 8x8-based variance algorithm and picks an 8x8 variance value per superblock to use as a boost. Lower values enable detecting more false negatives, at the expense of false positives (bitrate increase). There are four options. 0: disabled, use 64x64 variance algorithm instead 1: enabled, 1st octile 4: enabled, median 8: enabled, maximum. The default is 6.
+- `--variance-boost-strength` (1-4)
+Provides control over our augmented AQ Mode 2 which can utilize variance information in each frame for more consistent quality under high/low contrast scenes. Five curve options are provided, and the default is curve 2. 1: mild, 2: gentle, 3: medium, 4: aggressive
+- `--new-variance-octile` (0-8)
+Enables a new 8x8 variance algorithm and picks a variance value per superblock to use as a boost. Lower values enable detecting more false negatives, at the expense of false positives (bitrate increase). 0: partial (64x64 only), 1-8: enabled (8x8). The default value is 6.
 - Preset -2
 A terrifically slow encoding mode for research purposes.
 - Tune 3
 A new tune based on Tune 2 (SSIM) called SSIM with Subjective Quality Tuning. Generally harms metric performance in exchange for better visual fidelity.
-- `--sharpness`
+- `--sharpness` (0-7)
 A parameter for modifying loopfilter deblock sharpness and rate distortion to improve visual fidelity. The default is 0 (no sharpness).
 
 ### Modified Defaults
