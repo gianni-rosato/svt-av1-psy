@@ -13,6 +13,7 @@
 #include "aom_dsp_rtcd.h"
 #include "mem_neon.h"
 #include "sum_neon.h"
+#include "obmc_constants_neon.h"
 
 static INLINE void obmc_sad_8x1_s16_neon(int16x8_t ref_s16, const int32_t *mask, const int32_t *wsrc, uint32x4_t *sum) {
     int32x4_t wsrc_lo = vld1q_s32(wsrc);
@@ -32,14 +33,6 @@ static INLINE void obmc_sad_8x1_s16_neon(int16x8_t ref_s16, const int32_t *mask,
     *sum = vrsraq_n_u32(*sum, abs_lo, 12);
     *sum = vrsraq_n_u32(*sum, abs_hi, 12);
 }
-
-// Use tbl for doing a double-width zero extension from 8->32 bits since we can
-// do this in one instruction rather than two (indices out of range (255 here)
-// are set to zero by tbl).
-DECLARE_ALIGNED(16, static const uint8_t, obmc_variance_permute_idx[]) = {
-    0,   255, 255, 255, 1,   255, 255, 255, 2,   255, 255, 255, 3,   255, 255, 255, 4,   255, 255, 255, 5,   255,
-    255, 255, 6,   255, 255, 255, 7,   255, 255, 255, 8,   255, 255, 255, 9,   255, 255, 255, 10,  255, 255, 255,
-    11,  255, 255, 255, 12,  255, 255, 255, 13,  255, 255, 255, 14,  255, 255, 255, 15,  255, 255, 255};
 
 static INLINE void obmc_sad_8x1_s32_neon(uint32x4_t ref_u32_lo, uint32x4_t ref_u32_hi, const int32_t *mask,
                                          const int32_t *wsrc, uint32x4_t sum[2]) {

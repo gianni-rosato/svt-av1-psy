@@ -13,7 +13,7 @@
 #include "EbHighbdIntraPrediction_SSE2.h"
 #include "EbDefinitions.h"
 #include "common_dsp_rtcd.h"
-#include "EbIntraPrediction_AVX2.h"
+#include "EbIntraPrediction.h"
 
 // =============================================================================
 

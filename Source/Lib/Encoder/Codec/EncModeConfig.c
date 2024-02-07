@@ -2981,70 +2981,69 @@ void svt_aom_set_frame_coeff_lvl(PictureControlSet *pcs, uint8_t lvl) {
     }
 }
 
-static uint32_t hadamard_path(ModeDecisionContext *ctx, uint8_t *input, uint32_t input_origin_index,
-                              uint32_t input_stride, uint8_t *pred, uint32_t blk_origin_index, uint32_t pred_stride) {
+uint32_t hadamard_path_c(Buf2D residualBuf, Buf2D coeffBuf, Buf2D inputBuf, Buf2D predBuf, BlockSize bsize) {
+    assert(residualBuf.buf != NULL && residualBuf.buf0 == NULL && residualBuf.width == 0 && residualBuf.height == 0 &&
+           residualBuf.stride != 0);
+    assert(coeffBuf.buf != NULL && coeffBuf.buf0 == NULL && coeffBuf.width == 0 && coeffBuf.height == 0 &&
+           coeffBuf.stride == block_size_wide[bsize]);
+    assert(inputBuf.buf != NULL && inputBuf.buf0 == NULL && inputBuf.width == 0 && inputBuf.height == 0 &&
+           inputBuf.stride != 0);
+    assert(predBuf.buf != NULL && predBuf.buf0 == NULL && predBuf.width == 0 && predBuf.height == 0 &&
+           predBuf.stride != 0);
     uint32_t input_idx, pred_idx, res_idx;
 
     uint32_t satd_cost = 0;
 
-    const TxSize tx_size = AOMMIN(TX_32X32, max_txsize_lookup[ctx->blk_geom->bsize]);
+    const TxSize tx_size = AOMMIN(TX_32X32, max_txsize_lookup[bsize]);
 
     const int stepr = tx_size_high_unit[tx_size];
     const int stepc = tx_size_wide_unit[tx_size];
     const int txbw  = tx_size_wide[tx_size];
     const int txbh  = tx_size_high[tx_size];
 
-    const int max_blocks_wide = block_size_wide[ctx->blk_geom->bsize] >> MI_SIZE_LOG2;
-    const int max_blocks_high = block_size_wide[ctx->blk_geom->bsize] >> MI_SIZE_LOG2;
+    const int max_blocks_wide = block_size_wide[bsize] >> MI_SIZE_LOG2;
+    const int max_blocks_high = block_size_wide[bsize] >> MI_SIZE_LOG2;
     int       row, col;
 
     for (row = 0; row < max_blocks_high; row += stepr) {
         for (col = 0; col < max_blocks_wide; col += stepc) {
-            input_idx = input_origin_index + (((row * input_stride) + col) << 2);
-            pred_idx  = blk_origin_index + (((row * pred_stride) + col) << 2);
+            input_idx = ((row * inputBuf.stride) + col) << 2;
+            pred_idx  = ((row * predBuf.stride) + col) << 2;
             res_idx   = 0;
 
-            svt_aom_residual_kernel(input,
+            svt_aom_residual_kernel(inputBuf.buf,
                                     input_idx,
-                                    input_stride,
-                                    pred,
+                                    inputBuf.stride,
+                                    predBuf.buf,
                                     pred_idx,
-                                    pred_stride,
-                                    (int16_t *)ctx->temp_residual->buffer_y,
+                                    predBuf.stride,
+                                    (int16_t *)residualBuf.buf,
                                     res_idx,
-                                    ctx->temp_residual->stride_y,
-                                    0, // input and pred 8-bit
+                                    residualBuf.stride,
+                                    0, // inputBuf.buf and predBuf.buf 8-bit
                                     txbw,
                                     txbh);
 
             switch (tx_size) {
             case TX_4X4:
-                svt_aom_hadamard_4x4((int16_t *)ctx->temp_residual->buffer_y,
-                                     ctx->temp_residual->stride_y,
-                                     &(((int32_t *)ctx->tx_coeffs->buffer_y)[0]));
+                svt_aom_hadamard_4x4((int16_t *)residualBuf.buf, residualBuf.stride, &(((int32_t *)coeffBuf.buf)[0]));
                 break;
 
             case TX_8X8:
-                svt_aom_hadamard_8x8((int16_t *)ctx->temp_residual->buffer_y,
-                                     ctx->temp_residual->stride_y,
-                                     &(((int32_t *)ctx->tx_coeffs->buffer_y)[0]));
+                svt_aom_hadamard_8x8((int16_t *)residualBuf.buf, residualBuf.stride, &(((int32_t *)coeffBuf.buf)[0]));
                 break;
 
             case TX_16X16:
-                svt_aom_hadamard_16x16((int16_t *)ctx->temp_residual->buffer_y,
-                                       ctx->temp_residual->stride_y,
-                                       &(((int32_t *)ctx->tx_coeffs->buffer_y)[0]));
+                svt_aom_hadamard_16x16((int16_t *)residualBuf.buf, residualBuf.stride, &(((int32_t *)coeffBuf.buf)[0]));
                 break;
 
             case TX_32X32:
-                svt_aom_hadamard_32x32((int16_t *)ctx->temp_residual->buffer_y,
-                                       ctx->temp_residual->stride_y,
-                                       &(((int32_t *)ctx->tx_coeffs->buffer_y)[0]));
+                svt_aom_hadamard_32x32((int16_t *)residualBuf.buf, residualBuf.stride, &(((int32_t *)coeffBuf.buf)[0]));
                 break;
 
             default: assert(0);
             }
-            satd_cost += svt_aom_satd(&(((int32_t *)ctx->tx_coeffs->buffer_y)[0]), tx_size_2d[tx_size]);
+            satd_cost += svt_aom_satd(&(((int32_t *)coeffBuf.buf)[0]), tx_size_2d[tx_size]);
         }
     }
     return (satd_cost);
@@ -3168,13 +3167,21 @@ static EbErrorType svt_aom_check_high_freq(PictureControlSet *pcs, SuperBlock *s
             ref_origin_index = ref_pic->org_x + (ctx->blk_org_x + mv_x) +
                 (ctx->blk_org_y + mv_y + ref_pic->org_y) * ref_pic->stride_y;
 
-            uint32_t satd = hadamard_path(ctx,
-                                          input_pic->buffer_y,
-                                          input_origin_index,
-                                          input_pic->stride_y,
-                                          ref_pic->buffer_y,
-                                          ref_origin_index,
-                                          ref_pic->stride_y);
+            Buf2D residualBuf = {NULL, NULL, 0, 0, 0};
+            Buf2D predBuf     = {NULL, NULL, 0, 0, 0};
+            Buf2D inputBuf    = {NULL, NULL, 0, 0, 0};
+            Buf2D coeffBuf    = {NULL, NULL, 0, 0, 0};
+
+            residualBuf.buf    = ctx->temp_residual->buffer_y;
+            residualBuf.stride = ctx->temp_residual->stride_y;
+            coeffBuf.buf       = ctx->tx_coeffs->buffer_y;
+            coeffBuf.stride    = block_size_wide[ctx->blk_geom->bsize];
+            inputBuf.buf       = input_pic->buffer_y + input_origin_index;
+            inputBuf.stride    = input_pic->stride_y;
+            predBuf.buf        = ref_pic->buffer_y + ref_origin_index;
+            predBuf.stride     = ref_pic->stride_y;
+
+            uint32_t satd = hadamard_path(residualBuf, coeffBuf, inputBuf, predBuf, ctx->blk_geom->bsize);
 
             b32_satd[blk_idx] = MIN(b32_satd[blk_idx], satd);
         }

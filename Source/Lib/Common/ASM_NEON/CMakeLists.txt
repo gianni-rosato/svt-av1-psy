@@ -17,24 +17,20 @@ target_sources(
   COMMON_ASM_NEON
   PUBLIC aom_convolve8_neon.c
   PUBLIC av1_inv_txfm_neon.c
+  PUBLIC av1_inv_txfm_neon.c
   PUBLIC cdef_filter_block_neon.c
+  PUBLIC cfl_neon.c
   PUBLIC compound_convolve_neon.c
-  PUBLIC compound_convolve_neon.h
-  PUBLIC convolve_neon.c
-  PUBLIC convolve_neon.h
-  PUBLIC EbPictureOperators_Intrinsic_neon.c
-  PUBLIC itx_lbd_neon.h
-  PUBLIC mem_neon.h
-  PUBLIC sse_neon.c
-  PUBLIC sum_neon.h
-  PUBLIC transpose_neon.h
-  PUBLIC warp_plane_neon.c
-  PUBLIC warp_plane_neon.h
-  PUBLIC wiener_convolve_neon.c
   PUBLIC convolve_2d_neon.c
+  PUBLIC convolve_neon.c
   PUBLIC EbBlend_a64_mask_neon.c
-  PUBLIC selfguided_neon.c
+  PUBLIC EbDeblockingFilter_Intrinsic_neon.c
   PUBLIC EbIntraPrediction_neon.c
+  PUBLIC EbPictureOperators_Intrinsic_neon.c
+  PUBLIC selfguided_neon.c
+  PUBLIC sse_neon.c
+  PUBLIC warp_plane_neon.c
+  PUBLIC wiener_convolve_neon.c
   PUBLIC dav1d_asm.S
   PUBLIC dav1d_util.S
   PUBLIC itx.S)

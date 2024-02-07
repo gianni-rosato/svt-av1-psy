@@ -15,16 +15,17 @@
 add_library(ENCODER_ASM_NEON OBJECT)
 target_sources(
   ENCODER_ASM_NEON
-  PUBLIC pickrst_neon.c
-  PUBLIC sad_neon.c
+  PUBLIC av1_quantize_neon.c
+  PUBLIC encodetxb_neon.c
   PUBLIC EbComputeSAD_neon.c
   PUBLIC EbTemporalFiltering_neon.c
-  PUBLIC variance_neon.c
+  PUBLIC hadmard_path_neon.c
+  PUBLIC highbd_fwd_txfm_neon.c
   PUBLIC obmc_sad_neon.c
   PUBLIC obmc_variance_neon.c
-  PUBLIC highbd_fwd_txfm_neon.c
-  PUBLIC av1_quantize_neon.c
-  PUBLIC encodetxb_neon.c)
+  PUBLIC pickrst_neon.c
+  PUBLIC sad_neon.c
+  PUBLIC variance_neon.c)
 target_include_directories(
   ENCODER_ASM_NEON
   PRIVATE ${PROJECT_SOURCE_DIR}/Source/API/

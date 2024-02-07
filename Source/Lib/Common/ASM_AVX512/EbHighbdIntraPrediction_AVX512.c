@@ -15,7 +15,7 @@
 #include <immintrin.h>
 #include "EbHighbdIntraPrediction_SSE2.h"
 #include "common_dsp_rtcd.h"
-#include "EbIntraPrediction_AVX2.h"
+#include "EbIntraPrediction.h"
 #include "synonyms_avx512.h"
 
 #define FOUR 4U

@@ -41,7 +41,6 @@ set(all_files
     EbBlend_a64_mask_avx2.c
     EbHighbdIntraPrediction_AVX2.c
     EbInterPredictionCom_avx2.c
-    EbIntraPrediction_AVX2.h
     EbIntraPrediction_Intrinsic_AVX2.c
     EbMemory_AVX2.h
     EbPackUnPack_Intrinsic_AVX2.c

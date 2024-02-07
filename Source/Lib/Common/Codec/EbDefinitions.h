@@ -237,13 +237,13 @@ typedef enum InputCoeffLvl {
     HIGH_LVL    = 2,
     INVALID_LVL = ~0,
 } InputCoeffLvl;
-struct Buf2D {
+typedef struct Buf2D {
     uint8_t *buf;
     uint8_t *buf0;
     int      width;
     int      height;
     int      stride;
-};
+} Buf2D;
 typedef struct MvLimits {
     int col_min;
     int col_max;

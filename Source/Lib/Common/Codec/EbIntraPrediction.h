@@ -30,10 +30,19 @@ typedef void (*IntraPredFn)(uint8_t *dst, ptrdiff_t stride, const uint8_t *above
 
 typedef void (*IntraHighPredFn)(uint16_t *dst, ptrdiff_t stride, const uint16_t *above, const uint16_t *left,
                                 int32_t bd);
-
+/* for dc_prediction*/
+#define DC_SHIFT2 16
+#define DC_MULTIPLIER_1X2 0x5556
+#define DC_MULTIPLIER_1X4 0x3334
 /////####.... For recursive intra prediction.....#####///
 
+/* for smooth_prediction*/
+#define MAX_BLOCK_DIM 64
+extern const int32_t sm_weight_log2_scale;
+extern const uint8_t sm_weight_arrays[2 * MAX_BLOCK_DIM];
+
 #define FILTER_INTRA_SCALE_BITS 4
+#define SHIFT_INTRA_SCALE_BITS 15 - FILTER_INTRA_SCALE_BITS
 extern const int8_t eb_av1_filter_intra_taps[FILTER_INTRA_MODES][8][8];
 
 /////####.... To make functions common between EbIntraPrediction.c &
@@ -68,6 +77,9 @@ static const int32_t mode_to_angle_map[] = {
     0,
     0,
 };
+
+extern uint8_t base_mask[33][32];
+extern uint8_t even_odd_mask_x[8][16];
 
 int                  svt_aom_is_smooth(const BlockModeInfoEnc *mbmi, int plane);
 int                  svt_aom_is_smooth_dec(const BlockModeInfo *mbmi, int plane);

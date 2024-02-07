@@ -12,6 +12,7 @@
 #include "EbDefinitions.h"
 #include <emmintrin.h>
 #include "common_dsp_rtcd.h"
+#include "EbIntraPrediction.h"
 
 static INLINE __m128i dc_sum_16(const uint8_t *ref) {
     __m128i       x    = _mm_loadu_si128((__m128i const *)ref);
@@ -93,9 +94,6 @@ static INLINE __m128i dc_sum_4(const uint8_t *ref) {
     x                  = _mm_unpacklo_epi8(x, zero);
     return _mm_sad_epu8(x, zero);
 }
-#define DC_SHIFT2 16
-#define DC_MULTIPLIER_1X2 0x5556
-#define DC_MULTIPLIER_1X4 0x3334
 
 static INLINE int32_t divide_using_multiply_shift(int32_t num, int32_t shift1, int32_t multiplier) {
     const int32_t interm = num >> shift1;

@@ -577,6 +577,9 @@ extern "C" {
     void svt_av1_calc_target_weighted_pred_above_c(uint8_t is16bit, MacroBlockD *xd, int rel_mi_col, uint8_t nb_mi_width, MbModeInfo *nb_mi, void *fun_ctxt, const int num_planes);
     RTCD_EXTERN void (*svt_av1_calc_target_weighted_pred_left)(uint8_t is16bit, MacroBlockD *xd, int rel_mi_row, uint8_t nb_mi_height, MbModeInfo *nb_mi, void *fun_ctxt, const int num_planes);
     void svt_av1_calc_target_weighted_pred_left_c(uint8_t is16bit, MacroBlockD *xd, int rel_mi_row, uint8_t nb_mi_height, MbModeInfo *nb_mi, void *fun_ctxt, const int num_planes);
+    uint32_t hadamard_path_c(Buf2D residualBuf, Buf2D coeffBuf, Buf2D inputBuf, Buf2D predBuf, BlockSize bsize);
+    RTCD_EXTERN uint32_t (*hadamard_path)(Buf2D residual, Buf2D coeff, Buf2D input, Buf2D pred, BlockSize bsize);
+
 #ifdef ARCH_X86_64
     uint32_t svt_aom_sub_pixel_variance128x128_sse2(const uint8_t *src_ptr, int source_stride, int xoffset, int  yoffset, const uint8_t *ref_ptr, int ref_stride, uint32_t *sse);
     uint32_t svt_aom_sub_pixel_variance128x128_ssse3(const uint8_t *src_ptr, int source_stride, int xoffset, int  yoffset, const uint8_t *ref_ptr, int ref_stride, uint32_t *sse);
@@ -1048,6 +1051,34 @@ extern "C" {
     unsigned int svt_aom_obmc_variance128x64_neon(const uint8_t *pre, int pre_stride, const int32_t *wsrc,const int32_t *mask, unsigned *sse);
     unsigned int svt_aom_obmc_variance128x128_neon(const uint8_t *pre, int pre_stride, const int32_t *wsrc,const int32_t *mask, unsigned *sse);
 
+    unsigned int svt_aom_obmc_sub_pixel_variance4x4_neon(const uint8_t *pre, int pre_stride, int xoffset, int yoffset, const int32_t *wsrc, const int32_t *mask, unsigned int *sse);
+    unsigned int svt_aom_obmc_sub_pixel_variance4x8_neon(const uint8_t *pre, int pre_stride, int xoffset, int yoffset, const int32_t *wsrc, const int32_t *mask, unsigned int *sse);
+    unsigned int svt_aom_obmc_sub_pixel_variance4x16_neon(const uint8_t *pre, int pre_stride, int xoffset, int yoffset, const int32_t *wsrc, const int32_t *mask, unsigned int *sse);
+
+    unsigned int svt_aom_obmc_sub_pixel_variance8x4_neon(const uint8_t *pre, int pre_stride, int xoffset, int yoffset, const int32_t *wsrc, const int32_t *mask, unsigned int *sse);
+    unsigned int svt_aom_obmc_sub_pixel_variance8x8_neon(const uint8_t *pre, int pre_stride, int xoffset, int yoffset, const int32_t *wsrc, const int32_t *mask, unsigned int *sse);
+    unsigned int svt_aom_obmc_sub_pixel_variance8x16_neon(const uint8_t *pre, int pre_stride, int xoffset, int yoffset, const int32_t *wsrc, const int32_t *mask, unsigned int *sse);
+    unsigned int svt_aom_obmc_sub_pixel_variance8x32_neon(const uint8_t *pre, int pre_stride, int xoffset, int yoffset, const int32_t *wsrc, const int32_t *mask, unsigned int *sse);
+
+    unsigned int svt_aom_obmc_sub_pixel_variance16x4_neon(const uint8_t *pre, int pre_stride, int xoffset, int yoffset, const int32_t *wsrc, const int32_t *mask, unsigned int *sse);
+    unsigned int svt_aom_obmc_sub_pixel_variance16x8_neon(const uint8_t *pre, int pre_stride, int xoffset, int yoffset, const int32_t *wsrc, const int32_t *mask, unsigned int *sse);
+    unsigned int svt_aom_obmc_sub_pixel_variance16x16_neon(const uint8_t *pre, int pre_stride, int xoffset, int yoffset, const int32_t *wsrc, const int32_t *mask, unsigned int *sse);
+    unsigned int svt_aom_obmc_sub_pixel_variance16x32_neon(const uint8_t *pre, int pre_stride, int xoffset, int yoffset, const int32_t *wsrc, const int32_t *mask, unsigned int *sse);
+    unsigned int svt_aom_obmc_sub_pixel_variance16x64_neon(const uint8_t *pre, int pre_stride, int xoffset, int yoffset, const int32_t *wsrc, const int32_t *mask, unsigned int *sse);
+
+    unsigned int svt_aom_obmc_sub_pixel_variance32x8_neon(const uint8_t *pre, int pre_stride, int xoffset, int yoffset, const int32_t *wsrc, const int32_t *mask, unsigned int *sse);
+    unsigned int svt_aom_obmc_sub_pixel_variance32x16_neon(const uint8_t *pre, int pre_stride, int xoffset, int yoffset, const int32_t *wsrc, const int32_t *mask, unsigned int *sse);
+    unsigned int svt_aom_obmc_sub_pixel_variance32x32_neon(const uint8_t *pre, int pre_stride, int xoffset, int yoffset, const int32_t *wsrc, const int32_t *mask, unsigned int *sse);
+    unsigned int svt_aom_obmc_sub_pixel_variance32x64_neon(const uint8_t *pre, int pre_stride, int xoffset, int yoffset, const int32_t *wsrc, const int32_t *mask, unsigned int *sse);
+
+    unsigned int svt_aom_obmc_sub_pixel_variance64x16_neon(const uint8_t *pre, int pre_stride, int xoffset, int yoffset, const int32_t *wsrc, const int32_t *mask, unsigned int *sse);
+    unsigned int svt_aom_obmc_sub_pixel_variance64x32_neon(const uint8_t *pre, int pre_stride, int xoffset, int yoffset, const int32_t *wsrc, const int32_t *mask, unsigned int *sse);
+    unsigned int svt_aom_obmc_sub_pixel_variance64x64_neon(const uint8_t *pre, int pre_stride, int xoffset, int yoffset, const int32_t *wsrc, const int32_t *mask, unsigned int *sse);
+    unsigned int svt_aom_obmc_sub_pixel_variance64x128_neon(const uint8_t *pre, int pre_stride, int xoffset, int yoffset, const int32_t *wsrc, const int32_t *mask, unsigned int *sse);
+
+    unsigned int svt_aom_obmc_sub_pixel_variance128x64_neon(const uint8_t *pre, int pre_stride, int xoffset, int yoffset, const int32_t *wsrc, const int32_t *mask, unsigned int *sse);
+    unsigned int svt_aom_obmc_sub_pixel_variance128x128_neon(const uint8_t *pre, int pre_stride, int xoffset, int yoffset, const int32_t *wsrc, const int32_t *mask, unsigned int *sse);
+
     uint32_t svt_nxm_sad_kernel_helper_neon(const uint8_t *src, uint32_t src_stride, const uint8_t *ref, uint32_t ref_stride, uint32_t height, uint32_t width);
 
     void svt_av1_fwd_txfm2d_4x4_neon(int16_t *input, int32_t *coeff, uint32_t stride, TxType tx_type, uint8_t bd);
@@ -1089,6 +1120,13 @@ extern "C" {
     void svt_av1_fwd_txfm2d_16x16_N4_neon(int16_t *input, int32_t *output, uint32_t input_stride, TxType transform_type, uint8_t  bit_depth);
 
     void svt_av1_apply_temporal_filter_planewise_medium_neon(struct MeContext *me_ctx, const uint8_t *y_src, int y_src_stride, const uint8_t *y_pre, int y_pre_stride, const uint8_t *u_src, const uint8_t *v_src, int uv_src_stride, const uint8_t *u_pre, const uint8_t *v_pre, int uv_pre_stride, unsigned int block_width, unsigned int block_height, int ss_x, int ss_y, uint32_t *y_accum, uint16_t *y_count, uint32_t *u_accum, uint16_t *u_count, uint32_t *v_accum, uint16_t *v_count);
+
+    int svt_aom_satd_neon(const TranLow *coeff, int length);
+
+    int64_t svt_aom_sse_neon(const uint8_t *src, int src_stride, const uint8_t *ref, int ref_stride, int width, int height);
+    int64_t svt_av1_block_error_neon(const TranLow *coeff, const TranLow *dqcoeff, intptr_t block_size, int64_t *ssz);
+    int8_t svt_av1_wedge_sign_from_residuals_neon(const int16_t *ds, const uint8_t *m, int N, int64_t limit);
+    uint32_t hadamard_path_neon(Buf2D residualBuf, Buf2D coeffBuf, Buf2D inputBuf, Buf2D predBuf, BlockSize bsize);
 
 #endif
 

@@ -11,9 +11,8 @@
 
 #include <tmmintrin.h>
 #include "EbDefinitions.h"
+#include "EbIntraPrediction.h"
 #include "common_dsp_rtcd.h"
-
-static const int32_t sm_weight_log2_scale = 8;
 
 // =============================================================================
 
