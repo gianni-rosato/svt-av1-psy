@@ -28,6 +28,8 @@
 #include <sys/file.h>
 #endif
 
+
+
 #include "EbAppOutputivf.h"
 
 #if !defined(_WIN32) || !defined(HAVE_STRNLEN_S)
@@ -181,7 +183,7 @@
 #define MASTERING_DISPLAY_TOKEN "--mastering-display"
 #define CONTENT_LIGHT_LEVEL_TOKEN "--content-light"
 
-#ifdef USE_LIBDOVI
+#ifdef LIBDOVI_FOUND
 #define DOLBY_VISION_RPU_TOKEN "--dolby-vision-rpu"
 #endif
 
@@ -399,7 +401,7 @@ static EbErrorType set_cfg_roi_map_file(EbConfig *cfg, const char *token, const 
     return open_file(&cfg->roi_map_file, token, value, "r");
 }
 
-#ifdef USE_LIBDOVI
+#ifdef LIBDOVI_FOUND
 static EbErrorType set_cfg_dovi_rpu(EbConfig *cfg, const char *token, const char *value) {
     printf("Svt[info]: Parsing Dolby Vision RPU file...\n");
     const DoviRpuOpaqueList *rpus = dovi_parse_rpu_bin_file(value);
@@ -1225,7 +1227,7 @@ ConfigEntry config_entry_psy[] = {
      "Affects loopfilter deblock sharpness and rate distortion, default is 0 [+-7]",
      set_cfg_generic_token},
     // Dolby Vision RPU
-#ifdef USE_LIBDOVI
+#ifdef LIBDOVI_FOUND
     {SINGLE_INPUT,
      DOLBY_VISION_RPU_TOKEN,
      "Set the Dolby Vision RPU path",
@@ -1415,7 +1417,7 @@ ConfigEntry config_entry[] = {
     // Sharpness
     {SINGLE_INPUT, SHARPNESS_TOKEN, "Sharpness", set_cfg_generic_token},
 
-    #ifdef USE_LIBDOVI
+    #ifdef LIBDOVI_FOUND
     // Dolby Vision RPU Path
     {SINGLE_INPUT, DOLBY_VISION_RPU_TOKEN, "DolbyVisionRpu", set_cfg_dovi_rpu},
     #endif
@@ -1435,7 +1437,7 @@ EbConfig *svt_config_ctor() {
     app_cfg->progress            = 1;
     app_cfg->injector_frame_rate = 60;
     app_cfg->roi_map_file        = NULL;
-#ifdef USE_LIBDOVI
+#ifdef LIBDOVI_FOUND
     app_cfg->dovi_rpus           = NULL;
 #endif
     app_cfg->fgs_table_path      = NULL;
@@ -1493,7 +1495,7 @@ void svt_config_dtor(EbConfig *app_cfg) {
         app_cfg->roi_map_file = (FILE *)NULL;
     }
 
-#ifdef USE_LIBDOVI
+#ifdef LIBDOVI_FOUND
     if (app_cfg->dovi_rpus) {
         dovi_rpu_list_free(app_cfg->dovi_rpus);
         app_cfg->dovi_rpus = NULL;

@@ -16,6 +16,8 @@ A terrifically slow encoding mode for research purposes.
 A new tune based on Tune 2 (SSIM) called SSIM with Subjective Quality Tuning. Generally harms metric performance in exchange for better visual fidelity.
 - `--sharpness` (0-7)
 A parameter for modifying loopfilter deblock sharpness and rate distortion to improve visual fidelity. The default is 0 (no sharpness).
+- `--dolby-vision-rpu` (path to file)
+Set the path to a Dolby Vision RPU for encoding Dolby Vision video. SVT-AV1-PSY needs to be built with the `enable-libdovi` flag enabled in build.sh (see `./Build/linux/build.sh --help` for more info) (Thank you @quietvoid !)
 
 ### Modified Defaults
 
