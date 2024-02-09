@@ -11,18 +11,31 @@
 
 # APP Directory CMakeLists.txt
 
+cmake_minimum_required(VERSION 3.5...3.28)
+
 # Include Subdirectories
 include_directories(${PROJECT_SOURCE_DIR}/Source/API/)
 
-if(PKG_CONFIG_FOUND)
+# libdovi detection & preprocessor macro
+option(LIBDOVI_FOUND "Use the libdovi library" OFF)
+if(LIBDOVI_FOUND)
+  if(PKG_CONFIG_FOUND)
   pkg_check_modules(PC_LIBDOVI libdovi QUIET)
-endif()
+  endif()
 
-find_library(LIBDOVI_LIBRARY NAMES dovi libdovi
-                             PATHS ${PC_LIBDOVI_LIBDIR}
-)
-find_path(LIBDOVI_INCLUDE_DIR NAMES libdovi/rpu_parser.h
-                              PATHS ${PC_LIBDOVI_INCLUDEDIR})
+  find_library(LIBDOVI_LIBRARY NAMES dovi libdovi
+                               PATHS ${PC_LIBDOVI_LIBDIR})
+
+  find_path(LIBDOVI_INCLUDE_DIR NAMES libdovi/rpu_parser.h
+                                PATHS ${PC_LIBDOVI_INCLUDEDIR})
+
+  set(LIBDOVI_INCLUDE_DIRS ${LIBDOVI_INCLUDE_DIR})
+  set(LIBDOVI_LIBRARIES ${LIBDOVI_LIBRARY})
+  add_definitions(-DLIBDOVI_FOUND=1)
+  execute_process(COMMAND ${CMAKE_COMMAND} -E echo_append "-- Building with libdovi support - Yes\n")
+else()
+  execute_process(COMMAND ${CMAKE_COMMAND} -E echo_append "-- Building with libdovi support - No\n")
+endif()
 
 set(all_files
     ../../API/EbDebugMacros.h
@@ -47,11 +60,6 @@ set(all_files
     EbTime.h
     )
 
-if(PC_LIBDOVI_FOUND)
-  set(LIBDOVI_INCLUDE_DIRS ${LIBDOVI_INCLUDE_DIR})
-  set(LIBDOVI_LIBRARIES ${LIBDOVI_LIBRARY})
-  add_compile_definitions(SvtAv1EncApp PRIVATE USE_LIBDOVI)
-endif()
 
 # App Source Files
 add_executable(SvtAv1EncApp

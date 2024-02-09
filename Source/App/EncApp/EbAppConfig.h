@@ -12,10 +12,12 @@
 #ifndef EbAppConfig_h
 #define EbAppConfig_h
 
+
+
 #include <stdio.h>
 #include <stdbool.h>
 
-#ifdef USE_LIBDOVI
+#ifdef LIBDOVI_FOUND
 #include <libdovi/rpu_parser.h>
 #endif
 
@@ -191,7 +193,7 @@ typedef struct EbConfig {
     // Instance Index
     uint8_t instance_idx;
 
-#ifdef USE_LIBDOVI
+#ifdef LIBDOVI_FOUND
     const DoviRpuOpaqueList *dovi_rpus;
 #endif
 
