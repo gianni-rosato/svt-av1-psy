@@ -884,8 +884,8 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet *scs) {
         return_error = EB_ErrorBadParameter;
     }
 
-    if (config->sharpness > 7) {
-        SVT_ERROR("Instance %u: Sharpness level must be between 0 and 7\n", channel_number + 1);
+    if (config->sharpness > 7 || config->sharpness < -7) {
+        SVT_ERROR("Instance %u: Sharpness level must be between -7 and 7\n", channel_number + 1);
         return_error = EB_ErrorBadParameter;
     }
 
@@ -2008,7 +2008,6 @@ EB_API EbErrorType svt_av1_enc_parse_parameter(EbSvtAv1EncConfiguration *config_
         {"startup-mg-size", &config_struct->startup_mg_size},
         {"variance-boost-strength", &config_struct->variance_boost_strength},
         {"new-variance-octile", &config_struct->new_variance_octile},
-        {"sharpness", &config_struct->sharpness},
     };
     const size_t uint8_opts_size = sizeof(uint8_opts) / sizeof(uint8_opts[0]);
 
@@ -2079,6 +2078,7 @@ EB_API EbErrorType svt_av1_enc_parse_parameter(EbSvtAv1EncConfiguration *config_
         int8_t     *out;
     } int8_opts[] = {
         {"preset", &config_struct->enc_mode},
+        {"sharpness", &config_struct->sharpness},
     };
     const size_t int8_opts_size = sizeof(int8_opts) / sizeof(int8_opts[0]);
 

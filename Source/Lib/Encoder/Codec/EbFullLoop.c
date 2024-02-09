@@ -1169,7 +1169,7 @@ void svt_av1_optimize_b(ModeDecisionContext *ctx, int16_t txb_skip_context, int1
             return;
     }
     int       rweight = 100;
-    const int rshift  = pcs->scs->static_config.sharpness + 2;
+    const int rshift  = (pcs->scs->static_config.sharpness > 0 ? pcs->scs->static_config.sharpness : 0) + 2;
     if (use_sharpness && delta_q_present && plane == 0) {
         int diff = ctx->sb_ptr->qindex - quantizer_to_qindex[picture_qp];
         if (diff < 0) {

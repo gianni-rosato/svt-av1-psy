@@ -959,7 +959,7 @@ typedef struct EbSvtAv1EncConfiguration {
      * Max is 7.
      * Default is 0 (off).
      */
-    uint8_t sharpness;
+    int8_t sharpness;
 } EbSvtAv1EncConfiguration;
 
 /**

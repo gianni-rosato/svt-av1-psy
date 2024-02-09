@@ -1222,7 +1222,7 @@ ConfigEntry config_entry_psy[] = {
     // Sharpness
     {SINGLE_INPUT,
      SHARPNESS_TOKEN,
-     "Affects loopfilter deblock sharpness and rate distortion [0-7]",
+     "Affects loopfilter deblock sharpness and rate distortion, default is 0 [+-7]",
      set_cfg_generic_token},
     // Dolby Vision RPU
 #ifdef USE_LIBDOVI
