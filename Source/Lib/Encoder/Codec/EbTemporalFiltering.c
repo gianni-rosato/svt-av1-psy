@@ -4709,7 +4709,7 @@ static EbErrorType produce_temporally_filtered_pic(
         FP_ASSERT(q < (1 << 15));
         uint32_t q_decay_fp8 = 256;
         if (scs->static_config.tune == 3) {
-            q_decay_fp8 = MAX((uint32_t)(16 * pow((double)q, 0.5) + 0.25 * pow((double)q, 1.5)), 1);
+            q_decay_fp8 = MAX((uint32_t)(16 * pow((double)q, 0.5) + 0.25 * pow((double)q, 1.5)), 1); // Tuned for const_0dot7_fp16 at 0.8 (52428)
         } else {
             if (q >= TF_QINDEX_CUTOFF) {
                 q_decay_fp8 = (q * q) >> 5;
