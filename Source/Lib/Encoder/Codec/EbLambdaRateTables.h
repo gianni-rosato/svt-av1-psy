@@ -22,7 +22,7 @@ extern "C" {
 // *Note - As of Oct 2011, the JCT-VC uses the PSNR forumula
 //  PSNR = (LUMA_WEIGHT * PSNRy + PSNRu + PSNRv) / (2+LUMA_WEIGHT)
 #define LUMA_WEIGHT 1
-#define CHROMA_WEIGHT 2
+#define CHROMA_WEIGHT 1
 #define RATE_WEIGHT 1
 
 // Precision macros used in the mode decision
