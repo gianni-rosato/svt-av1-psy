@@ -31,6 +31,11 @@ SVT-AV1-PSY has different defaults than mainline SVT-AV1 in order to provide bet
 
 *We are not in any way affiliated with the Alliance for Open Media or any upstream SVT-AV1 project contributors who have not also contributed here.*
 
+### Other Changes
+
+- `--color-help`
+Prints the information found in Appendix A.2 of the user guide in order to help users more easily understand the Color Description Options in SvtAv1EncApp.
+
 # Getting Involved
 
 For more information on SVT-AV1-PSY and this project's mission, see the [PSY Development](Docs/PSY-Development.md) page.

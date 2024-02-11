@@ -40,6 +40,7 @@
  * Defines
  **********************************/
 #define HELP_TOKEN "--help"
+#define COLORH_TOKEN "--color-help"
 #define VERSION_TOKEN "--version"
 #define CHANNEL_NUMBER_TOKEN "--nch"
 #define COMMAND_LINE_MAX_SIZE 2048
@@ -643,6 +644,7 @@ typedef struct config_entry_s {
 ConfigEntry config_entry_options[] = {
     // File I/O
     {SINGLE_INPUT, HELP_TOKEN, "Shows the command line options currently available", set_cfg_input_file},
+    {SINGLE_INPUT, COLORH_TOKEN, "Extra help for adding AV1 metadata to the bitstream", set_cfg_input_file},
     {SINGLE_INPUT, VERSION_TOKEN, "Shows the version of the library that's linked to the library", set_cfg_input_file},
     {SINGLE_INPUT,
      INPUT_FILE_TOKEN,
@@ -1106,7 +1108,7 @@ ConfigEntry config_entry_specific[] = {
 
     {SINGLE_INPUT,
      FGS_TABLE_TOKEN,
-     "Set the film grain model table path",
+     "[PSY] Set the film grain model table path",
      set_cfg_fgs_table_path},
 
     // --- start: SUPER-RESOLUTION SUPPORT
@@ -1176,18 +1178,23 @@ ConfigEntry config_entry_specific[] = {
     {SINGLE_INPUT, NULL, NULL, NULL}};
 
 ConfigEntry config_entry_color_description[] = {
-    // Color description
+    // Color Description Help
+    {SINGLE_INPUT,
+     COLORH_TOKEN,
+     "[PSY] Metadata help from user guide Appendix A.2",
+     set_cfg_generic_token},
+    // Color Description
     {SINGLE_INPUT,
      COLOR_PRIMARIES_NEW_TOKEN,
-     "Color primaries, refer to Appendix A.2 of the user guide, default is 2 (unspecified) [0-12, 22]",
+     "Color primaries, refer to --color-help. Default is 2 (unspecified) [0-12, 22]",
      set_cfg_generic_token},
     {SINGLE_INPUT,
      TRANSFER_CHARACTERISTICS_NEW_TOKEN,
-     "Transfer characteristics, refer to Appendix A.2 of the user guide, default is 2 (unspecified) [0-22]",
+     "Transfer characteristics, refer to --color-help. Default is 2 (unspecified) [0-22]",
      set_cfg_generic_token},
     {SINGLE_INPUT,
      MATRIX_COEFFICIENTS_NEW_TOKEN,
-     "Matrix coefficients, refer to Appendix A.2 of the user guide, default is 2 (unspecified) [0-14]",
+     "Matrix coefficients, refer to --color-help. Default is 2 (unspecified) [0-14]",
      set_cfg_generic_token},
     {SINGLE_INPUT, COLOR_RANGE_NEW_TOKEN, "Color range, default is 0 [0: Studio, 1: Full]", set_cfg_generic_token},
     {SINGLE_INPUT,
@@ -1215,22 +1222,22 @@ ConfigEntry config_entry_psy[] = {
     // Variance boost
     {SINGLE_INPUT,
      VARIANCE_BOOST_STRENGTH_TOKEN,
-     "Variance boost strength, default is 2 [0-4]",
+     "[PSY] Variance boost strength, default is 2 [0-4]",
      set_cfg_generic_token},
     {SINGLE_INPUT,
      NEW_VARIANCE_OCTILE_TOKEN,
-     "Octile for new 8x8 variance algorithm. Set to 0 to use 64x64 variance algorithm, default is 6 [0-8]",
+     "[PSY] Octile for new 8x8 variance algorithm. Set to 0 to use 64x64 variance algorithm, default is 6 [0-8]",
      set_cfg_generic_token},
     // Sharpness
     {SINGLE_INPUT,
      SHARPNESS_TOKEN,
-     "Affects loopfilter deblock sharpness and rate distortion, default is 0 [+-7]",
+     "[PSY] Affects loopfilter deblock sharpness and rate distortion, default is 0 [+-7]",
      set_cfg_generic_token},
     // Dolby Vision RPU
 #ifdef LIBDOVI_FOUND
     {SINGLE_INPUT,
      DOLBY_VISION_RPU_TOKEN,
-     "Set the Dolby Vision RPU path",
+     "[PSY] Set the Dolby Vision RPU path",
      set_cfg_dovi_rpu},
 #endif
     // Termination
@@ -1996,9 +2003,9 @@ uint32_t get_help(int32_t argc, char *const argv[]) {
         return 0;
 
     printf(
-        "Usage: SvtAv1EncApp <options> <-b dst_filename> -i src_filename\n"
+        "\x1b[1;4mUsage\x1b[0m: SvtAv1EncApp <options> <-b dst_filename> -i src_filename\n"
         "\n"
-        "Examples:\n"
+        "\x1b[1;4mExamples\x1b[0m:\n"
         "Multi-pass encode (VBR):\n"
         "    SvtAv1EncApp <--stats svtav1_2pass.log> --passes 2 --rc 1 --tbr 1000 -b dst_filename "
         "-i src_filename\n"
@@ -2008,7 +2015,7 @@ uint32_t get_help(int32_t argc, char *const argv[]) {
         "Single-pass encode (VBR):\n"
         "    SvtAv1EncApp --passes 1 --rc 1 --tbr 1000 -b dst_filename -i src_filename\n"
         "\n"
-        "Options:\n");
+        "\x1b[1;4mOptions\x1b[0m:\n");
     for (ConfigEntry *options_token_index = config_entry_options; options_token_index->token; ++options_token_index) {
         // this only works if short and long token are one after another
         switch (check_long(*options_token_index, options_token_index[1])) {
@@ -2025,7 +2032,7 @@ uint32_t get_help(int32_t argc, char *const argv[]) {
                    options_token_index->name);
         }
     }
-    printf("\nEncoder Global Options:\n");
+    printf("\n\x1b[1;4mEncoder Global Options\x1b[0m:\n");
     for (ConfigEntry *global_options_token_index = config_entry_global_options; global_options_token_index->token;
          ++global_options_token_index) {
         switch (check_long(*global_options_token_index, global_options_token_index[1])) {
@@ -2042,7 +2049,7 @@ uint32_t get_help(int32_t argc, char *const argv[]) {
                    global_options_token_index->name);
         }
     }
-    printf("\nRate Control Options:\n");
+    printf("\n\x1b[1;4mRate Control Options\x1b[0m:\n");
     for (ConfigEntry *rc_token_index = config_entry_rc; rc_token_index->token; ++rc_token_index) {
         switch (check_long(*rc_token_index, rc_token_index[1])) {
         case 1:
@@ -2055,7 +2062,7 @@ uint32_t get_help(int32_t argc, char *const argv[]) {
                    rc_token_index->name);
         }
     }
-    printf("\nMulti-pass Options:\n");
+    printf("\n\x1b[1;4mMulti-pass Options\x1b[0m:\n");
     for (ConfigEntry *two_p_token_index = config_entry_2p; two_p_token_index->token; ++two_p_token_index) {
         switch (check_long(*two_p_token_index, two_p_token_index[1])) {
         case 1:
@@ -2071,7 +2078,7 @@ uint32_t get_help(int32_t argc, char *const argv[]) {
                    two_p_token_index->name);
         }
     }
-    printf("\nGOP size and type Options:\n");
+    printf("\n\x1b[1;4mGOP Size & Type Options\x1b[0m:\n");
     for (ConfigEntry *kf_token_index = config_entry_intra_refresh; kf_token_index->token; ++kf_token_index) {
         switch (check_long(*kf_token_index, kf_token_index[1])) {
         case 1:
@@ -2084,7 +2091,7 @@ uint32_t get_help(int32_t argc, char *const argv[]) {
                    kf_token_index->name);
         }
     }
-    printf("\nAV1 Specific Options:\n");
+    printf("\n\x1b[1;4mAV1 Specific Options\x1b[0m:\n");
     for (ConfigEntry *sp_token_index = config_entry_specific; sp_token_index->token; ++sp_token_index) {
         switch (check_long(*sp_token_index, sp_token_index[1])) {
         case 1:
@@ -2097,7 +2104,7 @@ uint32_t get_help(int32_t argc, char *const argv[]) {
                    sp_token_index->name);
         }
     }
-    printf("\nColor Description Options:\n");
+    printf("\n\x1b[1;4mColor Description Options\x1b[0m:\n");
     for (ConfigEntry *cd_token_index = config_entry_color_description; cd_token_index->token; ++cd_token_index) {
         switch (check_long(*cd_token_index, cd_token_index[1])) {
         case 1:
@@ -2111,7 +2118,7 @@ uint32_t get_help(int32_t argc, char *const argv[]) {
         }
     }
 
-    printf("\nPsychovisual Options:\n");
+    printf("\n\x1b[1;4mPsychovisual Options\x1b[0m:\n");
     for (ConfigEntry *cd_token_index = config_entry_psy; cd_token_index->token; ++cd_token_index) {
         switch (check_long(*cd_token_index, cd_token_index[1])) {
         case 1:
@@ -2124,6 +2131,90 @@ uint32_t get_help(int32_t argc, char *const argv[]) {
                    cd_token_index->name);
         }
     }
+
+    return 1;
+}
+
+uint32_t get_metahelp(int32_t argc, char *const argv[]) {
+    char config_string[COMMAND_LINE_MAX_SIZE];
+    if (find_token(argc, argv, COLORH_TOKEN, config_string)) {
+        return 0;
+    }
+
+    printf("This command line flag reproduces information provided by Appendix A.2 of the SVT-AV1 User Guide.\n\n");
+
+    printf("The available options for \x1b[32m--color-primaries\x1b[0m are:\n\n"
+           "\t1: bt709, BT.709\n"
+           "\t2: unspecified, default\n"
+           "\t4: bt470m, BT.470 System M (historical)\n"
+           "\t5: bt470bg, BT.470 System B, G (historical)\n"
+           "\t6: bt601, BT.601\n"
+           "\t7: smpte240, SMPTE 240\n"
+           "\t8: film, Generic film (color filters using illuminant C)\n"
+           "\t9: bt2020, BT.2020, BT.2100\n"
+           "\t10: xyz, SMPTE 428 (CIE 1921 XYZ)\n"
+           "\t11: smpte431, SMPTE RP 431-2\n"
+           "\t12: smpte432, SMPTE EG 432-1\n"
+           "\t22: ebu3213, EBU Tech. 3213-E\n\n");
+
+    printf("The available options for \x1b[32m--transfer-characteristics\x1b[0m are:\n\n"
+           "\t1: bt709, BT.709\n"
+           "\t2: unspecified, default\n"
+           "\t4: bt470m, BT.470 System M (historical)\n"
+           "\t5: bt470bg, BT.470 System B, G (historical)\n"
+           "\t6: bt601, BT.601\n"
+           "\t7: smpte240, SMPTE 240 M\n"
+           "\t8: linear, Linear\n"
+           "\t9: log100, Logarithmic (100 : 1 range)\n"
+           "\t10: log100-sqrt10, Logarithmic (100 * Sqrt(10) : 1 range)\n"
+           "\t11: iec61966, IEC 61966-2-4\n"
+           "\t12: bt1361, BT.1361\n"
+           "\t13: srgb, sRGB or sYCC\n"
+           "\t14: bt2020-10, BT.2020 10-bit systems\n"
+           "\t15: bt2020-12, BT.2020 12-bit systems\n"
+           "\t16: smpte2084, SMPTE ST 2084, ITU BT.2100 PQ\n"
+           "\t17: smpte428, SMPTE ST 428\n"
+           "\t18: hlg, BT.2100 HLG, ARIB STD-B67\n\n");
+
+    printf("The available options for \x1b[32m--matrix-coefficients\x1b[0m are:\n\n"
+           "\t0: identity, Identity matrix\n"
+           "\t1: bt709, BT.709\n"
+           "\t2: unspecified, default\n"
+           "\t4: fcc, US FCC 73.628\n"
+           "\t5: bt470bg, BT.470 System B, G (historical)\n"
+           "\t6: bt601, BT.601\n"
+           "\t7: smpte240, SMPTE 240 M\n"
+           "\t8: ycgco, YCgCo\n"
+           "\t9: bt2020-ncl, BT.2020 non-constant luminance, BT.2100 YCbCr\n"
+           "\t10: bt2020-cl, BT.2020 constant luminance\n"
+           "\t11: smpte2085, SMPTE ST 2085 YDzDx\n"
+           "\t12: chroma-ncl, Chromaticity-derived non-constant luminance\n"
+           "\t13: chroma-cl, Chromaticity-derived constant luminance\n"
+           "\t14: ictcp, BT.2100 ICtCp\n\n");
+
+    printf("The available options for \x1b[32m--color-range\x1b[0m are:\n\n"
+           "\t0: studio (default)\n"
+           "\t1: full\n\n");
+
+    printf("The available options for \x1b[32m--chroma-sample-position\x1b[0m are:\n\n"
+           "\t0: unknown, default\n"
+           "\t1: vertical/left, horizontally co-located with luma samples, vertical position in the middle between two luma samples\n"
+           "\t2: colocated/topleft, co-located with luma samples\n\n");
+
+    printf("The \x1b[32m--mastering-display\x1b[0m and \x1b[32m--content-light\x1b[0m parameters are used to set the mastering display and content light level in the AV1 bitstream.\n\n");
+
+    printf("\x1b[32m--mastering-display\x1b[0m takes the format of G(x,y)B(x,y)R(x,y)WP(x,y)L(max,min) where\n\n"
+           "\t- G(x,y) is the green channel of the mastering display\n"
+           "\t- B(x,y) is the blue channel of the mastering display\n"
+           "\t- R(x,y) is the red channel of the mastering display\n"
+           "\t- WP(x,y) is the white point of the mastering display\n"
+           "\t- L(max,min) is the light level of the mastering display\n\n");
+
+    printf("\x1b[38;5;248mThe x & y values can be coordinates from 0.0 to 1.0, as specified in CIE 1931 while the min,max values can be floating point values representing candelas per square meter, or nits.\n"
+           "The max,min values are generally specified in the range of 0.0 to 1.0 but there are no constraints on the provided values.\n"
+           "Invalid values will be clipped accordingly.\x1b[0m\n\n");
+
+    printf("\x1b[32m--content-light\x1b[0m takes the format of max_cll,max_fall where both values are integers clipped into a range of 0 to 65535.\n");
 
     return 1;
 }
