@@ -323,6 +323,7 @@ typedef struct SvtAv1RoiMap {
     int16_t         *qp_map;
     char            *buf;
 } SvtAv1RoiMap;
+
 typedef struct SvtAv1InputPicDef {
     uint16_t input_luma_width; // input luma width aligned to 8, this is used during encoding
     uint16_t input_luma_height; // input luma height aligned to 8, this is used during encoding
@@ -334,6 +335,87 @@ typedef struct SvtAv1RateInfo {
     uint32_t seq_qp;
     uint32_t target_bit_rate;
 } SvtAv1RateInfo;
+
+/*!\brief Structure containing film grain synthesis parameters for a frame
+     *
+     * This structure contains input parameters for film grain synthesis
+     */
+typedef struct {
+    // Whether the decoder should apply film grain
+    int32_t apply_grain;
+
+    // Whether the decoder should update the film grain parameters from previous frame
+    int32_t update_parameters;
+
+    // 8 bit values indicating grain scaling points for the luma plane
+    int32_t scaling_points_y[14][2];
+    int32_t num_y_points; // value: 0..14
+
+    // 8 bit values indicating grain scaling points for the blue chroma plane
+    int32_t scaling_points_cb[10][2];
+    int32_t num_cb_points; // value: 0..10
+
+    // 8 bit values indicating grain scaling points for the red chroma plane
+    int32_t scaling_points_cr[10][2];
+    int32_t num_cr_points; // value: 0..10
+
+    // A value by which to shift scaling points, typically 8
+    int32_t scaling_shift; // values : 8..11
+
+    // Number of auto-regressive coefficients
+    int32_t ar_coeff_lag; // values:  0..3
+
+    // 8 bit values representing auto-regressive coefficients for each plane
+    int32_t ar_coeffs_y[24];
+    int32_t ar_coeffs_cb[25];
+    int32_t ar_coeffs_cr[25];
+
+    // Shift value: AR coeffs range
+    // 6: [-2, 2)
+    // 7: [-1, 1)
+    // 8: [-0.5, 0.5)
+    // 9: [-0.25, 0.25)
+    int32_t ar_coeff_shift; // values : 6..9
+
+    // A multiplier for the cb component used in derivation of the
+    // input index to the cb component scaling function.
+    int32_t cb_mult; // 8 bits
+    // A multiplier for the average luma component used in derivation of the input index to the cb
+    // component scaling function.
+    int32_t cb_luma_mult; // 8 bits
+    // An offset used in derivation of the input index to the cb component scaling function.
+    int32_t cb_offset; // 9 bits
+
+    // A multiplier for the cr component used in derivation of the
+    // input index to the cr component scaling function.
+    int32_t cr_mult; // 8 bits
+    // A multiplier for the average luma component used in derivation of the input index to the cr
+    // component scaling function.
+    int32_t cr_luma_mult; // 8 bits
+    // An offset used in derivation of the input index to the cr component scaling function.
+    int32_t cr_offset; // 9 bits
+
+    // Whether overlap between film grain blocks should be applied
+    int32_t overlap_flag;
+
+    // Whether to clip to studio range after film grain is generated
+    int32_t clip_to_restricted_range;
+
+    int32_t bit_depth; // video bit depth
+
+    // Whether to apply film grain to chroma planes based on the luma plane
+    int32_t chroma_scaling_from_luma;
+
+    // Specifies how much the random numbers should be scaled down during grain synthesis
+    int32_t grain_scale_shift;
+
+    // A random seed for the decoder to use for grain generation
+    uint16_t random_seed;
+
+    // Whether the encoder should ignore the ref frame map when coding film grain
+    int32_t ignore_ref;
+} AomFilmGrain;
+
 /**
 CPU FLAGS
 */

@@ -14,7 +14,7 @@ git config --global --add safe.directory "$REPO_DIR" || true
 git -C "$REPO_DIR" fetch --all -pf > /dev/null 2>&1 || true
 
 echo "Checking for tabs" >&2
-! git -C "$REPO_DIR" --no-pager grep -InP "\t" -- . ':!third_party/**/*' || ret=1
+! git -C "$REPO_DIR" --no-pager grep -InP "\t" -- . ':!third_party/**/*' ':!Config/ExampleFilmGrainTable.tbl' || ret=1
 
 echo "Checking for carriage returns" >&2
 ! git -C "$REPO_DIR" --no-pager grep -InP "\r" -- . ':!third_party/**/*' || ret=1
