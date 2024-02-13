@@ -59,20 +59,6 @@ as two separate pictures as shown in the figure below.
 _10-bit yuv420p10le compressed_\
 ![10-bit yuv420p10le compressed](img/10bit_packed.png "10-bit yuv420p10le compressed")
 
-#### Unroll the 64x64
-
-Now for a faster read of the samples, every 64x64 block of the 2 bit picture
-should be written into a one dimensional array. Therefore, the top left 64x64
-sample block which is now written into a 16 bytes x 64 bytes after the
-compression of the 2bit samples, will be written into a 1024 bytes x 1 byte
-array as shown in the picture below.
-
-_64x64 block after 2 bit compression_\
-![64x64 block after 2 bit compression](img/64x64_after_2bit_compression.png "64x64 block after 2 bit compression")
-
-_64x64 block after unrolling_\
-![64x64 block after unrolling](img/64x64_after_unrolling.png "64x64 block after unrolling")
-
 ### Running the encoder
 
 This section describes how to run the sample encoder application
