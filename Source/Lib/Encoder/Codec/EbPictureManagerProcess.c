@@ -40,7 +40,21 @@ static INLINE unsigned int get_token_alloc(int mb_rows, int mb_cols, int sb_size
 
     return sb_rows * sb_cols * sb_palette_toks;
 }
-void                    rtime_alloc_palette_tokens(SequenceControlSet *scs, PictureControlSet *child_pcs_ptr);
+static EbErrorType rtime_alloc_palette_tokens(SequenceControlSet* scs, PictureControlSet* child_pcs) {
+    if (child_pcs->ppcs->frm_hdr.allow_screen_content_tools) {
+        if (scs->static_config.screen_content_mode) {
+            uint32_t     mi_cols = scs->max_input_luma_width >> MI_SIZE_LOG2;
+            uint32_t     mi_rows = scs->max_input_luma_height >> MI_SIZE_LOG2;
+            uint32_t     mb_cols = (mi_cols + 2) >> 2;
+            uint32_t     mb_rows = (mi_rows + 2) >> 2;
+            unsigned int tokens = get_token_alloc(mb_rows, mb_cols, MAX_SB_SIZE_LOG2, 2);
+            EB_CALLOC_ARRAY(child_pcs->tile_tok[0][0], tokens);
+        }
+        else
+            child_pcs->tile_tok[0][0] = NULL;
+    }
+    return EB_ErrorNone;
+}
 extern MvReferenceFrame svt_get_ref_frame_type(uint8_t list, uint8_t ref_idx);
 
 void svt_aom_largest_coding_unit_dctor(EbPtr p);

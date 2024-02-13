@@ -212,20 +212,6 @@ static void picture_control_set_dctor(EbPtr p) {
     EB_DESTROY_MUTEX(obj->cdef_search_mutex);
     EB_DESTROY_MUTEX(obj->rest_search_mutex);
 }
-// Token buffer is only used for palette tokens.
-static INLINE unsigned int get_token_alloc(int mb_rows, int mb_cols, int sb_size_log2, const int num_planes) {
-    // Calculate the maximum number of max superblocks in the image.
-    const int shift          = sb_size_log2 - 4;
-    const int sb_size        = 1 << sb_size_log2;
-    const int sb_size_square = sb_size * sb_size;
-    const int sb_rows        = ALIGN_POWER_OF_TWO(mb_rows, shift) >> shift;
-    const int sb_cols        = ALIGN_POWER_OF_TWO(mb_cols, shift) >> shift;
-
-    // One palette token for each pixel. There can be palettes on two planes.
-    const int sb_palette_toks = AOMMIN(2, num_planes) * sb_size_square;
-
-    return sb_rows * sb_cols * sb_palette_toks;
-}
 
 typedef struct InitData {
     NeighborArrayUnit **na_unit_dbl_ptr;
@@ -252,21 +238,6 @@ static EbErrorType create_neighbor_array_units(InitData *data, size_t count) {
     return EB_ErrorNone;
 }
 
-EbErrorType rtime_alloc_palette_tokens(SequenceControlSet *scs, PictureControlSet *child_pcs) {
-    if (child_pcs->ppcs->frm_hdr.allow_screen_content_tools) {
-        if (scs->static_config.screen_content_mode) {
-            uint32_t     mi_cols = scs->max_input_luma_width >> MI_SIZE_LOG2;
-            uint32_t     mi_rows = scs->max_input_luma_height >> MI_SIZE_LOG2;
-            uint32_t     mb_cols = (mi_cols + 2) >> 2;
-            uint32_t     mb_rows = (mi_rows + 2) >> 2;
-            unsigned int tokens  = get_token_alloc(mb_rows, mb_cols, MAX_SB_SIZE_LOG2, 2);
-            EB_CALLOC_ARRAY(child_pcs->tile_tok[0][0], tokens);
-        } else
-            child_pcs->tile_tok[0][0] = NULL;
-    }
-
-    return EB_ErrorNone;
-}
 /*
 recon_coef_update_param: update the parameters in EncDecSet for changing the resolution on the fly
 */
