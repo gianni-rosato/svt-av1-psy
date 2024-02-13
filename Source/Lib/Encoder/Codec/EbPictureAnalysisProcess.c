@@ -2176,7 +2176,7 @@ void *svt_aom_picture_analysis_kernel(void *input_ptr) {
         // There is no need to do processing for overlay picture. Overlay and AltRef share the same
         // results.
         if (!pcs->is_overlay) {
-            input_pic      = pcs->enhanced_pic;
+            input_pic = pcs->enhanced_pic;
 #if !OPT_MPASS_VBR4
             int copy_frame = 1;
             if (pcs->scs->ipp_pass_ctrls.skip_frame_first_pass == 1)
@@ -2251,7 +2251,7 @@ void *svt_aom_picture_analysis_kernel(void *input_ptr) {
                     pcs->sc_class0 = pcs->sc_class1 = pcs->sc_class2 = 0;
                 } else
 #endif
-                if (scs->static_config.screen_content_mode == 2) { // auto detect
+                    if (scs->static_config.screen_content_mode == 2) { // auto detect
                     // SC Detection is OFF for 4K and higher
                     if (scs->input_resolution <= INPUT_SIZE_1080p_RANGE)
                         svt_aom_is_screen_content(pcs);

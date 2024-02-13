@@ -567,8 +567,8 @@ typedef struct CandEliminationCtlrs {
     uint32_t enabled;
     uint8_t  dc_only;
 #if !CLN_SMALL_SIGS
-    uint8_t  inject_new_me;
-    uint8_t  inject_new_pme;
+    uint8_t inject_new_me;
+    uint8_t inject_new_pme;
     // factor to scale base TH by for distortion check
     uint8_t th_multiplier;
 #endif
@@ -927,7 +927,7 @@ typedef struct Mds0Ctrls {
 } Mds0Ctrls;
 typedef struct CandReductionCtrls {
 #if !OPT_MERGE_INTER_CANDS
-    uint8_t            merge_inter_classes;
+    uint8_t merge_inter_classes;
 #endif
     RedundantCandCtrls redundant_cand_ctrls;
     NearCountCtrls     near_count_ctrls;
@@ -980,15 +980,15 @@ typedef struct ModeDecisionContext {
     uint8_t                      *avail_blk_flag;
     uint8_t                      *cost_avail;
 #if CLN_MDC_ARRAY
-    MdcSbData                    mdc_sb_array;
+    MdcSbData mdc_sb_array;
 #else
-    MdcSbData                    *mdc_sb_array;
+    MdcSbData     *mdc_sb_array;
 #endif
 #if CLN_NSQ_COPIES
     bool copied_neigh_arrays;
 #endif
-    MvReferenceFrame              ref_frame_type_arr[MODE_CTX_REF_FRAMES];
-    uint8_t                       tot_ref_frame_types;
+    MvReferenceFrame ref_frame_type_arr[MODE_CTX_REF_FRAMES];
+    uint8_t          tot_ref_frame_types;
 
     NeighborArrayUnit *recon_neigh_y;
     NeighborArrayUnit *recon_neigh_cb;
@@ -1030,11 +1030,11 @@ typedef struct ModeDecisionContext {
     const BlockGeom *blk_geom;
 #if CLN_MOVE_PAL_BUFF
     // MD palette search
-    PALETTE_BUFFER*  palette_buffer;
-    PaletteInfo*     palette_cand_array;
+    PALETTE_BUFFER *palette_buffer;
+    PaletteInfo    *palette_cand_array;
 #else
-    PALETTE_BUFFER   palette_buffer;
-    PaletteInfo      palette_cand_array[MAX_PAL_CAND];
+    PALETTE_BUFFER palette_buffer;
+    PaletteInfo    palette_cand_array[MAX_PAL_CAND];
     // MD palette search
 #endif
     uint8_t *palette_size_array_0;
@@ -1067,11 +1067,11 @@ typedef struct ModeDecisionContext {
     uint8_t intra_luma_top_ctx;
 
 #if CLN_MOVE_CFL_BUFF
-    int16_t* pred_buf_q3;
+    int16_t *pred_buf_q3;
 #else
     // Hsan: both MD and EP to use pred_buf_q3 (kept 1, and removed the 2nd)
     EB_ALIGN(64)
-    int16_t pred_buf_q3[CFL_BUF_SQUARE];
+    int16_t  pred_buf_q3[CFL_BUF_SQUARE];
 #endif
     // Track all MVs that are prepared for candidates prior to MDS0. Used to avoid MV duplication.
     Mv **injected_mvs;
@@ -1107,25 +1107,25 @@ typedef struct ModeDecisionContext {
     uint8_t             *cfl_temp_luma_recon;
     uint16_t            *cfl_temp_luma_recon16bit;
 #if !OPT_BLOCK_SETTINGS
-    Bool                 spatial_sse_full_loop_level;
+    Bool spatial_sse_full_loop_level;
 #endif
-    Bool                 blk_skip_decision;
-    int8_t               rdoq_level;
+    Bool   blk_skip_decision;
+    int8_t rdoq_level;
 #if CLN_SB_ME_MV
-    int16_t              sb_me_mv[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX][2];
+    int16_t sb_me_mv[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX][2];
     // Store ME MV of the square to use with NSQ shapes; 4x4 will also use the 8x8 ME MVs
-    int16_t              sq_sb_me_mv[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX][2];
+    int16_t sq_sb_me_mv[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX][2];
 #else
-    int16_t              sb_me_mv[BLOCK_MAX_COUNT_SB_128][MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX][2];
+    int16_t  sb_me_mv[BLOCK_MAX_COUNT_SB_128][MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX][2];
 #endif
-    MV                   fp_me_mv[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
-    MV                   sub_me_mv[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
-    uint32_t             post_subpel_me_mv_cost[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
-    int16_t              best_pme_mv[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX][2];
-    int8_t               valid_pme_mv[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX];
+    MV       fp_me_mv[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
+    MV       sub_me_mv[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
+    uint32_t post_subpel_me_mv_cost[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
+    int16_t  best_pme_mv[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX][2];
+    int8_t   valid_pme_mv[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX];
 #if CLN_BLK_STRUCT
     // Store MVP during MD search - only results are forwarded to encdec
-    CandidateMv          ref_mv_stack[MODE_CTX_REF_FRAMES][MAX_REF_MV_STACK_SIZE];
+    CandidateMv ref_mv_stack[MODE_CTX_REF_FRAMES][MAX_REF_MV_STACK_SIZE];
 #endif
 #if CLN_INTER_MODE_CTX
     // Store inter_mode_ctx for each reference during MD search - only ctx for winning ref frame is forwarded to encdec
@@ -1224,22 +1224,22 @@ typedef struct ModeDecisionContext {
     TxtControls         txt_ctrls;
     CandReductionCtrls  cand_reduction_ctrls;
 #if FIX_NSQ_CTRL
-    NsqGeomCtrls        nsq_geom_ctrls;
-    NsqSearchCtrls      nsq_search_ctrls;
+    NsqGeomCtrls   nsq_geom_ctrls;
+    NsqSearchCtrls nsq_search_ctrls;
 #else
-    NsqCtrls            nsq_ctrls;
+    NsqCtrls nsq_ctrls;
 #endif
     DepthEarlyExitCtrls depth_early_exit_ctrls;
     RdoqCtrls           rdoq_ctrls;
     uint8_t             disallow_4x4;
 #if CLN_MD_DISALLOW_NSQ
-    uint8_t             md_disallow_nsq_search;
+    uint8_t md_disallow_nsq_search;
 #else
-    uint8_t             md_disallow_nsq;
+    uint8_t  md_disallow_nsq;
 #endif
-    uint8_t             params_status; // specifies the status of MD parameters; 0: default, 1: modified
+    uint8_t params_status; // specifies the status of MD parameters; 0: default, 1: modified
 #if !CLN_MD_LOOP
-    bool                d1_skip_flag[25];
+    bool d1_skip_flag[25];
 #endif
     // was parent_sq_coeff_area_based_cycles_reduction_ctrls
     ParentSqCmplxCtrls   psq_cplx_ctrls;
@@ -1265,13 +1265,13 @@ typedef struct ModeDecisionContext {
     uint32_t fp_me_dist[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
 #endif
     // Start/end position for MD sparse search
-    int16_t         sprs_lev0_start_x;
-    int16_t         sprs_lev0_end_x;
-    int16_t         sprs_lev0_start_y;
-    int16_t         sprs_lev0_end_y;
-    NicCtrls        nic_ctrls;
+    int16_t  sprs_lev0_start_x;
+    int16_t  sprs_lev0_end_x;
+    int16_t  sprs_lev0_start_y;
+    int16_t  sprs_lev0_end_y;
+    NicCtrls nic_ctrls;
 #if !OPT_BLOCK_SETTINGS
-    uint8_t         inter_compound_mode;
+    uint8_t inter_compound_mode;
 #endif
     MV              ref_mv;
     uint16_t        sb_index;
@@ -1355,17 +1355,17 @@ typedef struct ModeDecisionContext {
     COMPONENT_TYPE lpd1_chroma_comp;
     uint8_t        corrupted_mv_check;
 #if !CLN_SKIP_PD0_SIG
-    uint8_t        skip_pd0;
+    uint8_t skip_pd0;
 #endif
-    uint8_t        pred_mode_depth_refine;
+    uint8_t pred_mode_depth_refine;
     // when MD is done on 8bit, scale palette colors to 10bit (valid when bypass is 1)
     uint8_t scale_palette;
     uint8_t high_freq_present;
-#if OPT_NSQ_HIGH_FREQ  
+#if OPT_NSQ_HIGH_FREQ
     uint32_t b32_satd[4];
 #endif
 #if CLN_QUAD_REC
-    uint64_t             rec_dist_per_quadrant[4];
+    uint64_t rec_dist_per_quadrant[4];
 #endif
 #if CLN_BLK_STRUCT_4
     // non-normative txs

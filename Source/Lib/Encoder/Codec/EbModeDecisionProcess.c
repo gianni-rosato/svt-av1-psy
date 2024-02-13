@@ -293,10 +293,9 @@ EbErrorType svt_aom_mode_decision_context_ctor(ModeDecisionContext *ctx, EbColor
             EB_MALLOC_ARRAY(ctx->palette_cand_array[cd].color_idx_map, MAX_PALETTE_SQUARE);
 
         EB_MALLOC_ARRAY(ctx->palette_size_array_0, MAX_PAL_CAND);
-    }
-    else {
-        ctx->palette_buffer = NULL;
-        ctx->palette_cand_array = NULL;
+    } else {
+        ctx->palette_buffer       = NULL;
+        ctx->palette_cand_array   = NULL;
         ctx->palette_size_array_0 = NULL;
     }
 #else
@@ -367,20 +366,14 @@ EbErrorType svt_aom_mode_decision_context_ctor(ModeDecisionContext *ctx, EbColor
         ctx->md_blk_arr_nsq[coded_leaf_index].neigh_top_recon_16bit[2] =
             ctx->md_blk_arr_nsq[0].neigh_top_recon_16bit[2] + offset;
 
-        offset                                                       = coded_leaf_index * sb_size;
-        ctx->md_blk_arr_nsq[coded_leaf_index].neigh_left_recon[0] = ctx->md_blk_arr_nsq[0].neigh_left_recon[0] +
-            offset;
-        ctx->md_blk_arr_nsq[coded_leaf_index].neigh_top_recon[0] = ctx->md_blk_arr_nsq[0].neigh_top_recon[0] +
-            offset;
+        offset                                                    = coded_leaf_index * sb_size;
+        ctx->md_blk_arr_nsq[coded_leaf_index].neigh_left_recon[0] = ctx->md_blk_arr_nsq[0].neigh_left_recon[0] + offset;
+        ctx->md_blk_arr_nsq[coded_leaf_index].neigh_top_recon[0]  = ctx->md_blk_arr_nsq[0].neigh_top_recon[0] + offset;
         offset >>= 1;
-        ctx->md_blk_arr_nsq[coded_leaf_index].neigh_left_recon[1] = ctx->md_blk_arr_nsq[0].neigh_left_recon[1] +
-            offset;
-        ctx->md_blk_arr_nsq[coded_leaf_index].neigh_top_recon[1] = ctx->md_blk_arr_nsq[0].neigh_top_recon[1] +
-            offset;
-        ctx->md_blk_arr_nsq[coded_leaf_index].neigh_left_recon[2] = ctx->md_blk_arr_nsq[0].neigh_left_recon[2] +
-            offset;
-        ctx->md_blk_arr_nsq[coded_leaf_index].neigh_top_recon[2] = ctx->md_blk_arr_nsq[0].neigh_top_recon[2] +
-            offset;
+        ctx->md_blk_arr_nsq[coded_leaf_index].neigh_left_recon[1] = ctx->md_blk_arr_nsq[0].neigh_left_recon[1] + offset;
+        ctx->md_blk_arr_nsq[coded_leaf_index].neigh_top_recon[1]  = ctx->md_blk_arr_nsq[0].neigh_top_recon[1] + offset;
+        ctx->md_blk_arr_nsq[coded_leaf_index].neigh_left_recon[2] = ctx->md_blk_arr_nsq[0].neigh_left_recon[2] + offset;
+        ctx->md_blk_arr_nsq[coded_leaf_index].neigh_top_recon[2]  = ctx->md_blk_arr_nsq[0].neigh_top_recon[2] + offset;
     }
     ctx->md_blk_arr_nsq[0].av1xd = NULL;
     EB_MALLOC_ARRAY(ctx->md_blk_arr_nsq[0].av1xd, block_max_count_sb);
@@ -653,7 +646,7 @@ void svt_aom_reset_mode_decision(SequenceControlSet *scs, ModeDecisionContext *c
     //each segment enherits the bypass encdec from the picture level
     ctx->bypass_encdec = pcs->pic_bypass_encdec;
 #if !CLN_SKIP_PD0_SIG
-    ctx->skip_pd0      = pcs->pic_skip_pd0;
+    ctx->skip_pd0 = pcs->pic_skip_pd0;
 #endif
     set_block_based_depth_refinement_controls(ctx, pcs->pic_block_based_depth_refinement_level);
     if (!pcs->rtc_tune || pcs->temporal_layer_index != 0)

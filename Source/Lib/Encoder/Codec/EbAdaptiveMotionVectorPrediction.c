@@ -1136,13 +1136,9 @@ void svt_aom_generate_av1_mvp_table(ModeDecisionContext *ctx, BlkStruct *blk_ptr
 
         xd->ref_mv_count[ref_frame] = 0;
 #if CLN_BLK_STRUCT
-        memset(ctx->ref_mv_stack[ref_frame],
-            0,
-            sizeof(CandidateMv) * MAX_REF_MV_STACK_SIZE);
+        memset(ctx->ref_mv_stack[ref_frame], 0, sizeof(CandidateMv) * MAX_REF_MV_STACK_SIZE);
 #else
-        memset(ctx->blk_ptr->ed_ref_mv_stack[ref_frame],
-               0,
-               sizeof(CandidateMv) * MAX_REF_MV_STACK_SIZE);
+        memset(ctx->blk_ptr->ed_ref_mv_stack[ref_frame], 0, sizeof(CandidateMv) * MAX_REF_MV_STACK_SIZE);
 #endif
 
         IntMv gm_mv[2];
@@ -1218,15 +1214,15 @@ void svt_aom_get_av1_mv_pred_drl(ModeDecisionContext *ctx, BlkStruct *blk_ptr, M
     if (is_compound && mode != GLOBAL_GLOBALMV) {
         int32_t ref_mv_idx = drl_index + 1;
 #if CLN_BLK_STRUCT
-        nearestmv[0]       = ctx->ref_mv_stack[ref_frame][0].this_mv;
-        nearestmv[1]       = ctx->ref_mv_stack[ref_frame][0].comp_mv;
-        nearmv[0]          = ctx->ref_mv_stack[ref_frame][ref_mv_idx].this_mv;
-        nearmv[1]          = ctx->ref_mv_stack[ref_frame][ref_mv_idx].comp_mv;
+        nearestmv[0] = ctx->ref_mv_stack[ref_frame][0].this_mv;
+        nearestmv[1] = ctx->ref_mv_stack[ref_frame][0].comp_mv;
+        nearmv[0]    = ctx->ref_mv_stack[ref_frame][ref_mv_idx].this_mv;
+        nearmv[1]    = ctx->ref_mv_stack[ref_frame][ref_mv_idx].comp_mv;
 #else
-        nearestmv[0]       = ctx->blk_ptr->ed_ref_mv_stack[ref_frame][0].this_mv;
-        nearestmv[1]       = ctx->blk_ptr->ed_ref_mv_stack[ref_frame][0].comp_mv;
-        nearmv[0]          = ctx->blk_ptr->ed_ref_mv_stack[ref_frame][ref_mv_idx].this_mv;
-        nearmv[1]          = ctx->blk_ptr->ed_ref_mv_stack[ref_frame][ref_mv_idx].comp_mv;
+        nearestmv[0] = ctx->blk_ptr->ed_ref_mv_stack[ref_frame][0].this_mv;
+        nearestmv[1] = ctx->blk_ptr->ed_ref_mv_stack[ref_frame][0].comp_mv;
+        nearmv[0]    = ctx->blk_ptr->ed_ref_mv_stack[ref_frame][ref_mv_idx].this_mv;
+        nearmv[1]    = ctx->blk_ptr->ed_ref_mv_stack[ref_frame][ref_mv_idx].comp_mv;
 #endif
     } else if (drl_index > 0 && mode == NEARMV) {
         assert((1 + drl_index) < MAX_REF_MV_STACK_SIZE);
@@ -1235,7 +1231,7 @@ void svt_aom_get_av1_mv_pred_drl(ModeDecisionContext *ctx, BlkStruct *blk_ptr, M
 #else
         IntMv cur_mv = ctx->blk_ptr->ed_ref_mv_stack[ref_frame][1 + drl_index].this_mv;
 #endif
-        nearmv[0]    = cur_mv;
+        nearmv[0] = cur_mv;
     }
 
     ref_mv[0] = nearestmv[0];
@@ -1255,8 +1251,7 @@ void svt_aom_get_av1_mv_pred_drl(ModeDecisionContext *ctx, BlkStruct *blk_ptr, M
 
         if (compound_ref1_mode(mode) == NEWMV)
             ref_mv[1] = ctx->ref_mv_stack[ref_frame][ref_mv_idx].comp_mv;
-    }
-    else {
+    } else {
         if (mode == NEWMV) {
             if (xd->ref_mv_count[ref_frame] > 1)
                 ref_mv[0] = ctx->ref_mv_stack[ref_frame][drl_index].this_mv;
@@ -1397,9 +1392,9 @@ void svt_aom_update_mi_map(BlkStruct *blk_ptr, uint32_t blk_org_x, uint32_t blk_
     block_mi->partition    = from_shape_to_part[blk_geom->shape];
     block_mi->skip_mode    = (int8_t)blk_ptr->skip_mode;
 #if CLN_BLK_STRUCT_2
-    block_mi->uv_mode      = blk_ptr->intra_chroma_mode;
+    block_mi->uv_mode = blk_ptr->intra_chroma_mode;
 #else
-    block_mi->uv_mode      = blk_ptr->prediction_unit_array->intra_chroma_mode;
+    block_mi->uv_mode = blk_ptr->prediction_unit_array->intra_chroma_mode;
 #endif
     block_mi->use_intrabc  = blk_ptr->use_intrabc;
     block_mi->ref_frame[0] = rf[0];
@@ -1826,7 +1821,7 @@ Bool svt_aom_warped_motion_parameters(PictureControlSet *pcs, BlkStruct *blk_ptr
 
 //foreach_overlappable_nb_above
 #if CLN_BLK_STRUCT_2
-static uint32_t count_overlappable_nb_above(const Av1Common* cm, MacroBlockD* xd, int32_t mi_col, uint32_t nb_max) {
+static uint32_t count_overlappable_nb_above(const Av1Common *cm, MacroBlockD *xd, int32_t mi_col, uint32_t nb_max) {
     uint32_t nb_count = 0;
 #else
 static int count_overlappable_nb_above(const Av1Common *cm, MacroBlockD *xd, int32_t mi_col, int nb_max) {
@@ -1863,7 +1858,7 @@ static int count_overlappable_nb_above(const Av1Common *cm, MacroBlockD *xd, int
 }
 
 #if CLN_BLK_STRUCT_2
-static uint32_t count_overlappable_nb_left(const Av1Common* cm, MacroBlockD* xd, int32_t mi_row, uint32_t nb_max) {
+static uint32_t count_overlappable_nb_left(const Av1Common *cm, MacroBlockD *xd, int32_t mi_row, uint32_t nb_max) {
     uint32_t nb_count = 0;
 #else
 static int count_overlappable_nb_left(const Av1Common *cm, MacroBlockD *xd, int32_t mi_row, int nb_max) {
@@ -1896,19 +1891,17 @@ static int count_overlappable_nb_left(const Av1Common *cm, MacroBlockD *xd, int3
 
 void svt_av1_count_overlappable_neighbors(const PictureControlSet *pcs, BlkStruct *blk_ptr, const BlockSize bsize,
                                           int32_t mi_row, int32_t mi_col) {
-    Av1Common   *cm                                             = pcs->ppcs->av1_cm;
-    MacroBlockD *xd                                             = blk_ptr->av1xd;
+    Av1Common   *cm = pcs->ppcs->av1_cm;
+    MacroBlockD *xd = blk_ptr->av1xd;
 #if CLN_BLK_STRUCT_2
     blk_ptr->overlappable_neighbors = 0;
 
     if (!is_motion_variation_allowed_bsize(bsize))
         return;
 
-    blk_ptr->overlappable_neighbors = count_overlappable_nb_above(
-        cm, xd, mi_col, UINT32_MAX);
+    blk_ptr->overlappable_neighbors = count_overlappable_nb_above(cm, xd, mi_col, UINT32_MAX);
 
-    blk_ptr->overlappable_neighbors += count_overlappable_nb_left(
-        cm, xd, mi_row, UINT32_MAX);
+    blk_ptr->overlappable_neighbors += count_overlappable_nb_left(cm, xd, mi_row, UINT32_MAX);
 #else
     blk_ptr->prediction_unit_array[0].overlappable_neighbors[0] = 0;
     blk_ptr->prediction_unit_array[0].overlappable_neighbors[1] = 0;

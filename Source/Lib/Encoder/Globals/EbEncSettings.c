@@ -576,7 +576,7 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet *scs) {
         return_error = EB_ErrorBadParameter;
     }
 #if OPT_MPASS_VBR4 & !OPT_MPASS_VBR8
-    if (config->superres_mode > 0 && ((config->rc_stats_buffer.sz ))) {
+    if (config->superres_mode > 0 && ((config->rc_stats_buffer.sz))) {
 #else
     if (config->superres_mode > 0 && ((config->rc_stats_buffer.sz || config->pass == ENC_FIRST_PASS))) {
 #endif
@@ -932,9 +932,9 @@ EbErrorType svt_av1_set_default_params(EbSvtAv1EncConfiguration *config_ptr) {
     config_ptr->max_bit_rate           = 0;
     config_ptr->max_qp_allowed         = 63;
 #if OPT_1P_VBR
-    config_ptr->min_qp_allowed         = 4;
+    config_ptr->min_qp_allowed = 4;
 #else
-    config_ptr->min_qp_allowed         = 1;
+    config_ptr->min_qp_allowed = 1;
 #endif
     config_ptr->enable_adaptive_quantization = 2;
     config_ptr->enc_mode                     = 10;
@@ -1123,9 +1123,9 @@ void svt_av1_print_lib_params(SequenceControlSet *scs) {
                     (int)config->max_bit_rate / 1000);
             else
                 SVT_INFO("SVT [config]: BRC mode / %s \t\t\t\t\t: %s / %d \n",
-                    scs->tpl ? "rate factor" : "CQP Assignment",
-                    scs->tpl ? "CRF" : "CQP",
-                    scs->static_config.qp);
+                         scs->tpl ? "rate factor" : "CQP Assignment",
+                         scs->tpl ? "CRF" : "CQP",
+                         scs->static_config.qp);
 #else
             if (config->max_bit_rate)
                 SVT_INFO(

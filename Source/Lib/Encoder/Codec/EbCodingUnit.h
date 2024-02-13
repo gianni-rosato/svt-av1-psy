@@ -181,28 +181,28 @@ typedef struct QuantDcData {
     uint8_t u[MAX_TXB_COUNT_UV];
     uint8_t v[MAX_TXB_COUNT_UV];
 #else
-    int32_t y[MAX_TXB_COUNT];
-    int32_t u[MAX_TXB_COUNT_UV];
-    int32_t v[MAX_TXB_COUNT_UV];
+    int32_t       y[MAX_TXB_COUNT];
+    int32_t       u[MAX_TXB_COUNT_UV];
+    int32_t       v[MAX_TXB_COUNT_UV];
 #endif
 } QuantDcData;
 #endif
 
 #if CLN_BLK_STRUCT_3
 typedef struct BlkStruct {
-    MacroBlockD* av1xd;
+    MacroBlockD *av1xd;
     // only for MD
-    uint8_t* neigh_left_recon[3];
-    uint8_t* neigh_top_recon[3];
-    uint16_t* neigh_left_recon_16bit[3];
-    uint16_t* neigh_top_recon_16bit[3];
+    uint8_t  *neigh_left_recon[3];
+    uint8_t  *neigh_top_recon[3];
+    uint16_t *neigh_left_recon_16bit[3];
+    uint16_t *neigh_top_recon_16bit[3];
     // buffer to store quantized coeffs from MD for the final mode of each block
     // Used when encdec is bypassed
-    EbPictureBufferDesc* coeff_tmp;
+    EbPictureBufferDesc *coeff_tmp;
     // buffer to store recon from MD for the final mode of each block
     // Used when encdec is bypassed
-    EbPictureBufferDesc* recon_tmp;
-    uint64_t cost;
+    EbPictureBufferDesc *recon_tmp;
+    uint64_t             cost;
     // Similar to cost but does not get updated @ svt_aom_d1_non_square_block_decision() and
     // svt_aom_d2_inter_depth_block_decision()
     uint64_t default_cost;
@@ -210,25 +210,25 @@ typedef struct BlkStruct {
     uint32_t full_dist;
 #if CLN_TX_DATA
     QuantDcData quant_dc;
-    EobData eob;
-    TxType tx_type[MAX_TXB_COUNT];
-    TxType tx_type_uv;
-    uint16_t y_has_coeff;
-    uint8_t u_has_coeff;
-    uint8_t v_has_coeff;
+    EobData     eob;
+    TxType      tx_type[MAX_TXB_COUNT];
+    TxType      tx_type_uv;
+    uint16_t    y_has_coeff;
+    uint8_t     u_has_coeff;
+    uint8_t     v_has_coeff;
 #else
     TransformUnit txb_array[TRANSFORM_UNIT_MAX_COUNT];
-    int32_t quantized_dc[3][MAX_TXB_COUNT];
-    uint8_t  u_has_coeff[TRANSFORM_UNIT_MAX_COUNT];
-    uint8_t  v_has_coeff[TRANSFORM_UNIT_MAX_COUNT];
-    uint8_t  y_has_coeff[TRANSFORM_UNIT_MAX_COUNT];
+    int32_t       quantized_dc[3][MAX_TXB_COUNT];
+    uint8_t       u_has_coeff[TRANSFORM_UNIT_MAX_COUNT];
+    uint8_t       v_has_coeff[TRANSFORM_UNIT_MAX_COUNT];
+    uint8_t       y_has_coeff[TRANSFORM_UNIT_MAX_COUNT];
 #endif
-    PaletteInfo* palette_info;
-    uint8_t palette_mem; // status of palette info alloc
-    uint8_t palette_size[2];
+    PaletteInfo *palette_info;
+    uint8_t      palette_mem; // status of palette info alloc
+    uint8_t      palette_size[2];
 
-    Mv mv[MAX_NUM_OF_REF_PIC_LIST]; // 16-bytes
-    IntMv predmv[MAX_NUM_OF_REF_PIC_LIST];
+    Mv      mv[MAX_NUM_OF_REF_PIC_LIST]; // 16-bytes
+    IntMv   predmv[MAX_NUM_OF_REF_PIC_LIST];
     uint8_t inter_pred_direction_index;
 
     // Intra Mode
@@ -248,15 +248,15 @@ typedef struct BlkStruct {
 #if CLN_INTER_MODE_CTX
     int16_t inter_mode_ctx;
 #else
-    int16_t inter_mode_ctx[MODE_CTX_REF_FRAMES];
+    int16_t       inter_mode_ctx[MODE_CTX_REF_FRAMES];
 #endif
     // equivalent of leaf_index in the nscu context. we will keep both for now and use the right one
     // on a case by case basis.
     uint16_t mds_idx;
     // txb
-    uint8_t  tx_depth;
-    uint8_t  compound_idx;
-    uint8_t  comp_group_idx;
+    uint8_t tx_depth;
+    uint8_t compound_idx;
+    uint8_t comp_group_idx;
 
     uint8_t qindex;
     uint8_t split_flag;
@@ -265,7 +265,7 @@ typedef struct BlkStruct {
     // Store the drl ctx in coding loop to avoid storing final_ref_mv_stack and ref_mv_count for EC
     int8_t drl_ctx[2];
     // Store the drl ctx in coding loop to avoid storing final_ref_mv_stack and ref_mv_count for EC
-    int8_t drl_ctx_near[2];
+    int8_t         drl_ctx_near[2];
     PredictionMode pred_mode;
 
     uint8_t segment_id;
@@ -297,23 +297,23 @@ typedef struct BlkStruct {
 } BlkStruct;
 #else
 typedef struct BlkStruct {
-    TransformUnit          txb_array[TRANSFORM_UNIT_MAX_COUNT]; // ec
+    TransformUnit txb_array[TRANSFORM_UNIT_MAX_COUNT]; // ec
 #if CLN_BLK_STRUCT_2
-    Mv      mv[MAX_NUM_OF_REF_PIC_LIST]; // 16-bytes
-    uint8_t inter_pred_direction_index;
+    Mv            mv[MAX_NUM_OF_REF_PIC_LIST]; // 16-bytes
+    uint8_t       inter_pred_direction_index;
 
     // Intra Mode
     int8_t           angle_delta[PLANE_TYPES];
     UvPredictionMode intra_chroma_mode;
     // Inter Mode
-    uint8_t    ref_frame_type;
-    MotionMode motion_mode;
-    uint16_t   num_proj_ref;
-    uint32_t   overlappable_neighbors;
-    uint8_t    cfl_alpha_idx; // Index of the alpha Cb and alpha Cr combination
-    uint8_t    cfl_alpha_signs; // Joint sign of alpha Cb and alpha Cr
+    uint8_t                ref_frame_type;
+    MotionMode             motion_mode;
+    uint16_t               num_proj_ref;
+    uint32_t               overlappable_neighbors;
+    uint8_t                cfl_alpha_idx; // Index of the alpha Cb and alpha Cr combination
+    uint8_t                cfl_alpha_signs; // Joint sign of alpha Cb and alpha Cr
 #else
-    PredictionUnit         prediction_unit_array[MAX_NUM_OF_PU_PER_CU]; // ec
+    PredictionUnit           prediction_unit_array[MAX_NUM_OF_PU_PER_CU]; // ec
 #endif
     PaletteInfo           *palette_info; // ec
     uint8_t                palette_mem; // status of palette info alloc
@@ -381,10 +381,10 @@ typedef struct BlkStruct {
     CandidateMv ed_ref_mv_stack[MODE_CTX_REF_FRAMES][MAX_REF_MV_STACK_SIZE];
 #endif
     // only for MD
-    uint8_t* neigh_left_recon[3];
-    uint8_t* neigh_top_recon[3];
-    uint16_t* neigh_left_recon_16bit[3];
-    uint16_t* neigh_top_recon_16bit[3];
+    uint8_t  *neigh_left_recon[3];
+    uint8_t  *neigh_top_recon[3];
+    uint16_t *neigh_left_recon_16bit[3];
+    uint16_t *neigh_top_recon_16bit[3];
     int32_t   quantized_dc[3][MAX_TXB_COUNT];
 
     // wm
@@ -400,14 +400,14 @@ typedef struct BlkStruct {
 #endif
 #if CLN_EC_BLK_STRUCT
 typedef struct EcBlkStruct {
-    MacroBlockD* av1xd;
-    EobData eob;
-    TxType tx_type[MAX_TXB_COUNT];
-    TxType tx_type_uv;
+    MacroBlockD *av1xd;
+    EobData      eob;
+    TxType       tx_type[MAX_TXB_COUNT];
+    TxType       tx_type_uv;
 
-    PaletteInfo* palette_info;
-    uint8_t palette_size[2];
-    IntMv predmv[2];
+    PaletteInfo           *palette_info;
+    uint8_t                palette_size[2];
+    IntMv                  predmv[2];
     InterInterCompoundData interinter_comp;
 
     // Intra Mode
@@ -442,8 +442,8 @@ typedef struct EcBlkStruct {
 typedef struct EcBlkStruct {
 #if CLN_TX_DATA
     EobData eob;
-    TxType tx_type[MAX_TXB_COUNT];
-    TxType tx_type_uv;
+    TxType  tx_type[MAX_TXB_COUNT];
+    TxType  tx_type_uv;
 #else
     EcTransformUnit          txb_array[TRANSFORM_UNIT_MAX_COUNT]; // ec
 #endif
@@ -453,29 +453,29 @@ typedef struct EcBlkStruct {
     // Intra Mode
     int8_t angle_delta[PLANE_TYPES];
     // Inter Mode
-    MotionMode motion_mode;
-    uint16_t   num_proj_ref;
-    uint32_t   overlappable_neighbors;
-    uint8_t    cfl_alpha_idx; // Index of the alpha Cb and alpha Cr combination
-    uint8_t    cfl_alpha_signs; // Joint sign of alpha Cb and alpha Cr
+    MotionMode             motion_mode;
+    uint16_t               num_proj_ref;
+    uint32_t               overlappable_neighbors;
+    uint8_t                cfl_alpha_idx; // Index of the alpha Cb and alpha Cr combination
+    uint8_t                cfl_alpha_signs; // Joint sign of alpha Cb and alpha Cr
 #else
     EcPredictionUnit         prediction_unit_array[MAX_NUM_OF_PU_PER_CU]; // ec
 #endif
 #if CLN_EC_PAL_STRUCT
-    PaletteInfo* palette_info;
+    PaletteInfo           *palette_info;
 #else
     EcPaletteInfo           *palette_info; // ec
 #endif
-    uint8_t                  palette_mem; // status of palette info alloc
-    uint8_t                  palette_size[2];
-    IntMv                    predmv[2]; // ec
-    MacroBlockD             *av1xd;
+    uint8_t                palette_mem; // status of palette info alloc
+    uint8_t                palette_size[2];
+    IntMv                  predmv[2]; // ec
+    MacroBlockD           *av1xd;
 #if CLN_SEG_MASK
     InterInterCompoundData interinter_comp; // ec
 #else
     EcInterInterCompoundData interinter_comp; // ec
 #endif
-    uint8_t                  interintra_wedge_index; // ec
+    uint8_t                interintra_wedge_index; // ec
 
     int16_t inter_mode_ctx;
     // equivalent of leaf_index in the nscu context. we will keep both for now and use the right one

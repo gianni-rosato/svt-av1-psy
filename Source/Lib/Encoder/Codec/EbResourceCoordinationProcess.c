@@ -1101,9 +1101,9 @@ void *svt_aom_resource_coordination_kernel(void *input_ptr) {
                 speed_buffer_control(context_ptr, pcs, scs);
             } else
                 pcs->enc_mode = (EncMode)scs->static_config.enc_mode;
-            //  If the mode of the second pass is not set from CLI, it is set to enc_mode
+                //  If the mode of the second pass is not set from CLI, it is set to enc_mode
 
-            // Pre-Analysis Signal(s) derivation
+                // Pre-Analysis Signal(s) derivation
 #if !OPT_MPASS_VBR4
             if (scs->static_config.pass == ENC_FIRST_PASS)
                 svt_aom_first_pass_sig_deriv_pre_analysis_pcs(pcs);

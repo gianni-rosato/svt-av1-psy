@@ -196,7 +196,7 @@ MotionMode svt_aom_motion_mode_allowed(const PictureControlSet *pcs, uint16_t nu
                                        uint32_t *overlappable_neighbors, const BlockSize bsize, MvReferenceFrame rf0,
                                        MvReferenceFrame rf1, PredictionMode mode);
 #endif
-int        svt_aom_is_masked_compound_type(COMPOUND_TYPE type);
+int svt_aom_is_masked_compound_type(COMPOUND_TYPE type);
 
 int32_t svt_aom_count_primitive_subexpfin(uint16_t n, uint16_t k, uint16_t v);
 int32_t svt_aom_count_primitive_refsubexpfin(uint16_t n, uint16_t k, uint16_t ref, uint16_t v);

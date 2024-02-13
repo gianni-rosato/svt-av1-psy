@@ -3889,7 +3889,7 @@ static uint8_t inter_chroma_4xn_pred(PictureControlSet *pcs, MacroBlockD *xd, Mv
                                      ConvolveParams *conv_params_cb, ConvolveParams *conv_params_cr,
                                      ScaleFactors *sf_identity, uint32_t interp_filters,
 #if CLN_SEG_MASK
-                                     InterInterCompoundData *interinter_comp, uint8_t* seg_mask, uint8_t bit_depth) {
+                                     InterInterCompoundData *interinter_comp, uint8_t *seg_mask, uint8_t bit_depth) {
 #else
                                      InterInterCompoundData *interinter_comp, uint8_t bit_depth) {
 #endif

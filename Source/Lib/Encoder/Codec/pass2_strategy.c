@@ -883,7 +883,7 @@ static void process_first_pass_stats(PictureParentControlSet *pcs, FIRSTPASS_STA
     RATE_CONTROL *const         rc      = &enc_ctx->rc;
     const RateControlCfg *const rc_cfg  = &enc_ctx->rc_cfg;
 #if !OPT_MPASS_VBR2
-    uint32_t                    mb_rows;
+    uint32_t mb_rows;
     if (scs->mid_pass_ctrls.ds) {
         mb_rows = 2 * (scs->max_input_luma_height + 16 - 1) / 16;
     } else {
@@ -1337,7 +1337,7 @@ void svt_av1_init_second_pass(SequenceControlSet *scs) {
         twopass->stats_buf_ctx->stats_in_end->stat_struct.total_num_bits = total_num_bits;
     }
     svt_aom_set_rc_param(scs);
-    stats = twopass->stats_buf_ctx->total_stats;
+    stats                                     = twopass->stats_buf_ctx->total_stats;
     *stats                                    = *twopass->stats_buf_ctx->stats_in_end;
     *twopass->stats_buf_ctx->total_left_stats = *stats;
 

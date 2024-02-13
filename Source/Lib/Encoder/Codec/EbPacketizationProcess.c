@@ -452,8 +452,8 @@ static inline EbErrorType malloc_p_buffer(EbBufferHeaderType *output_stream_ptr)
     return EB_ErrorNone;
 }
 #if OPT_MPASS_VBR3
-void update_firstpass_stats(PictureParentControlSet *pcs, const int frame_number,
-    const double ts_duration, StatStruct *stat_struct);
+void update_firstpass_stats(PictureParentControlSet *pcs, const int frame_number, const double ts_duration,
+                            StatStruct *stat_struct);
 void svt_av1_end_first_pass(PictureParentControlSet *pcs);
 #endif
 /* Realloc when bitstream pointer size is not enough to write data of size sz */
@@ -868,11 +868,7 @@ void *svt_aom_packetization_kernel(void *input_ptr) {
 #else
             if (scs->static_config.pass == ENC_MIDDLE_PASS) {
 #endif
-                update_firstpass_stats(
-                    pcs->ppcs,
-                    (const int)pcs->picture_number,
-                    pcs->ppcs->ts_duration,
-                    &stat_struct);
+                update_firstpass_stats(pcs->ppcs, (const int)pcs->picture_number, pcs->ppcs->ts_duration, &stat_struct);
                 if (ppcs->end_of_sequence_flag)
                     svt_av1_end_first_pass(ppcs);
             }

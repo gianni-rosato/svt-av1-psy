@@ -487,11 +487,11 @@ static int32_t av1_write_coeffs_txb_1d(PictureParentControlSet *ppcs, FRAME_CONT
                                        int16_t dc_sign_ctx, int16_t eob) {
     (void)pu_index;
     (void)coeff_stride;
-    const TxSize           txs_ctx    = (TxSize)((txsize_sqr_map[tx_size] + txsize_sqr_up_map[tx_size] + 1) >> 1);
+    const TxSize txs_ctx = (TxSize)((txsize_sqr_map[tx_size] + txsize_sqr_up_map[tx_size] + 1) >> 1);
 #if CLN_TX_DATA
-    TxType                 tx_type = component_type == COMPONENT_LUMA ? blk_ptr->tx_type[txb_index] : blk_ptr->tx_type_uv;
+    TxType tx_type = component_type == COMPONENT_LUMA ? blk_ptr->tx_type[txb_index] : blk_ptr->tx_type_uv;
 #else
-    TxType                 tx_type    = blk_ptr->txb_array[txb_index].transform_type[component_type];
+    TxType tx_type = blk_ptr->txb_array[txb_index].transform_type[component_type];
 #endif
     const ScanOrder *const scan_order = &av1_scan_orders[tx_size][tx_type];
     const int16_t *const   scan       = scan_order->scan;
@@ -510,7 +510,8 @@ static int32_t av1_write_coeffs_txb_1d(PictureParentControlSet *ppcs, FRAME_CONT
 
 #if CLN_TX_DATA
     assert(IMPLIES((component_type == 0 && eob == 0), tx_type == DCT_DCT));
-    assert(IMPLIES((is_inter_mode(mbmi->block_mi.mode) && component_type == 0 && eob == 0 && txb_index == 0), blk_ptr->tx_type_uv == DCT_DCT));
+    assert(IMPLIES((is_inter_mode(mbmi->block_mi.mode) && component_type == 0 && eob == 0 && txb_index == 0),
+                   blk_ptr->tx_type_uv == DCT_DCT));
 #else
     if (component_type == 0 && eob == 0) {
         // INTER. Chroma follows Luma in transform type
@@ -1338,19 +1339,19 @@ MotionMode svt_aom_motion_mode_allowed(const PictureControlSet *pcs, uint16_t nu
 static void write_motion_mode(FRAME_CONTEXT *frame_context, AomWriter *ec_writer, BlockSize bsize, MbModeInfo *mbmi,
                               MotionMode motion_mode, MvReferenceFrame rf0, MvReferenceFrame rf1, EcBlkStruct *blk_ptr,
                               PictureControlSet *pcs) {
-    MotionMode last_motion_mode_allowed = svt_aom_motion_mode_allowed(
-        pcs,
+    MotionMode last_motion_mode_allowed = svt_aom_motion_mode_allowed(pcs,
 #if CLN_BLK_STRUCT_2
-        blk_ptr->num_proj_ref,
-        blk_ptr->overlappable_neighbors,
+                                                                      blk_ptr->num_proj_ref,
+                                                                      blk_ptr->overlappable_neighbors,
 #else
-        blk_ptr->prediction_unit_array[0].num_proj_ref,
-        blk_ptr->prediction_unit_array[0].overlappable_neighbors,
+                                                                      blk_ptr->prediction_unit_array[0].num_proj_ref,
+                                                                      blk_ptr->prediction_unit_array[0]
+                                                                          .overlappable_neighbors,
 #endif
-        bsize,
-        rf0,
-        rf1,
-        mbmi->block_mi.mode);
+                                                                      bsize,
+                                                                      rf0,
+                                                                      rf1,
+                                                                      mbmi->block_mi.mode);
     switch (last_motion_mode_allowed) {
     case SIMPLE_TRANSLATION: break;
     case OBMC_CAUSAL: aom_write_symbol(ec_writer, motion_mode == OBMC_CAUSAL, frame_context->obmc_cdf[bsize], 2); break;
@@ -4797,9 +4798,9 @@ void write_segment_id(PictureControlSet *pcs, FRAME_CONTEXT *frame_context, AomW
     SegmentationParams *segmentation_params = &pcs->ppcs->frm_hdr.segmentation_params;
     if (!segmentation_params->segmentation_enabled)
         return;
-    MbModeInfo* mbmi = get_mbmi(pcs, blk_org_x, blk_org_y);
-    int       cdf_num;
-    const int spatial_pred = svt_av1_get_spatial_seg_prediction(pcs, blk_ptr->av1xd, blk_org_x, blk_org_y, &cdf_num);
+    MbModeInfo *mbmi = get_mbmi(pcs, blk_org_x, blk_org_y);
+    int         cdf_num;
+    const int   spatial_pred = svt_av1_get_spatial_seg_prediction(pcs, blk_ptr->av1xd, blk_org_x, blk_org_y, &cdf_num);
     if (skip_coeff) {
         svt_av1_update_segmentation_map(pcs, bsize, blk_org_x, blk_org_y, spatial_pred);
         mbmi->block_mi.segment_id = spatial_pred;

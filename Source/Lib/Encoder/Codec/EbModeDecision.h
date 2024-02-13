@@ -133,10 +133,10 @@ typedef struct ModeDecisionCandidateBuffer {
     uint16_t  cnt_nz_coeff;
 #if CLN_QUANT_ONE_BYTE
     QuantDcData quant_dc;
-    EobData eob;
+    EobData     eob;
 #else
-    uint16_t  eob[MAX_MB_PLANE][MAX_TXB_COUNT];
-    int32_t   quantized_dc[MAX_MB_PLANE][MAX_TXB_COUNT];
+    uint16_t eob[MAX_MB_PLANE][MAX_TXB_COUNT];
+    int32_t  quantized_dc[MAX_MB_PLANE][MAX_TXB_COUNT];
 #endif
     uint8_t   block_has_coeff;
     uint8_t   u_has_coeff;

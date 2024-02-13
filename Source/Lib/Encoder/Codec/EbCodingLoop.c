@@ -30,12 +30,12 @@
 #include "EbPackUnPack_C.h"
 #include "EbEncInterPrediction.h"
 
-void     svt_aom_get_recon_pic(PictureControlSet *pcs, EbPictureBufferDesc **recon_ptr, Bool is_highbd);
-#if ! CLN_MD_LOOP
+void svt_aom_get_recon_pic(PictureControlSet *pcs, EbPictureBufferDesc **recon_ptr, Bool is_highbd);
+#if !CLN_MD_LOOP
 uint32_t svt_aom_get_tot_1d_blks(struct ModeDecisionContext *ctx, const int32_t sq_size, const uint8_t disallow_nsq);
 #endif
-void     aom_av1_set_ssim_rdmult(struct ModeDecisionContext *ctx, PictureControlSet *pcs, const int mi_row,
-                                 const int mi_col);
+void               aom_av1_set_ssim_rdmult(struct ModeDecisionContext *ctx, PictureControlSet *pcs, const int mi_row,
+                                           const int mi_col);
 static EbErrorType ec_rtime_alloc_palette_info(EcBlkStruct *md_blk_arr_nsq) {
     EB_MALLOC_ARRAY(md_blk_arr_nsq->palette_info, 1);
     EB_MALLOC_ARRAY(md_blk_arr_nsq->palette_info->color_idx_map, MAX_PALETTE_SQUARE);
@@ -59,8 +59,8 @@ typedef void (*EbAv1EncodeLoopFuncPtr)(PictureControlSet *pcs, EncDecContext *ed
                                        EbPictureBufferDesc *coeff_samples_sb, // sb based
                                        EbPictureBufferDesc *residual16bit, // no basis/offset
                                        EbPictureBufferDesc *transform16bit, // no basis/offset
-                                       EbPictureBufferDesc *inverse_quant_buffer,
-                                       uint32_t component_mask, uint16_t *eob);
+                                       EbPictureBufferDesc *inverse_quant_buffer, uint32_t component_mask,
+                                       uint16_t *eob);
 #else
 typedef void (*EbAv1EncodeLoopFuncPtr)(PictureControlSet *pcs, EncDecContext *ed_ctx, SuperBlock *sb_ptr,
                                        uint32_t org_x, uint32_t org_y,
@@ -214,13 +214,14 @@ static void encode_pass_update_recon_sample_neighbour_arrays(
 *   pred_samples - predicted chroma samples for cb and cr
 *
 **********************************************************/
-static void av1_encode_generate_cfl_prediction(EbPictureBufferDesc* pred_samples, EncDecContext* ed_ctx, uint32_t pred_cb_offset, uint32_t pred_cr_offset,
-    uint32_t round_origin_x, uint32_t round_origin_y) {
-    Bool is_16bit = ed_ctx->is_16bit;
-    const BlockGeom* blk_geom = ed_ctx->blk_geom;
-    BlkStruct* blk_ptr = ed_ctx->blk_ptr;
+static void av1_encode_generate_cfl_prediction(EbPictureBufferDesc *pred_samples, EncDecContext *ed_ctx,
+                                               uint32_t pred_cb_offset, uint32_t pred_cr_offset,
+                                               uint32_t round_origin_x, uint32_t round_origin_y) {
+    Bool             is_16bit = ed_ctx->is_16bit;
+    const BlockGeom *blk_geom = ed_ctx->blk_geom;
+    BlkStruct       *blk_ptr  = ed_ctx->blk_ptr;
 
-    EbPictureBufferDesc* recon_samples = pred_samples;
+    EbPictureBufferDesc *recon_samples = pred_samples;
 
     uint32_t recon_luma_offset = (recon_samples->org_y + round_origin_y) * recon_samples->stride_y +
         (recon_samples->org_x + round_origin_x);
@@ -228,84 +229,77 @@ static void av1_encode_generate_cfl_prediction(EbPictureBufferDesc* pred_samples
     // Down sample Luma
     if (is_16bit) {
         svt_cfl_luma_subsampling_420_hbd(
-            ((uint16_t*)recon_samples->buffer_y) + recon_luma_offset,
+            ((uint16_t *)recon_samples->buffer_y) + recon_luma_offset,
             recon_samples->stride_y,
             ed_ctx->md_ctx->pred_buf_q3,
-            blk_geom->bwidth_uv == blk_geom->bwidth ? (blk_geom->bwidth_uv << 1)
-            : blk_geom->bwidth,
-            blk_geom->bheight_uv == blk_geom->bheight ? (blk_geom->bheight_uv << 1)
-            : blk_geom->bheight);
-    }
-    else {
+            blk_geom->bwidth_uv == blk_geom->bwidth ? (blk_geom->bwidth_uv << 1) : blk_geom->bwidth,
+            blk_geom->bheight_uv == blk_geom->bheight ? (blk_geom->bheight_uv << 1) : blk_geom->bheight);
+    } else {
         svt_cfl_luma_subsampling_420_lbd(
             recon_samples->buffer_y + recon_luma_offset,
             recon_samples->stride_y,
             ed_ctx->md_ctx->pred_buf_q3,
-            blk_geom->bwidth_uv == blk_geom->bwidth ? (blk_geom->bwidth_uv << 1)
-            : blk_geom->bwidth,
-            blk_geom->bheight_uv == blk_geom->bheight ? (blk_geom->bheight_uv << 1)
-            : blk_geom->bheight);
+            blk_geom->bwidth_uv == blk_geom->bwidth ? (blk_geom->bwidth_uv << 1) : blk_geom->bwidth,
+            blk_geom->bheight_uv == blk_geom->bheight ? (blk_geom->bheight_uv << 1) : blk_geom->bheight);
     }
 
-    int32_t round_offset = ((blk_geom->tx_width_uv[blk_ptr->tx_depth]) *
-        (blk_geom->tx_height_uv[blk_ptr->tx_depth])) /
+    int32_t round_offset = ((blk_geom->tx_width_uv[blk_ptr->tx_depth]) * (blk_geom->tx_height_uv[blk_ptr->tx_depth])) /
         2;
 
-    svt_subtract_average(ed_ctx->md_ctx->pred_buf_q3,
+    svt_subtract_average(
+        ed_ctx->md_ctx->pred_buf_q3,
         blk_geom->tx_width_uv[blk_ptr->tx_depth],
         blk_geom->tx_height_uv[blk_ptr->tx_depth],
         round_offset,
-        svt_log2f(blk_geom->tx_width_uv[blk_ptr->tx_depth]) +
-        svt_log2f(blk_geom->tx_height_uv[blk_ptr->tx_depth]));
+        svt_log2f(blk_geom->tx_width_uv[blk_ptr->tx_depth]) + svt_log2f(blk_geom->tx_height_uv[blk_ptr->tx_depth]));
 
     int32_t alpha_q3_cb = cfl_idx_to_alpha(blk_ptr->cfl_alpha_idx,
-        blk_ptr->cfl_alpha_signs,
-        CFL_PRED_U); // once for U, once for V
+                                           blk_ptr->cfl_alpha_signs,
+                                           CFL_PRED_U); // once for U, once for V
     int32_t alpha_q3_cr = cfl_idx_to_alpha(blk_ptr->cfl_alpha_idx,
-        blk_ptr->cfl_alpha_signs,
-        CFL_PRED_V); // once for U, once for V
+                                           blk_ptr->cfl_alpha_signs,
+                                           CFL_PRED_V); // once for U, once for V
 
     if (is_16bit) {
         svt_cfl_predict_hbd(ed_ctx->md_ctx->pred_buf_q3,
-            ((uint16_t*)pred_samples->buffer_cb) + pred_cb_offset,
-            pred_samples->stride_cb,
-            ((uint16_t*)pred_samples->buffer_cb) + pred_cb_offset,
-            pred_samples->stride_cb,
-            alpha_q3_cb,
-            ed_ctx->bit_depth,
-            blk_geom->tx_width_uv[blk_ptr->tx_depth],
-            blk_geom->tx_height_uv[blk_ptr->tx_depth]);
+                            ((uint16_t *)pred_samples->buffer_cb) + pred_cb_offset,
+                            pred_samples->stride_cb,
+                            ((uint16_t *)pred_samples->buffer_cb) + pred_cb_offset,
+                            pred_samples->stride_cb,
+                            alpha_q3_cb,
+                            ed_ctx->bit_depth,
+                            blk_geom->tx_width_uv[blk_ptr->tx_depth],
+                            blk_geom->tx_height_uv[blk_ptr->tx_depth]);
 
         svt_cfl_predict_hbd(ed_ctx->md_ctx->pred_buf_q3,
-            ((uint16_t*)pred_samples->buffer_cr) + pred_cr_offset,
-            pred_samples->stride_cr,
-            ((uint16_t*)pred_samples->buffer_cr) + pred_cr_offset,
-            pred_samples->stride_cr,
-            alpha_q3_cr,
-            ed_ctx->bit_depth,
-            blk_geom->tx_width_uv[blk_ptr->tx_depth],
-            blk_geom->tx_height_uv[blk_ptr->tx_depth]);
-    }
-    else {
+                            ((uint16_t *)pred_samples->buffer_cr) + pred_cr_offset,
+                            pred_samples->stride_cr,
+                            ((uint16_t *)pred_samples->buffer_cr) + pred_cr_offset,
+                            pred_samples->stride_cr,
+                            alpha_q3_cr,
+                            ed_ctx->bit_depth,
+                            blk_geom->tx_width_uv[blk_ptr->tx_depth],
+                            blk_geom->tx_height_uv[blk_ptr->tx_depth]);
+    } else {
         svt_cfl_predict_lbd(ed_ctx->md_ctx->pred_buf_q3,
-            pred_samples->buffer_cb + pred_cb_offset,
-            pred_samples->stride_cb,
-            pred_samples->buffer_cb + pred_cb_offset,
-            pred_samples->stride_cb,
-            alpha_q3_cb,
-            8,
-            blk_geom->tx_width_uv[blk_ptr->tx_depth],
-            blk_geom->tx_height_uv[blk_ptr->tx_depth]);
+                            pred_samples->buffer_cb + pred_cb_offset,
+                            pred_samples->stride_cb,
+                            pred_samples->buffer_cb + pred_cb_offset,
+                            pred_samples->stride_cb,
+                            alpha_q3_cb,
+                            8,
+                            blk_geom->tx_width_uv[blk_ptr->tx_depth],
+                            blk_geom->tx_height_uv[blk_ptr->tx_depth]);
 
         svt_cfl_predict_lbd(ed_ctx->md_ctx->pred_buf_q3,
-            pred_samples->buffer_cr + pred_cr_offset,
-            pred_samples->stride_cr,
-            pred_samples->buffer_cr + pred_cr_offset,
-            pred_samples->stride_cr,
-            alpha_q3_cr,
-            8,
-            blk_geom->tx_width_uv[blk_ptr->tx_depth],
-            blk_geom->tx_height_uv[blk_ptr->tx_depth]);
+                            pred_samples->buffer_cr + pred_cr_offset,
+                            pred_samples->stride_cr,
+                            pred_samples->buffer_cr + pred_cr_offset,
+                            pred_samples->stride_cr,
+                            alpha_q3_cr,
+                            8,
+                            blk_geom->tx_width_uv[blk_ptr->tx_depth],
+                            blk_geom->tx_height_uv[blk_ptr->tx_depth]);
     }
 }
 
@@ -328,56 +322,51 @@ static void av1_encode_generate_cfl_prediction(EbPictureBufferDesc* pred_samples
 *
 **********************************************************/
 static void av1_encode_loop(PictureControlSet *pcs, EncDecContext *ed_ctx, SuperBlock *sb_ptr, uint32_t org_x,
-                                  uint32_t             org_y,
-                                  EbPictureBufferDesc *pred_samples, // no basis/offset
-                                  EbPictureBufferDesc *coeff_samples_sb, // sb based
-                                  EbPictureBufferDesc *residual16bit, // no basis/offset
-                                  EbPictureBufferDesc *transform16bit, // no basis/offset
-                                  EbPictureBufferDesc *inverse_quant_buffer,
-                                  uint32_t component_mask, uint16_t *eob)
+                            uint32_t             org_y,
+                            EbPictureBufferDesc *pred_samples, // no basis/offset
+                            EbPictureBufferDesc *coeff_samples_sb, // sb based
+                            EbPictureBufferDesc *residual16bit, // no basis/offset
+                            EbPictureBufferDesc *transform16bit, // no basis/offset
+                            EbPictureBufferDesc *inverse_quant_buffer, uint32_t component_mask, uint16_t *eob)
 
 {
-    ModeDecisionContext* md_ctx         = ed_ctx->md_ctx;
-    const BlockGeom*     blk_geom       = ed_ctx->blk_geom;
-    BlkStruct*           blk_ptr        = ed_ctx->blk_ptr;
-    const uint32_t       qindex         = blk_ptr->qindex;
-    const Bool           is_16bit       = ed_ctx->is_16bit;
-    const uint32_t       bit_depth      = ed_ctx->bit_depth;
-    EbPictureBufferDesc* input_samples  = is_16bit ? ed_ctx->input_sample16bit_buffer : ed_ctx->input_samples;
+    ModeDecisionContext *md_ctx        = ed_ctx->md_ctx;
+    const BlockGeom     *blk_geom      = ed_ctx->blk_geom;
+    BlkStruct           *blk_ptr       = ed_ctx->blk_ptr;
+    const uint32_t       qindex        = blk_ptr->qindex;
+    const Bool           is_16bit      = ed_ctx->is_16bit;
+    const uint32_t       bit_depth     = ed_ctx->bit_depth;
+    EbPictureBufferDesc *input_samples = is_16bit ? ed_ctx->input_sample16bit_buffer : ed_ctx->input_samples;
 
-    const bool is_inter = (blk_ptr->prediction_mode_flag == INTER_MODE || blk_ptr->use_intrabc) ? TRUE : FALSE;
-    const uint32_t       round_origin_x = (org_x >> 3) << 3; // for Chroma blocks with size of 4
-    const uint32_t       round_origin_y = (org_y >> 3) << 3; // for Chroma blocks with size of 4
-    const uint8_t tx_org_x = blk_geom->tx_org_x[is_inter][blk_ptr->tx_depth][ed_ctx->txb_itr];
-    const uint8_t tx_org_y = blk_geom->tx_org_y[is_inter][blk_ptr->tx_depth][ed_ctx->txb_itr];
-    const int32_t seg_qp = pcs->ppcs->frm_hdr.segmentation_params.segmentation_enabled
-        ? pcs->ppcs->frm_hdr.segmentation_params.feature_data[ed_ctx->blk_ptr->segment_id][SEG_LVL_ALT_Q]
-        : 0;
+    const bool     is_inter = (blk_ptr->prediction_mode_flag == INTER_MODE || blk_ptr->use_intrabc) ? TRUE : FALSE;
+    const uint32_t round_origin_x = (org_x >> 3) << 3; // for Chroma blocks with size of 4
+    const uint32_t round_origin_y = (org_y >> 3) << 3; // for Chroma blocks with size of 4
+    const uint8_t  tx_org_x       = blk_geom->tx_org_x[is_inter][blk_ptr->tx_depth][ed_ctx->txb_itr];
+    const uint8_t  tx_org_y       = blk_geom->tx_org_y[is_inter][blk_ptr->tx_depth][ed_ctx->txb_itr];
+    const int32_t  seg_qp         = pcs->ppcs->frm_hdr.segmentation_params.segmentation_enabled
+                 ? pcs->ppcs->frm_hdr.segmentation_params.feature_data[ed_ctx->blk_ptr->segment_id][SEG_LVL_ALT_Q]
+                 : 0;
 
     uint32_t input_luma_offset, input_cb_offset, input_cr_offset;
     uint32_t pred_luma_offset, pred_cb_offset, pred_cr_offset;
     uint32_t scratch_luma_offset, scratch_cb_offset, scratch_cr_offset;
     if (is_16bit) {
         input_luma_offset = tx_org_x + tx_org_y * SB_STRIDE_Y;
-        input_cb_offset = ROUND_UV(tx_org_x) / 2 + ROUND_UV(tx_org_y) / 2 * SB_STRIDE_UV;
-        input_cr_offset = ROUND_UV(tx_org_x) / 2 + ROUND_UV(tx_org_y) / 2 * SB_STRIDE_UV;
-        pred_luma_offset = ((pred_samples->org_y + org_y) * pred_samples->stride_y) +
-            (pred_samples->org_x + org_x);
-        pred_cb_offset = ((pred_samples->org_x + round_origin_x) >> 1) +
+        input_cb_offset   = ROUND_UV(tx_org_x) / 2 + ROUND_UV(tx_org_y) / 2 * SB_STRIDE_UV;
+        input_cr_offset   = ROUND_UV(tx_org_x) / 2 + ROUND_UV(tx_org_y) / 2 * SB_STRIDE_UV;
+        pred_luma_offset  = ((pred_samples->org_y + org_y) * pred_samples->stride_y) + (pred_samples->org_x + org_x);
+        pred_cb_offset    = ((pred_samples->org_x + round_origin_x) >> 1) +
             (((pred_samples->org_y + round_origin_y) >> 1) * pred_samples->stride_cb);
         pred_cr_offset = ((pred_samples->org_x + round_origin_x) >> 1) +
             (((pred_samples->org_y + round_origin_y) >> 1) * pred_samples->stride_cr);
-    }
-    else {
-        input_luma_offset = ((org_y + input_samples->org_y) * input_samples->stride_y) +
-            (org_x + input_samples->org_x);
-        input_cb_offset = (((round_origin_y + input_samples->org_y) >> 1) * input_samples->stride_cb) +
+    } else {
+        input_luma_offset = ((org_y + input_samples->org_y) * input_samples->stride_y) + (org_x + input_samples->org_x);
+        input_cb_offset   = (((round_origin_y + input_samples->org_y) >> 1) * input_samples->stride_cb) +
             ((round_origin_x + input_samples->org_x) >> 1);
         input_cr_offset = (((round_origin_y + input_samples->org_y) >> 1) * input_samples->stride_cr) +
             ((round_origin_x + input_samples->org_x) >> 1);
-        pred_luma_offset = (pred_samples->org_x + org_x) +
-            ((pred_samples->org_y + org_y) * pred_samples->stride_y);
-        pred_cb_offset = ((pred_samples->org_x + round_origin_x) >> 1) +
+        pred_luma_offset = (pred_samples->org_x + org_x) + ((pred_samples->org_y + org_y) * pred_samples->stride_y);
+        pred_cb_offset   = ((pred_samples->org_x + round_origin_x) >> 1) +
             (((pred_samples->org_y + round_origin_y) >> 1) * pred_samples->stride_cb);
         pred_cr_offset = ((pred_samples->org_x + round_origin_x) >> 1) +
             (((pred_samples->org_y + round_origin_y) >> 1) * pred_samples->stride_cr);
@@ -385,14 +374,12 @@ static void av1_encode_loop(PictureControlSet *pcs, EncDecContext *ed_ctx, Super
 
     if (bit_depth != EB_EIGHT_BIT) {
         scratch_luma_offset = blk_geom->org_x + blk_geom->org_y * SB_STRIDE_Y;
-        scratch_cb_offset = ROUND_UV(blk_geom->org_x) / 2 +
-            ROUND_UV(blk_geom->org_y) / 2 * SB_STRIDE_UV;
-        scratch_cr_offset = ROUND_UV(ed_ctx->blk_geom->org_x) / 2 +
-            ROUND_UV(blk_geom->org_y) / 2 * SB_STRIDE_UV;
+        scratch_cb_offset   = ROUND_UV(blk_geom->org_x) / 2 + ROUND_UV(blk_geom->org_y) / 2 * SB_STRIDE_UV;
+        scratch_cr_offset   = ROUND_UV(ed_ctx->blk_geom->org_x) / 2 + ROUND_UV(blk_geom->org_y) / 2 * SB_STRIDE_UV;
     } else {
         scratch_luma_offset = tx_org_x + tx_org_y * SB_STRIDE_Y;
-        scratch_cb_offset = ROUND_UV(tx_org_x) / 2 + ROUND_UV(tx_org_y) / 2 * SB_STRIDE_UV;
-        scratch_cr_offset = ROUND_UV(tx_org_x) / 2 + ROUND_UV(tx_org_y) / 2 * SB_STRIDE_UV;
+        scratch_cb_offset   = ROUND_UV(tx_org_x) / 2 + ROUND_UV(tx_org_y) / 2 * SB_STRIDE_UV;
+        scratch_cr_offset   = ROUND_UV(tx_org_x) / 2 + ROUND_UV(tx_org_y) / 2 * SB_STRIDE_UV;
     }
     ed_ctx->three_quad_energy = 0;
 
@@ -403,11 +390,11 @@ static void av1_encode_loop(PictureControlSet *pcs, EncDecContext *ed_ctx, Super
         //Get the new lambda for current block
         svt_aom_set_tuned_blk_lambda(md_ctx, pcs);
     } else if (pcs->ppcs->scs->static_config.tune == 2) {
-        md_ctx->blk_geom = ed_ctx->blk_geom;
+        md_ctx->blk_geom  = ed_ctx->blk_geom;
         md_ctx->blk_org_x = ed_ctx->blk_org_x;
         md_ctx->blk_org_y = ed_ctx->blk_org_y;
-        int mi_row = ed_ctx->blk_org_y / 4;
-        int mi_col = ed_ctx->blk_org_x / 4;
+        int mi_row        = ed_ctx->blk_org_y / 4;
+        int mi_col        = ed_ctx->blk_org_x / 4;
         aom_av1_set_ssim_rdmult(md_ctx, pcs, mi_row, mi_col);
     }
 
@@ -416,51 +403,50 @@ static void av1_encode_loop(PictureControlSet *pcs, EncDecContext *ed_ctx, Super
     //**********************************
     if (component_mask == PICTURE_BUFFER_DESC_FULL_MASK || component_mask == PICTURE_BUFFER_DESC_LUMA_MASK) {
         if (ed_ctx->md_skip_blk) {
-            eob[0] = 0;
+            eob[0]                               = 0;
             blk_ptr->quant_dc.y[ed_ctx->txb_itr] = 0;
         } else {
             svt_aom_residual_kernel(input_samples->buffer_y,
-                input_luma_offset,
-                input_samples->stride_y,
-                pred_samples->buffer_y,
-                pred_luma_offset,
-                pred_samples->stride_y,
-                ((int16_t*)residual16bit->buffer_y),
-                scratch_luma_offset,
-                residual16bit->stride_y,
-                is_16bit, // hbd
-                blk_geom->tx_width[blk_ptr->tx_depth],
-                blk_geom->tx_height[blk_ptr->tx_depth]);
+                                    input_luma_offset,
+                                    input_samples->stride_y,
+                                    pred_samples->buffer_y,
+                                    pred_luma_offset,
+                                    pred_samples->stride_y,
+                                    ((int16_t *)residual16bit->buffer_y),
+                                    scratch_luma_offset,
+                                    residual16bit->stride_y,
+                                    is_16bit, // hbd
+                                    blk_geom->tx_width[blk_ptr->tx_depth],
+                                    blk_geom->tx_height[blk_ptr->tx_depth]);
             svt_aom_estimate_transform(((int16_t *)residual16bit->buffer_y) + scratch_luma_offset,
-                                        residual16bit->stride_y,
-                                        ((TranLow *)transform16bit->buffer_y) + ed_ctx->coded_area_sb,
-                                        NOT_USED_VALUE,
-                                        blk_geom->txsize[blk_ptr->tx_depth],
-                                        &ed_ctx->three_quad_energy,
-                                        bit_depth,
-                                        blk_ptr->tx_type[ed_ctx->txb_itr],
-                                        PLANE_TYPE_Y,
-                                        DEFAULT_SHAPE);
+                                       residual16bit->stride_y,
+                                       ((TranLow *)transform16bit->buffer_y) + ed_ctx->coded_area_sb,
+                                       NOT_USED_VALUE,
+                                       blk_geom->txsize[blk_ptr->tx_depth],
+                                       &ed_ctx->three_quad_energy,
+                                       bit_depth,
+                                       blk_ptr->tx_type[ed_ctx->txb_itr],
+                                       PLANE_TYPE_Y,
+                                       DEFAULT_SHAPE);
 
-            blk_ptr->quant_dc.y[ed_ctx->txb_itr] =
-                svt_aom_quantize_inv_quantize(
-                    sb_ptr->pcs,
-                    md_ctx,
-                    ((int32_t*)transform16bit->buffer_y) + ed_ctx->coded_area_sb,
-                    ((int32_t*)coeff_samples_sb->buffer_y) + ed_ctx->coded_area_sb,
-                    ((int32_t*)inverse_quant_buffer->buffer_y) + ed_ctx->coded_area_sb,
-                    qindex,
-                    seg_qp,
-                    blk_geom->txsize[blk_ptr->tx_depth],
-                    &eob[0],
-                    COMPONENT_LUMA,
-                    bit_depth,
-                    blk_ptr->tx_type[ed_ctx->txb_itr],
-                    md_ctx->luma_txb_skip_context,
-                    md_ctx->luma_dc_sign_context,
-                    blk_ptr->pred_mode,
-                    md_ctx->full_lambda_md[(bit_depth == EB_TEN_BIT) ? EB_10_BIT_MD : EB_8_BIT_MD],
-                    TRUE);
+            blk_ptr->quant_dc.y[ed_ctx->txb_itr] = svt_aom_quantize_inv_quantize(
+                sb_ptr->pcs,
+                md_ctx,
+                ((int32_t *)transform16bit->buffer_y) + ed_ctx->coded_area_sb,
+                ((int32_t *)coeff_samples_sb->buffer_y) + ed_ctx->coded_area_sb,
+                ((int32_t *)inverse_quant_buffer->buffer_y) + ed_ctx->coded_area_sb,
+                qindex,
+                seg_qp,
+                blk_geom->txsize[blk_ptr->tx_depth],
+                &eob[0],
+                COMPONENT_LUMA,
+                bit_depth,
+                blk_ptr->tx_type[ed_ctx->txb_itr],
+                md_ctx->luma_txb_skip_context,
+                md_ctx->luma_dc_sign_context,
+                blk_ptr->pred_mode,
+                md_ctx->full_lambda_md[(bit_depth == EB_TEN_BIT) ? EB_10_BIT_MD : EB_8_BIT_MD],
+                TRUE);
         }
 
         blk_ptr->y_has_coeff |= (eob[0] > 0) << ed_ctx->txb_itr;
@@ -480,110 +466,108 @@ static void av1_encode_loop(PictureControlSet *pcs, EncDecContext *ed_ctx, Super
         // samples. The recon luma samples must be from a previous call to av1_encode_loop/av1_encode_generate_recon
         // because this function does not generate reconstructed samples.
         if (blk_ptr->prediction_mode_flag == INTRA_MODE && blk_ptr->intra_chroma_mode == UV_CFL_PRED) {
-            av1_encode_generate_cfl_prediction(pred_samples, ed_ctx, pred_cb_offset, pred_cr_offset,
-                round_origin_x, round_origin_y);
+            av1_encode_generate_cfl_prediction(
+                pred_samples, ed_ctx, pred_cb_offset, pred_cr_offset, round_origin_x, round_origin_y);
         }
 
         //**********************************
         // Chroma
         //**********************************
         if (ed_ctx->md_skip_blk) {
-            eob[1] = 0;
+            eob[1]                               = 0;
             blk_ptr->quant_dc.u[ed_ctx->txb_itr] = 0;
-            eob[2] = 0;
+            eob[2]                               = 0;
             blk_ptr->quant_dc.v[ed_ctx->txb_itr] = 0;
         } else {
             //**********************************
             // Cb
             //**********************************
             svt_aom_residual_kernel(input_samples->buffer_cb,
-                input_cb_offset,
-                input_samples->stride_cb,
-                pred_samples->buffer_cb,
-                pred_cb_offset,
-                pred_samples->stride_cb,
-                ((int16_t*)residual16bit->buffer_cb),
-                scratch_cb_offset,
-                residual16bit->stride_cb,
-                is_16bit, // hbd
-                blk_geom->tx_width_uv[blk_ptr->tx_depth],
-                blk_geom->tx_height_uv[blk_ptr->tx_depth]);
+                                    input_cb_offset,
+                                    input_samples->stride_cb,
+                                    pred_samples->buffer_cb,
+                                    pred_cb_offset,
+                                    pred_samples->stride_cb,
+                                    ((int16_t *)residual16bit->buffer_cb),
+                                    scratch_cb_offset,
+                                    residual16bit->stride_cb,
+                                    is_16bit, // hbd
+                                    blk_geom->tx_width_uv[blk_ptr->tx_depth],
+                                    blk_geom->tx_height_uv[blk_ptr->tx_depth]);
             svt_aom_estimate_transform(((int16_t *)residual16bit->buffer_cb) + scratch_cb_offset,
-                                        residual16bit->stride_cb,
-                                        ((TranLow *)transform16bit->buffer_cb) + ed_ctx->coded_area_sb_uv,
-                                        NOT_USED_VALUE,
-                                        blk_geom->txsize_uv[blk_ptr->tx_depth],
-                                        &ed_ctx->three_quad_energy,
-                                        bit_depth,
-                                        blk_ptr->tx_type_uv,
-                                        PLANE_TYPE_UV,
-                                        DEFAULT_SHAPE);
+                                       residual16bit->stride_cb,
+                                       ((TranLow *)transform16bit->buffer_cb) + ed_ctx->coded_area_sb_uv,
+                                       NOT_USED_VALUE,
+                                       blk_geom->txsize_uv[blk_ptr->tx_depth],
+                                       &ed_ctx->three_quad_energy,
+                                       bit_depth,
+                                       blk_ptr->tx_type_uv,
+                                       PLANE_TYPE_UV,
+                                       DEFAULT_SHAPE);
 
-            blk_ptr->quant_dc.u[ed_ctx->txb_itr] =
-                svt_aom_quantize_inv_quantize(
-                    sb_ptr->pcs,
-                    md_ctx,
-                    ((int32_t*)transform16bit->buffer_cb) + ed_ctx->coded_area_sb_uv,
-                    ((int32_t*)coeff_samples_sb->buffer_cb) + ed_ctx->coded_area_sb_uv,
-                    ((int32_t*)inverse_quant_buffer->buffer_cb) + ed_ctx->coded_area_sb_uv,
-                    qindex,
-                    seg_qp,
-                    blk_geom->txsize_uv[blk_ptr->tx_depth],
-                    &eob[1],
-                    COMPONENT_CHROMA_CB,
-                    bit_depth,
-                    blk_ptr->tx_type_uv,
-                    md_ctx->cb_txb_skip_context,
-                    md_ctx->cb_dc_sign_context,
-                    blk_ptr->pred_mode,
-                    md_ctx->full_lambda_md[(bit_depth == EB_TEN_BIT) ? EB_10_BIT_MD : EB_8_BIT_MD],
-                    TRUE);
+            blk_ptr->quant_dc.u[ed_ctx->txb_itr] = svt_aom_quantize_inv_quantize(
+                sb_ptr->pcs,
+                md_ctx,
+                ((int32_t *)transform16bit->buffer_cb) + ed_ctx->coded_area_sb_uv,
+                ((int32_t *)coeff_samples_sb->buffer_cb) + ed_ctx->coded_area_sb_uv,
+                ((int32_t *)inverse_quant_buffer->buffer_cb) + ed_ctx->coded_area_sb_uv,
+                qindex,
+                seg_qp,
+                blk_geom->txsize_uv[blk_ptr->tx_depth],
+                &eob[1],
+                COMPONENT_CHROMA_CB,
+                bit_depth,
+                blk_ptr->tx_type_uv,
+                md_ctx->cb_txb_skip_context,
+                md_ctx->cb_dc_sign_context,
+                blk_ptr->pred_mode,
+                md_ctx->full_lambda_md[(bit_depth == EB_TEN_BIT) ? EB_10_BIT_MD : EB_8_BIT_MD],
+                TRUE);
 
             //**********************************
             // Cr
             //**********************************
             svt_aom_residual_kernel(input_samples->buffer_cr,
-                input_cr_offset,
-                input_samples->stride_cr,
-                pred_samples->buffer_cr,
-                pred_cr_offset,
-                pred_samples->stride_cr,
-                ((int16_t*)residual16bit->buffer_cr),
-                scratch_cr_offset,
-                residual16bit->stride_cr,
-                is_16bit, // hbd
-                blk_geom->tx_width_uv[blk_ptr->tx_depth],
-                blk_geom->tx_height_uv[blk_ptr->tx_depth]);
+                                    input_cr_offset,
+                                    input_samples->stride_cr,
+                                    pred_samples->buffer_cr,
+                                    pred_cr_offset,
+                                    pred_samples->stride_cr,
+                                    ((int16_t *)residual16bit->buffer_cr),
+                                    scratch_cr_offset,
+                                    residual16bit->stride_cr,
+                                    is_16bit, // hbd
+                                    blk_geom->tx_width_uv[blk_ptr->tx_depth],
+                                    blk_geom->tx_height_uv[blk_ptr->tx_depth]);
             svt_aom_estimate_transform(((int16_t *)residual16bit->buffer_cr) + scratch_cb_offset,
-                                        residual16bit->stride_cr,
-                                        ((TranLow *)transform16bit->buffer_cr) + ed_ctx->coded_area_sb_uv,
-                                        NOT_USED_VALUE,
-                                        blk_geom->txsize_uv[blk_ptr->tx_depth],
-                                        &ed_ctx->three_quad_energy,
-                                        bit_depth,
-                                        blk_ptr->tx_type_uv,
-                                        PLANE_TYPE_UV,
-                                        DEFAULT_SHAPE);
+                                       residual16bit->stride_cr,
+                                       ((TranLow *)transform16bit->buffer_cr) + ed_ctx->coded_area_sb_uv,
+                                       NOT_USED_VALUE,
+                                       blk_geom->txsize_uv[blk_ptr->tx_depth],
+                                       &ed_ctx->three_quad_energy,
+                                       bit_depth,
+                                       blk_ptr->tx_type_uv,
+                                       PLANE_TYPE_UV,
+                                       DEFAULT_SHAPE);
 
-            blk_ptr->quant_dc.v[ed_ctx->txb_itr] =
-                svt_aom_quantize_inv_quantize(
-                    sb_ptr->pcs,
-                    md_ctx,
-                    ((int32_t*)transform16bit->buffer_cr) + ed_ctx->coded_area_sb_uv,
-                    ((int32_t*)coeff_samples_sb->buffer_cr) + ed_ctx->coded_area_sb_uv,
-                    ((int32_t*)inverse_quant_buffer->buffer_cr) + ed_ctx->coded_area_sb_uv,
-                    qindex,
-                    seg_qp,
-                    blk_geom->txsize_uv[blk_ptr->tx_depth],
-                    &eob[2],
-                    COMPONENT_CHROMA_CR,
-                    bit_depth,
-                    blk_ptr->tx_type_uv,
-                    md_ctx->cr_txb_skip_context,
-                    md_ctx->cr_dc_sign_context,
-                    blk_ptr->pred_mode,
-                    md_ctx->full_lambda_md[(bit_depth == EB_TEN_BIT) ? EB_10_BIT_MD : EB_8_BIT_MD],
-                    TRUE);
+            blk_ptr->quant_dc.v[ed_ctx->txb_itr] = svt_aom_quantize_inv_quantize(
+                sb_ptr->pcs,
+                md_ctx,
+                ((int32_t *)transform16bit->buffer_cr) + ed_ctx->coded_area_sb_uv,
+                ((int32_t *)coeff_samples_sb->buffer_cr) + ed_ctx->coded_area_sb_uv,
+                ((int32_t *)inverse_quant_buffer->buffer_cr) + ed_ctx->coded_area_sb_uv,
+                qindex,
+                seg_qp,
+                blk_geom->txsize_uv[blk_ptr->tx_depth],
+                &eob[2],
+                COMPONENT_CHROMA_CR,
+                bit_depth,
+                blk_ptr->tx_type_uv,
+                md_ctx->cr_txb_skip_context,
+                md_ctx->cr_dc_sign_context,
+                blk_ptr->pred_mode,
+                md_ctx->full_lambda_md[(bit_depth == EB_TEN_BIT) ? EB_10_BIT_MD : EB_8_BIT_MD],
+                TRUE);
         }
 
         blk_ptr->u_has_coeff |= (eob[1] > 0) << ed_ctx->txb_itr;
@@ -615,33 +599,32 @@ static void av1_encode_loop(PictureControlSet *pcs, EncDecContext *ed_ctx, Super
 *
 **********************************************************/
 static void av1_encode_generate_recon(EncDecContext *ed_ctx, uint32_t org_x, uint32_t org_y,
-                                            EbPictureBufferDesc *pred_samples, // no basis/offset
-                                            EbPictureBufferDesc *residual16bit, // no basis/offset
-                                            uint32_t component_mask, uint16_t *eob) {
-    BlkStruct* blk_ptr = ed_ctx->blk_ptr;
+                                      EbPictureBufferDesc *pred_samples, // no basis/offset
+                                      EbPictureBufferDesc *residual16bit, // no basis/offset
+                                      uint32_t component_mask, uint16_t *eob) {
+    BlkStruct *blk_ptr = ed_ctx->blk_ptr;
 
     //**********************************
     // Luma
     //**********************************
     if (component_mask & PICTURE_BUFFER_DESC_LUMA_MASK) {
-        if ((blk_ptr->y_has_coeff & (1 << ed_ctx->txb_itr)) &&
-            blk_ptr->skip_mode == FALSE) {
+        if ((blk_ptr->y_has_coeff & (1 << ed_ctx->txb_itr)) && blk_ptr->skip_mode == FALSE) {
             const uint32_t pred_luma_offset = (pred_samples->org_y + org_y) * pred_samples->stride_y +
                 (pred_samples->org_x + org_x);
 
             svt_aom_inv_transform_recon_wrapper(pred_samples->buffer_y,
-                pred_luma_offset,
-                pred_samples->stride_y,
-                pred_samples->buffer_y,
-                pred_luma_offset,
-                pred_samples->stride_y,
-                ((int32_t*)residual16bit->buffer_y),
-                ed_ctx->coded_area_sb,
-                ed_ctx->bit_depth == EB_TEN_BIT ? 1 : 0, // hbd
-                ed_ctx->blk_geom->txsize[blk_ptr->tx_depth],
-                blk_ptr->tx_type[ed_ctx->txb_itr],
-                PLANE_TYPE_Y,
-                eob[0]);
+                                                pred_luma_offset,
+                                                pred_samples->stride_y,
+                                                pred_samples->buffer_y,
+                                                pred_luma_offset,
+                                                pred_samples->stride_y,
+                                                ((int32_t *)residual16bit->buffer_y),
+                                                ed_ctx->coded_area_sb,
+                                                ed_ctx->bit_depth == EB_TEN_BIT ? 1 : 0, // hbd
+                                                ed_ctx->blk_geom->txsize[blk_ptr->tx_depth],
+                                                blk_ptr->tx_type[ed_ctx->txb_itr],
+                                                PLANE_TYPE_Y,
+                                                eob[0]);
         }
     }
 
@@ -655,47 +638,45 @@ static void av1_encode_generate_recon(EncDecContext *ed_ctx, uint32_t org_x, uin
         //**********************************
         // Cb
         //**********************************
-        if ((blk_ptr->u_has_coeff & (1 << ed_ctx->txb_itr)) &&
-            blk_ptr->skip_mode == FALSE) {
+        if ((blk_ptr->u_has_coeff & (1 << ed_ctx->txb_itr)) && blk_ptr->skip_mode == FALSE) {
             const uint32_t pred_offset_cb = (((pred_samples->org_y + round_origin_y) >> 1) * pred_samples->stride_cb) +
                 ((pred_samples->org_x + round_origin_x) >> 1);
 
             svt_aom_inv_transform_recon_wrapper(pred_samples->buffer_cb,
-                pred_offset_cb,
-                pred_samples->stride_cb,
-                pred_samples->buffer_cb,
-                pred_offset_cb,
-                pred_samples->stride_cb,
-                ((int32_t*)residual16bit->buffer_cb),
-                ed_ctx->coded_area_sb_uv,
-                ed_ctx->bit_depth == EB_TEN_BIT ? 1 : 0, // hbd
-                ed_ctx->blk_geom->txsize_uv[blk_ptr->tx_depth],
-                blk_ptr->tx_type_uv,
-                PLANE_TYPE_UV,
-                eob[1]);
+                                                pred_offset_cb,
+                                                pred_samples->stride_cb,
+                                                pred_samples->buffer_cb,
+                                                pred_offset_cb,
+                                                pred_samples->stride_cb,
+                                                ((int32_t *)residual16bit->buffer_cb),
+                                                ed_ctx->coded_area_sb_uv,
+                                                ed_ctx->bit_depth == EB_TEN_BIT ? 1 : 0, // hbd
+                                                ed_ctx->blk_geom->txsize_uv[blk_ptr->tx_depth],
+                                                blk_ptr->tx_type_uv,
+                                                PLANE_TYPE_UV,
+                                                eob[1]);
         }
 
         //**********************************
         // Cr
         //**********************************
-        if ((blk_ptr->v_has_coeff & (1 << ed_ctx->txb_itr)) &&
-            blk_ptr->skip_mode == FALSE) {
+        if ((blk_ptr->v_has_coeff & (1 << ed_ctx->txb_itr)) && blk_ptr->skip_mode == FALSE) {
             const uint32_t pred_offset_cr = (((pred_samples->org_y + round_origin_y) >> 1) * pred_samples->stride_cr) +
                 ((pred_samples->org_x + round_origin_x) >> 1);
 
             svt_aom_inv_transform_recon_wrapper(pred_samples->buffer_cr,
-                pred_offset_cr,
-                pred_samples->stride_cr,
-                pred_samples->buffer_cr,
-                pred_offset_cr,
-                pred_samples->stride_cr,
-                ((int32_t*)residual16bit->buffer_cr),
-                ed_ctx->coded_area_sb_uv,
-                ed_ctx->bit_depth == EB_TEN_BIT ? 1 : 0, // hbd
-                ed_ctx->blk_geom->txsize_uv[blk_ptr->tx_depth],
-                blk_ptr->tx_type_uv,
-                PLANE_TYPE_UV,
-                eob[2]);
+                                                pred_offset_cr,
+                                                pred_samples->stride_cr,
+                                                pred_samples->buffer_cr,
+                                                pred_offset_cr,
+                                                pred_samples->stride_cr,
+                                                ((int32_t *)residual16bit->buffer_cr),
+                                                ed_ctx->coded_area_sb_uv,
+                                                ed_ctx->bit_depth == EB_TEN_BIT ? 1 : 0, // hbd
+                                                ed_ctx->blk_geom->txsize_uv[blk_ptr->tx_depth],
+                                                blk_ptr->tx_type_uv,
+                                                PLANE_TYPE_UV,
+                                                eob[2]);
         }
     }
 
@@ -795,9 +776,9 @@ static void av1_encode_loop(PictureControlSet *pcs, EncDecContext *ed_ctx, Super
     if (component_mask == PICTURE_BUFFER_DESC_FULL_MASK || component_mask == PICTURE_BUFFER_DESC_LUMA_MASK) {
         if (ed_ctx->md_skip_blk) {
 #if !CLN_QUANT_FUNC
-            cnt_nz_coeff[0]                                                                                  = 0;
+            cnt_nz_coeff[0]                      = 0;
 #endif
-            eob[0]                                                                                           = 0;
+            eob[0]                               = 0;
 #if CLN_TX_DATA
             blk_ptr->quant_dc.y[ed_ctx->txb_itr] = 0;
 #else
@@ -839,22 +820,22 @@ static void av1_encode_loop(PictureControlSet *pcs, EncDecContext *ed_ctx, Super
 #endif
 #if CLN_QUANT_FUNC
                 svt_aom_quantize_inv_quantize(sb_ptr->pcs,
-                    ed_ctx->md_ctx,
-                    ((TranLow*)transform16bit->buffer_y) + coeff1d_offset,
-                    ((int32_t*)coeff_samples_sb->buffer_y) + coeff1d_offset,
-                    ((int32_t*)inverse_quant_buffer->buffer_y) + coeff1d_offset,
-                    qindex,
-                    seg_qp,
-                    ed_ctx->blk_geom->txsize[blk_ptr->tx_depth],
-                    &eob[0],
-                    COMPONENT_LUMA,
-                    EB_EIGHT_BIT,
-                    blk_ptr->tx_type[ed_ctx->txb_itr],
-                    ed_ctx->md_ctx->luma_txb_skip_context,
-                    ed_ctx->md_ctx->luma_dc_sign_context,
-                    blk_ptr->pred_mode,
-                    ed_ctx->md_ctx->full_lambda_md[EB_8_BIT_MD],
-                    TRUE);
+                                              ed_ctx->md_ctx,
+                                              ((TranLow *)transform16bit->buffer_y) + coeff1d_offset,
+                                              ((int32_t *)coeff_samples_sb->buffer_y) + coeff1d_offset,
+                                              ((int32_t *)inverse_quant_buffer->buffer_y) + coeff1d_offset,
+                                              qindex,
+                                              seg_qp,
+                                              ed_ctx->blk_geom->txsize[blk_ptr->tx_depth],
+                                              &eob[0],
+                                              COMPONENT_LUMA,
+                                              EB_EIGHT_BIT,
+                                              blk_ptr->tx_type[ed_ctx->txb_itr],
+                                              ed_ctx->md_ctx->luma_txb_skip_context,
+                                              ed_ctx->md_ctx->luma_dc_sign_context,
+                                              blk_ptr->pred_mode,
+                                              ed_ctx->md_ctx->full_lambda_md[EB_8_BIT_MD],
+                                              TRUE);
 #else
                 svt_aom_quantize_inv_quantize(sb_ptr->pcs,
                                               ed_ctx->md_ctx,
@@ -909,9 +890,7 @@ static void av1_encode_loop(PictureControlSet *pcs, EncDecContext *ed_ctx, Super
             }
         }
 #else
-        ed_ctx->md_ctx->blk_ptr->y_has_coeff[ed_ctx->txb_itr] = cnt_nz_coeff[0]
-            ? TRUE
-            : FALSE;
+        ed_ctx->md_ctx->blk_ptr->y_has_coeff[ed_ctx->txb_itr] = cnt_nz_coeff[0] ? TRUE : FALSE;
 
         if (cnt_nz_coeff[0] == 0) {
             // INTER. Chroma follows Luma in transform type
@@ -986,7 +965,7 @@ static void av1_encode_loop(PictureControlSet *pcs, EncDecContext *ed_ctx, Super
                                             blk_ptr->cfl_alpha_signs,
                                             CFL_PRED_V); // once for U, once for V
 #else
-                alpha_q3 = cfl_idx_to_alpha(blk_ptr->prediction_unit_array->cfl_alpha_idx,
+                alpha_q3         = cfl_idx_to_alpha(blk_ptr->prediction_unit_array->cfl_alpha_idx,
                                             blk_ptr->prediction_unit_array->cfl_alpha_signs,
                                             CFL_PRED_V); // once for U, once for V
 #endif
@@ -1011,24 +990,24 @@ static void av1_encode_loop(PictureControlSet *pcs, EncDecContext *ed_ctx, Super
         //**********************************
         if (ed_ctx->md_skip_blk) {
 #if CLN_QUANT_FUNC
-            eob[1] = 0;
+            eob[1]                               = 0;
             blk_ptr->quant_dc.u[ed_ctx->txb_itr] = 0;
-            eob[2] = 0;
+            eob[2]                               = 0;
             blk_ptr->quant_dc.v[ed_ctx->txb_itr] = 0;
 #else
 #if CLN_TX_DATA
-            cnt_nz_coeff[1] = 0;
-            eob[1] = 0;
+            cnt_nz_coeff[1]                      = 0;
+            eob[1]                               = 0;
             blk_ptr->quant_dc.u[ed_ctx->txb_itr] = 0;
-            cnt_nz_coeff[2] = 0;
-            eob[2] = 0;
+            cnt_nz_coeff[2]                      = 0;
+            eob[2]                               = 0;
             blk_ptr->quant_dc.v[ed_ctx->txb_itr] = 0;
 #else
-            cnt_nz_coeff[1]                                                                                  = 0;
-            eob[1]                                                                                           = 0;
+            cnt_nz_coeff[1] = 0;
+            eob[1] = 0;
             ed_ctx->md_ctx->blk_ptr->quantized_dc[1][ed_ctx->txb_itr] = 0;
-            cnt_nz_coeff[2]                                                                                  = 0;
-            eob[2]                                                                                           = 0;
+            cnt_nz_coeff[2] = 0;
+            eob[2] = 0;
             ed_ctx->md_ctx->blk_ptr->quantized_dc[2][ed_ctx->txb_itr] = 0;
 #endif
 #endif
@@ -1069,22 +1048,22 @@ static void av1_encode_loop(PictureControlSet *pcs, EncDecContext *ed_ctx, Super
 #endif
 #if CLN_QUANT_FUNC
                 svt_aom_quantize_inv_quantize(sb_ptr->pcs,
-                    ed_ctx->md_ctx,
-                    ((TranLow*)transform16bit->buffer_cb) + ed_ctx->coded_area_sb_uv,
-                    ((int32_t*)coeff_samples_sb->buffer_cb) + ed_ctx->coded_area_sb_uv,
-                    ((int32_t*)inverse_quant_buffer->buffer_cb) + ed_ctx->coded_area_sb_uv,
-                    qindex,
-                    seg_qp,
-                    ed_ctx->blk_geom->txsize_uv[blk_ptr->tx_depth],
-                    &eob[1],
-                    COMPONENT_CHROMA_CB,
-                    EB_EIGHT_BIT,
-                    blk_ptr->tx_type_uv,
-                    ed_ctx->md_ctx->cb_txb_skip_context,
-                    ed_ctx->md_ctx->cb_dc_sign_context,
-                    blk_ptr->pred_mode,
-                    ed_ctx->md_ctx->full_lambda_md[EB_8_BIT_MD],
-                    TRUE);
+                                              ed_ctx->md_ctx,
+                                              ((TranLow *)transform16bit->buffer_cb) + ed_ctx->coded_area_sb_uv,
+                                              ((int32_t *)coeff_samples_sb->buffer_cb) + ed_ctx->coded_area_sb_uv,
+                                              ((int32_t *)inverse_quant_buffer->buffer_cb) + ed_ctx->coded_area_sb_uv,
+                                              qindex,
+                                              seg_qp,
+                                              ed_ctx->blk_geom->txsize_uv[blk_ptr->tx_depth],
+                                              &eob[1],
+                                              COMPONENT_CHROMA_CB,
+                                              EB_EIGHT_BIT,
+                                              blk_ptr->tx_type_uv,
+                                              ed_ctx->md_ctx->cb_txb_skip_context,
+                                              ed_ctx->md_ctx->cb_dc_sign_context,
+                                              blk_ptr->pred_mode,
+                                              ed_ctx->md_ctx->full_lambda_md[EB_8_BIT_MD],
+                                              TRUE);
 #else
                 svt_aom_quantize_inv_quantize(sb_ptr->pcs,
                                               ed_ctx->md_ctx,
@@ -1147,22 +1126,22 @@ static void av1_encode_loop(PictureControlSet *pcs, EncDecContext *ed_ctx, Super
 #endif
 #if CLN_QUANT_FUNC
                 svt_aom_quantize_inv_quantize(sb_ptr->pcs,
-                    ed_ctx->md_ctx,
-                    ((TranLow*)transform16bit->buffer_cr) + ed_ctx->coded_area_sb_uv,
-                    ((int32_t*)coeff_samples_sb->buffer_cr) + ed_ctx->coded_area_sb_uv,
-                    ((TranLow*)inverse_quant_buffer->buffer_cr) + ed_ctx->coded_area_sb_uv,
-                    qindex,
-                    seg_qp,
-                    ed_ctx->blk_geom->txsize_uv[blk_ptr->tx_depth],
-                    &eob[2],
-                    COMPONENT_CHROMA_CR,
-                    EB_EIGHT_BIT,
-                    blk_ptr->tx_type_uv,
-                    ed_ctx->md_ctx->cr_txb_skip_context,
-                    ed_ctx->md_ctx->cr_dc_sign_context,
-                    blk_ptr->pred_mode,
-                    ed_ctx->md_ctx->full_lambda_md[EB_8_BIT_MD],
-                    TRUE);
+                                              ed_ctx->md_ctx,
+                                              ((TranLow *)transform16bit->buffer_cr) + ed_ctx->coded_area_sb_uv,
+                                              ((int32_t *)coeff_samples_sb->buffer_cr) + ed_ctx->coded_area_sb_uv,
+                                              ((TranLow *)inverse_quant_buffer->buffer_cr) + ed_ctx->coded_area_sb_uv,
+                                              qindex,
+                                              seg_qp,
+                                              ed_ctx->blk_geom->txsize_uv[blk_ptr->tx_depth],
+                                              &eob[2],
+                                              COMPONENT_CHROMA_CR,
+                                              EB_EIGHT_BIT,
+                                              blk_ptr->tx_type_uv,
+                                              ed_ctx->md_ctx->cr_txb_skip_context,
+                                              ed_ctx->md_ctx->cr_dc_sign_context,
+                                              blk_ptr->pred_mode,
+                                              ed_ctx->md_ctx->full_lambda_md[EB_8_BIT_MD],
+                                              TRUE);
 #else
                 svt_aom_quantize_inv_quantize(sb_ptr->pcs,
                                               ed_ctx->md_ctx,
@@ -1206,12 +1185,8 @@ static void av1_encode_loop(PictureControlSet *pcs, EncDecContext *ed_ctx, Super
         blk_ptr->eob.u[ed_ctx->txb_itr] = (uint16_t)cnt_nz_coeff[1];
         blk_ptr->eob.v[ed_ctx->txb_itr] = (uint16_t)cnt_nz_coeff[2];
 #else
-        ed_ctx->md_ctx->blk_ptr->u_has_coeff[ed_ctx->txb_itr] = cnt_nz_coeff[1]
-            ? TRUE
-            : FALSE;
-        ed_ctx->md_ctx->blk_ptr->v_has_coeff[ed_ctx->txb_itr] = cnt_nz_coeff[2]
-            ? TRUE
-            : FALSE;
+        ed_ctx->md_ctx->blk_ptr->u_has_coeff[ed_ctx->txb_itr] = cnt_nz_coeff[1] ? TRUE : FALSE;
+        ed_ctx->md_ctx->blk_ptr->v_has_coeff[ed_ctx->txb_itr] = cnt_nz_coeff[2] ? TRUE : FALSE;
 
         txb_ptr->nz_coef_count[1] = (uint16_t)cnt_nz_coeff[1];
         txb_ptr->nz_coef_count[2] = (uint16_t)cnt_nz_coeff[2];
@@ -1320,9 +1295,9 @@ static void av1_encode_loop_16bit(PictureControlSet *pcs, EncDecContext *ed_ctx,
         if (component_mask == PICTURE_BUFFER_DESC_FULL_MASK || component_mask == PICTURE_BUFFER_DESC_LUMA_MASK) {
             if (ed_ctx->md_skip_blk) {
 #if !CLN_QUANT_FUNC
-                cnt_nz_coeff[0]                                                                                  = 0;
+                cnt_nz_coeff[0]                      = 0;
 #endif
-                eob[0]                                                                                           = 0;
+                eob[0]                               = 0;
 #if CLN_TX_DATA
                 blk_ptr->quant_dc.y[ed_ctx->txb_itr] = 0;
 #else
@@ -1364,9 +1339,9 @@ static void av1_encode_loop_16bit(PictureControlSet *pcs, EncDecContext *ed_ctx,
                     svt_aom_quantize_inv_quantize(
                         sb_ptr->pcs,
                         ed_ctx->md_ctx,
-                        ((int32_t*)transform16bit->buffer_y) + coeff1d_offset,
-                        ((int32_t*)coeff_samples_sb->buffer_y) + coeff1d_offset,
-                        ((int32_t*)inverse_quant_buffer->buffer_y) + coeff1d_offset,
+                        ((int32_t *)transform16bit->buffer_y) + coeff1d_offset,
+                        ((int32_t *)coeff_samples_sb->buffer_y) + coeff1d_offset,
+                        ((int32_t *)inverse_quant_buffer->buffer_y) + coeff1d_offset,
                         qindex,
                         seg_qp,
                         ed_ctx->blk_geom->txsize[blk_ptr->tx_depth],
@@ -1434,8 +1409,7 @@ static void av1_encode_loop_16bit(PictureControlSet *pcs, EncDecContext *ed_ctx,
                 }
             }
 #else
-            ed_ctx->md_ctx->blk_ptr->y_has_coeff[ed_ctx->txb_itr] =
-                cnt_nz_coeff[0] ? TRUE : FALSE;
+            ed_ctx->md_ctx->blk_ptr->y_has_coeff[ed_ctx->txb_itr] = cnt_nz_coeff[0] ? TRUE : FALSE;
 
             if (cnt_nz_coeff[0] == 0) {
                 // INTER. Chroma follows Luma in transform type
@@ -1488,7 +1462,7 @@ static void av1_encode_loop_16bit(PictureControlSet *pcs, EncDecContext *ed_ctx,
                                                     blk_ptr->cfl_alpha_signs,
                                                     CFL_PRED_U); // once for U, once for V
 #else
-                int32_t alpha_q3 = cfl_idx_to_alpha(blk_ptr->prediction_unit_array->cfl_alpha_idx,
+                int32_t alpha_q3                     = cfl_idx_to_alpha(blk_ptr->prediction_unit_array->cfl_alpha_idx,
                                                     blk_ptr->prediction_unit_array->cfl_alpha_signs,
                                                     CFL_PRED_U); // once for U, once for V
 #endif
@@ -1510,7 +1484,7 @@ static void av1_encode_loop_16bit(PictureControlSet *pcs, EncDecContext *ed_ctx,
                                             blk_ptr->cfl_alpha_signs,
                                             CFL_PRED_V); // once for U, once for V
 #else
-                alpha_q3 = cfl_idx_to_alpha(blk_ptr->prediction_unit_array->cfl_alpha_idx,
+                alpha_q3                             = cfl_idx_to_alpha(blk_ptr->prediction_unit_array->cfl_alpha_idx,
                                             blk_ptr->prediction_unit_array->cfl_alpha_signs,
                                             CFL_PRED_V); // once for U, once for V
 #endif
@@ -1533,26 +1507,26 @@ static void av1_encode_loop_16bit(PictureControlSet *pcs, EncDecContext *ed_ctx,
             //**********************************
             if (ed_ctx->md_skip_blk) {
 #if CLN_QUANT_FUNC
-                eob[1] = 0;
+                eob[1]                               = 0;
                 blk_ptr->quant_dc.u[ed_ctx->txb_itr] = 0;
-                eob[2] = 0;
+                eob[2]                               = 0;
                 blk_ptr->quant_dc.v[ed_ctx->txb_itr] = 0;
 #else
 #if CLN_TX_DATA
+                cnt_nz_coeff[1]                      = 0;
+                eob[1]                               = 0;
+                blk_ptr->quant_dc.u[ed_ctx->txb_itr] = 0;
+
+                cnt_nz_coeff[2]                      = 0;
+                eob[2]                               = 0;
+                blk_ptr->quant_dc.v[ed_ctx->txb_itr] = 0;
+#else
                 cnt_nz_coeff[1] = 0;
                 eob[1] = 0;
-                blk_ptr->quant_dc.u[ed_ctx->txb_itr] = 0;
+                ed_ctx->md_ctx->blk_ptr->quantized_dc[1][ed_ctx->txb_itr] = 0;
 
                 cnt_nz_coeff[2] = 0;
                 eob[2] = 0;
-                blk_ptr->quant_dc.v[ed_ctx->txb_itr] = 0;
-#else
-                cnt_nz_coeff[1]                                                                                  = 0;
-                eob[1]                                                                                           = 0;
-                ed_ctx->md_ctx->blk_ptr->quantized_dc[1][ed_ctx->txb_itr] = 0;
-
-                cnt_nz_coeff[2]                                                                                  = 0;
-                eob[2]                                                                                           = 0;
                 ed_ctx->md_ctx->blk_ptr->quantized_dc[2][ed_ctx->txb_itr] = 0;
 #endif
 #endif
@@ -1594,9 +1568,9 @@ static void av1_encode_loop_16bit(PictureControlSet *pcs, EncDecContext *ed_ctx,
                     svt_aom_quantize_inv_quantize(
                         sb_ptr->pcs,
                         ed_ctx->md_ctx,
-                        ((int32_t*)transform16bit->buffer_cb) + ed_ctx->coded_area_sb_uv,
-                        ((int32_t*)coeff_samples_sb->buffer_cb) + ed_ctx->coded_area_sb_uv,
-                        ((int32_t*)inverse_quant_buffer->buffer_cb) + ed_ctx->coded_area_sb_uv,
+                        ((int32_t *)transform16bit->buffer_cb) + ed_ctx->coded_area_sb_uv,
+                        ((int32_t *)coeff_samples_sb->buffer_cb) + ed_ctx->coded_area_sb_uv,
+                        ((int32_t *)inverse_quant_buffer->buffer_cb) + ed_ctx->coded_area_sb_uv,
                         qindex,
                         seg_qp,
                         ed_ctx->blk_geom->txsize_uv[blk_ptr->tx_depth],
@@ -1674,9 +1648,9 @@ static void av1_encode_loop_16bit(PictureControlSet *pcs, EncDecContext *ed_ctx,
                     svt_aom_quantize_inv_quantize(
                         sb_ptr->pcs,
                         ed_ctx->md_ctx,
-                        ((int32_t*)transform16bit->buffer_cr) + ed_ctx->coded_area_sb_uv,
-                        ((int32_t*)coeff_samples_sb->buffer_cr) + ed_ctx->coded_area_sb_uv,
-                        ((int32_t*)inverse_quant_buffer->buffer_cr) + ed_ctx->coded_area_sb_uv,
+                        ((int32_t *)transform16bit->buffer_cr) + ed_ctx->coded_area_sb_uv,
+                        ((int32_t *)coeff_samples_sb->buffer_cr) + ed_ctx->coded_area_sb_uv,
+                        ((int32_t *)inverse_quant_buffer->buffer_cr) + ed_ctx->coded_area_sb_uv,
                         qindex,
                         seg_qp,
                         ed_ctx->blk_geom->txsize_uv[blk_ptr->tx_depth],
@@ -1732,10 +1706,8 @@ static void av1_encode_loop_16bit(PictureControlSet *pcs, EncDecContext *ed_ctx,
             blk_ptr->eob.u[ed_ctx->txb_itr] = (uint16_t)cnt_nz_coeff[1];
             blk_ptr->eob.v[ed_ctx->txb_itr] = (uint16_t)cnt_nz_coeff[2];
 #else
-            ed_ctx->md_ctx->blk_ptr->u_has_coeff[ed_ctx->txb_itr] =
-                cnt_nz_coeff[1] ? TRUE : FALSE;
-            ed_ctx->md_ctx->blk_ptr->v_has_coeff[ed_ctx->txb_itr] =
-                cnt_nz_coeff[2] ? TRUE : FALSE;
+            ed_ctx->md_ctx->blk_ptr->u_has_coeff[ed_ctx->txb_itr] = cnt_nz_coeff[1] ? TRUE : FALSE;
+            ed_ctx->md_ctx->blk_ptr->v_has_coeff[ed_ctx->txb_itr] = cnt_nz_coeff[2] ? TRUE : FALSE;
 
             txb_ptr->nz_coef_count[1] = (uint16_t)cnt_nz_coeff[1];
             txb_ptr->nz_coef_count[2] = (uint16_t)cnt_nz_coeff[2];
@@ -2061,7 +2033,7 @@ void svt_aom_store16bit_input_src(EbPictureBufferDesc *input_sample16bit_buffer,
                    from_ptr + row_it * input_sample16bit_buffer->stride_cr,
                    sb_w * 2);
 }
-void        svt_aom_update_mi_map_enc_dec(BlkStruct *blk_ptr, ModeDecisionContext *ctx, PictureControlSet *pcs);
+void svt_aom_update_mi_map_enc_dec(BlkStruct *blk_ptr, ModeDecisionContext *ctx, PictureControlSet *pcs);
 #if CLN_BLK_STRUCT_2
 static void perform_intra_coding_loop(PictureControlSet *pcs, SuperBlock *sb_ptr, uint32_t sb_addr, BlkStruct *blk_ptr,
                                       EncDecContext *ed_ctx) {
@@ -2237,24 +2209,24 @@ static void perform_intra_coding_loop(PictureControlSet *pcs, SuperBlock *sb_ptr
         // Encode Transform Unit -INTRA-
 #if CLN_ENCDEC_FUNCS
         av1_encode_loop(pcs,
-            ed_ctx,
-            sb_ptr,
-            txb_origin_x,
-            txb_origin_y,
-            recon_buffer,
-            coeff_buffer_sb,
-            residual_buffer,
-            transform_buffer,
-            inverse_quant_buffer,
-            PICTURE_BUFFER_DESC_LUMA_MASK,
-            eobs[ed_ctx->txb_itr]);
+                        ed_ctx,
+                        sb_ptr,
+                        txb_origin_x,
+                        txb_origin_y,
+                        recon_buffer,
+                        coeff_buffer_sb,
+                        residual_buffer,
+                        transform_buffer,
+                        inverse_quant_buffer,
+                        PICTURE_BUFFER_DESC_LUMA_MASK,
+                        eobs[ed_ctx->txb_itr]);
         av1_encode_generate_recon(ed_ctx,
-            txb_origin_x,
-            txb_origin_y,
-            recon_buffer,
-            inverse_quant_buffer,
-            PICTURE_BUFFER_DESC_LUMA_MASK,
-            eobs[ed_ctx->txb_itr]);
+                                  txb_origin_x,
+                                  txb_origin_y,
+                                  recon_buffer,
+                                  inverse_quant_buffer,
+                                  PICTURE_BUFFER_DESC_LUMA_MASK,
+                                  eobs[ed_ctx->txb_itr]);
 #else
         av1_encode_loop_func_table[is_16bit](pcs,
                                              ed_ctx,
@@ -2403,7 +2375,7 @@ static void perform_intra_coding_loop(PictureControlSet *pcs, SuperBlock *sb_ptr
 
 #if CLN_BLK_STRUCT_2
                 mode = (blk_ptr->intra_chroma_mode == UV_CFL_PRED) ? (PredictionMode)UV_DC_PRED
-                                                                  : (PredictionMode)blk_ptr->intra_chroma_mode;
+                                                                   : (PredictionMode)blk_ptr->intra_chroma_mode;
 #else
                 mode = (pu_ptr->intra_chroma_mode == UV_CFL_PRED) ? (PredictionMode)UV_DC_PRED
                                                                   : (PredictionMode)pu_ptr->intra_chroma_mode;
@@ -2501,7 +2473,7 @@ static void perform_intra_coding_loop(PictureControlSet *pcs, SuperBlock *sb_ptr
 
 #if CLN_BLK_STRUCT_2
                 mode = (blk_ptr->intra_chroma_mode == UV_CFL_PRED) ? (PredictionMode)UV_DC_PRED
-                                                                  : (PredictionMode)blk_ptr->intra_chroma_mode;
+                                                                   : (PredictionMode)blk_ptr->intra_chroma_mode;
 #else
                 mode = (pu_ptr->intra_chroma_mode == UV_CFL_PRED) ? (PredictionMode)UV_DC_PRED
                                                                   : (PredictionMode)pu_ptr->intra_chroma_mode;
@@ -2551,24 +2523,24 @@ static void perform_intra_coding_loop(PictureControlSet *pcs, SuperBlock *sb_ptr
         // Encode Transform Unit -INTRA-
 #if CLN_ENCDEC_FUNCS
         av1_encode_loop(pcs,
-            ed_ctx,
-            sb_ptr,
-            txb_origin_x,
-            txb_origin_y,
-            recon_buffer,
-            coeff_buffer_sb,
-            residual_buffer,
-            transform_buffer,
-            inverse_quant_buffer,
-            PICTURE_BUFFER_DESC_CHROMA_MASK,
-            eobs[ed_ctx->txb_itr]);
+                        ed_ctx,
+                        sb_ptr,
+                        txb_origin_x,
+                        txb_origin_y,
+                        recon_buffer,
+                        coeff_buffer_sb,
+                        residual_buffer,
+                        transform_buffer,
+                        inverse_quant_buffer,
+                        PICTURE_BUFFER_DESC_CHROMA_MASK,
+                        eobs[ed_ctx->txb_itr]);
         av1_encode_generate_recon(ed_ctx,
-            txb_origin_x,
-            txb_origin_y,
-            recon_buffer,
-            inverse_quant_buffer,
-            PICTURE_BUFFER_DESC_CHROMA_MASK,
-            eobs[ed_ctx->txb_itr]);
+                                  txb_origin_x,
+                                  txb_origin_y,
+                                  recon_buffer,
+                                  inverse_quant_buffer,
+                                  PICTURE_BUFFER_DESC_CHROMA_MASK,
+                                  eobs[ed_ctx->txb_itr]);
 #else
 
         av1_encode_loop_func_table[is_16bit](pcs,
@@ -2662,8 +2634,7 @@ static void perform_intra_coding_loop(PictureControlSet *pcs, SuperBlock *sb_ptr
             if (ed_ctx->md_ctx->blk_ptr->v_has_coeff[ed_ctx->txb_itr])
                 ed_ctx->md_ctx->blk_ptr->v_has_coeff[0] = TRUE;
         } else {
-            blk_ptr->block_has_coeff = blk_ptr->block_has_coeff |
-                ed_ctx->md_ctx->blk_ptr->y_has_coeff[ed_ctx->txb_itr];
+            blk_ptr->block_has_coeff = blk_ptr->block_has_coeff | ed_ctx->md_ctx->blk_ptr->y_has_coeff[ed_ctx->txb_itr];
         }
     } // Transform Loop
 #endif
@@ -2771,7 +2742,7 @@ static void perform_inter_coding_loop(SequenceControlSet *scs, PictureControlSet
     const BlockGeom *blk_geom = ctx->blk_geom;
     BlkStruct       *blk_ptr  = ctx->blk_ptr;
 #if !CLN_BLK_STRUCT_2
-    PredictionUnit  *pu_ptr   = blk_ptr->prediction_unit_array;
+    PredictionUnit *pu_ptr = blk_ptr->prediction_unit_array;
 #endif
 
     EbPictureBufferDesc *residual_buffer      = ctx->residual_buffer;
@@ -2919,11 +2890,11 @@ static void perform_inter_coding_loop(SequenceControlSet *scs, PictureControlSet
 #endif
 
     // Initialize the Transform Loop
-    ctx->txb_itr         = 0;
+    ctx->txb_itr = 0;
 #if !CLN_TX_DATA
-    uint8_t  y_has_coeff = 0;
-    uint8_t  u_has_coeff = 0;
-    uint8_t  v_has_coeff = 0;
+    uint8_t y_has_coeff = 0;
+    uint8_t u_has_coeff = 0;
+    uint8_t v_has_coeff = 0;
 #endif
 #if !CLN_QUANT_FUNC
     uint32_t cnt_nz_coeff[3];
@@ -3025,7 +2996,7 @@ static void perform_inter_coding_loop(SequenceControlSet *scs, PictureControlSet
             txb_origin_y,
             recon_buffer,
             inverse_quant_buffer,
-            blk_geom->has_uv&& uv_pass ? PICTURE_BUFFER_DESC_FULL_MASK : PICTURE_BUFFER_DESC_LUMA_MASK,
+            blk_geom->has_uv && uv_pass ? PICTURE_BUFFER_DESC_FULL_MASK : PICTURE_BUFFER_DESC_LUMA_MASK,
             eobs[ctx->txb_itr]);
 #else
         av1_enc_gen_recon_func_ptr[is_16bit](
@@ -3054,13 +3025,11 @@ static void perform_inter_coding_loop(SequenceControlSet *scs, PictureControlSet
             ctx->coded_area_sb_uv += blk_geom->tx_width_uv[blk_ptr->tx_depth] *
                 blk_geom->tx_height_uv[blk_ptr->tx_depth];
 
-        // Update the luma Dc Sign Level Coeff Neighbor Array
+            // Update the luma Dc Sign Level Coeff Neighbor Array
 #if CLN_TX_DATA
-        uint8_t dc_sign_level_coeff =
-            (uint8_t)blk_ptr->quant_dc.y[ctx->txb_itr];
+        uint8_t dc_sign_level_coeff = (uint8_t)blk_ptr->quant_dc.y[ctx->txb_itr];
 #else
-        uint8_t dc_sign_level_coeff =
-            (uint8_t)md_ctx->blk_ptr->quantized_dc[0][ctx->txb_itr];
+        uint8_t dc_sign_level_coeff = (uint8_t)md_ctx->blk_ptr->quantized_dc[0][ctx->txb_itr];
 #endif
 
         svt_aom_neighbor_array_unit_mode_write(pcs->ep_luma_dc_sign_level_coeff_na[tile_idx],
@@ -3074,11 +3043,9 @@ static void perform_inter_coding_loop(SequenceControlSet *scs, PictureControlSet
         // Update the cb Dc Sign Level Coeff Neighbor Array
         if (ctx->blk_geom->has_uv && uv_pass) {
 #if CLN_TX_DATA
-            dc_sign_level_coeff =
-                (uint8_t)blk_ptr->quant_dc.u[ctx->txb_itr];
+            dc_sign_level_coeff = (uint8_t)blk_ptr->quant_dc.u[ctx->txb_itr];
 #else
-            dc_sign_level_coeff =
-                (uint8_t)md_ctx->blk_ptr->quantized_dc[1][ctx->txb_itr];
+            dc_sign_level_coeff = (uint8_t)md_ctx->blk_ptr->quantized_dc[1][ctx->txb_itr];
 #endif
 
             svt_aom_neighbor_array_unit_mode_write(pcs->ep_cb_dc_sign_level_coeff_na[tile_idx],
@@ -3090,11 +3057,9 @@ static void perform_inter_coding_loop(SequenceControlSet *scs, PictureControlSet
                                                    NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
             // Update the cr DC Sign Level Coeff Neighbor Array
 #if CLN_TX_DATA
-            dc_sign_level_coeff =
-                (uint8_t)blk_ptr->quant_dc.v[ctx->txb_itr];
+            dc_sign_level_coeff = (uint8_t)blk_ptr->quant_dc.v[ctx->txb_itr];
 #else
-            dc_sign_level_coeff =
-                (uint8_t)md_ctx->blk_ptr->quantized_dc[2][ctx->txb_itr];
+            dc_sign_level_coeff = (uint8_t)md_ctx->blk_ptr->quantized_dc[2][ctx->txb_itr];
 #endif
 
             svt_aom_neighbor_array_unit_mode_write(pcs->ep_cr_dc_sign_level_coeff_na[tile_idx],
@@ -3477,17 +3442,13 @@ EB_EXTERN EbErrorType svt_aom_encdec_update(SequenceControlSet *scs, PictureCont
 
 #if CLN_BLK_STRUCT_2
                     if (blk_ptr->inter_pred_direction_index == UNI_PRED_LIST_0) {
-                        if (blk_ptr->mv[0].x % 2 != 0 ||
-                            blk_ptr->mv[0].y % 2 != 0)
+                        if (blk_ptr->mv[0].x % 2 != 0 || blk_ptr->mv[0].y % 2 != 0)
                             hp = 1;
                     } else if (blk_ptr->inter_pred_direction_index == UNI_PRED_LIST_1) {
-                        if (blk_ptr->mv[1].x % 2 != 0 ||
-                            blk_ptr->mv[1].y % 2 != 0)
+                        if (blk_ptr->mv[1].x % 2 != 0 || blk_ptr->mv[1].y % 2 != 0)
                             hp = 1;
                     } else {
-                        if (blk_ptr->mv[0].x % 2 != 0 ||
-                            blk_ptr->mv[0].y % 2 != 0 ||
-                            blk_ptr->mv[1].x % 2 != 0 ||
+                        if (blk_ptr->mv[0].x % 2 != 0 || blk_ptr->mv[0].y % 2 != 0 || blk_ptr->mv[1].x % 2 != 0 ||
                             blk_ptr->mv[1].y % 2 != 0)
                             hp = 1;
                     }
@@ -3635,9 +3596,9 @@ EB_EXTERN EbErrorType svt_aom_encdec_update(SequenceControlSet *scs, PictureCont
 #if !CLN_TX_DATA // svt_aom_encdec_update
                     TransformUnit *txb_ptr = &blk_ptr->txb_array[tu_it];
 #endif
-                    uint8_t        uv_pass = blk_ptr->tx_depth && tu_it ? 0 : 1; //NM: 128x128 exeption
-                    ctx->txb_itr           = (uint8_t)tu_it;
-                    uint16_t txb_origin_x  = ctx->blk_org_x +
+                    uint8_t uv_pass       = blk_ptr->tx_depth && tu_it ? 0 : 1; //NM: 128x128 exeption
+                    ctx->txb_itr          = (uint8_t)tu_it;
+                    uint16_t txb_origin_x = ctx->blk_org_x +
                         (blk_geom->tx_org_x[ctx->is_inter][blk_ptr->tx_depth][ctx->txb_itr] - blk_geom->org_x);
                     uint16_t txb_origin_y = ctx->blk_org_y +
                         (blk_geom->tx_org_y[ctx->is_inter][blk_ptr->tx_depth][ctx->txb_itr] - blk_geom->org_y);
@@ -3772,13 +3733,11 @@ EB_EXTERN EbErrorType svt_aom_encdec_update(SequenceControlSet *scs, PictureCont
 #endif
                                 (blk_geom->has_uv && uv_pass) ? COMPONENT_ALL : COMPONENT_LUMA);
 
-                        // Update the luma DC Sign Level Coeff Neighbor Array
+                            // Update the luma DC Sign Level Coeff Neighbor Array
 #if CLN_TX_DATA
-                        uint8_t dc_sign_level_coeff =
-                            (uint8_t)blk_ptr->quant_dc.y[ctx->txb_itr];
+                        uint8_t dc_sign_level_coeff = (uint8_t)blk_ptr->quant_dc.y[ctx->txb_itr];
 #else
-                        uint8_t dc_sign_level_coeff =
-                            (uint8_t)md_ctx->blk_ptr->quantized_dc[0][ctx->txb_itr];
+                        uint8_t dc_sign_level_coeff = (uint8_t)md_ctx->blk_ptr->quantized_dc[0][ctx->txb_itr];
 #endif
 
                         svt_aom_neighbor_array_unit_mode_write(pcs->ep_luma_dc_sign_level_coeff_na_update[tile_idx],
@@ -3792,11 +3751,9 @@ EB_EXTERN EbErrorType svt_aom_encdec_update(SequenceControlSet *scs, PictureCont
                         // Update the Cb DC Sign Level Coeff Neighbor Array
                         if (ctx->blk_geom->has_uv && uv_pass) {
 #if CLN_TX_DATA
-                            dc_sign_level_coeff =
-                                (uint8_t)blk_ptr->quant_dc.u[ctx->txb_itr];
+                            dc_sign_level_coeff = (uint8_t)blk_ptr->quant_dc.u[ctx->txb_itr];
 #else
-                            dc_sign_level_coeff =
-                                (uint8_t)md_ctx->blk_ptr->quantized_dc[1][ctx->txb_itr];
+                            dc_sign_level_coeff = (uint8_t)md_ctx->blk_ptr->quantized_dc[1][ctx->txb_itr];
 #endif
 
                             svt_aom_neighbor_array_unit_mode_write(pcs->ep_cb_dc_sign_level_coeff_na_update[tile_idx],
@@ -3809,11 +3766,9 @@ EB_EXTERN EbErrorType svt_aom_encdec_update(SequenceControlSet *scs, PictureCont
 
                             // Update the Cr DC Sign Level Coeff Neighbor Array
 #if CLN_TX_DATA
-                            dc_sign_level_coeff =
-                                (uint8_t)blk_ptr->quant_dc.v[ctx->txb_itr];
+                            dc_sign_level_coeff = (uint8_t)blk_ptr->quant_dc.v[ctx->txb_itr];
 #else
-                            dc_sign_level_coeff =
-                                (uint8_t)md_ctx->blk_ptr->quantized_dc[2][ctx->txb_itr];
+                            dc_sign_level_coeff = (uint8_t)md_ctx->blk_ptr->quantized_dc[2][ctx->txb_itr];
 #endif
 
                             svt_aom_neighbor_array_unit_mode_write(pcs->ep_cr_dc_sign_level_coeff_na_update[tile_idx],
@@ -3928,11 +3883,11 @@ EB_EXTERN EbErrorType svt_aom_encdec_update(SequenceControlSet *scs, PictureCont
             }
             blk_index++;
 #else
-            const BlockGeom* blk_geom = get_blk_geom_mds(blk_index);
+            const BlockGeom *blk_geom      = get_blk_geom_mds(blk_index);
 #if FIX_NSQ_CTRL
             const uint32_t   tot_d1_blocks = !md_ctx->nsq_geom_ctrls.enabled
 #else
-            const uint32_t   tot_d1_blocks = !md_ctx->nsq_ctrls.enabled
+            const uint32_t tot_d1_blocks = !md_ctx->nsq_ctrls.enabled
 #endif
                   ? 1
                   : svt_aom_get_tot_1d_blks(md_ctx, blk_geom->sq_size, md_ctx->md_disallow_nsq);

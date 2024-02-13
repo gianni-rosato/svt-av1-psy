@@ -1113,8 +1113,8 @@ static const int sqrt_tx_pixels_2d[TX_SIZES_ALL] = {
     4, 8, 16, 32, 32, 6, 6, 12, 12, 23, 23, 32, 32, 8, 8, 16, 16, 23, 23};
 
 #if CLN_REMOVE_UNUSED_ARGS
-static void svt_fast_optimize_b(const TranLow *coeff_ptr, const MacroblockPlane *p, TranLow *qcoeff_ptr, TranLow *dqcoeff_ptr,
-                         uint16_t *eob, TxSize tx_size, TxType tx_type)
+static void svt_fast_optimize_b(const TranLow *coeff_ptr, const MacroblockPlane *p, TranLow *qcoeff_ptr,
+                                TranLow *dqcoeff_ptr, uint16_t *eob, TxSize tx_size, TxType tx_type)
 #else
 void svt_fast_optimize_b(const TranLow *coeff_ptr, const MacroblockPlane *p, TranLow *qcoeff_ptr, TranLow *dqcoeff_ptr,
                          uint16_t *eob, TxSize tx_size, TxType tx_type)
@@ -1128,10 +1128,10 @@ void svt_fast_optimize_b(const TranLow *coeff_ptr, const MacroblockPlane *p, Tra
 }
 #if CLN_REMOVE_UNUSED_ARGS
 static void svt_av1_optimize_b(ModeDecisionContext *ctx, int16_t txb_skip_context, int16_t dc_sign_context,
-                        const TranLow *coeff_ptr, const MacroblockPlane *p,
-                        TranLow *qcoeff_ptr, TranLow *dqcoeff_ptr, uint16_t *eob,
-                        const QuantParam *qparam, TxSize tx_size, TxType tx_type, Bool is_inter, uint8_t use_sharpness,
-                        uint8_t delta_q_present, uint8_t picture_qp, uint32_t lambda, int plane)
+                               const TranLow *coeff_ptr, const MacroblockPlane *p, TranLow *qcoeff_ptr,
+                               TranLow *dqcoeff_ptr, uint16_t *eob, const QuantParam *qparam, TxSize tx_size,
+                               TxType tx_type, Bool is_inter, uint8_t use_sharpness, uint8_t delta_q_present,
+                               uint8_t picture_qp, uint32_t lambda, int plane)
 
 {
 #else
@@ -1366,13 +1366,13 @@ static INLINE TxSize aom_av1_get_adjusted_tx_size(TxSize tx_size) {
 }
 #if CLN_QUANT_FUNC
 void svt_aom_quantize_inv_quantize_light(PictureControlSet *pcs, int32_t *coeff, int32_t *quant_coeff,
-                                            int32_t *recon_coeff, uint32_t qindex, TxSize txsize, uint16_t *eob,
-                                            uint32_t bit_depth, TxType tx_type) {
+                                         int32_t *recon_coeff, uint32_t qindex, TxSize txsize, uint16_t *eob,
+                                         uint32_t bit_depth, TxType tx_type) {
 #else
 #if CLN_QUANT_ONE_BYTE
 void svt_aom_quantize_inv_quantize_light(PictureControlSet *pcs, int32_t *coeff, int32_t *quant_coeff,
-                                            int32_t *recon_coeff, uint32_t qindex, TxSize txsize, uint16_t *eob,
-                                            uint32_t *cnt_nz_coeff, uint32_t bit_depth, TxType tx_type) {
+                                         int32_t *recon_coeff, uint32_t qindex, TxSize txsize, uint16_t *eob,
+                                         uint32_t *cnt_nz_coeff, uint32_t bit_depth, TxType tx_type) {
 #else
 int32_t svt_aom_quantize_inv_quantize_light(PictureControlSet *pcs, int32_t *coeff, int32_t *quant_coeff,
                                             int32_t *recon_coeff, uint32_t qindex, TxSize txsize, uint16_t *eob,
@@ -1478,7 +1478,7 @@ int32_t svt_aom_quantize_inv_quantize_light(PictureControlSet *pcs, int32_t *coe
 
 #if CLN_QUANT_ONE_BYTE
 // See av1_get_txb_entropy_context in libaom
-uint8_t svt_av1_compute_cul_level_c(const int16_t* const scan, const int32_t* const quant_coeff, uint16_t* eob) {
+uint8_t svt_av1_compute_cul_level_c(const int16_t *const scan, const int32_t *const quant_coeff, uint16_t *eob) {
 #else
 int32_t svt_av1_compute_cul_level_c(const int16_t *const scan, const int32_t *const quant_coeff, uint16_t *eob) {
 #endif
@@ -1505,12 +1505,10 @@ int32_t svt_av1_compute_cul_level_c(const int16_t *const scan, const int32_t *co
 
 #if CLN_QUANT_FUNC
 uint8_t svt_aom_quantize_inv_quantize(PictureControlSet *pcs, ModeDecisionContext *ctx, int32_t *coeff,
-                                      int32_t *quant_coeff, int32_t *recon_coeff,
-                                      uint32_t qindex, int32_t segmentation_qp_offset,
-                                      TxSize txsize, uint16_t *eob,
+                                      int32_t *quant_coeff, int32_t *recon_coeff, uint32_t qindex,
+                                      int32_t segmentation_qp_offset, TxSize txsize, uint16_t *eob,
                                       uint32_t component_type, uint32_t bit_depth, TxType tx_type,
-                                      int16_t txb_skip_context,
-                                      int16_t dc_sign_context, PredictionMode pred_mode,
+                                      int16_t txb_skip_context, int16_t dc_sign_context, PredictionMode pred_mode,
                                       uint32_t lambda, Bool is_encode_pass) {
 #else
 #if CLN_QUANT_ONE_BYTE
@@ -1700,7 +1698,7 @@ int32_t svt_aom_quantize_inv_quantize(PictureControlSet *pcs, ModeDecisionContex
     }
     if (perform_rdoq && *eob != 0) {
 #if CLN_QUANT_FUNC
-        int width = tx_size_wide[txsize];
+        int width  = tx_size_wide[txsize];
         int height = tx_size_high[txsize];
 #endif
         int eob_perc = (*eob) * 100 / (width * height);
@@ -1814,9 +1812,9 @@ void svt_aom_full_loop_chroma_light_pd1(PictureControlSet *pcs, ModeDecisionCont
                                         uint64_t cb_full_distortion[DIST_CALC_TOTAL],
                                         uint64_t cr_full_distortion[DIST_CALC_TOTAL], uint64_t *cb_coeff_bits,
                                         uint64_t *cr_coeff_bits) {
-    uint32_t     full_lambda = ctx->hbd_md ? ctx->full_lambda_md[EB_10_BIT_MD] : ctx->full_lambda_md[EB_8_BIT_MD];
+    uint32_t full_lambda = ctx->hbd_md ? ctx->full_lambda_md[EB_10_BIT_MD] : ctx->full_lambda_md[EB_8_BIT_MD];
 #if !CLN_QUANT_FUNC
-    uint32_t     nz_count_dummy;
+    uint32_t nz_count_dummy;
 #endif
     const TxSize tx_size_uv = ctx->blk_geom->txsize_uv[0];
 
@@ -1870,47 +1868,47 @@ void svt_aom_full_loop_chroma_light_pd1(PictureControlSet *pcs, ModeDecisionCont
                                    pf_shape);
 #if CLN_QUANT_FUNC
         cand_bf->quant_dc.u[0] = svt_aom_quantize_inv_quantize(pcs,
-            ctx,
-            &(((int32_t*)ctx->tx_coeffs->buffer_cb)[0]),
-            &(((int32_t*)cand_bf->quant->buffer_cb)[0]),
-            &(((int32_t*)cand_bf->rec_coeff->buffer_cb)[0]),
-            chroma_qindex,
-            0,
-            tx_size_uv,
-            &cand_bf->eob.u[0],
-            COMPONENT_CHROMA_CB,
-            ctx->hbd_md ? EB_TEN_BIT : EB_EIGHT_BIT,
-            cand_bf->cand->transform_type_uv,
-            0,
-            0,
-            cand_bf->cand->pred_mode,
-            full_lambda,
-            FALSE);
+                                                               ctx,
+                                                               &(((int32_t *)ctx->tx_coeffs->buffer_cb)[0]),
+                                                               &(((int32_t *)cand_bf->quant->buffer_cb)[0]),
+                                                               &(((int32_t *)cand_bf->rec_coeff->buffer_cb)[0]),
+                                                               chroma_qindex,
+                                                               0,
+                                                               tx_size_uv,
+                                                               &cand_bf->eob.u[0],
+                                                               COMPONENT_CHROMA_CB,
+                                                               ctx->hbd_md ? EB_TEN_BIT : EB_EIGHT_BIT,
+                                                               cand_bf->cand->transform_type_uv,
+                                                               0,
+                                                               0,
+                                                               cand_bf->cand->pred_mode,
+                                                               full_lambda,
+                                                               FALSE);
 #else
 #if CLN_QUANT_ONE_BYTE
         cand_bf->quant_dc.u[0] = svt_aom_quantize_inv_quantize(pcs,
-            ctx,
-            &(((int32_t*)ctx->tx_coeffs->buffer_cb)[0]),
-            NOT_USED_VALUE,
-            &(((int32_t*)cand_bf->quant->buffer_cb)[0]),
-            &(((int32_t*)cand_bf->rec_coeff->buffer_cb)[0]),
-            chroma_qindex,
-            0,
-            ctx->blk_geom->tx_width_uv[0],
-            ctx->blk_geom->tx_height_uv[0],
-            tx_size_uv,
-            &cand_bf->eob.u[0],
-            &nz_count_dummy,
-            COMPONENT_CHROMA_CB,
-            ctx->hbd_md ? EB_TEN_BIT : EB_EIGHT_BIT,
-            cand_bf->cand->transform_type_uv,
-            cand_bf,
-            0,
-            0,
-            cand_bf->cand->pred_mode,
-            0,
-            full_lambda,
-            FALSE);
+                                                               ctx,
+                                                               &(((int32_t *)ctx->tx_coeffs->buffer_cb)[0]),
+                                                               NOT_USED_VALUE,
+                                                               &(((int32_t *)cand_bf->quant->buffer_cb)[0]),
+                                                               &(((int32_t *)cand_bf->rec_coeff->buffer_cb)[0]),
+                                                               chroma_qindex,
+                                                               0,
+                                                               ctx->blk_geom->tx_width_uv[0],
+                                                               ctx->blk_geom->tx_height_uv[0],
+                                                               tx_size_uv,
+                                                               &cand_bf->eob.u[0],
+                                                               &nz_count_dummy,
+                                                               COMPONENT_CHROMA_CB,
+                                                               ctx->hbd_md ? EB_TEN_BIT : EB_EIGHT_BIT,
+                                                               cand_bf->cand->transform_type_uv,
+                                                               cand_bf,
+                                                               0,
+                                                               0,
+                                                               cand_bf->cand->pred_mode,
+                                                               0,
+                                                               full_lambda,
+                                                               FALSE);
 #else
         cand_bf->quantized_dc[1][0] = svt_aom_quantize_inv_quantize(pcs,
                                                                     ctx,
@@ -1954,9 +1952,9 @@ void svt_aom_full_loop_chroma_light_pd1(PictureControlSet *pcs, ModeDecisionCont
         cb_full_distortion[DIST_CALC_PREDICTION] = RIGHT_SIGNED_SHIFT(cb_full_distortion[DIST_CALC_PREDICTION],
                                                                       chroma_shift);
 #if CLN_QUANT_ONE_BYTE
-        cand_bf->u_has_coeff                     = (cand_bf->eob.u[0] > 0);
+        cand_bf->u_has_coeff = (cand_bf->eob.u[0] > 0);
 #else
-        cand_bf->u_has_coeff                     = (cand_bf->eob[1][0] > 0);
+        cand_bf->u_has_coeff = (cand_bf->eob[1][0] > 0);
 #endif
     }
 
@@ -2009,47 +2007,47 @@ void svt_aom_full_loop_chroma_light_pd1(PictureControlSet *pcs, ModeDecisionCont
                                    pf_shape);
 #if CLN_QUANT_FUNC
         cand_bf->quant_dc.v[0] = svt_aom_quantize_inv_quantize(pcs,
-            ctx,
-            &(((int32_t*)ctx->tx_coeffs->buffer_cr)[0]),
-            &(((int32_t*)cand_bf->quant->buffer_cr)[0]),
-            &(((int32_t*)cand_bf->rec_coeff->buffer_cr)[0]),
-            chroma_qindex,
-            0,
-            tx_size_uv,
-            &cand_bf->eob.v[0],
-            COMPONENT_CHROMA_CR,
-            ctx->hbd_md ? EB_TEN_BIT : EB_EIGHT_BIT,
-            cand_bf->cand->transform_type_uv,
-            0,
-            0,
-            cand_bf->cand->pred_mode,
-            full_lambda,
-            FALSE);
+                                                               ctx,
+                                                               &(((int32_t *)ctx->tx_coeffs->buffer_cr)[0]),
+                                                               &(((int32_t *)cand_bf->quant->buffer_cr)[0]),
+                                                               &(((int32_t *)cand_bf->rec_coeff->buffer_cr)[0]),
+                                                               chroma_qindex,
+                                                               0,
+                                                               tx_size_uv,
+                                                               &cand_bf->eob.v[0],
+                                                               COMPONENT_CHROMA_CR,
+                                                               ctx->hbd_md ? EB_TEN_BIT : EB_EIGHT_BIT,
+                                                               cand_bf->cand->transform_type_uv,
+                                                               0,
+                                                               0,
+                                                               cand_bf->cand->pred_mode,
+                                                               full_lambda,
+                                                               FALSE);
 #else
 #if CLN_QUANT_ONE_BYTE
         cand_bf->quant_dc.v[0] = svt_aom_quantize_inv_quantize(pcs,
-            ctx,
-            &(((int32_t*)ctx->tx_coeffs->buffer_cr)[0]),
-            NOT_USED_VALUE,
-            &(((int32_t*)cand_bf->quant->buffer_cr)[0]),
-            &(((int32_t*)cand_bf->rec_coeff->buffer_cr)[0]),
-            chroma_qindex,
-            0,
-            ctx->blk_geom->tx_width_uv[0],
-            ctx->blk_geom->tx_height_uv[0],
-            tx_size_uv,
-            &cand_bf->eob.v[0],
-            &nz_count_dummy,
-            COMPONENT_CHROMA_CR,
-            ctx->hbd_md ? EB_TEN_BIT : EB_EIGHT_BIT,
-            cand_bf->cand->transform_type_uv,
-            cand_bf,
-            0,
-            0,
-            cand_bf->cand->pred_mode,
-            0,
-            full_lambda,
-            FALSE);
+                                                               ctx,
+                                                               &(((int32_t *)ctx->tx_coeffs->buffer_cr)[0]),
+                                                               NOT_USED_VALUE,
+                                                               &(((int32_t *)cand_bf->quant->buffer_cr)[0]),
+                                                               &(((int32_t *)cand_bf->rec_coeff->buffer_cr)[0]),
+                                                               chroma_qindex,
+                                                               0,
+                                                               ctx->blk_geom->tx_width_uv[0],
+                                                               ctx->blk_geom->tx_height_uv[0],
+                                                               tx_size_uv,
+                                                               &cand_bf->eob.v[0],
+                                                               &nz_count_dummy,
+                                                               COMPONENT_CHROMA_CR,
+                                                               ctx->hbd_md ? EB_TEN_BIT : EB_EIGHT_BIT,
+                                                               cand_bf->cand->transform_type_uv,
+                                                               cand_bf,
+                                                               0,
+                                                               0,
+                                                               cand_bf->cand->pred_mode,
+                                                               0,
+                                                               full_lambda,
+                                                               FALSE);
 #else
         cand_bf->quantized_dc[2][0] = svt_aom_quantize_inv_quantize(pcs,
                                                                     ctx,
@@ -2094,9 +2092,9 @@ void svt_aom_full_loop_chroma_light_pd1(PictureControlSet *pcs, ModeDecisionCont
         cr_full_distortion[DIST_CALC_PREDICTION] = RIGHT_SIGNED_SHIFT(cr_full_distortion[DIST_CALC_PREDICTION],
                                                                       chroma_shift);
 #if CLN_QUANT_ONE_BYTE
-        cand_bf->v_has_coeff                     = (cand_bf->eob.v[0] > 0);
+        cand_bf->v_has_coeff = (cand_bf->eob.v[0] > 0);
 #else
-        cand_bf->v_has_coeff                     = (cand_bf->eob[2][0] > 0);
+        cand_bf->v_has_coeff = (cand_bf->eob[2][0] > 0);
 #endif
     }
 
@@ -2140,8 +2138,8 @@ void svt_aom_full_loop_uv(PictureControlSet *pcs, ModeDecisionContext *ctx, Mode
     EbSpatialFullDistType spatial_full_dist_type_fun = ctx->hbd_md ? svt_full_distortion_kernel16_bits
                                                                    : svt_spatial_full_distortion_kernel;
 #if !CLN_QUANT_FUNC
-    uint32_t             *cb_count_non_zero_coeffs   = cnt_nz_coeff[1];
-    uint32_t             *cr_count_non_zero_coeffs   = cnt_nz_coeff[2];
+    uint32_t *cb_count_non_zero_coeffs = cnt_nz_coeff[1];
+    uint32_t *cr_count_non_zero_coeffs = cnt_nz_coeff[2];
 #endif
     EB_ALIGN(16) uint64_t txb_full_distortion[DIST_TOTAL][3][DIST_CALC_TOTAL];
     const SsimLevel       ssim_level = ctx->tune_ssim_level;
@@ -2229,16 +2227,16 @@ void svt_aom_full_loop_uv(PictureControlSet *pcs, ModeDecisionContext *ctx, Mode
                                        PLANE_TYPE_UV,
                                        pf_shape);
 
-            int32_t seg_qp                    = pcs->ppcs->frm_hdr.segmentation_params.segmentation_enabled
-                                   ? pcs->ppcs->frm_hdr.segmentation_params.feature_data[ctx->blk_ptr->segment_id][SEG_LVL_ALT_Q]
-                                   : 0;
+            int32_t seg_qp = pcs->ppcs->frm_hdr.segmentation_params.segmentation_enabled
+                ? pcs->ppcs->frm_hdr.segmentation_params.feature_data[ctx->blk_ptr->segment_id][SEG_LVL_ALT_Q]
+                : 0;
 #if CLN_QUANT_FUNC
             cand_bf->quant_dc.u[txb_itr] = svt_aom_quantize_inv_quantize(
                 pcs,
                 ctx,
-                &(((int32_t*)ctx->tx_coeffs->buffer_cb)[txb_1d_offset]),
-                &(((int32_t*)cand_bf->quant->buffer_cb)[txb_1d_offset]),
-                &(((int32_t*)cand_bf->rec_coeff->buffer_cb)[txb_1d_offset]),
+                &(((int32_t *)ctx->tx_coeffs->buffer_cb)[txb_1d_offset]),
+                &(((int32_t *)cand_bf->quant->buffer_cb)[txb_1d_offset]),
+                &(((int32_t *)cand_bf->rec_coeff->buffer_cb)[txb_1d_offset]),
                 chroma_qindex,
                 seg_qp,
                 ctx->blk_geom->txsize_uv[tx_depth],
@@ -2256,10 +2254,10 @@ void svt_aom_full_loop_uv(PictureControlSet *pcs, ModeDecisionContext *ctx, Mode
             cand_bf->quant_dc.u[txb_itr] = svt_aom_quantize_inv_quantize(
                 pcs,
                 ctx,
-                &(((int32_t*)ctx->tx_coeffs->buffer_cb)[txb_1d_offset]),
+                &(((int32_t *)ctx->tx_coeffs->buffer_cb)[txb_1d_offset]),
                 NOT_USED_VALUE,
-                &(((int32_t*)cand_bf->quant->buffer_cb)[txb_1d_offset]),
-                &(((int32_t*)cand_bf->rec_coeff->buffer_cb)[txb_1d_offset]),
+                &(((int32_t *)cand_bf->quant->buffer_cb)[txb_1d_offset]),
+                &(((int32_t *)cand_bf->rec_coeff->buffer_cb)[txb_1d_offset]),
                 chroma_qindex,
                 seg_qp,
                 ctx->blk_geom->tx_width_uv[tx_depth],
@@ -2478,16 +2476,16 @@ void svt_aom_full_loop_uv(PictureControlSet *pcs, ModeDecisionContext *ctx, Mode
                                        cand_bf->cand->transform_type_uv,
                                        PLANE_TYPE_UV,
                                        pf_shape);
-            int32_t seg_qp                    = pcs->ppcs->frm_hdr.segmentation_params.segmentation_enabled
-                                   ? pcs->ppcs->frm_hdr.segmentation_params.feature_data[ctx->blk_ptr->segment_id][SEG_LVL_ALT_Q]
-                                   : 0;
+            int32_t seg_qp = pcs->ppcs->frm_hdr.segmentation_params.segmentation_enabled
+                ? pcs->ppcs->frm_hdr.segmentation_params.feature_data[ctx->blk_ptr->segment_id][SEG_LVL_ALT_Q]
+                : 0;
 #if CLN_QUANT_FUNC
             cand_bf->quant_dc.v[txb_itr] = svt_aom_quantize_inv_quantize(
                 pcs,
                 ctx,
-                &(((int32_t*)ctx->tx_coeffs->buffer_cr)[txb_1d_offset]),
-                &(((int32_t*)cand_bf->quant->buffer_cr)[txb_1d_offset]),
-                &(((int32_t*)cand_bf->rec_coeff->buffer_cr)[txb_1d_offset]),
+                &(((int32_t *)ctx->tx_coeffs->buffer_cr)[txb_1d_offset]),
+                &(((int32_t *)cand_bf->quant->buffer_cr)[txb_1d_offset]),
+                &(((int32_t *)cand_bf->rec_coeff->buffer_cr)[txb_1d_offset]),
                 chroma_qindex,
                 seg_qp,
                 ctx->blk_geom->txsize_uv[tx_depth],
@@ -2505,10 +2503,10 @@ void svt_aom_full_loop_uv(PictureControlSet *pcs, ModeDecisionContext *ctx, Mode
             cand_bf->quant_dc.v[txb_itr] = svt_aom_quantize_inv_quantize(
                 pcs,
                 ctx,
-                &(((int32_t*)ctx->tx_coeffs->buffer_cr)[txb_1d_offset]),
+                &(((int32_t *)ctx->tx_coeffs->buffer_cr)[txb_1d_offset]),
                 NOT_USED_VALUE,
-                &(((int32_t*)cand_bf->quant->buffer_cr)[txb_1d_offset]),
-                &(((int32_t*)cand_bf->rec_coeff->buffer_cr)[txb_1d_offset]),
+                &(((int32_t *)cand_bf->quant->buffer_cr)[txb_1d_offset]),
+                &(((int32_t *)cand_bf->rec_coeff->buffer_cr)[txb_1d_offset]),
                 chroma_qindex,
                 seg_qp,
                 ctx->blk_geom->tx_width_uv[tx_depth],
@@ -2765,7 +2763,7 @@ uint64_t svt_aom_d1_non_square_block_decision(PictureControlSet *pcs, ModeDecisi
          (tot_cost < ctx->md_blk_arr_nsq[ctx->blk_geom->sqi_mds].cost))) {
         ctx->cost_avail[ctx->blk_geom->sqi_mds] = 1;
         //store best partition cost in parent square
-        ctx->md_blk_arr_nsq[ctx->blk_geom->sqi_mds].cost     = tot_cost;
+        ctx->md_blk_arr_nsq[ctx->blk_geom->sqi_mds].cost        = tot_cost;
         ctx->md_blk_arr_nsq[ctx->blk_geom->sqi_mds].part        = from_shape_to_part[ctx->blk_geom->shape];
         ctx->md_blk_arr_nsq[ctx->blk_geom->sqi_mds].best_d1_blk = first_blk_idx;
     }
@@ -2824,14 +2822,10 @@ static void compute_depth_costs(ModeDecisionContext *ctx, PictureParentControlSe
         (ctx->cost_avail[curr_depth_blk1_mds] || !blk1_within_pic) &&
         (ctx->cost_avail[curr_depth_blk2_mds] || !blk2_within_pic) &&
         (ctx->cost_avail[curr_depth_blk3_mds] || !blk3_within_pic)) {
-        uint64_t blk0_cost = ctx->cost_avail[curr_depth_blk0_mds] ? ctx->md_blk_arr_nsq[curr_depth_blk0_mds].cost
-                                                                  : 0;
-        uint64_t blk1_cost = ctx->cost_avail[curr_depth_blk1_mds] ? ctx->md_blk_arr_nsq[curr_depth_blk1_mds].cost
-                                                                  : 0;
-        uint64_t blk2_cost = ctx->cost_avail[curr_depth_blk2_mds] ? ctx->md_blk_arr_nsq[curr_depth_blk2_mds].cost
-                                                                  : 0;
-        uint64_t blk3_cost = ctx->cost_avail[curr_depth_blk3_mds] ? ctx->md_blk_arr_nsq[curr_depth_blk3_mds].cost
-                                                                  : 0;
+        uint64_t blk0_cost = ctx->cost_avail[curr_depth_blk0_mds] ? ctx->md_blk_arr_nsq[curr_depth_blk0_mds].cost : 0;
+        uint64_t blk1_cost = ctx->cost_avail[curr_depth_blk1_mds] ? ctx->md_blk_arr_nsq[curr_depth_blk1_mds].cost : 0;
+        uint64_t blk2_cost = ctx->cost_avail[curr_depth_blk2_mds] ? ctx->md_blk_arr_nsq[curr_depth_blk2_mds].cost : 0;
+        uint64_t blk3_cost = ctx->cost_avail[curr_depth_blk3_mds] ? ctx->md_blk_arr_nsq[curr_depth_blk3_mds].cost : 0;
         *curr_depth_cost   = blk0_cost + blk1_cost + blk2_cost + blk3_cost + above_split_rate;
     } else {
         *curr_depth_cost = MAX_MODE_COST;
@@ -2876,12 +2870,12 @@ uint32_t svt_aom_d2_inter_depth_block_decision(PictureControlSet *pcs, ModeDecis
                 ctx->md_blk_arr_nsq[parent_depth_idx_mds].split_flag = TRUE;
             } else if (((parent_bias * parent_depth_cost) / 1000) <= current_depth_cost) {
                 ctx->md_blk_arr_nsq[parent_depth_idx_mds].split_flag = FALSE;
-                ctx->md_blk_arr_nsq[parent_depth_idx_mds].cost    = parent_depth_cost;
+                ctx->md_blk_arr_nsq[parent_depth_idx_mds].cost       = parent_depth_cost;
                 last_blk_index                                       = parent_depth_idx_mds;
                 ctx->cost_avail[parent_depth_idx_mds]                = 1;
                 assert(parent_depth_cost != MAX_MODE_COST);
             } else {
-                ctx->md_blk_arr_nsq[parent_depth_idx_mds].cost    = current_depth_cost;
+                ctx->md_blk_arr_nsq[parent_depth_idx_mds].cost       = current_depth_cost;
                 ctx->md_blk_arr_nsq[parent_depth_idx_mds].part       = PARTITION_SPLIT;
                 ctx->md_blk_arr_nsq[parent_depth_idx_mds].split_flag = TRUE;
                 ctx->cost_avail[parent_depth_idx_mds]                = 1;

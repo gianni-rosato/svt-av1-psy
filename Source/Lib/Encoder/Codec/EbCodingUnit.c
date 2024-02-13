@@ -57,7 +57,8 @@ EbErrorType svt_aom_largest_coding_unit_ctor(SuperBlock *larget_coding_unit_ptr,
 #if FIX_NSQ_CTRL
                 if (!disallow_nsq)
                     break;
-                disallow_nsq = MIN(disallow_nsq, (svt_aom_get_nsq_geom_level(enc_mode, is_base, coeff_lvl) == 0 ? 1 : 0));
+                disallow_nsq = MIN(disallow_nsq,
+                                   (svt_aom_get_nsq_geom_level(enc_mode, is_base, coeff_lvl) == 0 ? 1 : 0));
 #else
                 for (EbInputResolution res = INPUT_SIZE_240p_RANGE; res <= INPUT_SIZE_8K_RANGE; res++) {
                     // min QP is 1 b/c 0 is lossless and is not supported

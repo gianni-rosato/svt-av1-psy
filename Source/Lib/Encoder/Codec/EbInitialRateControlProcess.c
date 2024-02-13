@@ -161,15 +161,11 @@ void validate_pic_for_tpl(PictureParentControlSet *pcs, uint32_t pic_index) {
             pcs->tpl_valid_pic[pic_index] = 1;
             pcs->used_tpl_frame_num++;
         }
-
     }
 }
 
-
-
 #if TUNE_TPL_LVL
 uint8_t svt_aom_get_tpl_group_level(uint8_t tpl, int8_t enc_mode, SvtAv1RcMode rc_mode) {
-
     uint8_t tpl_group_level;
 
     if (!tpl) {
@@ -181,57 +177,57 @@ uint8_t svt_aom_get_tpl_group_level(uint8_t tpl, int8_t enc_mode, SvtAv1RcMode r
     else if (enc_mode <= ENC_M5) {
 #endif
         tpl_group_level = 1;
-    }
-    else if (enc_mode <= ENC_M7) {
+    } else if (enc_mode <= ENC_M7) {
         tpl_group_level = 2;
-    }
-    else if (enc_mode <= ENC_M10 || (rc_mode == SVT_AV1_RC_MODE_VBR && enc_mode <= ENC_M11)) {
+    } else if (enc_mode <= ENC_M10 || (rc_mode == SVT_AV1_RC_MODE_VBR && enc_mode <= ENC_M11)) {
         tpl_group_level = 3;
-    }
-    else  {
+    } else {
         tpl_group_level = 4;
     }
 
     return tpl_group_level;
 }
 
-uint8_t svt_aom_set_tpl_group(PictureParentControlSet* pcs, uint8_t tpl_group_level, uint32_t source_width, uint32_t source_height) {
-    TplControls tpl_ctrls_struct = { 0 };
-    TplControls* tpl_ctrls = &tpl_ctrls_struct;
+uint8_t svt_aom_set_tpl_group(PictureParentControlSet *pcs, uint8_t tpl_group_level, uint32_t source_width,
+                              uint32_t source_height) {
+    TplControls  tpl_ctrls_struct = {0};
+    TplControls *tpl_ctrls        = &tpl_ctrls_struct;
 
     switch (tpl_group_level) {
-    case 0:
-        tpl_ctrls->enable = 0;
-        break;
+    case 0: tpl_ctrls->enable = 0; break;
     case 1:
-        tpl_ctrls->enable = 1;
+        tpl_ctrls->enable            = 1;
         tpl_ctrls->reduced_tpl_group = -1;
-        tpl_ctrls->synth_blk_size = 16;
+        tpl_ctrls->synth_blk_size    = 16;
         break;
     case 2:
-        tpl_ctrls->enable = 1;
-        tpl_ctrls->reduced_tpl_group = (pcs == NULL) ? - 1 : pcs->slice_type ? -1 : (pcs->hierarchical_levels == 5 ? 4 : 3);
-        tpl_ctrls->synth_blk_size = 16;
+        tpl_ctrls->enable            = 1;
+        tpl_ctrls->reduced_tpl_group = (pcs == NULL) ? -1
+            : pcs->slice_type                        ? -1
+                                                     : (pcs->hierarchical_levels == 5 ? 4 : 3);
+        tpl_ctrls->synth_blk_size    = 16;
         break;
     case 3:
-        tpl_ctrls->enable = 1;
+        tpl_ctrls->enable            = 1;
         tpl_ctrls->reduced_tpl_group = (pcs == NULL) ? -1 : pcs->hierarchical_levels == 5 ? 4 : 3;
-        tpl_ctrls->synth_blk_size = 16;
+        tpl_ctrls->synth_blk_size    = 16;
         break;
     case 4:
-        tpl_ctrls->enable = 1;
-        tpl_ctrls->reduced_tpl_group = (pcs == NULL) ? -1 : pcs->hierarchical_levels == 5
+        tpl_ctrls->enable            = 1;
+        tpl_ctrls->reduced_tpl_group = (pcs == NULL) ? -1
+            : pcs->hierarchical_levels == 5
             ? pcs->slice_type ? 2 : (pcs->scs->input_resolution <= INPUT_SIZE_480p_RANGE ? 3 : 1)
-            : pcs->hierarchical_levels == 4 ? pcs->slice_type ? 2 : (pcs->scs->input_resolution <= INPUT_SIZE_480p_RANGE ? 2 : 1)
+            : pcs->hierarchical_levels == 4
+            ? pcs->slice_type ? 2 : (pcs->scs->input_resolution <= INPUT_SIZE_480p_RANGE ? 2 : 1)
             : pcs->slice_type ? 3
-            : (pcs->scs->input_resolution <= INPUT_SIZE_480p_RANGE ? 2 : 0);
-        tpl_ctrls->synth_blk_size = AOMMIN(source_width, source_height) >= 720 ? 32 : 16;
+                              : (pcs->scs->input_resolution <= INPUT_SIZE_480p_RANGE ? 2 : 0);
+        tpl_ctrls->synth_blk_size    = AOMMIN(source_width, source_height) >= 720 ? 32 : 16;
         break;
     default: assert(0); break;
     }
 
     if (pcs == NULL)
-        return  tpl_ctrls->synth_blk_size;
+        return tpl_ctrls->synth_blk_size;
 
     if ((int)pcs->hierarchical_levels <= tpl_ctrls->reduced_tpl_group)
         tpl_ctrls->reduced_tpl_group = -1;
@@ -244,13 +240,13 @@ uint8_t svt_aom_set_tpl_group(PictureParentControlSet* pcs, uint8_t tpl_group_le
         default: tpl_ctrls->r0_adjust_factor = 0; break;
         case 1:
             tpl_ctrls->r0_adjust_factor = pcs->hierarchical_levels <= 2 ? 0.4
-                : pcs->hierarchical_levels <= 3 ? 0.8
-                : 1.6;
+                : pcs->hierarchical_levels <= 3                         ? 0.8
+                                                                        : 1.6;
             break;
         case 2:
             tpl_ctrls->r0_adjust_factor = pcs->hierarchical_levels <= 2 ? 0.6
-                : pcs->hierarchical_levels <= 3 ? 1.2
-                : 2.4;
+                : pcs->hierarchical_levels <= 3                         ? 1.2
+                                                                        : 2.4;
             break;
         case 3: tpl_ctrls->r0_adjust_factor = pcs->hierarchical_levels <= 3 ? 1.4 : 2.8; break;
         case 4: tpl_ctrls->r0_adjust_factor = 4.0; break;
@@ -260,17 +256,16 @@ uint8_t svt_aom_set_tpl_group(PictureParentControlSet* pcs, uint8_t tpl_group_le
         // Adjust r0 scaling factor based on GOP structure and lookahead
         if (!pcs->scs->tpl_lad_mg)
             tpl_ctrls->r0_adjust_factor *= 1.25;
-    }
-    else {
+    } else {
         // No r0 adjustment when all frames are used
         tpl_ctrls->r0_adjust_factor = 0;
 
         // If no lookahead, apply r0 scaling
         if (!pcs->scs->tpl_lad_mg) {
             tpl_ctrls->r0_adjust_factor = pcs->slice_type ? 0
-                : pcs->hierarchical_levels <= 2 ? 0.4
-                : pcs->hierarchical_levels <= 3 ? 0.8
-                : 1.6;
+                : pcs->hierarchical_levels <= 2           ? 0.4
+                : pcs->hierarchical_levels <= 3           ? 0.8
+                                                          : 1.6;
         }
     }
 #if OPT_1P_VBR
@@ -283,103 +278,100 @@ uint8_t svt_aom_set_tpl_group(PictureParentControlSet* pcs, uint8_t tpl_group_le
         tpl_ctrls->r0_adjust_factor *= 1.25;
 #endif
     memcpy(&pcs->tpl_ctrls, tpl_ctrls, sizeof(TplControls));
-    return  tpl_ctrls->synth_blk_size;
+    return tpl_ctrls->synth_blk_size;
 }
 
 static uint8_t get_tpl_params_level(uint64_t dist_per_group, int8_t enc_mode, SvtAv1RcMode rc_mode) {
-    uint8_t tpl_params_level;
+    uint8_t  tpl_params_level;
     uint64_t cplx_group_th = 10000;
 
     if (enc_mode <= ENC_M4) {
         tpl_params_level = 1;
-    }
-    else if (enc_mode <= ENC_M6) {
+    } else if (enc_mode <= ENC_M6) {
         if (dist_per_group < cplx_group_th)
             tpl_params_level = 3;
         else
             tpl_params_level = 2;
-    }
-    else if (enc_mode <= ENC_M10 || (rc_mode == SVT_AV1_RC_MODE_VBR && enc_mode <= ENC_M11)) {
+    } else if (enc_mode <= ENC_M10 || (rc_mode == SVT_AV1_RC_MODE_VBR && enc_mode <= ENC_M11)) {
         tpl_params_level = 4;
-    }
-    else {
+    } else {
         tpl_params_level = 5;
     }
     return tpl_params_level;
 }
 
-static void set_tpl_params(PictureParentControlSet * pcs, uint8_t tpl_level) {
-    TplControls* tpl_ctrls = &pcs->tpl_ctrls;
-    SequenceControlSet* scs = pcs->scs;
+static void set_tpl_params(PictureParentControlSet *pcs, uint8_t tpl_level) {
+    TplControls            *tpl_ctrls  = &pcs->tpl_ctrls;
+    SequenceControlSet     *scs        = pcs->scs;
     const EbInputResolution resolution = scs->input_resolution;
 
     switch (tpl_level) {
     case 0:
-        tpl_ctrls->compute_rate = 0;
-        tpl_ctrls->enable_tpl_qps = 0;
+        tpl_ctrls->compute_rate            = 0;
+        tpl_ctrls->enable_tpl_qps          = 0;
         tpl_ctrls->disable_intra_pred_nref = 0;
-        tpl_ctrls->intra_mode_end = DC_PRED;
-        tpl_ctrls->pf_shape = DEFAULT_SHAPE;
-        tpl_ctrls->use_sad_in_src_search = 0;
-        tpl_ctrls->dispenser_search_level = 0;
-        tpl_ctrls->subsample_tx = 0;
-        tpl_ctrls->subpel_depth = FULL_PEL;
+        tpl_ctrls->intra_mode_end          = DC_PRED;
+        tpl_ctrls->pf_shape                = DEFAULT_SHAPE;
+        tpl_ctrls->use_sad_in_src_search   = 0;
+        tpl_ctrls->dispenser_search_level  = 0;
+        tpl_ctrls->subsample_tx            = 0;
+        tpl_ctrls->subpel_depth            = FULL_PEL;
 
         break;
     case 1:
-        tpl_ctrls->compute_rate = 1;
-        tpl_ctrls->enable_tpl_qps = 1;
+        tpl_ctrls->compute_rate            = 1;
+        tpl_ctrls->enable_tpl_qps          = 1;
         tpl_ctrls->disable_intra_pred_nref = 0;
-        tpl_ctrls->intra_mode_end = PAETH_PRED;
-        tpl_ctrls->pf_shape = DEFAULT_SHAPE;
-        tpl_ctrls->use_sad_in_src_search = 0;
-        tpl_ctrls->dispenser_search_level = 0;
-        tpl_ctrls->subsample_tx = 0;
-        tpl_ctrls->subpel_depth = QUARTER_PEL;
+        tpl_ctrls->intra_mode_end          = PAETH_PRED;
+        tpl_ctrls->pf_shape                = DEFAULT_SHAPE;
+        tpl_ctrls->use_sad_in_src_search   = 0;
+        tpl_ctrls->dispenser_search_level  = 0;
+        tpl_ctrls->subsample_tx            = 0;
+        tpl_ctrls->subpel_depth            = QUARTER_PEL;
         break;
     case 2:
-        tpl_ctrls->compute_rate = 0;
-        tpl_ctrls->enable_tpl_qps = 0;
+        tpl_ctrls->compute_rate            = 0;
+        tpl_ctrls->enable_tpl_qps          = 0;
         tpl_ctrls->disable_intra_pred_nref = 1;
-        tpl_ctrls->intra_mode_end = PAETH_PRED;
-        tpl_ctrls->pf_shape = resolution <= INPUT_SIZE_480p_RANGE ? N2_SHAPE : N4_SHAPE;
-        tpl_ctrls->use_sad_in_src_search = 1;
-        tpl_ctrls->dispenser_search_level = 0;
-        tpl_ctrls->subsample_tx = 0;
-        tpl_ctrls->subpel_depth = QUARTER_PEL;
+        tpl_ctrls->intra_mode_end          = PAETH_PRED;
+        tpl_ctrls->pf_shape                = resolution <= INPUT_SIZE_480p_RANGE ? N2_SHAPE : N4_SHAPE;
+        tpl_ctrls->use_sad_in_src_search   = 1;
+        tpl_ctrls->dispenser_search_level  = 0;
+        tpl_ctrls->subsample_tx            = 0;
+        tpl_ctrls->subpel_depth            = QUARTER_PEL;
         break;
     case 3:
-        tpl_ctrls->compute_rate = 0;
-        tpl_ctrls->enable_tpl_qps = 0;
+        tpl_ctrls->compute_rate            = 0;
+        tpl_ctrls->enable_tpl_qps          = 0;
         tpl_ctrls->disable_intra_pred_nref = 1;
-        tpl_ctrls->intra_mode_end = DC_PRED;
-        tpl_ctrls->pf_shape = resolution <= INPUT_SIZE_480p_RANGE ? N2_SHAPE : N4_SHAPE;
-        tpl_ctrls->use_sad_in_src_search = 1;
-        tpl_ctrls->dispenser_search_level = 0;
-        tpl_ctrls->subsample_tx = 0;
-        tpl_ctrls->subpel_depth = QUARTER_PEL;
+        tpl_ctrls->intra_mode_end          = DC_PRED;
+        tpl_ctrls->pf_shape                = resolution <= INPUT_SIZE_480p_RANGE ? N2_SHAPE : N4_SHAPE;
+        tpl_ctrls->use_sad_in_src_search   = 1;
+        tpl_ctrls->dispenser_search_level  = 0;
+        tpl_ctrls->subsample_tx            = 0;
+        tpl_ctrls->subpel_depth            = QUARTER_PEL;
         break;
     case 4:
-        tpl_ctrls->compute_rate = 0;
-        tpl_ctrls->enable_tpl_qps = 0;
+        tpl_ctrls->compute_rate            = 0;
+        tpl_ctrls->enable_tpl_qps          = 0;
         tpl_ctrls->disable_intra_pred_nref = 1;
-        tpl_ctrls->intra_mode_end = DC_PRED;
-        tpl_ctrls->pf_shape = resolution <= INPUT_SIZE_480p_RANGE ? N2_SHAPE : N4_SHAPE;
-        tpl_ctrls->use_sad_in_src_search = 1;
-        tpl_ctrls->dispenser_search_level = 0;
-        tpl_ctrls->subsample_tx = 0;
-        tpl_ctrls->subpel_depth = FULL_PEL;
+        tpl_ctrls->intra_mode_end          = DC_PRED;
+        tpl_ctrls->pf_shape                = resolution <= INPUT_SIZE_480p_RANGE ? N2_SHAPE : N4_SHAPE;
+        tpl_ctrls->use_sad_in_src_search   = 1;
+        tpl_ctrls->dispenser_search_level  = 0;
+        tpl_ctrls->subsample_tx            = 0;
+        tpl_ctrls->subpel_depth            = FULL_PEL;
         break;
     case 5:
-        tpl_ctrls->compute_rate = 0;
-        tpl_ctrls->enable_tpl_qps = 0;
+        tpl_ctrls->compute_rate            = 0;
+        tpl_ctrls->enable_tpl_qps          = 0;
         tpl_ctrls->disable_intra_pred_nref = 1;
-        tpl_ctrls->intra_mode_end = DC_PRED;
-        tpl_ctrls->pf_shape = resolution <= INPUT_SIZE_480p_RANGE ? N2_SHAPE : N4_SHAPE;
-        tpl_ctrls->use_sad_in_src_search = 1;
-        tpl_ctrls->dispenser_search_level = 1;
-        tpl_ctrls->subsample_tx = 2;
-        tpl_ctrls->subpel_depth = FULL_PEL;
+        tpl_ctrls->intra_mode_end          = DC_PRED;
+        tpl_ctrls->pf_shape                = resolution <= INPUT_SIZE_480p_RANGE ? N2_SHAPE : N4_SHAPE;
+        tpl_ctrls->use_sad_in_src_search   = 1;
+        tpl_ctrls->dispenser_search_level  = 1;
+        tpl_ctrls->subsample_tx            = 2;
+        tpl_ctrls->subpel_depth            = FULL_PEL;
         break;
     default: assert(0); break;
     }
@@ -485,7 +477,6 @@ void store_extended_group(PictureParentControlSet *pcs, InitialRateControlContex
         }
     }
 
-
 #if TUNE_TPL_LVL ///
     uint32_t pic_index;
     uint64_t dist_per_group = 0;
@@ -499,12 +490,14 @@ void store_extended_group(PictureParentControlSet *pcs, InitialRateControlContex
 
     for (pic_index = 0; pic_index < pcs->tpl_group_size; pic_index++) {
         if (!pcs->tpl_group[pic_index]->tpl_params_ready) {
-            set_tpl_params(pcs->tpl_group[pic_index], get_tpl_params_level(dist_per_group, pcs->scs->static_config.enc_mode, pcs->scs->static_config.rate_control_mode));
+            set_tpl_params(
+                pcs->tpl_group[pic_index],
+                get_tpl_params_level(
+                    dist_per_group, pcs->scs->static_config.enc_mode, pcs->scs->static_config.rate_control_mode));
             pcs->tpl_group[pic_index]->tpl_params_ready = 1;
         }
     }
 #endif
-
 
 #if LAD_MG_PRINT
     if (log) {
@@ -736,17 +729,16 @@ void *svt_aom_initial_rate_control_kernel(void *input_ptr) {
 
             pcs->tpl_params_ready = 0;
             svt_aom_set_tpl_group(pcs,
-                svt_aom_get_tpl_group_level(
-                    scs->tpl,
-                    scs->static_config.enc_mode,
-                    scs->static_config.rate_control_mode),
-                scs->max_input_luma_width,  scs->max_input_luma_height);
+                                  svt_aom_get_tpl_group_level(
+                                      scs->tpl, scs->static_config.enc_mode, scs->static_config.rate_control_mode),
+                                  scs->max_input_luma_width,
+                                  scs->max_input_luma_height);
 
             pcs->r0_based_qps_qpm = pcs->tpl_ctrls.enable &&
                 (pcs->temporal_layer_index == 0 ||
-                    (scs->static_config.rate_control_mode == SVT_AV1_RC_MODE_CQP_OR_CRF &&
-                        ((pcs->hierarchical_levels == 5 && pcs->temporal_layer_index <= 2) ||
-                            (pcs->hierarchical_levels >= 4 && pcs->temporal_layer_index <= 1))));
+                 (scs->static_config.rate_control_mode == SVT_AV1_RC_MODE_CQP_OR_CRF &&
+                  ((pcs->hierarchical_levels == 5 && pcs->temporal_layer_index <= 2) ||
+                   (pcs->hierarchical_levels >= 4 && pcs->temporal_layer_index <= 1))));
 
             // If TPL results are needed for the current hierarchical layer, but are not available, shut r0-based QPS/QPM
             if (pcs->r0_based_qps_qpm && pcs->tpl_ctrls.reduced_tpl_group >= 0 &&

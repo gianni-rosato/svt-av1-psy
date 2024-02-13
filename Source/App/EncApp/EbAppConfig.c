@@ -1722,9 +1722,9 @@ EbErrorType handle_stats_file(EbConfig *app_cfg, EncPass enc_pass, const SvtAv1F
         if (app_cfg->stats) {
             if (!fopen_and_lock(&app_cfg->output_stat_file, app_cfg->stats, TRUE)) {
                 fprintf(app_cfg->error_log_file,
-                    "Error instance %u: can't open stats file %s for write \n",
-                    channel_number + 1,
-                    app_cfg->stats);
+                        "Error instance %u: can't open stats file %s for write \n",
+                        channel_number + 1,
+                        app_cfg->stats);
                 return EB_ErrorBadParameter;
             }
         }

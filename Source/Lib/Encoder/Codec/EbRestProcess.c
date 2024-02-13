@@ -135,8 +135,7 @@ EbErrorType svt_aom_rest_context_ctor(EbThreadContext *thread_ctx, const EbEncHa
         }
         context_ptr->rst_tmpbuf = NULL;
 #if DIS_DLF_SG_QP
-        if (svt_aom_get_enable_sg(
-                init_data_ptr->enc_mode, scs->input_resolution, scs->static_config.fast_decode))
+        if (svt_aom_get_enable_sg(init_data_ptr->enc_mode, scs->input_resolution, scs->static_config.fast_decode))
 #else
         if (svt_aom_get_enable_sg(
                 init_data_ptr->enc_mode, scs->input_resolution, scs->static_config.fast_decode, scs->static_config.qp))

@@ -1968,7 +1968,7 @@ static INLINE int32_t sum_to_int32(__m256i sum_256) {
 }
 
 #if CLN_QUANT_ONE_BYTE
-uint8_t svt_av1_compute_cul_level_avx2(const int16_t* const scan, const int32_t* const quant_coeff, uint16_t* eob) {
+uint8_t svt_av1_compute_cul_level_avx2(const int16_t *const scan, const int32_t *const quant_coeff, uint16_t *eob) {
 #else
 int32_t svt_av1_compute_cul_level_avx2(const int16_t *const scan, const int32_t *const quant_coeff, uint16_t *eob) {
 #endif

@@ -3060,8 +3060,7 @@ void *svt_aom_rate_control_kernel(void *input_ptr) {
                                     av1_rc_init(scs);
                                 }
                                 new_qindex = crf_qindex_calc(pcs, rc, rc->active_worst_quality);
-                            }
-                            else // if CQP
+                            } else // if CQP
                                 new_qindex = cqp_qindex_calc(pcs, qindex);
 #else
                             if (scs->static_config.pass != ENC_FIRST_PASS) {

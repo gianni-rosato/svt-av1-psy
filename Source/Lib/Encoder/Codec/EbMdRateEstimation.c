@@ -632,11 +632,11 @@ static AOM_INLINE void update_palette_cdf(MacroBlockD *xd, const MbModeInfo *con
         }
     }
 #if CLN_BLK_STRUCT_2
-    uint32_t  intra_chroma_mode = blk_ptr->intra_chroma_mode;
+    uint32_t intra_chroma_mode = blk_ptr->intra_chroma_mode;
 #else
-    uint32_t  intra_chroma_mode = blk_ptr->prediction_unit_array->intra_chroma_mode;
+    uint32_t intra_chroma_mode = blk_ptr->prediction_unit_array->intra_chroma_mode;
 #endif
-    const int uv_dc_pred        = intra_chroma_mode == UV_DC_PRED && is_chroma_reference(mi_row, mi_col, bsize, 1, 1);
+    const int uv_dc_pred = intra_chroma_mode == UV_DC_PRED && is_chroma_reference(mi_row, mi_col, bsize, 1, 1);
 
     if (uv_dc_pred) {
         const int n                   = blk_ptr->palette_size[1];
@@ -688,11 +688,11 @@ static AOM_INLINE void sum_intra_stats(PictureControlSet *pcs, BlkStruct *blk_pt
     if (!is_chroma_reference(mi_row, mi_col, bsize, sub_sampling_x, sub_sampling_y))
         return;
 #if CLN_BLK_STRUCT_2
-    const UvPredictionMode uv_mode     = blk_ptr->intra_chroma_mode;
+    const UvPredictionMode uv_mode = blk_ptr->intra_chroma_mode;
 #else
-    const UvPredictionMode uv_mode     = blk_ptr->prediction_unit_array->intra_chroma_mode;
+    const UvPredictionMode uv_mode = blk_ptr->prediction_unit_array->intra_chroma_mode;
 #endif
-    const int              cfl_allowed = blk_geom->bwidth <= 32 && blk_geom->bheight <= 32;
+    const int cfl_allowed = blk_geom->bwidth <= 32 && blk_geom->bheight <= 32;
     update_cdf(fc->uv_mode_cdf[cfl_allowed][y_mode], uv_mode, UV_INTRA_MODES - !cfl_allowed);
     if (uv_mode == UV_CFL_PRED) {
 #if CLN_BLK_STRUCT_2
@@ -916,11 +916,9 @@ void svt_aom_update_stats(PictureControlSet *pcs, BlkStruct *blk_ptr, int mi_row
 #if CLN_BLK_STRUCT_2
         av1_set_ref_frame(rf, blk_ptr->ref_frame_type);
 #if CLN_INTER_MODE_CTX
-        const int16_t mode_ctx = svt_aom_mode_context_analyzer(
-            blk_ptr->inter_mode_ctx, rf);
+        const int16_t mode_ctx = svt_aom_mode_context_analyzer(blk_ptr->inter_mode_ctx, rf);
 #else
-        const int16_t mode_ctx = svt_aom_mode_context_analyzer(
-            blk_ptr->inter_mode_ctx[blk_ptr->ref_frame_type], rf);
+        const int16_t mode_ctx = svt_aom_mode_context_analyzer(blk_ptr->inter_mode_ctx[blk_ptr->ref_frame_type], rf);
 #endif
 #else
         av1_set_ref_frame(rf, blk_ptr->prediction_unit_array[0].ref_frame_type);

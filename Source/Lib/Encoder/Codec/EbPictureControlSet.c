@@ -1065,7 +1065,9 @@ static EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr
 #if FIX_NSQ_CTRL
                 if (!disallow_4x4)
                     break;
-                disallow_4x4 = MIN(disallow_4x4, (svt_aom_get_nsq_geom_level(init_data_ptr->enc_mode, is_base, coeff_lvl) == 0 ? 1 : 0));
+                disallow_4x4 = MIN(
+                    disallow_4x4,
+                    (svt_aom_get_nsq_geom_level(init_data_ptr->enc_mode, is_base, coeff_lvl) == 0 ? 1 : 0));
 #else
                 for (EbInputResolution res = INPUT_SIZE_240p_RANGE; res <= INPUT_SIZE_8K_RANGE; res++) {
                     // min QP is 1 b/c 0 is lossless and is not supported

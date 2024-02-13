@@ -621,7 +621,7 @@ int svt_av1_find_best_sub_pixel_tree_pruned(void *ictx, MacroBlockD *xd, const s
 
 #if CLN_MVP_DIST_CALC
     if (ictx != NULL && ms_params->search_stage == SPEL_ME) {
-        ModeDecisionContext* ctx = (ModeDecisionContext*)ictx;
+        ModeDecisionContext *ctx                                 = (ModeDecisionContext *)ictx;
         ctx->fp_me_dist[ms_params->list_idx][ms_params->ref_idx] = besterr;
     }
 #endif
@@ -714,14 +714,14 @@ int svt_av1_find_best_sub_pixel_tree(void *ictx, MacroBlockD *xd, const struct A
 #endif
         if (ctx->pd_pass == PD_PASS_1 && ctx->md_subpel_me_ctrls.mvp_th > 0) {
 #if CLN_MVP_DIST_CALC
-            unsigned int best_mvperr = ctx->best_fp_mvp_dist[ms_params->list_idx][ms_params->ref_idx];
-            int best_mvp_idx = ctx->best_fp_mvp_idx[ms_params->list_idx][ms_params->ref_idx];
+            unsigned int best_mvperr  = ctx->best_fp_mvp_dist[ms_params->list_idx][ms_params->ref_idx];
+            int          best_mvp_idx = ctx->best_fp_mvp_idx[ms_params->list_idx][ms_params->ref_idx];
 #else
             SUBPEL_MOTION_SEARCH_PARAMS par_tmp = *ms_params;
             par_tmp.mv_cost_params.mv_cost_type = MV_COST_NONE;
             unsigned int best_mvperr            = MAX_U32;
 #if OPT_ME_SP_8TH_PEL
-            int best_mvp_idx = 0;
+            int          best_mvp_idx           = 0;
 #endif
             for (int8_t mvp = 0; mvp < ctx->mvp_count[par_tmp.list_idx][par_tmp.ref_idx]; mvp++) {
                 unsigned int mvpdist;
@@ -733,7 +733,7 @@ int svt_av1_find_best_sub_pixel_tree(void *ictx, MacroBlockD *xd, const struct A
 #if OPT_ME_SP_8TH_PEL
                 if (mvperr < best_mvperr) {
                     best_mvp_idx = mvp;
-                    best_mvperr = mvperr;
+                    best_mvperr  = mvperr;
                 }
 #else
                 best_mvperr = MIN(mvperr, best_mvperr);
@@ -748,16 +748,16 @@ int svt_av1_find_best_sub_pixel_tree(void *ictx, MacroBlockD *xd, const struct A
 #if OPT_ME_SP_8TH_PEL
 #if CLN_MVP_DIST_CALC
             else if (ABS(bestmv->col - ctx->mvp_array[ms_params->list_idx][ms_params->ref_idx][best_mvp_idx].col) >
-                ctx->md_subpel_me_ctrls.hp_mv_th ||
-                ABS(bestmv->row - ctx->mvp_array[ms_params->list_idx][ms_params->ref_idx][best_mvp_idx].row) >
-                ctx->md_subpel_me_ctrls.hp_mv_th) {
+                         ctx->md_subpel_me_ctrls.hp_mv_th ||
+                     ABS(bestmv->row - ctx->mvp_array[ms_params->list_idx][ms_params->ref_idx][best_mvp_idx].row) >
+                         ctx->md_subpel_me_ctrls.hp_mv_th) {
                 round = MIN(round, 2);
             }
 #else
             else if (ABS(bestmv->col - ctx->mvp_array[par_tmp.list_idx][par_tmp.ref_idx][best_mvp_idx].col) >
-                ctx->md_subpel_me_ctrls.hp_mv_th ||
-                ABS(bestmv->row - ctx->mvp_array[par_tmp.list_idx][par_tmp.ref_idx][best_mvp_idx].row) >
-                ctx->md_subpel_me_ctrls.hp_mv_th) {
+                         ctx->md_subpel_me_ctrls.hp_mv_th ||
+                     ABS(bestmv->row - ctx->mvp_array[par_tmp.list_idx][par_tmp.ref_idx][best_mvp_idx].row) >
+                         ctx->md_subpel_me_ctrls.hp_mv_th) {
                 round = MIN(round, 2);
             }
 #endif

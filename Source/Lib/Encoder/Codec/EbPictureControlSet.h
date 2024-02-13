@@ -172,27 +172,27 @@ typedef struct EbMdcLeafData {
 #else
     uint32_t tot_d1_blocks; // how many d1 bloks every parent square would have
 #endif
-    bool     is_child; // does is it belong to the child depth(s); relative to PRED (the output of PD0)
+    bool is_child; // does is it belong to the child depth(s); relative to PRED (the output of PD0)
 } EbMdcLeafData;
 
 #if CLN_MDC_ARRAY
 typedef struct MdcSbData {
-    uint32_t leaf_count;
-    EbMdcLeafData* leaf_data_array;
-    Bool* split_flag;
-    uint8_t* refined_split_flag;
+    uint32_t       leaf_count;
+    EbMdcLeafData *leaf_data_array;
+    Bool          *split_flag;
+    uint8_t       *refined_split_flag;
     // 0: do not encode, 1: current or parent depth(s), 2: child depth(s)
-    uint8_t* consider_block;
+    uint8_t *consider_block;
 } MdcSbData;
 #else
 typedef struct MdcSbData {
-    uint32_t      leaf_count;
+    uint32_t leaf_count;
 #if CLN_MD_LOOP
     // leaf_data_array and split_flag are stored only for SQ shapes and passed to MD. They are indexed
     // using a leaf index, which is simply a count of all blocks added to the array so far.  Since only
     // SQ blocks are added to the array, the max number of entries is the max number of SQ blocks.
     EbMdcLeafData leaf_data_array[SQ_BLOCK_MAX_COUNT_SB_128];
-    Bool          split_flag[SQ_BLOCK_MAX_COUNT_SB_128];
+    Bool split_flag[SQ_BLOCK_MAX_COUNT_SB_128];
 
     // refined_split_flag and consider_block are used in the depth refinement stage, and are indexed
     // using the block mds index, so the array needs to hold all possible values for block mds index
@@ -883,10 +883,10 @@ typedef struct PictureParentControlSet {
     uint16_t             me_processed_b64_count;
     EbHandle             me_processed_b64_mutex;
 #if !OPT_MPASS_VBR2
-    FirstPassData        firstpass_data;
+    FirstPassData firstpass_data;
 #endif
-    double               ts_duration;
-    double               r0;
+    double ts_duration;
+    double r0;
     // track pictures that are processd in two different TPL groups
     uint8_t tpl_src_data_ready;
     Bool    blk_lambda_tuning;
@@ -1177,7 +1177,7 @@ typedef struct PictureParentControlSet {
     bool     seq_param_changed;
 #if TUNE_TPL_LVL
     uint64_t norm_me_dist;
-    uint8_t tpl_params_ready;
+    uint8_t  tpl_params_ready;
 #endif
 } PictureParentControlSet;
 
@@ -1238,7 +1238,7 @@ typedef struct PictureControlSetInitData {
     uint8_t    tpl_synth_size;
     uint8_t    in_loop_ois;
 #if !OPT_MPASS_VBR4
-    uint8_t    pass;
+    uint8_t pass;
 #endif
     uint32_t   rate_control_mode;
     Av1Common *av1_cm;
