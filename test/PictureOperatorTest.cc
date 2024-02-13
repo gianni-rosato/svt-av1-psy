@@ -48,9 +48,13 @@ using svt_av1_test_tool::SVTRandom;  // to generate the random
 namespace {
 
 typedef enum { REF_MAX, SRC_MAX, RANDOM } TestPattern;
-TestPattern TEST_PATTERNS[] = {REF_MAX, SRC_MAX, RANDOM};
 
 typedef std::tuple<uint32_t, uint32_t> PUSize;
+
+#if defined(ARCH_X86_64)
+
+TestPattern TEST_PATTERNS[] = {REF_MAX, SRC_MAX, RANDOM};
+
 PUSize TEST_PU_SIZES[] = {
     PUSize(64, 64), PUSize(64, 32), PUSize(32, 64), PUSize(32, 32),
     PUSize(32, 16), PUSize(16, 32), PUSize(16, 16), PUSize(16, 8),
@@ -205,6 +209,8 @@ INSTANTIATE_TEST_CASE_P(PictureOperator, PictureOperatorTest,
                         ::testing::Combine(::testing::ValuesIn(TEST_PU_SIZES),
                                            ::testing::ValuesIn(TEST_PATTERNS)));
 
+#endif
+
 typedef void (*downsample_2d_fn)(uint8_t *input_samples, uint32_t input_stride,
                                  uint32_t input_area_width,
                                  uint32_t input_area_height,
@@ -291,10 +297,25 @@ TEST_P(Downsample2DTest, test) {
     }
 };
 
+#if defined(ARCH_X86_64)
+
 INSTANTIATE_TEST_CASE_P(
     Downsample2D, Downsample2DTest,
     ::testing::Combine(::testing::ValuesIn(DOWNSAMPLE_SIZES),
                        ::testing::ValuesIn(DECIM_STEPS),
                        ::testing::Values(svt_aom_downsample_2d_sse4_1,
                                          svt_aom_downsample_2d_avx2)));
+
+#endif
+
+#if defined(ARCH_AARCH64)
+
+INSTANTIATE_TEST_CASE_P(
+    Downsample2D, Downsample2DTest,
+    ::testing::Combine(::testing::ValuesIn(DOWNSAMPLE_SIZES),
+                       ::testing::ValuesIn(DECIM_STEPS),
+                       ::testing::Values(svt_aom_downsample_2d_neon)));
+
+#endif
+
 }  // namespace

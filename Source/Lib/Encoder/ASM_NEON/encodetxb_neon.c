@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023, Alliance for Open Media. All rights reserved
+ * Copyright (c) 2024, Alliance for Open Media. All rights reserved
  *
  * This source code is subject to the terms of the BSD 2 Clause License and
  * the Alliance for Open Media Patent License 1.0. If the BSD 2 Clause License
@@ -14,6 +14,7 @@
 #include "EbCabacContextModel.h"
 #include "EbCommonUtils.h"
 #include "EbFullLoop.h"
+#include "EbMotionEstimation.h" //svt_aom_downsample_2d_c()
 
 void svt_av1_txb_init_levels_neon(const TranLow *const coeff, const int32_t width, const int32_t height,
                                   uint8_t *const levels) {
@@ -590,5 +591,100 @@ void svt_av1_get_nz_map_contexts_neon(const uint8_t *const levels, const int16_t
         coeff_contexts[pos] = 2;
     } else {
         coeff_contexts[pos] = 3;
+    }
+}
+
+static INLINE uint8x8_t compute_sum(uint8x16_t *in, uint8x16_t *prev_in) {
+    int16x8_t prev_in_lo_half = vreinterpretq_s16_u16(vmovl_u8(vget_low_u8(*prev_in)));
+    int16x8_t prev_in_hi_half = vreinterpretq_s16_u16(vmovl_u8(vget_high_u8(*prev_in)));
+
+    int16x8_t in_lo_half = vreinterpretq_s16_u16(vmovl_u8(vget_low_u8(*in)));
+    int16x8_t in_hi_half = vreinterpretq_s16_u16(vmovl_u8(vget_high_u8(*in)));
+
+    int16x8_t sum = vaddq_s16(vpaddq_s16(prev_in_lo_half, prev_in_hi_half), vpaddq_s16(in_lo_half, in_hi_half));
+    sum           = vrshrq_n_s16(sum, 2);
+
+    return vqmovun_s16(sum);
+}
+
+void svt_aom_downsample_2d_neon(uint8_t *input_samples, // input parameter, input samples Ptr
+                                uint32_t input_stride, // input parameter, input stride
+                                uint32_t input_area_width, // input parameter, input area width
+                                uint32_t input_area_height, // input parameter, input area height
+                                uint8_t *decim_samples, // output parameter, decimated samples Ptr
+                                uint32_t decim_stride, // input parameter, output stride
+                                uint32_t decim_step) // input parameter, decimation amount in pixels
+{
+    uint32_t input_stripe_stride = input_stride * decim_step;
+    uint8_t *in_ptr              = input_samples;
+    uint8_t *out_ptr             = decim_samples;
+    uint32_t width_align16       = input_area_width - (input_area_width % 16);
+
+    if (decim_step == 2) {
+        in_ptr += input_stride;
+        for (uint32_t vert_idx = 1; vert_idx < input_area_height; vert_idx += 2) {
+            uint8_t *prev_in_line           = in_ptr - input_stride;
+            uint32_t decim_horizontal_index = 0;
+
+            for (uint32_t horiz_idx = 1; horiz_idx < width_align16; horiz_idx += 16) {
+                uint8x16_t prev_in  = vld1q_u8(prev_in_line + horiz_idx - 1);
+                uint8x16_t in       = vld1q_u8(in_ptr + horiz_idx - 1);
+                uint8x8_t  sum_epu8 = compute_sum(&in, &prev_in);
+                vst1_u8(out_ptr + decim_horizontal_index, sum_epu8);
+                decim_horizontal_index += 8;
+            }
+
+            // complement when input_area_width is not multiple of 16
+            if (width_align16 < input_area_width) {
+                DECLARE_ALIGNED(16, uint8_t, tmp_buf[8]);
+                uint8x16_t prev_in  = vld1q_u8(prev_in_line + width_align16);
+                uint8x16_t in       = vld1q_u8(in_ptr + width_align16);
+                uint8x8_t  sum_epu8 = compute_sum(&in, &prev_in);
+                int        count    = (input_area_width - width_align16) >> 1;
+                vst1_u8(tmp_buf, sum_epu8);
+                memcpy(out_ptr + decim_horizontal_index, tmp_buf, count * sizeof(uint8_t));
+            }
+
+            in_ptr += input_stripe_stride;
+            out_ptr += decim_stride;
+        }
+    } else if (decim_step == 4) {
+        const uint8_t values[] = {
+            0x00, 0x02, 0x04, 0x06, 0x08, 0x0A, 0x0C, 0x0E, 0x01, 0x03, 0x05, 0x07, 0x09, 0x0B, 0x0D, 0x0F};
+        const uint8x16_t mask = vld1q_u8(values);
+        in_ptr += 2 * input_stride;
+        for (uint32_t vertical_index = 2; vertical_index < input_area_height; vertical_index += 4) {
+            uint8_t *prev_in_line           = in_ptr - input_stride;
+            uint32_t decim_horizontal_index = 0;
+
+            for (uint32_t horiz_idx = 2; horiz_idx < width_align16; horiz_idx += 16) {
+                uint8x16_t prev_in                              = vld1q_u8(prev_in_line + horiz_idx - 1);
+                uint8x16_t in                                   = vld1q_u8(in_ptr + horiz_idx - 1);
+                uint8x8_t  sum_epu8                             = compute_sum(&in, &prev_in);
+                uint8x16_t sum_epu8_ext                         = vcombine_u8(sum_epu8, vdup_n_u8(0));
+                sum_epu8_ext                                    = vqtbl1q_u8(sum_epu8_ext, mask);
+                *(uint32_t *)(out_ptr + decim_horizontal_index) = vgetq_lane_u32(vreinterpretq_u32_u8(sum_epu8_ext), 0);
+                decim_horizontal_index += 4;
+            }
+
+            // complement when input_area_width is not multiple of 16
+            if (width_align16 < input_area_width) {
+                uint8x16_t prev_in      = vld1q_u8(prev_in_line + width_align16 + 1);
+                uint8x16_t in           = vld1q_u8(in_ptr + width_align16 + 1);
+                uint8x8_t  sum_epu8     = compute_sum(&in, &prev_in);
+                uint8x16_t sum_epu8_ext = vcombine_u8(sum_epu8, vdup_n_u8(0));
+                sum_epu8_ext            = vqtbl1q_u8(sum_epu8_ext, mask);
+                int      count          = (input_area_width - width_align16) >> 2;
+                uint32_t tmp            = vgetq_lane_u32(vreinterpretq_u32_u8(sum_epu8_ext), 0);
+                memcpy(out_ptr + decim_horizontal_index, &tmp, count * sizeof(uint8_t));
+            }
+
+            in_ptr += input_stripe_stride;
+            out_ptr += decim_stride;
+        }
+    } else {
+        // fallback for other decimation step values
+        svt_aom_downsample_2d_c(
+            input_samples, input_stride, input_area_width, input_area_height, decim_samples, decim_stride, decim_step);
     }
 }

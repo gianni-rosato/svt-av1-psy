@@ -84,6 +84,7 @@ set(arch_neutral_files
 set(multi_arch_files
     FwdTxfm2dAsmTest.cc
     TemporalFilterTestPlanewise.cc
+    PictureOperatorTest.cc
     )
 
 if(HAVE_X86_PLATFORM)
@@ -111,7 +112,6 @@ if(HAVE_X86_PLATFORM)
         OBMCVarianceTest.cc
         PackUnPackTest.cc
         PaletteModeUtilTest.cc
-        PictureOperatorTest.cc
         PsnrTest.cc
         QuantAsmTest.cc
         ResidualTest.cc
