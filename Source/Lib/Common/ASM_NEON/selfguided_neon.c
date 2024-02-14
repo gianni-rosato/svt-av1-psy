@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023, Alliance for Open Media. All rights reserved
+ * Copyright (c) 2024, Alliance for Open Media. All rights reserved
  *
  * This source code is subject to the terms of the BSD 2 Clause License and
  * the Alliance for Open Media Patent License 1.0. If the BSD 2 Clause License
@@ -1489,4 +1489,164 @@ void svt_av1_selfguided_restoration_neon(const uint8_t *dat8, int32_t width, int
         restoration_fast_internal(dgd16, width, height, dgd16_stride, flt0, flt_stride, bit_depth, sgr_params_idx, 0);
     if (params->r[1] > 0)
         restoration_internal(dgd16, width, height, dgd16_stride, flt1, flt_stride, bit_depth, sgr_params_idx, 1);
+}
+
+typedef struct {
+    int r[2]; // radii
+    int s[2]; // sgr parameters for r[0] and r[1], based on GenSgrprojVtable()
+} sgr_params_type;
+
+// The 's' values are calculated based on original 'r' and 'e' values in the
+// spec using GenSgrprojVtable().
+// Note: Setting r = 0 skips the filter; with corresponding s = -1 (invalid).
+const sgr_params_type av1_sgr_params[SGRPROJ_PARAMS] = {
+    {{2, 1}, {140, 3236}},
+    {{2, 1}, {112, 2158}},
+    {{2, 1}, {93, 1618}},
+    {{2, 1}, {80, 1438}},
+    {{2, 1}, {70, 1295}},
+    {{2, 1}, {58, 1177}},
+    {{2, 1}, {47, 1079}},
+    {{2, 1}, {37, 996}},
+    {{2, 1}, {30, 925}},
+    {{2, 1}, {25, 863}},
+    {{0, 1}, {-1, 2589}},
+    {{0, 1}, {-1, 1618}},
+    {{0, 1}, {-1, 1177}},
+    {{0, 1}, {-1, 925}},
+    {{2, 0}, {56, -1}},
+    {{2, 0}, {22, -1}},
+};
+
+static INLINE void av1_decode_xq(const int *xqd, int *xq, const sgr_params_type *params) {
+    if (params->r[0] == 0) {
+        xq[0] = 0;
+        xq[1] = (1 << SGRPROJ_PRJ_BITS) - xqd[1];
+    } else if (params->r[1] == 0) {
+        xq[0] = xqd[0];
+        xq[1] = 0;
+    } else {
+        xq[0] = xqd[0];
+        xq[1] = (1 << SGRPROJ_PRJ_BITS) - xq[0] - xqd[1];
+    }
+}
+
+void svt_aom_apply_selfguided_restoration_neon(const uint8_t *dat, int32_t width, int32_t height, int32_t stride,
+                                               int32_t eps, const int32_t *xqd, uint8_t *dst, int32_t dst_stride,
+                                               int32_t *tmpbuf, int32_t bit_depth, int32_t highbd) {
+    int32_t *flt0 = tmpbuf;
+    int32_t *flt1 = flt0 + RESTORATION_UNITPELS_MAX;
+    assert(width * height <= RESTORATION_UNITPELS_MAX);
+    uint16_t                     dgd16_[RESTORATION_PROC_UNIT_PELS];
+    const int                    dgd16_stride = width + 2 * SGRPROJ_BORDER_HORZ;
+    uint16_t                    *dgd16        = dgd16_ + dgd16_stride * SGRPROJ_BORDER_VERT + SGRPROJ_BORDER_HORZ;
+    const int                    width_ext    = width + 2 * SGRPROJ_BORDER_HORZ;
+    const int                    height_ext   = height + 2 * SGRPROJ_BORDER_VERT;
+    const int                    dgd_stride   = stride;
+    const sgr_params_type *const params       = &av1_sgr_params[eps];
+    int                          xq[2];
+
+    // these can't be both false at the same time
+    assert(!(params->r[0] == 0 && params->r[1] == 0));
+
+    if (highbd) {
+        const uint16_t *dgd16_tmp = CONVERT_TO_SHORTPTR(dat);
+        src_convert_hbd_copy(dgd16_tmp - SGRPROJ_BORDER_VERT * dgd_stride - SGRPROJ_BORDER_HORZ,
+                             dgd_stride,
+                             dgd16 - SGRPROJ_BORDER_VERT * dgd16_stride - SGRPROJ_BORDER_HORZ,
+                             dgd16_stride,
+                             width_ext,
+                             height_ext);
+    } else {
+        src_convert_u8_to_u16(dat - SGRPROJ_BORDER_VERT * dgd_stride - SGRPROJ_BORDER_HORZ,
+                              dgd_stride,
+                              dgd16 - SGRPROJ_BORDER_VERT * dgd16_stride - SGRPROJ_BORDER_HORZ,
+                              dgd16_stride,
+                              width_ext,
+                              height_ext);
+    }
+
+    if (params->r[0] > 0) {
+        restoration_fast_internal(dgd16, width, height, dgd16_stride, flt0, width, bit_depth, eps, 0);
+    }
+    if (params->r[1] > 0) {
+        restoration_internal(dgd16, width, height, dgd16_stride, flt1, width, bit_depth, eps, 1);
+    }
+
+    av1_decode_xq(xqd, xq, params);
+
+    {
+        int16_t  *src_ptr;
+        uint8_t  *dst_ptr;
+        uint16_t *dst16 = CONVERT_TO_SHORTPTR(dst);
+        uint16_t *dst16_ptr;
+        int       count = 0, rc = 0;
+
+        const int32x4_t  xq0_vec = vdupq_n_s32(xq[0]);
+        const int32x4_t  xq1_vec = vdupq_n_s32(xq[1]);
+        const int16x8_t  zero    = vdupq_n_s16(0);
+        const uint16x8_t max     = vdupq_n_u16((1 << bit_depth) - 1);
+        src_ptr                  = (int16_t *)dgd16;
+
+        do {
+            count                = 0;
+            const int32_t offset = rc * dst_stride;
+            dst_ptr              = dst + offset;
+            dst16_ptr            = dst16 + offset;
+
+            do {
+                const int16x4x2_t s0 = vld1_s16_x2(src_ptr + count);
+
+                const int32x4_t u0 = vshll_n_s16(s0.val[0], SGRPROJ_RST_BITS);
+                const int32x4_t u4 = vshll_n_s16(s0.val[1], SGRPROJ_RST_BITS);
+
+                int32x4_t v0 = vshlq_n_s32(u0, SGRPROJ_PRJ_BITS);
+                int32x4_t v4 = vshlq_n_s32(u4, SGRPROJ_PRJ_BITS);
+
+                if (params->r[0] > 0) {
+                    const int32x4x2_t fx0 = vld1q_s32_x2(flt0 + count);
+
+                    const int32x4_t f00 = vsubq_s32(fx0.val[0], u0);
+                    const int32x4_t f10 = vsubq_s32(fx0.val[1], u4);
+
+                    v0 = vmlaq_s32(v0, xq0_vec, f00);
+                    v4 = vmlaq_s32(v4, xq0_vec, f10);
+                }
+
+                if (params->r[1] > 0) {
+                    const int32x4x2_t fx0 = vld1q_s32_x2(flt1 + count);
+
+                    const int32x4_t f00 = vsubq_s32(fx0.val[0], u0);
+                    const int32x4_t f10 = vsubq_s32(fx0.val[1], u4);
+
+                    v0 = vmlaq_s32(v0, xq1_vec, f00);
+                    v4 = vmlaq_s32(v4, xq1_vec, f10);
+                }
+
+                const int16x4_t d0 = vqrshrn_n_s32(v0, SGRPROJ_PRJ_BITS + SGRPROJ_RST_BITS);
+                const int16x4_t d4 = vqrshrn_n_s32(v4, SGRPROJ_PRJ_BITS + SGRPROJ_RST_BITS);
+
+                const int16x8_t r0 = vcombine_s16(d0, d4);
+
+                uint16x8_t r4 = vreinterpretq_u16_s16(vmaxq_s16(r0, zero));
+
+                if (highbd) {
+                    r4 = vminq_u16(r4, max);
+                    vst1q_u16(dst16_ptr, r4);
+                    dst16_ptr += 8;
+                } else {
+                    const uint8x8_t t0 = vqmovn_u16(r4);
+                    vst1_u8(dst_ptr, t0);
+                    dst_ptr += 8;
+                }
+
+                count += 8;
+            } while (count < width);
+
+            src_ptr += dgd16_stride;
+            flt1 += width;
+            flt0 += width;
+            rc++;
+        } while (rc < height);
+    }
 }

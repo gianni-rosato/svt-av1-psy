@@ -252,6 +252,8 @@ TEST_P(AV1SelfguidedFilterTest, CorrectnessTest) {
     RunCorrectnessTest();
 }
 
+#ifdef ARCH_X86_64
+
 INSTANTIATE_TEST_CASE_P(
     SSE4_1, AV1SelfguidedFilterTest,
     ::testing::Values(make_tuple(svt_apply_selfguided_restoration_sse4_1)));
@@ -259,6 +261,16 @@ INSTANTIATE_TEST_CASE_P(
 INSTANTIATE_TEST_CASE_P(
     AVX2, AV1SelfguidedFilterTest,
     ::testing::Values(make_tuple(svt_apply_selfguided_restoration_avx2)));
+
+#endif /* ARCH_X86_64 */
+
+#ifdef ARCH_AARCH64
+
+INSTANTIATE_TEST_CASE_P(
+    NEON, AV1SelfguidedFilterTest,
+    ::testing::Values(make_tuple(svt_aom_apply_selfguided_restoration_neon)));
+
+#endif /* ARCH_AARCH64 */
 
 // Test parameter list:
 //  <tst_fun_, bit_depth>
@@ -486,6 +498,8 @@ TEST_P(AV1HighbdSelfguidedFilterTest, CorrectnessTest) {
     RunCorrectnessTest();
 }
 
+#ifdef ARCH_X86_64
+
 const int32_t highbd_params_avx2[] = {8, 10, 12};
 INSTANTIATE_TEST_CASE_P(
     SSE4_1, AV1HighbdSelfguidedFilterTest,
@@ -497,5 +511,7 @@ INSTANTIATE_TEST_CASE_P(
     AVX2, AV1HighbdSelfguidedFilterTest,
     ::testing::Combine(::testing::Values(svt_apply_selfguided_restoration_avx2),
                        ::testing::ValuesIn(highbd_params_avx2)));
+
+#endif /* ARCH_X86_64 */
 
 }  // namespace

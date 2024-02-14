@@ -86,6 +86,7 @@ set(multi_arch_files
     TemporalFilterTestPlanewise.cc
     PictureOperatorTest.cc
     SadTest.cc
+    selfguided_filter_test.cc
     )
 
 if(HAVE_X86_PLATFORM)
@@ -133,7 +134,6 @@ if(HAVE_X86_PLATFORM)
         intrapred_edge_filter_test.cc
         intrapred_test.cc
         quantize_func_test.cc
-        selfguided_filter_test.cc
         subtract_avg_cfl_test.cc
         warp_filter_test.cc
         warp_filter_test_util.cc
