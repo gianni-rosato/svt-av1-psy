@@ -138,7 +138,6 @@ set(all_files
         EbPictureManagerQueue.h
         EbPredictionStructure.c
         EbPredictionStructure.h
-        EbPredictionUnit.h
         EbProductCodingLoop.c
         EbPsnr.c
         EbPsnr.h
@@ -172,7 +171,6 @@ set(all_files
         EbSourceBasedOperationsProcess.h
         EbTemporalFiltering.c
         EbTemporalFiltering.h
-        EbTransformUnit.h
         EbTransforms.c
         EbTransforms.h
         aom_dsp_rtcd.c

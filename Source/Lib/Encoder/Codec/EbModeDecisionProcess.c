@@ -23,7 +23,6 @@ static void mode_decision_context_dctor(EbPtr p) {
 
     uint32_t block_max_count_sb = obj->init_max_block_cnt;
 
-#if CLN_MOVE_PAL_BUFF
     // MD palette search
     if (obj->palette_buffer)
         EB_FREE(obj->palette_buffer);
@@ -38,15 +37,6 @@ static void mode_decision_context_dctor(EbPtr p) {
     }
     if (obj->palette_size_array_0)
         EB_FREE_ARRAY(obj->palette_size_array_0);
-#else
-    for (int cd = 0; cd < MAX_PAL_CAND; cd++)
-        if (obj->palette_cand_array[cd].color_idx_map)
-            EB_FREE_ARRAY(obj->palette_cand_array[cd].color_idx_map);
-
-    // MD palette search
-    if (obj->palette_size_array_0)
-        EB_FREE_ARRAY(obj->palette_size_array_0);
-#endif
     for (CandClass cand_class_it = CAND_CLASS_0; cand_class_it < CAND_CLASS_TOTAL; cand_class_it++)
         EB_FREE_ARRAY(obj->cand_buff_indices[cand_class_it]);
     EB_FREE_ARRAY(obj->best_candidate_index_array);
@@ -66,9 +56,7 @@ static void mode_decision_context_dctor(EbPtr p) {
     EB_DELETE(obj->cand_bf_tx_depth_2);
     EB_FREE_ALIGNED_ARRAY(obj->cfl_temp_luma_recon16bit);
     EB_FREE_ALIGNED_ARRAY(obj->cfl_temp_luma_recon);
-#if CLN_MOVE_CFL_BUFF
     EB_FREE_ALIGNED_ARRAY(obj->pred_buf_q3);
-#endif
     EB_FREE_ARRAY(obj->fast_cand_array);
     EB_FREE_ARRAY(obj->fast_cand_ptr_array);
     EB_FREE_2D(obj->injected_mvs);
@@ -114,14 +102,10 @@ static void mode_decision_context_dctor(EbPtr p) {
         EB_FREE(obj->wsrc_buf);
     if (obj->mask_buf)
         EB_FREE(obj->mask_buf);
-#if CLN_MDC_ARRAY
     EB_FREE_ARRAY(obj->mdc_sb_array.leaf_data_array);
     EB_FREE_ARRAY(obj->mdc_sb_array.split_flag);
     EB_FREE_ARRAY(obj->mdc_sb_array.refined_split_flag);
     EB_FREE_ARRAY(obj->mdc_sb_array.consider_block);
-#else
-    EB_FREE_ARRAY(obj->mdc_sb_array);
-#endif
     for (uint32_t txt_itr = 0; txt_itr < TX_TYPES; ++txt_itr) {
         EB_DELETE(obj->recon_coeff_ptr[txt_itr]);
         EB_DELETE(obj->recon_ptr[txt_itr]);
@@ -208,9 +192,7 @@ EbErrorType svt_aom_mode_decision_context_ctor(ModeDecisionContext *ctx, EbColor
         EB_MALLOC_ALIGNED(ctx->cfl_temp_luma_recon16bit, sizeof(uint16_t) * sb_size * sb_size);
     if (ctx->hbd_md != EB_10_BIT_MD)
         EB_MALLOC_ALIGNED(ctx->cfl_temp_luma_recon, sizeof(uint8_t) * sb_size * sb_size);
-#if CLN_MOVE_CFL_BUFF
     EB_MALLOC_ALIGNED(ctx->pred_buf_q3, CFL_BUF_SQUARE);
-#endif
     uint8_t use_update_cdf = 0;
     for (uint8_t is_islice = 0; is_islice < 2; is_islice++) {
         for (uint8_t is_base = 0; is_base < 2; is_base++) {
@@ -255,11 +237,7 @@ EbErrorType svt_aom_mode_decision_context_ctor(ModeDecisionContext *ctx, EbColor
         for (EbInputResolution input_resolution = 0; input_resolution < INPUT_SIZE_COUNT; input_resolution++) {
             if (obmc_allowed)
                 break;
-#if OPT_OBMC
             obmc_allowed |= svt_aom_get_obmc_level(NULL, enc_mode, fast_decode, input_resolution);
-#else
-            obmc_allowed |= svt_aom_get_obmc_level(enc_mode, fast_decode, input_resolution);
-#endif
         }
     }
     if (obmc_allowed) {
@@ -284,7 +262,6 @@ EbErrorType svt_aom_mode_decision_context_ctor(ModeDecisionContext *ctx, EbColor
         ctx->fast_cand_ptr_array[cand_index]->palette_info = NULL;
     }
 
-#if CLN_MOVE_PAL_BUFF
     // MD palette search
     if (cfg_palette) {
         EB_MALLOC(ctx->palette_buffer, sizeof(PALETTE_BUFFER));
@@ -298,16 +275,6 @@ EbErrorType svt_aom_mode_decision_context_ctor(ModeDecisionContext *ctx, EbColor
         ctx->palette_cand_array   = NULL;
         ctx->palette_size_array_0 = NULL;
     }
-#else
-    for (int cd = 0; cd < MAX_PAL_CAND; cd++)
-        if (cfg_palette)
-            EB_MALLOC_ARRAY(ctx->palette_cand_array[cd].color_idx_map, MAX_PALETTE_SQUARE);
-        else
-            ctx->palette_cand_array[cd].color_idx_map = NULL;
-
-    // MD palette search
-    EB_MALLOC_ARRAY(ctx->palette_size_array_0, MAX_PAL_CAND);
-#endif
 
     // Cost Arrays
     EB_MALLOC_ARRAY(ctx->fast_cost_array, ctx->max_nics_uv);
@@ -379,14 +346,10 @@ EbErrorType svt_aom_mode_decision_context_ctor(ModeDecisionContext *ctx, EbColor
     EB_MALLOC_ARRAY(ctx->md_blk_arr_nsq[0].av1xd, block_max_count_sb);
     EB_MALLOC_ARRAY(ctx->avail_blk_flag, block_max_count_sb);
     EB_MALLOC_ARRAY(ctx->cost_avail, block_max_count_sb);
-#if CLN_MDC_ARRAY
     EB_MALLOC_ARRAY(ctx->mdc_sb_array.leaf_data_array, block_max_count_sb);
     EB_MALLOC_ARRAY(ctx->mdc_sb_array.split_flag, block_max_count_sb);
     EB_MALLOC_ARRAY(ctx->mdc_sb_array.refined_split_flag, block_max_count_sb);
     EB_MALLOC_ARRAY(ctx->mdc_sb_array.consider_block, block_max_count_sb);
-#else
-    EB_MALLOC_ARRAY(ctx->mdc_sb_array, 1);
-#endif
     for (coded_leaf_index = 0; coded_leaf_index < block_max_count_sb; ++coded_leaf_index) {
         ctx->md_blk_arr_nsq[coded_leaf_index].av1xd      = ctx->md_blk_arr_nsq[0].av1xd + coded_leaf_index;
         ctx->md_blk_arr_nsq[coded_leaf_index].segment_id = 0;
@@ -645,9 +608,6 @@ void svt_aom_reset_mode_decision(SequenceControlSet *scs, ModeDecisionContext *c
     }
     //each segment enherits the bypass encdec from the picture level
     ctx->bypass_encdec = pcs->pic_bypass_encdec;
-#if !CLN_SKIP_PD0_SIG
-    ctx->skip_pd0 = pcs->pic_skip_pd0;
-#endif
     set_block_based_depth_refinement_controls(ctx, pcs->pic_block_based_depth_refinement_level);
     if (!pcs->rtc_tune || pcs->temporal_layer_index != 0)
         ctx->rtc_use_N4_dct_dct_shortcut = 1;

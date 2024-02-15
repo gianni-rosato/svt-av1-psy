@@ -295,9 +295,6 @@ static const uint32_t intra_adaptive_md_cycles_reduction_th[DEPTH_DELTA_NUM][NUM
     {1875, 962, 222, 144, 171, 5, 17, 1272, 15},
     {3, 0, 0, 0, 0, 0, 0, 0, 0},
 };
-#if !CLN_MVP_DIST_CALC
-void perform_md_reference_pruning(PictureControlSet *pcs, ModeDecisionContext *ctx, EbPictureBufferDesc *input_pic);
-#endif
 void svt_aom_move_blk_data(PictureControlSet *pcs, EncDecContext *ed_ctx, BlkStruct *src_cu, EcBlkStruct *dst_cu);
 #ifdef __cplusplus
 }

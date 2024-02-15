@@ -16,7 +16,6 @@
 #include "EbUtility.h"
 #include "EbPictureControlSet.h"
 #include "EbCodingUnit.h"
-#include "EbPredictionUnit.h"
 #include "EbPictureBufferDesc.h"
 #include "EbAdaptiveMotionVectorPrediction.h"
 #include "EbPictureOperators.h"
@@ -122,26 +121,21 @@ typedef struct ModeDecisionCandidateBuffer {
     EbPictureBufferDesc *recon;
 
     // Costs
-    uint64_t *fast_cost;
-    uint64_t *full_cost;
-    uint64_t *full_cost_ssim;
-    uint64_t  fast_luma_rate;
-    uint64_t  fast_chroma_rate;
-    uint64_t  total_rate;
-    uint32_t  luma_fast_dist;
-    uint32_t  full_dist;
-    uint16_t  cnt_nz_coeff;
-#if CLN_QUANT_ONE_BYTE
+    uint64_t   *fast_cost;
+    uint64_t   *full_cost;
+    uint64_t   *full_cost_ssim;
+    uint64_t    fast_luma_rate;
+    uint64_t    fast_chroma_rate;
+    uint64_t    total_rate;
+    uint32_t    luma_fast_dist;
+    uint32_t    full_dist;
+    uint16_t    cnt_nz_coeff;
     QuantDcData quant_dc;
     EobData     eob;
-#else
-    uint16_t eob[MAX_MB_PLANE][MAX_TXB_COUNT];
-    int32_t  quantized_dc[MAX_MB_PLANE][MAX_TXB_COUNT];
-#endif
-    uint8_t   block_has_coeff;
-    uint8_t   u_has_coeff;
-    uint8_t   v_has_coeff;
-    uint16_t  y_has_coeff;
+    uint8_t     block_has_coeff;
+    uint8_t     u_has_coeff;
+    uint8_t     v_has_coeff;
+    uint16_t    y_has_coeff;
     bool
         valid_pred; // The prediction of SIMPLE_TRANSLATION is not valid when OBMC face-off is used (where OBMC will re-use the pred buffer of SIMPLE_TRANSLATION)
 } ModeDecisionCandidateBuffer;

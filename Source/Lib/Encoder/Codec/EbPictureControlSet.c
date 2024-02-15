@@ -403,12 +403,7 @@ EbErrorType pcs_update_param(PictureControlSet *pcs) {
     if (svt_aom_get_enable_restoration(scs->static_config.enc_mode,
                                        scs->static_config.enable_restoration_filtering,
                                        scs->input_resolution,
-#if DIS_DLF_SG_QP
                                        scs->static_config.fast_decode)) {
-#else
-                                       scs->static_config.fast_decode,
-                                       scs->static_config.qp)) {
-#endif
         set_restoration_unit_size(scs->max_input_luma_width, scs->max_input_luma_height, 1, 1, pcs->rst_info);
     }
     pcs->frame_width  = scs->max_input_luma_width;
@@ -504,12 +499,7 @@ static EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr
     if (svt_aom_get_enable_restoration(init_data_ptr->enc_mode,
                                        init_data_ptr->static_config.enable_restoration_filtering,
                                        init_data_ptr->input_resolution,
-#if DIS_DLF_SG_QP
                                        init_data_ptr->static_config.fast_decode)) {
-#else
-                                       init_data_ptr->static_config.fast_decode,
-                                       init_data_ptr->static_config.qp)) {
-#endif
         set_restoration_unit_size(
             init_data_ptr->picture_width, init_data_ptr->picture_height, 1, 1, object_ptr->rst_info);
 
@@ -1062,24 +1052,11 @@ static EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr
     for (uint8_t is_base = 0; is_base <= 1; is_base++) {
         for (uint8_t is_islice = 0; is_islice <= 1; is_islice++) {
             for (uint8_t coeff_lvl = 0; coeff_lvl <= HIGH_LVL + 1; coeff_lvl++) {
-#if FIX_NSQ_CTRL
                 if (!disallow_4x4)
                     break;
                 disallow_4x4 = MIN(
                     disallow_4x4,
                     (svt_aom_get_nsq_geom_level(init_data_ptr->enc_mode, is_base, coeff_lvl) == 0 ? 1 : 0));
-#else
-                for (EbInputResolution res = INPUT_SIZE_240p_RANGE; res <= INPUT_SIZE_8K_RANGE; res++) {
-                    // min QP is 1 b/c 0 is lossless and is not supported
-                    for (uint8_t qp = 1; qp <= MAX_QP_VALUE; qp++) {
-                        if (!disallow_4x4)
-                            break;
-                        disallow_4x4 = MIN(
-                            disallow_4x4,
-                            (svt_aom_get_nsq_level(init_data_ptr->enc_mode, is_base, coeff_lvl, qp, res) == 0 ? 1 : 0));
-                    }
-                }
-#endif
             }
         }
     }
@@ -1166,15 +1143,6 @@ static void picture_parent_control_set_dctor(EbPtr ptr) {
         }
         EB_FREE_PTR_ARRAY(obj->picture_histogram, MAX_NUMBER_OF_REGIONS_IN_WIDTH);
     }
-#if !OPT_MPASS_VBR2
-    {
-        if (obj->firstpass_data.mb_stats)
-            EB_FREE_ARRAY(obj->firstpass_data.mb_stats);
-        if (obj->firstpass_data.raw_motion_err_list)
-            EB_FREE_ARRAY(obj->firstpass_data.raw_motion_err_list);
-    }
-
-#endif
     EB_FREE_ARRAY(obj->rc_me_distortion);
     EB_FREE_ARRAY(obj->stationary_block_present_sb);
     EB_FREE_ARRAY(obj->rc_me_allow_gm);
@@ -1199,10 +1167,6 @@ static void picture_parent_control_set_dctor(EbPtr ptr) {
     EB_DESTROY_MUTEX(obj->debug_mutex);
     EB_FREE_ARRAY(obj->tile_group_info);
     EB_DESTROY_MUTEX(obj->pa_me_done.mutex);
-#if !OPT_MPASS_VBR5
-    EB_DESTROY_SEMAPHORE(obj->first_pass_done_semaphore);
-    EB_DESTROY_MUTEX(obj->first_pass_mutex);
-#endif
     if (obj->is_pcs_sb_params)
         svt_pcs_sb_structs_dctor(obj);
     if (obj->frame_superres_enabled || obj->frame_resize_enabled) {
@@ -1363,16 +1327,6 @@ static EbErrorType picture_parent_control_set_ctor(PictureParentControlSet *obje
         }
     }
 
-#if !OPT_MPASS_VBR2
-    if (init_data_ptr->pass == ENC_FIRST_PASS ||
-        (init_data_ptr->rate_control_mode && init_data_ptr->pass == ENC_SINGLE_PASS)) {
-        const uint16_t picture_width_in_mb  = (uint16_t)((init_data_ptr->picture_width + 15) / 16);
-        const uint16_t picture_height_in_mb = (uint16_t)((init_data_ptr->picture_height + 15) / 16);
-        EB_MALLOC_ARRAY(object_ptr->firstpass_data.mb_stats, (uint32_t)(picture_width_in_mb * picture_height_in_mb));
-        EB_MALLOC_ARRAY(object_ptr->firstpass_data.raw_motion_err_list,
-                        (uint32_t)(picture_width_in_mb * picture_height_in_mb));
-    }
-#endif
     object_ptr->r0 = 0;
 
     EB_MALLOC_ARRAY(object_ptr->rc_me_distortion, object_ptr->b64_total_count);
@@ -1392,10 +1346,6 @@ static EbErrorType picture_parent_control_set_ctor(PictureParentControlSet *obje
     EB_MALLOC_ARRAY(object_ptr->av1_cm, 1);
 
     EB_CREATE_MUTEX(object_ptr->pa_me_done.mutex);
-#if !OPT_MPASS_VBR5
-    EB_CREATE_SEMAPHORE(object_ptr->first_pass_done_semaphore, 0, 1);
-    EB_CREATE_MUTEX(object_ptr->first_pass_mutex);
-#endif
 
     EB_CREATE_SEMAPHORE(object_ptr->tpl_disp_done_semaphore, 0, 1);
     EB_CREATE_MUTEX(object_ptr->tpl_disp_mutex);

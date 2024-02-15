@@ -619,12 +619,10 @@ int svt_av1_find_best_sub_pixel_tree_pruned(void *ictx, MacroBlockD *xd, const s
     const int is_scaled = 0;
     besterr = svt_upsampled_setup_center_error(bestmv, var_params, mv_cost_params, (unsigned int *)distortion);
 
-#if CLN_MVP_DIST_CALC
     if (ictx != NULL && ms_params->search_stage == SPEL_ME) {
         ModeDecisionContext *ctx                                 = (ModeDecisionContext *)ictx;
         ctx->fp_me_dist[ms_params->list_idx][ms_params->ref_idx] = besterr;
     }
-#endif
     if (early_neigh_check_exit)
         return besterr;
     uint64_t th_normalizer = (((var_params->w * var_params->h) >> 3) * ms_params->abs_th_mult * (qp >> 1));
@@ -704,64 +702,22 @@ int svt_av1_find_best_sub_pixel_tree(void *ictx, MacroBlockD *xd, const struct A
     *bestmv             = start_mv;
     const int is_scaled = 0;
     besterr = svt_upsampled_setup_center_error(bestmv, var_params, mv_cost_params, (unsigned int *)distortion);
-#if CLN_SMALL_SIGS
     if (ctx != NULL && ms_params->search_stage == SPEL_ME) {
-#else
-    if (ctx != NULL && ms_params->search_stage == 0 && bsize < BLOCK_64X64) {
-#endif
-#if CLN_MVP_DIST_CALC
         ctx->fp_me_dist[ms_params->list_idx][ms_params->ref_idx] = besterr;
-#endif
         if (ctx->pd_pass == PD_PASS_1 && ctx->md_subpel_me_ctrls.mvp_th > 0) {
-#if CLN_MVP_DIST_CALC
-            unsigned int best_mvperr  = ctx->best_fp_mvp_dist[ms_params->list_idx][ms_params->ref_idx];
-            int          best_mvp_idx = ctx->best_fp_mvp_idx[ms_params->list_idx][ms_params->ref_idx];
-#else
-            SUBPEL_MOTION_SEARCH_PARAMS par_tmp = *ms_params;
-            par_tmp.mv_cost_params.mv_cost_type = MV_COST_NONE;
-            unsigned int best_mvperr            = MAX_U32;
-#if OPT_ME_SP_8TH_PEL
-            int          best_mvp_idx           = 0;
-#endif
-            for (int8_t mvp = 0; mvp < ctx->mvp_count[par_tmp.list_idx][par_tmp.ref_idx]; mvp++) {
-                unsigned int mvpdist;
-                unsigned int mvperr = svt_upsampled_setup_center_error(
-                    &ctx->mvp_array[par_tmp.list_idx][par_tmp.ref_idx][mvp],
-                    &par_tmp.var_params,
-                    &par_tmp.mv_cost_params,
-                    &mvpdist);
-#if OPT_ME_SP_8TH_PEL
-                if (mvperr < best_mvperr) {
-                    best_mvp_idx = mvp;
-                    best_mvperr  = mvperr;
-                }
-#else
-                best_mvperr = MIN(mvperr, best_mvperr);
-#endif
-            }
-#endif
-            const int     mvp_err   = best_mvperr + 1;
-            const int     me_err    = besterr + 1;
-            const int32_t deviation = ((me_err - mvp_err) * 100) / me_err;
+            unsigned int  best_mvperr  = ctx->best_fp_mvp_dist[ms_params->list_idx][ms_params->ref_idx];
+            int           best_mvp_idx = ctx->best_fp_mvp_idx[ms_params->list_idx][ms_params->ref_idx];
+            const int     mvp_err      = best_mvperr + 1;
+            const int     me_err       = besterr + 1;
+            const int32_t deviation    = ((me_err - mvp_err) * 100) / me_err;
             if (deviation >= ctx->md_subpel_me_ctrls.mvp_th)
                 round = 1;
-#if OPT_ME_SP_8TH_PEL
-#if CLN_MVP_DIST_CALC
             else if (ABS(bestmv->col - ctx->mvp_array[ms_params->list_idx][ms_params->ref_idx][best_mvp_idx].col) >
                          ctx->md_subpel_me_ctrls.hp_mv_th ||
                      ABS(bestmv->row - ctx->mvp_array[ms_params->list_idx][ms_params->ref_idx][best_mvp_idx].row) >
                          ctx->md_subpel_me_ctrls.hp_mv_th) {
                 round = MIN(round, 2);
             }
-#else
-            else if (ABS(bestmv->col - ctx->mvp_array[par_tmp.list_idx][par_tmp.ref_idx][best_mvp_idx].col) >
-                         ctx->md_subpel_me_ctrls.hp_mv_th ||
-                     ABS(bestmv->row - ctx->mvp_array[par_tmp.list_idx][par_tmp.ref_idx][best_mvp_idx].row) >
-                         ctx->md_subpel_me_ctrls.hp_mv_th) {
-                round = MIN(round, 2);
-            }
-#endif
-#endif
         }
     }
     if (early_neigh_check_exit)

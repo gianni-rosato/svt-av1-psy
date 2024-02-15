@@ -24,37 +24,15 @@ uint8_t svt_aom_get_nic_level(EncMode enc_mode, uint8_t is_base, uint8_t hierarc
 
 void    svt_aom_set_depth_ctrls(PictureControlSet *pcs, ModeDecisionContext *ctx, uint8_t depth_level);
 uint8_t svt_aom_get_enable_me_16x16(EncMode enc_mode);
-#if !OPT_COEFF_LVL_NORM
-uint8_t svt_aom_get_predict_frame_coeff_lvl(EncMode enc_mode);
-void    svt_aom_set_frame_coeff_lvl(PictureControlSet *pcs, uint8_t lvl);
-#endif
 Bool    svt_aom_is_ref_same_size(PictureControlSet *pcs, uint8_t list_idx, uint8_t ref_idx);
 uint8_t svt_aom_get_enable_me_8x8(EncMode enc_mode, bool rtc_tune, EbInputResolution input_resolution);
-#if !TUNE_TPL_LVL
-void svt_aom_set_tpl_extended_controls(PictureParentControlSet *pcs, uint8_t tpl_level);
-#endif
-void svt_aom_sig_deriv_mode_decision_config(SequenceControlSet *scs, PictureControlSet *pcs);
-#if !OPT_MPASS_VBR4
-void svt_aom_first_pass_sig_deriv_mode_decision_config(PictureControlSet *pcs);
-#endif
-void svt_aom_sig_deriv_block(PictureControlSet *pcs, ModeDecisionContext *ctx);
-void svt_aom_sig_deriv_pre_analysis_pcs(PictureParentControlSet *pcs);
-#if !OPT_MPASS_VBR4
-void svt_aom_first_pass_sig_deriv_pre_analysis_pcs(PictureParentControlSet *pcs);
-#endif
-void svt_aom_sig_deriv_pre_analysis_scs(SequenceControlSet *scs);
-#if !OPT_MPASS_VBR4
-void svt_aom_first_pass_sig_deriv_pre_analysis_scs(SequenceControlSet *scs);
-#endif
-void svt_aom_sig_deriv_multi_processes(SequenceControlSet *scs, PictureParentControlSet *pcs,
-                                       PictureDecisionContext *context_ptr);
-#if !OPT_MPASS_VBR4
-void svt_aom_first_pass_sig_deriv_multi_processes(SequenceControlSet *scs, PictureParentControlSet *pcs);
-#endif
-void svt_aom_sig_deriv_me_tf(PictureParentControlSet *pcs, MeContext *me_ctx);
-#if !OPT_MPASS_VBR4
-void svt_aom_first_pass_sig_deriv_me(SequenceControlSet *scs, PictureParentControlSet *pcs, MeContext *me_ctx);
-#endif
+void    svt_aom_sig_deriv_mode_decision_config(SequenceControlSet *scs, PictureControlSet *pcs);
+void    svt_aom_sig_deriv_block(PictureControlSet *pcs, ModeDecisionContext *ctx);
+void    svt_aom_sig_deriv_pre_analysis_pcs(PictureParentControlSet *pcs);
+void    svt_aom_sig_deriv_pre_analysis_scs(SequenceControlSet *scs);
+void    svt_aom_sig_deriv_multi_processes(SequenceControlSet *scs, PictureParentControlSet *pcs,
+                                          PictureDecisionContext *context_ptr);
+void    svt_aom_sig_deriv_me_tf(PictureParentControlSet *pcs, MeContext *me_ctx);
 
 void svt_aom_sig_deriv_enc_dec_light_pd1(PictureControlSet *pcs, ModeDecisionContext *ctx);
 void svt_aom_sig_deriv_enc_dec_light_pd0(SequenceControlSet *scs, PictureControlSet *pcs, ModeDecisionContext *ctx);
@@ -68,53 +46,23 @@ uint8_t svt_aom_derive_gm_level(PictureParentControlSet *pcs, bool super_res_off
 
 void svt_aom_set_gm_controls(PictureParentControlSet *pcs, uint8_t gm_level);
 
-#if DIS_DLF_SG_QP
 uint8_t svt_aom_get_enable_sg(EncMode enc_mode, uint8_t input_resolution, Bool fast_decode);
 uint8_t svt_aom_get_enable_restoration(EncMode enc_mode, int8_t config_enable_restoration, uint8_t input_resolution,
                                        Bool fast_decode);
-#else
-uint8_t svt_aom_get_enable_sg(EncMode enc_mode, uint8_t input_resolution, Bool fast_decode, uint16_t qp);
-uint8_t svt_aom_get_enable_restoration(EncMode enc_mode, int8_t config_enable_restoration, uint8_t input_resolution,
-                                       Bool fast_decode, uint16_t qp);
-#endif
 
 void svt_aom_set_dist_based_ref_pruning_controls(ModeDecisionContext *ctx, uint8_t dist_based_ref_pruning_level);
 
-bool svt_aom_get_disallow_4x4(EncMode enc_mode, uint8_t is_base);
-#if FIX_NSQ_CTRL
+bool    svt_aom_get_disallow_4x4(EncMode enc_mode, uint8_t is_base);
 uint8_t svt_aom_get_nsq_geom_level(EncMode enc_mode, uint8_t is_base, InputCoeffLvl coeff_lvl);
 uint8_t svt_aom_get_nsq_search_level(EncMode enc_mode, uint8_t is_base, InputCoeffLvl coeff_lvl, uint32_t qp);
-#else
-uint8_t svt_aom_get_nsq_level(EncMode enc_mode, uint8_t is_base, InputCoeffLvl coeff_lvl, uint32_t qp,
-                              uint8_t input_resolution);
-#endif
 uint8_t get_inter_compound_level(EncMode enc_mode);
 uint8_t get_filter_intra_level(EncMode enc_mode);
 uint8_t svt_aom_get_inter_intra_level(EncMode enc_mode, uint8_t is_base, uint8_t transition_present);
-#if OPT_OBMC
 uint8_t svt_aom_get_obmc_level(PictureControlSet *pcs, EncMode enc_mode, uint8_t fast_decode,
                                EbInputResolution input_resolution);
-#else
-uint8_t svt_aom_get_obmc_level(EncMode enc_mode, uint8_t fast_decode, EbInputResolution input_resolution);
-#endif
-#if FIX_NSQ_CTRL
-void svt_aom_set_nsq_geom_ctrls(ModeDecisionContext *ctx, uint8_t nsq_geom_level, uint8_t *allow_HVA_HVB,
-                                uint8_t *allow_HV4, uint8_t *min_nsq_bsize);
-#if FIX_PSQ_TXS_UPDATE
-void svt_aom_set_nsq_search_ctrls(ModeDecisionContext *ctx, uint8_t nsq_search_level, uint8_t resolution);
-#else
-void svt_aom_set_nsq_search_ctrls(ModeDecisionContext *ctx, uint8_t nsq_search_level);
-#endif
-#else
-void    svt_aom_set_nsq_ctrls(ModeDecisionContext *ctx, uint8_t nsq_level, uint8_t *allow_HVA_HVB, uint8_t *allow_HV4,
-                              uint8_t *min_nsq_bsize);
-#endif
-#if !FIX_PSQ_TXS_UPDATE
-#if OPT_NSQ_HIGH_FREQ
-void svt_aom_set_parent_sq_coeff_area_based_cycles_reduction_ctrls(ModeDecisionContext *ctx, uint8_t resolution,
-                                                                   uint8_t cycles_alloc_lvl);
-#endif
-#endif
+void    svt_aom_set_nsq_geom_ctrls(ModeDecisionContext *ctx, uint8_t nsq_geom_level, uint8_t *allow_HVA_HVB,
+                                   uint8_t *allow_HV4, uint8_t *min_nsq_bsize);
+void    svt_aom_set_nsq_search_ctrls(ModeDecisionContext *ctx, uint8_t nsq_search_level, uint8_t resolution);
 uint8_t svt_aom_get_tpl_synthesizer_block_size(int8_t tpl_level, uint32_t picture_width, uint32_t picture_height);
 
 void svt_aom_set_mfmv_config(SequenceControlSet *scs);

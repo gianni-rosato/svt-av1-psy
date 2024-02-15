@@ -41,14 +41,8 @@ typedef enum AppPortActiveType { APP_PortActive = 0, APP_PortInactive } AppPortA
 typedef enum EncPass {
     ENC_SINGLE_PASS, //single pass mode
     ENC_FIRST_PASS, // first pass of multi pass mode
-#if OPT_MPASS_VBR6
     ENC_SECOND_PASS, // second pass of multi pass mode
     MAX_ENC_PASS = 2,
-#else
-    ENC_SECOND_PASS, // second pass of multi pass mode (last pass for CRF / middle pass for VBR)
-    ENC_THIRD_PASS, // third pass of multi pass mode (last pass for VBR)
-    MAX_ENC_PASS = 3,
-#endif
 } EncPass;
 
 #define WARNING_LENGTH 100
@@ -207,12 +201,7 @@ typedef struct EncChannel {
 
 typedef enum MultiPassModes {
     SINGLE_PASS, //single pass mode
-#if OPT_MPASS_VBR6
     TWO_PASS, // two pass: Same Pred + final
-#else
-    TWO_PASS_IPP_FINAL, // two pass: IPP + final
-    THREE_PASS_IPP_SAMEPRED_FINAL, // three pass: IPP + Same Pred + final
-#endif
 } MultiPassModes;
 
 typedef struct EncApp {

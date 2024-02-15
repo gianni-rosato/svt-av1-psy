@@ -16,7 +16,6 @@
 #include "EbDefinitions.h"
 #include "EbEntropyCodingObject.h"
 #include "EbCodingUnit.h"
-#include "EbPredictionUnit.h"
 #include "EbPictureBufferDesc.h"
 #include "EbSequenceControlSet.h"
 #include "EbPictureControlSet.h"
@@ -187,16 +186,10 @@ extern EbErrorType svt_aom_encode_td_av1(uint8_t *bitstream_ptr);
 extern EbErrorType svt_aom_encode_sps_av1(Bitstream *bitstream_ptr, SequenceControlSet *scs);
 
 //*******************************************************************************************//
-#if CLN_BLK_STRUCT_2
 MotionMode svt_aom_motion_mode_allowed(const PictureControlSet *pcs, uint16_t num_proj_ref,
                                        uint32_t overlappable_neighbors, const BlockSize bsize, MvReferenceFrame rf0,
                                        MvReferenceFrame rf1, PredictionMode mode);
-#else
-MotionMode svt_aom_motion_mode_allowed(const PictureControlSet *pcs, uint16_t num_proj_ref,
-                                       uint32_t *overlappable_neighbors, const BlockSize bsize, MvReferenceFrame rf0,
-                                       MvReferenceFrame rf1, PredictionMode mode);
-#endif
-int svt_aom_is_masked_compound_type(COMPOUND_TYPE type);
+int        svt_aom_is_masked_compound_type(COMPOUND_TYPE type);
 
 int32_t svt_aom_count_primitive_subexpfin(uint16_t n, uint16_t k, uint16_t v);
 int32_t svt_aom_count_primitive_refsubexpfin(uint16_t n, uint16_t k, uint16_t ref, uint16_t v);

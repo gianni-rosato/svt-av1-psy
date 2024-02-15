@@ -51,11 +51,7 @@ typedef struct MdEncPassCuData {
     uint64_t chroma_distortion;
 } MdEncPassCuData;
 
-#if CLN_MOVE_PAL_BUFF
 typedef struct PALETTE_BUFFER {
-#else
-typedef struct {
-#endif
     uint8_t best_palette_color_map[MAX_PALETTE_SQUARE];
     int     kmeans_data_buf[2 * MAX_PALETTE_SQUARE];
 } PALETTE_BUFFER;
@@ -415,11 +411,9 @@ typedef struct MdSubPelSearchCtrls {
     uint8_t skip_zz_mv;
     uint8_t min_blk_sz; //blk size below which we skip subpel
     uint8_t mvp_th; // when > 0, use mvp info to skip hpel search. skip if ME is  worse than MVP.
-#if OPT_ME_SP_8TH_PEL
     // Skip high precision (1/8-Pel) when the ME vs. MVP MV difference (x or y) is larger than the threshold.
     // MAX_SIGNED_VALUE is off; 0 is safest on TH, higher is more aggressive
     int hp_mv_th;
-#endif
 } MdSubPelSearchCtrls;
 typedef struct ParentSqCmplxCtrls {
     Bool enabled;
@@ -548,14 +542,10 @@ typedef struct NicPruningCtrls {
     // if (best_mds0_distortion/QP < TH) consider only the best candidate after MDS0; 0: OFF,
     // higher: more aggressive.
     uint32_t force_1_cand_th;
-#if OPT_Q_PRUNE_TH_WEIGHT
     uint16_t mds1_q_weight;
     uint16_t mds2_q_weight;
     uint16_t mds3_q_weight;
-#endif
-#if OPT_MERGE_INTER_CANDS
-    uint8_t merge_inter_cands_mult;
-#endif
+    uint8_t  merge_inter_cands_mult;
 } NicPruningCtrls;
 typedef struct NicCtrls {
     NicPruningCtrls pruning_ctrls;
@@ -566,14 +556,7 @@ typedef struct NicCtrls {
 typedef struct CandEliminationCtlrs {
     uint32_t enabled;
     uint8_t  dc_only;
-#if !CLN_SMALL_SIGS
-    uint8_t inject_new_me;
-    uint8_t inject_new_pme;
-    // factor to scale base TH by for distortion check
-    uint8_t th_multiplier;
-#endif
 } CandEliminationCtlrs;
-#if FIX_NSQ_CTRL
 typedef struct NsqGeomCtrls {
     // Enable or disable nsq signal. 0: disabled, 1: enabled
     bool enabled;
@@ -585,12 +568,10 @@ typedef struct NsqGeomCtrls {
     uint8_t allow_HVA_HVB;
 } NsqGeomCtrls;
 typedef struct NsqSearchCtrls {
-#if CLN_MD_DISALLOW_NSQ
     // If enabled, allow multiple NSQ shapes to be searched at MD, and use the below search features (if on) to reduce the
     // compute overhead. If not enabled, NSQ shapes may still be allowed by nsq_geom_ctrls, but no search will be performed
     // (therefore, each depth  must specify one block to be tested at MD, whether SQ or NSQ).
     bool enabled;
-#endif
     // Set the level for coeff-based NSQ accuracy reduction
     uint8_t psq_cplx_lvl;
     // Weighting (expressed as a percentage) applied to square shape costs for determining if a and
@@ -628,60 +609,9 @@ typedef struct NsqSearchCtrls {
     uint8_t psq_txs_lvl;
     // Whether to use the default or aggressive settings for the sub-Pred_depth block(s) (i.e. not applicable when PRED only)
     uint8_t sub_depth_block_lvl;
-#if OPT_NSQ_HIGH_FREQ
     // Whether to use conservative settings for high energy area (not applicable when sb-size=128)
     uint8_t high_energy_weight;
-#endif
 } NsqSearchCtrls;
-#else
-typedef struct NsqCtrls {
-    // Enable or disable nsq signal. 0: disabled, 1: enabled
-    uint8_t enabled;
-    // Disables all nsq blocks for below a specified size. e.g. 8 = 8x8, 16 = 16x16
-    uint8_t min_nsq_block_size;
-    // Disallow H4/V4 when off. 0: OFF, 1: ON
-    uint8_t allow_HV4;
-    // Disallow HA/HB/VA/VB NSQ blocks when off. 0: OFF, 1: ON
-    uint8_t allow_HVA_HVB;
-    // Set the level for coeff-based NSQ accuracy reduction
-    uint8_t psq_cplx_lvl;
-    // Weighting (expressed as a percentage) applied to square shape costs for determining if a and
-    // b shapes should be skipped. Namely: skip HA, HB, and H4 if h_cost > (weighted sq_cost) skip
-    // VA, VB, and V4 if v_cost > (weighted sq_cost)
-    uint32_t sq_weight;
-    // Skip H/V if the cost of H/V is bigger than the cost of V/H by hv_weight
-    // Only active when sq_weight is used (ie. sq_weight != (uint32_t)~0)
-    uint32_t hv_weight;
-    // max_part0_to_part1_dev is used to:
-    // (1) skip the H_Path if the deviation between the Parent-SQ src-to-recon distortion of (1st quadrant + 2nd quadrant) and the Parent-SQ src-to-recon distortion of (3rd quadrant + 4th quadrant) is less than TH,
-    // (2) skip the V_Path if the deviation between the Parent-SQ src-to-recon distortion of (1st quadrant + 3rd quadrant) and the Parent-SQ src-to-recon distortion of (2nd quadrant + 4th quadrant) is less than TH.
-    uint32_t max_part0_to_part1_dev;
-    // If the rate cost of splitting into NSQ shapes is greater than the percentage threshold of the cost of the SQ block, skip testing the NSQ shape.
-    // split_cost_th is specified as a perentage * 10 (i.e. a value of 70 corresponds to skipping the NSQ shape if the split rate cost is > 7% of the SQ cost).
-    // 0 is off.  Lower values are more aggressive.
-    uint32_t nsq_split_cost_th;
-    // If the rate cost of splitting the SQ into lower depths is smaller than the percentage threshold of the cost of the SQ block, skip testing the NSQ shapes.
-    // depth_split_cost_th is specified as a perentage * 100 (i.e. a value of 700 corresponds to skipping the NSQ shapes if the split rate cost is < 7% of the SQ cost).
-    // 0 is off.  Higher values are more aggressive.
-    uint32_t lower_depth_split_cost_th;
-    // Skip testing H or V if the signaling rate of H/V is significantly higher than the rate of V/H. Specified as a percentage TH. 0 is off, higher is more aggressive.
-    uint32_t H_vs_V_split_rate_th;
-    // For non-H/V partitions, skip testing the partition if its signaling rate cost is significantly higher than the signaling rate cost of the
-    // best partition.  Specified as a percentage TH. 0 is off, higher is more aggressive.
-    uint32_t non_HV_split_rate_th;
-    // Apply an offset to non_HV_split_rate_th
-    bool non_HV_split_rate_modulation;
-    // Offset applied to rate thresholds for 16x16 and smaller block sizes. Higher is more aggressive; 0 is off.
-    uint32_t rate_th_offset_lte16;
-    // If the distortion (or rate) component of the SQ cost is more than component_multiple_th times the rate (or distortion) component, skip the NSQ shapes
-    // 0: off, higher is safer
-    uint32_t component_multiple_th;
-    // Predict the number of non-zero coeff per NSQ shape using a non-conformant txs-search
-    uint8_t psq_txs_lvl;
-    // Whether to use the default or aggressive settings for the sub-Pred_depth block(s) (i.e. not applicable when PRED only)
-    uint8_t sub_depth_block_lvl;
-} NsqCtrls;
-#endif
 typedef struct DepthEarlyExitCtrls {
     // If the rate cost of splitting into lower depths is greater than the percentage threshold of the cost of the parent block, skip testing the lower depth.
     // split_cost_th is specified as a perentage * 10 (i.e. a value of 70 corresponds to skipping the lower depth if the split rate cost is > 7% of the parent cost).
@@ -926,9 +856,6 @@ typedef struct Mds0Ctrls {
     uint16_t mds0_distortion_th;
 } Mds0Ctrls;
 typedef struct CandReductionCtrls {
-#if !OPT_MERGE_INTER_CANDS
-    uint8_t merge_inter_classes;
-#endif
     RedundantCandCtrls redundant_cand_ctrls;
     NearCountCtrls     near_count_ctrls;
     // inject unipred MVP candidates only for the best ME list
@@ -979,16 +906,10 @@ typedef struct ModeDecisionContext {
     BlkStruct                    *md_blk_arr_nsq;
     uint8_t                      *avail_blk_flag;
     uint8_t                      *cost_avail;
-#if CLN_MDC_ARRAY
-    MdcSbData mdc_sb_array;
-#else
-    MdcSbData     *mdc_sb_array;
-#endif
-#if CLN_NSQ_COPIES
-    bool copied_neigh_arrays;
-#endif
-    MvReferenceFrame ref_frame_type_arr[MODE_CTX_REF_FRAMES];
-    uint8_t          tot_ref_frame_types;
+    MdcSbData                     mdc_sb_array;
+    bool                          copied_neigh_arrays;
+    MvReferenceFrame              ref_frame_type_arr[MODE_CTX_REF_FRAMES];
+    uint8_t                       tot_ref_frame_types;
 
     NeighborArrayUnit *recon_neigh_y;
     NeighborArrayUnit *recon_neigh_cb;
@@ -1028,16 +949,10 @@ typedef struct ModeDecisionContext {
     SuperBlock      *sb_ptr;
     BlkStruct       *blk_ptr;
     const BlockGeom *blk_geom;
-#if CLN_MOVE_PAL_BUFF
     // MD palette search
     PALETTE_BUFFER *palette_buffer;
     PaletteInfo    *palette_cand_array;
-#else
-    PALETTE_BUFFER palette_buffer;
-    PaletteInfo    palette_cand_array[MAX_PAL_CAND];
-    // MD palette search
-#endif
-    uint8_t *palette_size_array_0;
+    uint8_t        *palette_size_array_0;
     // simple geometry 64x64SB, Sq only, no 4xN
     uint8_t          sb64_sq_no4xn_geom;
     uint8_t          pu_itr;
@@ -1066,13 +981,7 @@ typedef struct ModeDecisionContext {
     uint8_t intra_luma_left_ctx;
     uint8_t intra_luma_top_ctx;
 
-#if CLN_MOVE_CFL_BUFF
     int16_t *pred_buf_q3;
-#else
-    // Hsan: both MD and EP to use pred_buf_q3 (kept 1, and removed the 2nd)
-    EB_ALIGN(64)
-    int16_t  pred_buf_q3[CFL_BUF_SQUARE];
-#endif
     // Track all MVs that are prepared for candidates prior to MDS0. Used to avoid MV duplication.
     Mv **injected_mvs;
     // Track the reference types for each MV
@@ -1094,43 +1003,32 @@ typedef struct ModeDecisionContext {
     int16_t              cr_txb_skip_context;
     int16_t              cr_dc_sign_context;
     // Multi-modes signal(s)
-    uint8_t              global_mv_injection;
-    uint8_t              new_nearest_injection;
-    uint8_t              new_nearest_near_comb_injection;
-    WmCtrls              wm_ctrls;
-    UvCtrls              uv_ctrls;
-    uint8_t              unipred3x3_injection;
-    Bipred3x3Controls    bipred3x3_ctrls;
-    uint8_t              redundant_blk;
-    uint8_t              nic_level;
-    uint8_t              svt_aom_inject_inter_candidates;
-    uint8_t             *cfl_temp_luma_recon;
-    uint16_t            *cfl_temp_luma_recon16bit;
-#if !OPT_BLOCK_SETTINGS
-    Bool spatial_sse_full_loop_level;
-#endif
-    Bool   blk_skip_decision;
-    int8_t rdoq_level;
-#if CLN_SB_ME_MV
-    int16_t sb_me_mv[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX][2];
+    uint8_t           global_mv_injection;
+    uint8_t           new_nearest_injection;
+    uint8_t           new_nearest_near_comb_injection;
+    WmCtrls           wm_ctrls;
+    UvCtrls           uv_ctrls;
+    uint8_t           unipred3x3_injection;
+    Bipred3x3Controls bipred3x3_ctrls;
+    uint8_t           redundant_blk;
+    uint8_t           nic_level;
+    uint8_t           svt_aom_inject_inter_candidates;
+    uint8_t          *cfl_temp_luma_recon;
+    uint16_t         *cfl_temp_luma_recon16bit;
+    Bool              blk_skip_decision;
+    int8_t            rdoq_level;
+    int16_t           sb_me_mv[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX][2];
     // Store ME MV of the square to use with NSQ shapes; 4x4 will also use the 8x8 ME MVs
-    int16_t sq_sb_me_mv[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX][2];
-#else
-    int16_t  sb_me_mv[BLOCK_MAX_COUNT_SB_128][MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX][2];
-#endif
+    int16_t  sq_sb_me_mv[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX][2];
     MV       fp_me_mv[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
     MV       sub_me_mv[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
     uint32_t post_subpel_me_mv_cost[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
     int16_t  best_pme_mv[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX][2];
     int8_t   valid_pme_mv[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX];
-#if CLN_BLK_STRUCT
     // Store MVP during MD search - only results are forwarded to encdec
     CandidateMv ref_mv_stack[MODE_CTX_REF_FRAMES][MAX_REF_MV_STACK_SIZE];
-#endif
-#if CLN_INTER_MODE_CTX
     // Store inter_mode_ctx for each reference during MD search - only ctx for winning ref frame is forwarded to encdec
-    int16_t inter_mode_ctx[MODE_CTX_REF_FRAMES];
-#endif
+    int16_t              inter_mode_ctx[MODE_CTX_REF_FRAMES];
     EbPictureBufferDesc *input_sample16bit_buffer;
     // set to 1 once the packing of 10bit source is done for each SB
     uint8_t  hbd_pack_done;
@@ -1223,24 +1121,13 @@ typedef struct ModeDecisionContext {
     TxsControls         txs_ctrls;
     TxtControls         txt_ctrls;
     CandReductionCtrls  cand_reduction_ctrls;
-#if FIX_NSQ_CTRL
-    NsqGeomCtrls   nsq_geom_ctrls;
-    NsqSearchCtrls nsq_search_ctrls;
-#else
-    NsqCtrls nsq_ctrls;
-#endif
+    NsqGeomCtrls        nsq_geom_ctrls;
+    NsqSearchCtrls      nsq_search_ctrls;
     DepthEarlyExitCtrls depth_early_exit_ctrls;
     RdoqCtrls           rdoq_ctrls;
     uint8_t             disallow_4x4;
-#if CLN_MD_DISALLOW_NSQ
-    uint8_t md_disallow_nsq_search;
-#else
-    uint8_t  md_disallow_nsq;
-#endif
-    uint8_t params_status; // specifies the status of MD parameters; 0: default, 1: modified
-#if !CLN_MD_LOOP
-    bool d1_skip_flag[25];
-#endif
+    uint8_t             md_disallow_nsq_search;
+    uint8_t             params_status; // specifies the status of MD parameters; 0: default, 1: modified
     // was parent_sq_coeff_area_based_cycles_reduction_ctrls
     ParentSqCmplxCtrls   psq_cplx_ctrls;
     NsqPsqTxsCtrls       nsq_psq_txs_ctrls;
@@ -1258,21 +1145,16 @@ typedef struct ModeDecisionContext {
     // Array for all nearest/near MVs for a block for single ref case
     MV mvp_array[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH][MAX_MVP_CANIDATES];
     // Count of all nearest/near MVs for a block for single ref case
-    int8_t mvp_count[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
-#if CLN_MVP_DIST_CALC
+    int8_t   mvp_count[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
     uint16_t best_fp_mvp_idx[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
     uint32_t best_fp_mvp_dist[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
     uint32_t fp_me_dist[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
-#endif
     // Start/end position for MD sparse search
-    int16_t  sprs_lev0_start_x;
-    int16_t  sprs_lev0_end_x;
-    int16_t  sprs_lev0_start_y;
-    int16_t  sprs_lev0_end_y;
-    NicCtrls nic_ctrls;
-#if !OPT_BLOCK_SETTINGS
-    uint8_t inter_compound_mode;
-#endif
+    int16_t         sprs_lev0_start_x;
+    int16_t         sprs_lev0_end_x;
+    int16_t         sprs_lev0_start_y;
+    int16_t         sprs_lev0_end_y;
+    NicCtrls        nic_ctrls;
     MV              ref_mv;
     uint16_t        sb_index;
     uint64_t        mds0_best_cost;
@@ -1299,13 +1181,11 @@ typedef struct ModeDecisionContext {
     Bool bypass_encdec;
     // Indicates whether only pred depth refinement is used in PD1 (set per SB)
     Bool pred_depth_only;
-#if CLN_ADD_FIXED_PRED_SIG
     // If true, indicates that there is a fixed partition structure for the current PD pass. When
     // the partition strucutre is fixed, there is no SQ/NSQ (d1) decision and no inter-depth (d2) decision.
     // When the partition structure in PD1 is fixed and EncDec is bypassed, the recon pic and QP info
     // can be written directly to final buffers instead of temporary buffers to be copied in EncDec.
     bool fixed_partition;
-#endif
     // Indicates whether only pred depth refinement is used in PD1 (set per frame) Per frame is
     // necessary because some shortcuts can only be taken if the whole frame uses pred depth only
     Bool                pic_pred_depth_only;
@@ -1354,24 +1234,15 @@ typedef struct ModeDecisionContext {
     // chroma components to compensate at MDS3 of LPD1
     COMPONENT_TYPE lpd1_chroma_comp;
     uint8_t        corrupted_mv_check;
-#if !CLN_SKIP_PD0_SIG
-    uint8_t skip_pd0;
-#endif
-    uint8_t pred_mode_depth_refine;
+    uint8_t        pred_mode_depth_refine;
     // when MD is done on 8bit, scale palette colors to 10bit (valid when bypass is 1)
-    uint8_t scale_palette;
-    uint8_t high_freq_present;
-#if OPT_NSQ_HIGH_FREQ
+    uint8_t  scale_palette;
+    uint8_t  high_freq_present;
     uint32_t b32_satd[4];
-#endif
-#if CLN_QUAD_REC
     uint64_t rec_dist_per_quadrant[4];
-#endif
-#if CLN_BLK_STRUCT_4
     // non-normative txs
     uint16_t min_nz_h;
     uint16_t min_nz_v;
-#endif
     // used to signal when the N4 shortcut can be used for rtc, works in conjunction with use_tx_shortcuts_mds3 flag
     uint8_t rtc_use_N4_dct_dct_shortcut;
     // SSIM_LVL_0: off

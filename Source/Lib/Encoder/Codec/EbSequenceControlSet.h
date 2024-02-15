@@ -24,39 +24,13 @@ extern "C" {
 #endif
 typedef enum EncPass {
     ENC_SINGLE_PASS, //single pass mode
-#if OPT_MPASS_VBR7
     ENC_FIRST_PASS, // first pass of two pass mode
     ENC_SECOND_PASS, // Second pass of two pass mode
     MAX_ENCODE_PASS = 2,
-#else
-#if !OPT_MPASS_VBR6
-    ENC_FIRST_PASS, // first pass of multi pass mode
-#endif
-    ENC_MIDDLE_PASS, // middle pass of multi pass mode
-    ENC_LAST_PASS, // last pass of multi pass mode
-    MAX_ENCODE_PASS = 3,
-#endif
 } EncPass;
-#if !OPT_MPASS_VBR4
-typedef struct IppPassControls {
-    uint8_t skip_frame_first_pass; // Enable the ability to skip frame
-    uint8_t ds; // use downsampled input
-    uint8_t bypass_blk_step; // bypass every other row and col
-    uint8_t dist_ds; // downsample distortion
-    uint8_t bypass_zz_check; // Bypas the (0,0)_MV check against HME_MV before performing ME
-    uint8_t use8blk;
-    uint8_t reduce_me_search; //Reduce HME_ME SR areas
-} IppPassControls;
-#endif
-#if OPT_MPASS_VBR8
 typedef struct FirstPassControls {
     uint8_t ds; // use downsampled input (0: no downsample, 1: downsample by 1 in each direction)
 } FirstPassControls;
-#else
-typedef struct MidPassControls {
-    uint8_t ds; // use downsampled input
-} MidPassControls;
-#endif
 
 typedef struct BitstreamLevel {
     uint8_t major;
@@ -267,20 +241,10 @@ typedef struct SequenceControlSet {
     int     cqp_base_q_tf;
     int     cqp_base_q;
     // less than 200 frames or gop_constraint_rc is set, used in VBR and set in multipass encode
-    uint8_t is_short_clip;
-    uint8_t passes;
-#if !OPT_MPASS_VBR4
-    IppPassControls ipp_pass_ctrls;
-#endif
-#if OPT_MPASS_VBR8
+    uint8_t           is_short_clip;
+    uint8_t           passes;
     FirstPassControls first_pass_ctrls;
-#else
-    MidPassControls mid_pass_ctrls;
-#endif
-#if !OPT_MPASS_VBR4
-    uint8_t ipp_was_ds;
-#endif
-    uint8_t final_pass_preset;
+    uint8_t           final_pass_preset;
     /* Palette Mode
     *
     * -1: Default, 0: OFF, 1: Fully ON, 2 ... 6: Faster levels */
@@ -409,15 +373,10 @@ typedef struct SequenceControlSet {
     *
     * Default is 0. */
     int speed_control_flag;
-#if TUNE_TPL_LVL
     /* TPL
     *
     * 0: OFF, 1: ON. */
     uint8_t tpl;
-#else
-    //Flag that will hold the tpl level, set at init time, level 0 is off, other levels are set by preset
-    uint8_t tpl_level;
-#endif
     // If true, calculate and store the SB-based variance
     uint8_t calculate_variance;
     // Whether to modulation lambda using TPL stats or/and ME-stats or/and the percentage of INTRA selection at reference frame(s)

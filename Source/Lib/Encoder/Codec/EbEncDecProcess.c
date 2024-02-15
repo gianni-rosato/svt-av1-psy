@@ -508,12 +508,7 @@ void svt_aom_recon_output(PictureControlSet *pcs, SequenceControlSet *scs) {
             const uint16_t ss_x         = (color_format == EB_YUV444 ? 1 : 2) - 1;
             const uint16_t ss_y         = (color_format >= EB_YUV422 ? 1 : 2) - 1;
             // FGN: Create a buffer if needed, copy the reconstructed picture and run the film grain synthesis algorithm
-#if OPT_MPASS_VBR4
-            if (scs->seq_header.film_grain_params_present &&
-#else
-            if ((scs->static_config.pass != ENC_FIRST_PASS) && scs->seq_header.film_grain_params_present &&
-#endif
-                pcs->ppcs->frm_hdr.film_grain_params.apply_grain) {
+            if (scs->seq_header.film_grain_params_present && pcs->ppcs->frm_hdr.film_grain_params.apply_grain) {
                 AomFilmGrain *film_grain_ptr;
 
                 uint16_t                    padding = scs->super_block_size + 32;
@@ -2091,34 +2086,14 @@ static void copy_neighbour_arrays_light_pd0(PictureControlSet *pcs, ModeDecision
 }
 void svt_aom_copy_neighbour_arrays(PictureControlSet *pcs, ModeDecisionContext *ctx, uint32_t src_idx, uint32_t dst_idx,
                                    uint32_t blk_mds);
-#if !CLN_MD_LOOP
-uint32_t svt_aom_get_tot_1d_blks(struct ModeDecisionContext *ctx, const int32_t sq_size, const uint8_t disallow_nsq);
-static INLINE uint32_t get_default_tot_d1_blocks(ModeDecisionContext *ctx, const BlockGeom *blk_geom,
-                                                 const uint8_t disallow_nsq) {
-    uint32_t tot_d1_blocks = svt_aom_get_tot_1d_blks(ctx, blk_geom->sq_size, disallow_nsq);
-    return tot_d1_blocks;
-}
-#endif
 static void set_parent_to_be_considered(ModeDecisionContext *ctx, MdcSbData *results_ptr, uint32_t blk_index,
                                         int32_t sb_size, int8_t pred_depth, uint8_t pred_sq_idx, int8_t depth_step,
                                         const uint8_t disallow_nsq) {
     const BlockGeom *blk_geom = get_blk_geom_mds(blk_index);
     if (blk_geom->sq_size < ((sb_size == BLOCK_128X128) ? 128 : 64)) {
         //Set parent to be considered
-        uint32_t parent_depth_idx_mds = blk_geom->parent_depth_idx_mds;
-#if CLN_MD_LOOP
+        uint32_t parent_depth_idx_mds                     = blk_geom->parent_depth_idx_mds;
         results_ptr->consider_block[parent_depth_idx_mds] = 1;
-#else
-        const BlockGeom *parent_blk_geom = get_blk_geom_mds(parent_depth_idx_mds);
-#if CLN_MD_LOOP
-        const unsigned int parent_tot_d1_blocks = 1;
-#else
-        const unsigned int parent_tot_d1_blocks = get_default_tot_d1_blocks(ctx, parent_blk_geom, disallow_nsq);
-#endif
-        for (uint32_t block_1d_idx = 0; block_1d_idx < parent_tot_d1_blocks; block_1d_idx++) {
-            results_ptr->consider_block[parent_depth_idx_mds + block_1d_idx] = 1;
-        }
-#endif
         if (depth_step < -1)
             set_parent_to_be_considered(
                 ctx, results_ptr, parent_depth_idx_mds, sb_size, pred_depth, pred_sq_idx, depth_step + 1, disallow_nsq);
@@ -2140,62 +2115,20 @@ static void set_child_to_be_considered(PictureControlSet *pcs, ModeDecisionConte
     const uint32_t child_block_idx_4 = child_block_idx_3 +
         ns_depth_offset[blk_geom->svt_aom_geom_idx][blk_geom->depth + 1];
 
-#if OPT_NSQ_INCOMP
     if (ctx->depth_refinement_ctrls.enabled && ctx->depth_refinement_ctrls.prune_child_if_not_avail) {
         // Only add child depth if all allowable child blocks available (i.e. tested in PD0)
         const uint8_t count = ctx->cost_avail[child_block_idx_1] + ctx->cost_avail[child_block_idx_2] +
             ctx->cost_avail[child_block_idx_3] + ctx->cost_avail[child_block_idx_4];
-#else
-    if (ctx->depth_refinement_ctrls.enabled && ctx->depth_refinement_ctrls.prune_child_if_not_avail &&
-        pcs->ppcs->sb_geom[sb_index].block_is_allowed[blk_index]) {
-        // Only add child depth if all allowable child blocks available (i.e. tested in PD0)
-        const uint8_t count = ctx->avail_blk_flag[child_block_idx_1] + ctx->avail_blk_flag[child_block_idx_2] +
-            ctx->avail_blk_flag[child_block_idx_3] + ctx->avail_blk_flag[child_block_idx_4];
-#endif
         // LPD0 takes many shortcuts, so only rely on the info if at least one of the child blocks was processed
         if ((count || ctx->lpd0_ctrls.pd0_level == REGULAR_PD0) && count < 4)
             return;
     }
-#if CLN_MD_LOOP
     results_ptr->refined_split_flag[blk_index] = TRUE;
-#else
-    unsigned int tot_d1_blocks = get_default_tot_d1_blocks(ctx, blk_geom, disallow_nsq);
-
-    if (blk_geom->svt_aom_geom_idx == GEOM_0)
-        tot_d1_blocks = 1;
-
-    // Set parent depth's split flag to be true
-    for (uint32_t block_1d_idx = 0; block_1d_idx < tot_d1_blocks; block_1d_idx++) {
-        results_ptr->refined_split_flag[blk_index + block_1d_idx] = TRUE;
-    }
-#endif
-#if CLN_MD_LOOP
     //Set first child to be considered
     results_ptr->consider_block[child_block_idx_1]     = 2;
     results_ptr->refined_split_flag[child_block_idx_1] = FALSE;
-#else
-    //Set first child to be considered
-    const BlockGeom *child1_blk_geom = get_blk_geom_mds(child_block_idx_1);
-
-    // All child blocks are same sq_size, so will share the same tot_d1_blocks
-    const unsigned int child_default_tot_d1_blocks = get_default_tot_d1_blocks(ctx, child1_blk_geom, disallow_nsq);
-#if FIX_NSQ_CTRL
-    const unsigned int child_tot_d1_blocks = !ctx->nsq_geom_ctrls.enabled ? 1 : child_default_tot_d1_blocks;
-#else
-    const unsigned int child_tot_d1_blocks = !ctx->nsq_ctrls.enabled ? 1 : child_default_tot_d1_blocks;
-#endif
-    for (unsigned block_1d_idx = 0; block_1d_idx < child_tot_d1_blocks; block_1d_idx++) {
-        results_ptr->consider_block[child_block_idx_1 + block_1d_idx] = 2;
-        results_ptr->refined_split_flag[child_block_idx_1 + block_1d_idx] = FALSE;
-    }
-#endif
-#if OPT_NSQ_INCOMP
     // Add children blocks if more depth to consider (depth_step is > 1)
     if (depth_step > 1)
-#else
-    // Add children blocks if more depth to consider (depth_step is > 1), or block not allowed (add next depth)
-    if (depth_step > 1 || !pcs->ppcs->sb_geom[sb_index].block_is_allowed[child_block_idx_1])
-#endif
         set_child_to_be_considered(pcs,
                                    ctx,
                                    results_ptr,
@@ -2204,30 +2137,13 @@ static void set_child_to_be_considered(PictureControlSet *pcs, ModeDecisionConte
                                    sb_size,
                                    pred_depth,
                                    pred_sq_idx,
-#if OPT_NSQ_INCOMP
                                    depth_step - 1,
-#else
-                                   depth_step > 1 ? depth_step - 1 : 1,
-#endif
                                    disallow_nsq);
-#if CLN_MD_LOOP
     //Set second child to be considered
     results_ptr->consider_block[child_block_idx_2]     = 2;
     results_ptr->refined_split_flag[child_block_idx_2] = FALSE;
-#else
-    //Set second child to be considered
-    for (unsigned block_1d_idx = 0; block_1d_idx < child_tot_d1_blocks; block_1d_idx++) {
-        results_ptr->consider_block[child_block_idx_2 + block_1d_idx] = 2;
-        results_ptr->refined_split_flag[child_block_idx_2 + block_1d_idx] = FALSE;
-    }
-#endif
-#if OPT_NSQ_INCOMP
     // Add children blocks if more depth to consider (depth_step is > 1)
     if (depth_step > 1)
-#else
-    // Add children blocks if more depth to consider (depth_step is > 1), or block not allowed (add next depth)
-    if (depth_step > 1 || !pcs->ppcs->sb_geom[sb_index].block_is_allowed[child_block_idx_2])
-#endif
         set_child_to_be_considered(pcs,
                                    ctx,
                                    results_ptr,
@@ -2236,31 +2152,14 @@ static void set_child_to_be_considered(PictureControlSet *pcs, ModeDecisionConte
                                    sb_size,
                                    pred_depth,
                                    pred_sq_idx,
-#if OPT_NSQ_INCOMP
                                    depth_step - 1,
-#else
-                                   depth_step > 1 ? depth_step - 1 : 1,
-#endif
                                    disallow_nsq);
-#if CLN_MD_LOOP
     //Set third child to be considered
     results_ptr->consider_block[child_block_idx_3]     = 2;
     results_ptr->refined_split_flag[child_block_idx_3] = FALSE;
-#else
-    //Set third child to be considered
-    for (unsigned block_1d_idx = 0; block_1d_idx < child_tot_d1_blocks; block_1d_idx++) {
-        results_ptr->consider_block[child_block_idx_3 + block_1d_idx] = 2;
-        results_ptr->refined_split_flag[child_block_idx_3 + block_1d_idx] = FALSE;
-    }
-#endif
 
-#if OPT_NSQ_INCOMP
     // Add children blocks if more depth to consider (depth_step is > 1)
     if (depth_step > 1)
-#else
-    // Add children blocks if more depth to consider (depth_step is > 1), or block not allowed (add next depth)
-    if (depth_step > 1 || !pcs->ppcs->sb_geom[sb_index].block_is_allowed[child_block_idx_3])
-#endif
         set_child_to_be_considered(pcs,
                                    ctx,
                                    results_ptr,
@@ -2269,30 +2168,13 @@ static void set_child_to_be_considered(PictureControlSet *pcs, ModeDecisionConte
                                    sb_size,
                                    pred_depth,
                                    pred_sq_idx,
-#if OPT_NSQ_INCOMP
                                    depth_step - 1,
-#else
-                                   depth_step > 1 ? depth_step - 1 : 1,
-#endif
                                    disallow_nsq);
-#if CLN_MD_LOOP
     //Set forth child to be considered
     results_ptr->consider_block[child_block_idx_4]     = 2;
     results_ptr->refined_split_flag[child_block_idx_4] = FALSE;
-#else
-    //Set forth child to be considered
-    for (unsigned block_1d_idx = 0; block_1d_idx < child_tot_d1_blocks; block_1d_idx++) {
-        results_ptr->consider_block[child_block_idx_4 + block_1d_idx] = 2;
-        results_ptr->refined_split_flag[child_block_idx_4 + block_1d_idx] = FALSE;
-    }
-#endif
-#if OPT_NSQ_INCOMP
     // Add children blocks if more depth to consider (depth_step is > 1)
     if (depth_step > 1)
-#else
-    // Add children blocks if more depth to consider (depth_step is > 1), or block not allowed (add next depth)
-    if (depth_step > 1 || !pcs->ppcs->sb_geom[sb_index].block_is_allowed[child_block_idx_4])
-#endif
         set_child_to_be_considered(pcs,
                                    ctx,
                                    results_ptr,
@@ -2301,14 +2183,9 @@ static void set_child_to_be_considered(PictureControlSet *pcs, ModeDecisionConte
                                    sb_size,
                                    pred_depth,
                                    pred_sq_idx,
-#if OPT_NSQ_INCOMP
                                    depth_step - 1,
-#else
-                                   depth_step > 1 ? depth_step - 1 : 1,
-#endif
                                    disallow_nsq);
 }
-#if CLN_MD_LOOP
 /* Update shapes and tot_shapes with the shapes to be tested at the current d1 depth, based on block
 characteristics and settings.
 */
@@ -2333,15 +2210,10 @@ static void set_d1_blocks_to_test(PictureControlSet *pcs, ModeDecisionContext *c
     uint8_t    shapes_idx = 0;
     const Part max_part   = (!ctx->nsq_geom_ctrls.enabled ||
                            (blk_geom->sq_size <= ctx->nsq_geom_ctrls.min_nsq_block_size) || blk_geom->sq_size == 4 ||
-#if CLN_MD_DISALLOW_NSQ
-                           (ctx->md_disallow_nsq_search && !inj_hv_incomp) ||
-#else
-                           (ctx->md_disallow_nsq && !inj_hv_incomp) ||
-#endif
-                           inj_sq_only_incomp)
-        ? PART_N
-        : (blk_geom->sq_size == 8 || inj_hv_incomp) ? PART_V
-                                                    : PART_S - 1;
+                           (ctx->md_disallow_nsq_search && !inj_hv_incomp) || inj_sq_only_incomp)
+          ? PART_N
+          : (blk_geom->sq_size == 8 || inj_hv_incomp) ? PART_V
+                                                      : PART_S - 1;
     for (Part part = PART_N; part <= max_part; part++) {
         if (inj_hv_incomp) {
             if ((pcs->ppcs->sb_geom[ctx->sb_index].block_is_allowed[blk_index + 1] && part != PART_H) ||
@@ -2368,11 +2240,7 @@ static void build_cand_block_array(SequenceControlSet *scs, PictureControlSet *p
                                    bool first_stage) {
     memset(ctx->avail_blk_flag, FALSE, sizeof(uint8_t) * scs->max_block_cnt);
     memset(ctx->cost_avail, FALSE, sizeof(uint8_t) * scs->max_block_cnt);
-#if CLN_MDC_ARRAY
-    MdcSbData *results_ptr = &ctx->mdc_sb_array;
-#else
-    MdcSbData *results_ptr = ctx->mdc_sb_array;
-#endif
+    MdcSbData *results_ptr        = &ctx->mdc_sb_array;
     results_ptr->leaf_count       = 0;
     uint32_t       blk_index      = 0;
     const uint16_t max_block_cnt  = scs->max_block_cnt;
@@ -2396,16 +2264,6 @@ static void build_cand_block_array(SequenceControlSet *scs, PictureControlSet *p
             ? 0
             : 1;
 
-#if !CLN_SKIP_PD0_SIG
-        if (ctx->skip_pd0) {
-            if (ctx->depth_removal_ctrls.disallow_below_64x64)
-                is_block_tagged = (blk_geom->sq_size != 64) ? 0 : is_block_tagged;
-            else if (ctx->depth_removal_ctrls.disallow_below_32x32)
-                is_block_tagged = (blk_geom->sq_size != 32) ? 0 : is_block_tagged;
-            else if (ctx->depth_removal_ctrls.disallow_below_16x16)
-                is_block_tagged = (blk_geom->sq_size != 16) ? 0 : is_block_tagged;
-        }
-#endif
         // SQ/NSQ block(s) filter based on the block validity
         if (is_block_tagged) {
             if (first_stage || results_ptr->consider_block[blk_index]) {
@@ -2425,240 +2283,10 @@ static void build_cand_block_array(SequenceControlSet *scs, PictureControlSet *p
                     results_ptr->split_flag[results_ptr->leaf_count++] = results_ptr->refined_split_flag[blk_index];
                 }
             }
-#if CLN_SKIP_PD0_SIG
         }
         blk_index += (blk_geom->sq_size > min_sq_size) ? blk_geom->d1_depth_offset : blk_geom->ns_depth_offset;
-#else
-            blk_index += blk_geom->d1_depth_offset;
-        } else {
-            if (ctx->skip_pd0 && ctx->pd_pass == PD_PASS_0)
-                ctx->md_blk_arr_nsq[blk_index].part = (blk_geom->sq_size > min_sq_size) ? PARTITION_SPLIT
-                                                                                        : PARTITION_NONE;
-            blk_index += (blk_geom->sq_size > min_sq_size) ? blk_geom->d1_depth_offset : blk_geom->ns_depth_offset;
-        }
-#endif
     }
 }
-#else
-uint32_t svt_aom_get_tot_1d_blks(struct ModeDecisionContext *ctx, const int32_t sq_size, const uint8_t disallow_nsq) {
-    uint32_t tot_d1_blocks;
-#if FIX_NSQ_CTRL
-    tot_d1_blocks = (disallow_nsq) || (sq_size <= ctx->nsq_geom_ctrls.min_nsq_block_size) ? 1
-#else
-    tot_d1_blocks = (disallow_nsq) || (sq_size <= ctx->nsq_ctrls.min_nsq_block_size) ? 1
-#endif
-        : sq_size == 128 ? 17
-        : sq_size > 8 ? 25
-        : sq_size == 8 ? 5
-                       : 1;
-#if FIX_NSQ_CTRL
-    if (!ctx->nsq_geom_ctrls.allow_HVA_HVB && !ctx->nsq_geom_ctrls.allow_HV4)
-        tot_d1_blocks = MIN(5, tot_d1_blocks);
-    else if (!ctx->nsq_geom_ctrls.allow_HVA_HVB)
-#else
-    if (!ctx->nsq_ctrls.allow_HVA_HVB && !ctx->nsq_ctrls.allow_HV4)
-        tot_d1_blocks = MIN(5, tot_d1_blocks);
-    else if (!ctx->nsq_ctrls.allow_HVA_HVB)
-#endif
-        tot_d1_blocks = MIN((uint32_t)(sq_size == 128 ? 5 : 13), tot_d1_blocks);
-
-    return tot_d1_blocks;
-}
-
-static EbErrorType md_rtime_alloc_palette_info(BlkStruct *md_blk_arr_nsq) {
-    EB_MALLOC_ARRAY(md_blk_arr_nsq->palette_info, 1);
-    EB_MALLOC_ARRAY(md_blk_arr_nsq->palette_info->color_idx_map, MAX_PALETTE_SQUARE);
-
-    return EB_ErrorNone;
-}
-
-// Initialize structures used to indicate which blocks will be tested at MD.
-// MD data structures should be updated in init_block_data(), not here.
-static void build_cand_block_array(SequenceControlSet *scs, PictureControlSet *pcs, ModeDecisionContext *ctx,
-                                   Bool is_complete_sb) {
-    memset(ctx->avail_blk_flag, FALSE, sizeof(uint8_t) * scs->max_block_cnt);
-    memset(ctx->cost_avail, FALSE, sizeof(uint8_t) * scs->max_block_cnt);
-    MdcSbData *results_ptr       = ctx->mdc_sb_array;
-    results_ptr->leaf_count      = 0;
-    uint32_t       blk_index     = 0;
-    const uint16_t max_block_cnt = scs->max_block_cnt;
-    int32_t        min_sq_size;
-    if (ctx->pred_depth_only)
-        min_sq_size = (ctx->depth_removal_ctrls.enabled && ctx->depth_removal_ctrls.disallow_below_64x64) ? 64
-            : (ctx->depth_removal_ctrls.enabled && ctx->depth_removal_ctrls.disallow_below_32x32)         ? 32
-            : (ctx->depth_removal_ctrls.enabled && ctx->depth_removal_ctrls.disallow_below_16x16)         ? 16
-            : ctx->disallow_4x4                                                                           ? 8
-                                                                                                          : 4;
-    else
-        min_sq_size = ctx->disallow_4x4 ? 8 : 4;
-
-    while (blk_index < max_block_cnt) {
-        const BlockGeom *blk_geom = get_blk_geom_mds(blk_index);
-
-        // Initialize here because may not be updated at inter-depth decision for incomplete SBs
-        if (!is_complete_sb)
-            ctx->md_blk_arr_nsq[blk_index].part = PARTITION_SPLIT;
-
-        // SQ/NSQ block(s) filter based on the SQ size
-        uint8_t is_block_tagged = (blk_geom->sq_size == 128 && pcs->slice_type == I_SLICE) ||
-                (ctx->pred_depth_only && (blk_geom->sq_size < min_sq_size))
-            ? 0
-            : 1;
-        if (ctx->skip_pd0) {
-            if (ctx->depth_removal_ctrls.disallow_below_64x64)
-                is_block_tagged = (blk_geom->sq_size != 64) ? 0 : is_block_tagged;
-            else if (ctx->depth_removal_ctrls.disallow_below_32x32)
-                is_block_tagged = (blk_geom->sq_size != 32) ? 0 : is_block_tagged;
-            else if (ctx->depth_removal_ctrls.disallow_below_16x16)
-                is_block_tagged = (blk_geom->sq_size != 16) ? 0 : is_block_tagged;
-        }
-        // SQ/NSQ block(s) filter based on the block validity
-        if (is_block_tagged) {
-#if CLN_MD_LOOP
-            uint32_t tot_d1_blocks = 1;
-            bool inj_hv_incomp = false;
-
-            const uint16_t min_nsq = ctx->pd_pass == PD_PASS_1 && ctx->lpd1_ctrls.pd1_level != REGULAR_PD1 ? 8 : 4;
-            if (ctx->nsq_geom_ctrls.enabled &&
-                blk_geom->sq_size > MAX(min_nsq, ctx->nsq_geom_ctrls.min_nsq_block_size)) {
-                if (!pcs->ppcs->sb_geom[ctx->sb_index].block_is_allowed[blk_index] &&
-                    (pcs->ppcs->sb_geom[ctx->sb_index].block_is_allowed[blk_index + 1] ||
-                     pcs->ppcs->sb_geom[ctx->sb_index].block_is_allowed[blk_index + 3])) {
-                    inj_hv_incomp = true;
-                }
-            }
-#else
-#if FIX_NSQ_CTRL
-            uint32_t tot_d1_blocks = !ctx->nsq_geom_ctrls.enabled
-#else
-            uint32_t tot_d1_blocks = !ctx->nsq_ctrls.enabled
-#endif
-                ? 1
-                : svt_aom_get_tot_1d_blks(ctx, blk_geom->sq_size, ctx->md_disallow_nsq);
-
-#if OPT_NSQ_INCOMP
-            const uint16_t min_nsq = ctx->pd_pass == PD_PASS_1 && ctx->lpd1_ctrls.pd1_level != REGULAR_PD1 ? 8 : 4;
-            if (ctx->md_disallow_nsq && ctx->nsq_geom_ctrls.enabled &&
-                blk_geom->sq_size > MAX(min_nsq, ctx->nsq_geom_ctrls.min_nsq_block_size) &&
-                ((ctx->pd_pass == PD_PASS_0 && ctx->lpd0_ctrls.pd0_level == REGULAR_PD0) ||
-                 (ctx->pd_pass == PD_PASS_1 && ctx->lpd1_ctrls.pd1_level == REGULAR_PD1))) {
-                if (pcs->ppcs->sb_geom[ctx->sb_index].block_is_allowed[blk_index])
-                    tot_d1_blocks = 1;
-                else if (pcs->ppcs->sb_geom[ctx->sb_index].block_is_allowed[blk_index + 1] ||
-                         pcs->ppcs->sb_geom[ctx->sb_index].block_is_allowed[blk_index + 3])
-                    tot_d1_blocks = 5;
-            }
-#endif
-#endif
-            // If have NSQ shapes but tagged as not considered, set tot_d1_blocks to 1
-            if (tot_d1_blocks > 1 && !results_ptr->consider_block[blk_index + 1])
-                tot_d1_blocks = 1;
-
-                // If HA/HB/VA/VB and H4/V4 are disallowed, tot_d1_blocks will be
-                // capped at 5 in svt_aom_get_tot_1d_blks().  Therefore, if the condition MIN(17, tot_d1_blocks) is
-                // hit, tot_d1_blocks will be 5 OR HA/HB/VA/VB will be enabled.  Either case is valid.
-#if FIX_NSQ_CTRL
-            const uint32_t to_test_d1_blocks = !ctx->nsq_geom_ctrls.allow_HV4 ? MIN(17, tot_d1_blocks) : tot_d1_blocks;
-
-            for (uint32_t idx = blk_index; idx < (tot_d1_blocks + blk_index); ++idx) {
-#if !CLN_MD_LOOP
-#if OPT_NSQ_INCOMP
-                if (idx == blk_index && ctx->md_disallow_nsq && ctx->nsq_geom_ctrls.enabled &&
-                    ((ctx->pd_pass == PD_PASS_0 && ctx->lpd0_ctrls.pd0_level != REGULAR_PD0) ||
-                     (ctx->pd_pass == PD_PASS_1 && ctx->lpd1_ctrls.pd1_level != REGULAR_PD1)) &&
-                    blk_geom->sq_size > MAX(min_nsq, ctx->nsq_geom_ctrls.min_nsq_block_size)) {
-                    if (!pcs->ppcs->sb_geom[ctx->sb_index].block_is_allowed[idx] &&
-                        (pcs->ppcs->sb_geom[ctx->sb_index].block_is_allowed[idx + 1] ||
-                         pcs->ppcs->sb_geom[ctx->sb_index].block_is_allowed[idx + 3])) {
-#if CLN_MD_LOOP
-                        inj_hv_incomp = true;
-#else
-                        if (!pcs->ppcs->sb_geom[ctx->sb_index].block_is_allowed[idx + 1])
-                            idx += 3;
-                        else
-                            idx += 1;
-#endif
-                    }
-                }
-#endif
-#endif
-#if !CLN_MD_LOOP
-                if (!ctx->nsq_geom_ctrls.allow_HV4) {
-#endif
-#else
-            const uint32_t to_test_d1_blocks = !ctx->nsq_ctrls.allow_HV4 ? MIN(17, tot_d1_blocks) : tot_d1_blocks;
-
-            for (uint32_t idx = blk_index; idx < (tot_d1_blocks + blk_index); ++idx) {
-                if (!ctx->nsq_ctrls.allow_HV4) {
-#endif
-#if !CLN_MD_LOOP
-                    // Index of first H4 block is 5; if H4/V4 blocks are skipped increase index to bypass the blocks.
-                    // idx is increased by 7, rather than 8, because after continue is exectued, idx will be incremented
-                    // by 1 (as part of the for loop).  H4/V4 blocks are not allowed for 128 sq_size, so don't skip.
-                    if (blk_geom->sq_size < 128 && (idx - blk_index) == 5) {
-                        idx += 7;
-                        continue;
-                    }
-                }
-
-                //  MD palette info buffer
-                if (pcs->ppcs->palette_level) {
-                    if (ctx->md_blk_arr_nsq[idx].palette_mem == 0) {
-                        md_rtime_alloc_palette_info(&ctx->md_blk_arr_nsq[idx]);
-                        ctx->md_blk_arr_nsq[idx].palette_mem = 1;
-                    }
-                }
-
-                ctx->md_blk_arr_nsq[idx].palette_size[0] = 0;
-                ctx->md_blk_arr_nsq[idx].palette_size[1] = 0;
-#endif
-                if (results_ptr->consider_block[idx]) {
-                    results_ptr->leaf_data_array[results_ptr->leaf_count].mds_idx = idx;
-#if CLN_MD_LOOP
-                    uint8_t shapes_idx = 0;
-                    for (Part part = PART_N; part < PART_S; part++) {
-                        if (part > PART_N && !ctx->nsq_geom_ctrls.enabled)
-                            continue;
-                        if (inj_hv_incomp) {
-                            if ((pcs->ppcs->sb_geom[ctx->sb_index].block_is_allowed[idx + 1] && part != PART_H) ||
-                                (pcs->ppcs->sb_geom[ctx->sb_index].block_is_allowed[idx + 3] && part != PART_V))
-                                continue;
-                        } else if (part > PART_N && ctx->md_disallow_nsq) {
-                            continue;
-                        }
-                        if (part > PART_N && (blk_geom->sq_size <= ctx->nsq_geom_ctrls.min_nsq_block_size))
-                            continue;
-                        if (part > PART_N && blk_geom->sq_size == 4)
-                            continue;
-                        if (part > PART_V && blk_geom->sq_size <= 8)
-                            continue;
-                        if ((part == PART_H4 || part == PART_V4) && blk_geom->sq_size == 128)
-                            continue;
-                        if (!ctx->nsq_geom_ctrls.allow_HVA_HVB &&
-                            (part == PART_HA || part == PART_HB || part == PART_VA || part == PART_VB))
-                            continue;
-                        if (!ctx->nsq_geom_ctrls.allow_HV4 && (part == PART_H4 || part == PART_V4))
-                            continue;
-                        results_ptr->leaf_data_array[results_ptr->leaf_count].shapes[shapes_idx++] = part;
-                    }
-                    results_ptr->leaf_data_array[results_ptr->leaf_count].tot_shapes = shapes_idx;
-#else
-                        results_ptr->leaf_data_array[results_ptr->leaf_count].tot_d1_blocks = to_test_d1_blocks;
-#endif
-                    results_ptr->leaf_data_array[results_ptr->leaf_count].is_child = results_ptr->consider_block[idx] ==
-                            2
-                        ? 1
-                        : 0;
-                    results_ptr->split_flag[results_ptr->leaf_count++] = results_ptr->refined_split_flag[idx];
-                }
-            }
-            blk_index += blk_geom->d1_depth_offset;
-        } else {
-            blk_index += (blk_geom->sq_size > min_sq_size) ? blk_geom->d1_depth_offset : blk_geom->ns_depth_offset;
-        }
-    }
-}
-#endif
 void update_pred_th_offset(ModeDecisionContext *ctx, const BlockGeom *blk_geom, int8_t *s_depth, int8_t *e_depth,
                            int64_t *th_offset) {
     uint32_t full_lambda = ctx->hbd_md ? ctx->full_lambda_md[EB_10_BIT_MD] : ctx->full_lambda_md[EB_8_BIT_MD];
@@ -2795,29 +2423,16 @@ static uint8_t is_child_to_current_deviation_small(PictureControlSet *pcs, ModeD
     }
     if (blk_geom->bsize == BLOCK_8X8)
         th_offset = th_offset - ctx->depth_refinement_ctrls.limit_4x4_depth;
-#if OPT_NSQ_INCOMP
     if (ctx->avail_blk_flag[blk_index] && ctx->lpd0_ctrls.pd0_level < VERY_LIGHT_PD0) {
-#else
-    if (ctx->lpd0_ctrls.pd0_level < VERY_LIGHT_PD0) {
-#endif
         if (ctx->md_blk_arr_nsq[blk_index].cnt_nz_coeff < ctx->depth_refinement_ctrls.sub_to_current_pd0_coeff_th)
             th_offset -= ctx->depth_refinement_ctrls.sub_to_current_pd0_coeff_offset;
     }
 
-#if OPT_NSQ_INCOMP
     if (ctx->avail_blk_flag[blk_geom->sqi_mds] && ctx->intra_ctrls.enable_intra &&
         (ctx->blk_ptr->prediction_mode_flag == INTER_MODE)) {
-#else
-    if (ctx->intra_ctrls.enable_intra && (ctx->blk_ptr->prediction_mode_flag == INTER_MODE)) {
-#endif
         th_offset -= 20;
-#if CLN_TX_DATA
         if (ctx->lpd0_ctrls.pd0_level < VERY_LIGHT_PD0 && !ctx->md_blk_arr_nsq[blk_geom->sqi_mds].y_has_coeff)
             th_offset -= 20;
-#else
-        if (ctx->lpd0_ctrls.pd0_level < VERY_LIGHT_PD0 && !ctx->md_blk_arr_nsq[blk_geom->sqi_mds].y_has_coeff[0])
-            th_offset -= 20;
-#endif
     }
     uint32_t split_cost_th = ctx->depth_refinement_ctrls.split_rate_th;
     // Skip testing child depth if the rate cost of splitting is high
@@ -2897,35 +2512,21 @@ static void get_max_min_pd0_depths(SequenceControlSet *scs, PictureControlSet *p
 
 static void perform_pred_depth_refinement(SequenceControlSet *scs, PictureControlSet *pcs, ModeDecisionContext *ctx,
                                           uint32_t sb_index) {
-#if CLN_MDC_ARRAY
     MdcSbData *results_ptr = &ctx->mdc_sb_array;
-#else
-    MdcSbData *results_ptr = ctx->mdc_sb_array;
-#endif
-    uint32_t blk_index = 0;
-    uint8_t  use_cost_band_based_modulation =
+    uint32_t   blk_index   = 0;
+    uint8_t    use_cost_band_based_modulation =
         (!scs->vq_ctrls.stability_ctrls.depth_refinement ||
          (pcs->slice_type != I_SLICE && pcs->ppcs->me_8x8_cost_variance[ctx->sb_index] < VQ_STABILITY_ME_VAR_TH));
-#if FIX_NSQ_CTRL
     if (!ctx->nsq_geom_ctrls.enabled) {
-#else
-    if (!ctx->nsq_ctrls.enabled) {
-#endif
         if (ctx->disallow_4x4) {
             memset(results_ptr->consider_block, 0, sizeof(uint8_t) * scs->max_block_cnt);
-#if !CLN_MD_LOOP
-            memset(results_ptr->split_flag, 1, sizeof(uint8_t) * scs->max_block_cnt);
-#endif
             memset(results_ptr->refined_split_flag, 1, sizeof(uint8_t) * scs->max_block_cnt);
         } else {
             while (blk_index < scs->max_block_cnt) {
                 const BlockGeom *blk_geom = get_blk_geom_mds(blk_index);
 
-                Bool split_flag                        = blk_geom->sq_size > 4 ? TRUE : FALSE;
-                results_ptr->consider_block[blk_index] = 0;
-#if !CLN_MD_LOOP
-                results_ptr->split_flag[blk_index] = blk_geom->sq_size > 4 ? TRUE : FALSE;
-#endif
+                Bool split_flag                            = blk_geom->sq_size > 4 ? TRUE : FALSE;
+                results_ptr->consider_block[blk_index]     = 0;
                 results_ptr->refined_split_flag[blk_index] = blk_geom->sq_size > 4 ? TRUE : FALSE;
                 blk_index += split_flag ? blk_geom->d1_depth_offset : blk_geom->ns_depth_offset;
             }
@@ -2933,11 +2534,8 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs, PictureContro
     } else {
         // Reset mdc_sb_array data to defaults; it will be updated based on the predicted blocks (stored in md_blk_arr_nsq)
         while (blk_index < scs->max_block_cnt) {
-            const BlockGeom *blk_geom              = get_blk_geom_mds(blk_index);
-            results_ptr->consider_block[blk_index] = 0;
-#if !CLN_MD_LOOP
-            results_ptr->split_flag[blk_index] = blk_geom->sq_size > 4 ? TRUE : FALSE;
-#endif
+            const BlockGeom *blk_geom                  = get_blk_geom_mds(blk_index);
+            results_ptr->consider_block[blk_index]     = 0;
             results_ptr->refined_split_flag[blk_index] = blk_geom->sq_size > 4 ? TRUE : FALSE;
             blk_index++;
         }
@@ -2954,14 +2552,7 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs, PictureContro
 
     while (blk_index < scs->max_block_cnt) {
         const BlockGeom *blk_geom = get_blk_geom_mds(blk_index);
-#if !CLN_MD_LOOP
-#if FIX_NSQ_CTRL
-        uint32_t tot_d1_blocks = svt_aom_get_tot_1d_blks(ctx, blk_geom->sq_size, !ctx->nsq_geom_ctrls.enabled);
-#else
-        uint32_t tot_d1_blocks = svt_aom_get_tot_1d_blks(ctx, blk_geom->sq_size, !ctx->nsq_ctrls.enabled);
-#endif
-#endif
-        ctx->blk_ptr = &ctx->md_blk_arr_nsq[blk_index];
+        ctx->blk_ptr              = &ctx->md_blk_arr_nsq[blk_index];
 
         // if the parent square is inside inject this block
         uint8_t is_blk_allowed = pcs->slice_type != I_SLICE ? 1 : (blk_geom->sq_size < 128) ? 1 : 0;
@@ -2973,29 +2564,17 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs, PictureContro
             if (blk_geom->shape == PART_N) {
                 if (ctx->md_blk_arr_nsq[blk_index].split_flag == FALSE) {
                     // Add current pred depth block(s)
-#if CLN_MD_LOOP
                     results_ptr->consider_block[blk_index]     = 1;
                     results_ptr->refined_split_flag[blk_index] = FALSE;
-#else
-                    for (unsigned block_1d_idx = 0; block_1d_idx < tot_d1_blocks; block_1d_idx++) {
-                        results_ptr->consider_block[blk_index + block_1d_idx] = 1;
-                        results_ptr->refined_split_flag[blk_index + block_1d_idx] = FALSE;
-                    }
-#endif
 
                     int8_t s_depth = ctx->depth_ctrls.s_depth;
                     int8_t e_depth = ctx->depth_ctrls.e_depth;
 
                     // Selected depths should be available, unless they are not valid blocks (e.g. out of bounds).
                     // Therefore, when blocks are invalid, don't add parent/child.
-#if OPT_NSQ_INCOMP
                     if (!ctx->cost_avail[blk_geom->sqi_mds]) {
-#else
-                    if (!ctx->avail_blk_flag[blk_geom->sqi_mds]) {
-#endif
                         s_depth = e_depth = 0;
                     } else {
-#if OPT_NSQ_INCOMP
                         if (ctx->avail_blk_flag[blk_geom->sqi_mds]) {
                             // Getting here means avail_blk_flag is true, so the block was tested. Decisions that rely on
                             // info from a tested block should go here. For incomplete blocks, the cost may be available from
@@ -3009,40 +2588,8 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs, PictureContro
                                 }
                             }
                         }
-#else
-                        // Getting here means avail_blk_flag is true, so the block was tested. Decisions that rely on
-                        // info from a tested block should go here.
-                        if (ctx->depth_ctrls.use_pred_mode) {
-                            // Cap to (-1,+1) if the pred mode is INTER (if both INTER and INTRA are tested)
-                            if (ctx->intra_ctrls.enable_intra && (ctx->blk_ptr->prediction_mode_flag == INTER_MODE)) {
-                                s_depth = MAX(s_depth, -1);
-                                e_depth = MIN(e_depth, 1);
-                            }
-                        }
-#endif
                     }
 
-#if !CLN_SKIP_PD0_SIG
-                    if (ctx->skip_pd0) {
-                        SbGeom *sb_geom = &pcs->ppcs->sb_geom[ctx->sb_index];
-                        if (ctx->depth_removal_ctrls.disallow_below_64x64) {
-                            if ((sb_geom->width % 64 == 0) || (sb_geom->height % 64 == 0)) {
-                                s_depth = 0;
-                                e_depth = 0;
-                            }
-                        } else if (ctx->depth_removal_ctrls.disallow_below_32x32) {
-                            if ((sb_geom->width % 32 == 0) || (sb_geom->height % 32 == 0)) {
-                                s_depth = 0;
-                                e_depth = 0;
-                            }
-                        } else if (ctx->depth_removal_ctrls.disallow_below_16x16) {
-                            if ((sb_geom->width % 16 == 0) || (sb_geom->height % 16 == 0)) {
-                                s_depth = 0;
-                                e_depth = 0;
-                            }
-                        }
-                    }
-#endif
                     // If multiple depths are selected, perform refinement
                     if (s_depth != 0 || e_depth != 0) {
                         // 4x4 blocks have no children
@@ -3096,13 +2643,9 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs, PictureContro
                         uint8_t add_parent_depth         = 1;
                         ctx->parent_to_current_deviation = MIN_SIGNED_VALUE;
                         if (ctx->depth_refinement_ctrls.enabled && s_depth == -1 &&
-#if OPT_NSQ_INCOMP
                             // Check avail_blk_flag b/c use default_cost inside, and default_cost may not be
                             // updated even if cost_avail is true.
                             ctx->avail_blk_flag[blk_index] &&
-#else
-                            pcs->ppcs->sb_geom[sb_index].block_is_allowed[blk_index] &&
-#endif
                             blk_geom->sq_size < ((scs->seq_header.sb_size == BLOCK_128X128) ? 128 : 64)) {
                             add_parent_depth = is_parent_to_current_deviation_small(pcs, ctx, blk_geom, th_offset);
                         }
@@ -3112,14 +2655,9 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs, PictureContro
                         uint8_t add_sub_depth           = 1;
                         ctx->child_to_current_deviation = MIN_SIGNED_VALUE;
                         if (ctx->depth_refinement_ctrls.enabled && e_depth == 1 &&
-#if OPT_NSQ_INCOMP
                             // Check avail_blk_flag b/c use default_cost inside, and default_cost may not be
                             // updated even if cost_avail is true.
-                            ctx->avail_blk_flag[blk_index] &&
-#else
-                            pcs->ppcs->sb_geom[sb_index].block_is_allowed[blk_index] &&
-#endif
-                            blk_geom->sq_size > 4) {
+                            ctx->avail_blk_flag[blk_index] && blk_geom->sq_size > 4) {
                             add_sub_depth = is_child_to_current_deviation_small(
                                 pcs, ctx, blk_geom, blk_index, th_offset);
                         }
@@ -3149,11 +2687,7 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs, PictureContro
                                                         (int8_t)blk_geom->depth,
                                                         sq_size_idx,
                                                         s_depth,
-#if FIX_NSQ_CTRL
                                                         !ctx->nsq_geom_ctrls.enabled);
-#else
-                                                        !ctx->nsq_ctrls.enabled);
-#endif
 
                         if (e_depth != 0 && add_sub_depth)
                             set_child_to_be_considered(pcs,
@@ -3165,11 +2699,7 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs, PictureContro
                                                        (int8_t)blk_geom->depth,
                                                        sq_size_idx,
                                                        e_depth,
-#if FIX_NSQ_CTRL
                                                        !ctx->nsq_geom_ctrls.enabled);
-#else
-                                                       !ctx->nsq_ctrls.enabled);
-#endif
                     }
                 }
             }
@@ -3180,187 +2710,6 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs, PictureContro
     if (pred_depth_only)
         ctx->pred_depth_only = 1;
 }
-#if !CLN_MD_LOOP
-// Initialize structures used to indicate which blocks will be tested at MD.
-// MD data structures should be updated in init_block_data(), not here.
-static EbErrorType build_starting_cand_block_array(SequenceControlSet *scs, PictureControlSet *pcs,
-                                                   ModeDecisionContext *ctx) {
-    memset(ctx->avail_blk_flag, FALSE, sizeof(uint8_t) * scs->max_block_cnt);
-    memset(ctx->cost_avail, FALSE, sizeof(uint8_t) * scs->max_block_cnt);
-    MdcSbData *results_ptr       = ctx->mdc_sb_array;
-    results_ptr->leaf_count      = 0;
-    uint32_t       blk_index     = 0;
-    const uint16_t max_block_cnt = scs->max_block_cnt;
-
-    const int32_t min_sq_size = (ctx->depth_removal_ctrls.enabled && ctx->depth_removal_ctrls.disallow_below_64x64) ? 64
-        : (ctx->depth_removal_ctrls.enabled && ctx->depth_removal_ctrls.disallow_below_32x32)                       ? 32
-        : (ctx->depth_removal_ctrls.enabled && ctx->depth_removal_ctrls.disallow_below_16x16)                       ? 16
-        : ctx->disallow_4x4                                                                                         ? 8
-                                                                                                                    : 4;
-
-    // Loop over all blocks to initialize data for partitions to be tested
-    while (blk_index < max_block_cnt) {
-        const BlockGeom *blk_geom = get_blk_geom_mds(blk_index);
-        // SQ/NSQ block(s) filter based on the SQ size
-        uint8_t is_block_tagged = (blk_geom->sq_size == 128 && pcs->slice_type == I_SLICE) ||
-                (blk_geom->sq_size < min_sq_size)
-            ? 0
-            : 1;
-        if (ctx->skip_pd0) {
-            if (ctx->depth_removal_ctrls.disallow_below_64x64)
-                is_block_tagged = (blk_geom->sq_size != 64) ? 0 : is_block_tagged;
-            else if (ctx->depth_removal_ctrls.disallow_below_32x32)
-                is_block_tagged = (blk_geom->sq_size != 32) ? 0 : is_block_tagged;
-            else if (ctx->depth_removal_ctrls.disallow_below_16x16)
-                is_block_tagged = (blk_geom->sq_size != 16) ? 0 : is_block_tagged;
-        }
-        // SQ/NSQ block(s) filter based on the block validity
-        if (is_block_tagged) {
-#if CLN_MD_LOOP
-            uint32_t tot_d1_blocks = 1;
-            bool     inj_hv_incomp = false;
-
-            const uint16_t min_nsq = ctx->pd_pass == PD_PASS_1 && ctx->lpd1_ctrls.pd1_level != REGULAR_PD1 ? 8 : 4;
-            if (ctx->nsq_geom_ctrls.enabled &&
-                blk_geom->sq_size > MAX(min_nsq, ctx->nsq_geom_ctrls.min_nsq_block_size)) {
-                if (!pcs->ppcs->sb_geom[ctx->sb_index].block_is_allowed[blk_index] &&
-                    (pcs->ppcs->sb_geom[ctx->sb_index].block_is_allowed[blk_index + 1] ||
-                     pcs->ppcs->sb_geom[ctx->sb_index].block_is_allowed[blk_index + 3])) {
-                    inj_hv_incomp = true;
-                }
-            }
-#else
-#if FIX_NSQ_CTRL
-#if OPT_NSQ_INCOMP
-            uint32_t tot_d1_blocks = !ctx->nsq_geom_ctrls.enabled
-#else
-            const uint32_t tot_d1_blocks = !ctx->nsq_geom_ctrls.enabled
-#endif
-#else
-            const uint32_t tot_d1_blocks = !ctx->nsq_ctrls.enabled
-#endif
-                ? 1
-                : svt_aom_get_tot_1d_blks(ctx, blk_geom->sq_size, ctx->md_disallow_nsq);
-
-#if OPT_NSQ_INCOMP
-            const uint16_t min_nsq = ctx->pd_pass == PD_PASS_1 && ctx->lpd1_ctrls.pd1_level != REGULAR_PD1 ? 8 : 4;
-            if (ctx->md_disallow_nsq && ctx->nsq_geom_ctrls.enabled &&
-                blk_geom->sq_size > MAX(min_nsq, ctx->nsq_geom_ctrls.min_nsq_block_size) &&
-                ((ctx->pd_pass == PD_PASS_0 && ctx->lpd0_ctrls.pd0_level == REGULAR_PD0) ||
-                 (ctx->pd_pass == PD_PASS_1 && ctx->lpd1_ctrls.pd1_level == REGULAR_PD1))) {
-                if (pcs->ppcs->sb_geom[ctx->sb_index].block_is_allowed[blk_index])
-                    tot_d1_blocks = 1;
-                else if (pcs->ppcs->sb_geom[ctx->sb_index].block_is_allowed[blk_index + 1] ||
-                         pcs->ppcs->sb_geom[ctx->sb_index].block_is_allowed[blk_index + 3])
-                    tot_d1_blocks = 5;
-            }
-#endif
-#endif
-
-            // If HA/HB/VA/VB and H4/V4 are disallowed, tot_d1_blocks will be
-            // capped at 5 in svt_aom_get_tot_1d_blks().  Therefore, if the condition MIN(17, tot_d1_blocks) is
-            // hit, tot_d1_blocks will be 5 OR HA/HB/VA/VB will be enabled.  Either case is valid.
-#if FIX_NSQ_CTRL
-            const uint32_t to_test_d1_blocks = !ctx->nsq_geom_ctrls.allow_HV4 ? MIN(17, tot_d1_blocks) : tot_d1_blocks;
-
-            for (uint32_t idx = blk_index; idx < (tot_d1_blocks + blk_index); ++idx) {
-#if !CLN_MD_LOOP
-#if OPT_NSQ_INCOMP
-                if (idx == blk_index && ctx->md_disallow_nsq && ctx->nsq_geom_ctrls.enabled &&
-                    ((ctx->pd_pass == PD_PASS_0 && ctx->lpd0_ctrls.pd0_level != REGULAR_PD0) ||
-                     (ctx->pd_pass == PD_PASS_1 && ctx->lpd1_ctrls.pd1_level != REGULAR_PD1)) &&
-                    blk_geom->sq_size > MAX(min_nsq, ctx->nsq_geom_ctrls.min_nsq_block_size)) {
-                    if (!pcs->ppcs->sb_geom[ctx->sb_index].block_is_allowed[idx] &&
-                        (pcs->ppcs->sb_geom[ctx->sb_index].block_is_allowed[idx + 1] ||
-                         pcs->ppcs->sb_geom[ctx->sb_index].block_is_allowed[idx + 3])) {
-#if CLN_MD_LOOP
-                        inj_hv_incomp = true;
-#else
-                        if (!pcs->ppcs->sb_geom[ctx->sb_index].block_is_allowed[idx + 1])
-                            idx += 3;
-                        else
-                            idx += 1;
-#endif
-                    }
-                }
-#endif
-#endif
-#if !CLN_MD_LOOP
-                if (!ctx->nsq_geom_ctrls.allow_HV4) {
-#endif
-#else
-            const uint32_t to_test_d1_blocks = !ctx->nsq_ctrls.allow_HV4 ? MIN(17, tot_d1_blocks) : tot_d1_blocks;
-
-            for (uint32_t idx = blk_index; idx < (tot_d1_blocks + blk_index); ++idx) {
-                if (!ctx->nsq_ctrls.allow_HV4) {
-#endif
-#if !CLN_MD_LOOP
-                    // Index of first H4 block is 5; if H4/V4 blocks are skipped increase index to bypass the blocks.
-                    // idx is increased by 7, rather than 8, because after continue is exectued, idx will be incremented
-                    // by 1 (as part of the for loop).  H4/V4 blocks are not allowed for 128 sq_size, so don't skip.
-                    if (blk_geom->sq_size < 128 && (idx - blk_index) == 5) {
-                        idx += 7;
-                        continue;
-                    }
-                }
-
-                //  MD palette info buffer
-                if (pcs->ppcs->palette_level) {
-                    if (ctx->md_blk_arr_nsq[idx].palette_mem == 0) {
-                        md_rtime_alloc_palette_info(&ctx->md_blk_arr_nsq[idx]);
-                        ctx->md_blk_arr_nsq[idx].palette_mem = 1;
-                    }
-                }
-
-                ctx->md_blk_arr_nsq[idx].palette_size[0] = 0;
-                ctx->md_blk_arr_nsq[idx].palette_size[1] = 0;
-#endif
-                results_ptr->leaf_data_array[results_ptr->leaf_count].mds_idx = idx;
-#if CLN_MD_LOOP
-                uint8_t shapes_idx = 0;
-                for (Part part = PART_N; part < PART_S; part++) {
-                    if (part > PART_N && !ctx->nsq_geom_ctrls.enabled)
-                        continue;
-                    if (inj_hv_incomp) {
-                        if ((pcs->ppcs->sb_geom[ctx->sb_index].block_is_allowed[idx + 1] && part != PART_H) ||
-                            (pcs->ppcs->sb_geom[ctx->sb_index].block_is_allowed[idx + 3] && part != PART_V))
-                            continue;
-                    } else if (part > PART_N && ctx->md_disallow_nsq) {
-                        continue;
-                    }
-                    if (part > PART_N && (blk_geom->sq_size <= ctx->nsq_geom_ctrls.min_nsq_block_size))
-                        continue;
-                    if (part > PART_N && blk_geom->sq_size == 4)
-                        continue;
-                    if (part > PART_V && blk_geom->sq_size <= 8)
-                        continue;
-                    if ((part == PART_H4 || part == PART_V4) && blk_geom->sq_size == 128)
-                        continue;
-                    if (!ctx->nsq_geom_ctrls.allow_HVA_HVB &&
-                        (part == PART_HA || part == PART_HB || part == PART_VA || part == PART_VB))
-                        continue;
-                    if (!ctx->nsq_geom_ctrls.allow_HV4 && (part == PART_H4 || part == PART_V4))
-                        continue;
-                    results_ptr->leaf_data_array[results_ptr->leaf_count].shapes[shapes_idx++] = part;
-                }
-                results_ptr->leaf_data_array[results_ptr->leaf_count].tot_shapes = shapes_idx;
-#else
-                    results_ptr->leaf_data_array[results_ptr->leaf_count].tot_d1_blocks = to_test_d1_blocks;
-#endif
-                results_ptr->split_flag[results_ptr->leaf_count++] = (blk_geom->sq_size > min_sq_size) ? TRUE : FALSE;
-            }
-            blk_index += blk_geom->d1_depth_offset;
-        } else {
-            if (ctx->skip_pd0)
-                ctx->md_blk_arr_nsq[blk_index].part = (blk_geom->sq_size > min_sq_size) ? PARTITION_SPLIT
-                                                                                        : PARTITION_NONE;
-            blk_index += (blk_geom->sq_size > min_sq_size) ? blk_geom->d1_depth_offset : blk_geom->ns_depth_offset;
-        }
-    }
-
-    return EB_ErrorNone;
-}
-#endif
 void recode_loop_update_q(PictureParentControlSet *ppcs, int *const loop, int *const q, int *const q_low,
                           int *const q_high, const int top_index, const int bottom_index, int *const undershoot_seen,
                           int *const overshoot_seen, int *const low_cr_seen, const int loop_count);
@@ -3440,28 +2789,15 @@ static void exaustive_light_pd1_features(ModeDecisionContext *md_ctx, PicturePar
             md_ctx->spatial_sse_ctrls.spatial_sse_full_loop_level == 0 && md_ctx->md_sq_me_ctrls.enabled == 0 &&
             md_ctx->md_pme_ctrls.enabled == 0 && md_ctx->txt_ctrls.enabled == 0 &&
             md_ctx->mds0_ctrls.mds0_dist_type != SSD && md_ctx->unipred3x3_injection == 0 &&
-#if OPT_BLOCK_SETTINGS
             md_ctx->bipred3x3_ctrls.enabled == 0 && md_ctx->inter_comp_ctrls.tot_comp_types == 1 &&
-#else
-            md_ctx->bipred3x3_ctrls.enabled == 0 && md_ctx->inter_compound_mode == 0 &&
-#endif
             md_ctx->md_pic_obmc_level == 0 && md_ctx->md_filter_intra_level == 0 &&
             md_ctx->new_nearest_near_comb_injection == 0 && md_ctx->md_palette_level == 0 &&
-#if OPT_MERGE_INTER_CANDS
             ppcs->gm_ctrls.enabled == 0 &&
-#else
-            md_ctx->cand_reduction_ctrls.merge_inter_classes && ppcs->gm_ctrls.enabled == 0 &&
-#endif
             // If TXS enabled at picture level, there are necessary context updates that must be added to LPD1
             ppcs->frm_hdr.tx_mode != TX_MODE_SELECT && md_ctx->txs_ctrls.enabled == 0 && md_ctx->pred_depth_only &&
-#if CLN_MD_DISALLOW_NSQ
             md_ctx->md_disallow_nsq_search == TRUE && md_ctx->disallow_4x4 == TRUE &&
-            ppcs->scs->super_block_size == 64 &&
-#else
-            md_ctx->md_disallow_nsq == TRUE && md_ctx->disallow_4x4 == TRUE && ppcs->scs->super_block_size == 64 &&
-#endif
-            ppcs->ref_list0_count_try == 1 && ppcs->ref_list1_count_try == 1 && md_ctx->cfl_ctrls.enabled == 0 &&
-            md_ctx->uv_ctrls.uv_mode == CHROMA_MODE_1) {
+            ppcs->scs->super_block_size == 64 && ppcs->ref_list0_count_try == 1 && ppcs->ref_list1_count_try == 1 &&
+            md_ctx->cfl_ctrls.enabled == 0 && md_ctx->uv_ctrls.uv_mode == CHROMA_MODE_1) {
             light_pd1 = 1;
         } else {
             light_pd1 = 0;
@@ -3527,7 +2863,6 @@ static void lpd1_detector_post_pd0(PictureControlSet *pcs, ModeDecisionContext *
                 // If the best PD0 mode was INTER, check the MV length
                 if (md_ctx->avail_blk_flag[0] == TRUE && md_ctx->md_blk_arr_nsq[0].prediction_mode_flag == INTER_MODE &&
                     md_ctx->lpd1_ctrls.max_mv_length[pd1_lvl] != (uint16_t)~0) {
-#if CLN_BLK_STRUCT_2
                     BlkStruct     *blk_ptr       = &md_ctx->md_blk_arr_nsq[0];
                     const uint16_t max_mv_length = md_ctx->lpd1_ctrls.max_mv_length[pd1_lvl];
 
@@ -3545,25 +2880,6 @@ static void lpd1_detector_post_pd0(PictureControlSet *pcs, ModeDecisionContext *
                         if (blk_ptr->mv[REF_LIST_1].x > max_mv_length || blk_ptr->mv[REF_LIST_1].y > max_mv_length)
                             md_ctx->lpd1_ctrls.pd1_level = pd1_lvl - 1;
                     }
-#else
-                    PredictionUnit *pu_ptr = md_ctx->md_blk_arr_nsq[0].prediction_unit_array;
-                    const uint16_t max_mv_length = md_ctx->lpd1_ctrls.max_mv_length[pd1_lvl];
-
-                    if (pu_ptr->inter_pred_direction_index == UNI_PRED_LIST_0) {
-                        if (pu_ptr->mv[REF_LIST_0].x > max_mv_length || pu_ptr->mv[REF_LIST_0].y > max_mv_length)
-                            md_ctx->lpd1_ctrls.pd1_level = pd1_lvl - 1;
-                    } else if (pu_ptr->inter_pred_direction_index == UNI_PRED_LIST_1) {
-                        if (pu_ptr->mv[REF_LIST_1].x > max_mv_length || pu_ptr->mv[REF_LIST_1].y > max_mv_length)
-                            md_ctx->lpd1_ctrls.pd1_level = pd1_lvl - 1;
-                    } else //if (pu_ptr->inter_pred_direction_index == BI_PRED)
-                    {
-                        assert(pu_ptr->inter_pred_direction_index == BI_PRED);
-                        if (pu_ptr->mv[REF_LIST_0].x > max_mv_length || pu_ptr->mv[REF_LIST_0].y > max_mv_length)
-                            md_ctx->lpd1_ctrls.pd1_level = pd1_lvl - 1;
-                        if (pu_ptr->mv[REF_LIST_1].x > max_mv_length || pu_ptr->mv[REF_LIST_1].y > max_mv_length)
-                            md_ctx->lpd1_ctrls.pd1_level = pd1_lvl - 1;
-                    }
-#endif
                 }
 
                 if (pcs->slice_type != I_SLICE) {
@@ -3925,11 +3241,7 @@ void *svt_aom_mode_decision_kernel(void *input_ptr) {
         ed_ctx->tot_skip_coded_area     = 0;
         ed_ctx->tot_hp_coded_area       = 0;
         // Bypass encdec for the first pass
-#if OPT_MPASS_VBR4
         if (svt_aom_is_pic_skipped(pcs->ppcs)) {
-#else
-        if (scs->static_config.pass == ENC_FIRST_PASS || svt_aom_is_pic_skipped(pcs->ppcs)) {
-#endif
             svt_release_object(pcs->ppcs->me_data_wrapper);
             pcs->ppcs->me_data_wrapper = (EbObjectWrapper *)NULL;
             pcs->ppcs->pa_me_data      = NULL;
@@ -4033,12 +3345,8 @@ void *svt_aom_mode_decision_kernel(void *input_ptr) {
                         ed_ctx->md_ctx->tile_index  = sb_ptr->tile_info.tile_rs_index;
                         ed_ctx->md_ctx->sb_origin_x = sb_origin_x;
                         ed_ctx->md_ctx->sb_origin_y = sb_origin_y;
-#if CLN_MDC_ARRAY
-                        mdc_ptr = &(ed_ctx->md_ctx->mdc_sb_array);
-#else
-                        mdc_ptr = ed_ctx->md_ctx->mdc_sb_array;
-#endif
-                        ed_ctx->sb_index = sb_index;
+                        mdc_ptr                     = &(ed_ctx->md_ctx->mdc_sb_array);
+                        ed_ctx->sb_index            = sb_index;
                         if (pcs->cdf_ctrl.enabled) {
                             if (scs->seq_header.pic_based_rate_est &&
                                 scs->enc_dec_segment_row_count_array[pcs->temporal_layer_index] == 1 &&
@@ -4114,14 +3422,6 @@ void *svt_aom_mode_decision_kernel(void *input_ptr) {
                                                   ed_ctx->md_ctx->depth_removal_ctrls.disallow_below_64x64)
                                 ? 1
                                 : 0;
-#if !CLN_SKIP_PD0_SIG
-                        if (ed_ctx->md_ctx->skip_pd0)
-                            if (ed_ctx->md_ctx->depth_removal_ctrls.disallow_below_32x32)
-                                skip_pd_pass_0 = 1;
-                        if (ed_ctx->md_ctx->skip_pd0)
-                            if (ed_ctx->md_ctx->depth_removal_ctrls.disallow_below_16x16)
-                                skip_pd_pass_0 = 1;
-#endif
 
                         // If LPD0 is used, a more conservative level can be set for complex SBs
                         const bool rtc_tune = (scs->static_config.pred_structure == SVT_AV1_PRED_LOW_DELAY_B) ? true
@@ -4139,11 +3439,9 @@ void *svt_aom_mode_decision_kernel(void *input_ptr) {
                             // Input : mdc_blk_ptr built @ mdc process (up to 4421)
                             // Output: md_blk_arr_nsq reduced set of block(s)
                             ed_ctx->md_ctx->pd_pass = PD_PASS_0;
-#if CLN_ADD_FIXED_PRED_SIG
                             // PD0 doesn't have a fixed partition structure, as the main purpose of PD0
                             // is to determine a prediction for the final prediction structure
                             md_ctx->fixed_partition = false;
-#endif
                             // skip_intra much be TRUE for non-I_SLICE pictures to use light_pd0 path
                             if (md_ctx->lpd0_ctrls.pd0_level > REGULAR_PD0) {
                                 // [PD_PASS_0] Signal(s) derivation
@@ -4157,12 +3455,8 @@ void *svt_aom_mode_decision_kernel(void *input_ptr) {
                                                                     sb_origin_x,
                                                                     sb_origin_y);
 
-                                    // Build the t=0 cand_block_array
-#if CLN_MD_LOOP
+                                // Build the t=0 cand_block_array
                                 build_cand_block_array(scs, pcs, md_ctx, true);
-#else
-                                build_starting_cand_block_array(scs, pcs, ed_ctx->md_ctx);
-#endif
                                 svt_aom_mode_decision_sb_light_pd0(scs, pcs, ed_ctx->md_ctx, mdc_ptr);
                                 // Re-build mdc_blk_ptr for the 2nd PD Pass [PD_PASS_1]
                                 // Reset neighnor information to current SB @ position (0,0)
@@ -4185,11 +3479,7 @@ void *svt_aom_mode_decision_kernel(void *input_ptr) {
                                                               0);
 
                                 // Build the t=0 cand_block_array
-#if CLN_MD_LOOP
                                 build_cand_block_array(scs, pcs, md_ctx, true);
-#else
-                                build_starting_cand_block_array(scs, pcs, ed_ctx->md_ctx);
-#endif
                                 // PD0 MD Tool(s) : ME_MV(s) as INTER candidate(s), DC as INTRA candidate, luma only, Frequency domain SSE,
                                 // no fast rate (no MVP table generation), MDS0 then MDS3, reduced NIC(s), 1 ref per list,..
                                 svt_aom_mode_decision_sb(scs, pcs, ed_ctx->md_ctx, mdc_ptr);
@@ -4231,28 +3521,11 @@ void *svt_aom_mode_decision_kernel(void *input_ptr) {
                             svt_aom_sig_deriv_enc_dec_light_pd1(pcs, ed_ctx->md_ctx);
                         else
                             svt_aom_sig_deriv_enc_dec(scs, pcs, ed_ctx->md_ctx);
-#if CLN_ADD_FIXED_PRED_SIG
-#if CLN_MD_DISALLOW_NSQ
                         // If there is only one depth and no NSQ search at PD1, then the partition structure
                         // is fixed.
                         md_ctx->fixed_partition = md_ctx->pred_depth_only && md_ctx->md_disallow_nsq_search;
-#else
-                            // If there is only one depth and no NSQ shapes tested at PD1, then the partition structure
-                            // is fixed.
-                            md_ctx->fixed_partition = md_ctx->pred_depth_only && md_ctx->md_disallow_nsq;
-#endif
-#endif
-#if CLN_MD_LOOP
                         build_cand_block_array(
                             scs, pcs, md_ctx, skip_pd_pass_0 || pcs->ppcs->multi_pass_pd_level == MULTI_PASS_PD_OFF);
-#else
-                        if (!skip_pd_pass_0 && pcs->ppcs->multi_pass_pd_level != MULTI_PASS_PD_OFF)
-                            build_cand_block_array(
-                                scs, pcs, ed_ctx->md_ctx, pcs->ppcs->sb_geom[sb_index].is_complete_sb);
-                        else
-                            // Build the t=0 cand_block_array
-                            build_starting_cand_block_array(scs, pcs, ed_ctx->md_ctx);
-#endif
                         // [PD_PASS_1] Mode Decision - Obtain the final partitioning decision using more accurate info
                         // than previous stages.  Reduce the total number of partitions to 1.
                         // Input : mdc_blk_ptr built @ PD0 refinement

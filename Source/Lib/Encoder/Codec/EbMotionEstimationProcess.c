@@ -60,10 +60,6 @@ EbErrorType check_00_center(PictureParentControlSet *pcs, EbPictureBufferDesc *r
                             MeContext *me_ctx, uint32_t sb_origin_x, uint32_t sb_origin_y,
                             uint32_t sb_width, uint32_t sb_height, int16_t *x_search_center,
                             int16_t *y_search_center, uint32_t zz_sad);
-#if !OPT_MPASS_VBR5
-void open_loop_first_pass(struct PictureParentControlSet *ppcs_ptr,
-                          MotionEstimationContext_t *me_context_ptr, int32_t segment_index);
-#endif
 void dg_detector_hme_level0(struct PictureParentControlSet *ppcs, uint32_t seg_idx);
 
 static void motion_estimation_context_dctor(EbPtr p) {
@@ -114,10 +110,6 @@ void *svt_aom_motion_estimation_kernel(void *input_ptr) {
         SequenceControlSet *scs = pcs->scs;
         if (in_results_ptr->task_type == TASK_TFME)
             me_context_ptr->me_ctx->me_type = ME_MCTF;
-#if !OPT_MPASS_VBR4
-        else if (in_results_ptr->task_type == TASK_FIRST_PASS_ME)
-            me_context_ptr->me_ctx->me_type = ME_FIRST_PASS;
-#endif
         else if (in_results_ptr->task_type == TASK_PAME || in_results_ptr->task_type == TASK_SUPERRES_RE_ME)
             me_context_ptr->me_ctx->me_type = ME_OPEN_LOOP;
         else if (in_results_ptr->task_type == TASK_DG_DETECTOR_HME)
@@ -126,19 +118,10 @@ void *svt_aom_motion_estimation_kernel(void *input_ptr) {
         // ME Kernel Signal(s) derivation
         if ((in_results_ptr->task_type == TASK_PAME) ||
             (in_results_ptr->task_type == TASK_SUPERRES_RE_ME))
-#if !OPT_MPASS_VBR4
-            if (scs->static_config.pass == ENC_FIRST_PASS)
-                svt_aom_first_pass_sig_deriv_me(scs, pcs, me_context_ptr->me_ctx);
-            else
-#endif
                 svt_aom_sig_deriv_me(scs, pcs, me_context_ptr->me_ctx);
 
         else if (in_results_ptr->task_type == TASK_TFME)
             svt_aom_sig_deriv_me_tf(pcs, me_context_ptr->me_ctx);
-#if !OPT_MPASS_VBR4
-        else if (in_results_ptr->task_type == TASK_FIRST_PASS_ME)
-            svt_aom_first_pass_sig_deriv_me(scs, pcs, me_context_ptr->me_ctx);
-#endif
 
         if ((in_results_ptr->task_type == TASK_PAME) ||
             (in_results_ptr->task_type == TASK_SUPERRES_RE_ME)) {
@@ -174,12 +157,7 @@ void *svt_aom_motion_estimation_kernel(void *input_ptr) {
             uint32_t y_b64_end_index = SEGMENT_END_IDX(y_segment_index, picture_height_in_b64, pcs->me_segments_row_count);
 
             Bool skip_me = FALSE;
-#if OPT_MPASS_VBR4
             if (svt_aom_is_pic_skipped(pcs))
-#else
-            if (scs->static_config.pass == ENC_FIRST_PASS ||
-                svt_aom_is_pic_skipped(pcs))
-#endif
                 skip_me = TRUE;
             // skip me for the first pass. ME is already performed
             if (!skip_me) {
@@ -346,15 +324,6 @@ void *svt_aom_motion_estimation_kernel(void *input_ptr) {
 
             // Release the Input Results
             svt_release_object(in_results_wrapper_ptr);
-#if !OPT_MPASS_VBR4
-        } else if (in_results_ptr->task_type == TASK_FIRST_PASS_ME) {
-            // first pass start
-            me_context_ptr->me_ctx->me_type = ME_FIRST_PASS;
-            open_loop_first_pass(pcs, me_context_ptr, in_results_ptr->segment_index);
-
-            // Release the Input Results
-            svt_release_object(in_results_wrapper_ptr);
-#endif
         } else if (in_results_ptr->task_type == TASK_DG_DETECTOR_HME) {
             // dynamic gop detector
             dg_detector_hme_level0(pcs, in_results_ptr->segment_index);

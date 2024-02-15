@@ -36,9 +36,6 @@ extern "C" {
 
 #define TASK_PAME 0
 #define TASK_TFME 1
-#if !OPT_MPASS_VBR5
-#define TASK_FIRST_PASS_ME 2
-#endif
 #define TASK_SUPERRES_RE_ME 3
 #define TASK_DG_DETECTOR_HME 4
 #define MAX_TPL_GROUP_SIZE 512 //enough to cover 6L gop
@@ -207,14 +204,9 @@ typedef struct TfControls {
     // deviation between the 64x64 ME distortion and the sum of the 4 32x32 ME distortions is less
     // than use_pred_64x64_only_th then perform Sub - Pel search for only the 64x64 block
     uint8_t use_pred_64x64_only_th;
-#if OPT_TF_SP_EXIT
     // Exit the subpel search if per-pixel distortion/variance is less than the TH (i.e. if the search results so far are "good enough")
     // 0 is off; higher is more aggressive
     uint8_t subpel_early_exit_th;
-#else
-    // Specifies whether to early exit the Sub-Pel search based on a pred-error-th or not
-    uint8_t subpel_early_exit;
-#endif
     // Specifies whether to skip reference frame e.g. 1 = use all frames, 2 = use every other frame, 4 = use 1/4 frames, etc.
     uint8_t ref_frame_factor;
     // Specifies whether to tune the params using qp (0: OFF, 1: ON)
@@ -237,13 +229,8 @@ typedef enum SqWeightOffsets {
     AGGRESSIVE_OFFSET_0   = -5,
     AGGRESSIVE_OFFSET_1   = -10
 } SqWeightOffsets;
-#if OPT_COEFF_LVL_NORM
 #define COEFF_LVL_TH_0 (5833 / 48)
 #define COEFF_LVL_TH_1 (16666 / 48)
-#else
-#define COEFF_LVL_TH_0 30000
-#define COEFF_LVL_TH_1 100000
-#endif
 typedef enum InputCoeffLvl {
     LOW_LVL     = 0,
     NORMAL_LVL  = 1,
@@ -325,18 +312,9 @@ enum {
 //  Delta QP support
 #define ADD_DELTA_QP_SUPPORT 1 // Add delta QP support
 #define BLOCK_MAX_COUNT_SB_128 4421
-#if !CLN_MDC_ARRAY
-#if CLN_MD_LOOP
-// Total count of square blocks when all block sizes allowed
-// There are 32*32=1024 4x4 blocks, 16*16=256 8x8 blocks, etc.
-#define SQ_BLOCK_MAX_COUNT_SB_128 1365
-#endif
-#endif
 
 #define MAX_TXB_COUNT 16 // Maximum number of transform blocks per depth
-#if CLN_TX_DATA
 #define MAX_TXB_COUNT_UV 4 // Maximum number of transform blocks per depth for chroma planes
-#endif
 #define MAX_LAD 120 // max lookahead-distance 2x60fps
 #define ROUND_UV(x) (((x) >> 3) << 3)
 #define AV1_PROB_COST_SHIFT 9
@@ -992,7 +970,6 @@ typedef enum ATTRIBUTE_PACKED {
     TX_TYPES_1D,
 } TxType1D;
 
-#if CLN_TXTYPE_WIN
 #ifdef _MSC_VER
 typedef uint8_t TxType;
 enum ATTRIBUTE_PACKED {
@@ -1020,28 +997,6 @@ typedef enum ATTRIBUTE_PACKED {
 #ifdef _MSC_VER
 };
 #else
-} TxType;
-#endif
-#else
-typedef enum ATTRIBUTE_PACKED {
-    DCT_DCT, // DCT  in both horizontal and vertical
-    ADST_DCT, // ADST in vertical, DCT in horizontal
-    DCT_ADST, // DCT  in vertical, ADST in horizontal
-    ADST_ADST, // ADST in both directions
-    FLIPADST_DCT,
-    DCT_FLIPADST,
-    FLIPADST_FLIPADST,
-    ADST_FLIPADST,
-    FLIPADST_ADST,
-    IDTX,
-    V_DCT,
-    H_DCT,
-    V_ADST,
-    H_ADST,
-    V_FLIPADST,
-    H_FLIPADST,
-    TX_TYPES,
-    INVALID_TX_TYPE,
 } TxType;
 #endif
 
@@ -1303,10 +1258,6 @@ typedef struct {
 
     /*!< Specifies the type of mask to be used during blending. */
     DIFFWTD_MASK_TYPE mask_type;
-#if !CLN_SEG_MASK
-    // Temp buffer used for inter prediction
-    uint8_t *seg_mask;
-#endif
 } InterInterCompoundData;
 typedef enum ATTRIBUTE_PACKED {
     FILTER_DC_PRED,
@@ -1316,21 +1267,6 @@ typedef enum ATTRIBUTE_PACKED {
     FILTER_PAETH_PRED,
     FILTER_INTRA_MODES,
 } FilterIntraMode;
-#if !CLN_SEG_MASK
-typedef struct {
-    /*!< Specifies how the two predictions should be blended together. */
-    CompoundType type;
-
-    /*!< Used to derive the direction and offset of the wedge mask used during blending. */
-    uint8_t wedge_index;
-
-    /*!< Specifies the sign of the wedge blend. */
-    uint8_t wedge_sign;
-
-    /*!< Specifies the type of mask to be used during blending. */
-    DIFFWTD_MASK_TYPE mask_type;
-} EcInterInterCompoundData;
-#endif
 static const PredictionMode fimode_to_intramode[FILTER_INTRA_MODES] = {DC_PRED, V_PRED, H_PRED, D157_PRED, PAETH_PRED};
 #define DIRECTIONAL_MODES 8
 #define MAX_ANGLE_DELTA 3
@@ -2240,12 +2176,6 @@ typedef struct {
     PaletteModeInfo pmi;
     uint8_t  *color_idx_map;
 } PaletteInfo;
-#if !CLN_EC_PAL_STRUCT
-typedef struct {
-    PaletteModeInfo pmi;
-    uint8_t* color_idx_map;
-} EcPaletteInfo;
-#endif
 /** The EbHandle type is used to define OS object handles for threads,
 semaphores, mutexs, etc.
 */

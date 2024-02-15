@@ -451,11 +451,9 @@ static inline EbErrorType malloc_p_buffer(EbBufferHeaderType *output_stream_ptr)
     EB_MALLOC(output_stream_ptr->p_buffer, output_stream_ptr->n_alloc_len);
     return EB_ErrorNone;
 }
-#if OPT_MPASS_VBR3
 void update_firstpass_stats(PictureParentControlSet *pcs, const int frame_number, const double ts_duration,
                             StatStruct *stat_struct);
 void svt_av1_end_first_pass(PictureParentControlSet *pcs);
-#endif
 /* Realloc when bitstream pointer size is not enough to write data of size sz */
 static EbErrorType realloc_output_bitstream(Bitstream *bitstream_ptr, uint32_t sz) {
     if (bitstream_ptr && sz > 0) {
@@ -838,22 +836,10 @@ void *svt_aom_packetization_kernel(void *input_ptr) {
 
         // Send the number of bytes per frame to RC
         pcs->ppcs->total_num_bits = output_stream_ptr->n_filled_len << 3;
-#if OPT_MPASS_VBR6
-#if OPT_MPASS_VBR7
         if (scs->passes == 2 && scs->static_config.pass == ENC_FIRST_PASS) {
-#else
-        if (scs->passes == 2 && scs->static_config.pass == ENC_MIDDLE_PASS) {
-#endif
-#else
-        if (scs->passes == 3 && scs->static_config.pass == ENC_MIDDLE_PASS) {
-#endif
             StatStruct stat_struct;
             stat_struct.poc = pcs->picture_number;
-#if OPT_MPASS_VBR8
             if (scs->first_pass_ctrls.ds)
-#else
-            if (scs->mid_pass_ctrls.ds)
-#endif
                 stat_struct.total_num_bits = pcs->ppcs->total_num_bits * DS_SC_FACT / 10;
             else
                 stat_struct.total_num_bits = pcs->ppcs->total_num_bits;
@@ -862,19 +848,11 @@ void *svt_aom_packetization_kernel(void *input_ptr) {
             if (svt_aom_is_pic_skipped(pcs->ppcs))
                 stat_struct.total_num_bits = 0;
             stat_struct.temporal_layer_index = pcs->temporal_layer_index;
-#if OPT_MPASS_VBR3
-#if OPT_MPASS_VBR7
             if (scs->static_config.pass == ENC_FIRST_PASS) {
-#else
-            if (scs->static_config.pass == ENC_MIDDLE_PASS) {
-#endif
                 update_firstpass_stats(pcs->ppcs, (const int)pcs->picture_number, pcs->ppcs->ts_duration, &stat_struct);
                 if (ppcs->end_of_sequence_flag)
                     svt_av1_end_first_pass(ppcs);
             }
-#else
-            (scs->twopass.stats_buf_ctx->stats_in_start + pcs->ppcs->picture_number)->stat_struct = stat_struct;
-#endif
         }
         queue_entry_ptr->total_num_bits = pcs->ppcs->total_num_bits;
         queue_entry_ptr->frame_type     = frm_hdr->frame_type;

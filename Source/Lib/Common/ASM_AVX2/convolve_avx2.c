@@ -1967,11 +1967,7 @@ static INLINE int32_t sum_to_int32(__m256i sum_256) {
     return _mm_cvtsi128_si32(sum_128);
 }
 
-#if CLN_QUANT_ONE_BYTE
 uint8_t svt_av1_compute_cul_level_avx2(const int16_t *const scan, const int32_t *const quant_coeff, uint16_t *eob) {
-#else
-int32_t svt_av1_compute_cul_level_avx2(const int16_t *const scan, const int32_t *const quant_coeff, uint16_t *eob) {
-#endif
     if (*eob == 1) {
         if (quant_coeff[0] > 0)
             return (AOMMIN(COEFF_CONTEXT_MASK, quant_coeff[0]) + (2 << COEFF_CONTEXT_BITS));
@@ -2000,9 +1996,5 @@ int32_t svt_av1_compute_cul_level_avx2(const int16_t *const scan, const int32_t 
         return (cul_level | (1 << COEFF_CONTEXT_BITS));
     if (quant_coeff[0] > 0)
         return (cul_level + (2 << COEFF_CONTEXT_BITS));
-#if CLN_QUANT_ONE_BYTE
     return (uint8_t)cul_level;
-#else
-    return cul_level;
-#endif
 }

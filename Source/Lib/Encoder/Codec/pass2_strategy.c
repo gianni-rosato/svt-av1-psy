@@ -50,14 +50,7 @@ static int input_stats(TWO_PASS *p, FIRSTPASS_STATS *fps) {
 }
 static void subtract_stats(FIRSTPASS_STATS *section, const FIRSTPASS_STATS *frame) {
     section->frame -= frame->frame;
-#if !OPT_MPASS_VBR2
-    section->intra_error -= frame->intra_error;
-#endif
     section->coded_error -= frame->coded_error;
-#if !OPT_MPASS_VBR2
-    section->intra_skip_pct -= frame->intra_skip_pct;
-    section->inactive_zone_rows -= frame->inactive_zone_rows;
-#endif
     section->count -= frame->count;
     section->duration -= frame->duration;
 }
@@ -147,11 +140,7 @@ static int get_twopass_worst_quality(PictureParentControlSet *pcs, const double 
     const RateControlCfg *const rc_cfg  = &enc_ctx->rc_cfg;
     uint32_t                    mb_cols;
     uint32_t                    mb_rows;
-#if OPT_MPASS_VBR8
     if (scs->first_pass_ctrls.ds) {
-#else
-    if (scs->mid_pass_ctrls.ds) {
-#endif
         mb_cols = 2 * (scs->max_input_luma_width + 16 - 1) / 16;
         mb_rows = 2 * (scs->max_input_luma_height + 16 - 1) / 16;
     } else {
@@ -191,10 +180,6 @@ static void accumulate_this_frame_stats(const FIRSTPASS_STATS *stats, const doub
                                         GF_GROUP_STATS *gf_stats) {
     gf_stats->gf_group_err += mod_frame_err;
     gf_stats->gf_group_raw_error += stats->coded_error;
-#if !OPT_MPASS_VBR2
-    gf_stats->gf_group_skip_pct += stats->intra_skip_pct;
-    gf_stats->gf_group_inactive_zone_rows += stats->inactive_zone_rows;
-#endif
 }
 // Calculate the total bits to allocate in this GF/ARF group.
 /*!\brief Calculates the bit target for this GF/ARF group
@@ -478,10 +463,6 @@ static void calculate_gf_stats(PictureParentControlSet *ppcs, GF_GROUP_STATS *gf
     if (frame_is_intra_only(ppcs)) {
         gf_stats->gf_group_err -= mod_frame_err;
         gf_stats->gf_group_raw_error -= this_frame->coded_error;
-#if !OPT_MPASS_VBR2
-        gf_stats->gf_group_skip_pct -= this_frame->intra_skip_pct;
-        gf_stats->gf_group_inactive_zone_rows -= this_frame->inactive_zone_rows;
-#endif
     }
     gf_stats->gf_stat_struct = this_frame->stat_struct;
     int i                    = 0;
@@ -548,11 +529,7 @@ static void calculate_active_worst_quality(PictureParentControlSet *ppcs, GF_GRO
         }
         tmp_q = get_twopass_worst_quality(
             ppcs, group_av_err, (group_av_skip_pct + group_av_inactive_zone), vbr_group_bits_per_frame, rc_factor);
-#if OPT_MPASS_VBR6
         if (scs->twopass.passes == 2) {
-#else
-        if (scs->twopass.passes == 3) {
-#endif
             int          ref_qindex           = gf_stats.gf_stat_struct.worst_qindex;
             const double ref_q                = svt_av1_convert_qindex_to_q(ref_qindex, scs->encoder_bit_depth);
             int64_t      ref_gf_group_bits    = (int64_t)(gf_stats.gf_group_err);
@@ -612,11 +589,7 @@ static void gf_group_rate_assingment(PictureParentControlSet *pcs, FIRSTPASS_STA
 
     // Reset the file position.
     reset_fpf_position(twopass, start_pos);
-#if OPT_MPASS_VBR6
     if (twopass->passes == 2 && scs->static_config.pass == ENC_SECOND_PASS)
-#else
-    if (twopass->passes == 3 && scs->static_config.pass == ENC_LAST_PASS)
-#endif
         av1_gop_bit_allocation_same_pred(pcs, rc->gf_group_bits, gf_stats);
     else
         av1_gop_bit_allocation(pcs,
@@ -836,11 +809,7 @@ static void kf_group_rate_assingment(PictureParentControlSet *pcs, FIRSTPASS_STA
     // In case of LAP enabled for VBR, if the frames_to_key value is
     // very high, we calculate the bits based on a clipped value of
     // frames_to_key.
-#if OPT_MPASS_VBR6
     if (twopass->passes == 2)
-#else
-    if (twopass->passes == 3)
-#endif
         kf_bits = (int)(twopass->kf_group_bits * (twopass->stats_in - 1)->stat_struct.total_num_bits / kf_group_err);
     else
         kf_bits = calculate_boost_bits(AOMMIN(rc->frames_to_key, frames_to_key_clipped) - 1,
@@ -882,14 +851,6 @@ static void process_first_pass_stats(PictureParentControlSet *pcs, FIRSTPASS_STA
     TWO_PASS *const             twopass = &scs->twopass;
     RATE_CONTROL *const         rc      = &enc_ctx->rc;
     const RateControlCfg *const rc_cfg  = &enc_ctx->rc_cfg;
-#if !OPT_MPASS_VBR2
-    uint32_t mb_rows;
-    if (scs->mid_pass_ctrls.ds) {
-        mb_rows = 2 * (scs->max_input_luma_height + 16 - 1) / 16;
-    } else {
-        mb_rows = (scs->max_input_luma_height + 16 - 1) / 16;
-    }
-#endif
     if (pcs->picture_number == 0 && twopass->stats_buf_ctx->total_stats && twopass->stats_buf_ctx->total_left_stats) {
         if (scs->lap_rc) {
             /*
@@ -902,17 +863,8 @@ static void process_first_pass_stats(PictureParentControlSet *pcs, FIRSTPASS_STA
         const int    section_target_bandwidth = get_section_target_bandwidth(pcs);
         const double section_length           = twopass->stats_buf_ctx->total_left_stats->count;
         const double section_error            = twopass->stats_buf_ctx->total_left_stats->coded_error / section_length;
-#if !OPT_MPASS_VBR2
-        const double section_intra_skip    = twopass->stats_buf_ctx->total_left_stats->intra_skip_pct / section_length;
-        const double section_inactive_zone = (twopass->stats_buf_ctx->total_left_stats->inactive_zone_rows * 2) /
-            ((double)/*cm->mi_params.*/ mb_rows * section_length);
-#endif
-        int tmp_q;
-#if OPT_MPASS_VBR6
+        int          tmp_q;
         if (scs->passes == 2) {
-#else
-        if (scs->passes == 3) {
-#endif
             int          ref_qindex        = twopass->stats_buf_ctx->stats_in_start->stat_struct.worst_qindex;
             const double ref_q             = svt_av1_convert_qindex_to_q(ref_qindex, scs->encoder_bit_depth);
             int64_t      ref_gf_group_bits = (int64_t)(twopass->stats_buf_ctx->total_stats->stat_struct.total_num_bits);
@@ -934,15 +886,7 @@ static void process_first_pass_stats(PictureParentControlSet *pcs, FIRSTPASS_STA
                 tmp_q = low;
             }
         } else
-            tmp_q = get_twopass_worst_quality(pcs,
-                                              section_error,
-#if OPT_MPASS_VBR2
-                                              0,
-#else
-                                              section_intra_skip + section_inactive_zone,
-#endif
-                                              section_target_bandwidth,
-                                              DEFAULT_GRP_WEIGHT);
+            tmp_q = get_twopass_worst_quality(pcs, section_error, 0, section_target_bandwidth, DEFAULT_GRP_WEIGHT);
 
         rc->active_worst_quality          = tmp_q;
         rc->avg_frame_qindex[INTER_FRAME] = tmp_q;
@@ -1218,11 +1162,7 @@ void svt_aom_set_rc_param(SequenceControlSet *scs) {
     FrameInfo     *frame_info = &enc_ctx->frame_info;
 
     const int is_vbr = scs->static_config.rate_control_mode == SVT_AV1_RC_MODE_VBR;
-#if OPT_MPASS_VBR8
     if (scs->first_pass_ctrls.ds) {
-#else
-    if (scs->mid_pass_ctrls.ds) {
-#endif
         frame_info->frame_width  = scs->max_input_luma_width << 1;
         frame_info->frame_height = scs->max_input_luma_height << 1;
         frame_info->mb_cols      = ((scs->max_input_luma_width + 16 - 1) / 16) << 1;
@@ -1314,15 +1254,7 @@ void svt_av1_init_second_pass(SequenceControlSet *scs) {
 
     if (!twopass->stats_buf_ctx->stats_in_end)
         return;
-#if OPT_MPASS_VBR6
-#if OPT_MPASS_VBR7
     {
-#else
-    if (twopass->passes == 2 && scs->static_config.pass != ENC_MIDDLE_PASS) {
-#endif
-#else
-    if (twopass->passes == 3 && scs->static_config.pass != ENC_MIDDLE_PASS) {
-#endif
         svt_av1_twopass_zero_stats(twopass->stats_buf_ctx->stats_in_end);
         FIRSTPASS_STATS *this_frame     = (FIRSTPASS_STATS *)scs->twopass.stats_in;
         uint64_t         total_num_bits = 0;
@@ -1349,14 +1281,7 @@ void svt_av1_init_second_pass(SequenceControlSet *scs) {
     // first pass.
     svt_av1_new_framerate(scs, frame_rate);
     twopass->bits_left = (int64_t)(stats->duration * (int64_t)scs->static_config.target_bit_rate / 10000000.0);
-#if OPT_MPASS_VBR6
-#if !OPT_MPASS_VBR7
-    if (twopass->passes == 2 && scs->static_config.pass != ENC_MIDDLE_PASS)
-#endif
-#else
-    if (twopass->passes == 3 && scs->static_config.pass != ENC_MIDDLE_PASS)
-#endif
-        read_stat_from_file(scs);
+    read_stat_from_file(scs);
 
     // Scan the first pass file and calculate a modified total error based upon
     // the bias/power function used to allocate bits.
@@ -1381,52 +1306,6 @@ void svt_av1_init_second_pass(SequenceControlSet *scs) {
     // Static sequence monitor variables.
     twopass->kf_zeromotion_pct = 100;
 }
-#if !OPT_MPASS_VBR2
-/*********************************************************************************************
- * Find the initial QP to be used in the middle pass based on the target rate
- * and stats from previous pass
- ***********************************************************************************************/
-void svt_aom_find_init_qp_middle_pass(SequenceControlSet *scs, PictureParentControlSet *pcs) {
-    TWO_PASS *const twopass = &scs->twopass;
-    EncodeContext  *enc_ctx = scs->enc_ctx;
-    if (scs->static_config.pass == ENC_MIDDLE_PASS && twopass->stats_buf_ctx->total_stats &&
-        twopass->stats_buf_ctx->total_left_stats) {
-        RATE_CONTROL *const         rc     = &enc_ctx->rc;
-        const RateControlCfg *const rc_cfg = &enc_ctx->rc_cfg;
-        rc->worst_quality                  = rc_cfg->worst_allowed_q;
-        rc->best_quality                   = rc_cfg->best_allowed_q;
-        uint32_t mb_rows;
-        if (scs->mid_pass_ctrls.ds)
-            mb_rows = 2 * (scs->max_input_luma_height + 16 - 1) / 16;
-        else
-            mb_rows = (scs->max_input_luma_height + 16 - 1) / 16;
-        const int    section_target_bandwidth = get_section_target_bandwidth(pcs);
-        const double section_length           = twopass->stats_buf_ctx->total_left_stats->count;
-        const double section_error            = twopass->stats_buf_ctx->total_left_stats->coded_error / section_length;
-#if !OPT_MPASS_VBR2
-        const double section_intra_skip    = twopass->stats_buf_ctx->total_left_stats->intra_skip_pct / section_length;
-        const double section_inactive_zone = (twopass->stats_buf_ctx->total_left_stats->inactive_zone_rows * 2) /
-            ((double)mb_rows * section_length);
-#endif
-
-        const int tmp_q = get_twopass_worst_quality(pcs,
-                                                    section_error,
-#if OPT_MPASS_VBR2
-                                                    0,
-#else
-                                                    section_intra_skip + section_inactive_zone,
-#endif
-                                                    section_target_bandwidth,
-                                                    DEFAULT_GRP_WEIGHT);
-
-        rc->active_worst_quality = tmp_q;
-        // For same pred pass, use the estimated QP as the sequence QP
-        scs->static_config.qp = (uint8_t)CLIP3((int32_t)scs->static_config.min_qp_allowed,
-                                               (int32_t)scs->static_config.max_qp_allowed - 4,
-                                               (int32_t)((tmp_q + 2) >> 2));
-    }
-}
-#endif
 int svt_aom_frame_is_kf_gf_arf(PictureParentControlSet *ppcs) {
     return frame_is_intra_only(ppcs) || ppcs->update_type == SVT_AV1_ARF_UPDATE ||
         ppcs->update_type == SVT_AV1_GF_UPDATE;

@@ -453,17 +453,10 @@ typedef struct EbSvtAv1EncConfiguration {
      *
      * Default is 63. */
     uint32_t max_qp_allowed;
-#if OPT_1P_VBR
     /* Minimum QP value allowed for rate control use, only applicable when rate
      * control mode is set to 1 or 2. It has to be smaller or equal to maxQpAllowed.
      *
      * Default is 4. */
-#else
-    /* Minimum QP value allowed for rate control use, only applicable when rate
-     * control mode is set to 1. It has to be smaller or equal to maxQpAllowed.
-     *
-     * Default is 0. */
-#endif
     uint32_t min_qp_allowed;
 
     // DATARATE CONTROL OPTIONS

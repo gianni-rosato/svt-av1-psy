@@ -1324,10 +1324,6 @@ static void integer_search_b64(PictureParentControlSet *pcs, uint32_t b64_index,
                 }
             } else {
                 uint8_t hme_is_accuarte = 1;
-#if !OPT_MPASS_VBR4
-                if (!scs->ipp_pass_ctrls.bypass_zz_check ||
-                    me_ctx->me_type != ME_FIRST_PASS)
-#endif
                     if ((x_search_center != 0 || y_search_center != 0) &&
                         (me_ctx->is_ref == TRUE)) {
 
@@ -3205,9 +3201,6 @@ EbErrorType svt_aom_motion_estimation_b64(
                     num_of_list_to_search,
                     b64_index);
         }
-#if !OPT_MPASS_VBR4
-        if (me_ctx->me_type != ME_FIRST_PASS)
-#endif
             // Save the distortion per block size
             compute_distortion(pcs, b64_index, me_ctx);
 

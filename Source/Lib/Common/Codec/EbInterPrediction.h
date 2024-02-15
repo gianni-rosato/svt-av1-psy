@@ -268,16 +268,10 @@ static INLINE int check_sb_border(const int mi_row, const int mi_col, const int 
     return 1;
 }
 
-#if CLN_BLK_STRUCT_2
 // AV1 spec 7.10.3
 // overlappable neighbours not relevant for intra frames (i.e. where intra_bc is allowed)
 // because no warp/obmc in intra frames.
 static INLINE int is_neighbor_overlappable(const MbModeInfo *mbmi) { return mbmi->block_mi.ref_frame[0] > INTRA_FRAME; }
-#else
-static INLINE int is_neighbor_overlappable(const MbModeInfo *mbmi) {
-    return /*is_intrabc_block(mbmi) ||*/ mbmi->block_mi.ref_frame[0] > INTRA_FRAME; // TODO: modify when add intra_bc
-}
-#endif
 
 static INLINE int32_t is_mv_valid(const MV *mv) {
     return mv->row > MV_LOW && mv->row < MV_UPP && mv->col > MV_LOW && mv->col < MV_UPP;

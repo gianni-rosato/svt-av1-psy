@@ -254,11 +254,7 @@ void *svt_aom_entropy_coding_kernel(void *input_ptr) {
             reset_entropy_coding_picture(context_ptr, pcs, scs);
         }
         svt_release_mutex(pcs->entropy_coding_pic_mutex);
-#if OPT_MPASS_VBR4
         if (!svt_aom_is_pic_skipped(pcs->ppcs)) {
-#else
-        if (scs->static_config.pass != ENC_FIRST_PASS && !svt_aom_is_pic_skipped(pcs->ppcs)) {
-#endif
             for (uint32_t y_sb_index = 0; y_sb_index < tile_height_in_sb; ++y_sb_index) {
                 for (uint32_t x_sb_index = 0; x_sb_index < tile_width_in_sb; ++x_sb_index) {
                     uint16_t    sb_index = (uint16_t)((x_sb_index + tile_sb_start_x) +

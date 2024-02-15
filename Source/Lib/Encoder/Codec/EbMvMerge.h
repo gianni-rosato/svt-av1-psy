@@ -14,7 +14,6 @@
 
 #include "EbDefinitions.h"
 #include "EbCodingUnit.h"
-#include "EbPredictionUnit.h"
 #include "EbNeighborArrays.h"
 #ifdef __cplusplus
 extern "C" {

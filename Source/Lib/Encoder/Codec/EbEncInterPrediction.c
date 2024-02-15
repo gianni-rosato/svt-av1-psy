@@ -19,17 +19,7 @@
 #include "EbResize.h"
 #include "av1me.h"
 
-void svt_aom_get_recon_pic(PictureControlSet *pcs, EbPictureBufferDesc **recon_ptr, Bool is_highbd);
-#if !CLN_SEG_MASK
-void svt_aom_enc_make_inter_predictor(SequenceControlSet *scs, uint8_t *src_ptr, uint8_t *src_ptr_2b, uint8_t *dst_ptr,
-                                      int16_t pre_y, int16_t pre_x, MV mv, const struct ScaleFactors *const sf,
-                                      ConvolveParams *conv_params, InterpFilters interp_filters,
-                                      InterInterCompoundData *interinter_comp, uint8_t *seg_mask, uint16_t frame_width,
-                                      uint16_t frame_height, uint8_t blk_width, uint8_t blk_height, BlockSize bsize,
-                                      MacroBlockD *av1xd, int32_t src_stride, int32_t dst_stride, uint8_t plane,
-                                      const uint32_t ss_y, const uint32_t ss_x, uint8_t bit_depth, uint8_t use_intrabc,
-                                      uint8_t is_masked_compound, uint8_t is16bit);
-#endif
+void                 svt_aom_get_recon_pic(PictureControlSet *pcs, EbPictureBufferDesc **recon_ptr, Bool is_highbd);
 EbPictureBufferDesc *svt_aom_get_ref_pic_buffer(PictureControlSet *pcs, uint8_t is_highbd, uint8_t list_idx,
                                                 uint8_t ref_idx) {
     (void)is_highbd;
@@ -67,9 +57,6 @@ static void av1_make_masked_scaled_inter_predictor(uint8_t *src_ptr, uint8_t *sr
     //We come here when we have a prediction done using regular path for the ref0 stored in conv_param.dst.
     //use regular path to generate a prediction for ref1 into  a temporary buffer,
     //then  blend that temporary buffer with that from  the first reference.
-#if !CLN_SEG_MASK
-    seg_mask = comp_data->seg_mask;
-#endif
 
 #define INTER_PRED_BYTES_PER_PIXEL 2
     DECLARE_ALIGNED(32, uint8_t, tmp_buf[INTER_PRED_BYTES_PER_PIXEL * MAX_SB_SQUARE]);
@@ -3888,11 +3875,7 @@ static uint8_t inter_chroma_4xn_pred(PictureControlSet *pcs, MacroBlockD *xd, Mv
                                      uint8_t use_intrabc, uint8_t ss_x, uint8_t ss_y, const BlockSize bsize,
                                      ConvolveParams *conv_params_cb, ConvolveParams *conv_params_cr,
                                      ScaleFactors *sf_identity, uint32_t interp_filters,
-#if CLN_SEG_MASK
                                      InterInterCompoundData *interinter_comp, uint8_t *seg_mask, uint8_t bit_depth) {
-#else
-                                     InterInterCompoundData *interinter_comp, uint8_t bit_depth) {
-#endif
     assert(bsize < BlockSizeS_ALL);
 
     uint8_t is16bit = bit_depth > EB_EIGHT_BIT;
@@ -4018,11 +4001,7 @@ static uint8_t inter_chroma_4xn_pred(PictureControlSet *pcs, MacroBlockD *xd, Mv
                                                  conv_params_cb,
                                                  this_mbmi->block_mi.interp_filters,
                                                  interinter_comp,
-#if CLN_SEG_MASK
                                                  seg_mask,
-#else
-                                                 NULL,
-#endif
                                                  ref_pic->width,
                                                  ref_pic->height,
                                                  (uint8_t)b4_w,
@@ -4065,11 +4044,7 @@ static uint8_t inter_chroma_4xn_pred(PictureControlSet *pcs, MacroBlockD *xd, Mv
                                                  conv_params_cr,
                                                  this_mbmi->block_mi.interp_filters,
                                                  interinter_comp,
-#if CLN_SEG_MASK
                                                  seg_mask,
-#else
-                                                 NULL,
-#endif
                                                  ref_pic->width,
                                                  ref_pic->height,
                                                  (uint8_t)b4_w,
@@ -4117,15 +4092,8 @@ EbErrorType svt_aom_inter_prediction(SequenceControlSet *scs, PictureControlSet 
     uint16_t *tmp_dst_cb = tmp_dst_y;
     uint16_t *tmp_dst_cr = &tmp_dst_y[64 * 64];
 
-#if CLN_SEG_MASK
     // seg_mask is computed for luma and used for chroma
     DECLARE_ALIGNED(16, uint8_t, seg_mask[2 * MAX_SB_SQUARE]);
-#else
-    DECLARE_ALIGNED(16, uint8_t, seg_mask[2 * MAX_SB_SQUARE]);
-    // seg_mask is computed for luma and used for chroma
-    if (interinter_comp)
-        interinter_comp->seg_mask = seg_mask;
-#endif
 
     MvReferenceFrame rf[2];
     av1_set_ref_frame(rf, ref_frame_type);
@@ -4328,9 +4296,7 @@ EbErrorType svt_aom_inter_prediction(SequenceControlSet *scs, PictureControlSet 
                                                  &sf_identity,
                                                  interp_filters,
                                                  interinter_comp,
-#if CLN_SEG_MASK
                                                  seg_mask,
-#endif
                                                  bit_depth);
         }
 
@@ -4520,11 +4486,6 @@ EbErrorType svt_aom_inter_prediction(SequenceControlSet *scs, PictureControlSet 
                                              is16bit);
         }
     }
-#if !CLN_SEG_MASK
-    // set to NULL to avoid dangling pointer
-    if (interinter_comp)
-        interinter_comp->seg_mask = NULL;
-#endif
 
     if (is_interintra_used) {
         inter_intra_prediction(pcs,

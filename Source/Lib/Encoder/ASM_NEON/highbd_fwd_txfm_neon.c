@@ -3616,10 +3616,10 @@ static void fdct64_new_neon(int32x4_t *input, int32x4_t *output, const int8_t co
 static void fidtx64x64_neon(int32x4_t *input, int32x4_t *output, const int8_t cos_bit, const int8_t *stage_range) {
     (void)cos_bit;
     (void)stage_range;
-    const int32_t   bits     = 12; // new_sqrt2_bits = 12
-    const int32_t   sqrt     = 4 * 5793; // 4 * new_sqrt2
-    const int32_t   col_num  = 16;
-    const int32x4_t newsqrt  = vdupq_n_s32(sqrt);
+    const int32_t   bits    = 12; // new_sqrt2_bits = 12
+    const int32_t   sqrt    = 4 * 5793; // 4 * new_sqrt2
+    const int32_t   col_num = 16;
+    const int32x4_t newsqrt = vdupq_n_s32(sqrt);
 
     const int32_t num_iters = 64 * col_num;
     for (int32_t i = 0; i < num_iters; i++) {

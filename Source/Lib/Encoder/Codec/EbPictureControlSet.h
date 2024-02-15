@@ -164,18 +164,13 @@ struct PredictionUnit;
 
 typedef struct EbMdcLeafData {
     uint32_t mds_idx;
-#if CLN_MD_LOOP
     // array containing all shapes to be tested for the current SQ block
     Part shapes[PART_S];
     // total number of shapes to test for the current SQ block
     uint8_t tot_shapes;
-#else
-    uint32_t tot_d1_blocks; // how many d1 bloks every parent square would have
-#endif
-    bool is_child; // does is it belong to the child depth(s); relative to PRED (the output of PD0)
+    bool    is_child; // does is it belong to the child depth(s); relative to PRED (the output of PD0)
 } EbMdcLeafData;
 
-#if CLN_MDC_ARRAY
 typedef struct MdcSbData {
     uint32_t       leaf_count;
     EbMdcLeafData *leaf_data_array;
@@ -184,30 +179,6 @@ typedef struct MdcSbData {
     // 0: do not encode, 1: current or parent depth(s), 2: child depth(s)
     uint8_t *consider_block;
 } MdcSbData;
-#else
-typedef struct MdcSbData {
-    uint32_t leaf_count;
-#if CLN_MD_LOOP
-    // leaf_data_array and split_flag are stored only for SQ shapes and passed to MD. They are indexed
-    // using a leaf index, which is simply a count of all blocks added to the array so far.  Since only
-    // SQ blocks are added to the array, the max number of entries is the max number of SQ blocks.
-    EbMdcLeafData leaf_data_array[SQ_BLOCK_MAX_COUNT_SB_128];
-    Bool split_flag[SQ_BLOCK_MAX_COUNT_SB_128];
-
-    // refined_split_flag and consider_block are used in the depth refinement stage, and are indexed
-    // using the block mds index, so the array needs to hold all possible values for block mds index
-    uint8_t refined_split_flag[BLOCK_MAX_COUNT_SB_128];
-    // 0: do not encode, 1: current or parent depth(s), 2: child depth(s)
-    uint8_t consider_block[BLOCK_MAX_COUNT_SB_128];
-#else
-    EbMdcLeafData leaf_data_array[BLOCK_MAX_COUNT_SB_128];
-    Bool          split_flag[BLOCK_MAX_COUNT_SB_128];
-    uint8_t
-        consider_block[BLOCK_MAX_COUNT_SB_128]; // 0: do not encode, 1: current or parent depth(s), 2: child depth(s)
-    uint8_t refined_split_flag[BLOCK_MAX_COUNT_SB_128];
-#endif
-} MdcSbData;
-#endif
 /**************************************
  * Picture Control Set
  **************************************/
@@ -387,12 +358,8 @@ typedef struct PictureControlSet {
     uint8_t disallow_4x4_all_frames;
     uint8_t wm_level; // warped motion level
     uint8_t cand_reduction_level;
-#if FIX_NSQ_CTRL
     uint8_t nsq_geom_level;
     uint8_t nsq_search_level;
-#else
-    uint8_t nsq_level;
-#endif
     uint8_t txt_level;
     uint8_t tx_shortcut_level;
     uint8_t interpolation_search_level;
@@ -412,9 +379,6 @@ typedef struct PictureControlSet {
     uint8_t md_pme_level;
     uint8_t mds0_level;
     uint8_t pic_disallow_4x4; // disallow 4x4 at pic level
-#if !CLN_SKIP_PD0_SIG
-    uint8_t pic_skip_pd0; // skip_pd0 at pic level
-#endif
     uint8_t pic_disallow_below_16x16; // disallow_below_16x16 signal at pic level
     // depth_removal_level signal at the picture level
     uint8_t pic_depth_removal_level;
@@ -882,11 +846,8 @@ typedef struct PictureParentControlSet {
     int8_t               is_gm_on; //-1 invalid, 1: gm on in one of the ref frames,  0:gm off for all ref frames
     uint16_t             me_processed_b64_count;
     EbHandle             me_processed_b64_mutex;
-#if !OPT_MPASS_VBR2
-    FirstPassData firstpass_data;
-#endif
-    double ts_duration;
-    double r0;
+    double               ts_duration;
+    double               r0;
     // track pictures that are processd in two different TPL groups
     uint8_t tpl_src_data_ready;
     Bool    blk_lambda_tuning;
@@ -1096,29 +1057,19 @@ typedef struct PictureParentControlSet {
     bool         gm_pp_detected; //gm detection enabled at the pre-processing level
     CdefControls cdef_ctrls;
     // RC related variables
-    int                             q_low;
-    int                             q_high;
-    int                             loop_count;
-    int                             overshoot_seen;
-    int                             undershoot_seen;
-    int                             low_cr_seen;
-    uint64_t                        pcs_total_rate;
-    EbHandle                        pcs_total_rate_mutex;
-#if !OPT_MPASS_VBR5
-    int16_t                         first_pass_seg_total_count;
-    uint8_t                         first_pass_seg_column_count;
-    uint8_t                         first_pass_seg_row_count;
-    uint16_t                        first_pass_seg_acc;
-    EbHandle                        first_pass_done_semaphore;
-    EbHandle                        first_pass_mutex;
-    struct PictureParentControlSet *first_pass_ref_ppcs_ptr[2];
-    uint8_t                         first_pass_ref_count;
-#endif
-    uint8_t                         first_pass_done;
-    uint8_t                         first_frame_in_minigop;
-    TplControls                     tpl_ctrls;
-    uint8_t                         tpl_is_valid;
-    EbHandle                        tpl_disp_mutex;
+    int         q_low;
+    int         q_high;
+    int         loop_count;
+    int         overshoot_seen;
+    int         undershoot_seen;
+    int         low_cr_seen;
+    uint64_t    pcs_total_rate;
+    EbHandle    pcs_total_rate_mutex;
+    uint8_t     first_pass_done;
+    uint8_t     first_frame_in_minigop;
+    TplControls tpl_ctrls;
+    uint8_t     tpl_is_valid;
+    EbHandle    tpl_disp_mutex;
     // uint32_t         input_type;
     int16_t  enc_dec_segment_row;
     uint16_t tile_group_index;
@@ -1175,10 +1126,8 @@ typedef struct PictureParentControlSet {
     uint32_t tf_avg_ahd_error;
     bool     tf_active_region_present;
     bool     seq_param_changed;
-#if TUNE_TPL_LVL
     uint64_t norm_me_dist;
     uint8_t  tpl_params_ready;
-#endif
 } PictureParentControlSet;
 
 typedef struct TplDispResults {
@@ -1237,9 +1186,6 @@ typedef struct PictureControlSetInitData {
     uint8_t    enable_tpl_la;
     uint8_t    tpl_synth_size;
     uint8_t    in_loop_ois;
-#if !OPT_MPASS_VBR4
-    uint8_t pass;
-#endif
     uint32_t   rate_control_mode;
     Av1Common *av1_cm;
     uint16_t   init_max_block_cnt;
@@ -1249,19 +1195,7 @@ typedef struct PictureControlSetInitData {
     uint8_t enable_adaptive_quantization;
     uint8_t calc_hist;
     uint8_t tpl_lad_mg;
-#if !OPT_MPASS_VBR4
-    uint8_t skip_frame_first_pass;
-    uint8_t ipp_ds;
-    uint8_t bypass_blk_step;
-    uint8_t dist_ds;
-    uint8_t ipp_was_ds;
-#endif
     uint8_t final_pass_preset;
-#if !OPT_MPASS_VBR4
-    uint8_t bypass_zz_check;
-    uint8_t use8blk;
-    uint8_t reduce_me_search;
-#endif
     uint8_t input_resolution;
     uint8_t calculate_variance;
     Bool    is_scale;

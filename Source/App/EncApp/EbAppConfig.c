@@ -1645,44 +1645,8 @@ EbErrorType handle_stats_file(EbConfig *app_cfg, EncPass enc_pass, const SvtAv1F
                 return EB_ErrorBadParameter;
             }
         }
-#if OPT_MPASS_VBR6
         // Final pass
         else if (app_cfg->config.pass == 2) {
-#else
-        // Multi pass VBR has 3 passes, and pass = 2 is the middle pass
-        // In this pass, data is read from the file, copied to memory, updated and
-        // written back to the same file
-        else if (app_cfg->config.pass == 2 && app_cfg->config.rate_control_mode == SVT_AV1_RC_MODE_VBR) {
-            if (!fopen_and_lock(&app_cfg->input_stat_file, stats, FALSE)) {
-                fprintf(app_cfg->error_log_file,
-                        "Error instance %u: can't read stats file %s for read\n",
-                        channel_number + 1,
-                        stats);
-                return EB_ErrorBadParameter;
-            }
-            // Copy from file to memory
-            if (!load_twopass_stats_in(app_cfg)) {
-                fprintf(app_cfg->error_log_file, "Error instance %u: can't load file %s\n", channel_number + 1, stats);
-                return EB_ErrorBadParameter;
-            }
-            // Close the input stat file
-            if (app_cfg->input_stat_file) {
-                fclose(app_cfg->input_stat_file);
-                app_cfg->input_stat_file = (FILE *)NULL;
-            }
-            // Open the file in write mode
-            if (!fopen_and_lock(&app_cfg->output_stat_file, stats, TRUE)) {
-                fprintf(app_cfg->error_log_file,
-                        "Error instance %u: can't open stats file %s for write \n",
-                        channel_number + 1,
-                        stats);
-                return EB_ErrorBadParameter;
-            }
-        }
-        // Final pass: pass = 2 for CRF and pass = 3 for VBR
-        else if ((app_cfg->config.pass == 2 && app_cfg->config.rate_control_mode == SVT_AV1_RC_MODE_CQP_OR_CRF) ||
-                 (app_cfg->config.pass == 3 && app_cfg->config.rate_control_mode == SVT_AV1_RC_MODE_VBR)) {
-#endif
             if (!fopen_and_lock(&app_cfg->input_stat_file, stats, FALSE)) {
                 fprintf(app_cfg->error_log_file,
                         "Error instance %u: can't read stats file %s for read\n",
@@ -1712,39 +1676,7 @@ EbErrorType handle_stats_file(EbConfig *app_cfg, EncPass enc_pass, const SvtAv1F
         }
         break;
     }
-#if OPT_MPASS_VBR6
     case ENC_SECOND_PASS: {
-#else
-#if OPT_MPASS_VBR3
-    case ENC_SECOND_PASS: {
-        // for combined two passes,
-        // we only ouptut first pass stats when user explicitly set the --stats
-        if (app_cfg->stats) {
-            if (!fopen_and_lock(&app_cfg->output_stat_file, app_cfg->stats, TRUE)) {
-                fprintf(app_cfg->error_log_file,
-                        "Error instance %u: can't open stats file %s for write \n",
-                        channel_number + 1,
-                        app_cfg->stats);
-                return EB_ErrorBadParameter;
-            }
-        }
-        break;
-    }
-#else
-    case ENC_SECOND_PASS: {
-        if (!rc_stats_buffer->sz) {
-            fprintf(app_cfg->error_log_file,
-                    "Error instance %u: combined multi passes need stats in for the middle pass \n",
-                    channel_number + 1);
-            return EB_ErrorBadParameter;
-        }
-        app_cfg->config.rc_stats_buffer = *rc_stats_buffer;
-        break;
-    }
-#endif
-
-    case ENC_THIRD_PASS: {
-#endif
         if (!rc_stats_buffer->sz) {
             fprintf(app_cfg->error_log_file,
                     "Error instance %u: combined multi passes need stats in for the final pass \n",
@@ -2211,11 +2143,7 @@ uint32_t get_passes(int32_t argc, char *const argv[], EncPass enc_pass[MAX_ENC_P
             fprintf(stderr, "[SVT-Error]: Multipass CRF is not supported.\n\n");
             return 0;
         }
-#if OPT_MPASS_VBR6
         multi_pass_mode = SINGLE_PASS;
-#else
-        multi_pass_mode = passes == 2 ? TWO_PASS_IPP_FINAL : SINGLE_PASS;
-#endif
     }
     // Determine the number of passes in rate control mode
     else if (rc_mode == 1) {
@@ -2226,17 +2154,8 @@ uint32_t get_passes(int32_t argc, char *const argv[], EncPass enc_pass[MAX_ENC_P
                 fprintf(stderr, "[SVT-Error]:  Multipass VBR is not supported for preset %d.\n\n", enc_mode);
                 return 0;
             } else {
-#if OPT_MPASS_VBR3
-                passes = 2;
-#if OPT_MPASS_VBR6
+                passes          = 2;
                 multi_pass_mode = TWO_PASS;
-#else
-                multi_pass_mode = TWO_PASS_IPP_FINAL;
-#endif
-#else
-                passes          = 3;
-                multi_pass_mode = THREE_PASS_IPP_SAMEPRED_FINAL;
-#endif
             }
         }
     } else {
@@ -2250,27 +2169,10 @@ uint32_t get_passes(int32_t argc, char *const argv[], EncPass enc_pass[MAX_ENC_P
     // Set the settings for each pass based on multi_pass_mode
     switch (multi_pass_mode) {
     case SINGLE_PASS: enc_pass[0] = ENC_SINGLE_PASS; break;
-#if OPT_MPASS_VBR6
     case TWO_PASS:
         enc_pass[0] = ENC_FIRST_PASS;
         enc_pass[1] = ENC_SECOND_PASS;
         break;
-#else
-    case TWO_PASS_IPP_FINAL:
-#if OPT_MPASS_VBR3
-        enc_pass[0] = ENC_SECOND_PASS;
-        enc_pass[1] = ENC_THIRD_PASS;
-#else
-        enc_pass[0] = ENC_FIRST_PASS;
-        enc_pass[1] = ENC_SECOND_PASS;
-#endif
-        break;
-    case THREE_PASS_IPP_SAMEPRED_FINAL:
-        enc_pass[0] = ENC_FIRST_PASS;
-        enc_pass[1] = ENC_SECOND_PASS;
-        enc_pass[2] = ENC_THIRD_PASS;
-        break;
-#endif
     default: break;
     }
 

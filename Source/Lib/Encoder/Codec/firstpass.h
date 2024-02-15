@@ -19,10 +19,6 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#if !OPT_MPASS_VBR4
-#define FORCED_BLK_SIZE 16
-#define FIRST_PASS_Q 10.0
-#endif
 
 #define DOUBLE_DIVIDE_CHECK(x) ((x) < 0 ? (x)-0.000001 : (x) + 0.000001)
 
@@ -37,30 +33,10 @@ typedef struct {
    * No real meaning for a collection of frames.
    */
     double frame;
-#if !OPT_MPASS_VBR2
-    /*!
-   * Intra prediction error.
-   */
-    double intra_error;
-#endif
     /*!
    * Best of intra pred error and inter pred error using last frame as ref.
    */
     double coded_error;
-#if !OPT_MPASS_VBR2
-    /*!
-   * Percentage of blocks that have almost no intra error residual
-   * (i.e. are in effect completely flat and untextured in the intra
-   * domain). In natural videos this is uncommon, but it is much more
-   * common in animations, graphics and screen content, so may be used
-   * as a signal to detect these types of content.
-   */
-    double intra_skip_pct;
-    /*!
-   * Image mask rows top and bottom.
-   */
-    double inactive_zone_rows;
-#endif
     /*!
    * Duration of the frame / collection of frames.
    */
@@ -123,33 +99,6 @@ typedef struct {
 
 /*!\cond */
 
-#if !OPT_MPASS_VBR2
-// This structure contains several key parameters to be accumulated for this
-// frame.
-typedef struct {
-    // Intra prediction error.
-    int64_t intra_error;
-    // Best of intra pred error and inter pred error using last frame as ref.
-    int64_t coded_error;
-    // Count of blocks where intra error is very small.
-    int intra_skip_count;
-    // Start row.
-    int image_data_start_row;
-} FRAME_STATS;
-
-// This structure contains first pass data.
-typedef struct {
-    // Buffer holding frame stats for all MACROBLOCKs.
-    // mb_stats[i] stores the FRAME_STATS of the ith
-    // MB in raster scan order.
-    FRAME_STATS *mb_stats;
-    // Buffer to store the prediction error of the (0,0) motion
-    // vector using the last source frame as the reference.
-    // raw_motion_err_list[i] stores the raw_motion_err of
-    // the ith MB in raster scan order.
-    int *raw_motion_err_list;
-} FirstPassData;
-#endif
 struct AV1EncoderConfig;
 struct TileDataEnc;
 

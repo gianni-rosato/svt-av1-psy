@@ -164,18 +164,12 @@ void validate_pic_for_tpl(PictureParentControlSet *pcs, uint32_t pic_index) {
     }
 }
 
-#if TUNE_TPL_LVL
 uint8_t svt_aom_get_tpl_group_level(uint8_t tpl, int8_t enc_mode, SvtAv1RcMode rc_mode) {
     uint8_t tpl_group_level;
 
     if (!tpl) {
         tpl_group_level = 0;
-    }
-#if TUNE_M5_M6_3
-    else if (enc_mode <= ENC_M6) {
-#else
-    else if (enc_mode <= ENC_M5) {
-#endif
+    } else if (enc_mode <= ENC_M6) {
         tpl_group_level = 1;
     } else if (enc_mode <= ENC_M7) {
         tpl_group_level = 2;
@@ -268,15 +262,10 @@ uint8_t svt_aom_set_tpl_group(PictureParentControlSet *pcs, uint8_t tpl_group_le
                                                           : 1.6;
         }
     }
-#if OPT_1P_VBR
     if (pcs->scs->static_config.rate_control_mode == 1) {
         tpl_ctrls->r0_adjust_factor *= 1.25;
         tpl_ctrls->r0_adjust_factor = MIN(3, tpl_ctrls->r0_adjust_factor);
     }
-#else
-    if (scs->static_config.rate_control_mode == 1)
-        tpl_ctrls->r0_adjust_factor *= 1.25;
-#endif
     memcpy(&pcs->tpl_ctrls, tpl_ctrls, sizeof(TplControls));
     return tpl_ctrls->synth_blk_size;
 }
@@ -383,7 +372,6 @@ static void set_tpl_params(PictureParentControlSet *pcs, uint8_t tpl_level) {
     if (scs->enable_smooth == 0)
         tpl_ctrls->intra_mode_end = MIN(tpl_ctrls->intra_mode_end, D67_PRED);
 }
-#endif
 
 /*
  copy the number of pcs entries from the the output queue to extended  buffer
@@ -477,7 +465,6 @@ void store_extended_group(PictureParentControlSet *pcs, InitialRateControlContex
         }
     }
 
-#if TUNE_TPL_LVL ///
     uint32_t pic_index;
     uint64_t dist_per_group = 0;
 
@@ -497,7 +484,6 @@ void store_extended_group(PictureParentControlSet *pcs, InitialRateControlContex
             pcs->tpl_group[pic_index]->tpl_params_ready = 1;
         }
     }
-#endif
 
 #if LAD_MG_PRINT
     if (log) {
@@ -586,13 +572,8 @@ static void process_lad_queue(InitialRateControlContext *ctx, uint8_t pass_thru)
         }
 
         if (send_out) {
-#if OPT_MPASS_VBR7
             if (head_pcs->scs->static_config.pass == ENC_FIRST_PASS ||
                 head_pcs->scs->static_config.pass == ENC_SECOND_PASS || head_pcs->scs->lap_rc) {
-#else
-            if (head_pcs->scs->static_config.pass == ENC_MIDDLE_PASS ||
-                head_pcs->scs->static_config.pass == ENC_LAST_PASS || head_pcs->scs->lap_rc) {
-#endif
                 head_pcs->stats_in_offset = head_pcs->decode_order;
                 svt_block_on_mutex(head_pcs->scs->twopass.stats_buf_ctx->stats_in_write_mutex);
                 head_pcs->stats_in_end_offset = head_pcs->ext_group_size && head_pcs->scs->lap_rc
@@ -626,9 +607,6 @@ static void process_lad_queue(InitialRateControlContext *ctx, uint8_t pass_thru)
         }
     }
 }
-#if !OPT_1P_VBR
-#define LOW_8x8_DIST_VAR_TH 10000
-#endif
 #define HIGH_8x8_DIST_VAR_TH 50000
 #define MIN_AVG_ME_DIST 1000
 #define VBR_CODED_ERROR_FACTOR 30
@@ -652,10 +630,6 @@ static void set_1pvbr_param(PictureParentControlSet *pcs) {
         double weight = 1;
         if (avg_variance_me_dist > HIGH_8x8_DIST_VAR_TH)
             weight = 1.5;
-#if !OPT_1P_VBR
-        else if (avg_variance_me_dist < LOW_8x8_DIST_VAR_TH)
-            weight = 0.75;
-#endif
 
         if (scs->input_resolution <= INPUT_SIZE_480p_RANGE)
             weight = 1.5 * weight;
@@ -715,7 +689,6 @@ void *svt_aom_initial_rate_control_kernel(void *input_ptr) {
         // If the picture is complete, proceed
         if (pcs->me_segments_completion_count == pcs->me_segments_total_count) {
             SequenceControlSet *scs = pcs->scs;
-#if TUNE_TPL_LVL
 
             pcs->norm_me_dist = 0;
             if (pcs->slice_type != I_SLICE) {
@@ -747,7 +720,6 @@ void *svt_aom_initial_rate_control_kernel(void *input_ptr) {
                 pcs->r0_based_qps_qpm = 0;
             }
 
-#endif
             if (in_results_ptr->task_type == TASK_SUPERRES_RE_ME) {
                 // do necessary steps as normal routine
                 {
