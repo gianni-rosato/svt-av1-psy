@@ -66,6 +66,11 @@ extern "C" {
 
 // Switch frame debugging code
 #define DEBUG_SFRAME            0
+
+// Variance boost debugging code
+#define DEBUG_VAR_BOOST         0
+#define DEBUG_VAR_BOOST_QP      0
+
 // Quantization matrices
 #define DEBUG_QM_LEVEL          0
 #define DEBUG_STARTUP_MG_SIZE   0
