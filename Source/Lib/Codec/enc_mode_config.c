@@ -103,7 +103,9 @@ uint8_t svt_aom_get_enable_me_16x16(EncMode enc_mode) {
 uint8_t svt_aom_get_gm_core_level(EncMode enc_mode, bool super_res_off) {
     uint8_t gm_level = 0;
     if (super_res_off) {
-        if (enc_mode <= ENC_MR)
+        if (enc_mode <= ENC_MRP)
+            gm_level = 1;
+        else if (enc_mode <= ENC_MR)
             gm_level = 2;
         else if (enc_mode <= ENC_M2)
             gm_level = 4;
@@ -146,7 +148,15 @@ static void set_hme_search_params(PictureParentControlSet *pcs, MeContext *me_ct
     // Whether to modulate HME (w,h) using qp
     uint8_t q_mult = 0;
     // Set HME level 0 min and max search areas
-    if (pcs->enc_mode <= ENC_M1) {
+    if (pcs->enc_mode <= ENC_MRS) {
+        if (input_resolution < INPUT_SIZE_4K_RANGE) {
+            me_ctx->hme_l0_sa.sa_min = (SearchArea){128, 128};
+            me_ctx->hme_l0_sa.sa_max = (SearchArea){256, 256};
+        } else {
+            me_ctx->hme_l0_sa.sa_min = (SearchArea){240, 240};
+            me_ctx->hme_l0_sa.sa_max = (SearchArea){480, 480};
+        }
+    } else if (pcs->enc_mode <= ENC_M1) {
         if (input_resolution < INPUT_SIZE_4K_RANGE) {
             me_ctx->hme_l0_sa.sa_min = (SearchArea){32, 32};
             me_ctx->hme_l0_sa.sa_max = (SearchArea){192, 192};
@@ -721,7 +731,9 @@ void svt_aom_sig_deriv_me(SequenceControlSet *scs, PictureParentControlSet *pcs,
     }
     // Set pre-hme level (0-2)
     uint8_t prehme_level = 0;
-    if (sc_class1)
+    if (enc_mode <= ENC_MRS)
+        prehme_level = 1;
+    else if (sc_class1)
         prehme_level = rtc_tune ? 1 : 2;
     else if (rtc_tune) {
         if (enc_mode <= ENC_M8)
@@ -746,14 +758,20 @@ void svt_aom_sig_deriv_me(SequenceControlSet *scs, PictureParentControlSet *pcs,
     uint8_t me_ref_prune_level = 0;
 
     if (sc_class1) {
-        if (enc_mode <= ENC_M2)
+        if (enc_mode <= ENC_MRS)
+            me_ref_prune_level = 0;
+        else if (enc_mode <= ENC_M2)
             me_ref_prune_level = 1;
         else if (enc_mode <= ENC_M8)
             me_ref_prune_level = 3;
         else
             me_ref_prune_level = 6;
     } else {
-        if (enc_mode <= ENC_M0) {
+        if (enc_mode <= ENC_MRS) {
+            me_ref_prune_level = 0;
+        } else if (enc_mode <= ENC_MR) {
+            me_ref_prune_level = 1;
+        } else if (enc_mode <= ENC_M0) {
             me_ref_prune_level = is_base ? 1 : 2;
         } else if (enc_mode <= ENC_M1) {
             me_ref_prune_level = is_base ? 1 : 4;
@@ -783,7 +801,9 @@ void svt_aom_sig_deriv_me(SequenceControlSet *scs, PictureParentControlSet *pcs,
     svt_aom_set_me_sr_adjustment_ctrls(me_ctx, me_sr_adj_lvl);
 
     uint8_t mv_sa_adj_level = 0;
-    if (enc_mode <= ENC_M3)
+    if (enc_mode <= ENC_MRS)
+        mv_sa_adj_level = 1;
+    else if (enc_mode <= ENC_M3)
         mv_sa_adj_level = 2;
     else
         mv_sa_adj_level = 0;
@@ -1754,7 +1774,9 @@ static void set_palette_level(PictureParentControlSet *pcs, uint8_t palette_leve
 uint16_t svt_aom_get_max_can_count(EncMode enc_mode) {
     //NOTE: this is a memory feature and not a speed feature. it should not be have any speed/quality impact.
     uint16_t mem_max_can_count;
-    if (enc_mode <= ENC_M1)
+    if (enc_mode <= ENC_MRS)
+        mem_max_can_count = 2500;
+    else if (enc_mode <= ENC_M1)
         mem_max_can_count = 1225;
     else if (enc_mode <= ENC_M2)
         mem_max_can_count = 1000;
@@ -4309,8 +4331,11 @@ void svt_aom_set_wm_controls(ModeDecisionContext *ctx, uint8_t wm_level) {
 // Get the nic_level used for each preset (to be passed to setting function: svt_aom_set_nic_controls())
 uint8_t svt_aom_get_nic_level(EncMode enc_mode, uint8_t is_base, uint32_t qp, uint8_t seq_qp_mod) {
     uint8_t nic_level;
-
-    if (enc_mode <= ENC_MR)
+    if (enc_mode <= ENC_MRS)
+        nic_level = 0;
+    else if (enc_mode <= ENC_MRP)
+        nic_level = 1;
+    else if (enc_mode <= ENC_MR)
         nic_level = is_base ? 2 : 6;
     else if (enc_mode <= ENC_M0)
         nic_level = is_base ? 3 : 7;
@@ -4326,6 +4351,12 @@ uint8_t svt_aom_get_nic_level(EncMode enc_mode, uint8_t is_base, uint32_t qp, ui
         nic_level = 16;
     else
         nic_level = 19;
+
+    // don't band if ENC_MRP or ENC_MRS
+    if (enc_mode <= ENC_MRP) {
+        return nic_level;
+    }
+
     // QP-banding
     if (seq_qp_mod) {
         if (enc_mode <= ENC_M5) {
@@ -7033,7 +7064,9 @@ void svt_aom_sig_deriv_enc_dec_common(SequenceControlSet *scs, PictureControlSet
     // Level 2: [-1, +1] depth refinement
     uint8_t depth_level = 0;
 
-    if (pcs->ppcs->sc_class1) {
+    if (enc_mode <= ENC_MRS)
+        depth_level = 1;
+    else if (pcs->ppcs->sc_class1) {
         if (rtc_tune) {
             if (enc_mode <= ENC_M7)
                 depth_level = pcs->slice_type == I_SLICE ? 3 : 4;
@@ -7108,7 +7141,8 @@ void svt_aom_sig_deriv_enc_dec_common(SequenceControlSet *scs, PictureControlSet
     } else
         depth_level = 0;
 
-    if (!pcs->ppcs->sc_class1 && depth_level && scs->seq_qp_mod) {
+    // don't band if ENC_MRP or ENC_MRS
+    if (!pcs->ppcs->sc_class1 && depth_level && scs->seq_qp_mod && enc_mode > ENC_MRP) {
         // QP-banding
         if (enc_mode <= ENC_M5) {
             if ((scs->seq_qp_mod == 2 || scs->seq_qp_mod == 3) && scs->static_config.qp <= 32)
@@ -7123,8 +7157,9 @@ void svt_aom_sig_deriv_enc_dec_common(SequenceControlSet *scs, PictureControlSet
         }
     }
 
+    // don't band if ENC_MRP or ENC_MRS
     // med-banding
-    if (pcs->me_dist_mod && depth_level && !pcs->ppcs->sc_class1) {
+    if (pcs->me_dist_mod && depth_level && !pcs->ppcs->sc_class1 && enc_mode > ENC_MRP) {
         uint32_t dist_64, dist_32, dist_16, dist_8, me_8x8_cost_variance;
         if (pcs->scs->super_block_size == 64) {
             dist_64              = pcs->ppcs->me_64x64_distortion[ctx->sb_index];
@@ -7766,7 +7801,10 @@ void svt_aom_sig_deriv_enc_dec(SequenceControlSet *scs, PictureControlSet *pcs, 
     md_subpel_pme_controls(pcs, ctx, ctx->md_subpel_pme_level);
     uint8_t rate_est_level = 0;
     if (pd_pass == PD_PASS_0) {
-        rate_est_level = 2;
+        if (enc_mode <= ENC_MRP)
+            rate_est_level = 1;
+        else
+            rate_est_level = 2;
     } else {
         rate_est_level = 1;
     }
@@ -7789,7 +7827,9 @@ void svt_aom_sig_deriv_enc_dec(SequenceControlSet *scs, PictureControlSet *pcs, 
             intra_level = (is_islice || ppcs->transition_present == 1) ? 1 : 6;
         else
             intra_level = (is_islice || ppcs->transition_present == 1) ? 4 : 6;
-    } else if (enc_mode <= ENC_M1)
+    } else if (enc_mode <= ENC_MRS)
+        intra_level = 1;
+    else if (enc_mode <= ENC_M1)
         intra_level = is_base ? 1 : 2;
     else if (enc_mode <= ENC_M2)
         intra_level = is_base ? 1 : 3;
@@ -7848,7 +7888,9 @@ bool svt_aom_get_disallow_4x4(EncMode enc_mode, uint8_t is_base) {
 uint8_t svt_aom_get_nsq_geom_level(EncMode enc_mode, uint8_t is_base, InputCoeffLvl coeff_lvl) {
     uint8_t nsq_geom_level;
 
-    if (enc_mode <= ENC_M1) {
+    if (enc_mode <= ENC_MRP) {
+        nsq_geom_level = 1;
+    } else if (enc_mode <= ENC_M1) {
         if (coeff_lvl == HIGH_LVL)
             nsq_geom_level = 2;
         else // regular or low
@@ -7883,7 +7925,11 @@ uint8_t svt_aom_get_nsq_geom_level(EncMode enc_mode, uint8_t is_base, InputCoeff
 
 uint8_t svt_aom_get_nsq_search_level(PictureControlSet *pcs, EncMode enc_mode, InputCoeffLvl coeff_lvl, uint32_t qp) {
     int nsq_search_level;
-    if (enc_mode <= ENC_MR) {
+    if (enc_mode <= ENC_MRS) {
+        nsq_search_level = 1;
+    } else if (enc_mode <= ENC_MRP) {
+        nsq_search_level = 2;
+    } else if (enc_mode <= ENC_MR) {
         nsq_search_level = 3;
     } else if (enc_mode <= ENC_M1) {
         nsq_search_level = 5;
@@ -7905,6 +7951,10 @@ uint8_t svt_aom_get_nsq_search_level(PictureControlSet *pcs, EncMode enc_mode, I
     if (nsq_search_level == 0)
         return nsq_search_level;
 
+    // don't band if ENC_MRP or ENC_MRS
+    if (enc_mode <= ENC_MRP) {
+        return nsq_search_level;
+    }
 #define NSQ_MODULATION_MIN_LEVEL 8
     if (nsq_search_level > NSQ_MODULATION_MIN_LEVEL) {
         if (pcs->ppcs->tpl_ctrls.enable && pcs->ppcs->r0_based_qps_qpm) {
@@ -8267,7 +8317,9 @@ static void set_pic_lpd0_lvl(PictureControlSet *pcs, EncMode enc_mode) {
 }
 uint8_t get_inter_compound_level(EncMode enc_mode) {
     uint8_t comp_level;
-    if (enc_mode <= ENC_M0)
+    if (enc_mode <= ENC_MRS)
+        comp_level = 1;
+    else if (enc_mode <= ENC_M0)
         comp_level = 3;
     else if (enc_mode <= ENC_M2)
         comp_level = 4;
@@ -8290,7 +8342,9 @@ uint8_t get_filter_intra_level(EncMode enc_mode) {
 
 uint8_t svt_aom_get_inter_intra_level(EncMode enc_mode, uint8_t is_base, uint8_t transition_present) {
     uint8_t inter_intra_level = 0;
-    if (enc_mode <= ENC_MR)
+    if (enc_mode <= ENC_MRS)
+        inter_intra_level = 1;
+    else if (enc_mode <= ENC_MR)
         inter_intra_level = 2;
     else if (enc_mode <= ENC_M2)
         inter_intra_level = (transition_present || is_base) ? 2 : 0;
@@ -8314,6 +8368,11 @@ uint8_t svt_aom_get_obmc_level(EncMode enc_mode, uint32_t qp, uint8_t is_base, u
         obmc_level = is_base ? 4 : 0;
     else
         obmc_level = 0;
+
+    // don't band if ENC_MRP or ENC_MRS
+    if (enc_mode <= ENC_MRP) {
+        return obmc_level;
+    }
 
     // QP-banding
     if (!(enc_mode <= ENC_M0) && obmc_level && seq_qp_mod) {
@@ -8524,7 +8583,9 @@ void svt_aom_sig_deriv_mode_decision_config(SequenceControlSet *scs, PictureCont
     // Set the level for the txt search
     pcs->txt_level = 0;
 
-    if (enc_mode <= ENC_M1) {
+    if (enc_mode <= ENC_MRS) {
+        pcs->txt_level = 1;
+    } else if (enc_mode <= ENC_M1) {
         pcs->txt_level = is_base ? 2 : 3;
     } else if (enc_mode <= ENC_M3) {
         pcs->txt_level = is_base ? 2 : 5;
@@ -8556,7 +8617,9 @@ void svt_aom_sig_deriv_mode_decision_config(SequenceControlSet *scs, PictureCont
     }
     // Set the level the interpolation search
     pcs->interpolation_search_level = 0;
-    if (enc_mode <= ENC_M6)
+    if (enc_mode <= ENC_MRS)
+        pcs->interpolation_search_level = 1;
+    else if (enc_mode <= ENC_M6)
         pcs->interpolation_search_level = 4;
     else {
         pcs->interpolation_search_level = 4;
@@ -8601,19 +8664,25 @@ void svt_aom_sig_deriv_mode_decision_config(SequenceControlSet *scs, PictureCont
         pcs->cfl_level = 0;
 
     // Set the level for new/nearest/near injection
-    if (enc_mode <= ENC_M5)
+    if (enc_mode <= ENC_MRS)
+        pcs->new_nearest_near_comb_injection = 1;
+    else if (enc_mode <= ENC_M5)
         pcs->new_nearest_near_comb_injection = is_base ? 2 : 0;
     else
         pcs->new_nearest_near_comb_injection = 0;
 
     // Set the level for unipred3x3 injection
-    if (enc_mode <= ENC_M0)
+    if (enc_mode <= ENC_MRS)
+        pcs->unipred3x3_injection = 1;
+    else if (enc_mode <= ENC_M0)
         pcs->unipred3x3_injection = 2;
     else
         pcs->unipred3x3_injection = 0;
 
     // Set the level for bipred3x3 injection
-    if (enc_mode <= ENC_M1)
+    if (enc_mode <= ENC_MRS)
+        pcs->bipred3x3_injection = 1;
+    else if (enc_mode <= ENC_M1)
         pcs->bipred3x3_injection = 2;
     else if (enc_mode <= ENC_M4)
         pcs->bipred3x3_injection = 4;
@@ -8625,7 +8694,9 @@ void svt_aom_sig_deriv_mode_decision_config(SequenceControlSet *scs, PictureCont
 
     // Set the level for the distance-based red pruning
     if (pcs->ppcs->ref_list0_count_try > 1 || pcs->ppcs->ref_list1_count_try > 1) {
-        if (rtc_tune) {
+        if (enc_mode <= ENC_MRS)
+            pcs->dist_based_ref_pruning = 1;
+        else if (rtc_tune) {
             if (pcs->coeff_lvl == VLOW_LVL || pcs->coeff_lvl == LOW_LVL) {
                 pcs->dist_based_ref_pruning = is_base ? 2 : 6;
             } else {
@@ -8660,6 +8731,8 @@ void svt_aom_sig_deriv_mode_decision_config(SequenceControlSet *scs, PictureCont
         } else {
             pcs->txs_level = is_islice ? 4 : 0;
         }
+    } else if (enc_mode <= ENC_MRP) {
+        pcs->txs_level = 1;
     } else if (enc_mode <= ENC_M2) {
         pcs->txs_level = 2;
     } else if (enc_mode <= ENC_M3) {
