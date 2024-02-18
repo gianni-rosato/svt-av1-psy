@@ -970,9 +970,16 @@ typedef struct EbSvtAv1EncConfiguration {
      *  Default is 0 */
     Bool enable_alt_curve;
 
-    /*Add 128 Byte Padding to Struct to avoid changing the size of the public configuration struct*/
-    uint8_t padding[128 - 2 * sizeof(Bool) - 2 * sizeof(uint8_t)];
+    /* @brief Affects loopfilter deblock sharpness and rate distortion
+     *
+     * Min value is -7.
+     * Max is 7.
+     * Default is 0 (off).
+     */
+     int8_t sharpness;
 
+    /*Add 128 Byte Padding to Struct to avoid changing the size of the public configuration struct*/
+    uint8_t padding[128 - 2 * sizeof(Bool) - 2 * sizeof(uint8_t) - sizeof(int8_t)];
 } EbSvtAv1EncConfiguration;
 
 /**
