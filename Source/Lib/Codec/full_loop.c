@@ -1125,7 +1125,7 @@ static void svt_av1_optimize_b(ModeDecisionContext *ctx, int16_t txb_skip_contex
                                const TranLow *coeff_ptr, const MacroblockPlane *p, TranLow *qcoeff_ptr,
                                TranLow *dqcoeff_ptr, uint16_t *eob, const QuantParam *qparam, TxSize tx_size,
                                TxType tx_type, Bool is_inter, uint8_t use_sharpness, uint8_t delta_q_present,
-                               uint8_t picture_qp, uint32_t lambda, int plane)
+                               uint8_t picture_qp, uint32_t lambda, int plane, PictureControlSet *pcs)
 
 {
     int                    sharpness  = 0; // No Sharpness
@@ -1166,7 +1166,7 @@ static void svt_av1_optimize_b(ModeDecisionContext *ctx, int16_t txb_skip_contex
             return;
     }
     int       rweight = 100;
-    const int rshift  = 2;
+    const int rshift  = (pcs->scs->static_config.sharpness > 0 ? pcs->scs->static_config.sharpness : 0) + 2;
     if (use_sharpness && delta_q_present && plane == 0) {
         int diff = ctx->sb_ptr->qindex - quantizer_to_qindex[picture_qp];
         if (diff < 0) {
@@ -1675,7 +1675,8 @@ uint8_t svt_aom_quantize_inv_quantize(PictureControlSet *pcs, ModeDecisionContex
                            pcs->ppcs->frm_hdr.delta_q_params.delta_q_present,
                            pcs->picture_qp,
                            lambda,
-                           (component_type == COMPONENT_LUMA) ? 0 : 1);
+                           (component_type == COMPONENT_LUMA) ? 0 : 1,
+                           pcs);
     }
 
     if (!ctx->rate_est_ctrls.update_skip_ctx_dc_sign_ctx)

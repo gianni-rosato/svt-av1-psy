@@ -89,7 +89,7 @@ EbErrorType svt_aom_initial_rate_control_context_ctor(EbThreadContext *thread_ct
 }
 
 void svt_av1_build_quantizer(EbBitDepth bit_depth, int32_t y_dc_delta_q, int32_t u_dc_delta_q, int32_t u_ac_delta_q,
-                             int32_t v_dc_delta_q, int32_t v_ac_delta_q, Quants *const quants, Dequants *const deq);
+                             int32_t v_dc_delta_q, int32_t v_ac_delta_q, Quants *const quants, Dequants *const deq, PictureParentControlSet *pcs);
 
 #if LAD_MG_PRINT
 
@@ -755,12 +755,12 @@ void *svt_aom_initial_rate_control_kernel(void *input_ptr) {
             if (pcs->picture_number == 0) {
                 Quants *const   quants_8bit = &scs->enc_ctx->quants_8bit;
                 Dequants *const deq_8bit    = &scs->enc_ctx->deq_8bit;
-                svt_av1_build_quantizer(EB_EIGHT_BIT, 0, 0, 0, 0, 0, quants_8bit, deq_8bit);
+                svt_av1_build_quantizer(EB_EIGHT_BIT, 0, 0, 0, 0, 0, quants_8bit, deq_8bit, pcs);
 
                 if (scs->static_config.encoder_bit_depth == EB_TEN_BIT) {
                     Quants *const   quants_bd = &scs->enc_ctx->quants_bd;
                     Dequants *const deq_bd    = &scs->enc_ctx->deq_bd;
-                    svt_av1_build_quantizer(EB_TEN_BIT, 0, 0, 0, 0, 0, quants_bd, deq_bd);
+                    svt_av1_build_quantizer(EB_TEN_BIT, 0, 0, 0, 0, 0, quants_bd, deq_bd, pcs);
                 }
             }
             // Set the one pass VBR parameters based on the look ahead data
