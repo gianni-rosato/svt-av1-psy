@@ -215,6 +215,7 @@ void            enc_channel_dctor(EncChannel *c, uint32_t inst_cnt);
 EbErrorType     read_command_line(int32_t argc, char *const argv[], EncChannel *channels, uint32_t num_channels);
 int             get_version(int argc, char *argv[]);
 extern uint32_t get_help(int32_t argc, char *const argv[]);
+extern uint32_t get_color_help(int32_t argc, char *const argv[]);
 extern uint32_t get_number_of_channels(int32_t argc, char *const argv[]);
 uint32_t        get_passes(int32_t argc, char *const argv[], EncPass enc_pass[MAX_ENC_PASS]);
 EbErrorType     handle_stats_file(EbConfig *app_cfg, EncPass pass, const SvtAv1FixedBuf *rc_stats_buffer,
