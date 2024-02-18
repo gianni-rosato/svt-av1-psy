@@ -1132,7 +1132,7 @@ EbErrorType svt_av1_pick_filter_level(EbPictureBufferDesc *srcBuffer, // source 
     FrameHeader        *frm_hdr = &pcs->ppcs->frm_hdr;
     (void)srcBuffer;
     struct LoopFilter *const lf = &frm_hdr->loop_filter_params;
-    lf->sharpness_level         = 0;
+    lf->sharpness_level         = pcs->scs->static_config.sharpness > 0 ? pcs->scs->static_config.sharpness : 0;
 
     if (method == LPF_PICK_MINIMAL_LPF)
         lf->filter_level[0] = lf->filter_level[1] = 0;
