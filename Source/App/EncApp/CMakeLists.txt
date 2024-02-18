@@ -25,6 +25,9 @@ if(LIBDOVI_FOUND)
 
   find_library(LIBDOVI_LIBRARY NAMES dovi libdovi
                                PATHS ${PC_LIBDOVI_LIBDIR})
+  if(NOT LIBDOVI_LIBRARY)
+  message(FATAL_ERROR "libdovi library not found!")
+  endif()
 
   find_path(LIBDOVI_INCLUDE_DIR NAMES libdovi/rpu_parser.h
                                 PATHS ${PC_LIBDOVI_INCLUDEDIR})
