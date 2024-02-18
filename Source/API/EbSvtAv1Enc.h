@@ -955,6 +955,13 @@ typedef struct EbSvtAv1EncConfiguration {
     */
     uint8_t new_variance_octile;
 
+    /* @brief Affects loopfilter deblock sharpness and rate distortion
+     *
+     * Min value is -7.
+     * Max is 7.
+     * Default is 0 (off).
+     */
+     int8_t sharpness;
 } EbSvtAv1EncConfiguration;
 
 /**

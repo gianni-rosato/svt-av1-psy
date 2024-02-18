@@ -1202,6 +1202,7 @@ typedef struct PictureControlSetInitData {
     bool    rtc_tune;
     uint8_t variance_boost_strength;
     uint8_t new_variance_octile;
+    int8_t sharpness;
 } PictureControlSetInitData;
 
 typedef struct Av1Comp {
