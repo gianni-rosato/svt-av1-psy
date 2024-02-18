@@ -41,8 +41,8 @@ extern "C" {
 #define NO_ENCDEC               0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch
 #define DEBUG_TPL               0 // Prints to debug TPL
 #define DETAILED_FRAME_OUTPUT   0 // Prints detailed frame output from the library for debugging
-#define TUNE_CHROMA_SSIM        0 // Allows for Chroma and SSIM BDR-based Tuning
-#define TUNE_CQP_CHROMA_SSIM    0 // Tune CQP qp scaling towards improved chroma and SSIM BDR
+#define TUNE_CHROMA_SSIM        1 // Allows for Chroma and SSIM BDR-based Tuning
+#define TUNE_CQP_CHROMA_SSIM    1 // Tune CQP qp scaling towards improved chroma and SSIM BDR
 
 #define MIN_PIC_PARALLELIZATION 0 // Use the minimum amount of picture parallelization
 #define SRM_REPORT              0 // Report SRM status

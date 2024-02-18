@@ -198,6 +198,8 @@
 #define VARIANCE_OCTILE_TOKEN "--variance-octile"
 #define ENABLE_ALT_CURVE_TOKEN "--enable-alt-curve"
 
+#define SHARPNESS_TOKEN "--sharpness"
+
 static EbErrorType validate_error(EbErrorType err, const char *token, const char *value) {
     switch (err) {
     case EB_ErrorNone: return EB_ErrorNone;
@@ -1047,9 +1049,9 @@ ConfigEntry config_entry_specific[] = {
     // --- end: ALTREF_FILTERING_SUPPORT
     {SINGLE_INPUT,
      TUNE_TOKEN,
-     "Specifies whether to use PSNR or VQ as the tuning metric [0 = VQ, 1 = PSNR, 2 = SSIM], "
+     "Specifies whether to use PSNR, VQ, or SSIM as the tuning metric [0 = VQ, 1 = PSNR, 2 = SSIM, 3 = Subjective SSIM], "
      "default is 1 "
-     "[0-2]",
+     "[0-3]",
      set_cfg_generic_token},
     // MD Parameters
     {SINGLE_INPUT,
@@ -1196,6 +1198,11 @@ ConfigEntry config_entry_psy[] = {
     {SINGLE_INPUT,
      ENABLE_ALT_CURVE_TOKEN,
      "[PSY] Enable alternative curve for variance boost (different boosting trade-offs), default is 0 [0-1]",
+     set_cfg_generic_token},
+    // Sharpness
+    {SINGLE_INPUT,
+     SHARPNESS_TOKEN,
+     "Affects loopfilter deblock sharpness and rate distortion, default is 0 [+-7]",
      set_cfg_generic_token},
     // Termination
     {SINGLE_INPUT, NULL, NULL, NULL}};
@@ -1379,6 +1386,9 @@ ConfigEntry config_entry[] = {
     {SINGLE_INPUT, VARIANCE_BOOST_STRENGTH_TOKEN, "VarianceBoostStrength", set_cfg_generic_token},
     {SINGLE_INPUT, VARIANCE_OCTILE_TOKEN, "VarianceOctile", set_cfg_generic_token},
     {SINGLE_INPUT, ENABLE_ALT_CURVE_TOKEN, "EnableAltCurve", set_cfg_generic_token},
+
+    // Sharpness
+    {SINGLE_INPUT, SHARPNESS_TOKEN, "Sharpness", set_cfg_generic_token},
 
     // Termination
     {SINGLE_INPUT, NULL, NULL, NULL}};
