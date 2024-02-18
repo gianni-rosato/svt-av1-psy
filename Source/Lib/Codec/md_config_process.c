@@ -81,17 +81,44 @@ void set_global_motion_field(PictureControlSet *pcs) {
 }
 
 void svt_av1_build_quantizer(EbBitDepth bit_depth, int32_t y_dc_delta_q, int32_t u_dc_delta_q, int32_t u_ac_delta_q,
-                             int32_t v_dc_delta_q, int32_t v_ac_delta_q, Quants *const quants, Dequants *const deq) {
+                             int32_t v_dc_delta_q, int32_t v_ac_delta_q, Quants *const quants, Dequants *const deq, PictureParentControlSet *pcs) {
     int32_t i, q, quant_qtx;
 
     for (q = 0; q < QINDEX_RANGE; q++) {
-        const int32_t qzbin_factor     = svt_aom_get_qzbin_factor(q, bit_depth);
-        const int32_t qrounding_factor = q == 0 ? 64 : 48;
+        int32_t qzbin_factor     = svt_aom_get_qzbin_factor(q, bit_depth);
+        int32_t qrounding_factor = q == 0 ? 64 : 48;
+        int32_t qrounding_factor_fp = pcs->scs->static_config.tune != 3 ? 64 : 48;
+        int diff = q - pcs->frm_hdr.quantization_params.base_q_idx; // q-range diff based on current quantizer
 
         for (i = 0; i < 2; ++i) {
-            int32_t qrounding_factor_fp = 64;
             quant_qtx                   = i == 0 ? svt_aom_dc_quant_qtx(q, y_dc_delta_q, bit_depth)
                                                  : svt_aom_ac_quant_qtx(q, 0, bit_depth);
+            if (pcs->scs->static_config.sharpness != 0) {
+                if (pcs->scs->static_config.sharpness > 0) { // If sharpness is positive
+                    if (diff < 0) { // If we're going to lower quant, decrease zbin factor and increase rounding
+                        qzbin_factor -= MAX(pcs->scs->static_config.sharpness << 1, abs(diff)); // Example range with --sharpness 4: Subtract qzbin_factor by diff, or by (4 << 1), preferring which is closer to 0
+                        qrounding_factor += MAX(pcs->scs->static_config.sharpness << 1, abs(diff));
+                        qrounding_factor_fp += MAX(pcs->scs->static_config.sharpness << 1, abs(diff));
+                    } else if (diff > 0) { // If we're going higher quant, reset both zbin and rounding factor
+                        qzbin_factor     = svt_aom_get_qzbin_factor(q, bit_depth);
+                        qrounding_factor = q == 0 ? 64 : 48;
+                        qrounding_factor_fp = pcs->scs->static_config.tune != 3 ? 64 : 48;
+                    }
+                } else if (pcs->scs->static_config.sharpness < 0) { // If sharpness is negative
+                    if (diff < 0) { // If we're going to lower quant, reset both zbin and rounding factor
+                        qzbin_factor     = svt_aom_get_qzbin_factor(q, bit_depth);
+                        qrounding_factor = q == 0 ? 64 : 48;
+                        qrounding_factor_fp = pcs->scs->static_config.tune != 3 ? 64 : 48;
+                    } else if (diff > 0) { // If we're going higher quant, increase zbin and decrease rounding factors
+                        qzbin_factor += MIN(abs(pcs->scs->static_config.sharpness) << 1, diff); // Choose minimum here since diff > 0
+                        qrounding_factor -= MIN(abs(pcs->scs->static_config.sharpness) << 1, diff);
+                        qrounding_factor_fp -= MIN(abs(pcs->scs->static_config.sharpness) << 1, diff);
+                    }
+                }
+                qzbin_factor = MIN(MAX(qzbin_factor, 1), 256); // Ensure we don't go too low or high
+                qrounding_factor = MIN(MAX(qrounding_factor, 1), 256);
+                qrounding_factor_fp = MIN(MAX(qrounding_factor_fp, 1), 256);
+            }
             svt_aom_invert_quant(&quants->y_quant[q][i], &quants->y_quant_shift[q][i], quant_qtx);
             quants->y_quant_fp[q][i] = (int16_t)((1 << 16) / quant_qtx);
             quants->y_round_fp[q][i] = (int16_t)((qrounding_factor_fp * quant_qtx) >> 7);
