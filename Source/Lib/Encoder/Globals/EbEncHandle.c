@@ -1616,6 +1616,7 @@ EB_API EbErrorType svt_av1_enc_init(EbComponentType *svt_enc_component)
         input_data.static_config = enc_handle_ptr->scs_instance_array[instance_index]->scs->static_config;
         input_data.variance_boost_strength = enc_handle_ptr->scs_instance_array[instance_index]->scs->static_config.variance_boost_strength;
         input_data.new_variance_octile = enc_handle_ptr->scs_instance_array[instance_index]->scs->static_config.new_variance_octile;
+        input_data.sharpness = enc_handle_ptr->scs_instance_array[instance_index]->scs->static_config.sharpness;
 
         EB_NEW(
             enc_handle_ptr->picture_parent_control_set_pool_ptr_array[instance_index],
@@ -3271,7 +3272,18 @@ static void derive_vq_params(SequenceControlSet* scs) {
         // Stability
         vq_ctrl->stability_ctrls.depth_refinement = 1;
     }
-    else {
+    else if (scs->static_config.tune == 3) {
+
+        vq_ctrl->sharpness_ctrls.scene_transition = 1;
+        vq_ctrl->sharpness_ctrls.tf               = 1;
+        vq_ctrl->sharpness_ctrls.unipred_bias     = 1;
+        vq_ctrl->sharpness_ctrls.ifs              = 1;
+        vq_ctrl->sharpness_ctrls.cdef             = 1;
+        vq_ctrl->sharpness_ctrls.restoration      = 1;
+        vq_ctrl->sharpness_ctrls.rdoq             = 1;
+        // Stability
+        vq_ctrl->stability_ctrls.depth_refinement = 1;
+    } else {
 
         // Sharpness
         vq_ctrl->sharpness_ctrls.scene_transition = 1;
@@ -3310,7 +3322,7 @@ static void derive_tf_params(SequenceControlSet *scs) {
     if (do_tf == 0) {
         tf_level = 0;
     }
-    else if (enc_mode <= ENC_M0) {
+    else if (enc_mode <= ENC_M0 || scs->static_config.tune == 3) {
         tf_level = 1;
     }
     else if (enc_mode <= ENC_M4) {
@@ -4579,6 +4591,9 @@ static void copy_api_from_app(
     // Variance boost
     scs->static_config.variance_boost_strength = config_struct->variance_boost_strength;
     scs->static_config.new_variance_octile = config_struct->new_variance_octile;
+
+    // Sharpness
+    scs->static_config.sharpness = config_struct->sharpness;
     return;
 }
 

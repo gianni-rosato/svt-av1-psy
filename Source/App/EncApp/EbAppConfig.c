@@ -196,6 +196,8 @@
 #define VARIANCE_BOOST_STRENGTH_TOKEN "--variance-boost-strength"
 #define NEW_VARIANCE_OCTILE_TOKEN "--new-variance-octile"
 
+#define SHARPNESS_TOKEN "--sharpness"
+
 static EbErrorType validate_error(EbErrorType err, const char *token, const char *value) {
     switch (err) {
     case EB_ErrorNone: return EB_ErrorNone;
@@ -1045,9 +1047,9 @@ ConfigEntry config_entry_specific[] = {
     // --- end: ALTREF_FILTERING_SUPPORT
     {SINGLE_INPUT,
      TUNE_TOKEN,
-     "Specifies whether to use PSNR or VQ as the tuning metric [0 = VQ, 1 = PSNR, 2 = SSIM], "
+     "Specifies whether to use PSNR, VQ, or SSIM as the tuning metric [0 = VQ, 1 = PSNR, 2 = SSIM, 3 = Subjective SSIM], "
      "default is 1 "
-     "[0-2]",
+     "[0-3]",
      set_cfg_generic_token},
     // MD Parameters
     {SINGLE_INPUT,
@@ -1186,6 +1188,11 @@ ConfigEntry config_entry_variance_boost[] = {
     {SINGLE_INPUT,
      NEW_VARIANCE_OCTILE_TOKEN,
      "Octile for new 8x8 variance algorithm. Set to 0 to use 64x64 variance algorithm, default is 6 [0-8]",
+     set_cfg_generic_token},
+    // Sharpness
+    {SINGLE_INPUT,
+     SHARPNESS_TOKEN,
+     "Affects loopfilter deblock sharpness and rate distortion, default is 0 [+-7]",
      set_cfg_generic_token},
     // Termination
     {SINGLE_INPUT, NULL, NULL, NULL}};
@@ -1367,6 +1374,9 @@ ConfigEntry config_entry[] = {
     // Variance boost
     {SINGLE_INPUT, VARIANCE_BOOST_STRENGTH_TOKEN, "VarianceBoostStrength", set_cfg_generic_token},
     {SINGLE_INPUT, NEW_VARIANCE_OCTILE_TOKEN, "NewVarianceOctile", set_cfg_generic_token},
+
+    // Sharpness
+    {SINGLE_INPUT, SHARPNESS_TOKEN, "Sharpness", set_cfg_generic_token},
 
     // Termination
     {SINGLE_INPUT, NULL, NULL, NULL}};
