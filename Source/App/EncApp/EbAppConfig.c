@@ -772,7 +772,7 @@ ConfigEntry config_entry_global_options[] = {
      set_cfg_generic_token},
     {SINGLE_INPUT,
      INPUT_DEPTH_TOKEN,
-     "Input video file and output bitstream bit-depth, default is 8 [8, 10]",
+     "Input video file and output bitstream bit-depth, default is 10 [8, 10]",
      set_cfg_generic_token},
     // Latency
     {SINGLE_INPUT,
@@ -945,8 +945,8 @@ ConfigEntry config_entry_rc[] = {
      VBR_MAX_SECTION_PCT_TOKEN,
      "GOP max bitrate (expressed as a percentage of the target rate), default is 2000 [0-10000]",
      set_cfg_generic_token},
-    {SINGLE_INPUT, ENABLE_QM_TOKEN, "Enable quantisation matrices, default is 0 [0-1]", set_cfg_generic_token},
-    {SINGLE_INPUT, MIN_QM_LEVEL_TOKEN, "Min quant matrix flatness, default is 8 [0-15]", set_cfg_generic_token},
+    {SINGLE_INPUT, ENABLE_QM_TOKEN, "Enable quantisation matrices, default is 1 [0-1]", set_cfg_generic_token},
+    {SINGLE_INPUT, MIN_QM_LEVEL_TOKEN, "Min quant matrix flatness, default is 0 [0-15]", set_cfg_generic_token},
     {SINGLE_INPUT, MAX_QM_LEVEL_TOKEN, "Max quant matrix flatness, default is 15 [0-15]", set_cfg_generic_token},
     {SINGLE_INPUT,
      ROI_MAP_FILE_TOKEN,
@@ -1091,7 +1091,7 @@ ConfigEntry config_entry_specific[] = {
 
     {SINGLE_INPUT,
      FILM_GRAIN_DENOISE_APPLY_TOKEN,
-     "Apply denoising when film grain is ON, default is 1 [0: no denoising, film grain data is "
+     "Apply denoising when film grain is ON, default is 0 [0: no denoising, film grain data is "
      "still in frame header, "
      "1: level of denoising is set by the film-grain parameter]",
      set_cfg_generic_token},
@@ -1215,7 +1215,7 @@ ConfigEntry config_entry_psy[] = {
     // Variance boost
     {SINGLE_INPUT,
      ENABLE_VARIANCE_BOOST_TOKEN,
-     "Enable variance boost, default is 0 [0-1]",
+     "Enable variance boost, default is 1 [0-1]",
      set_cfg_generic_token},
     {SINGLE_INPUT,
      VARIANCE_BOOST_STRENGTH_TOKEN,
