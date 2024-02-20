@@ -19,8 +19,12 @@ uint8_t svt_aom_set_chroma_controls(ModeDecisionContext *ctx, uint8_t uv_level);
 uint8_t svt_aom_get_update_cdf_level(EncMode enc_mode, SliceType is_islice, uint8_t is_base);
 uint8_t svt_aom_get_chroma_level(EncMode enc_mode);
 uint8_t svt_aom_get_bypass_encdec(EncMode enc_mode, uint8_t encoder_bit_depth);
+#if OPT_NIC
+uint8_t svt_aom_get_nic_level(EncMode enc_mode, uint8_t is_base, uint32_t qp);
+#else
 uint8_t svt_aom_get_nic_level(EncMode enc_mode, uint8_t is_base, uint8_t hierarchical_levels, uint32_t qp,
                               bool rtc_tune);
+#endif
 
 void    svt_aom_set_depth_ctrls(PictureControlSet *pcs, ModeDecisionContext *ctx, uint8_t depth_level);
 uint8_t svt_aom_get_enable_me_16x16(EncMode enc_mode);
@@ -54,12 +58,29 @@ void svt_aom_set_dist_based_ref_pruning_controls(ModeDecisionContext *ctx, uint8
 
 bool    svt_aom_get_disallow_4x4(EncMode enc_mode, uint8_t is_base);
 uint8_t svt_aom_get_nsq_geom_level(EncMode enc_mode, uint8_t is_base, InputCoeffLvl coeff_lvl);
+#if OPT_NEW_NSQ_LVLS
+#if OPT_R0_NSQ
+uint8_t svt_aom_get_nsq_search_level(PictureControlSet* pcs, EncMode enc_mode, InputCoeffLvl coeff_lvl, uint32_t qp);
+#else
+uint8_t svt_aom_get_nsq_search_level(EncMode enc_mode, InputCoeffLvl coeff_lvl, uint32_t qp);
+#endif
+#else
 uint8_t svt_aom_get_nsq_search_level(EncMode enc_mode, uint8_t is_base, InputCoeffLvl coeff_lvl, uint32_t qp);
+#endif
 uint8_t get_inter_compound_level(EncMode enc_mode);
 uint8_t get_filter_intra_level(EncMode enc_mode);
 uint8_t svt_aom_get_inter_intra_level(EncMode enc_mode, uint8_t is_base, uint8_t transition_present);
+#if OPT_OBMC_LVLS
+uint8_t svt_aom_get_obmc_level(EncMode enc_mode, uint32_t qp, uint8_t is_base);
+#else
+#if OPT_OBMC_DIST
+uint8_t svt_aom_get_obmc_level(EncMode enc_mode, uint8_t fast_decode, EbInputResolution input_resolution);
+#else
 uint8_t svt_aom_get_obmc_level(PictureControlSet *pcs, EncMode enc_mode, uint8_t fast_decode,
                                EbInputResolution input_resolution);
+#endif
+#endif
+
 void    svt_aom_set_nsq_geom_ctrls(ModeDecisionContext *ctx, uint8_t nsq_geom_level, uint8_t *allow_HVA_HVB,
                                    uint8_t *allow_HV4, uint8_t *min_nsq_bsize);
 void    svt_aom_set_nsq_search_ctrls(ModeDecisionContext *ctx, uint8_t nsq_search_level, uint8_t resolution);

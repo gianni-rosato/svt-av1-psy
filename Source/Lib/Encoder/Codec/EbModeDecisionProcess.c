@@ -128,7 +128,11 @@ EbErrorType svt_aom_mode_decision_context_ctor(ModeDecisionContext *ctx, EbColor
                                                EncMode enc_mode, uint16_t max_block_cnt, uint32_t encoder_bit_depth,
                                                EbFifo *mode_decision_configuration_input_fifo_ptr,
                                                EbFifo *mode_decision_output_fifo_ptr, uint8_t enable_hbd_mode_decision,
+#if OPT_NIC
+                                               uint8_t cfg_palette) {
+#else
                                                uint8_t cfg_palette, bool rtc_tune) {
+#endif
     uint32_t buffer_index;
     uint32_t cand_index;
 
@@ -149,16 +153,24 @@ EbErrorType svt_aom_mode_decision_context_ctor(ModeDecisionContext *ctx, EbColor
     // determine MAX_NICS for a given preset
     // get the min scaling level (the smallest scaling level is the most conservative)
     uint8_t min_nic_scaling_level = NICS_SCALING_LEVELS - 1;
+#if !OPT_NIC
     for (uint8_t hl = 0; hl < MAX_TEMPORAL_LAYERS; hl++) {
+#endif
         for (uint8_t is_base = 0; is_base < 2; is_base++) {
             // min QP is 1 b/c 0 is lossless and is not supported
             for (uint8_t qp = 1; qp <= MAX_QP_VALUE; qp++) {
+#if OPT_NIC
+                uint8_t nic_level = svt_aom_get_nic_level(enc_mode, is_base, qp);
+#else
                 uint8_t nic_level         = svt_aom_get_nic_level(enc_mode, is_base, hl, qp, rtc_tune);
+#endif
                 uint8_t nic_scaling_level = svt_aom_set_nic_controls(NULL, nic_level);
                 min_nic_scaling_level     = MIN(min_nic_scaling_level, nic_scaling_level);
             }
         }
+#if !OPT_NIC
     }
+#endif
     uint8_t stage1_scaling_num = MD_STAGE_NICS_SCAL_NUM[min_nic_scaling_level][MD_STAGE_1];
 
     // scale max_nics
@@ -232,14 +244,32 @@ EbErrorType svt_aom_mode_decision_context_ctor(ModeDecisionContext *ctx, EbColor
     }
 
     // Allocate buffers for obmc prediction
+#if OPT_OBMC_LVLS
+    uint8_t obmc_allowed = 0;
+    for (uint8_t fast_decode = 0; fast_decode < 2; fast_decode++) {
+        for (uint8_t is_base = 0; is_base < 2; is_base++) {
+            // min QP is 1 b/c 0 is lossless and is not supported
+            for (uint8_t qp = 1; qp <= MAX_QP_VALUE; qp++) {
+                if (obmc_allowed)
+                    break;
+                obmc_allowed |= svt_aom_get_obmc_level(enc_mode, qp, is_base);
+            }
+        }
+    }
+#else
     uint8_t obmc_allowed = 0;
     for (uint8_t fast_decode = 0; fast_decode < 2; fast_decode++) {
         for (EbInputResolution input_resolution = 0; input_resolution < INPUT_SIZE_COUNT; input_resolution++) {
             if (obmc_allowed)
                 break;
+#if OPT_OBMC_DIST
+            obmc_allowed |= svt_aom_get_obmc_level(enc_mode, fast_decode, input_resolution);
+#else
             obmc_allowed |= svt_aom_get_obmc_level(NULL, enc_mode, fast_decode, input_resolution);
+#endif
         }
     }
+#endif
     if (obmc_allowed) {
         const uint8_t bits = ctx->hbd_md > EB_8_BIT_MD ? 2 : 1;
         EB_MALLOC(ctx->obmc_buff_0, sb_size * sb_size * bits * MAX_MB_PLANE * sizeof(ctx->obmc_buff_0[0]));

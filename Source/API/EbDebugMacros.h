@@ -34,6 +34,32 @@
 extern "C" {
 #endif // __cplusplus
 
+// svt-10
+#define OPT_DEPTHS_LVL                            1 // Optimize depth_level: levels and qp-banding
+#define OPT_OBMC_DIST                             1 // Use scs-qp @ obmc pic early exit
+#define OPT_TXS                                   1 // Optimize txs_level: levels and qp-banding
+#define OPT_HIGH_FREQ                             1 // Opt high freq
+#define OPT_NIC                                   1 // Optimize nic_level: levels and qp-banding
+#define OPT_NEW_NSQ_LVLS                          1 // Add new NSQ levels and tune based on QP and coeff_level
+#define OPT_TXT                                   1 // Optimize for txt levels: remove unnecessary levels and create new levels with better spacing in terms of speed
+#define OPT_OBMC_LVLS                             1 // Optimize obmc_level
+#define OPT_ME_HME_REF_PRUNE                      1 // Optimize levels for ME/HME ref pruning
+#define OPT_WARP_LVLS                             1 // Optimize warp_level
+#define OPT_CAND_RED                              1 // Optimize cand reduction level for M6
+#define OPT_R0_NSQ                                1 // NSQ-offset = f(r0)
+
+#define OPT_R0_DEPTH_REFINEMENT                   0
+#define OPT_R0_DEPTH_REMOVAL                      0
+#define OPT_R0_DEPTHS                             0
+
+#define OPT_LIST1_REMOVAL                         1 // Optimize levels for List0-only @ Base
+
+#define CALL_GLOBAL                               0
+#if CALL_GLOBAL
+#define USE_GLOBAL                                0
+#endif
+
+
 //FOR DEBUGGING - Do not remove
 #define OPT_LD_LATENCY2         1 // Latency optimization for low delay - to keep the Macro for backwards testing until 3.0
 #define LOG_ENC_DONE            0 // log encoder job one

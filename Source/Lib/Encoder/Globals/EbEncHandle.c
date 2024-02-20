@@ -3354,6 +3354,21 @@ static void set_list0_only_base(SequenceControlSet* scs, uint8_t list0_only_base
     case 0:
         ctrls->enabled = 0;
         break;
+#if OPT_LIST1_REMOVAL
+    case 1:
+        ctrls->enabled = 1;
+        ctrls->list0_only_base_th = 35;
+        break;
+    case 2:
+        ctrls->enabled = 1;
+        ctrls->list0_only_base_th = 75;
+        break;
+    case 3:
+    default:
+        ctrls->enabled = 1;
+        ctrls->list0_only_base_th = 100;
+        break;
+#else
     case 1:
         ctrls->enabled = 1;
         ctrls->list0_only_base_th = 35;
@@ -3371,6 +3386,7 @@ static void set_list0_only_base(SequenceControlSet* scs, uint8_t list0_only_base
         ctrls->list0_only_base_th = 100;
         break;
     default: assert(0); break;
+#endif
     }
 }
 /*
@@ -4143,11 +4159,27 @@ static void set_param_based_on_input(SequenceControlSet *scs)
         scs->over_boundary_block_mode = scs->over_bndry_blk;
     svt_aom_set_mfmv_config(scs);
 
+#if OPT_LIST1_REMOVAL
+    uint8_t list0_only_base_lvl = 0;
+    if (scs->static_config.enc_mode <= ENC_M4)
+        list0_only_base_lvl = 0;
+    else if (scs->static_config.enc_mode <= ENC_M6)
+        list0_only_base_lvl = 3;
+    else
+        list0_only_base_lvl = 4;
+
+    // QP-banding
+    if (scs->static_config.qp <= 43)
+        list0_only_base_lvl = list0_only_base_lvl + 1;
+    else if (scs->static_config.qp > 51)
+        list0_only_base_lvl = MAX(0, (int) ((int) list0_only_base_lvl - 1));
+#else
     uint8_t list0_only_base_lvl = 0;
     if (scs->static_config.enc_mode <= ENC_M4)
         list0_only_base_lvl = 0;
     else
         list0_only_base_lvl = 4;
+#endif
     set_list0_only_base(scs, list0_only_base_lvl);
 
     if (scs->static_config.rate_control_mode == SVT_AV1_RC_MODE_VBR || scs->static_config.rate_control_mode == SVT_AV1_RC_MODE_CBR ||
