@@ -1364,6 +1364,8 @@ extern "C" {
     void svt_aom_paeth_predictor_64x32_neon(uint8_t *dst, ptrdiff_t stride, const uint8_t *above,const uint8_t *left);
     void svt_aom_paeth_predictor_64x64_neon(uint8_t *dst, ptrdiff_t stride, const uint8_t *above,const uint8_t *left);
 
+    void svt_full_distortion_kernel32_bits_neon(int32_t *coeff, uint32_t coeff_stride, int32_t *recon_coeff, uint32_t recon_coeff_stride, uint64_t distortion_result[DIST_CALC_TOTAL], uint32_t area_width, uint32_t area_height);
+
 #endif
 
 #ifdef ARCH_X86_64

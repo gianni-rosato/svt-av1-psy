@@ -183,6 +183,8 @@ TEST_P(SpatialFullDistortionTest, DISABLED_Speed) {
     RunSpeedTest();
 }
 
+#ifdef ARCH_X86_64
+
 INSTANTIATE_TEST_CASE_P(
     AVX2, SpatialFullDistortionTest,
     ::testing::Values(svt_spatial_full_distortion_kernel_avx2));
@@ -195,6 +197,8 @@ INSTANTIATE_TEST_CASE_P(
 INSTANTIATE_TEST_CASE_P(
     AVX512, SpatialFullDistortionTest,
     ::testing::Values(svt_spatial_full_distortion_kernel_avx512));
+#endif
+
 #endif
 
 typedef enum { VAL_MIN, VAL_MAX, VAL_RANDOM } TestPattern;
@@ -367,6 +371,9 @@ void SpatialFullDistortionKernelFuncTest::RunCheckOutput() {
 TEST_P(SpatialFullDistortionKernelFuncTest, SpatialKernelFuncTest) {
     RunCheckOutput();
 }
+
+#ifdef ARCH_X86_64
+
 #if EN_AVX512_SUPPORT
 INSTANTIATE_TEST_CASE_P(
     SpatialKernelFunc, SpatialFullDistortionKernelFuncTest,
@@ -387,6 +394,7 @@ INSTANTIATE_TEST_CASE_P(
                           svt_spatial_full_distortion_kernel_avx2)));
 #endif
 
+#endif
 class FullDistortionKernel16BitsFuncTest
     : public SpatialFullDistortionFuncTestBase,
       public ::testing::WithParamInterface<SpatialKernelTestParam> {
@@ -548,6 +556,8 @@ TEST_P(FullDistortionKernel16BitsFuncTest, DISABLED_Speed) {
     RunSpeedTest();
 }
 
+#ifdef ARCH_X86_64
+
 INSTANTIATE_TEST_CASE_P(
     FullDistortionKernel16FuncTest_SSE4_1, FullDistortionKernel16BitsFuncTest,
     ::testing::Combine(
@@ -561,6 +571,8 @@ INSTANTIATE_TEST_CASE_P(
         ::testing::ValuesIn(TEST_AREA_SIZES),
         ::testing::ValuesIn(TEST_PATTERNS),
         ::testing::Values(svt_full_distortion_kernel16_bits_avx2)));
+
+#endif
 
 typedef void (*fullDistortionKernel32BitsFunc)(
     int32_t *coeff, uint32_t coeff_stride, int32_t *recon_coeff,
@@ -640,6 +652,8 @@ TEST_P(fullDistortionKernel32Bits, CheckOutput) {
     RunCheckOutput();
 }
 
+#ifdef ARCH_X86_64
+
 INSTANTIATE_TEST_CASE_P(
     SSE4_1, fullDistortionKernel32Bits,
     ::testing::Values(svt_full_distortion_kernel32_bits_sse4_1));
@@ -647,6 +661,16 @@ INSTANTIATE_TEST_CASE_P(
 INSTANTIATE_TEST_CASE_P(
     AVX2, fullDistortionKernel32Bits,
     ::testing::Values(svt_full_distortion_kernel32_bits_avx2));
+
+#endif
+
+#ifdef ARCH_AARCH64
+
+INSTANTIATE_TEST_CASE_P(
+    NEON, fullDistortionKernel32Bits,
+    ::testing::Values(svt_full_distortion_kernel32_bits_neon));
+
+#endif
 
 typedef void (*fullDistortionKernelCbfZero32BitsFunc)(
     int32_t *coeff, uint32_t coeff_stride,
@@ -708,6 +732,8 @@ TEST_P(fullDistortionKernelCbfZero32Bits, CheckOutput) {
     RunCheckOutput();
 }
 
+#ifdef ARCH_X86_64
+
 INSTANTIATE_TEST_CASE_P(
     SSE4_1, fullDistortionKernelCbfZero32Bits,
     ::testing::Values(svt_full_distortion_kernel_cbf_zero32_bits_sse4_1));
@@ -715,5 +741,7 @@ INSTANTIATE_TEST_CASE_P(
 INSTANTIATE_TEST_CASE_P(
     AVX2, fullDistortionKernelCbfZero32Bits,
     ::testing::Values(svt_full_distortion_kernel_cbf_zero32_bits_avx2));
+
+#endif
 
 }  // namespace

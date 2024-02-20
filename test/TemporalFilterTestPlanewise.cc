@@ -1132,6 +1132,22 @@ TEST_F(TemporalFilterTestGetFinalFilteredPixels, test_hbd_avx2) {
 
 #endif
 
+#ifdef ARCH_AARCH64
+
+TEST_F(TemporalFilterTestGetFinalFilteredPixels, test_lbd_neon) {
+    for (int i = 0; i < 100; ++i) {
+        RunTest(false, svt_aom_get_final_filtered_pixels_neon);
+    }
+}
+
+TEST_F(TemporalFilterTestGetFinalFilteredPixels, test_hbd_neon) {
+    for (int i = 0; i < 100; ++i) {
+        RunTest(true, svt_aom_get_final_filtered_pixels_neon);
+    }
+}
+
+#endif
+
 typedef void (*apply_filtering_central_fn)(
     struct MeContext *me_ctx, EbPictureBufferDesc *input_picture_ptr_central,
     EbByte *src, uint32_t **accum, uint16_t **count, uint16_t blk_width,

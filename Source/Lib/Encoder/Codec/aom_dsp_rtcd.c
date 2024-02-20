@@ -835,7 +835,7 @@ void svt_aom_setup_rtcd_internal(EbCpuFlags flags) {
     SET_ONLY_C(svt_av1_apply_zz_based_temporal_filter_planewise_medium_hbd, svt_av1_apply_zz_based_temporal_filter_planewise_medium_hbd_c);
     SET_NEON(svt_av1_apply_temporal_filter_planewise_medium, svt_av1_apply_temporal_filter_planewise_medium_c, svt_av1_apply_temporal_filter_planewise_medium_neon);
     SET_ONLY_C(svt_av1_apply_temporal_filter_planewise_medium_hbd, svt_av1_apply_temporal_filter_planewise_medium_hbd_c);
-    SET_ONLY_C(get_final_filtered_pixels, svt_aom_get_final_filtered_pixels_c);
+    SET_NEON(get_final_filtered_pixels, svt_aom_get_final_filtered_pixels_c, svt_aom_get_final_filtered_pixels_neon);
     SET_ONLY_C(apply_filtering_central, svt_aom_apply_filtering_central_c);
     SET_ONLY_C(apply_filtering_central_highbd, svt_aom_apply_filtering_central_highbd_c);
     SET_NEON(downsample_2d, svt_aom_downsample_2d_c, svt_aom_downsample_2d_neon);
