@@ -15,6 +15,7 @@
 #include "EbInvTransforms.h"
 #include "transpose_neon.h"
 #include "itx_lbd_neon.h"
+#include "av1_inv_txfm_neon.h"
 
 static INLINE void pack_and_load_buffer_4x4(const int32_t *input, int16x4_t *in) {
     for (int i = 0; i < 4; ++i) { in[i] = vmovn_s32(vld1q_s32(input + i * 4)); }
@@ -4239,32 +4240,6 @@ static INLINE void lowbd_inv_txfm2d_add_no_identity_neon(const int32_t *input, u
         }
     } else if (txfm_size_col == 8) {
         lowbd_add_flip_buffer_8xn_neon(b, output_r, stride_r, output_w, stride_w, ud_flip, txfm_size_row);
-    }
-}
-
-static INLINE void svt_av1_lowbd_inv_txfm2d_add_neon(const int32_t *input, uint8_t *output_r, int32_t stride_r,
-                                                     uint8_t *output_w, int32_t stride_w, TxType tx_type,
-                                                     TxSize tx_size, int32_t eob) {
-    switch (tx_type) {
-    case IDTX:
-        lowbd_inv_txfm2d_add_idtx_neon(input, output_r, stride_r, output_w, stride_w, tx_type, tx_size, eob);
-        break;
-
-    case H_DCT:
-    case H_ADST:
-    case H_FLIPADST:
-        lowbd_inv_txfm2d_add_v_identity_neon(input, output_r, stride_r, output_w, stride_w, tx_type, tx_size, eob);
-        break;
-
-    case V_DCT:
-    case V_ADST:
-    case V_FLIPADST:
-        lowbd_inv_txfm2d_add_h_identity_neon(input, output_r, stride_r, output_w, stride_w, tx_type, tx_size, eob);
-        break;
-
-    default:
-        lowbd_inv_txfm2d_add_no_identity_neon(input, output_r, stride_r, output_w, stride_w, tx_type, tx_size, eob);
-        break;
     }
 }
 

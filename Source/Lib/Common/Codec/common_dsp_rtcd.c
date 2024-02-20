@@ -854,16 +854,16 @@ void svt_aom_setup_common_rtcd_internal(EbCpuFlags flags) {
     SET_ONLY_C(svt_av1_inv_txfm2d_add_8x32, svt_av1_inv_txfm2d_add_8x32_c);
     SET_ONLY_C(svt_av1_inv_txfm2d_add_16x4, svt_av1_inv_txfm2d_add_16x4_c);
     SET_ONLY_C(svt_av1_inv_txfm2d_add_16x8, svt_av1_inv_txfm2d_add_16x8_c);
-    SET_ONLY_C(svt_av1_inv_txfm2d_add_16x16, svt_av1_inv_txfm2d_add_16x16_c);
+    SET_NEON(svt_av1_inv_txfm2d_add_16x16, svt_av1_inv_txfm2d_add_16x16_c, svt_av1_inv_txfm2d_add_16x16_neon);
     SET_ONLY_C(svt_av1_inv_txfm2d_add_16x32, svt_av1_inv_txfm2d_add_16x32_c);
     SET_ONLY_C(svt_av1_inv_txfm2d_add_16x64, svt_av1_inv_txfm2d_add_16x64_c);
     SET_ONLY_C(svt_av1_inv_txfm2d_add_32x8, svt_av1_inv_txfm2d_add_32x8_c);
     SET_ONLY_C(svt_av1_inv_txfm2d_add_32x16, svt_av1_inv_txfm2d_add_32x16_c);
-    SET_ONLY_C(svt_av1_inv_txfm2d_add_32x32, svt_av1_inv_txfm2d_add_32x32_c);
+    SET_NEON(svt_av1_inv_txfm2d_add_32x32, svt_av1_inv_txfm2d_add_32x32_c, svt_av1_inv_txfm2d_add_32x32_neon);
     SET_ONLY_C(svt_av1_inv_txfm2d_add_32x64, svt_av1_inv_txfm2d_add_32x64_c);
     SET_ONLY_C(svt_av1_inv_txfm2d_add_64x16, svt_av1_inv_txfm2d_add_64x16_c);
     SET_ONLY_C(svt_av1_inv_txfm2d_add_64x32, svt_av1_inv_txfm2d_add_64x32_c);
-    SET_ONLY_C(svt_av1_inv_txfm2d_add_64x64, svt_av1_inv_txfm2d_add_64x64_c);
+    SET_NEON(svt_av1_inv_txfm2d_add_64x64, svt_av1_inv_txfm2d_add_64x64_c, svt_av1_inv_txfm2d_add_64x64_neon);
     SET_NEON(svt_av1_inv_txfm_add, svt_av1_inv_txfm_add_c, svt_dav1d_inv_txfm_add_neon);
 
     SET_ONLY_C(svt_compressed_packmsb, svt_compressed_packmsb_c);

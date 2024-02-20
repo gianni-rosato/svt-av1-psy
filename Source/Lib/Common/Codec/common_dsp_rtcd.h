@@ -1366,6 +1366,10 @@ extern "C" {
 
     void svt_full_distortion_kernel32_bits_neon(int32_t *coeff, uint32_t coeff_stride, int32_t *recon_coeff, uint32_t recon_coeff_stride, uint64_t distortion_result[DIST_CALC_TOTAL], uint32_t area_width, uint32_t area_height);
 
+    void svt_av1_inv_txfm2d_add_16x16_neon(const int32_t *input, uint16_t *output_r, int32_t stride_r, uint16_t *output_w, int32_t stride_w, TxType tx_type, int32_t bd);
+    void svt_av1_inv_txfm2d_add_32x32_neon(const int32_t *input, uint16_t *output_r, int32_t stride_r, uint16_t *output_w, int32_t stride_w, TxType tx_type, int32_t bd);
+    void svt_av1_inv_txfm2d_add_64x64_neon(const int32_t *input, uint16_t *output_r, int32_t stride_r, uint16_t *output_w, int32_t stride_w, TxType tx_type, int32_t bd);
+
 #endif
 
 #ifdef ARCH_X86_64

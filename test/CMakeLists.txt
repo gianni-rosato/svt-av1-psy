@@ -83,6 +83,7 @@ set(arch_neutral_files
 
 set(multi_arch_files
     FwdTxfm2dAsmTest.cc
+    InvTxfm2dAsmTest.cc
     PictureOperatorTest.cc
     SadTest.cc
     selfguided_filter_test.cc
@@ -109,7 +110,6 @@ if(HAVE_X86_PLATFORM)
         InvTxfm1dTest.cc
         FwdTxfm2dTest.cc
         HbdVarianceTest.cc
-        InvTxfm2dAsmTest.cc
         MotionEstimationTest.cc
         OBMCSadTest.cc
         OBMCVarianceTest.cc

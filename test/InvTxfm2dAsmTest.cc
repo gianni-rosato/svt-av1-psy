@@ -42,7 +42,10 @@
 #include "EbTransforms.h"
 #include "EbUnitTestUtility.h"
 #include "TxfmCommon.h"
+
+#ifdef ARCH_X86_64
 #include "av1_inv_txfm_ssse3.h"
+#endif  // ARCH_X86_64
 
 using svt_av1_test_tool::SVTRandom;  // to generate the random
 namespace {
@@ -100,6 +103,8 @@ typedef struct {
 #name, nullptr, nullptr, nullptr \
     }
 
+#ifdef ARCH_X86_64
+
 static bool is_tx_type_imp_32x32_avx2(const TxType tx_type) {
     switch (tx_type) {
     case DCT_DCT:
@@ -154,6 +159,34 @@ static const InvSqrTxfmFuncPair inv_txfm_c_avx512_func_pairs[TX_64X64 + 1] = {
 };
 #endif
 
+#endif  // ARCH_X86_64
+
+#ifdef ARCH_AARCH64
+
+static bool is_tx_type_imp_32x32_neon(const TxType tx_type) {
+    switch (tx_type) {
+    case DCT_DCT:
+    case IDTX: return true;
+    default: return false;
+    }
+}
+
+static bool is_tx_type_imp_64x64_neon(const TxType tx_type) {
+    if (tx_type == DCT_DCT)
+        return true;
+    return false;
+}
+
+static const InvSqrTxfmFuncPair inv_txfm_c_neon_func_pairs[TX_64X64 + 1] = {
+    SQR_FUNC_PAIRS(svt_av1_inv_txfm2d_add_16x16, neon, all_txtype_imp),
+    SQR_FUNC_PAIRS(svt_av1_inv_txfm2d_add_32x32, neon,
+                   is_tx_type_imp_32x32_neon),
+    SQR_FUNC_PAIRS(svt_av1_inv_txfm2d_add_64x64, neon,
+                   is_tx_type_imp_64x64_neon),
+};
+
+#endif  // ARCH_AARCH64
+
 // from TX_4X8 to TX_SIZES_ALL
 static const InvRectTxfm2dType1Func rect_type1_ref_funcs_c[TX_SIZES_ALL] = {
     // square transform
@@ -176,6 +209,8 @@ static const InvRectTxfm2dType1Func rect_type1_ref_funcs_c[TX_SIZES_ALL] = {
     svt_av1_inv_txfm2d_add_32x8_c,
     svt_av1_inv_txfm2d_add_16x64_c,
     svt_av1_inv_txfm2d_add_64x16_c};
+
+#ifdef ARCH_X86_64
 
 static const InvRectTxfm2dType1Func rect_type1_ref_funcs_sse4_1[TX_SIZES_ALL] =
     {
@@ -284,6 +319,8 @@ static const InvRectType2TxfmFuncPair *get_rect_type2_func_pair_dav1d(
     }
 }
 
+#endif  // ARCH_X86_64
+
 /**
  * @brief Unit test for inverse tx 2d avx2/sse4_1 functions:
  * - svt_av1_inv_txfm2d_{4, 8, 16, 32, 64}x{4, 8, 16, 32, 64}_avx2
@@ -348,13 +385,21 @@ class InvTxfm2dAsmTest : public ::testing::TestWithParam<InvTxfm2dParam> {
     void run_sqr_txfm_match_test(const TxSize tx_size, int is_asm_kernel) {
         const int width = tx_size_wide[tx_size];
         const int height = tx_size_high[tx_size];
-        InvSqrTxfmFuncPair pair =
-            (is_asm_kernel == 0)   ? inv_txfm_c_avx2_func_pairs[tx_size]
-            : (is_asm_kernel == 3) ? dav1d_inv_txfm_c_avx2_func_pairs[tx_size]
+        InvSqrTxfmFuncPair pair{"", nullptr, nullptr, nullptr};
+        switch (is_asm_kernel) {
+#ifdef ARCH_X86_64
+        case 0: pair = inv_txfm_c_avx2_func_pairs[tx_size]; break;
+        case 1: pair = inv_txfm_c_sse4_1_func_pairs[tx_size]; break;
 #if EN_AVX512_SUPPORT
-            : (is_asm_kernel == 2) ? inv_txfm_c_avx512_func_pairs[tx_size]
-#endif
-                                   : inv_txfm_c_sse4_1_func_pairs[tx_size];
+        case 2: pair = inv_txfm_c_avx512_func_pairs[tx_size]; break;
+#endif  // EN_AVX512_SUPPORT
+        case 3: pair = dav1d_inv_txfm_c_avx2_func_pairs[tx_size]; break;
+#endif  // ARCH_X86_64
+#ifdef ARCH_AARCH64
+        case 4: pair = inv_txfm_c_neon_func_pairs[tx_size]; break;
+#endif  // ARCH_AARCH64
+        }
+
         if (pair.ref_func == nullptr || pair.test_func == nullptr)
             return;
         for (int tx_type = DCT_DCT; tx_type < TX_TYPES; ++tx_type) {
@@ -387,7 +432,7 @@ class InvTxfm2dAsmTest : public ::testing::TestWithParam<InvTxfm2dParam> {
                                type,
                                bd_);
 
-                EXPECT_EQ(0,
+                ASSERT_EQ(0,
                           memcmp(output_ref_,
                                  output_test_,
                                  height * stride_ * sizeof(output_test_[0])))
@@ -397,6 +442,8 @@ class InvTxfm2dAsmTest : public ::testing::TestWithParam<InvTxfm2dParam> {
             }
         }
     }
+
+#ifdef ARCH_X86_64
 
     void run_rect_type1_txfm_match_test(
         const TxSize tx_size, const InvRectTxfm2dType1Func *function_arr) {
@@ -804,6 +851,8 @@ class InvTxfm2dAsmTest : public ::testing::TestWithParam<InvTxfm2dParam> {
         }
     }
 
+#endif  // ARCH_X86_64
+
   private:
     // clear the coeffs according to eob position, note the coeffs are
     // linear.
@@ -887,6 +936,7 @@ class InvTxfm2dAsmTest : public ::testing::TestWithParam<InvTxfm2dParam> {
 TEST_P(InvTxfm2dAsmTest, sqr_txfm_match_test) {
     for (int i = TX_4X4; i <= TX_64X64; i++) {
         const TxSize tx_size = static_cast<TxSize>(i);
+#ifdef ARCH_X86_64
         run_sqr_txfm_match_test(tx_size, 0);
         run_sqr_txfm_match_test(tx_size, 1);
         run_sqr_txfm_match_test(tx_size, 3);
@@ -894,8 +944,14 @@ TEST_P(InvTxfm2dAsmTest, sqr_txfm_match_test) {
         if (svt_aom_get_cpu_flags_to_use() & EB_CPU_FLAGS_AVX512F)
             run_sqr_txfm_match_test(tx_size, 2);
 #endif
+#endif  // ARCH_X86_64
+#ifdef ARCH_AARCH64
+        run_sqr_txfm_match_test(tx_size, 4);
+#endif  // ARCH_AARCH64
     }
 }
+
+#ifdef ARCH_X86_64
 
 TEST_P(InvTxfm2dAsmTest, rect_type1_txfm_match_test) {
     for (int i = TX_4X8; i < TX_SIZES_ALL; i++) {
@@ -951,6 +1007,11 @@ TEST_P(InvTxfm2dAsmTest, DISABLED_HandleTransform_speed_test) {
     run_handle_transform_speed_test();
 }
 
+extern "C" void svt_av1_lowbd_inv_txfm2d_add_ssse3(
+    const int32_t *input, uint8_t *output_r, int32_t stride_r,
+    uint8_t *output_w, int32_t stride_w, TxType tx_type, TxSize tx_size,
+    int32_t eob);
+
 extern "C" void svt_av1_lowbd_inv_txfm2d_add_avx2(
     const int32_t *input, uint8_t *output_r, int32_t stride_r,
     uint8_t *output_w, int32_t stride_w, TxType tx_type, TxSize tx_size,
@@ -962,6 +1023,22 @@ INSTANTIATE_TEST_CASE_P(
                                          svt_av1_lowbd_inv_txfm2d_add_avx2),
                        ::testing::Values(static_cast<int>(EB_EIGHT_BIT),
                                          static_cast<int>(EB_TEN_BIT))));
+#endif  // ARCH_X86_64
+
+#ifdef ARCH_AARCH64
+
+extern "C" void svt_av1_lowbd_inv_txfm2d_add_neon(
+    const int32_t *input, uint8_t *output_r, int32_t stride_r,
+    uint8_t *output_w, int32_t stride_w, TxType tx_type, TxSize tx_size,
+    int32_t eob);
+
+INSTANTIATE_TEST_CASE_P(
+    TX_ASM, InvTxfm2dAsmTest,
+    ::testing::Combine(::testing::Values(svt_av1_lowbd_inv_txfm2d_add_neon),
+                       ::testing::Values(static_cast<int>(EB_EIGHT_BIT),
+                                         static_cast<int>(EB_TEN_BIT))));
+
+#endif  // ARCH_AARCH64
 
 using InvTxfm2AddParam = std::tuple<LowbdInvTxfm2dAddFunc, int>;
 
@@ -1150,6 +1227,8 @@ TEST_P(InvTxfm2dAddTest, svt_av1_inv_txfm_add) {
     }
 }
 
+#ifdef ARCH_X86_64
+
 INSTANTIATE_TEST_CASE_P(
     TX_ASM, InvTxfm2dAddTest,
     ::testing::Combine(::testing::Values(svt_av1_inv_txfm_add_ssse3,
@@ -1157,5 +1236,7 @@ INSTANTIATE_TEST_CASE_P(
                                          svt_dav1d_inv_txfm_add_avx2),
                        ::testing::Values(static_cast<int>(EB_EIGHT_BIT),
                                          static_cast<int>(EB_TEN_BIT))));
+
+#endif  // ARCH_X86_64
 
 }  // namespace
