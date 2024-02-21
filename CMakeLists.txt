@@ -19,6 +19,8 @@ endif()
 project(svt-av1 VERSION 1.8.0
     LANGUAGES C CXX)
 
+set(VERSION_TAG "")
+
 if(POLICY CMP0063)
   cmake_policy(SET CMP0063 NEW)
 endif()

@@ -11,7 +11,7 @@
 # Common/Codec Directory CMakeLists.txt
 
 if(EXCLUDE_HASH)
-    set(PACKAGE_VERSION_STRING ${PROJECT_VERSION})
+    set(PACKAGE_VERSION_STRING ${PROJECT_VERSION}${VERSION_TAG})
     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/EbVersion.h.in EbVersion.h @ONLY)
     add_custom_target(EbVersionHeaderGen)
 else()
@@ -20,7 +20,7 @@ else()
             -D INPUT_FILE=${CMAKE_CURRENT_SOURCE_DIR}/EbVersion.h.in
             -D OUTPUT_FILE=EbVersion.h
             -D GIT_ROOT_DIR=${PROJECT_SOURCE_DIR}
-            -D PACKAGE_VERSION_STRING=${PROJECT_VERSION}
+            -D PACKAGE_VERSION_STRING=${PROJECT_VERSION}${VERSION_TAG}
             -P ${CMAKE_CURRENT_SOURCE_DIR}/ConfigureGitVersion.cmake
         BYPRODUCTS EbVersion.h
         COMMENT "Generating version header"
