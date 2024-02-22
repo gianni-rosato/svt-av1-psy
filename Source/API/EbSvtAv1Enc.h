@@ -435,7 +435,7 @@ typedef struct EbSvtAv1EncConfiguration {
     /* Target bitrate in bits/second, only applicable when rate control mode is
      * set to 1 (VBR) or 2 (CBR).
      *
-     * Default is 2000000. */
+     * Default is 2000513. */
     uint32_t target_bit_rate;
     /* maximum bitrate in bits/second, only apllicable when rate control mode is
      * set to 0.

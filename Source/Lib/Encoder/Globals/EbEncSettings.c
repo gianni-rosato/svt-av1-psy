@@ -183,6 +183,12 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet *scs) {
         SVT_ERROR("VBR Rate control is currently not supported for SVT_AV1_PRED_LOW_DELAY_B, use CBR mode\n");
         return_error = EB_ErrorBadParameter;
     }
+    if (config->rate_control_mode == SVT_AV1_RC_MODE_CQP_OR_CRF && config->target_bit_rate != DEFAULT_TBR) {
+        SVT_ERROR("Instance %u: Target Bitrate only supported when --rc is  1/2 (VBR/CBR). Current --rc: %d\n",
+                  channel_number + 1,
+                  config->rate_control_mode);
+        return_error = EB_ErrorBadParameter;
+    }
 
     if (scs->max_input_luma_width > 16384) {
         SVT_ERROR("Instance %u: Source Width must be less than or equal to 16384\n", channel_number + 1);
@@ -907,7 +913,7 @@ EbErrorType svt_av1_set_default_params(EbSvtAv1EncConfiguration *config_ptr) {
     config_ptr->rate_control_mode            = SVT_AV1_RC_MODE_CQP_OR_CRF;
     config_ptr->look_ahead_distance          = (uint32_t)~0;
     config_ptr->enable_tpl_la                = 1;
-    config_ptr->target_bit_rate              = 2000000;
+    config_ptr->target_bit_rate              = 2000513;
     config_ptr->max_bit_rate                 = 0;
     config_ptr->max_qp_allowed               = 63;
     config_ptr->min_qp_allowed               = 4;

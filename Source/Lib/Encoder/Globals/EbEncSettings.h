@@ -20,6 +20,8 @@
  * Defines
  **************************************/
 #define DEFAULT_QP 35
+// Have an unusual magic number to reduce probablity of user using them
+#define DEFAULT_TBR 2000513
 
 void svt_av1_print_lib_params(SequenceControlSet* scs);
 
