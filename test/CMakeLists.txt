@@ -168,7 +168,7 @@ if(HAVE_X86_PLATFORM)
         $<TARGET_OBJECTS:ENCODER_ASM_SSE4_1>
         $<TARGET_OBJECTS:ENCODER_ASM_AVX2>
         $<TARGET_OBJECTS:ENCODER_ASM_AVX512>
-        cpuinfo_public
+        $<IF:$<BOOL:${USE_EXTERNAL_CPUINFO}>,cpuinfo::cpuinfo,cpuinfo_public>
     )
 endif()
 
