@@ -28,7 +28,7 @@ extern "C" {
  * has been modified, and reset anytime the major API version has
  * been changed. Used to keep track if a field has been added or not.
  */
-#define SVT_AV1_ENC_ABI_VERSION 9
+#define SVT_AV1_ENC_ABI_VERSION 10
 
 //***HME***
 

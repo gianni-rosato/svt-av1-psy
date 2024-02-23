@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.9.0] - 2024-02-15
+
+Encoder
+- Improve the tradeoffs for the random access mode across presets:
+-   Speedup presets MR by ~100% and M0 to M8 by 3-28% while maintaining similar quality levels
+-   Improved the compression efficiency of presets M9-M13 by 1-4% (!2179)
+-   Simplified VBR multi-pass to use 2 passes to allow integration with ffmpeg
+- Continued adding ARM optimizations for functions with c_only equivalent
+
+Cleanup and bug fixes and documentation
+- Various cleanups and functional bug fixes
+- Update the documentation to reflect the rate control updates
+
+
 ## [1.8.0] - 2023-12-11
 
 Encoder
