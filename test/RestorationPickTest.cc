@@ -17,9 +17,14 @@
 #include "EbUnitTestUtility.h"
 #include "util.h"
 
+#ifdef ARCH_X86_64
+
 #include <immintrin.h>  // AVX2
 #include "synonyms.h"
 #include "synonyms_avx2.h"
+
+#endif
+
 #include "EbRestorationPick.h"
 
 typedef void (*av1_compute_stats_func)(int32_t wiener_win, const uint8_t *dgd8,
@@ -256,6 +261,8 @@ TEST_P(av1_compute_stats_test, DISABLED_speed) {
     speed_test();
 }
 
+#ifdef ARCH_X86_64
+
 INSTANTIATE_TEST_CASE_P(
     AV1_COMPUTE_STATS_AVX2, av1_compute_stats_test,
     ::testing::Combine(
@@ -273,6 +280,8 @@ INSTANTIATE_TEST_CASE_P(
         ::testing::Values(svt_av1_compute_stats_avx512), ::testing::Range(0, 6),
         ::testing::Values(WIENER_WIN_CHROMA, WIENER_WIN, WIENER_WIN_3TAP)));
 #endif
+
+#endif  // ARCH_X86_64
 
 typedef ::testing::tuple<BlockSize, av1_compute_stats_highbd_func, int, int,
                          EbBitDepth>
@@ -534,6 +543,8 @@ TEST_P(av1_compute_stats_test_hbd, DISABLED_speed) {
     highbd_speed_test();
 }
 
+#ifdef ARCH_X86_64
+
 INSTANTIATE_TEST_CASE_P(
     AV1_COMPUTE_STATS_HBD_AVX2, av1_compute_stats_test_hbd,
     ::testing::Combine(
@@ -554,3 +565,18 @@ INSTANTIATE_TEST_CASE_P(
         ::testing::Values(WIENER_WIN_CHROMA, WIENER_WIN, WIENER_WIN_3TAP),
         ::testing::Values(EB_EIGHT_BIT, EB_TEN_BIT, EB_TWELVE_BIT)));
 #endif
+
+#endif  // ARCH_X86_64
+
+#ifdef ARCH_AARCH64
+
+INSTANTIATE_TEST_CASE_P(
+    AV1_COMPUTE_STATS_HBD_NEON, av1_compute_stats_test_hbd,
+    ::testing::Combine(
+        ::testing::Range(BLOCK_4X4, (BlockSize)(BlockSizeS_ALL + 2)),
+        ::testing::Values(svt_av1_compute_stats_highbd_neon),
+        ::testing::Range(0, 8),
+        ::testing::Values(WIENER_WIN_CHROMA, WIENER_WIN, WIENER_WIN_3TAP),
+        ::testing::Values(EB_EIGHT_BIT, EB_TEN_BIT, EB_TWELVE_BIT)));
+
+#endif  // ARCH_AARCH64

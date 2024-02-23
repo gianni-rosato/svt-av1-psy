@@ -93,6 +93,7 @@ set(multi_arch_files
     SpatialFullDistortionTest.cc
     TemporalFilterTestPlanewise.cc
     convolve_2d_test.cc
+    RestorationPickTest.cc
     )
 
 if(HAVE_X86_PLATFORM)
@@ -121,7 +122,6 @@ if(HAVE_X86_PLATFORM)
         PsnrTest.cc
         QuantAsmTest.cc
         ResidualTest.cc
-        RestorationPickTest.cc
         SelfGuidedUtilTest.cc
         VarianceTest.cc
         WedgeUtilTest.cc
