@@ -460,7 +460,7 @@ Linux libavif (Static):
       -DAVIF_CODEC_SVT=SYSTEM
       -DAVIF_BUILD_EXAMPLES=ON
       -DAVIF_BUILD_APPS=ON
-      -DAVIF_LIBYUV=OFF
+      -DAVIF_LIBYUV=OFF #Remove this token once upgraded to Ubuntu 22
     - cmake --build libavif-build --config Release --target install
     - valgrind --error-exitcode=1 --track-origins=yes --suppressions=/usr/lib/valgrind/debian.supp -- avifenc -c svt -d 8 -y 420 -r limited -j 2 ./Docs/img/me_fig_new.png out.avif
 
