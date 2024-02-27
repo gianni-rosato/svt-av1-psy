@@ -1,7 +1,7 @@
 From cf7fcd8dedfa40d27bf5a4f91e5d00c03eee560f Mon Sep 17 00:00:00 2001
 From: James Almer <jamrial@gmail.com>
 Date: Tue, 29 Nov 2022 18:35:27 -0300
-Subject: [PATCH 5/8] avcodec/libsvtav1: don't force a default value for
+Subject: [PATCH 05/12] avcodec/libsvtav1: don't force a default value for
  deprecated options
 
 Stick to the library's default value instead.
@@ -76,5 +76,5 @@ index d41bed480b..b145a484da 100644
  
      { "svtav1-params", "Set the SVT-AV1 configuration using a :-separated list of key=value parameters", OFFSET(svtav1_opts), AV_OPT_TYPE_DICT, { 0 }, 0, 0, VE },
 -- 
-2.40.1
+2.44.0
 

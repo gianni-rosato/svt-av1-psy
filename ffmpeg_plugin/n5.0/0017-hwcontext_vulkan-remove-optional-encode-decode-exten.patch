@@ -1,7 +1,7 @@
 From 67c80720fc3da77bdf3ba66134a584ed1470a12e Mon Sep 17 00:00:00 2001
 From: Lynne <dev@lynne.ee>
 Date: Sun, 25 Dec 2022 01:03:30 +0100
-Subject: [PATCH 17/18] hwcontext_vulkan: remove optional encode/decode
+Subject: [PATCH 17/22] hwcontext_vulkan: remove optional encode/decode
  extensions from the list
 
 They're not currently used, so they don't need to be there.
@@ -32,5 +32,5 @@ index 60a6cf6a91..82cae4c757 100644
  
  /* Converts return values to strings */
 -- 
-2.40.1
+2.44.0
 

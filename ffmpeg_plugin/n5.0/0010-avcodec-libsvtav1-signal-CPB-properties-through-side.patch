@@ -1,7 +1,7 @@
 From f1a56bbd744fd998652d688ff950db7f899af70e Mon Sep 17 00:00:00 2001
 From: =?UTF-8?q?Jan=20Ekstr=C3=B6m?= <jeebjp@gmail.com>
 Date: Mon, 9 May 2022 21:29:44 +0300
-Subject: [PATCH 10/18] avcodec/libsvtav1: signal CPB properties through side
+Subject: [PATCH 10/22] avcodec/libsvtav1: signal CPB properties through side
  data
 
 This way values such as maxrate/bufsize can be utilized further
@@ -42,5 +42,5 @@ index 0298aa0f99..e4135547e8 100644
      return 0;
  }
 -- 
-2.40.1
+2.44.0
 

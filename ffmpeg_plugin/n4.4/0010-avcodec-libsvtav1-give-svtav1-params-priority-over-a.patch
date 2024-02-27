@@ -1,7 +1,7 @@
 From 690f3b794f44d19eaf54fc33dc17fdee9317252d Mon Sep 17 00:00:00 2001
 From: James Almer <jamrial@gmail.com>
 Date: Sun, 27 Mar 2022 20:06:51 -0300
-Subject: [PATCH 10/21] avcodec/libsvtav1: give svtav1-params priority over
+Subject: [PATCH 10/25] avcodec/libsvtav1: give svtav1-params priority over
  avctx values
 
 If the svt equivalent option to an avctx AVOption is passed by the user
@@ -125,5 +125,5 @@ index 5cc2a6e023..ef9ae00235 100644
      return 0;
  }
 -- 
-2.40.1
+2.44.0
 

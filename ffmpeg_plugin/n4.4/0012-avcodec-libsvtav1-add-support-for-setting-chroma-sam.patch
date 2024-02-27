@@ -1,7 +1,7 @@
 From bb022d8d110bbd04d840d16fb313a5c664ac5d0b Mon Sep 17 00:00:00 2001
 From: =?UTF-8?q?Jan=20Ekstr=C3=B6m?= <jeebjp@gmail.com>
 Date: Mon, 25 Apr 2022 23:35:17 +0300
-Subject: [PATCH 12/21] avcodec/libsvtav1: add support for setting chroma
+Subject: [PATCH 12/25] avcodec/libsvtav1: add support for setting chroma
  sample location
 
 Support for configuring this was added with version 1.0.0.
@@ -48,5 +48,5 @@ index 333b22ca4c..caff1299b8 100644
          param->profile = avctx->profile;
  
 -- 
-2.40.1
+2.44.0
 

@@ -1,7 +1,7 @@
 From e37e8754b16e841eb2c49a6146bbe00e2c70f232 Mon Sep 17 00:00:00 2001
 From: =?UTF-8?q?Jan=20Ekstr=C3=B6m?= <jeebjp@gmail.com>
 Date: Thu, 9 Mar 2023 20:27:06 +0200
-Subject: [PATCH 6/8] avcodec/libsvtav1: use larger of bit rate and max rate
+Subject: [PATCH 06/12] avcodec/libsvtav1: use larger of bit rate and max rate
  for buffer size
 
 Generally if maxrate is set, the calculation should be maxrate over
@@ -42,5 +42,5 @@ index b145a484da..164ba35137 100644
      if (avctx->bit_rate || avctx->rc_max_rate || avctx->rc_buffer_size) {
          AVCPBProperties *cpb_props = ff_add_cpb_side_data(avctx);
 -- 
-2.40.1
+2.44.0
 

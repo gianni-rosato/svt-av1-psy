@@ -14,12 +14,26 @@ Notes:
 - The patches for n5.1 have been tested to apply cleanly to n5.1, n5.1.1, n5.1.2, and n5.1.3.
   - n5.1 already contains certain patches from the set of n5.0, thus is a subset of n5.0's patches.
 
+### n6.1 - [svt-av1/n6.1](https://gitlab.com/1480c1/FFmpeg/-/tree/svt-av1/n6.1)
+
+#### using SVT-AV1 v1.1.0 or lower with n6.1?
+
+- [67a2571a55](https://gitlab.com/1480c1/FFmpeg/-/commit/67a2571a55): Backport patch for adding version guard around `force_key_frames`, not needed if using the latest SVT-AV1
+
+#### Using SVT-AV1 v2.0.0 or higher with n6.1?
+
+- [69dd1ce610](https://gitlab.com/1480c1/FFmpeg/-/commit/69dd1ce610): Backport patch for SVT-AV1 2.0.0 API changes surounding low delay operations
+
 ### n6.0 - [svt-av1/n6.0](https://gitlab.com/1480c1/FFmpeg/-/tree/svt-av1/n6.0)
 
 #### Using SVT-AV1 v1.4 with n6.0?
 
 - [fba9d9609f](https://gitlab.com/1480c1/FFmpeg/-/commit/fba9d9609f): Backport patch for additional changes for max_buf_sz
 - [7958325a83](https://gitlab.com/1480c1/FFmpeg/-/commit/7958325a83): Backport patch for allowing -1 for the -preset option
+- [7bcc1b4eb8](https://gitlab.com/1480c1/FFmpeg/-/commit/7bcc1b4eb8): Backport patch for workaround with `gop_size` == 1
+- [e8465aa5dd](https://gitlab.com/1480c1/FFmpeg/-/commit/e8465aa5dd): Backport patch for for using the workaround with `force_key_frames` if `gop_size` == 1
+- [67a2571a55](https://gitlab.com/1480c1/FFmpeg/-/commit/67a2571a55): Backport patch for adding version guard around `force_key_frames`
+- [69dd1ce610](https://gitlab.com/1480c1/FFmpeg/-/commit/69dd1ce610): Backport patch for SVT-AV1 2.0.0 API changes surounding low delay operations
 
 ---
 
@@ -37,6 +51,10 @@ Notes:
 - [fe100bc556](https://gitlab.com/1480c1/FFmpeg/-/commit/fe100bc556): Backport patch for passing bitrate properties through cpb side data
 - [fb70e0611b](https://gitlab.com/1480c1/FFmpeg/-/commit/fb70e0611b): Backport patch for fixing segfault on copying metadata from the EOS signal
 - [7958325a83](https://gitlab.com/1480c1/FFmpeg/-/commit/7958325a83): Backport patch for allowing -1 for the -preset option
+- [7bcc1b4eb8](https://gitlab.com/1480c1/FFmpeg/-/commit/7bcc1b4eb8): Backport patch for workaround with `gop_size` == 1
+- [e8465aa5dd](https://gitlab.com/1480c1/FFmpeg/-/commit/e8465aa5dd): Backport patch for for using the workaround with `force_key_frames` if `gop_size` == 1
+- [67a2571a55](https://gitlab.com/1480c1/FFmpeg/-/commit/67a2571a55): Backport patch for adding version guard around `force_key_frames`
+- [69dd1ce610](https://gitlab.com/1480c1/FFmpeg/-/commit/69dd1ce610): Backport patch for SVT-AV1 2.0.0 API changes surounding low delay operations
 
 #### Using SVT-AV1 v1.1 with n5.0?
 
@@ -83,6 +101,10 @@ This patch is not necessary if you have vulkan disabled.
 - [1c6fd7d756](https://gitlab.com/1480c1/FFmpeg/-/commit/1c6fd7d756): Backport patch removing vbv_bufsize
 - [96748ac54f](https://gitlab.com/1480c1/FFmpeg/-/commit/96748ac54f): Backport patch fixing setting of max_buf_sz
 - [fba9d9609f](https://gitlab.com/1480c1/FFmpeg/-/commit/fba9d9609f): Backport patch for additional changes for max_buf_sz
+- [7bcc1b4eb8](https://gitlab.com/1480c1/FFmpeg/-/commit/7bcc1b4eb8): Backport patch for workaround with `gop_size` == 1
+- [e8465aa5dd](https://gitlab.com/1480c1/FFmpeg/-/commit/e8465aa5dd): Backport patch for for using the workaround with `force_key_frames` if `gop_size` == 1
+- [67a2571a55](https://gitlab.com/1480c1/FFmpeg/-/commit/67a2571a55): Backport patch for adding version guard around `force_key_frames`
+- [69dd1ce610](https://gitlab.com/1480c1/FFmpeg/-/commit/69dd1ce610): Backport patch for SVT-AV1 2.0.0 API changes surounding low delay operations
 
 ## How to build
 

@@ -1,7 +1,7 @@
-From 39791bac50fc53994b68a4d6df221a8a5bb0e5de Mon Sep 17 00:00:00 2001
+From b4a0e682f34b099bb24b91a6091c744c5a63baa0 Mon Sep 17 00:00:00 2001
 From: Christopher Degawa <ccom@randomderp.com>
 Date: Wed, 10 May 2023 15:29:12 -0500
-Subject: [PATCH 21/21] libavcodec/libsvtav1: Allow -1 for preset option
+Subject: [PATCH 21/25] libavcodec/libsvtav1: Allow -1 for preset option
 
 Currently, the -1 (MR) preset is disallowed as it's taken as the preset
 option not set, and the only way to access it was through svtav1-params.
@@ -35,5 +35,5 @@ index 32d10a3e1f..afc3e35070 100644
      FF_AV1_PROFILE_OPTS
  
 -- 
-2.40.1
+2.44.0
 

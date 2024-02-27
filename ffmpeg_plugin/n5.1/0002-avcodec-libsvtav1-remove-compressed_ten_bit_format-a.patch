@@ -1,7 +1,7 @@
 From 20a52b6fde5887321b5d95c3ce84e08dba46aa3e Mon Sep 17 00:00:00 2001
 From: Christopher Degawa <christopher.degawa@intel.com>
 Date: Thu, 20 Oct 2022 22:55:27 -0500
-Subject: [PATCH 2/8] avcodec/libsvtav1: remove compressed_ten_bit_format and
+Subject: [PATCH 02/12] avcodec/libsvtav1: remove compressed_ten_bit_format and
  simplify alloc_buffer
 
 compressed_ten_bit_format has been deprecated upstream and has no effect
@@ -42,5 +42,5 @@ index 4001cf7f03..a14ebf448e 100644
      // allocate buffer for in and out
      svt_enc->in_buf           = av_mallocz(sizeof(*svt_enc->in_buf));
 -- 
-2.40.1
+2.44.0
 

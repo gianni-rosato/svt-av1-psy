@@ -1,7 +1,7 @@
 From b0e1e47eaa959768b0897d6ef9830d28a00ed794 Mon Sep 17 00:00:00 2001
 From: Christopher Degawa <ccom@randomderp.com>
 Date: Sun, 20 Nov 2022 13:07:36 -0600
-Subject: [PATCH 18/21] avcodec/libsvtav1: only set max_buf_sz if both bitrate
+Subject: [PATCH 18/25] avcodec/libsvtav1: only set max_buf_sz if both bitrate
  and rc_buf_sz is set
 
 maximum_buffer_size_ms should only be set if both are specified or if
@@ -27,5 +27,5 @@ index b12dad98a0..55e16d5d3d 100644
      if (svt_enc->crf > 0) {
          param->qp                   = svt_enc->crf;
 -- 
-2.40.1
+2.44.0
 

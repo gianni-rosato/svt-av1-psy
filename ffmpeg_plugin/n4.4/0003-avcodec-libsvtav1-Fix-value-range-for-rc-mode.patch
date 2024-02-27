@@ -1,7 +1,7 @@
 From b8357cd00de896c7f5826544760f7b17ea9ee677 Mon Sep 17 00:00:00 2001
 From: Limin Wang <lance.lmwang@gmail.com>
 Date: Sat, 18 Sep 2021 08:24:17 +0800
-Subject: [PATCH 03/21] avcodec/libsvtav1: Fix value range for rc mode
+Subject: [PATCH 03/25] avcodec/libsvtav1: Fix value range for rc mode
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
@@ -26,5 +26,5 @@ index f57cdba63a..173979756d 100644
          { "vbr", "Variable Bit Rate, use a target bitrate for the entire stream", 0, AV_OPT_TYPE_CONST, { .i64 = 1 },  INT_MIN, INT_MAX, VE, "rc" },
          { "cvbr", "Constrained Variable Bit Rate, use a target bitrate for each GOP", 0, AV_OPT_TYPE_CONST,{ .i64 = 2 },  INT_MIN, INT_MAX, VE, "rc" },
 -- 
-2.40.1
+2.44.0
 
