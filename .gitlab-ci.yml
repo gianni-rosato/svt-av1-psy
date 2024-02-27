@@ -6,6 +6,7 @@ workflow:
     - when: always
 
 stages:
+  - check
   - compile
   - test
   - test-2
@@ -43,7 +44,7 @@ Style check:
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
       when: never
     - if: $NIGHTLY == null && $WEEKEND == null
-  stage: compile
+  stage: check
   image: registry.gitlab.com/aomediacodec/aom-testing/alpine3
   cache: []
   script:
@@ -54,7 +55,7 @@ Static analysis (cppcheck):
     - if: $NIGHTLY != null && $WEEKEND != null
       when: never
     - !reference [.source_code_rules]
-  stage: compile
+  stage: check
   image: registry.gitlab.com/aomediacodec/aom-testing/ubuntu1804
   cache:
     key: cppcheck
