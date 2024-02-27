@@ -76,6 +76,11 @@
 #include "aom_dsp_rtcd.h"
 #include "common_dsp_rtcd.h"
 
+/***************************************
+ * Macros
+ ***************************************/
+#define SIZE_OF_ONE_FRAME_IN_BYTES(width, height, csp, is_16bit) \
+    ((((width) * (height)) + 2 * (((width) * (height)) >> (3 - csp))) << is_16bit)
 
  /**************************************
   * Defines
@@ -1142,6 +1147,7 @@ static EbErrorType svt_enc_handle_ctor(
     enc_handle_ptr->eos_received = false;
     enc_handle_ptr->eos_sent = false;
     enc_handle_ptr->frame_received = false;
+    enc_handle_ptr->is_prev_valid = true;
     return EB_ErrorNone;
 }
 
@@ -5097,6 +5103,76 @@ EbErrorType svt_input_y8b_update(
     return EB_ErrorNone;
 }
 /*
+    memset the library input buffer(s)
+*/
+static void memset_input_buffer(SequenceControlSet* scs, EbBufferHeaderType* dst,
+    EbBufferHeaderType* dst_y8b, EbBufferHeaderType* src, int pass) {
+
+    // Copy the higher level structure
+    dst->n_alloc_len  = src->n_alloc_len;
+    dst->n_filled_len = src->n_filled_len;
+    dst->flags        = src->flags;
+    dst->pts          = src->pts;
+    dst->n_tick_count = src->n_tick_count;
+    dst->size         = src->size;
+    dst->qp           = src->qp;
+    dst->pic_type = src->pic_type;
+    if (scs->first_pass_ctrls.ds) {
+        // memset the picture buffer
+        if (src->p_buffer != NULL) {
+
+            EbPictureBufferDesc* y8b_input_picture_ptr = (EbPictureBufferDesc*)dst_y8b->p_buffer;
+            EbPictureBufferDesc* input_pic = (EbPictureBufferDesc*)dst->p_buffer;
+            EbSvtAv1EncConfiguration* config = &scs->static_config;
+            Bool is_16bit_input = (Bool)(config->encoder_bit_depth > EB_EIGHT_BIT);
+
+            uint32_t y8b_input_size = ((y8b_input_picture_ptr->max_width + (y8b_input_picture_ptr->org_x << 1)) * (y8b_input_picture_ptr->max_height + (y8b_input_picture_ptr->org_y << 1)));
+            memset(y8b_input_picture_ptr->buffer_y, 0, (y8b_input_size * sizeof(uint8_t)));
+
+            uint32_t input_size = ((input_pic->max_width + (input_pic->org_x << 1)) * (input_pic->max_height + (input_pic->org_y << 1)));
+            memset(input_pic->buffer_cb, 128, (input_size >> 2) * sizeof(uint8_t));
+            memset(input_pic->buffer_cr, 128, (input_size >> 2) * sizeof(uint8_t));
+            if (is_16bit_input) {
+                memset(input_pic->buffer_bit_inc_y, 0, ((input_size >> 2) * sizeof(uint8_t)));
+                memset(input_pic->buffer_bit_inc_cb, 0, ((input_size >> 4) * sizeof(uint8_t)));
+                memset(input_pic->buffer_bit_inc_cr, 0, ((input_size >> 4) * sizeof(uint8_t)));
+            }
+        }
+    }
+    else if (pass != ENCODE_FIRST_PASS) {
+        // memset the picture buffer
+        if (src->p_buffer != NULL) {
+
+            EbPictureBufferDesc* y8b_input_picture_ptr = (EbPictureBufferDesc*)dst_y8b->p_buffer;
+            EbPictureBufferDesc* input_pic = (EbPictureBufferDesc*)dst->p_buffer;
+            EbSvtAv1EncConfiguration* config = &scs->static_config;
+            Bool is_16bit_input = (Bool)(config->encoder_bit_depth > EB_EIGHT_BIT);
+
+            uint32_t y8b_input_size = ((y8b_input_picture_ptr->max_width + (y8b_input_picture_ptr->org_x << 1))* (y8b_input_picture_ptr->max_height + (y8b_input_picture_ptr->org_y << 1)));
+            memset(y8b_input_picture_ptr->buffer_y, 0, (y8b_input_size * sizeof(uint8_t)));
+
+            uint32_t input_size = ((input_pic->max_width + (input_pic->org_x << 1)) * (input_pic->max_height + (input_pic->org_y << 1)));
+            memset(input_pic->buffer_cb, 128, (input_size >> 2) * sizeof(uint8_t));
+            memset(input_pic->buffer_cr, 128, (input_size >> 2) * sizeof(uint8_t));
+            if (is_16bit_input) {
+                memset(input_pic->buffer_bit_inc_y , 0, ((input_size >> 2) * sizeof(uint8_t)));
+                memset(input_pic->buffer_bit_inc_cb, 0, ((input_size >> 4) * sizeof(uint8_t)));
+                memset(input_pic->buffer_bit_inc_cr, 0, ((input_size >> 4) * sizeof(uint8_t)));
+            }
+            // Copy the metadata array
+            if (svt_aom_copy_metadata_buffer(dst, src->metadata) != EB_ErrorNone)
+                dst->metadata = NULL;
+        }
+    }
+
+    // Copy the private data list
+    if (src->p_app_private)
+        copy_private_data_list(dst, src);
+    else
+        dst->p_app_private = NULL;
+}
+
+/*
  Copy the input buffer header content
 from the sample application to the library buffers
 */
@@ -5262,6 +5338,15 @@ EB_API EbErrorType svt_av1_enc_send_picture(
     EbBufferHeaderType   *app_hdr = p_buffer;
     enc_handle_ptr->frame_received = true;
 
+    // Exit the library if we detect an invalid API input buffer @ the previous library call
+    if (enc_handle_ptr->is_prev_valid == false) {
+        p_buffer->flags = EB_BUFFERFLAG_EOS;
+        p_buffer->pic_type = EB_AV1_INVALID_PICTURE;
+        enc_handle_ptr->eos_received = 1;
+        return_val = EB_ErrorBadParameter;
+        SVT_ERROR("Invalid API input buffer size detected. Please ignore the output stream\n");
+    }
+
     // Get new Luma-8b buffer & a new (Chroma-8b + Luma-Chroma-2bit) buffers; Lib will release once done.
     EbObjectWrapper  *y8b_wrapper;
     svt_get_empty_object(
@@ -5294,15 +5379,38 @@ EB_API EbErrorType svt_av1_enc_send_picture(
     if (p_buffer != NULL) {
         enc_handle_ptr->eos_received += p_buffer->flags & EB_BUFFERFLAG_EOS;
 
-        //copy the Luma 8bit part into y8b buffer and the rest of samples into the regular buffer
+        // copy the Luma 8bit part into y8b buffer and the rest of samples into the regular buffer
         EbBufferHeaderType *lib_y8b_hdr = (EbBufferHeaderType*)y8b_wrapper->object_ptr;
         EbBufferHeaderType *lib_reg_hdr = (EbBufferHeaderType*)eb_wrapper_ptr->object_ptr;
-        copy_input_buffer(
-            enc_handle_ptr->scs_instance_array[0]->scs,
-            lib_reg_hdr,
-            lib_y8b_hdr,
-            app_hdr,
-            0);
+
+        // check whether the n_filled_len has enough samples to be processed
+        EbPictureBufferDesc* input_pic = (EbPictureBufferDesc*)lib_y8b_hdr->p_buffer;
+        SequenceControlSet* scs = enc_handle_ptr->scs_instance_array[0]->scs;
+        EbSvtAv1EncConfiguration* config = &scs->static_config;
+        Bool is_16bit_input = (Bool)(config->encoder_bit_depth > EB_EIGHT_BIT);
+        size_t read_size = (size_t)SIZE_OF_ONE_FRAME_IN_BYTES(
+            input_pic->width - scs->max_input_pad_right, input_pic->height - scs->max_input_pad_bottom, config->encoder_color_format, is_16bit_input);
+        if (app_hdr->p_buffer != NULL && read_size > app_hdr->n_filled_len) {
+
+            // memset the library input buffer(s) if the API input buffer is not large enough
+            // this operation is necessary to avoid a potential crash when processing an invalid input
+            // the library will still process the current input and then exit
+            memset_input_buffer(
+                enc_handle_ptr->scs_instance_array[0]->scs,
+                lib_reg_hdr,
+                lib_y8b_hdr,
+                app_hdr,
+                0);
+            enc_handle_ptr->is_prev_valid = false;
+        }
+        else {
+            copy_input_buffer(
+                enc_handle_ptr->scs_instance_array[0]->scs,
+                lib_reg_hdr,
+                lib_y8b_hdr,
+                app_hdr,
+                0);
+        }
     }
 
     //Take a new App-RessCoord command
