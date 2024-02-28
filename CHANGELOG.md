@@ -1,6 +1,6 @@
 # Changelog
 
-## [1.9.0] - 2024-02-15
+## [2.0.0] - 2024-02-15
 
 Encoder
 - Improve the tradeoffs for the random access mode across presets:
