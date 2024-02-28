@@ -35,7 +35,7 @@ extern "C" {
 #endif // __cplusplus
 
 //FOR DEBUGGING - Do not remove
-#define OPT_LD_LATENCY2         0 // Latency optimization for low delay
+#define OPT_LD_LATENCY2         1 // Latency optimization for low delay
 #define LOG_ENC_DONE            0 // log encoder job one
 #define NO_ENCDEC               0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch
 #define DEBUG_TPL               0 // Prints to debug TPL

@@ -4141,12 +4141,15 @@ static void store_mg_picture_arrays(PictureDecisionContext* ctx) {
 static void assign_and_release_pa_refs(EncodeContext* enc_ctx, PictureParentControlSet* pcs, PictureDecisionContext* ctx) {
 
     const unsigned int mg_size = ctx->mg_size;
+#if !OPT_LD_LATENCY2
     bool eos_reached = false;
+#endif
     for (uint32_t pic_i = 0; pic_i < mg_size; ++pic_i) {
 
         pcs = (PictureParentControlSet*)ctx->mg_pictures_array[pic_i];
+#if !OPT_LD_LATENCY2
         eos_reached |= pcs->end_of_sequence_flag;
-
+#endif
         if ((pcs->slice_type == P_SLICE) || (pcs->slice_type == B_SLICE)) {
             uint8_t max_ref_count = (pcs->slice_type == B_SLICE) ? ALT + 1 : BWD; // no list1 refs for P_SLICE
             for (REF_FRAME_MINUS1 ref = LAST; ref < max_ref_count; ref++) {
