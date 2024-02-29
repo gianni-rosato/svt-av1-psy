@@ -1354,7 +1354,7 @@ int variance_comp_int(const void *a, const void *b) { return (int)*(uint16_t *)a
 #define VAR_BOOST_MAX_QSTEP_RATIO_BOOST 8
 
 static int av1_get_deltaq_sb_variance_boost(uint8_t base_q_idx, uint16_t *variances, uint8_t strength,
-                                            EbBitDepth bit_depth, uint8_t octile) {
+                                            EbBitDepth bit_depth, uint8_t octile, Bool enable_alt_curve) {
     // boost q_index based on empirical visual testing, strength 2
     // variance     qstep_ratio boost (@ base_q_idx 255)
     // 256          1
@@ -1407,10 +1407,15 @@ static int av1_get_deltaq_sb_variance_boost(uint8_t base_q_idx, uint16_t *varian
     assert(strength >= 1 && strength <= 4);
     double qstep_ratio = 0;
 
-    // regular q step ratio curve
-    double strengths[] = {0, 0.65, 1.1, 1.6, 2.5};
-    qstep_ratio        = pow(1.018, strengths[strength] * (-10 * log2((double)variance) + 80));
-
+    if (!enable_alt_curve) {
+        // regular q step ratio curve
+        double strengths[] = {0, 0.65, 1.1, 1.6, 2.5};
+        qstep_ratio        = pow(1.018, strengths[strength] * (-10 * log2((double)variance) + 80));
+    } else {
+        // alternative "flat" q step ratio curve (in log-variance domain)
+        // prefers boosting mid-contrast content more over the regular curve (at a modest bitrate increase)
+        qstep_ratio = 0.25 * strength * (-log2((double)variance) + 8) + 1;
+    }
     qstep_ratio = CLIP3(1, VAR_BOOST_MAX_QSTEP_RATIO_BOOST, qstep_ratio);
 
     int32_t base_q   = svt_av1_convert_qindex_to_q_fp8(base_q_idx, bit_depth);
@@ -1472,7 +1477,8 @@ void svt_variance_adjust_qp(PictureControlSet *pcs) {
                                                  ppcs_ptr->variance[sb_addr],
                                                  scs->static_config.variance_boost_strength,
                                                  scs->static_config.encoder_bit_depth,
-                                                 scs->static_config.variance_octile);
+                                                 scs->static_config.variance_octile,
+                                                 scs->static_config.enable_alt_curve);
 #if DEBUG_VAR_BOOST_STATS
         printf("%4d ", boost);
 
