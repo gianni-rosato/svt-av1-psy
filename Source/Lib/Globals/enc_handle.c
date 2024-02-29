@@ -4575,6 +4575,7 @@ static void copy_api_from_app(
     scs->static_config.enable_variance_boost = config_struct->enable_variance_boost;
     scs->static_config.variance_boost_strength = config_struct->variance_boost_strength;
     scs->static_config.variance_octile = config_struct->variance_octile;
+    scs->static_config.enable_alt_curve = config_struct->enable_alt_curve;
     return;
 }
 
