@@ -980,11 +980,18 @@ typedef struct EbSvtAv1EncConfiguration {
      *  Default is 6 */
     uint8_t variance_octile;
 
+    /* @brief Enable the use of an alternative curve for variance boost
+     * which emphasizes boosting low-medium contrast regions, at a modest bitrate increase over the regular curve
+     *  0: disable alt curve
+     *  1: enable alt curve (i.e. use regular curve)
+     *  Default is 0 */
+    Bool enable_alt_curve;
+
     /*Add 128 Byte Padding to Struct to avoid changing the size of the public configuration struct*/
 #if CLN_LP_LVLS
     uint8_t padding[128 - sizeof(Bool) - 2 * sizeof(uint8_t) - sizeof(uint32_t)];
 #else
-    uint8_t padding[128 - sizeof(Bool) - 2 * sizeof(uint8_t)];
+    uint8_t padding[128 - 2 * sizeof(Bool) - 2 * sizeof(uint8_t)];
 #endif
 
 } EbSvtAv1EncConfiguration;

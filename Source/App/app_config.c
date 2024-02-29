@@ -196,6 +196,7 @@
 #define ENABLE_VARIANCE_BOOST_TOKEN "--enable-variance-boost"
 #define VARIANCE_BOOST_STRENGTH_TOKEN "--variance-boost-strength"
 #define VARIANCE_OCTILE_TOKEN "--variance-octile"
+#define ENABLE_ALT_CURVE_TOKEN "--enable-alt-curve"
 
 static EbErrorType validate_error(EbErrorType err, const char *token, const char *value) {
     switch (err) {
@@ -1178,11 +1179,24 @@ ConfigEntry config_entry_color_description[] = {
     // Termination
     {SINGLE_INPUT, NULL, NULL, NULL}};
 
-ConfigEntry config_entry_variance_boost[] = {
+ConfigEntry config_entry_psy[] = {
     // Variance boost
-    {SINGLE_INPUT, ENABLE_VARIANCE_BOOST_TOKEN, "Enable variance boost, default is 0 [0-1]", set_cfg_generic_token},
-    {SINGLE_INPUT, VARIANCE_BOOST_STRENGTH_TOKEN, "Variance boost strength, default is 2 [1-4]", set_cfg_generic_token},
-    {SINGLE_INPUT, VARIANCE_OCTILE_TOKEN, "Octile for variance boost, default is 6 [1-8]", set_cfg_generic_token},
+    {SINGLE_INPUT,
+     ENABLE_VARIANCE_BOOST_TOKEN,
+     "Enable variance boost, default is 0 [0-1]",
+     set_cfg_generic_token},
+    {SINGLE_INPUT,
+     VARIANCE_BOOST_STRENGTH_TOKEN,
+     "Variance boost strength, default is 2 [1-4]",
+     set_cfg_generic_token},
+    {SINGLE_INPUT,
+     VARIANCE_OCTILE_TOKEN,
+     "Octile for variance boost, default is 6 [1-8]",
+     set_cfg_generic_token},
+    {SINGLE_INPUT,
+     ENABLE_ALT_CURVE_TOKEN,
+     "[PSY] Enable alternative curve for variance boost (different boosting trade-offs), default is 0 [0-1]",
+     set_cfg_generic_token},
     // Termination
     {SINGLE_INPUT, NULL, NULL, NULL}};
 
@@ -1364,6 +1378,7 @@ ConfigEntry config_entry[] = {
     {SINGLE_INPUT, ENABLE_VARIANCE_BOOST_TOKEN, "EnableVarianceBoost", set_cfg_generic_token},
     {SINGLE_INPUT, VARIANCE_BOOST_STRENGTH_TOKEN, "VarianceBoostStrength", set_cfg_generic_token},
     {SINGLE_INPUT, VARIANCE_OCTILE_TOKEN, "VarianceOctile", set_cfg_generic_token},
+    {SINGLE_INPUT, ENABLE_ALT_CURVE_TOKEN, "EnableAltCurve", set_cfg_generic_token},
 
     // Termination
     {SINGLE_INPUT, NULL, NULL, NULL}};
@@ -2001,7 +2016,7 @@ uint32_t get_help(int32_t argc, char *const argv[]) {
     }
 
     printf("\nVariance Boost Options:\n");
-    for (ConfigEntry *cd_token_index = config_entry_variance_boost; cd_token_index->token; ++cd_token_index) {
+    for (ConfigEntry *cd_token_index = config_entry_psy; cd_token_index->token; ++cd_token_index) {
         switch (check_long(*cd_token_index, cd_token_index[1])) {
         case 1:
             printf("  %s, %-25s    %-25s\n", cd_token_index->token, cd_token_index[1].token, cd_token_index->name);
