@@ -1201,7 +1201,8 @@ typedef struct PictureControlSetInitData {
     Bool    is_scale;
     bool    rtc_tune;
     uint8_t variance_boost_strength;
-    uint8_t new_variance_octile;
+    uint8_t variance_octile;
+    Bool    enable_alt_curve;
     int8_t sharpness;
 } PictureControlSetInitData;
 
