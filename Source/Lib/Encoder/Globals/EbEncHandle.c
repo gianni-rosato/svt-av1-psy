@@ -194,7 +194,8 @@ static EbErrorType init_thread_management_params() {
     FILE *fin = fopen("/proc/cpuinfo", "r");
     if (fin) {
         int processor_id = 0;
-        int maxSize = INITIAL_PROCESSOR_GROUP;
+        int max_size = INITIAL_PROCESSOR_GROUP;
+        int old_max_size = max_size;
         char line[1024];
         while (fgets(line, sizeof(line), fin)) {
             if(strncmp(line, "processor", 9) == 0) {
@@ -212,11 +213,14 @@ static EbErrorType init_thread_management_params() {
                 }
                 if (socket_id + 1 > num_groups)
                     num_groups = socket_id + 1;
-                if (socket_id >= maxSize) {
-                    maxSize = maxSize * 2;
-                    processorGroup *temp = realloc(lp_group, maxSize * sizeof(*temp));
-                    if (temp)
+                if (socket_id >= max_size) {
+                    old_max_size = max_size;
+                    max_size = max_size * 2;
+                    processorGroup *temp = realloc(lp_group, max_size * sizeof(*temp));
+                    if (temp) {
+                        memset(temp + old_max_size, 0, (max_size - old_max_size) * sizeof(*temp));
                         lp_group = temp;
+                    }
                     else {
                         free(lp_group);
                         fclose(fin);
