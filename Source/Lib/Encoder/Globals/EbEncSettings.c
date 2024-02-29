@@ -892,6 +892,10 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet *scs) {
         return_error = EB_ErrorBadParameter;
     }
 
+    if (config->enable_alt_curve > 1) {
+        SVT_ERROR("Instance %u: Enable alt curve must be between 0 and 1\n", channel_number + 1);
+    }
+
     return return_error;
 }
 
@@ -1041,6 +1045,7 @@ EbErrorType svt_av1_set_default_params(EbSvtAv1EncConfiguration *config_ptr) {
     config_ptr->enable_variance_boost             = FALSE;
     config_ptr->variance_boost_strength           = 2;
     config_ptr->variance_octile                   = 6;
+    config_ptr->enable_alt_curve                  = FALSE;
     return return_error;
 }
 
@@ -1145,10 +1150,11 @@ void svt_av1_print_lib_params(SequenceControlSet *scs) {
                          config->enable_adaptive_quantization,
                          config->enable_variance_boost);
             } else {
-                SVT_INFO("SVT [config]: AQ mode / variance boost strength / octile \t\t\t: %d / %d / %d\n",
+                SVT_INFO("SVT [config]: AQ mode / variance boost strength / octile / curve \t\t: %d / %d / %d / %s\n",
                          config->enable_adaptive_quantization,
                          config->variance_boost_strength,
-                         config->variance_octile);
+                         config->variance_octile,
+                         config->enable_alt_curve ? "alt" : "regular");
             }
         }
 
@@ -2110,6 +2116,7 @@ EB_API EbErrorType svt_av1_enc_parse_parameter(EbSvtAv1EncConfiguration *config_
         {"enable-dg", &config_struct->enable_dg},
         {"gop-constraint-rc", &config_struct->gop_constraint_rc},
         {"enable-variance-boost", &config_struct->enable_variance_boost},
+        {"enable-alt-curve", &config_struct->enable_alt_curve},
     };
     const size_t bool_opts_size = sizeof(bool_opts) / sizeof(bool_opts[0]);
 
