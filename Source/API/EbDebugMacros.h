@@ -70,6 +70,7 @@ extern "C" {
 // Variance boost debugging code
 #define DEBUG_VAR_BOOST         0
 #define DEBUG_VAR_BOOST_QP      0
+#define DEBUG_VAR_BOOST_STATS   0
 
 // Quantization matrices
 #define DEBUG_QM_LEVEL          0

@@ -198,7 +198,8 @@
 #define ROI_MAP_FILE_TOKEN "--roi-map-file"
 
 #define VARIANCE_BOOST_STRENGTH_TOKEN "--variance-boost-strength"
-#define NEW_VARIANCE_OCTILE_TOKEN "--new-variance-octile"
+#define VARIANCE_OCTILE_TOKEN "--variance-octile"
+#define ENABLE_ALT_CURVE_TOKEN "--enable-alt-curve"
 
 #define SHARPNESS_TOKEN "--sharpness"
 
@@ -1217,8 +1218,12 @@ ConfigEntry config_entry_psy[] = {
      "[PSY] Variance boost strength, default is 2 [0-4]",
      set_cfg_generic_token},
     {SINGLE_INPUT,
-     NEW_VARIANCE_OCTILE_TOKEN,
-     "[PSY] Octile for new 8x8 variance algorithm. Set to 0 to use 64x64 variance algorithm, default is 6 [0-8]",
+     VARIANCE_OCTILE_TOKEN,
+     "[PSY] Octile for variance boost, default is 6 [0-8]",
+     set_cfg_generic_token},
+    {SINGLE_INPUT,
+     ENABLE_ALT_CURVE_TOKEN,
+     "[PSY] Enable alternative curve for variance boost (different boosting trade-offs), default is 0 [0-1]",
      set_cfg_generic_token},
     // Sharpness
     {SINGLE_INPUT,
@@ -1407,7 +1412,8 @@ ConfigEntry config_entry[] = {
 
     // Variance boost
     {SINGLE_INPUT, VARIANCE_BOOST_STRENGTH_TOKEN, "VarianceBoostStrength", set_cfg_generic_token},
-    {SINGLE_INPUT, NEW_VARIANCE_OCTILE_TOKEN, "NewVarianceOctile", set_cfg_generic_token},
+    {SINGLE_INPUT, VARIANCE_OCTILE_TOKEN, "VarianceOctile", set_cfg_generic_token},
+    {SINGLE_INPUT, ENABLE_ALT_CURVE_TOKEN, "EnableAltCurve", set_cfg_generic_token},
 
     // Sharpness
     {SINGLE_INPUT, SHARPNESS_TOKEN, "Sharpness", set_cfg_generic_token},

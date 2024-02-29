@@ -936,24 +936,24 @@ typedef struct EbSvtAv1EncConfiguration {
     AomFilmGrain *fgs_table;
 
     uint8_t padding[64 - sizeof(Bool) - sizeof(AomFilmGrain *)];
-    /* @brief Boost low variance regions according to a fast-growing formula
-        0: no boost
-        1: mild boost
-        2: gentle boost
-        3: medium boost
-        4: aggressive boost
-       Default is 2 (gentle curve) */
+    /* @brief Selects the curve strength to boost low variance regions according to a fast-growing formula
+       Default is 2 */
     uint8_t variance_boost_strength;
 
-    /* @brief Enables the new 8x8-based variance algorithm, and picks an 8x8 variance value per superblock to determine boost
+    /* @brief Picks a set of eight 8x8 variance values per superblock to determine boost
        Lower values enable detecting more blocks that need boosting, at the expense of more possible false positives (overall bitrate increase)
-        0: disabled, uses classic 64x64 based variance algorithm instead
-        1: enabled, 1st octile
-        4: enabled, median
-        8: enabled, maximum
-       Default is 6
-    */
-    uint8_t new_variance_octile;
+        1: 1st octile
+        4: 4th octile
+        8: 8th octile
+       Default is 6 */
+    uint8_t variance_octile;
+
+    /* @brief Enable the use of an alternative curve for variance boost
+       which emphasizes boosting low-medium contrast regions, at a modest bitrate increase over the regular curve
+        0: disable alt curve
+        1: enable alt curve (i.e. use regular curve)
+       Default is 0 */
+    uint8_t enable_alt_curve;
 
     /* @brief Affects loopfilter deblock sharpness and rate distortion
      *
