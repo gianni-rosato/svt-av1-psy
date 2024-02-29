@@ -313,10 +313,11 @@ void svt_av1_cdef_frame(SequenceControlSet *scs, PictureControlSet *pcs) {
     int32_t        coeff_shift = AOMMAX(scs->static_config.encoder_bit_depth - 8, 0);
     const int32_t  nvfb        = (cm->mi_rows + MI_SIZE_64X64 - 1) / MI_SIZE_64X64;
     const int32_t  nhfb        = (cm->mi_cols + MI_SIZE_64X64 - 1) / MI_SIZE_64X64;
+    const uint32_t cdef_size   = sizeof(*row_cdef) * (nhfb + 2) * 2;
 
-    row_cdef = (uint8_t *)svt_aom_malloc(sizeof(*row_cdef) * (nhfb + 2) * 2);
+    row_cdef = (uint8_t *)svt_aom_malloc(cdef_size);
     assert(row_cdef != NULL);
-    memset(row_cdef, 1, sizeof(*row_cdef) * (nhfb + 2) * 2);
+    memset(row_cdef, 1, cdef_size);
     prev_row_cdef = row_cdef + 1;
     curr_row_cdef = prev_row_cdef + nhfb + 2;
     for (int32_t pli = 0; pli < num_planes; pli++) {
