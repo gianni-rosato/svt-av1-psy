@@ -960,8 +960,8 @@ typedef struct EbSvtAv1EncConfiguration {
 
     /* @brief Enable the use of an alternative curve for variance boost
        which emphasizes boosting low-medium contrast regions, at a modest bitrate increase over the regular curve
-        0: disable alt curve
-        1: enable alt curve (i.e. use regular curve)
+        0: disable alt curve (i.e. use regular curve)
+        1: enable alt curve
        Default is 0 */
     uint8_t enable_alt_curve;
 
