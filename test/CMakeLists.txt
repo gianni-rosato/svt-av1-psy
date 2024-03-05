@@ -23,12 +23,14 @@ include_directories(${PROJECT_SOURCE_DIR}/test/
     ${PROJECT_SOURCE_DIR}/Source/Lib/Common/ASM_SSE4_1/
     ${PROJECT_SOURCE_DIR}/Source/Lib/Common/ASM_AVX2/
     ${PROJECT_SOURCE_DIR}/Source/Lib/Common/ASM_AVX512/
+    ${PROJECT_SOURCE_DIR}/Source/Lib/Common/ASM_NEON/
     ${PROJECT_SOURCE_DIR}/Source/Lib/Encoder/C_DEFAULT/
     ${PROJECT_SOURCE_DIR}/Source/Lib/Encoder/ASM_SSE2/
     ${PROJECT_SOURCE_DIR}/Source/Lib/Encoder/ASM_SSSE3/
     ${PROJECT_SOURCE_DIR}/Source/Lib/Encoder/ASM_SSE4_1/
     ${PROJECT_SOURCE_DIR}/Source/Lib/Encoder/ASM_AVX2/
     ${PROJECT_SOURCE_DIR}/Source/Lib/Encoder/ASM_AVX512/
+    ${PROJECT_SOURCE_DIR}/Source/Lib/Encoder/ASM_NEON/
     ${PROJECT_SOURCE_DIR}/Source/Lib/Encoder/Codec
     ${PROJECT_SOURCE_DIR}/Source/Lib/Encoder/Globals
     ${PROJECT_SOURCE_DIR}/Source/Lib/Decoder/Codec
@@ -90,6 +92,7 @@ set(multi_arch_files
     CdefTest.cc
     SpatialFullDistortionTest.cc
     TemporalFilterTestPlanewise.cc
+    convolve_2d_test.cc
     )
 
 if(HAVE_X86_PLATFORM)
@@ -124,7 +127,6 @@ if(HAVE_X86_PLATFORM)
         WedgeUtilTest.cc
         av1_convolve_scale_test.cc
         compute_mean_test.cc
-        convolve_2d_test.cc
         corner_match_test.cc
         dwt_test.cc
         frame_error_test.cc

@@ -29,6 +29,7 @@ target_sources(
   PUBLIC EbDeblockingFilter_Intrinsic_neon.c
   PUBLIC EbIntraPrediction_neon.c
   PUBLIC EbPictureOperators_Intrinsic_neon.c
+  PUBLIC highbd_convolve_2d_neon.c
   PUBLIC selfguided_neon.c
   PUBLIC sse_neon.c
   PUBLIC warp_plane_neon.c
