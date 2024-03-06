@@ -72,8 +72,7 @@ The feature is currently active only when screen content encoding is active, eit
 | **Flag**      | **Level (Sequence/Picture)** | **Description**                                                                                                                        |
 | ---           | ---                          | ---                                                                                                                                    |
 | --scm         | Sequence                     | Command line token. 0: No SC, 1: SC ON 2: Auto mode (detector based)                                                                   |
-| --palette     | Configuration                | To enable palette from the command-line interface. 0: OFF; 1: Slow; 2: Fastest. Auto mode=-1 if not set from the encoder configuration |
-| palette_level | Picture based                | Set based on the configuration palette mode. For auto mode it is set to 6 for M0.                                                      |
+| palette_level | Picture based                | Set based on the configuration palette mode.                                                                                           |
 
 
 **Details of the implementation**
@@ -129,13 +128,13 @@ MD candidate class.
 
 ## 4. **Signaling**
 
-The most important signals/parameters which are sent in the bit
-stream regarding palette prediction:
+The most important signals/parameters which are sent in the bitstream
+regarding palette prediction:
 - Size of the palette: The number of colors used for the current
   block.
 - The palette colors:
   - Special techniques are used to code the colors in the
-    bit-stream;
+    bitstream;
   - The encoder and decoder maintain a cache of colors computed
     based on the neighboring colors. Information on whether some
     colors could be re-used from the cache is sent in the bit-stream

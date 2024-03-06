@@ -12,8 +12,7 @@ The processing of a frame by the restoration filter proceeds by
 splitting the picture into restoration units. The size of the
 restoration units is set in the function `set_restoration_unit_size`
 and is set to the maximum restoration unit size
-(```RESTORATION_UNITSIZE_MAX```) of 256 for both luma and chroma when
-picture\_width\*picture\_height\>352\*288, otherwise it is set to 128.
+(```RESTORATION_UNITSIZE_MAX```) of 256 for both luma and chroma.
 
 At the frame level, the restoration filter operates with one of the
 following modes: OFF, Wiener filter, SGRPROJ filter for the whole frame,
@@ -59,7 +58,8 @@ chroma.
 | **Flag**            | **Level** | **Description**                                                                                                     |
 | ------------------- | --------- | ------------------------------------------------------------------------------------------------------------------- |
 | enable\_restoration | Sequence  | Indicates whether to use restoration filters for the whole sequence.                                                |
-| wn\_filter\_mode    | Picture   | Controls the quality-complexity tradeoff of the filter as a function of the encoder mode.                           |
+| enable\_restoration | Picture   | Indicates whether to use restoration filters for the whole picture .                                                |
+| wn\_filter\_ctrls     | Picture   | Struct of controls for the quality-complexity tradeoff of the filter as a function of the encoder mode.           |
 | allow\_intrabc      | Picture   | Indicates whether to enable intra block copy. The restoration filter is not active when allow_intrabc is set to 1.  |
 
 ### Step 1 - Splitting the frame into segments
@@ -212,7 +212,8 @@ To illustrate the idea of subspace projection, consider the following column vec
 | **Flag**            | **Level** | **Description**                                                                                                     |
 | ------------------- | --------- | ------------------------------------------------------------------------------------------------------------------- |
 | enable\_restoration | Sequence  | Indicates whether to use restoration filters for the whole sequence.                                                |
-| sg\_filter\_mode    | Picture   | Controls the quality-complexity tradeoff of the filter as a function of the encoder mode.                           |
+| enable\_restoration | Picture   | Indicates whether to use restoration filters for the whole picture .                                                |
+| sg\_filter\_ctrls   | Picture   | Struct that controls the quality-complexity tradeoff of the filter as a function of the encoder mode.               |
 | allow\_intrabc      | Picture   | Indicates whether to enable intra block copy. The restoration filter is not active when allow\_intrabc is set to 1. |
 
 #### Details of the implementation
@@ -336,18 +337,18 @@ filter parameter search.
 
 **3.1 Wiener filter search**
 
-Wiener filter optimization controls are set in ```set_wn_filter_ctrls ()```.
+Wiener filter optimization controls are set in ```svt_aom_set_wn_filter_ctrls ()```.
 
 ### Filter Tap Level
 
 For the wiener filter, the search could be performed using either 3, 5
 or 7 tap filters for luma, or 3 or 5 tap filters for chroma. The
-parameter ```cm->wn_filter_mode``` is used to specify the level of filter
+parameter ```cm->wn_filter_ctrls.filter_tap_level``` is used to specify the level of filter
 complexity, where increasing levels of filter search complexity are
 defined by considering an increasing number of filter taps for both luma
 and chroma, as given in the table below.
 
-##### Table 3. Description of the Wiener filter settings for the different ```wn_filter_mode``` values.
+##### Table 3. Description of the Wiener filter settings for the different ```cm->wn_filter_ctrls.filter_tap_level``` values.
 
 | **wn\_filter\_mode** | **Settings**             |
 | -------------------- | ------------------------ |
@@ -386,32 +387,19 @@ $`\varepsilon`$ values in the
 interval $`[0,15]`$, where
 $`\varepsilon`$ is used in the
 outline of SGRPROJ algorithm presented above. The algorithmic optimization of
-the filter search involves restricting the range of
+the filter search involves restricting the number of
 $`\varepsilon`$ values in the
-search operation. The parameter ```cm->sg_filter_mode``` is used to specify
-different level of search complexity, where a higher value of
-```cm->sg_filter_mode``` would correspond to a wider interval of
-$`\varepsilon`$ values and a more
-costly search. The parameter step is used to control the width of the search
-interval, and is given in the following table.
-
-##### Table 5. Step parameter as a function of the sg\_filter\_mode.
-
-| **sg\_filter\_mode** | **step** |
-| -------------------- | -------- |
-| 0                    | OFF      |
-| 1                    | 0        |
-| 2                    | 1        |
-| 3                    | 4        |
-| 4                    | 16       |
+search operation. The parameter ```cm->sg_filter_ctrls.start_ep[0]``` and ```cm->sg_filter_ctrls.start_ep[1]```
+determine the search's starting $`\varepsilon`$ value for luma and chroma respectively.
+ ```cm->sg_filter_ctrls.start_ep[0/1]``` determine the end values for the search, while
+ ```cm->sg_filter_ctrls.ep_inc[0/1]``` determine the step size. ```cm->sg_filter_ctrls.refine[0/1]```
+indicate whether refinement for alpha and beta should be performed.
 
 The optimization proceeds as follows:
 
-1.  The encoder mode ```enc_mode``` specifies the SGRPROJ filter mode
-    ```sg_filter_mode```.
+1.  The SGRPROJ filter level is obtained from ```vsvt_aom_get_sg_filter_level```.
 
-2.  The ```sg_filter_mode``` specifies the parameter step through the
-    function ```get_sg_step```.
+2.  The search parameters are set in ```svt_aom_set_sg_filter_ctrls```.
 
 3.  The interval \[start\_ep, end\_ep\] of $`\varepsilon`$
     values to search is specified as follows

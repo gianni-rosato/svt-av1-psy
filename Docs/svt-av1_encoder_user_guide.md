@@ -132,16 +132,6 @@ Here are some sample encode command lines
 #### 1 pass CRF at maximum speed from 24fps yuv 1920x1080 input
 `SvtAv1EncApp -i input.yuv -w 1920 -h 1080 --fps 24 --crf 30 --preset 12 -b output.ivf`
 
-#### Mutli-pass CRF at maximum quality from 24fps yuv 1920x1080 input
-Single command line :
-`SvtAv1EncApp -i input.yuv -w 1920 -h 1080 --fps 24 --crf 30 --preset 0 --passes 2 -b output.ivf`
-
-or
-
-Multiple command lines :
-`SvtAv1EncApp -i input.yuv -w 1920 -h 1080 --fps 24 --crf 30 --preset 0 --pass 1 --stats stat_file.stat`
-`SvtAv1EncApp -i input.yuv -w 1920 -h 1080 --fps 24 --crf 30 --preset 0 --pass 2 --stats stat_file.stat -b output.ivf `
-
 #### 1 pass VBR 1000 Kbps at medium speed from 24fps yuv 1920x1080 input
 `SvtAv1EncApp -i input.yuv -w 1920 -h 1080 --fps 24 --rc 1 --tbr 1000 --preset 5 -b output.ivf`
 

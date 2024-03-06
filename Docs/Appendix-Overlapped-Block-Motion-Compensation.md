@@ -80,7 +80,6 @@ Flags associated with the OBMC feature are listed in Table 1.
 
 | **Flag**                  | **Level (Sequence/Picture)**| **Description**                                                               |
 | --------------------------| ----------------------------| ------------------------------------------------------------------------------|
-| obmc_level                | Sequence                    | Config flag to enable/disable OBMC at the sequence level                      |
 | is_motion_mode_switchable | Picture                     | Picture-level signal to enable non-translation motion modes (e.g. WARP, OBMC) |
 | pic_obmc_mode             | Picture                     | Picture based OBMC mode                                                       |
 | md_pic_obmc_level         | SB                          | SB-based OBMC mode                                                            |
@@ -137,21 +136,12 @@ the neighboring blocks.
 ## 3. Optimization of the algorithm
 
 The optimization of the OBMC algorithm is based on limiting the blocks where
-OBMC prediction is considered. The OBMC levels are controlled by the
-```pic_obmc_mode flag```. Table 1 below provides a description of the
-quality-complexity tradeoffs in the algorithm.
-
-##### Table 2. Description of the settings of the pic_obmc_mode flag.
-
-| **pic_obmc_mode**   | **Description**                           |
-| --------------------| ------------------------------------------|
-| 0                   | OFF                                       |
-| 1                   | ON, use OBMC for all block sizes          |
-| 2                   | ON, use OBMC for block sizes <=16x16 only |
+OBMC prediction is considered and on reducing the complexity (accuracy) of the search.
+The OBMC levels are controlled by the ```pic_obmc_mode``` flag.
 
 ## 4. Signaling
 
-The flag ```is_motion_mode_switchable specifyies``` if the motion mode can
+The flag ```is_motion_mode_switchable``` specifies if the motion mode can
 change from one block to another. As a result, a block-based field called
 ```motion_mode``` is sent to indicate, when set, that the type of motion for
 the block could be either SIMPLE_TRANSLATION, OBMC, or WARPED.

@@ -313,7 +313,7 @@ The injection of LW candidates is not allowed for ```PD_PASS_0```.
 
 In mode decision, the picture-level flag wm_level controls the
 complexity-quality tradeoffs associated with the LW feature. The flag is set is
-set in ```signal_derivation_mode_decision_config_kernel_oq``` and control the
+set in ```svt_aom_sig_deriv_mode_decision_config``` and control the
 LW optimization signals listed in Table 2 below.
 
 The wm_level is set to zero for Intra pictures or when
@@ -325,7 +325,14 @@ enabled.
 |--- |--- |--- |
 |enabled|Super-block|Allow/disallow the injection of LW candidates|
 |use_wm_for_mvp|Super-block|Allow/disallow the injection of MVP-based LW candidates|
-|num_new_mv_refinement|Super-block|Define the number of refinement positions around the NEW_MVs [0..12]|
+|refinement_iterations|Super-block|Number of iterations to use in the refinement search; each iteration searches the cardinal neighbours around the best-so-far position; 0 is no refinement |
+| refine_diag | Refinement search for diagonal positions |
+| refine_level | Specifies the MD Stage where the wm refinement will take place. 0: Before MDS0.  1: At MDS1.  2: At MDS3. |
+| min_neighbour_perc | Specifies minimum neighbour percentage for WM |
+| corner_perc_bias | Specifies corner bias for WM |
+| lower_band_th | Skip if alpha/ beta / gamma / delta is lower than threshold value |
+| upper_band_th | Skip if alpha/ beta / gamma / delta is higher than threshold value |
+| shut_approx_if_not_mds0 | Shut the approximation(s) if refinement @ mds1 or mds3 |
 
 ## 4. Signaling
 

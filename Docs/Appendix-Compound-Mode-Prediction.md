@@ -1,4 +1,4 @@
-[Top level](../README.md)
+﻿[Top level](../README.md)
 
 # Compound Mode Prediction Appendix
 
@@ -106,7 +106,7 @@ The mask for sample $`(i, j)`$ is given by $`m(i,j) = b + a * |p​1​(i, j) - 
 smooth the variation of the mask values around $`b`$.
 
 The prediction is generated using $`p​(i, j) = m(i, j) * p1​(i, j) + ( ​1
-​ - m(i, j)) * p​2​(i, j)`$. Both the mask $`m(i,j)$ and $(1-m(i,j))`$ are
+​ - m(i, j)) * p​2​(i, j)`$. Both the mask $`m(i,j)`$ and $`(1-m(i,j))`$ are
 evaluated and the one that provides the best RD cost is selected.
 
 **Distance-based Compound Prediction**
@@ -147,32 +147,15 @@ The control tokens and flags for the feature are listed in Tables 2 and 3.
 
 | **Flag** | **Level (Sequence/picture)** | **Description** |
 | --- | --- | --- |
-| inter_intra_compound | sequence | Config level settings for the whole sequence. 0/1: ON/OFF; -1 for Auto i.e. Default |
 | enable_interintra_compound | sequence | Sequence level ON/OFF flag |
-| md_inter_intra_level | sequence | Enable/disable the feature at the picture level. |
-| md_inter_intra_level | block | Enable/disable the feature at the block level. |
+| inter_intra_level | picture | Enable/disable the feature at the picture level. |
 
 
 ##### Table 3. Control flags related to inter-inter compound mode prediction.
 
 | **Flag** | **Level (Sequence/picture)** | **Description** |
 | --- | --- | --- |
-| compound_level | sequence | Config level settings for the whole sequence. 0/1: OFF/ON; -1 for Auto i.e. Default |
-| compound_mode | sequence | Sequence level ON/OFF flag |
-| inter_compound_mode | sequence | Enable/disable the feature at the picture level. |
-| inter_compound_mode | block | Enable/disable the feature at the block level. |
-
-### API
-
-The main function calls associated with the compound mode are listed in Tables 4 and 5.
-
-##### Table 4. API for inter-intra compound mode.
-
-![comp_mode_pred_table4_new](./img/comp_mode_pred_table4_new.png)
-
-##### Table 5. API for inter-inter compound mode.
-
-![comp_mode_pred_table5_new](./img/comp_mode_pred_table5_new.png)
+| inter_compound_mode | picture | Enable/disable the feature at the picture level. |
 
 ### Details of the implementation
 
@@ -453,8 +436,13 @@ signals are given in Table 6.
 | do_3x3_bi | if true, test all compound types for near_near |
 | do_nearest_near_new | if true, test all compound types for nearest_near_new |
 | do_3x3_bi | if true, test all compound types for 3x3_bipred |
+| skip_mvp_on_ref_info | Skip MVP compound based on ref frame type and neighbour ref frame types |
 | pred0_to_pred1_mult | Multiplier to the pred0_to_pred1_sad; 0: no pred0_to_pred1_sad-based pruning, >= 1: towards more inter-inter compound |
 | use_rate | if true, use rate @ compound params derivation |
+| mvp_no_cmp_low_cmplx |no compound for low complexity blocks (MVP only) |
+| mvp_no_diff_nsq | no diff for nsq (MVP only) |
+| mvp_no_wdg_var_th | no wedge if blk variance is less than mvp_no_wdg_var_th; 0: OFF (MVP only) |
+| no_sym_dist | no distance for symteric refs |
 
 ## Notes
 

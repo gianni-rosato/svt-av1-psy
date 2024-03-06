@@ -120,9 +120,9 @@ description of each function.
 
 | **Process**                         | **Function**             | **Purpose**                                                                                                                                    |
 | ---                                 | ---                      | ---                                                                                                                                            |
-| Picture Decision Process            | set_gm_controls          | Set global motion controls                                                                                                                     |
+| Picture Decision Process            | svt_aom_set_gm_controls  | Set global motion controls                                                                                                                     |
 | Motion Estimation Process           | perform_gm_detection     | Detect whether a global motion may be identified based on the uniformity of the motion vectors produced by the normal motion estimation search |
-| Motion Estimation Process           | global_motion_estimation | Perform global motion estimation search                                                                                                        |
+| Motion Estimation Process           | svt_aom_global_motion_estimation | Perform global motion estimation search                                                                                                |
 | Mode Decision Configuration process | set_global_motion_field  | Map the global motion information generated in EbMotionEstimationProcess to EbEncDecProcess                                                    |
 | Mode Decision Process               | inject_global_candidates | Inject global motion as a mode candidate to the mode decision                                                                                  |
 
@@ -245,12 +245,6 @@ The three main functions associated with the injection of GLOBAL_GLOBAL candidat
 The first two are related to the generation of inter-intra compound candidates. The third
 is related to the injection of inter-inter compound candidates.
 
-With respect to ranking the global motion candidates, the current implementation
-uses the specific class (```CAND_CLASS_8```) that adds a dedicated path for those candidates.
-This allows some of the those candidates to survive until the last and most costly stage
-of the mode decision process.
-
-
 
 ## 3. Optimization of the algorithm
 
@@ -274,6 +268,14 @@ described in Table 2 below.
 |use_distance_based_active_th|Picture|Active_th is the threshold used to decide on the uniformity of MVs from motion estimation. 0: Use default active_th, 1: Increase active_th based on distance to ref (only if bypass_based_on_me=1)|
 |params_refinement_steps|Picture|Specify the number of refinement steps to use in the GM parameters refinement.|
 |downsample_level|Picture|GM_FULL: Exhaustive search mode. GM_DOWN: GM search based on down-sampled resolution with a down-sampling factor of 2 in each dimension. GM_TRAN_ONLY: Translation only using ME MV|
+| use_ref_info | do GM in the closed loop instead of the open loop and use reference information 0: off 1: on |
+| layer_offset | do the detection bypass for last layer pictures   0:off     1:last layer     2:last 2 layers 3: last 3 layers |
+| corners | use a fraction of corner points for computing correspondences for RANSAC in detection. 1:1/4   2:2/4   3:3/4   4:all |
+| chess_rfn | skip global motion refinement using a chess pattern to skip blocks |
+| match_sz | change the window size for correlation calculations. must be odd. N: NxN window size goes from 1 to 15 |
+| inj_psq_glb | Inject global only if Parent SQ is global |
+| pp_enabled | enable Pre-processor for GM |
+| ref_idx0_only | limit the search to  ref index = 0 only |
 
 The generated global motion information may be used in all or some of the mode decision Partitioning Decision (PD) passes.
 The injection of global motion candidates in MD is controlled by the flag global_mv_injection.
