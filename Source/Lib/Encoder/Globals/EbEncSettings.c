@@ -958,7 +958,7 @@ EbErrorType svt_av1_set_default_params(EbSvtAv1EncConfiguration *config_ptr) {
 
     // Latency
     config_ptr->film_grain_denoise_strength = 0;
-    config_ptr->film_grain_denoise_apply    = 1;
+    config_ptr->film_grain_denoise_apply    = 0;
 
     // CPU Flags
     config_ptr->use_cpu_flags = EB_CPU_FLAGS_ALL;

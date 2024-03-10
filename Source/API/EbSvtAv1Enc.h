@@ -631,7 +631,8 @@ typedef struct EbSvtAv1EncConfiguration {
     *
     * 0 is no denoising
     * 1 is full denoising
-    */
+    *
+    * Default is 0. */
     uint8_t film_grain_denoise_apply;
 
     /* CDEF Level
