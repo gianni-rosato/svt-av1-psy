@@ -3011,6 +3011,27 @@ static EbErrorType produce_temporally_filtered_pic(
                     if (pcs_list[frame_index]->tf_ahd_error_to_central > low_ahd_err && // error to central high enough
                        ((int) (((int) pcs_list[frame_index]->tf_ahd_error_to_central - (int) centre_pcs->tf_avg_ahd_error) * 100)) > (th * (int) centre_pcs->tf_avg_ahd_error)) // ahd_error_to_central higher than tf_avg_ahd_error by x%
                         continue;
+
+#if TF_BRIGHTNESS_CHECK_V1
+
+                    uint32_t bright_change_region_cnt = 0;
+                    for (uint32_t region_in_picture_width_index = 0;
+                        region_in_picture_width_index < scs->picture_analysis_number_of_regions_per_width;
+                        region_in_picture_width_index++) { // loop over horizontal regions
+                        for (uint32_t region_in_picture_height_index = 0;
+                            region_in_picture_height_index < scs->picture_analysis_number_of_regions_per_height;
+                            region_in_picture_height_index++) { // loop over vertical regions
+
+                            if (ABS((int)pcs_list[frame_index]->average_intensity_per_region[region_in_picture_width_index][region_in_picture_height_index] -
+                                (int)centre_pcs->average_intensity_per_region[region_in_picture_width_index][region_in_picture_height_index]) > 2 &&
+                                pcs_list[frame_index]->avg_luma != centre_pcs->tf_avg_luma) {
+                                bright_change_region_cnt++;
+                            }
+                        }
+                    }
+                    if (bright_change_region_cnt >= ((14*scs->picture_analysis_number_of_regions_per_width * scs->picture_analysis_number_of_regions_per_height) / 16))
+                        continue;
+#endif
                 }
                 // ------------
                 // Step 1: motion estimation + compensation
@@ -3057,12 +3078,14 @@ static EbErrorType produce_temporally_filtered_pic(
                     // Block-based MC using open-loop HME + refinement
                     // set default hme search params
                     set_hme_search_params_mctf(ctx,0);
+#if !TF_HME_ME_
                     // Increase HME-Level0 search-area if tf_active_region_present
                     if (centre_pcs->tf_ctrls.hme_me_level <= 1) {
                         if (pcs_list[frame_index]->tf_active_region_present) {
                             set_hme_search_params_mctf(ctx,1);
                         }
                     }
+#endif
                     svt_aom_motion_estimation_b64(centre_pcs,
                         (uint32_t)blk_row * blk_cols + blk_col,
                         (uint32_t)blk_col * BW, // x block

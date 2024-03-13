@@ -181,10 +181,20 @@ void validate_pic_for_tpl(PictureParentControlSet *pcs, uint32_t pic_index) {
 
 uint8_t svt_aom_get_tpl_group_level(uint8_t tpl, int8_t enc_mode, SvtAv1RcMode rc_mode) {
     uint8_t tpl_group_level;
-
+#if OPT_TPL_SUB_LVL
+    if (!tpl)
+        tpl_group_level = 0;
+    else if (enc_mode <= ENC_M6)
+        tpl_group_level = 1;
+    else if (enc_mode <= ENC_M10 || (rc_mode == SVT_AV1_RC_MODE_VBR && enc_mode <= ENC_M11))
+        tpl_group_level = 3;
+    else 
+        tpl_group_level = 4;
+#else
     if (!tpl) {
         tpl_group_level = 0;
-    } else if (enc_mode <= ENC_M6) {
+    }
+    else if (enc_mode <= ENC_M6) {
         tpl_group_level = 1;
     } else if (enc_mode <= ENC_M7) {
         tpl_group_level = 2;
@@ -193,7 +203,7 @@ uint8_t svt_aom_get_tpl_group_level(uint8_t tpl, int8_t enc_mode, SvtAv1RcMode r
     } else {
         tpl_group_level = 4;
     }
-
+#endif
     return tpl_group_level;
 }
 
@@ -288,7 +298,7 @@ uint8_t svt_aom_set_tpl_group(PictureParentControlSet *pcs, uint8_t tpl_group_le
 static uint8_t get_tpl_params_level(uint64_t dist_per_group, int8_t enc_mode, SvtAv1RcMode rc_mode) {
     uint8_t  tpl_params_level;
     uint64_t cplx_group_th = 10000;
-
+#if OPT_TPL_SUB_LVL
     if (enc_mode <= ENC_M4) {
         tpl_params_level = 1;
     } else if (enc_mode <= ENC_M6) {
@@ -297,10 +307,26 @@ static uint8_t get_tpl_params_level(uint64_t dist_per_group, int8_t enc_mode, Sv
         else
             tpl_params_level = 2;
     } else if (enc_mode <= ENC_M10 || (rc_mode == SVT_AV1_RC_MODE_VBR && enc_mode <= ENC_M11)) {
+        tpl_params_level = 3;
+    } else {
+        tpl_params_level = 4;
+    }
+#else
+    if (enc_mode <= ENC_M4) {
+        tpl_params_level = 1;
+    }
+    else if (enc_mode <= ENC_M6) {
+        if (dist_per_group < cplx_group_th)
+            tpl_params_level = 3;
+        else
+            tpl_params_level = 2;
+    }
+    else if (enc_mode <= ENC_M10 || (rc_mode == SVT_AV1_RC_MODE_VBR && enc_mode <= ENC_M11)) {
         tpl_params_level = 4;
     } else {
         tpl_params_level = 5;
     }
+#endif
     return tpl_params_level;
 }
 
@@ -320,7 +346,9 @@ static void set_tpl_params(PictureParentControlSet *pcs, uint8_t tpl_level) {
         tpl_ctrls->dispenser_search_level  = 0;
         tpl_ctrls->subsample_tx            = 0;
         tpl_ctrls->subpel_depth            = FULL_PEL;
-
+#if OPT_TPL_SUB_LVL
+        tpl_ctrls->subpel_diag_refinement  = 0;
+#endif
         break;
     case 1:
         tpl_ctrls->compute_rate            = 1;
@@ -332,6 +360,9 @@ static void set_tpl_params(PictureParentControlSet *pcs, uint8_t tpl_level) {
         tpl_ctrls->dispenser_search_level  = 0;
         tpl_ctrls->subsample_tx            = 0;
         tpl_ctrls->subpel_depth            = QUARTER_PEL;
+#if OPT_TPL_SUB_LVL
+        tpl_ctrls->subpel_diag_refinement  = 0;
+#endif
         break;
     case 2:
         tpl_ctrls->compute_rate            = 0;
@@ -343,6 +374,9 @@ static void set_tpl_params(PictureParentControlSet *pcs, uint8_t tpl_level) {
         tpl_ctrls->dispenser_search_level  = 0;
         tpl_ctrls->subsample_tx            = 0;
         tpl_ctrls->subpel_depth            = QUARTER_PEL;
+#if OPT_TPL_SUB_LVL
+        tpl_ctrls->subpel_diag_refinement  = 0;
+#endif
         break;
     case 3:
         tpl_ctrls->compute_rate            = 0;
@@ -354,8 +388,12 @@ static void set_tpl_params(PictureParentControlSet *pcs, uint8_t tpl_level) {
         tpl_ctrls->dispenser_search_level  = 0;
         tpl_ctrls->subsample_tx            = 0;
         tpl_ctrls->subpel_depth            = QUARTER_PEL;
+#if OPT_TPL_SUB_LVL
+        tpl_ctrls->subpel_diag_refinement  = 4;
+#endif
         break;
     case 4:
+#if !OPT_TPL_SUB_LVL
         tpl_ctrls->compute_rate            = 0;
         tpl_ctrls->enable_tpl_qps          = 0;
         tpl_ctrls->disable_intra_pred_nref = 1;
@@ -367,6 +405,7 @@ static void set_tpl_params(PictureParentControlSet *pcs, uint8_t tpl_level) {
         tpl_ctrls->subpel_depth            = FULL_PEL;
         break;
     case 5:
+#endif
         tpl_ctrls->compute_rate            = 0;
         tpl_ctrls->enable_tpl_qps          = 0;
         tpl_ctrls->disable_intra_pred_nref = 1;
@@ -376,6 +415,9 @@ static void set_tpl_params(PictureParentControlSet *pcs, uint8_t tpl_level) {
         tpl_ctrls->dispenser_search_level  = 1;
         tpl_ctrls->subsample_tx            = 2;
         tpl_ctrls->subpel_depth            = FULL_PEL;
+#if OPT_TPL_SUB_LVL
+        tpl_ctrls->subpel_diag_refinement  = 4;
+#endif
         break;
     default: assert(0); break;
     }

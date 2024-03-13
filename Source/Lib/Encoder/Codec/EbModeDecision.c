@@ -4733,13 +4733,23 @@ EbErrorType generate_md_stage_0_cand(
         else { // INTER
             if (cand_ptr->pred_mode == NEWMV || cand_ptr->pred_mode == NEW_NEWMV || merge_inter_cands) {
                 // MV Prediction
+#if OPT_SWAP_C1_C2
+                cand_ptr->cand_class = CAND_CLASS_2;
+                ctx->md_stage_0_count[CAND_CLASS_2]++;
+#else
                 cand_ptr->cand_class = CAND_CLASS_1;
                 ctx->md_stage_0_count[CAND_CLASS_1]++;
+#endif
             }
             else {
                 //MVP Prediction
+#if OPT_SWAP_C1_C2
+                cand_ptr->cand_class = CAND_CLASS_1;
+                ctx->md_stage_0_count[CAND_CLASS_1]++;
+#else
                 cand_ptr->cand_class = CAND_CLASS_2;
                 ctx->md_stage_0_count[CAND_CLASS_2]++;
+#endif
             }
 
         }

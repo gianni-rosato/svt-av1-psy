@@ -1997,6 +1997,12 @@ void svt_aom_is_screen_content(PictureParentControlSet *pcs) {
     pcs->sc_class2 = pcs->sc_class1 ||
         (counts_1 * blk_h * blk_w * 10 > input_pic->width * input_pic->height * 4 &&
          counts_2 * blk_h * blk_w * 30 > input_pic->width * input_pic->height);
+
+#if OPT_NSQ_CLASSIFIER_1
+    pcs->sc_class3 = pcs->sc_class1 ||
+        (counts_1 * blk_h * blk_w *  8 > input_pic->width * input_pic->height  && 
+         counts_2 * blk_h * blk_w * 50 > input_pic->width * input_pic->height) ;
+#endif
 }
 
 /************************************************
@@ -2237,10 +2243,18 @@ void *svt_aom_picture_analysis_kernel(void *input_ptr) {
                     if (scs->input_resolution <= INPUT_SIZE_1080p_RANGE)
                         svt_aom_is_screen_content(pcs);
                     else
+#if OPT_NSQ_CLASSIFIER_1
+                        pcs->sc_class0 = pcs->sc_class1 = pcs->sc_class2 = pcs->sc_class3 = 0;
+#else
                         pcs->sc_class0 = pcs->sc_class1 = pcs->sc_class2 = 0;
+#endif
 
                 } else // off / on
+#if OPT_NSQ_CLASSIFIER_1
+                    pcs->sc_class0 = pcs->sc_class1 = pcs->sc_class2 = pcs->sc_class3 = scs->static_config.screen_content_mode;
+#else
                     pcs->sc_class0 = pcs->sc_class1 = pcs->sc_class2 = scs->static_config.screen_content_mode;
+#endif
             }
         }
         // Get Empty Results Object

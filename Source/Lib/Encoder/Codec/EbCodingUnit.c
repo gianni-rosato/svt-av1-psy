@@ -50,16 +50,27 @@ EbErrorType svt_aom_largest_coding_unit_ctor(SuperBlock *larget_coding_unit_ptr,
 
     larget_coding_unit_ptr->index = sb_index;
     bool disallow_nsq             = true;
+#if OPT_NSQ_GEOM
+    for (EbInputResolution input_resolution = 0; input_resolution < INPUT_SIZE_COUNT; input_resolution++) {
+#endif
     for (uint8_t is_base = 0; is_base <= 1; is_base++) {
         for (uint8_t is_islice = 0; is_islice <= 1; is_islice++) {
             for (uint8_t coeff_lvl = 0; coeff_lvl <= HIGH_LVL + 1; coeff_lvl++) {
                 if (!disallow_nsq)
                     break;
+#if OPT_NSQ_GEOM
+                disallow_nsq = MIN(disallow_nsq,
+                    (svt_aom_get_nsq_geom_level(enc_mode, is_base, coeff_lvl, input_resolution) == 0 ? 1 : 0));
+#else
                 disallow_nsq = MIN(disallow_nsq,
                                    (svt_aom_get_nsq_geom_level(enc_mode, is_base, coeff_lvl) == 0 ? 1 : 0));
+#endif
             }
         }
     }
+#if OPT_NSQ_GEOM
+    }
+#endif
     bool disallow_4x4 = true;
     for (uint8_t is_islice = 0; is_islice <= 1; is_islice++) {
         for (uint8_t is_base = 0; is_base <= 1; is_base++) {

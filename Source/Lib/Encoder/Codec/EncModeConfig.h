@@ -12,9 +12,17 @@ void     svt_aom_md_pme_search_controls(ModeDecisionContext *ctx, uint8_t md_pme
 void     svt_aom_set_inter_intra_ctrls(ModeDecisionContext *ctx, uint8_t inter_intra_level);
 
 void    svt_aom_set_txt_controls(ModeDecisionContext *ctx, uint8_t txt_level);
+#if OPT_DIST_OBMC
+void    svt_aom_set_obmc_controls(PictureControlSet* pcs, ModeDecisionContext* ctx, uint8_t obmc_mode);
+#else
 void    svt_aom_set_obmc_controls(ModeDecisionContext *ctx, uint8_t obmc_mode);
+#endif
 void    svt_aom_set_wm_controls(ModeDecisionContext *ctx, uint8_t wm_level);
+#if OPT_DIST_NIC
+uint8_t svt_aom_set_nic_controls(PictureControlSet* pcs, ModeDecisionContext* ctx, uint8_t nic_level);
+#else
 uint8_t svt_aom_set_nic_controls(ModeDecisionContext *ctx, uint8_t nic_level);
+#endif
 uint8_t svt_aom_set_chroma_controls(ModeDecisionContext *ctx, uint8_t uv_level);
 uint8_t svt_aom_get_update_cdf_level(EncMode enc_mode, SliceType is_islice, uint8_t is_base);
 uint8_t svt_aom_get_chroma_level(EncMode enc_mode);
@@ -49,15 +57,22 @@ bool    svt_aom_need_gm_ref_info(EncMode enc_mode, bool super_res_off);
 uint8_t svt_aom_derive_gm_level(PictureParentControlSet *pcs, bool super_res_off);
 
 void svt_aom_set_gm_controls(PictureParentControlSet *pcs, uint8_t gm_level);
-
+#if OPT_SG
+uint8_t svt_aom_get_enable_sg(EncMode enc_mode, uint8_t input_resolution);
+uint8_t svt_aom_get_enable_restoration(EncMode enc_mode, int8_t config_enable_restoration, uint8_t input_resolution);
+#else
 uint8_t svt_aom_get_enable_sg(EncMode enc_mode, uint8_t input_resolution, Bool fast_decode);
 uint8_t svt_aom_get_enable_restoration(EncMode enc_mode, int8_t config_enable_restoration, uint8_t input_resolution,
                                        Bool fast_decode);
-
+#endif
 void svt_aom_set_dist_based_ref_pruning_controls(ModeDecisionContext *ctx, uint8_t dist_based_ref_pruning_level);
 
 bool    svt_aom_get_disallow_4x4(EncMode enc_mode, uint8_t is_base);
+#if OPT_NSQ_GEOM
+uint8_t svt_aom_get_nsq_geom_level(EncMode enc_mode, uint8_t is_base, InputCoeffLvl coeff_lvl, EbInputResolution input_resolution);
+#else
 uint8_t svt_aom_get_nsq_geom_level(EncMode enc_mode, uint8_t is_base, InputCoeffLvl coeff_lvl);
+#endif
 #if OPT_NEW_NSQ_LVLS
 #if OPT_R0_NSQ
 uint8_t svt_aom_get_nsq_search_level(PictureControlSet* pcs, EncMode enc_mode, InputCoeffLvl coeff_lvl, uint32_t qp);
@@ -83,7 +98,11 @@ uint8_t svt_aom_get_obmc_level(PictureControlSet *pcs, EncMode enc_mode, uint8_t
 
 void    svt_aom_set_nsq_geom_ctrls(ModeDecisionContext *ctx, uint8_t nsq_geom_level, uint8_t *allow_HVA_HVB,
                                    uint8_t *allow_HV4, uint8_t *min_nsq_bsize);
+#if OPT_DIST_BAND
+void    svt_aom_set_nsq_search_ctrls(PictureControlSet* pcs, ModeDecisionContext* ctx, uint8_t nsq_search_level, uint8_t resolution);
+#else
 void    svt_aom_set_nsq_search_ctrls(ModeDecisionContext *ctx, uint8_t nsq_search_level, uint8_t resolution);
+#endif
 uint8_t svt_aom_get_tpl_synthesizer_block_size(int8_t tpl_level, uint32_t picture_width, uint32_t picture_height);
 
 void svt_aom_set_mfmv_config(SequenceControlSet *scs);

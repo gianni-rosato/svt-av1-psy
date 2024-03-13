@@ -164,7 +164,11 @@ EbErrorType svt_aom_mode_decision_context_ctor(ModeDecisionContext *ctx, EbColor
 #else
                 uint8_t nic_level         = svt_aom_get_nic_level(enc_mode, is_base, hl, qp, rtc_tune);
 #endif
+#if OPT_DIST_NIC
+                uint8_t nic_scaling_level = svt_aom_set_nic_controls(NULL, NULL, nic_level);
+#else
                 uint8_t nic_scaling_level = svt_aom_set_nic_controls(NULL, nic_level);
+#endif
                 min_nic_scaling_level     = MIN(min_nic_scaling_level, nic_scaling_level);
             }
         }

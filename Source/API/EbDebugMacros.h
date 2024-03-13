@@ -47,6 +47,7 @@ extern "C" {
 #define OPT_WARP_LVLS                             1 // Optimize warp_level
 #define OPT_CAND_RED                              1 // Optimize cand reduction level for M6
 #define OPT_R0_NSQ                                1 // NSQ-offset = f(r0)
+#define TUNE_SHUT_ME_CAND_PRUNE                   1 // Disable me cand pruning in M6
 
 #define OPT_R0_DEPTH_REFINEMENT                   0
 #define OPT_R0_DEPTH_REMOVAL                      0
@@ -54,14 +55,45 @@ extern "C" {
 
 #define OPT_LIST1_REMOVAL                         1 // Optimize levels for List0-only @ Base
 
+#define OPT_SUBPEL_LVLS                           1 // Optimize ME subpel levels
+
+#define OPT_M7                                    1 // M7 tuning using M5 as a reference
+#define OPT_DEPTH_REFINEMENT_LVLS                 1 // Use r0 instead of coeff-check/base-check @ depth-refinement lvl derivation
+#define OPT_TPL_SUB_LVL                           1 // Optimize the tpl sub-lvl
+#define OPT_DEPTH_REMOVAL                         1 // Optimize depth_removal
+#define OPT_NSQ_GEOM                              0 // Optimize nsq_geom
+#define CLOSE_THE_SPEED_GAP_TO_1_8                1 // M5_cand_red + M5_txs
+#define OPT_MED                                   1
+#if OPT_MED
+#define OPT_DIST_DEPTHS                           1 // med-banding for depths
+#define OPT_DIST_BAND                             1 // med-banding for nsq
+#define OPT_DIST_DEPTH_REMOVAL                    0 // med-banding for depth-removal
+#define OPT_DIST_NIC                              0 // med-banding for depth-removal
+#define OPT_DIST_TXS                              1 // med-banding for depth-removal
+#define OPT_DIST_OBMC                             0 // med-banding for depth-removal
+#define OPT_STRENGTHEN_MED                        1 // conservative med
+#endif
+#define OPT_NSQ_CLASSIFIER_1                      1 // add/use sc_class3
 #define CALL_GLOBAL                               0
 #if CALL_GLOBAL
 #define USE_GLOBAL                                0
 #endif
-
+#define TUNE_SUBPEL                               0 // adopt M6_subpel in M7
+#define TF_BRIGHTNESS_CHECK_V1                    1 // prune tf reference frame(s) using the brightness deviation to the central-frame
+#define TF_HME_ME_                                1 // OPT HME of tf
+#define OPT_SWAP_C1_C2                            1 // Swap CAND_CLASS_1 and CAND_CLASS_2 to process MVP candidates first
+#define OPT_MFMV_FD                               1 // Use coeff_lvl for MFMV fast-decode levels instead of current ME_dist/QP
+#define TUNE_TXS                                  0 // adopt M8_TXS in M7
+#define OPT_CDEF_0                                1 // Remove the fast-decode check from CDEF's lvl derivation
+#define OPT_SG                                    1 // Tune SG settings
+#define OPT_DLF_QP_BAND                           1 // Add QP banding to DLF for fast-decode
+#define OPT_MFMV_DEFAULT                          0 // Adopt fast-decode MFMV level for M5/7 default
+#define CLN_REMOVE_USELESS_CHECKS                 1 // Remove useless preset checks (lossless)
+#define OPT_WM_BIS                                1 // Tune WM settings
 
 //FOR DEBUGGING - Do not remove
 #define OPT_LD_LATENCY2         1 // Latency optimization for low delay - to keep the Macro for backwards testing until 3.0
+#define OPT_LD_LATENCY2         0 // Latency optimization for low delay
 #define LOG_ENC_DONE            0 // log encoder job one
 #define NO_ENCDEC               0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch
 #define DEBUG_TPL               0 // Prints to debug TPL

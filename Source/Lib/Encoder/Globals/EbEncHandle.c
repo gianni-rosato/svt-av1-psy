@@ -3017,7 +3017,11 @@ void tf_controls(SequenceControlSet* scs, uint8_t tf_level) {
         scs->tf_params_per_type[2].modulate_pics = 1;
         scs->tf_params_per_type[2].max_num_past_pics = MIN((1 << scs->static_config.hierarchical_levels) / 2, svt_aom_tf_max_ref_per_struct(scs->static_config.hierarchical_levels, 2, 0));
         scs->tf_params_per_type[2].max_num_future_pics = MIN((1 << scs->static_config.hierarchical_levels) / 2, svt_aom_tf_max_ref_per_struct(scs->static_config.hierarchical_levels, 2, 1));
+#if TF_HME_ME_
+        scs->tf_params_per_type[2].hme_me_level = 2;
+#else
         scs->tf_params_per_type[2].hme_me_level = 1;
+#endif
         scs->tf_params_per_type[2].half_pel_mode = 1;
         scs->tf_params_per_type[2].quarter_pel_mode = 1;
         scs->tf_params_per_type[2].eight_pel_mode = 1;
@@ -4038,10 +4042,17 @@ static void set_param_based_on_input(SequenceControlSet *scs)
     uint8_t  min_nsq_bsize = 0;
     uint8_t  no_8x4_4x8 = 1;
     uint8_t  no_16x8_8x16 = 1;
+#if OPT_NSQ_GEOM
+    for (EbInputResolution input_resolution = 0; input_resolution < INPUT_SIZE_COUNT; input_resolution++) {
+#endif
     for (uint8_t is_base = 0; is_base <= 1; is_base++) {
             for (uint8_t coeff_lvl = 0; coeff_lvl <= HIGH_LVL + 1; coeff_lvl++)
             {
+#if OPT_NSQ_GEOM
+                nsq_geom_level = svt_aom_get_nsq_geom_level(scs->static_config.enc_mode, is_base, coeff_lvl, input_resolution);
+#else
                 nsq_geom_level = svt_aom_get_nsq_geom_level(scs->static_config.enc_mode, is_base, coeff_lvl);
+#endif
                 disallow_nsq = MIN(disallow_nsq, (nsq_geom_level == 0 ? 1 : 0));
                 uint8_t temp_allow_HVA_HVB = 0, temp_allow_HV4 = 0;
                 svt_aom_set_nsq_geom_ctrls(NULL, nsq_geom_level, &temp_allow_HVA_HVB, &temp_allow_HV4, &min_nsq_bsize);
@@ -4052,6 +4063,9 @@ static void set_param_based_on_input(SequenceControlSet *scs)
                 no_16x8_8x16 = no_16x8_8x16 && min_nsq_bsize >= 16;
             }
     }
+#if OPT_NSQ_GEOM
+    }
+#endif
     bool disallow_4x4 = true;
     for (uint8_t is_islice = 0; is_islice <= 1; is_islice++)
         for (uint8_t is_base = 0; is_base <= 1; is_base++)
@@ -4217,9 +4231,11 @@ static void set_param_based_on_input(SequenceControlSet *scs)
         else if (scs->static_config.enc_mode <= ENC_M4) {
             mrp_level = 5;
         }
+#if !CLN_REMOVE_USELESS_CHECKS
         else if (scs->static_config.enc_mode <= ENC_M5) {
             mrp_level = 7;
         }
+#endif
         else if (scs->static_config.enc_mode <= ENC_M6) {
             mrp_level = 7;
         }

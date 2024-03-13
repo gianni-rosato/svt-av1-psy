@@ -604,6 +604,20 @@ void *svt_aom_mode_decision_configuration_kernel(void *input_ptr) {
         if (pcs->slice_type != I_SLICE && !pcs->ppcs->sc_class1) {
             set_frame_coeff_lvl(pcs);
         }
+
+
+#if OPT_MED
+        // Whether or not to modulate the level of prediction tools using me-distortion
+        if (pcs->slice_type == I_SLICE) {
+            pcs->med = 0;
+        }
+        else {
+            if (pcs->enc_mode <= ENC_M4)
+                pcs->med = 0;
+            else
+                pcs->med = 1;
+        }
+#endif
         // -------
         // Scale references if resolution of the reference is different than the input
         // super-res reference frame size is same as original input size, only check current frame scaled flag;
