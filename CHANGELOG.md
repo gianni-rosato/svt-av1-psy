@@ -1,5 +1,26 @@
 # Changelog
 
+## [2.0.0] - 2024-03-13
+
+Major API updates
+- Changed the API signaling the End Of Stream (EOS) with the last frame vs with an empty frame
+- OPT_LD_LATENCY2 making the change above is kept in the code to help devs with integration
+- Removed the 3-pass VBR mode which changed the calling mechanism of multi-pass VBR
+- Moved to a new versioning scheme where the project major version will be updated everytime API/ABI is changed
+
+Encoder
+- Improve the tradeoffs for the random access mode across presets:
+-   Speedup presets MR by ~100% and improved quality along with tradeoff improvements across the higher quality presets (!2179)
+-   Improved the compression efficiency of presets M9-M13 by 1-4% (!2179)
+-   Simplified VBR multi-pass to use 2 passes to allow integration with ffmpeg
+- Continued adding ARM optimizations for functions with c_only equivalent
+- Replaced the 3-pass VBR with a 2-pass VBR to ease the multi-pass integration with ffmpeg
+- Memory savings of 20-35% for LP 8 mode in preset M6 and below and 1-5% in other modes / presets
+
+Cleanup and bug fixes and documentation
+- Various cleanups and functional bug fixes
+- Update the documentation to reflect the rate control changes
+
 ## [1.8.0] - 2023-12-11
 
 Encoder

@@ -23,8 +23,8 @@ extern "C" {
 struct SvtMetadataArray;
 
 // API Version
-#define SVT_AV1_VERSION_MAJOR 1
-#define SVT_AV1_VERSION_MINOR 8
+#define SVT_AV1_VERSION_MAJOR 2
+#define SVT_AV1_VERSION_MINOR 0
 #define SVT_AV1_VERSION_PATCHLEVEL 0
 
 #define SVT_AV1_CHECK_VERSION(major, minor, patch)                                                               \

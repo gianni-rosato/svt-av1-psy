@@ -28,7 +28,7 @@ extern "C" {
  * has been modified, and reset anytime the major API version has
  * been changed. Used to keep track if a field has been added or not.
  */
-#define SVT_AV1_ENC_ABI_VERSION 9
+#define SVT_AV1_ENC_ABI_VERSION 0
 
 //***HME***
 
@@ -923,7 +923,6 @@ typedef struct EbSvtAv1EncConfiguration {
      */
     SvtAv1FrameScaleEvts frame_scale_evts;
 
-    /*Add 64 Byte Padding to Struct to avoid changing the size of the public configuration struct*/
     /* ROI map
     *
     * 0 = disable ROI
@@ -934,7 +933,12 @@ typedef struct EbSvtAv1EncConfiguration {
     /* Stores the optional film grain synthesis info */
     AomFilmGrain *fgs_table;
 
-    uint8_t padding[64 - sizeof(Bool) - sizeof(AomFilmGrain *)];
+    /* New parameters can go in under this line. Also deduct the size of the parameter */
+    /* from the padding array */
+
+    /*Add 128 Byte Padding to Struct to avoid changing the size of the public configuration struct*/
+    uint8_t padding[128];
+
 } EbSvtAv1EncConfiguration;
 
 /**

@@ -12,8 +12,8 @@
 # Encoder Library directory CMakeLists.txt
 
 # Shared Encoder Version
-set(ENC_VERSION_MAJOR 1)
-set(ENC_VERSION_MINOR 8)
+set(ENC_VERSION_MAJOR 2)
+set(ENC_VERSION_MINOR 0)
 set(ENC_VERSION_PATCH 0)
 set(ENC_VERSION ${ENC_VERSION_MAJOR}.${ENC_VERSION_MINOR}.${ENC_VERSION_PATCH})
 
