@@ -937,10 +937,6 @@ typedef struct EbSvtAv1EncConfiguration {
 
     /* New parameters can go in under this line. Also deduct the size of the parameter */
     /* from the padding array */
-
-    /*Add 128 Byte Padding to Struct to avoid changing the size of the public configuration struct*/
-    uint8_t padding[128];
-    
     /* @brief Boost low variance regions according to a fast-growing formula
         0: no boost
         1: mild boost
@@ -972,6 +968,10 @@ typedef struct EbSvtAv1EncConfiguration {
      * Default is 0 (off).
      */
      int8_t sharpness;
+
+    /*Add 128 Byte Padding to Struct to avoid changing the size of the public configuration struct*/
+    uint8_t padding[128 - 3 * sizeof(uint8_t) - sizeof(int8_t)];
+
 } EbSvtAv1EncConfiguration;
 
 /**
