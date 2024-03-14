@@ -60,6 +60,7 @@ $(
         ':!test/vectors/smoking_test.cfg' \
         ':!test/vectors/video_src.cfg' \
         ':!*.png' \
+        ':!*.webp' \
         ':!*.PNG' \
         ':!*.pdf'
 )
