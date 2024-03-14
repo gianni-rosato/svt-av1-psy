@@ -22,7 +22,7 @@ screen sharing applications.
 
 In practice, the CfL prediction is performed as illustrated in Figure 1 below.
 
-![cfl_appendix_fig1](./img/cfl_appendix_fig1.png)
+![cfl_appendix_fig1](./img/cfl_appendix_fig1.webp)
 
 ##### Figure 1. Block diagram of the chroma from luma prediction process.
 

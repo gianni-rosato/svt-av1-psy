@@ -55,7 +55,7 @@ The major modules of the SVT-AV1 decoder are:
 4. CDEF
 5. Loop Restoration
 
-![image1](./img/decoder_flow.png)
+![image1](./img/decoder_flow.webp)
 <a name = "figure-1"></a>
 ##### Figure 1: High-Level Decoder Architecture
 
@@ -76,7 +76,7 @@ tile group obu data. Figure 2 shows a typical flow of the parse stage.
    Picture buffer with predicted values filled for blocks with palette mode
    Reconstructed picture buffer without applying post-processing filters for single-thread mode
 
-![image2](./img/decoder_parse_stage.png)
+![image2](./img/decoder_parse_stage.webp)
 <a name = "figure-2"></a>
 ##### Figure 2: Parse stage Flow
 
@@ -98,7 +98,7 @@ reconstruction stage.
 
 **Output** : Reconstructed picture buffer without applying the post-processing filters.
 
-![image3](./img/decoder_reconstruction_stage.png)
+![image3](./img/decoder_reconstruction_stage.webp)
 <a name = "figure-3"></a>
 ##### Figure 3: Reconstruction stage Flowdecode\_frame\_tiles() function starts reconstruction at frame level. Then decode\_tile\_job() is called for each tile.
 
@@ -122,7 +122,7 @@ super blocks and their constituent sub-blocks as per section 7.14 of AV1 spec.
 This stage applies the loop filter for the entire frame. Flow diagram for Loop
 Filter is below in Figure 4.
 
-![image4](./img/decoder_loop_filter_stage.png)
+![image4](./img/decoder_loop_filter_stage.webp)
 <a name = "figure-4"></a>
 ##### Figure 4: Loop Filter stage Flow
 
@@ -144,11 +144,11 @@ Filter is below in Figure 4.
         2. Apply LF for each horizontal  TU edge.
 
 
-![image5](./img/decoder_LF_horz.png)
+![image5](./img/decoder_LF_horz.webp)
 <a name = "figure-5"></a>
 ##### Figure 5: LF Vertical Stage
 
-![image6](./img/decoder_LF_vert.png)
+![image6](./img/decoder_LF_vert.webp)
 <a name = "figure-6"></a>
 ##### Figure 6: LF Horizontal Stage
 
@@ -158,7 +158,7 @@ The CDEF performs deringing based on the detected direction of blocks as per
 section 7.15 of AV1 spec. This stage applies the CDEF for the entire frame. The
 flow diagram for the CDEF is shown in Figure 7.
 
-![image7](./img/decoder_cdef_stage.png)
+![image7](./img/decoder_cdef_stage.webp)
 <a name = "figure-7"></a>
 ##### Figure 7: CDEF stage Flow
 
@@ -178,7 +178,7 @@ Steps involved in CDEF:
     * Store the results in the destination buffer
 
 
-![image8](./img/decoder_cdef_filter.png)
+![image8](./img/decoder_cdef_filter.webp)
 <a name = "figure-8"></a>
 ##### Figure 8: CDEF Filter Flow
 
@@ -188,7 +188,7 @@ This stage applies the Loop Restoration for the entire frame and the process is
 defined as per section 7.17 of AV1 spec. The flow diagram for the LR is shown
 in Figure 9.
 
-![image9](./img/decoder_loop_restoration_stage.png)
+![image9](./img/decoder_loop_restoration_stage.webp)
 <a name = "figure-9"></a>
 ##### Figure 9: Loop Restoration stage Flow
 
@@ -251,11 +251,11 @@ The worker thread will perform the following:
 Figure 11 shows the flow chart of the worker thread.
 
 
-![image10](./img/decoder_main_thread.png)
+![image10](./img/decoder_main_thread.webp)
 <a name = "figure-10"></a>
 ##### Figure 10: Figure 10 Main Thread Flow Chart
 
-![image11](./img/decoder_worker_thread.png)
+![image11](./img/decoder_worker_thread.webp)
 <a name = "figure-11"></a>
 ##### Figure 11: Worker Thread Flow Chart
 
@@ -271,11 +271,11 @@ Please note that the thread number and tile number need not match. Each thread
 can pick any tile based on job availability. The pictures are just for
 understanding purpose only.
 
-![image12](./img/decoder_tile_parallel_l_gt_t.png)
+![image12](./img/decoder_tile_parallel_l_gt_t.webp)
 <a name = "figure-12"></a>
 ##### Figure 12: Tile Parallelism (L < T)
 
-![image13](./img/decoder_tile_parallel_l_lt_t.png)
+![image13](./img/decoder_tile_parallel_l_lt_t.webp)
 <a name = "figure-13"></a>
 ##### Figure 13: Tile Parallelism (L > T)
 
@@ -293,7 +293,7 @@ switches to the new tile with maximum number of jobs to be processed. If a
 unique tile that has not yet processed any row is not found, it picks the tile
 with maximum number of jobs to be processed.
 
-![image14](./img/decoder_TileRowMT.png)
+![image14](./img/decoder_TileRowMT.webp)
 <a name = "figure-14"></a>
 ##### Figure 14: Illustration for Tile Row MT for 4 Tiles and 9 Threads
 
@@ -304,7 +304,7 @@ Wavefront Processing (WPP) will be used to handle data dependencies if
 required. LF, CDEF, and LR may work with different unit sizes depending on the
 available parallelism unit instead of SB.
 
-![image15](./img/decoder_5_threads.png)
+![image15](./img/decoder_5_threads.webp)
 <a name = "figure-15"></a>
 ##### Figure 15: Frame\_i with 5 Threads
 
@@ -395,11 +395,11 @@ picture, then Figure 16 shows the map with offset for each location in the SB
 and stored in p\_mi\_offset buffer. This map will be used for deriving neighbor
 BlockModeInfo structure at any location if needed.
 
-![image16](./img/decoder_Nbr.png)
+![image16](./img/decoder_Nbr.webp)
 <a name = "figure-16"></a>
 ##### Figure 16: Sample SB with Blocks numbered (BlockModeInfo)
 
-![image17](./img/decoder_NbrOffset.png)
+![image17](./img/decoder_NbrOffset.webp)
 <a name = "figure-17"></a>
 ##### Figure 17: Map with offset for each Block (p\_mi\_offset)­
 
