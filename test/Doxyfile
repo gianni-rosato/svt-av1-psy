@@ -1551,7 +1551,7 @@ EXT_LINKS_IN_WINDOW    = NO
 
 # Use this tag to change the font size of LaTeX formulas included as images in
 # the HTML documentation. When you change the font size after a successful
-# doxygen run you need to manually remove any form_*.png images from the HTML
+# doxygen run you need to manually remove any form_*.webp images from the HTML
 # output directory to force them to be regenerated.
 # Minimum value: 8, maximum value: 50, default value: 10.
 # This tag requires that the tag GENERATE_HTML is set to YES.
@@ -1562,7 +1562,7 @@ FORMULA_FONTSIZE       = 10
 # generated for formulas are transparent PNGs. Transparent PNGs are not
 # supported properly for IE 6.0, but are supported on all modern browsers.
 #
-# Note that when changing this option you need to delete any form_*.png files in
+# Note that when changing this option you need to delete any form_*.webp files in
 # the HTML output directory before the changes have effect.
 # The default value is: YES.
 # This tag requires that the tag GENERATE_HTML is set to YES.
