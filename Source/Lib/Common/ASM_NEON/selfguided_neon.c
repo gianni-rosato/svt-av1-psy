@@ -1499,7 +1499,7 @@ typedef struct {
 // The 's' values are calculated based on original 'r' and 'e' values in the
 // spec using GenSgrprojVtable().
 // Note: Setting r = 0 skips the filter; with corresponding s = -1 (invalid).
-const sgr_params_type av1_sgr_params[SGRPROJ_PARAMS] = {
+static const sgr_params_type av1_sgr_params[SGRPROJ_PARAMS] = {
     {{2, 1}, {140, 3236}},
     {{2, 1}, {112, 2158}},
     {{2, 1}, {93, 1618}},
