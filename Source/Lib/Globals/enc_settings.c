@@ -902,6 +902,11 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet *scs) {
         return_error = EB_ErrorBadParameter;
     }
 
+    if (config->qp_scale_compress_strength > 3) {
+        SVT_ERROR("Instance %u: QP scale compress strength must be between 0 and 3\n", channel_number + 1);
+        return_error = EB_ErrorBadParameter;
+    }
+
     return return_error;
 }
 
@@ -1054,6 +1059,7 @@ EbErrorType svt_av1_set_default_params(EbSvtAv1EncConfiguration *config_ptr) {
     config_ptr->enable_alt_curve                  = FALSE;
     config_ptr->sharpness                         = 0; 
     config_ptr->extended_crf_qindex_offset        = 0;
+    config_ptr->qp_scale_compress_strength        = 1;
     return return_error;
 }
 
@@ -1178,11 +1184,9 @@ void svt_av1_print_lib_params(SequenceControlSet *scs) {
                      config->film_grain_denoise_strength);
         }
 
-        if (config->sharpness != 0) {
-            SVT_INFO("SVT [config]: Sharpness / level \t\t\t\t\t\t: %d / %d\n",
-                     1,
-                     config->sharpness);
-        }
+        SVT_INFO("SVT [config]: Sharpness / QP scale compress strength \t\t\t: %d / %d\n",
+                 config->sharpness,
+                 config->qp_scale_compress_strength);
     }
 #ifdef DEBUG_BUFFERS
     SVT_INFO("SVT [config]: INPUT / OUTPUT \t\t\t\t\t\t\t: %d / %d\n",
@@ -2050,6 +2054,7 @@ EB_API EbErrorType svt_av1_enc_parse_parameter(EbSvtAv1EncConfiguration *config_
         {"startup-mg-size", &config_struct->startup_mg_size},
         {"variance-boost-strength", &config_struct->variance_boost_strength},
         {"variance-octile", &config_struct->variance_octile},
+        {"qp-scale-compress-strength", &config_struct->qp_scale_compress_strength}
     };
     const size_t uint8_opts_size = sizeof(uint8_opts) / sizeof(uint8_opts[0]);
 
