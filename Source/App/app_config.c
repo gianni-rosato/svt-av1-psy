@@ -204,6 +204,8 @@
 
 #define SHARPNESS_TOKEN "--sharpness"
 
+#define QP_SCALE_COMPRESS_STRENGTH_TOKEN "--qp-scale-compress-strength"
+
 static EbErrorType validate_error(EbErrorType err, const char *token, const char *value) {
     switch (err) {
     case EB_ErrorNone: return EB_ErrorNone;
@@ -1235,6 +1237,11 @@ ConfigEntry config_entry_psy[] = {
      SHARPNESS_TOKEN,
      "[PSY] Affects loopfilter deblock sharpness and rate distortion, default is 0 [-7 to 7]",
      set_cfg_generic_token},
+    // QP scale compress
+    {SINGLE_INPUT,
+     QP_SCALE_COMPRESS_STRENGTH_TOKEN,
+     "[PSY] QP scale compress strength, default is 1 [0-3]",
+     set_cfg_generic_token},
     // Termination
     {SINGLE_INPUT, NULL, NULL, NULL}};
 
@@ -1423,6 +1430,9 @@ ConfigEntry config_entry[] = {
 
     // Sharpness
     {SINGLE_INPUT, SHARPNESS_TOKEN, "Sharpness", set_cfg_generic_token},
+
+    // QP scale compression
+    {SINGLE_INPUT, QP_SCALE_COMPRESS_STRENGTH_TOKEN, "QpScaleCompressStrength", set_cfg_generic_token},
 
     // Termination
     {SINGLE_INPUT, NULL, NULL, NULL}};
