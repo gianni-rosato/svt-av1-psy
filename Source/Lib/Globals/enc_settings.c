@@ -262,8 +262,8 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet *scs) {
         return_error = EB_ErrorBadParameter;
     }
 
-    if (config->enable_dlf_flag > 1) {
-        SVT_ERROR("Instance %u: Invalid LoopFilterEnable. LoopFilterEnable must be [0 - 1]\n", channel_number + 1);
+    if (config->enable_dlf_flag > 2) {
+        SVT_ERROR("Instance %u: Invalid LoopFilterEnable. LoopFilterEnable must be [0 - 2]\n", channel_number + 1);
         return_error = EB_ErrorBadParameter;
     }
 
@@ -960,7 +960,7 @@ EbErrorType svt_av1_set_default_params(EbSvtAv1EncConfiguration *config_ptr) {
     config_ptr->intra_refresh_type           = 2;
     config_ptr->hierarchical_levels          = 0;
     config_ptr->pred_structure               = SVT_AV1_PRED_RANDOM_ACCESS;
-    config_ptr->enable_dlf_flag              = TRUE;
+    config_ptr->enable_dlf_flag              = 1;
     config_ptr->cdef_level                   = DEFAULT;
     config_ptr->enable_restoration_filtering = DEFAULT;
     config_ptr->enable_mfmv                  = DEFAULT;
@@ -2045,6 +2045,7 @@ EB_API EbErrorType svt_av1_enc_parse_parameter(EbSvtAv1EncConfiguration *config_
         {"tune", &config_struct->tune},
         {"film-grain-denoise", &config_struct->film_grain_denoise_apply},
         {"enable-hdr", &config_struct->high_dynamic_range_input},
+        {"enable-dlf", &config_struct->enable_dlf_flag},
         {"resize-mode", &config_struct->resize_mode},
         {"resize-denom", &config_struct->resize_denom},
         {"resize-kf-denom", &config_struct->resize_kf_denom},
@@ -2152,7 +2153,6 @@ EB_API EbErrorType svt_av1_enc_parse_parameter(EbSvtAv1EncConfiguration *config_
         Bool       *out;
     } bool_opts[] = {
         {"use-q-file", &config_struct->use_qp_file},
-        {"enable-dlf", &config_struct->enable_dlf_flag},
         {"rmv", &config_struct->restricted_motion_vector},
         {"enable-tf", &config_struct->enable_tf},
         {"enable-overlays", &config_struct->enable_overlays},
