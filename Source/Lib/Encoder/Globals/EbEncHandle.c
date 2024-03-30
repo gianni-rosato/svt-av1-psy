@@ -3327,7 +3327,7 @@ static void derive_tf_params(SequenceControlSet *scs) {
     if (do_tf == 0) {
         tf_level = 0;
     }
-    else if (enc_mode <= ENC_M0 || scs->static_config.tune == 3) {
+    else if (enc_mode <= ENC_M0) {
         tf_level = 1;
     }
     else if (enc_mode <= ENC_M4) {
