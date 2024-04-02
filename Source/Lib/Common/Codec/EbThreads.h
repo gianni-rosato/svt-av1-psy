@@ -56,17 +56,19 @@ extern EbErrorType svt_block_on_mutex(EbHandle mutex_handle);
 extern EbErrorType svt_destroy_mutex(EbHandle mutex_handle);
 #ifdef _WIN32
 
-#define EB_CREATE_THREAD(pointer, thread_function, thread_context)           \
-    do {                                                                     \
-        pointer = svt_create_thread(thread_function, thread_context);        \
-        EB_ADD_MEM(pointer, 1, EB_THREAD);                                   \
-        if (num_groups == 1)                                                 \
-            SetThreadAffinityMask(pointer, svt_aom_group_affinity.Mask);     \
-        else if (num_groups == 2 && alternate_groups) {                      \
-            svt_aom_group_affinity.Group = 1 - svt_aom_group_affinity.Group; \
-            SetThreadGroupAffinity(pointer, &svt_aom_group_affinity, NULL);  \
-        } else if (num_groups == 2 && !alternate_groups)                     \
-            SetThreadGroupAffinity(pointer, &svt_aom_group_affinity, NULL);  \
+#define EB_CREATE_THREAD(pointer, thread_function, thread_context)               \
+    do {                                                                         \
+        pointer = svt_create_thread(thread_function, thread_context);            \
+        EB_ADD_MEM(pointer, 1, EB_THREAD);                                       \
+        if (svt_aom_group_affinity_enabled) {                                    \
+            if (num_groups == 1)                                                 \
+                SetThreadAffinityMask(pointer, svt_aom_group_affinity.Mask);     \
+            else if (num_groups == 2 && alternate_groups) {                      \
+                svt_aom_group_affinity.Group = 1 - svt_aom_group_affinity.Group; \
+                SetThreadGroupAffinity(pointer, &svt_aom_group_affinity, NULL);  \
+            } else if (num_groups == 2 && !alternate_groups)                     \
+                SetThreadGroupAffinity(pointer, &svt_aom_group_affinity, NULL);  \
+        }                                                                        \
     } while (0)
 
 #else

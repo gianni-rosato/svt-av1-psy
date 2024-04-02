@@ -45,6 +45,7 @@
 extern uint8_t        num_groups;
 extern GROUP_AFFINITY svt_aom_group_affinity;
 extern Bool           alternate_groups;
+extern uint8_t        svt_aom_group_affinity_enabled;
 #elif defined(__linux__)
 extern cpu_set_t svt_aom_group_affinity;
 #endif

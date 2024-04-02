@@ -50,7 +50,8 @@
 #ifdef _WIN32
 uint8_t        num_groups = 0;
 GROUP_AFFINITY svt_aom_group_affinity;
-Bool           alternate_groups = 0;
+Bool           alternate_groups               = 0;
+int8_t         svt_aom_group_affinity_enabled = 0;
 #elif defined(__linux__)
 cpu_set_t svt_aom_group_affinity;
 #endif
