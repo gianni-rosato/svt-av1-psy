@@ -39,4 +39,4 @@ static INLINE int32_t get_convolve_tap(const int16_t *const filter) {
         return 8;
 }
 
-#endif
+#endif // AOM_AV1_COMMON_ARM_CONVOLVE_NEON_H_

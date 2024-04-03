@@ -1375,6 +1375,8 @@ extern "C" {
                                            const InterpFilterParams *filter_params_y, const int32_t subpel_x_q4,
                                            const int32_t subpel_y_q4, ConvolveParams *conv_params, int32_t bd);
 
+    void svt_av1_highbd_convolve_2d_sr_neon(const uint16_t *src, int32_t src_stride, uint16_t *dst, int32_t dst_stride, int32_t w, int32_t h, const InterpFilterParams *filter_params_x, const InterpFilterParams *filter_params_y, const int32_t subpel_x_q4, const int32_t subpel_y_q4, ConvolveParams *conv_params, int32_t bd);
+
 #endif
 
 #ifdef ARCH_X86_64
