@@ -11,11 +11,6 @@
 
 # APP Directory CMakeLists.txt
 
-if (NOT HAVE_X86_PLATFORM)
-    message(WARNING "Skipping SvtAv1E2ETests because HAVE_X86_PLATFORM is false")
-    return()
-endif()
-
 include(ProcessorCount)
 set(SVT_AV1_E2E_ROOT "${CMAKE_CURRENT_SOURCE_DIR}")
 include("${SVT_AV1_E2E_ROOT}/test_data_util.cmake")

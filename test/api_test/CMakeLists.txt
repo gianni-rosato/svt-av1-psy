@@ -12,11 +12,6 @@
 
 # APP Directory CMakeLists.txt
 
-if (NOT HAVE_X86_PLATFORM)
-    message(WARNING "Skipping SvtAv1ApiTests because HAVE_X86_PLATFORM is false")
-    return()
-endif()
-
 # Include Subdirectories
 include_directories(${PROJECT_SOURCE_DIR}/test/
     ${PROJECT_SOURCE_DIR}/third_party/googletest/include
