@@ -1235,7 +1235,7 @@ ConfigEntry config_entry_psy[] = {
     // QP scale compress
     {SINGLE_INPUT,
      QP_SCALE_COMPRESS_STRENGTH_TOKEN,
-     "[PSY] QP scale compress strength, default is 1 [0-3]",
+     "[PSY] QP scale compress strength, default is 1 while SVT-AV1 default is 0 [0-3]",
      set_cfg_generic_token},
     // Termination
     {SINGLE_INPUT, NULL, NULL, NULL}};
