@@ -8411,6 +8411,10 @@ void svt_aom_sig_deriv_mode_decision_config(SequenceControlSet *scs, PictureCont
     pcs->interpolation_search_level = 0;
     if (enc_mode <= ENC_MRS)
         pcs->interpolation_search_level = 1;
+    else if (enc_mode <= ENC_M2)
+        pcs->interpolation_search_level = 2;
+    else if (enc_mode <= ENC_M4)
+        pcs->interpolation_search_level = 3;
     else if (enc_mode <= ENC_M8)
         pcs->interpolation_search_level = 4;
     else {
