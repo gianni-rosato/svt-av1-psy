@@ -391,7 +391,7 @@ typedef struct PictureControlSet {
     EncMode          enc_mode;
     InputCoeffLvl    coeff_lvl;
 #if OPT_MED
-    Bool med;
+    bool me_dist_mod; // Whether or not to modulate the level of prediction tools using me-distortion
 #endif
     int32_t          cdef_preset[MAX_TILE_CNTS][4];
     WienerInfo       wiener_info[MAX_TILE_CNTS][MAX_MB_PLANE];
@@ -439,6 +439,9 @@ typedef struct PictureControlSet {
     uint8_t    approx_inter_rate;
     uint8_t    skip_intra;
     PicVqCtrls vq_ctrls;
+#if ADD_LAMBDA_WEIGHT_SGN
+    uint16_t lambda_weight;
+#endif
     // scaled input picture is only used in loop restoration for recon size is
     // different with input frame when reference scaling is enabled
     EbPictureBufferDesc *scaled_input_pic;

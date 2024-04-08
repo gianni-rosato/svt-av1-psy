@@ -739,12 +739,19 @@ typedef struct EbSvtAv1EncConfiguration {
     /* DEPRECATED: to be removed in 1.5.0. */
     int32_t manual_pred_struct_entry_num;
 #endif
+#if OPT_FAST_DECODE_LVLS
+   /* Decoder-speed-targeted encoder optimization level (produce bitstreams that can be decoded faster).
+    * 0: No decoder speed optimization
+    * -1, 1, 2, 3,..: Decoder speed optimization enabled
+    */
+    int8_t fast_decode;
+#else
     /* Decoder-speed-targeted encoder optimization level (produce bitstreams that can be decoded faster).
     * 0: No decoder speed optimization
     * 1: Decoder speed optimization enabled (fast decode)
     */
     Bool fast_decode;
-
+#endif
     /* S-Frame interval (frames)
     * 0: S-Frame off
     * >0: S-Frame on and indicates the number of frames after which a frame may be coded as an S-Frame

@@ -250,14 +250,12 @@ EbErrorType svt_aom_mode_decision_context_ctor(ModeDecisionContext *ctx, EbColor
     // Allocate buffers for obmc prediction
 #if OPT_OBMC_LVLS
     uint8_t obmc_allowed = 0;
-    for (uint8_t fast_decode = 0; fast_decode < 2; fast_decode++) {
-        for (uint8_t is_base = 0; is_base < 2; is_base++) {
-            // min QP is 1 b/c 0 is lossless and is not supported
-            for (uint8_t qp = 1; qp <= MAX_QP_VALUE; qp++) {
-                if (obmc_allowed)
-                    break;
-                obmc_allowed |= svt_aom_get_obmc_level(enc_mode, qp, is_base);
-            }
+    for (uint8_t is_base = 0; is_base < 2; is_base++) {
+        // min QP is 1 b/c 0 is lossless and is not supported
+        for (uint8_t qp = 1; qp <= MAX_QP_VALUE; qp++) {
+            if (obmc_allowed)
+                break;
+            obmc_allowed |= svt_aom_get_obmc_level(enc_mode, qp, is_base);
         }
     }
 #else
@@ -570,7 +568,68 @@ static void av1_lambda_assign_md(PictureControlSet *pcs, ModeDecisionContext *ct
             }
         }
     }
-
+#if ADD_LAMBDA_WEIGHT_SGN
+    if (pcs->lambda_weight) {
+        ctx->full_lambda_md[0] = (ctx->full_lambda_md[0] * pcs->lambda_weight) >> 7;
+        ctx->fast_lambda_md[0] = (ctx->fast_lambda_md[0] * pcs->lambda_weight) >> 7;
+        ctx->full_lambda_md[1] = (ctx->full_lambda_md[1] * pcs->lambda_weight) >> 7;
+        ctx->fast_lambda_md[1] = (ctx->fast_lambda_md[1] * pcs->lambda_weight) >> 7;
+    }
+#else
+#if LAMBDA_SKIP_BIAS
+#if FIX_LAMBDA
+    Bool use_higher_lambda = 0;
+#else
+    Bool use_higher_lambda;
+#endif
+#if FIX_LAMBDA
+    if(pcs->scs->static_config.fast_decode) {
+#endif
+#if TUNE_M5
+#if SLOW_DOWN_DECODER // shut lambda modulation
+    if (pcs->enc_mode <= ENC_M7)
+#else
+    if (pcs->enc_mode <= ENC_M4)
+#endif
+#else
+    if (pcs->enc_mode <= ENC_M5)
+#endif
+        use_higher_lambda = 0;
+#if SHUT_LAMBDA_MODULATION_FOR_M13
+    else if (pcs->enc_mode <= ENC_M11)
+        use_higher_lambda = 1;
+    else 
+        use_higher_lambda = 0;
+#else
+    else
+        use_higher_lambda = 1;
+#endif
+#if FIX_LAMBDA
+    }
+#endif
+    if (use_higher_lambda) {
+#if HIGHER_LAMBDA_EXTREME_RIGHT_BAND
+        if (pcs->picture_qp >= 57) {
+            ctx->full_lambda_md[0] = (ctx->full_lambda_md[0] * 200) >> 7;
+            ctx->fast_lambda_md[0] = (ctx->fast_lambda_md[0] * 200) >> 7;
+            ctx->full_lambda_md[1] = (ctx->full_lambda_md[1] * 200) >> 7;
+            ctx->fast_lambda_md[1] = (ctx->fast_lambda_md[1] * 200) >> 7;
+        }
+        else {
+            ctx->full_lambda_md[0] = (ctx->full_lambda_md[0] * 150) >> 7;
+            ctx->fast_lambda_md[0] = (ctx->fast_lambda_md[0] * 150) >> 7;
+            ctx->full_lambda_md[1] = (ctx->full_lambda_md[1] * 150) >> 7;
+            ctx->fast_lambda_md[1] = (ctx->fast_lambda_md[1] * 150) >> 7;
+        }
+#else
+        ctx->full_lambda_md[0] = (ctx->full_lambda_md[0] * 150) >> 7;
+        ctx->fast_lambda_md[0] = (ctx->fast_lambda_md[0] * 150) >> 7;
+        ctx->full_lambda_md[1] = (ctx->full_lambda_md[1] * 150) >> 7;
+        ctx->fast_lambda_md[1] = (ctx->fast_lambda_md[1] * 150) >> 7;
+#endif
+    }
+#endif
+#endif
     ctx->full_lambda_md[1] *= 16;
     ctx->fast_lambda_md[1] *= 4;
 

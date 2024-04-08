@@ -129,9 +129,9 @@ typedef struct ObmcControls {
     uint8_t enabled;
 #if OPT_OBMC_LVLS
     // Specifies max block size to refine
-    Bool max_blk_size_to_refine;
+    uint8_t max_blk_size_to_refine;
     // Specifies max block size to test
-    Bool max_blk_size;
+    uint8_t max_blk_size;
 #else
     // if true, cap the max block size to refine to 16x16
     Bool max_blk_size_to_refine_16x16;

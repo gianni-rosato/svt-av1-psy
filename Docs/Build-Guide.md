@@ -1,6 +1,7 @@
 [Top level](../README.md)
 
 # Build and Install
+Before building, please consider **enabling** link-time optimizations (LTO), which will build a binary with reduced call and return overhead due to the increased inline expansion. In order for effective LTO generated inline expansion to occur, additional time to process the source files is needed, and so may affect your overall compile time.
 
 ## Windows* Operating Systems (64-bit)
 
@@ -16,6 +17,7 @@
   - Build the project by following the steps below
     - cd into `Build\windows`
     - run `build.bat <2019|2017|2015>` [This will generate the .sln files and build the project]
+    - for LTO build run `build.bat <2019|2017|2015> lto` [This will generate the .sln files and build the project]
 
 - __Binaries Location__
   - Binaries can be found under `<repo dir>/Bin/Release` or `<repo dir>/Bin/Debug`, depending on whether Debug or Release were selected in the build mode.
@@ -40,6 +42,7 @@ Note - a Dockerfile is provided to build the encoder into a tiny Alpine Linux Do
 - __Build Instructions__
   - `cd Build/linux`
   - `./build.sh <release | debug>`
+  - for LTO build run `./build.sh <release | debug> --enable-lto`
 
 - __Sample Binaries location__
   - Binaries can be found under `Bin/Release` and/or `Bin/Debug`

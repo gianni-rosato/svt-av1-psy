@@ -4,6 +4,9 @@
 
 [[_TOC_]]
 
+# Why build with LTO
+The purpose of building with link-time optimization (LTO) enabled is to reduce the call and return overhead by inline expansion. This means that a function's call site will be replaced with the body of the function itself. In order for the inline expansion to occur, additional compile time is required.
+
 # What Presets Do
 
 Presets control how many efficiency features are used during the encoding

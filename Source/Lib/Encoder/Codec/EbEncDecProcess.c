@@ -3667,13 +3667,13 @@ void *svt_aom_mode_decision_kernel(void *input_ptr) {
                                                                    &pcs->ec_ctx_array[sb_index]);
                             ed_ctx->md_ctx->md_rate_est_ctx = ed_ctx->md_ctx->rate_est_table;
                         }
+
                         // Configure the SB
                         svt_aom_mode_decision_configure_sb(
                             ed_ctx->md_ctx,
                             pcs,
                             sb_ptr->qindex,
                             svt_aom_get_me_qindex(pcs, sb_ptr, scs->seq_header.sb_size == BLOCK_128X128));
-
                         // signals set once per SB (i.e. not per PD)
                         svt_aom_sig_deriv_enc_dec_common(scs, pcs, ed_ctx->md_ctx);
 
