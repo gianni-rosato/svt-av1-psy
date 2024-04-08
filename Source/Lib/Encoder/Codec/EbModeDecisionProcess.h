@@ -1025,7 +1025,9 @@ typedef struct ModeDecisionContext {
     Bipred3x3Controls bipred3x3_ctrls;
     uint8_t           redundant_blk;
     uint8_t           nic_level;
+#if !CNL_INJ_NON_SIMPLE_MODES
     uint8_t           svt_aom_inject_inter_candidates;
+#endif
     uint8_t          *cfl_temp_luma_recon;
     uint16_t         *cfl_temp_luma_recon16bit;
     Bool              blk_skip_decision;

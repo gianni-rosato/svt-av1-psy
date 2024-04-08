@@ -9062,7 +9062,11 @@ static void md_encode_block(PictureControlSet *pcs, ModeDecisionContext *ctx, ui
     }
     uint32_t fast_candidate_total_count;
     ctx->md_stage = MD_STAGE_0;
+#if CNL_INJ_NON_SIMPLE_MODES
+    generate_md_stage_0_cand(pcs, ctx, &fast_candidate_total_count);
+#else
     generate_md_stage_0_cand(ctx->sb_ptr, ctx, &fast_candidate_total_count, pcs);
+#endif
     if (pcs->slice_type != I_SLICE) {
         if (!ctx->shut_fast_rate) {
             estimate_ref_frames_num_bits(ctx, pcs);

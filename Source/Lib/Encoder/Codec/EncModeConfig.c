@@ -9226,7 +9226,9 @@ void svt_aom_sig_deriv_enc_dec_light_pd0(SequenceControlSet *scs, PictureControl
     const bool               rtc_tune  = (scs->static_config.pred_structure == SVT_AV1_PRED_LOW_DELAY_B) ? true : false;
     const bool               is_not_last_layer = !ppcs->is_highest_layer;
     ctx->md_disallow_nsq_search                = 1;
+#if !CNL_INJ_NON_SIMPLE_MODES
     ctx->svt_aom_inject_inter_candidates       = 1;
+#endif
 
     // Use coeff rate and slit flag rate only (i.e. no fast rate)
     ctx->shut_fast_rate = TRUE;
@@ -9582,7 +9584,9 @@ void svt_aom_sig_deriv_enc_dec_light_pd1(PictureControlSet *pcs, ModeDecisionCon
     set_cfl_ctrls(ctx, 0);
     ctx->md_disallow_nsq_search                     = 1;
     ctx->new_nearest_injection                      = 1;
+#if !CNL_INJ_NON_SIMPLE_MODES
     ctx->svt_aom_inject_inter_candidates            = 1;
+#endif
     ctx->blk_skip_decision                          = TRUE;
     ctx->rate_est_ctrls.update_skip_ctx_dc_sign_ctx = 0;
     ctx->rate_est_ctrls.update_skip_coeff_ctx       = 0;
@@ -9664,7 +9668,9 @@ void svt_aom_sig_deriv_enc_dec(SequenceControlSet *scs, PictureControlSet *pcs, 
 
     ctx->unipred3x3_injection = pd_pass == PD_PASS_0 ? 0 : pcs->unipred3x3_injection;
     svt_aom_set_bipred3x3_controls(ctx, pd_pass == PD_PASS_0 ? 0 : pcs->bipred3x3_injection);
+#if !CNL_INJ_NON_SIMPLE_MODES
     ctx->svt_aom_inject_inter_candidates = 1;
+#endif
     set_inter_comp_controls(ctx, pd_pass == PD_PASS_0 ? 0 : pcs->inter_compound_mode);
     svt_aom_set_dist_based_ref_pruning_controls(ctx, pd_pass == PD_PASS_0 ? 0 : pcs->dist_based_ref_pruning);
     set_spatial_sse_full_loop_level(ctx, pd_pass == PD_PASS_0 ? 0 : pcs->spatial_sse_full_loop_level);

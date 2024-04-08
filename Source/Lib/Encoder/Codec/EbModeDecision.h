@@ -165,8 +165,13 @@ extern uint8_t svt_aom_wm_motion_refinement(PictureControlSet *pcs, struct ModeD
                                             uint8_t list_idx, int early_exit);
 extern uint8_t svt_aom_obmc_motion_refinement(PictureControlSet *pcs, struct ModeDecisionContext *ctx,
                                               ModeDecisionCandidate *cand, uint8_t ref_list_idx, int refine_level);
+#if CNL_INJ_NON_SIMPLE_MODES
+EbErrorType generate_md_stage_0_cand(PictureControlSet* pcs, struct ModeDecisionContext *ctx,
+                                        uint32_t *fast_candidate_total_count);
+#else
 EbErrorType    generate_md_stage_0_cand(SuperBlock *sb_ptr, struct ModeDecisionContext *ctx,
                                         uint32_t *fast_candidate_total_count, PictureControlSet *pcs);
+#endif
 void           generate_md_stage_0_cand_light_pd1(struct ModeDecisionContext *ctx, uint32_t *fast_candidate_total_count,
                                                   PictureControlSet *pcs);
 EbErrorType    generate_md_stage_0_cand_light_pd0(struct ModeDecisionContext *ctx, uint32_t *fast_candidate_total_count,
