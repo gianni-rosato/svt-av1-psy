@@ -1621,6 +1621,7 @@ EB_API EbErrorType svt_av1_enc_init(EbComponentType *svt_enc_component)
         input_data.variance_boost_strength = enc_handle_ptr->scs_instance_array[instance_index]->scs->static_config.variance_boost_strength;
         input_data.variance_octile = enc_handle_ptr->scs_instance_array[instance_index]->scs->static_config.variance_octile;
         input_data.sharpness = enc_handle_ptr->scs_instance_array[instance_index]->scs->static_config.sharpness;
+        input_data.qp_scale_compress_strength = enc_handle_ptr->scs_instance_array[instance_index]->scs->static_config.qp_scale_compress_strength;
 
         EB_NEW(
             enc_handle_ptr->picture_parent_control_set_pool_ptr_array[instance_index],
@@ -3326,7 +3327,7 @@ static void derive_tf_params(SequenceControlSet *scs) {
     if (do_tf == 0) {
         tf_level = 0;
     }
-    else if (enc_mode <= ENC_M0 || scs->static_config.tune == 3) {
+    else if (enc_mode <= ENC_M0) {
         tf_level = 1;
     }
     else if (enc_mode <= ENC_M4) {
@@ -4602,6 +4603,9 @@ static void copy_api_from_app(
 
     // Extended CRF
     scs->static_config.extended_crf_qindex_offset = config_struct->extended_crf_qindex_offset;
+
+    // QP scaling compression
+    scs->static_config.qp_scale_compress_strength = config_struct->qp_scale_compress_strength;
     return;
 }
 

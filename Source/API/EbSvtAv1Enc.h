@@ -617,9 +617,11 @@ typedef struct EbSvtAv1EncConfiguration {
     /**
      * @brief Deblocking loop filter control
      *
-     * Default is true.
+     * 0: disabled
+     * 1: enabled
+     * 2: more accurate (slower)
      */
-    Bool enable_dlf_flag;
+    uint8_t enable_dlf_flag;
 
     /* Film grain denoising the input picture
     * Flag to enable the denoising
@@ -975,8 +977,16 @@ typedef struct EbSvtAv1EncConfiguration {
      */
     uint8_t extended_crf_qindex_offset;
 
+    /* @brief compresses the QP hierarchical layer scale to improve temporal video consistency
+     * 0: no compression, original SVT-AV1 scaling
+     * 1-3: enable compression, the higher the number the stronger the compression
+     *      (different frame quality fluctuation/mean quality tradeoffs)
+     * Default is 1
+     */
+    uint8_t qp_scale_compress_strength;
+
     /*Add 128 Byte Padding to Struct to avoid changing the size of the public configuration struct*/
-    uint8_t padding[128 - 4 * sizeof(uint8_t) - sizeof(int8_t)];
+    uint8_t padding[128 - 5 * sizeof(uint8_t) - sizeof(int8_t)];
 
 } EbSvtAv1EncConfiguration;
 
