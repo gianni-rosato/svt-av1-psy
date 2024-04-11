@@ -18,6 +18,7 @@ target_sources(
   PUBLIC av1_quantize_neon.c
   PUBLIC encodetxb_neon.c
   PUBLIC EbComputeSAD_neon.c
+  PUBLIC EbCdef_neon.c
   PUBLIC EbTemporalFiltering_neon.c
   PUBLIC hadmard_path_neon.c
   PUBLIC highbd_fwd_txfm_neon.c

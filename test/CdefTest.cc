@@ -739,8 +739,6 @@ TEST(CdefToolTest, CopyRectMatchTest) {
 }
 #endif  // defined(ARCH_X86_64)
 
-#if defined(ARCH_X86_64)
-
 /**
  * @brief Unit test for svt_aom_compute_cdef_dist_16bit_avx2
  *
@@ -809,6 +807,29 @@ TEST(CdefToolTest, ComputeCdefDistMatchTest) {
                                                         coeff_shift,
                                                         plane,
                                                         subsampling);
+
+#if defined(ARCH_AARCH64)
+
+                        // NEON
+                        const uint64_t neon_mse =
+                            svt_aom_compute_cdef_dist_16bit_neon(dst_data_,
+                                                                 stride,
+                                                                 src_data_,
+                                                                 dlist,
+                                                                 cdef_count,
+                                                                 test_bs[i],
+                                                                 coeff_shift,
+                                                                 plane,
+                                                                 subsampling);
+                        ASSERT_EQ(c_mse, neon_mse)
+                            << "svt_aom_compute_cdef_dist_16bit_sse4_1 failed "
+                            << "bitdepth: " << bd << " plane: " << plane
+                            << " BlockSize " << test_bs[i] << " loop: " << k;
+
+#endif  // if defined(ARCH_AARCH64)
+
+#if defined(ARCH_X86_64)
+
                         // SSE4.1
                         const uint64_t sse_mse =
                             svt_aom_compute_cdef_dist_16bit_sse4_1(dst_data_,
@@ -840,13 +861,14 @@ TEST(CdefToolTest, ComputeCdefDistMatchTest) {
                             << "svt_aom_compute_cdef_dist_16bit_avx2 failed "
                             << "bitdepth: " << bd << " plane: " << plane
                             << " BlockSize " << test_bs[i] << " loop: " << k;
+
+#endif  // defined(ARCH_X86_64)
                     }
                 }
             }
         }
     }
 }
-#endif  // defined(ARCH_X86_64)
 
 #if defined(ARCH_X86_64)
 
