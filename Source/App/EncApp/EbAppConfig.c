@@ -193,6 +193,10 @@
 
 #define ROI_MAP_FILE_TOKEN "--roi-map-file"
 
+#define ENABLE_VARIANCE_BOOST_TOKEN "--enable-variance-boost"
+#define VARIANCE_BOOST_STRENGTH_TOKEN "--variance-boost-strength"
+#define VARIANCE_OCTILE_TOKEN "--variance-octile"
+
 static EbErrorType validate_error(EbErrorType err, const char *token, const char *value) {
     switch (err) {
     case EB_ErrorNone: return EB_ErrorNone;
@@ -1174,6 +1178,14 @@ ConfigEntry config_entry_color_description[] = {
     // Termination
     {SINGLE_INPUT, NULL, NULL, NULL}};
 
+ConfigEntry config_entry_variance_boost[] = {
+    // Variance boost
+    {SINGLE_INPUT, ENABLE_VARIANCE_BOOST_TOKEN, "Enable variance boost, default is 0 [0-1]", set_cfg_generic_token},
+    {SINGLE_INPUT, VARIANCE_BOOST_STRENGTH_TOKEN, "Variance boost strength, default is 2 [1-4]", set_cfg_generic_token},
+    {SINGLE_INPUT, VARIANCE_OCTILE_TOKEN, "Octile for variance boost, default is 6 [1-8]", set_cfg_generic_token},
+    // Termination
+    {SINGLE_INPUT, NULL, NULL, NULL}};
+
 ConfigEntry config_entry[] = {
     // Options
     {SINGLE_INPUT, INPUT_FILE_TOKEN, "InputFile", set_cfg_input_file},
@@ -1347,6 +1359,11 @@ ConfigEntry config_entry[] = {
 
     // ROI
     {SINGLE_INPUT, ROI_MAP_FILE_TOKEN, "RoiMapFile", set_cfg_roi_map_file},
+
+    // Variance boost
+    {SINGLE_INPUT, ENABLE_VARIANCE_BOOST_TOKEN, "EnableVarianceBoost", set_cfg_generic_token},
+    {SINGLE_INPUT, VARIANCE_BOOST_STRENGTH_TOKEN, "VarianceBoostStrength", set_cfg_generic_token},
+    {SINGLE_INPUT, VARIANCE_OCTILE_TOKEN, "VarianceOctile", set_cfg_generic_token},
 
     // Termination
     {SINGLE_INPUT, NULL, NULL, NULL}};
@@ -1982,6 +1999,21 @@ uint32_t get_help(int32_t argc, char *const argv[]) {
                    cd_token_index->name);
         }
     }
+
+    printf("\nVariance Boost Options:\n");
+    for (ConfigEntry *cd_token_index = config_entry_variance_boost; cd_token_index->token; ++cd_token_index) {
+        switch (check_long(*cd_token_index, cd_token_index[1])) {
+        case 1:
+            printf("  %s, %-25s    %-25s\n", cd_token_index->token, cd_token_index[1].token, cd_token_index->name);
+            ++cd_token_index;
+            break;
+        default:
+            printf(cd_token_index->token[1] == '-' ? "      %-25s    %-25s\n" : "      -%-25s   %-25s\n",
+                   cd_token_index->token,
+                   cd_token_index->name);
+        }
+    }
+
     return 1;
 }
 

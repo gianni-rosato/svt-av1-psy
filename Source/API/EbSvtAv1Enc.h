@@ -936,8 +936,26 @@ typedef struct EbSvtAv1EncConfiguration {
     /* New parameters can go in under this line. Also deduct the size of the parameter */
     /* from the padding array */
 
+    /* Variance boost
+     * false = disable variance boost
+     * true = enable variance boost
+     * Default is false. */
+    Bool enable_variance_boost;
+
+    /* @brief Selects the curve strength to boost low variance regions according to a fast-growing formula
+     * Default is 2 */
+    uint8_t variance_boost_strength;
+
+    /* @brief Picks a set of eight 8x8 variance values per superblock to determine boost
+     * Lower values enable detecting more blocks that need boosting, at the expense of more possible false positives (overall bitrate increase)
+     *  1: 1st octile
+     *  4: 4th octile
+     *  8: 8th octile
+     *  Default is 6 */
+    uint8_t variance_octile;
+
     /*Add 128 Byte Padding to Struct to avoid changing the size of the public configuration struct*/
-    uint8_t padding[128];
+    uint8_t padding[128 - sizeof(Bool) - 2 * sizeof(uint8_t)];
 
 } EbSvtAv1EncConfiguration;
 

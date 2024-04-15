@@ -873,6 +873,16 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet *scs) {
         return_error = EB_ErrorBadParameter;
     }
 
+    if (config->variance_boost_strength < 1 || config->variance_boost_strength > 4) {
+        SVT_ERROR("Instance %u: Variance boost strength must be between 1 and 4\n", channel_number + 1);
+        return_error = EB_ErrorBadParameter;
+    }
+
+    if (config->variance_octile < 1 || config->variance_octile > 8) {
+        SVT_ERROR("Instance %u: Variance boost octile must be between 1 and 8\n", channel_number + 1);
+        return_error = EB_ErrorBadParameter;
+    }
+
     return return_error;
 }
 
@@ -1018,6 +1028,9 @@ EbErrorType svt_av1_set_default_params(EbSvtAv1EncConfiguration *config_ptr) {
     config_ptr->frame_scale_evts.resize_kf_denoms = NULL;
     config_ptr->frame_scale_evts.start_frame_nums = NULL;
     config_ptr->enable_roi_map                    = false;
+    config_ptr->enable_variance_boost             = FALSE;
+    config_ptr->variance_boost_strength           = 2;
+    config_ptr->variance_octile                   = 6;
     return return_error;
 }
 
@@ -1094,14 +1107,14 @@ void svt_av1_print_lib_params(SequenceControlSet *scs) {
                 SVT_INFO(
                     "SVT [config]: BRC mode / %s / max bitrate (kbps)\t\t\t: %s / %d / "
                     "%d\n",
-                    scs->tpl ? "rate factor" : "CQP Assignment",
-                    scs->tpl ? "capped CRF" : "CQP",
+                    scs->tpl || scs->static_config.enable_variance_boost ? "rate factor" : "CQP Assignment",
+                    scs->tpl || scs->static_config.enable_variance_boost ? "capped CRF" : "CQP",
                     scs->static_config.qp,
                     (int)config->max_bit_rate / 1000);
             else
                 SVT_INFO("SVT [config]: BRC mode / %s \t\t\t\t\t: %s / %d \n",
-                         scs->tpl ? "rate factor" : "CQP Assignment",
-                         scs->tpl ? "CRF" : "CQP",
+                         scs->tpl || scs->static_config.enable_variance_boost ? "rate factor" : "CQP Assignment",
+                         scs->tpl || scs->static_config.enable_variance_boost ? "CRF" : "CQP",
                          scs->static_config.qp);
             break;
         case SVT_AV1_RC_MODE_VBR:
@@ -1114,6 +1127,19 @@ void svt_av1_print_lib_params(SequenceControlSet *scs) {
                 "/ %d\n",
                 (int)config->target_bit_rate / 1000);
             break;
+        }
+
+        if (config->rate_control_mode != SVT_AV1_RC_MODE_CBR) {
+            if (!config->enable_variance_boost) {
+                SVT_INFO("SVT [config]: AQ mode / variance boost \t\t\t\t\t: %d / %d\n",
+                         config->enable_adaptive_quantization,
+                         config->enable_variance_boost);
+            } else {
+                SVT_INFO("SVT [config]: AQ mode / variance boost strength / octile \t\t\t: %d / %d / %d\n",
+                         config->enable_adaptive_quantization,
+                         config->variance_boost_strength,
+                         config->variance_octile);
+            }
         }
 
         if (config->film_grain_denoise_strength != 0) {
@@ -1964,6 +1990,8 @@ EB_API EbErrorType svt_av1_enc_parse_parameter(EbSvtAv1EncConfiguration *config_
         {"qm-max", &config_struct->max_qm_level},
         {"use-fixed-qindex-offsets", &config_struct->use_fixed_qindex_offsets},
         {"startup-mg-size", &config_struct->startup_mg_size},
+        {"variance-boost-strength", &config_struct->variance_boost_strength},
+        {"variance-octile", &config_struct->variance_octile},
     };
     const size_t uint8_opts_size = sizeof(uint8_opts) / sizeof(uint8_opts[0]);
 
@@ -2066,6 +2094,7 @@ EB_API EbErrorType svt_av1_enc_parse_parameter(EbSvtAv1EncConfiguration *config_
         {"enable-qm", &config_struct->enable_qm},
         {"enable-dg", &config_struct->enable_dg},
         {"gop-constraint-rc", &config_struct->gop_constraint_rc},
+        {"enable-variance-boost", &config_struct->enable_variance_boost},
     };
     const size_t bool_opts_size = sizeof(bool_opts) / sizeof(bool_opts[0]);
 

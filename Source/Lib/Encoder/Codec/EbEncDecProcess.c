@@ -2713,6 +2713,7 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs, PictureContro
 void recode_loop_update_q(PictureParentControlSet *ppcs, int *const loop, int *const q, int *const q_low,
                           int *const q_high, const int top_index, const int bottom_index, int *const undershoot_seen,
                           int *const overshoot_seen, int *const low_cr_seen, const int loop_count);
+void svt_variance_adjust_qp(PictureControlSet *pcs);
 void svt_aom_sb_qp_derivation_tpl_la(PictureControlSet *pcs);
 void mode_decision_configuration_init_qp_update(PictureControlSet *pcs);
 void svt_aom_init_enc_dec_segement(PictureParentControlSet *ppcs);
@@ -2761,16 +2762,22 @@ static void recode_loop_decision_maker(PictureControlSet *pcs, SequenceControlSe
                                           (frm_hdr->quantization_params.base_q_idx + 2) >> 2);
         pcs->picture_qp  = ppcs->picture_qp;
 
+        // set initial SB base_q_idx values
+        pcs->ppcs->frm_hdr.delta_q_params.delta_q_present = 0;
+        for (int sb_addr = 0; sb_addr < pcs->sb_total_count; ++sb_addr) {
+            SuperBlock *sb_ptr = pcs->sb_ptr_array[sb_addr];
+            sb_ptr->qindex     = frm_hdr->quantization_params.base_q_idx;
+        }
+
+        // adjust SB qindex based on variance
+        // note: do not enable variance boost for CBR rate control mode
+        if (scs->static_config.enable_variance_boost && scs->static_config.rate_control_mode != SVT_AV1_RC_MODE_CBR) {
+            svt_variance_adjust_qp(pcs);
+        }
+
         // 2pass QPM with tpl_la
         if (scs->static_config.enable_adaptive_quantization == 2 && ppcs->tpl_ctrls.enable && ppcs->r0 != 0)
             svt_aom_sb_qp_derivation_tpl_la(pcs);
-        else {
-            ppcs->frm_hdr.delta_q_params.delta_q_present = 0;
-            for (int sb_addr = 0; sb_addr < pcs->sb_total_count; ++sb_addr) {
-                SuperBlock *sb_ptr = pcs->sb_ptr_array[sb_addr];
-                sb_ptr->qindex     = quantizer_to_qindex[pcs->picture_qp];
-            }
-        }
     } else {
         ppcs->loop_count = 0;
     }
