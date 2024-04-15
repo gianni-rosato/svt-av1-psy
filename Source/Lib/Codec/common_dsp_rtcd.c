@@ -865,7 +865,7 @@ void svt_aom_setup_common_rtcd_internal(EbCpuFlags flags) {
     SET_NEON(svt_av1_inv_txfm2d_add_64x64, svt_av1_inv_txfm2d_add_64x64_c, svt_av1_inv_txfm2d_add_64x64_neon);
     SET_NEON(svt_av1_inv_txfm_add, svt_av1_inv_txfm_add_c, svt_dav1d_inv_txfm_add_neon);
 
-    SET_ONLY_C(svt_compressed_packmsb, svt_compressed_packmsb_c);
+    SET_NEON(svt_compressed_packmsb, svt_compressed_packmsb_c, svt_compressed_packmsb_neon);
     SET_ONLY_C(svt_c_pack, svt_c_pack_c);
     SET_ONLY_C(svt_unpack_avg, svt_unpack_avg_c);
     SET_ONLY_C(svt_unpack_avg_safe_sub, svt_unpack_avg_safe_sub_c);
@@ -874,7 +874,7 @@ void svt_aom_setup_common_rtcd_internal(EbCpuFlags flags) {
     SET_ONLY_C(svt_cfl_luma_subsampling_420_hbd, svt_cfl_luma_subsampling_420_hbd_c);
     SET_ONLY_C(svt_convert_8bit_to_16bit, svt_convert_8bit_to_16bit_c);
     SET_ONLY_C(svt_convert_16bit_to_8bit, svt_convert_16bit_to_8bit_c);
-    SET_ONLY_C(svt_pack2d_16_bit_src_mul4, svt_enc_msb_pack2_d);
+    SET_NEON(svt_pack2d_16_bit_src_mul4, svt_enc_msb_pack2_d, svt_enc_msb_pack2d_neon);
     SET_ONLY_C(svt_aom_un_pack2d_16_bit_src_mul4, svt_enc_msb_un_pack2_d);
     SET_ONLY_C(svt_full_distortion_kernel_cbf_zero32_bits, svt_full_distortion_kernel_cbf_zero32_bits_c);
     SET_NEON(svt_full_distortion_kernel32_bits, svt_full_distortion_kernel32_bits_c, svt_full_distortion_kernel32_bits_neon);

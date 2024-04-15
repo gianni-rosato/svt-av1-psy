@@ -856,7 +856,7 @@ void svt_aom_setup_rtcd_internal(EbCpuFlags flags) {
     SET_ONLY_C(svt_av1_calc_indices_dim2, svt_av1_calc_indices_dim2_c);
     SET_ONLY_C(variance_highbd, svt_aom_variance_highbd_c);
     SET_ONLY_C(svt_av1_haar_ac_sad_8x8_uint8_input, svt_av1_haar_ac_sad_8x8_uint8_input_c);
-    SET_ONLY_C(svt_unpack_and_2bcompress, svt_unpack_and_2bcompress_c);
+    SET_NEON(svt_unpack_and_2bcompress, svt_unpack_and_2bcompress_c, svt_unpack_and_2bcompress_neon);
     SET_ONLY_C(svt_estimate_noise_fp16, svt_estimate_noise_fp16_c);
     SET_ONLY_C(svt_estimate_noise_highbd_fp16, svt_estimate_noise_highbd_fp16_c);
     SET_ONLY_C(svt_copy_mi_map_grid, svt_copy_mi_map_grid_c);

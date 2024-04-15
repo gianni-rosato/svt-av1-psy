@@ -23,6 +23,9 @@
  * - svt_unpack_avg_avx2_intrin
  * - svt_unpack_avg_sse2_intrin
  * - svt_unpack_avg_safe_sub_avx2_intrin
+ * - svt_unpack_and_2bcompress_neon
+ * - svt_compressed_packmsb_neon
+ * - svt_enc_msb_pack2d_neon
  *
  * @author Cidana-Ivy, Cidana-Wenyao
  *
@@ -47,6 +50,7 @@ using svt_av1_test_tool::SVTRandom;  // to generate the random
 namespace {
 const int RANDOM_TIME = 8;
 typedef std::tuple<uint32_t, uint32_t> AreaSize;
+
 /*
  * TEST_PACK_SIZES: containing width of 32, 64.
  */
@@ -78,6 +82,8 @@ AreaSize TEST_PACK_SIZES_EXTEND[] = {AreaSize(128, 128),
                                      AreaSize(176, 144),
                                      AreaSize(800, 600),
                                      AreaSize(640, 480)};
+
+#ifdef ARCH_X86_64
 
 // test svt_c_pack_avx2_intrin, which only support width of 32 and 64;
 class PackTest : public ::testing::TestWithParam<AreaSize> {
@@ -184,6 +190,8 @@ TEST_P(PackTest, PackTest) {
 };
 
 INSTANTIATE_TEST_SUITE_P(PACK, PackTest, ::testing::ValuesIn(TEST_PACK_SIZES));
+
+#endif  // ARCH_X86_64
 
 // test svt_compressed_packmsb_sse4_1_intrin
 // test svt_compressed_packmsb_avx2_intrin
@@ -296,7 +304,9 @@ TEST_P(PackMsbTest, PackMsbTest) {
     run_test();
 };
 
-INSTANTIATE_TEST_SUITE_P(
+#ifdef ARCH_X86_64
+
+INSTANTIATE_TEST_CASE_P(
     PACKMSB, PackMsbTest,
     ::testing::Combine(::testing::ValuesIn(TEST_PACK_SIZES),
                        ::testing::Values(svt_compressed_packmsb_sse4_1_intrin,
@@ -307,6 +317,22 @@ INSTANTIATE_TEST_SUITE_P(
     ::testing::Combine(::testing::ValuesIn(TEST_PACK_SIZES_EXTEND),
                        ::testing::Values(svt_compressed_packmsb_sse4_1_intrin,
                                          svt_compressed_packmsb_avx2_intrin)));
+
+#endif  // ARCH_X86_64
+
+#ifdef ARCH_AARCH64
+
+INSTANTIATE_TEST_CASE_P(
+    PACKMSB, PackMsbTest,
+    ::testing::Combine(::testing::ValuesIn(TEST_PACK_SIZES),
+                       ::testing::Values(svt_compressed_packmsb_neon)));
+
+INSTANTIATE_TEST_CASE_P(
+    PACKMSB_EXTEND, PackMsbTest,
+    ::testing::Combine(::testing::ValuesIn(TEST_PACK_SIZES_EXTEND),
+                       ::testing::Values(svt_compressed_packmsb_neon)));
+
+#endif  // ARCH_AARCH64
 
 // test svt_unpack_and_2bcompress_sse4_1
 // test svt_unpack_and_2bcompress_avx2
@@ -438,7 +464,9 @@ TEST_P(Unpack2bCompress, Unpack2bCompress) {
     run_test();
 };
 
-INSTANTIATE_TEST_SUITE_P(
+#ifdef ARCH_X86_64
+
+INSTANTIATE_TEST_CASE_P(
     UNPACK2BCOMPRESS, Unpack2bCompress,
     ::testing::Combine(::testing::ValuesIn(TEST_PACK_SIZES),
                        ::testing::Values(svt_unpack_and_2bcompress_sse4_1,
@@ -460,6 +488,32 @@ INSTANTIATE_TEST_SUITE_P(
                                          AreaSize(129, 3), AreaSize(129, 5)),
                        ::testing::Values(svt_unpack_and_2bcompress_sse4_1,
                                          svt_unpack_and_2bcompress_avx2)));
+
+#endif  // ARCH_X86_64
+
+#ifdef ARCH_AARCH64
+
+INSTANTIATE_TEST_CASE_P(
+    UNPACK2BCOMPRESS, Unpack2bCompress,
+    ::testing::Combine(::testing::ValuesIn(TEST_PACK_SIZES),
+                       ::testing::Values(svt_unpack_and_2bcompress_neon)));
+
+INSTANTIATE_TEST_CASE_P(
+    UNPACK2BCOMPRESS_EXTEND, Unpack2bCompress,
+    ::testing::Combine(::testing::ValuesIn(TEST_PACK_SIZES_EXTEND),
+                       ::testing::Values(svt_unpack_and_2bcompress_neon)));
+
+INSTANTIATE_TEST_CASE_P(
+    UNPACK2BCOMPRESS_EXTEND2, Unpack2bCompress,
+    ::testing::Combine(::testing::Values(AreaSize(32, 1), AreaSize(32, 2),
+                                         AreaSize(32, 3), AreaSize(32, 5),
+                                         AreaSize(64, 1), AreaSize(64, 2),
+                                         AreaSize(64, 3), AreaSize(64, 5),
+                                         AreaSize(65, 3), AreaSize(66, 5),
+                                         AreaSize(129, 3), AreaSize(129, 5)),
+                       ::testing::Values(svt_unpack_and_2bcompress_neon)));
+
+#endif  // ARCH_AARCH64
 
 // test svt_enc_msb_pack2d_avx2_intrin_al and svt_enc_msb_pack2d_sse2_intrin.
 // There is an implicit assumption that the width should be multiple of 4.
@@ -483,9 +537,16 @@ class Pack2dTest : public ::testing::TestWithParam<AreaSize> {
         test_size_ = MAX_SB_SQUARE;
         in_8bit_buffer_ = nullptr;
         inn_bit_buffer_ = nullptr;
-        out_16bit_buffer_avx2_ = nullptr;
         out_16bit_buffer_c_ = nullptr;
+
+#ifdef ARCH_X86_64
+        out_16bit_buffer_avx2_ = nullptr;
         out_16bit_buffer_sse2_ = nullptr;
+#endif  // ARCH_X86_64
+
+#ifdef ARCH_AARCH64
+        out_16bit_buffer_neon_ = nullptr;
+#endif  // ARCH_AARCH64
     }
 
     void SetUp() override {
@@ -493,15 +554,25 @@ class Pack2dTest : public ::testing::TestWithParam<AreaSize> {
             reinterpret_cast<uint8_t *>(svt_aom_memalign(32, test_size_));
         inn_bit_buffer_ =
             reinterpret_cast<uint8_t *>(svt_aom_memalign(32, test_size_));
-        out_16bit_buffer_avx2_ = reinterpret_cast<uint16_t *>(
-            svt_aom_memalign(32, sizeof(uint16_t) * test_size_));
+
         out_16bit_buffer_c_ = reinterpret_cast<uint16_t *>(
             svt_aom_memalign(32, sizeof(uint16_t) * test_size_));
-        out_16bit_buffer_sse2_ = reinterpret_cast<uint16_t *>(
+        memset(out_16bit_buffer_c_, 0, sizeof(uint16_t) * test_size_);
+
+#ifdef ARCH_X86_64
+        out_16bit_buffer_avx2_ = reinterpret_cast<uint16_t *>(
             svt_aom_memalign(32, sizeof(uint16_t) * test_size_));
         memset(out_16bit_buffer_avx2_, 0, sizeof(uint16_t) * test_size_);
-        memset(out_16bit_buffer_c_, 0, sizeof(uint16_t) * test_size_);
+        out_16bit_buffer_sse2_ = reinterpret_cast<uint16_t *>(
+            svt_aom_memalign(32, sizeof(uint16_t) * test_size_));
         memset(out_16bit_buffer_sse2_, 0, sizeof(uint16_t) * test_size_);
+#endif  // ARCH_X86_64
+
+#ifdef ARCH_AARCH64
+        out_16bit_buffer_neon_ = reinterpret_cast<uint16_t *>(
+            svt_aom_memalign(32, sizeof(uint16_t) * test_size_));
+        memset(out_16bit_buffer_neon_, 0, sizeof(uint16_t) * test_size_);
+#endif  // ARCH_AARCH64
     }
 
     void TearDown() override {
@@ -509,12 +580,22 @@ class Pack2dTest : public ::testing::TestWithParam<AreaSize> {
             svt_aom_free(in_8bit_buffer_);
         if (inn_bit_buffer_)
             svt_aom_free(inn_bit_buffer_);
-        if (out_16bit_buffer_avx2_)
-            svt_aom_free(out_16bit_buffer_avx2_);
+
         if (out_16bit_buffer_c_)
             svt_aom_free(out_16bit_buffer_c_);
+
+#ifdef ARCH_X86_64
+        if (out_16bit_buffer_avx2_)
+            svt_aom_free(out_16bit_buffer_avx2_);
         if (out_16bit_buffer_sse2_)
             svt_aom_free(out_16bit_buffer_sse2_);
+#endif  // ARCH_X86_64
+
+#ifdef ARCH_AARCH64
+        if (out_16bit_buffer_neon_)
+            svt_aom_free(out_16bit_buffer_neon_);
+#endif  // ARCH_AARCH64
+
         aom_clear_system_state();
     }
 
@@ -538,14 +619,6 @@ class Pack2dTest : public ::testing::TestWithParam<AreaSize> {
             svt_buf_random_u8(in_8bit_buffer_, test_size_);
             svt_buf_random_u8(inn_bit_buffer_, test_size_);
 
-            svt_enc_msb_pack2d_avx2_intrin_al(in_8bit_buffer_,
-                                              in_stride_,
-                                              inn_bit_buffer_,
-                                              out_16bit_buffer_avx2_,
-                                              out_stride_,
-                                              out_stride_,
-                                              area_width_,
-                                              area_height_);
             svt_enc_msb_pack2_d(in_8bit_buffer_,
                                 in_stride_,
                                 inn_bit_buffer_,
@@ -554,6 +627,22 @@ class Pack2dTest : public ::testing::TestWithParam<AreaSize> {
                                 out_stride_,
                                 area_width_,
                                 area_height_);
+
+#ifdef ARCH_X86_64
+
+            svt_enc_msb_pack2d_avx2_intrin_al(in_8bit_buffer_,
+                                              in_stride_,
+                                              inn_bit_buffer_,
+                                              out_16bit_buffer_avx2_,
+                                              out_stride_,
+                                              out_stride_,
+                                              area_width_,
+                                              area_height_);
+            check_output(area_width_,
+                         area_height_,
+                         out_16bit_buffer_avx2_,
+                         out_16bit_buffer_c_);
+
             svt_enc_msb_pack2d_sse2_intrin(in_8bit_buffer_,
                                            in_stride_,
                                            inn_bit_buffer_,
@@ -565,12 +654,27 @@ class Pack2dTest : public ::testing::TestWithParam<AreaSize> {
 
             check_output(area_width_,
                          area_height_,
-                         out_16bit_buffer_avx2_,
-                         out_16bit_buffer_c_);
-            check_output(area_width_,
-                         area_height_,
                          out_16bit_buffer_sse2_,
                          out_16bit_buffer_c_);
+
+#endif  // ARCH_X86_64
+
+#ifdef ARCH_AARCH64
+
+            svt_enc_msb_pack2d_neon(in_8bit_buffer_,
+                                    in_stride_,
+                                    inn_bit_buffer_,
+                                    out_16bit_buffer_neon_,
+                                    out_stride_,
+                                    out_stride_,
+                                    area_width_,
+                                    area_height_);
+            check_output(area_width_,
+                         area_height_,
+                         out_16bit_buffer_neon_,
+                         out_16bit_buffer_c_);
+
+#endif  // ARCH_AARCH64
 
             EXPECT_FALSE(HasFailure())
                 << "svt_enc_msb_pack2d_{sse2,avx2}_intrin failed at " << i
@@ -581,8 +685,18 @@ class Pack2dTest : public ::testing::TestWithParam<AreaSize> {
 
     uint8_t *in_8bit_buffer_, *inn_bit_buffer_;
     uint32_t in_stride_, out_stride_;
-    uint16_t *out_16bit_buffer_avx2_, *out_16bit_buffer_c_,
-        *out_16bit_buffer_sse2_;
+
+    uint16_t *out_16bit_buffer_c_;
+
+#ifdef ARCH_X86_64
+    uint16_t *out_16bit_buffer_avx2_;
+    uint16_t *out_16bit_buffer_sse2_;
+#endif
+
+#ifdef ARCH_AARCH64
+    uint16_t *out_16bit_buffer_neon_;
+#endif
+
     uint32_t area_width_, area_height_;
     uint32_t test_size_;
 };
@@ -593,6 +707,8 @@ TEST_P(Pack2dTest, Pack2dTest) {
 
 INSTANTIATE_TEST_SUITE_P(PACK2D, Pack2dTest,
                          ::testing::ValuesIn(TEST_COMMON_SIZES));
+
+#ifdef ARCH_X86_64
 
 // test svt_enc_un_pack8_bit_data_avx2_intrin
 // Similar assumption that the width is multiple of 4, using
@@ -773,6 +889,10 @@ TEST_P(UnPackTest, UnPack2dTest) {
 
 INSTANTIATE_TEST_SUITE_P(UNPACK, UnPackTest,
                          ::testing::ValuesIn(TEST_COMMON_SIZES));
+
+#endif  // ARCH_X86_64
+
+#ifdef ARCH_X86_64
 
 // test svt_unpack_avg_avx2_intrin
 // only width of {4, 8, 16, 32, 64} are implemented in
@@ -966,5 +1086,7 @@ TEST_P(UnPackAvgTest, UnPackSubAvgTest) {
 
 INSTANTIATE_TEST_SUITE_P(UNPACKAVG, UnPackAvgTest,
                          ::testing::ValuesIn(TEST_AVG_SIZES));
+
+#endif  // ARCH_X86_64
 
 }  // namespace
