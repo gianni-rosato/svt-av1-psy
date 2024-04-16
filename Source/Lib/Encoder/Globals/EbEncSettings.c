@@ -1028,6 +1028,7 @@ EbErrorType svt_av1_set_default_params(EbSvtAv1EncConfiguration *config_ptr) {
     config_ptr->frame_scale_evts.resize_kf_denoms = NULL;
     config_ptr->frame_scale_evts.start_frame_nums = NULL;
     config_ptr->enable_roi_map                    = false;
+    config_ptr->fgs_table                         = NULL;
     config_ptr->enable_variance_boost             = FALSE;
     config_ptr->variance_boost_strength           = 2;
     config_ptr->variance_octile                   = 6;
