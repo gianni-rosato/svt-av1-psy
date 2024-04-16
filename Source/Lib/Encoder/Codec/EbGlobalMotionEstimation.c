@@ -394,6 +394,7 @@ void svt_aom_upscale_wm_params(EbWarpedMotionParams *wm_params, uint8_t scale_fa
                                              GM_TRANS_MAX * GM_TRANS_DECODE_FACTOR);
     }
 }
+
 void compute_global_motion(PictureParentControlSet *pcs, int *frm_corners, int num_frm_corners,
                            EbPictureBufferDesc *det_input_pic, //src frame for detection
                            EbPictureBufferDesc *det_ref_pic, //ref frame for detection
@@ -506,16 +507,16 @@ void compute_global_motion(PictureParentControlSet *pcs, int *frm_corners, int n
             if (global_motion.wmtype == IDENTITY)
                 continue;
 
-            const int64_t ref_frame_error = svt_av1_calc_frame_error(
-                ref_buffer, ref_pic->stride_y, frm_buffer, input_pic->width, input_pic->height, input_pic->stride_y);
+            const uint32_t ref_sad_error = svt_nxm_sad_kernel(
+                ref_buffer, ref_pic->stride_y, frm_buffer, input_pic->stride_y, input_pic->height, input_pic->width);
 
-            if (ref_frame_error == 0)
+            if (ref_sad_error == 0)
                 continue;
 
             // If the best error advantage found doesn't meet the threshold for
             // this motion type, revert to IDENTITY.
             if (!svt_av1_is_enough_erroradvantage(
-                    (double)best_warp_error / ref_frame_error,
+                    (double)best_warp_error / ref_sad_error,
                     svt_aom_gm_get_params_cost(&global_motion, ref_params, allow_high_precision_mv),
                     GM_ERRORADV_TR_0 /* TODO: check error advantage */)) {
                 global_motion = default_warp_params;

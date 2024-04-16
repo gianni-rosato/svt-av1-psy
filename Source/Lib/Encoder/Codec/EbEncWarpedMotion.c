@@ -141,8 +141,8 @@ static int64_t warp_error(EbWarpedMotionParams *wm, const uint8_t *const ref, in
                            subsampling_y,
                            &conv_params);
 
-            gm_sumerr += svt_av1_calc_frame_error(
-                tmp, WARP_ERROR_BLOCK, dst + j + i * p_stride, warp_w, warp_h, p_stride);
+            gm_sumerr += svt_nxm_sad_kernel(tmp, WARP_ERROR_BLOCK, dst + j + i * p_stride, p_stride, warp_h, warp_w);
+
             if (gm_sumerr > best_error)
                 return gm_sumerr;
         }
