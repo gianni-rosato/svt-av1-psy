@@ -3311,8 +3311,8 @@ void *svt_aom_rate_control_kernel(void *input_ptr) {
                                 : frm_hdr->quantization_params
                                       .base_q_idx; // do not shut the auto QPS if use_fixed_qindex_offsets 2
 
-                            if (scs->static_config.tune == 3 && scs->static_config.qp_scale_compress_strength == 0) {
-                                qindex += (int32_t)rint(-pow(qindex / 48.0, 0.5) * pcs->temporal_layer_index); // Adaptive qindex offset based on temporal layer index (later is more boosted)
+                            if (scs->static_config.tune == 3) {
+                                qindex += (int32_t)rint(-pow((255 - pcs->ppcs->avg_luma) / (1024.0 / (pcs->temporal_layer_index + 1)), 0.5) * (qindex / 8.0)); // Frame-level luma adjustment. Gives more bitrate to darker scenes.
                             }
 
                             if (!frame_is_intra_only(pcs->ppcs)) {
