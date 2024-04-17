@@ -442,3 +442,149 @@ void svt_aom_get_final_filtered_pixels_neon(MeContext *me_ctx, EbByte *src_cente
         }
     }
 }
+
+int32_t svt_estimate_noise_fp16_neon(const uint8_t *src, uint16_t width, uint16_t height, uint16_t stride_y) {
+    int64_t sum = 0;
+    int64_t num = 0;
+
+    //  A | B | C
+    //  D | E | F
+    //  G | H | I
+    // g_x = (A - I) + (G - C) + 2*(D - F)
+    // g_y = (A - I) - (G - C) + 2*(B - H)
+    // v   = 4*E - 2*(D+F+B+H) + (A+C+G+I)
+
+    const int16x8_t zero               = vdupq_n_s16(0);
+    const int16x8_t edge_treshold      = vdupq_n_s16(EDGE_THRESHOLD);
+    int32x4_t       num_accumulator_lo = vdupq_n_s32(0);
+    int32x4_t       num_accumulator_hi = vdupq_n_s32(0);
+    int32x4_t       sum_accumulator_lo = vdupq_n_s32(0);
+    int32x4_t       sum_accumulator_hi = vdupq_n_s32(0);
+
+    for (int i = 1; i < height - 1; ++i) {
+        const int k_stride = i * stride_y;
+
+        int j = 1;
+
+        int16x8_t rowAC = vreinterpretq_s16_u16(vmovl_u8(vld1_u8(&src[k_stride + j - stride_y - 1 + 0])));
+        int16x8_t rowBC = vreinterpretq_s16_u16(vmovl_u8(vld1_u8(&src[k_stride + j - 1 + 0])));
+        int16x8_t rowCC = vreinterpretq_s16_u16(vmovl_u8(vld1_u8(&src[k_stride + j + stride_y - 1 + 0])));
+
+        for (; j + 16 < width - 1; j += 16) {
+            const uint8x16_t rowABC = vld1q_u8(&src[k_stride + j - stride_y - 1 + 8]);
+            const uint8x16_t rowBBC = vld1q_u8(&src[k_stride + j - 1 + 8]);
+            const uint8x16_t rowCBC = vld1q_u8(&src[k_stride + j + stride_y - 1 + 8]);
+
+            const int16x8_t rowAA = rowAC;
+            const int16x8_t rowAB = vreinterpretq_s16_u16(vmovl_u8(vget_low_u8(rowABC)));
+            rowAC                 = vreinterpretq_s16_u16(vmovl_u8(vget_high_u8(rowABC)));
+            const int16x8_t rowBA = rowBC;
+            const int16x8_t rowBB = vreinterpretq_s16_u16(vmovl_u8(vget_low_u8(rowBBC)));
+            rowBC                 = vreinterpretq_s16_u16(vmovl_u8(vget_high_u8(rowBBC)));
+            const int16x8_t rowCA = rowCC;
+            const int16x8_t rowCB = vreinterpretq_s16_u16(vmovl_u8(vget_low_u8(rowCBC)));
+            rowCC                 = vreinterpretq_s16_u16(vmovl_u8(vget_high_u8(rowCBC)));
+
+            const int16x8_t A_lo = rowAA;
+            const int16x8_t A_hi = rowAB;
+            const int16x8_t B_lo = vextq_s16(rowAA, rowAB, 1);
+            const int16x8_t B_hi = vextq_s16(rowAB, rowAC, 1);
+            const int16x8_t C_lo = vextq_s16(rowAA, rowAB, 2);
+            const int16x8_t C_hi = vextq_s16(rowAB, rowAC, 2);
+
+            const int16x8_t D_lo = rowBA;
+            const int16x8_t D_hi = rowBB;
+            const int16x8_t E_lo = vextq_s16(rowBA, rowBB, 1);
+            const int16x8_t E_hi = vextq_s16(rowBB, rowBC, 1);
+            const int16x8_t F_lo = vextq_s16(rowBA, rowBB, 2);
+            const int16x8_t F_hi = vextq_s16(rowBB, rowBC, 2);
+
+            const int16x8_t G_lo = rowCA;
+            const int16x8_t G_hi = rowCB;
+            const int16x8_t H_lo = vextq_s16(rowCA, rowCB, 1);
+            const int16x8_t H_hi = vextq_s16(rowCB, rowCC, 1);
+            const int16x8_t I_lo = vextq_s16(rowCA, rowCB, 2);
+            const int16x8_t I_hi = vextq_s16(rowCB, rowCC, 2);
+
+            const int16x8_t A_m_I_lo = vsubq_s16(A_lo, I_lo);
+            const int16x8_t A_m_I_hi = vsubq_s16(A_hi, I_hi);
+            const int16x8_t G_m_C_lo = vsubq_s16(G_lo, C_lo);
+            const int16x8_t G_m_C_hi = vsubq_s16(G_hi, C_hi);
+
+            const int16x8_t D_m_Fx2_lo = vshlq_n_s16(vsubq_s16(D_lo, F_lo), 1);
+            const int16x8_t D_m_Fx2_hi = vshlq_n_s16(vsubq_s16(D_hi, F_hi), 1);
+            const int16x8_t B_m_Hx2_lo = vshlq_n_s16(vsubq_s16(B_lo, H_lo), 1);
+            const int16x8_t B_m_Hx2_hi = vshlq_n_s16(vsubq_s16(B_hi, H_hi), 1);
+
+            const int16x8_t gx_256_lo = vqabsq_s16(vaddq_s16(vaddq_s16(A_m_I_lo, G_m_C_lo), D_m_Fx2_lo));
+            const int16x8_t gx_256_hi = vqabsq_s16(vaddq_s16(vaddq_s16(A_m_I_hi, G_m_C_hi), D_m_Fx2_hi));
+
+            const int16x8_t gy_256_lo = vqabsq_s16(vaddq_s16(vsubq_s16(A_m_I_lo, G_m_C_lo), B_m_Hx2_lo));
+            const int16x8_t gy_256_hi = vqabsq_s16(vaddq_s16(vsubq_s16(A_m_I_hi, G_m_C_hi), B_m_Hx2_hi));
+
+            const int16x8_t ga_256_lo = vaddq_s16(gx_256_lo, gy_256_lo);
+            const int16x8_t ga_256_hi = vaddq_s16(gx_256_hi, gy_256_hi);
+
+            const int16x8_t D_F_B_Hx2_lo = vshlq_n_s16(vaddq_s16(vaddq_s16(D_lo, F_lo), vaddq_s16(B_lo, H_lo)), 1);
+            const int16x8_t D_F_B_Hx2_hi = vshlq_n_s16(vaddq_s16(vaddq_s16(D_hi, F_hi), vaddq_s16(B_hi, H_hi)), 1);
+            const int16x8_t A_C_G_I_lo   = vaddq_s16(vaddq_s16(A_lo, C_lo), vaddq_s16(G_lo, I_lo));
+            const int16x8_t A_C_G_I_hi   = vaddq_s16(vaddq_s16(A_hi, C_hi), vaddq_s16(G_hi, I_hi));
+            int16x8_t       v_256_lo = vqabsq_s16(vaddq_s16(vsubq_s16(vshlq_n_s16(E_lo, 2), D_F_B_Hx2_lo), A_C_G_I_lo));
+            int16x8_t       v_256_hi = vqabsq_s16(vaddq_s16(vsubq_s16(vshlq_n_s16(E_hi, 2), D_F_B_Hx2_hi), A_C_G_I_hi));
+
+            //if (ga < EDGE_THRESHOLD)
+            const int16x8_t cmp_lo = vreinterpretq_s16_u16(vshrq_n_u16(vcgtq_s16(edge_treshold, ga_256_lo), 15));
+            const int16x8_t cmp_hi = vreinterpretq_s16_u16(vshrq_n_u16(vcgtq_s16(edge_treshold, ga_256_hi), 15));
+            v_256_lo               = vmulq_s16(v_256_lo, cmp_lo);
+            v_256_hi               = vmulq_s16(v_256_hi, cmp_hi);
+
+            //num_accumulator and sum_accumulator have 32bit values
+            num_accumulator_lo = vaddq_s32(num_accumulator_lo, vreinterpretq_s32_s16(vzip1q_s16(cmp_lo, zero)));
+            num_accumulator_hi = vaddq_s32(num_accumulator_hi, vreinterpretq_s32_s16(vzip1q_s16(cmp_hi, zero)));
+            num_accumulator_lo = vaddq_s32(num_accumulator_lo, vreinterpretq_s32_s16(vzip2q_s16(cmp_lo, zero)));
+            num_accumulator_hi = vaddq_s32(num_accumulator_hi, vreinterpretq_s32_s16(vzip2q_s16(cmp_hi, zero)));
+
+            sum_accumulator_lo = vaddq_s32(sum_accumulator_lo, vreinterpretq_s32_s16(vzip1q_s16(v_256_lo, zero)));
+            sum_accumulator_hi = vaddq_s32(sum_accumulator_hi, vreinterpretq_s32_s16(vzip1q_s16(v_256_hi, zero)));
+            sum_accumulator_lo = vaddq_s32(sum_accumulator_lo, vreinterpretq_s32_s16(vzip2q_s16(v_256_lo, zero)));
+            sum_accumulator_hi = vaddq_s32(sum_accumulator_hi, vreinterpretq_s32_s16(vzip2q_s16(v_256_hi, zero)));
+        }
+
+        for (; j < width - 1; ++j) {
+            const int k = i * stride_y + j;
+
+            // Sobel gradients
+            const int g_x = (src[k - stride_y - 1] - src[k - stride_y + 1]) +
+                (src[k + stride_y - 1] - src[k + stride_y + 1]) + 2 * (src[k - 1] - src[k + 1]);
+            const int g_y = (src[k - stride_y - 1] - src[k + stride_y - 1]) +
+                (src[k - stride_y + 1] - src[k + stride_y + 1]) + 2 * (src[k - stride_y] - src[k + stride_y]);
+            const int ga = abs(g_x) + abs(g_y);
+
+            if (ga < EDGE_THRESHOLD) { // Do not consider edge pixels to estimate the noise
+                // Find Laplacian
+                const int v = 4 * src[k] - 2 * (src[k - 1] + src[k + 1] + src[k - stride_y] + src[k + stride_y]) +
+                    (src[k - stride_y - 1] + src[k - stride_y + 1] + src[k + stride_y - 1] + src[k + stride_y + 1]);
+                sum += abs(v);
+                ++num;
+            }
+        }
+    }
+
+    int32x4_t sum_256_lo = vpaddq_s32(sum_accumulator_lo, num_accumulator_lo);
+    int32x4_t sum_256_hi = vpaddq_s32(sum_accumulator_hi, num_accumulator_hi);
+    sum_256_lo           = vpaddq_s32(sum_256_lo, sum_256_lo);
+    sum_256_hi           = vpaddq_s32(sum_256_hi, sum_256_hi);
+
+    int32x4_t sum_128 = vaddq_s32(sum_256_lo, sum_256_hi);
+
+    sum += vgetq_lane_s32(sum_128, 0);
+    num += vgetq_lane_s32(vextq_s32(sum_128, vdupq_n_s32(0), 1), 0);
+
+    // If very few smooth pels, return -1 since the estimate is unreliable
+    if (num < SMOOTH_THRESHOLD) {
+        return -65536 /*-1:fp16*/;
+    }
+
+    FP_ASSERT((((int64_t)sum * SQRT_PI_BY_2_FP16) / (6 * num)) < ((int64_t)1 << 31));
+    return (int32_t)((sum * SQRT_PI_BY_2_FP16) / (6 * num));
+}
