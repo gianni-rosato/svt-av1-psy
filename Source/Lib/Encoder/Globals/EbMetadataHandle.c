@@ -123,7 +123,7 @@ EB_API size_t svt_metadata_size(SvtMetadataArrayT *metadata, const EbAv1Metadata
         for (size_t i = 0; i < metadata->sz; i++) {
             SvtMetadataT *current_metadata = metadata->metadata_array[i];
             if (current_metadata && current_metadata->payload && current_metadata->type == type) {
-                sz = current_metadata->sz + 1 //obu type
+                sz += current_metadata->sz + 1 //obu type
                     + 1 //trailing byte
                     + 1 //header size
                     + 1; //length field size
