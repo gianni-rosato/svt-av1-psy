@@ -79,18 +79,20 @@ set(arch_neutral_files
     ../third_party/aom_dsp/src/entdec.c)
 
 set(multi_arch_files
-    CdefTest.cc
     FwdTxfm2dAsmTest.cc
     InvTxfm2dAsmTest.cc
     PackUnPackTest.cc
     PictureOperatorTest.cc
-    RestorationPickTest.cc
     SadTest.cc
+    selfguided_filter_test.cc
+    CdefTest.cc
+    RestorationPickTest.cc
     SpatialFullDistortionTest.cc
     TemporalFilterTestPlanewise.cc
     convolve_2d_test.cc
     RestorationPickTest.cc
     selfguided_filter_test.cc
+    quantize_func_test.cc
 )
 
 if(HAVE_X86_PLATFORM)

@@ -713,6 +713,8 @@ class InvTxfm2dAsmTest : public ::testing::TestWithParam<InvTxfm2dParam> {
         }
     }
 
+#endif  // ARCH_X86_64
+
     void run_HandleTransform_match_test() {
         using HandleTxfmFunc = uint64_t (*)(int32_t * output);
         const int num_htf_sizes = 10;
@@ -727,6 +729,8 @@ class InvTxfm2dAsmTest : public ::testing::TestWithParam<InvTxfm2dParam> {
             svt_handle_transform64x16_N2_N4_c,
             svt_handle_transform64x32_N2_N4_c,
             svt_handle_transform64x64_N2_N4_c};
+
+#ifdef ARCH_X86_64
         const HandleTxfmFunc htf_asm_funcs[num_htf_sizes] = {
             svt_handle_transform16x64_avx2,
             svt_handle_transform32x64_avx2,
@@ -738,6 +742,22 @@ class InvTxfm2dAsmTest : public ::testing::TestWithParam<InvTxfm2dParam> {
             svt_handle_transform64x16_N2_N4_avx2,
             svt_handle_transform64x32_N2_N4_avx2,
             svt_handle_transform64x64_N2_N4_avx2};
+#endif  // ARCH_X86_64
+
+#ifdef ARCH_AARCH64
+        const HandleTxfmFunc htf_asm_funcs[num_htf_sizes] = {
+            svt_handle_transform16x64_neon,
+            svt_handle_transform32x64_neon,
+            svt_handle_transform64x16_neon,
+            svt_handle_transform64x32_neon,
+            svt_handle_transform64x64_neon,
+            svt_handle_transform16x64_N2_N4_neon,
+            svt_handle_transform32x64_N2_N4_neon,
+            svt_handle_transform64x16_N2_N4_neon,
+            svt_handle_transform64x32_N2_N4_neon,
+            svt_handle_transform64x64_N2_N4_neon};
+#endif  // ARCH_AARCH64
+
         DECLARE_ALIGNED(32, int32_t, input[MAX_TX_SQUARE]);
 
         for (int idx = 0; idx < num_htf_sizes; ++idx) {
@@ -772,6 +792,9 @@ class InvTxfm2dAsmTest : public ::testing::TestWithParam<InvTxfm2dParam> {
             svt_handle_transform64x16_N2_N4_c,
             svt_handle_transform64x32_N2_N4_c,
             svt_handle_transform64x64_N2_N4_c};
+
+#ifdef ARCH_X86_64
+        char const *const intrinsic_set_name = "avx2";
         const HandleTxfmFunc htf_asm_funcs[num_htf_sizes] = {
             svt_handle_transform16x64_avx2,
             svt_handle_transform32x64_avx2,
@@ -783,6 +806,23 @@ class InvTxfm2dAsmTest : public ::testing::TestWithParam<InvTxfm2dParam> {
             svt_handle_transform64x16_N2_N4_avx2,
             svt_handle_transform64x32_N2_N4_avx2,
             svt_handle_transform64x64_N2_N4_avx2};
+#endif  // ARCH_X86_64
+
+#ifdef ARCH_AARCH64
+        char const *const intrinsic_set_name = "neon";
+        const HandleTxfmFunc htf_asm_funcs[num_htf_sizes] = {
+            svt_handle_transform16x64_neon,
+            svt_handle_transform32x64_neon,
+            svt_handle_transform64x16_neon,
+            svt_handle_transform64x32_neon,
+            svt_handle_transform64x64_neon,
+            svt_handle_transform16x64_N2_N4_neon,
+            svt_handle_transform32x64_N2_N4_neon,
+            svt_handle_transform64x16_N2_N4_neon,
+            svt_handle_transform64x32_N2_N4_neon,
+            svt_handle_transform64x64_N2_N4_neon};
+#endif  // ARCH_AARCH64
+
         DECLARE_ALIGNED(32, int32_t, input[MAX_TX_SQUARE]);
         double time_c, time_o;
         uint64_t start_time_seconds, start_time_useconds;
@@ -790,6 +830,9 @@ class InvTxfm2dAsmTest : public ::testing::TestWithParam<InvTxfm2dParam> {
         uint64_t finish_time_seconds, finish_time_useconds;
 
         for (int idx = 0; idx < num_htf_sizes; ++idx) {
+            if (!htf_asm_funcs[idx]) {
+                continue;
+            }
             const TxSize tx_size = htf_tx_size[idx];
             const uint64_t num_loop = 10000000;
             uint64_t energy_ref, energy_asm;
@@ -830,21 +873,20 @@ class InvTxfm2dAsmTest : public ::testing::TestWithParam<InvTxfm2dParam> {
             }
 
             printf("Average Nanoseconds per Function Call\n");
-            printf("    HandleTransform%dx%d_c     : %6.2f\n",
+            printf("    HandleTransform%dx%d_c    : %6.2f\n",
                    widths[idx],
                    heights[idx],
                    1000000 * time_c / num_loop);
             printf(
-                "    HandleTransform%dx%d_avx2) : %6.2f   (Comparison: "
+                "    HandleTransform%dx%d_%s : %6.2f   (Comparison: "
                 "%5.2fx)\n",
                 widths[idx],
                 heights[idx],
+                intrinsic_set_name,
                 1000000 * time_o / num_loop,
                 time_c / time_o);
         }
     }
-
-#endif  // ARCH_X86_64
 
   private:
     // clear the coeffs according to eob position, note the coeffs are
@@ -944,6 +986,14 @@ TEST_P(InvTxfm2dAsmTest, sqr_txfm_match_test) {
     }
 }
 
+TEST_P(InvTxfm2dAsmTest, HandleTransform_match_test) {
+    run_HandleTransform_match_test();
+}
+
+TEST_P(InvTxfm2dAsmTest, DISABLED_HandleTransform_speed_test) {
+    run_handle_transform_speed_test();
+}
+
 #ifdef ARCH_X86_64
 
 TEST_P(InvTxfm2dAsmTest, rect_type1_txfm_match_test) {
@@ -990,14 +1040,6 @@ TEST_P(InvTxfm2dAsmTest, lowbd_txfm_match_test) {
         const TxSize tx_size = static_cast<TxSize>(i);
         run_lowbd_txfm_match_test(tx_size);
     }
-}
-
-TEST_P(InvTxfm2dAsmTest, HandleTransform_match_test) {
-    run_HandleTransform_match_test();
-}
-
-TEST_P(InvTxfm2dAsmTest, DISABLED_HandleTransform_speed_test) {
-    run_handle_transform_speed_test();
 }
 
 extern "C" void svt_av1_lowbd_inv_txfm2d_add_ssse3(

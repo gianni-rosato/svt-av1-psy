@@ -796,6 +796,8 @@ TEST_P(QuantizeQmHbdTest, CoeffHalfDequant) {
 
 using std::make_tuple;
 
+#ifdef ARCH_X86_64
+
 #if HAS_AVX2
 const QuantizeParam kQParamArrayAvx2[] = {
     make_tuple(&svt_av1_quantize_fp_c, &svt_av1_quantize_fp_sse4_1,
@@ -969,7 +971,10 @@ INSTANTIATE_TEST_SUITE_P(AVX2, QuantizeQmTest,
 INSTANTIATE_TEST_SUITE_P(AVX2, QuantizeQmHbdTest,
                          ::testing::ValuesIn(kQmParamHbdArrayAvx2));
 
-TEST(ComputeCulLevel, avx2) {
+#endif  // HAS_AVX2
+#endif  // ARCH_X86_64
+
+TEST(ComputeCulLevel, ComputeCulLevelIntrinsic) {
     SVTRandom rnd(0, (1 << 10) - 1);
     const int max_size = 100 * 100;
     // scan[] is a set of indexes for quant_coeff[]
@@ -991,13 +996,21 @@ TEST(ComputeCulLevel, avx2) {
         eob_ref = eob_mod = rnd.random() % max_size;
 
         int32_t ref = svt_av1_compute_cul_level_c(scan, quant_coeff, &eob_ref);
+
+#ifdef ARCH_X86_64
+#if HAS_AVX2
         int32_t mod =
             svt_av1_compute_cul_level_avx2(scan, quant_coeff, &eob_mod);
+#endif  // HAS_AVX2
+#endif  // ARCH_X86_64
+
+#ifdef ARCH_AARCH64
+        int32_t mod =
+            svt_av1_compute_cul_level_neon(scan, quant_coeff, &eob_mod);
+#endif  // ARCH_AARCH64
 
         EXPECT_TRUE(ref == mod);
         EXPECT_TRUE(eob_ref == eob_mod);
     }
 }
-
-#endif  // HAS_AVX2
 }  // namespace

@@ -744,4 +744,12 @@ INSTANTIATE_TEST_SUITE_P(
 
 #endif
 
+#ifdef ARCH_AARCH64
+
+INSTANTIATE_TEST_CASE_P(
+    NEON, fullDistortionKernelCbfZero32Bits,
+    ::testing::Values(svt_full_distortion_kernel_cbf_zero32_bits_neon));
+
+#endif  //  ARCH_AARCH64
+
 }  // namespace

@@ -33,6 +33,7 @@ target_sources(
   PUBLIC dav1d_util.S
   PUBLIC deblocking_filter_intrinsic_neon.c
   PUBLIC encodetxb_neon.c
+  PUBLIC EbTransforms_neon.c # TODO: CHECK IF THIS NEEDS RENAMING
   PUBLIC hadmard_path_neon.c
   PUBLIC highbd_convolve_2d_neon.c
   PUBLIC highbd_fwd_txfm_neon.c

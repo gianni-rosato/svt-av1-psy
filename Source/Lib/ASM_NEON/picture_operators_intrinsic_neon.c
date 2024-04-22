@@ -929,3 +929,35 @@ void svt_enc_msb_pack2d_neon(uint8_t *in8_bit_buffer, uint32_t in8_stride, uint8
         }
     }
 }
+
+void svt_full_distortion_kernel_cbf_zero32_bits_neon(int32_t *coeff, uint32_t coeff_stride,
+                                                     uint64_t distortion_result[DIST_CALC_TOTAL], uint32_t area_width,
+                                                     uint32_t area_height) {
+    uint64x2_t sum = vdupq_n_u64(0);
+
+    uint32_t row_count = area_height;
+    do {
+        int32_t *coeff_temp = coeff;
+
+        uint32_t col_count = area_width / 4;
+        do {
+            const int32x2_t x_lo = vld1_s32(coeff_temp + 0);
+            const int32x2_t x_hi = vld1_s32(coeff_temp + 2);
+            coeff_temp += 4;
+
+            const uint64x2_t y_lo = vreinterpretq_u64_s64(vmull_s32(x_lo, x_lo));
+            const uint64x2_t y_hi = vreinterpretq_u64_s64(vmull_s32(x_hi, x_hi));
+
+            sum = vaddq_u64(sum, y_lo);
+            sum = vaddq_u64(sum, y_hi);
+
+        } while (--col_count);
+
+        coeff += coeff_stride;
+        row_count -= 1;
+    } while (row_count > 0);
+
+    const uint64x2_t temp2 = vextq_u64(sum, sum, 1);
+    const uint64x2_t temp1 = vaddq_u64(sum, temp2);
+    vst1q_u64(distortion_result, temp1);
+}

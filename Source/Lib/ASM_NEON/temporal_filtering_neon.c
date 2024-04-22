@@ -588,3 +588,83 @@ int32_t svt_estimate_noise_fp16_neon(const uint8_t *src, uint16_t width, uint16_
     FP_ASSERT((((int64_t)sum * SQRT_PI_BY_2_FP16) / (6 * num)) < ((int64_t)1 << 31));
     return (int32_t)((sum * SQRT_PI_BY_2_FP16) / (6 * num));
 }
+
+static void apply_filtering_central_loop_lbd(uint16_t w, uint16_t h, uint8_t *src, uint16_t src_stride, uint32_t *accum,
+                                             uint16_t *count) {
+    assert(w % 8 == 0);
+
+    uint32x4_t modifier       = vdupq_n_u32(TF_PLANEWISE_FILTER_WEIGHT_SCALE);
+    uint16x8_t modifier_epi16 = vdupq_n_u16(TF_PLANEWISE_FILTER_WEIGHT_SCALE);
+
+    for (uint16_t k = 0, i = 0; i < h; i++) {
+        for (uint16_t j = 0; j < w; j += 8) {
+            const uint16x8_t src_16 = vmovl_u8(vld1_u8(src + i * src_stride + j));
+
+            vst1q_u32(accum + k + 0, vmulq_u32(modifier, vmovl_u16(vget_low_u16(src_16))));
+            vst1q_u32(accum + k + 4, vmulq_u32(modifier, vmovl_u16(vget_high_u16(src_16))));
+            vst1q_u16(count + k, modifier_epi16);
+
+            k += 8;
+        }
+    }
+}
+
+static void apply_filtering_central_loop_hbd(uint16_t w, uint16_t h, uint16_t *src, uint16_t src_stride,
+                                             uint32_t *accum, uint16_t *count) {
+    assert(w % 8 == 0);
+
+    uint32x4_t modifier       = vdupq_n_u32(TF_PLANEWISE_FILTER_WEIGHT_SCALE);
+    uint16x8_t modifier_epi16 = vdupq_n_u16(TF_PLANEWISE_FILTER_WEIGHT_SCALE);
+
+    for (uint16_t k = 0, i = 0; i < h; i++) {
+        for (uint16_t j = 0; j < w; j += 8) {
+            const uint32x4_t src_1 = vmovl_u16(vld1_u16(src + i * src_stride + j + 0));
+            const uint32x4_t src_2 = vmovl_u16(vld1_u16(src + i * src_stride + j + 4));
+
+            vst1q_u32(accum + k + 0, vmulq_u32(modifier, src_1));
+            vst1q_u32(accum + k + 4, vmulq_u32(modifier, src_2));
+            vst1q_u16(count + k, modifier_epi16);
+
+            k += 8;
+        }
+    }
+}
+
+void svt_aom_apply_filtering_central_neon(struct MeContext *me_ctx, EbPictureBufferDesc *input_picture_ptr_central,
+                                          EbByte *src, uint32_t **accum, uint16_t **count, uint16_t blk_width,
+                                          uint16_t blk_height, uint32_t ss_x, uint32_t ss_y) {
+    uint16_t src_stride_y = input_picture_ptr_central->stride_y;
+
+    // Luma
+    apply_filtering_central_loop_lbd(blk_width, blk_height, src[C_Y], src_stride_y, accum[C_Y], count[C_Y]);
+
+    // Chroma
+    if (me_ctx->tf_chroma) {
+        uint16_t blk_height_ch = blk_height >> ss_y;
+        uint16_t blk_width_ch  = blk_width >> ss_x;
+        uint16_t src_stride_ch = src_stride_y >> ss_x;
+        apply_filtering_central_loop_lbd(blk_width_ch, blk_height_ch, src[C_U], src_stride_ch, accum[C_U], count[C_U]);
+        apply_filtering_central_loop_lbd(blk_width_ch, blk_height_ch, src[C_V], src_stride_ch, accum[C_V], count[C_V]);
+    }
+}
+
+void svt_aom_apply_filtering_central_highbd_neon(struct MeContext    *me_ctx,
+                                                 EbPictureBufferDesc *input_picture_ptr_central, uint16_t **src_16bit,
+                                                 uint32_t **accum, uint16_t **count, uint16_t blk_width,
+                                                 uint16_t blk_height, uint32_t ss_x, uint32_t ss_y) {
+    uint16_t src_stride_y = input_picture_ptr_central->stride_y;
+
+    // Luma
+    apply_filtering_central_loop_hbd(blk_width, blk_height, src_16bit[C_Y], src_stride_y, accum[C_Y], count[C_Y]);
+
+    // Chroma
+    if (me_ctx->tf_chroma) {
+        uint16_t blk_height_ch = blk_height >> ss_y;
+        uint16_t blk_width_ch  = blk_width >> ss_x;
+        uint16_t src_stride_ch = src_stride_y >> ss_x;
+        apply_filtering_central_loop_hbd(
+            blk_width_ch, blk_height_ch, src_16bit[C_U], src_stride_ch, accum[C_U], count[C_U]);
+        apply_filtering_central_loop_hbd(
+            blk_width_ch, blk_height_ch, src_16bit[C_V], src_stride_ch, accum[C_V], count[C_V]);
+    }
+}

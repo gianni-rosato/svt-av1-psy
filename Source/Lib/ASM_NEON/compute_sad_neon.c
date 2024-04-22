@@ -1703,3 +1703,83 @@ uint32_t svt_nxm_sad_kernel_helper_neon(const uint8_t *src, uint32_t src_stride,
     }
     return res;
 }
+
+void svt_ext_eight_sad_calculation_32x32_64x64_neon(uint32_t p_sad16x16[16][8], uint32_t *p_best_sad_32x32,
+                                                    uint32_t *p_best_sad_64x64, uint32_t *p_best_mv32x32,
+                                                    uint32_t *p_best_mv64x64, uint32_t mv, uint32_t p_sad32x32[4][8]) {
+    uint32x4_t       tmp0     = vaddq_u32(vld1q_u32(p_sad16x16[0]), vld1q_u32(p_sad16x16[1]));
+    uint32x4_t       tmp1     = vaddq_u32(vld1q_u32(p_sad16x16[2]), vld1q_u32(p_sad16x16[3]));
+    const uint32x4_t sad32_a1 = vaddq_u32(tmp0, tmp1);
+    vst1q_u32(p_sad32x32[0], sad32_a1);
+
+    tmp0                      = vaddq_u32(vld1q_u32((p_sad16x16[0] + 4)), vld1q_u32((p_sad16x16[1] + 4)));
+    tmp1                      = vaddq_u32(vld1q_u32((p_sad16x16[2] + 4)), vld1q_u32((p_sad16x16[3] + 4)));
+    const uint32x4_t sad32_a2 = vaddq_u32(tmp0, tmp1);
+    vst1q_u32((p_sad32x32[0] + 4), sad32_a2);
+
+    tmp0                      = vaddq_u32(vld1q_u32(p_sad16x16[4]), vld1q_u32(p_sad16x16[5]));
+    tmp1                      = vaddq_u32(vld1q_u32(p_sad16x16[6]), vld1q_u32(p_sad16x16[7]));
+    const uint32x4_t sad32_b1 = vaddq_u32(tmp0, tmp1);
+    vst1q_u32(p_sad32x32[1], sad32_b1);
+
+    tmp0                      = vaddq_u32(vld1q_u32((p_sad16x16[4] + 4)), vld1q_u32((p_sad16x16[5] + 4)));
+    tmp1                      = vaddq_u32(vld1q_u32((p_sad16x16[6] + 4)), vld1q_u32((p_sad16x16[7] + 4)));
+    const uint32x4_t sad32_b2 = vaddq_u32(tmp0, tmp1);
+    vst1q_u32((p_sad32x32[1] + 4), sad32_b2);
+
+    tmp0                      = vaddq_u32(vld1q_u32(p_sad16x16[8]), vld1q_u32(p_sad16x16[9]));
+    tmp1                      = vaddq_u32(vld1q_u32(p_sad16x16[10]), vld1q_u32(p_sad16x16[11]));
+    const uint32x4_t sad32_c1 = vaddq_u32(tmp0, tmp1);
+    vst1q_u32(p_sad32x32[2], sad32_c1);
+
+    tmp0                      = vaddq_u32(vld1q_u32((p_sad16x16[8] + 4)), vld1q_u32((p_sad16x16[9] + 4)));
+    tmp1                      = vaddq_u32(vld1q_u32((p_sad16x16[10] + 4)), vld1q_u32((p_sad16x16[11] + 4)));
+    const uint32x4_t sad32_c2 = vaddq_u32(tmp0, tmp1);
+    vst1q_u32((p_sad32x32[2] + 4), sad32_c2);
+
+    tmp0                      = vaddq_u32(vld1q_u32(p_sad16x16[12]), vld1q_u32(p_sad16x16[13]));
+    tmp1                      = vaddq_u32(vld1q_u32(p_sad16x16[14]), vld1q_u32(p_sad16x16[15]));
+    const uint32x4_t sad32_d1 = vaddq_u32(tmp0, tmp1);
+    vst1q_u32(p_sad32x32[3], sad32_d1);
+
+    tmp0                      = vaddq_u32(vld1q_u32((p_sad16x16[12] + 4)), vld1q_u32((p_sad16x16[13] + 4)));
+    tmp1                      = vaddq_u32(vld1q_u32((p_sad16x16[14] + 4)), vld1q_u32((p_sad16x16[15] + 4)));
+    const uint32x4_t sad32_d2 = vaddq_u32(tmp0, tmp1);
+    vst1q_u32((p_sad32x32[3] + 4), sad32_d2);
+
+    DECLARE_ALIGNED(32, uint32_t, p_sad64x64[8]);
+    tmp0 = vaddq_u32(sad32_a1, sad32_b1);
+    tmp1 = vaddq_u32(sad32_c1, sad32_d1);
+    vst1q_u32(p_sad64x64, vaddq_u32(tmp0, tmp1));
+    tmp0 = vaddq_u32(sad32_a2, sad32_b2);
+    tmp1 = vaddq_u32(sad32_c2, sad32_d2);
+    vst1q_u32((p_sad64x64 + 4), vaddq_u32(tmp0, tmp1));
+
+    DECLARE_ALIGNED(32, uint32_t, computed_idx[8]);
+    uint32x4_t       search_idx = vmovl_u16(vcreate_u16(0x0003000200010000));
+    const uint32x4_t mv_sse     = vdupq_n_u32(mv);
+    uint32x4_t       new_mv_sse = vaddq_u32(search_idx, mv_sse);
+    new_mv_sse                  = vandq_u32(new_mv_sse, vdupq_n_u32(0xffff));
+    vst1q_u32(computed_idx, vorrq_u32(new_mv_sse, vandq_u32(mv_sse, vdupq_n_u32(0xffff0000))));
+
+    search_idx = vmovl_u16(vcreate_u16(0x0007000600050004));
+    new_mv_sse = vaddq_u32(search_idx, mv_sse);
+    new_mv_sse = vandq_u32(new_mv_sse, vdupq_n_u32(0xffff));
+    vst1q_u32((computed_idx + 4), vorrq_u32(new_mv_sse, vandq_u32(mv_sse, vdupq_n_u32(0xffff0000))));
+
+    for (int i = 0; i < 4; i++) {
+        for (int j = 0; j < 8; j++) {
+            if (p_sad32x32[i][j] < p_best_sad_32x32[i]) {
+                p_best_sad_32x32[i] = p_sad32x32[i][j];
+                p_best_mv32x32[i]   = computed_idx[j];
+            }
+        }
+    }
+
+    for (int j = 0; j < 8; j++) {
+        if (p_sad64x64[j] < p_best_sad_64x64[0]) {
+            p_best_sad_64x64[0] = p_sad64x64[j];
+            p_best_mv64x64[0]   = computed_idx[j];
+        }
+    }
+}
