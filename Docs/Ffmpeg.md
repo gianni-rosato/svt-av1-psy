@@ -78,7 +78,7 @@ If higher decoding performance is required, using 10-bit YCbCr encoding will
 increase efficiency, so a lower average bitrate can be used, which in turn
 improves decoding performance. In addition, passing the parameter
 `fast-decode=1` can help (this parameter does not have an effect for all
-presets, so check the [parameter description](parameters.md) for your preset).
+presets, so check the [parameter description](Parameters.md) for your preset).
 Last, for a given bitrate, 8-bit `yuv420p` can sometimes be faster to encode,
 albeit at the cost of some fidelity.
 
