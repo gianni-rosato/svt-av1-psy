@@ -89,6 +89,7 @@ License 1.0. See [LICENSE](LICENSE.md) and [PATENTS](PATENTS.md) for details.
 - [Temporal Dependency Model](Docs/Appendix-TPL.md)
 - [Transform Search Appendix](Docs/Appendix-TX-Search.md)
 - [Reference Scaling Appendix](Docs/Appendix-Reference-Scaling.md)
+- [Variance Boost Appendix](Docs/Appendix-Variance-Boost.md)
 
 **How Can I Contribute?**
 - [SVT-AV1 Contribution Guide](Docs/Contribute.md)

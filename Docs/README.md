@@ -40,3 +40,4 @@
 - [Temporal Dependency Model](Appendix-TPL.md)
 - [Transform Search Appendix](Appendix-TX-Search.md)
 - [Reference Scaling Appendix](Appendix-Reference-Scaling.md)
+- [Variance Boost Appendix](Appendix-Variance-Boost.md)
