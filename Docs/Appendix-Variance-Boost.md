@@ -83,10 +83,10 @@ The default value is 6. Recommended values are between 4 and 7.
 
 ## References
 
-\[1\] https://en.wikipedia.org/wiki/Variance_Adaptive_Quantization  
-\[2\] https://people.xiph.org/~xiphmont/demo/theora/demo9.html  
-\[3\] https://x264-devel.videolan.narkive.com/eFxZMbt1/variance-based-adaptive-quantization  
-\[4\] https://gitlab.com/AOMediaCodec/SVT-AV1/-/issues/2105  
+- \[1\] https://en.wikipedia.org/wiki/Variance_Adaptive_Quantization
+- \[2\] https://people.xiph.org/~xiphmont/demo/theora/demo9.html
+- \[3\] https://x264-devel.videolan.narkive.com/eFxZMbt1/variance-based-adaptive-quantization
+- \[4\] https://gitlab.com/AOMediaCodec/SVT-AV1/-/issues/2105
 
 ## Notes
 
