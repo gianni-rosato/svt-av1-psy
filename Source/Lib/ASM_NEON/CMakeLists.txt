@@ -30,6 +30,7 @@ target_sources(
   PUBLIC convolve_2d_neon.c
   PUBLIC convolve_neon.c
   PUBLIC highbd_jnt_convolve_neon.c
+  PUBLIC highbd_convolve_neon.c
   PUBLIC dav1d_asm.S
   PUBLIC dav1d_util.S
   PUBLIC deblocking_filter_intrinsic_neon.c
