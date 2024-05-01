@@ -100,9 +100,8 @@ EbErrorType svt_aom_rest_context_ctor(EbThreadContext *thread_ctx, const EbEncHa
 
     Bool is_16bit = scs->is_16bit_pipeline;
 #if OPT_SG
-        if (svt_aom_get_enable_restoration(init_data_ptr->enc_mode,
-                                       config->enable_restoration_filtering,
-                                       scs->input_resolution)) {
+    if (svt_aom_get_enable_restoration(
+            init_data_ptr->enc_mode, config->enable_restoration_filtering, scs->input_resolution)) {
 #else
     if (svt_aom_get_enable_restoration(init_data_ptr->enc_mode,
                                        config->enable_restoration_filtering,

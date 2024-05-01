@@ -8,11 +8,10 @@
  * Media Patent License 1.0 was not distributed with this source code in the
  * PATENTS file, you can obtain it at https://www.aomedia.org/license/patent-license.
  */
-
 #include <immintrin.h>
 #include "aom_dsp_rtcd.h"
 #include "EbEncWarpedMotion.h"
-
+#if !CLN_REMOVE_UNUSED_FUNCS // TODO: remove this file
 int64_t svt_av1_calc_frame_error_avx2(const uint8_t *const ref, int ref_stride, const uint8_t *const dst, int p_width,
                                       int p_height, int dst_stride) {
     int64_t sum_error = 0;
@@ -101,3 +100,4 @@ int64_t svt_av1_calc_frame_error_avx2(const uint8_t *const ref, int ref_stride, 
     }
     return sum_error;
 }
+#endif

@@ -9645,13 +9645,8 @@ static Bool update_md_settings(PictureControlSet *pcs, ModeDecisionContext *ctx,
         ctx->nic_ctrls.scaling_ctrls.stage3_scaling_num = MIN(ctx->nic_ctrls.scaling_ctrls.stage3_scaling_num, 3);
         ctx->txs_ctrls.enabled                          = 0;
         svt_aom_set_wm_controls(ctx, MAX(MIN(pcs->wm_level ? pcs->wm_level + 1 : 0, 2), pcs->wm_level));
-#if OPT_DIST_OBMC
-        svt_aom_set_obmc_controls(
-            pcs, ctx, MAX(MIN(ctx->md_pic_obmc_level ? ctx->md_pic_obmc_level + 1 : 0, 2), ctx->md_pic_obmc_level));
-#else
         svt_aom_set_obmc_controls(
             ctx, MAX(MIN(ctx->md_pic_obmc_level ? ctx->md_pic_obmc_level + 1 : 0, 2), ctx->md_pic_obmc_level));
-#endif
         svt_aom_set_txt_controls(ctx, MAX(MIN(pcs->txt_level ? pcs->txt_level + 2 : 0, 4), pcs->txt_level));
     }
     if (level >= 2) {
@@ -10271,7 +10266,7 @@ static void update_d1_data(PictureControlSet *pcs, ModeDecisionContext *ctx, uin
     }
 }
 #if OPT_HIGH_FREQ
-static void update_nsq_settings(PictureControlSet* pcs, ModeDecisionContext* ctx) {
+static void update_nsq_settings(PictureControlSet *pcs, ModeDecisionContext *ctx) {
 #else
 static void update_nsq_settings(SequenceControlSet *scs, PictureControlSet *pcs, ModeDecisionContext *ctx) {
 #endif
@@ -10286,7 +10281,7 @@ static void update_nsq_settings(SequenceControlSet *scs, PictureControlSet *pcs,
         ? ctx->b32_satd[(ctx->blk_geom->org_x / 32) + ((ctx->blk_geom->org_y / 32) << 1)]
         : MAX(ctx->b32_satd[0], MAX(ctx->b32_satd[1], MAX(ctx->b32_satd[2], ctx->b32_satd[3])));
 #if OPT_HIGH_FREQ
-    uint32_t input_size = (pcs->ppcs->frame_width * pcs->ppcs->frame_height) / 10000;
+    uint32_t input_size  = (pcs->ppcs->frame_width * pcs->ppcs->frame_height) / 10000;
     uint32_t high_energy = CLIP3(500, 100000, (int)((40000 - (125 * input_size))));
 
     if (energy > high_energy) {
@@ -10297,19 +10292,21 @@ static void update_nsq_settings(SequenceControlSet *scs, PictureControlSet *pcs,
         svt_aom_set_nsq_search_ctrls(ctx, MAX((int)pcs->nsq_search_level - 1, 1), pcs->ppcs->input_resolution);
 #endif
 #else
-        NsqSearchCtrls* nsq_search_ctrls = &ctx->nsq_search_ctrls;
-        nsq_search_ctrls->sq_weight = MAX(95, nsq_search_ctrls->sq_weight);
+        NsqSearchCtrls *nsq_search_ctrls         = &ctx->nsq_search_ctrls;
+        nsq_search_ctrls->sq_weight              = MAX(95, nsq_search_ctrls->sq_weight);
         nsq_search_ctrls->max_part0_to_part1_dev = 0;
-        nsq_search_ctrls->psq_txs_lvl = 0;
-        nsq_search_ctrls->sub_depth_block_lvl = MIN(1, nsq_search_ctrls->sub_depth_block_lvl);
-        nsq_search_ctrls->component_multiple_th = nsq_search_ctrls->component_multiple_th == 0 ? 0 : MAX(80, nsq_search_ctrls->component_multiple_th);
-        nsq_search_ctrls->hv_weight = MAX(100, nsq_search_ctrls->hv_weight);
+        nsq_search_ctrls->psq_txs_lvl            = 0;
+        nsq_search_ctrls->sub_depth_block_lvl    = MIN(1, nsq_search_ctrls->sub_depth_block_lvl);
+        nsq_search_ctrls->component_multiple_th  = nsq_search_ctrls->component_multiple_th == 0
+             ? 0
+             : MAX(80, nsq_search_ctrls->component_multiple_th);
+        nsq_search_ctrls->hv_weight              = MAX(100, nsq_search_ctrls->hv_weight);
 #endif
     }
 #else
-    int      energy_quantizer;
+    int energy_quantizer;
     // energy-quantizer = f (frame_size)
-    int input_size   = (pcs->ppcs->frame_width * pcs->ppcs->frame_height) / 10000;
+    int input_size = (pcs->ppcs->frame_width * pcs->ppcs->frame_height) / 10000;
     energy_quantizer = CLIP3(500, 100000, (int)((40000 - (125 * input_size))));
 
     // energy-quantizer = f (q)
@@ -10319,8 +10316,8 @@ static void update_nsq_settings(SequenceControlSet *scs, PictureControlSet *pcs,
     int delta = MIN(energy / energy_quantizer, 2);
     // Update the NSQ setting if SQ is_high_energy
     if (delta) {
-        const uint8_t is_base          = pcs->ppcs->temporal_layer_index == 0;
-        uint8_t       nsq_search_level = svt_aom_get_nsq_search_level(
+        const uint8_t is_base = pcs->ppcs->temporal_layer_index == 0;
+        uint8_t nsq_search_level = svt_aom_get_nsq_search_level(
             MAX(ENC_MR, (int)pcs->ppcs->enc_mode - delta), is_base, pcs->coeff_lvl, scs->static_config.qp);
         svt_aom_set_nsq_search_ctrls(ctx, nsq_search_level, pcs->ppcs->input_resolution);
     }

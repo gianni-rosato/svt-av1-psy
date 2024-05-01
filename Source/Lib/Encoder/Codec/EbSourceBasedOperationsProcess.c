@@ -494,16 +494,16 @@ static void tpl_subpel_search(SequenceControlSet *scs, PictureParentControlSet *
     // Assign which subpel search method to use - always use pruned because tested regular and did not give any gain
     fractional_mv_step_fp *subpel_search_method = svt_av1_find_best_sub_pixel_tree_pruned;
 #if OPT_TPL_SUB_LVL
-    ms_params->pred_variance_th = 0;
-    ms_params->abs_th_mult = 0;
-    ms_params->round_dev_th = MAX_SIGNED_VALUE;
+    ms_params->pred_variance_th     = 0;
+    ms_params->abs_th_mult          = 0;
+    ms_params->round_dev_th         = MAX_SIGNED_VALUE;
     ms_params->skip_diag_refinement = pcs->tpl_ctrls.subpel_diag_refinement;
-    uint8_t early_exit = 0;
+    uint8_t early_exit              = 0;
 #else
     // Disabled shortcuts for now.
-    ms_params->pred_variance_th = 0;
-    ms_params->abs_th_mult = 0;
-    ms_params->round_dev_th = MAX_SIGNED_VALUE;
+    ms_params->pred_variance_th     = 0;
+    ms_params->abs_th_mult          = 0;
+    ms_params->round_dev_th         = MAX_SIGNED_VALUE;
     ms_params->skip_diag_refinement = 0;
     uint8_t early_exit              = 0;
 #endif

@@ -18,8 +18,9 @@
 extern "C" {
 #endif
 
+#if !CLN_REMOVE_UNUSED_FUNCS
 static INLINE int error_measure(int err) { return svt_aom_error_measure_lut[255 + err]; }
-
+#endif
 // Returns the error between the result of applying motion 'wm' to the frame
 // described by 'ref' and the frame described by 'dst'.
 int64_t svt_av1_warp_error(EbWarpedMotionParams *wm, const uint8_t *ref, int width, int height, int stride,

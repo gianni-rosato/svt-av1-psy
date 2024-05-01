@@ -401,9 +401,8 @@ EbErrorType pcs_update_param(PictureControlSet *pcs) {
         svt_picture_buffer_desc_update(pcs->input_frame16bit, (EbPtr)&coeff_buffer_desc_init_data);
     }
 #if OPT_SG
-        if (svt_aom_get_enable_restoration(scs->static_config.enc_mode,
-                                       scs->static_config.enable_restoration_filtering,
-                                       scs->input_resolution)) {
+    if (svt_aom_get_enable_restoration(
+            scs->static_config.enc_mode, scs->static_config.enable_restoration_filtering, scs->input_resolution)) {
 #else
     if (svt_aom_get_enable_restoration(scs->static_config.enc_mode,
                                        scs->static_config.enable_restoration_filtering,
@@ -502,7 +501,7 @@ static EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr
     object_ptr->temp_lf_recon_pic                 = (EbPictureBufferDesc *)NULL;
     object_ptr->scaled_input_pic                  = (EbPictureBufferDesc *)NULL;
 #if OPT_SG
-        if (svt_aom_get_enable_restoration(init_data_ptr->enc_mode,
+    if (svt_aom_get_enable_restoration(init_data_ptr->enc_mode,
                                        init_data_ptr->static_config.enable_restoration_filtering,
                                        init_data_ptr->input_resolution)) {
 #else
@@ -1060,30 +1059,18 @@ static EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr
 
     // If NSQ is allowed, then need a 4x4 MI grid because 8x8 NSQ shapes will require 4x4 granularity
     bool disallow_4x4 = true;
-#if OPT_NSQ_GEOM
-    for (EbInputResolution input_resolution = 0; input_resolution < INPUT_SIZE_COUNT; input_resolution++) {
-#endif
     for (uint8_t is_base = 0; is_base <= 1; is_base++) {
         for (uint8_t is_islice = 0; is_islice <= 1; is_islice++) {
             for (uint8_t coeff_lvl = 0; coeff_lvl <= HIGH_LVL + 1; coeff_lvl++) {
                 if (!disallow_4x4)
                     break;
-
-#if OPT_NSQ_GEOM
-                disallow_4x4 = MIN(
-                    disallow_4x4,
-                    (svt_aom_get_nsq_geom_level(init_data_ptr->enc_mode, is_base, coeff_lvl, input_resolution) == 0 ? 1 : 0));
-#else
                 disallow_4x4 = MIN(
                     disallow_4x4,
                     (svt_aom_get_nsq_geom_level(init_data_ptr->enc_mode, is_base, coeff_lvl) == 0 ? 1 : 0));
-#endif
             }
         }
     }
-#if OPT_NSQ_GEOM
-    }
-#endif
+
     for (uint8_t is_islice = 0; is_islice <= 1; is_islice++) {
         for (uint8_t is_base = 0; is_base <= 1; is_base++) {
             disallow_4x4 = MIN(disallow_4x4, svt_aom_get_disallow_4x4(init_data_ptr->enc_mode, is_base));

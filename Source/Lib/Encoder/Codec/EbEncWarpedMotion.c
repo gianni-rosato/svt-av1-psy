@@ -19,6 +19,7 @@
 
 #define WARP_ERROR_BLOCK 32
 
+#if !CLN_REMOVE_UNUSED_FUNCS
 /* clang-format off */
 const int svt_aom_error_measure_lut[512] = {
   // pow 0.7
@@ -99,6 +100,7 @@ int64_t svt_av1_calc_frame_error_c(const uint8_t *const ref, int stride, const u
     }
     return sum_error;
 }
+#endif
 
 static int64_t warp_error(EbWarpedMotionParams *wm, const uint8_t *const ref, int width, int height, int stride,
                           const uint8_t *const dst, int p_col, int p_row, int p_width, int p_height, int p_stride,

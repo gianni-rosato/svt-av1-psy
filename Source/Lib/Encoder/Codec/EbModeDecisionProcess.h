@@ -1026,7 +1026,7 @@ typedef struct ModeDecisionContext {
     uint8_t           redundant_blk;
     uint8_t           nic_level;
 #if !CNL_INJ_NON_SIMPLE_MODES
-    uint8_t           svt_aom_inject_inter_candidates;
+    uint8_t svt_aom_inject_inter_candidates;
 #endif
     uint8_t          *cfl_temp_luma_recon;
     uint16_t         *cfl_temp_luma_recon16bit;
@@ -1265,8 +1265,8 @@ typedef struct ModeDecisionContext {
     // SSIM_LVL_2: addition to level 1, also use ssim cost to find best tx type in tx_type_search()
     SsimLevel tune_ssim_level;
 #if !OPT_WARP_LVLS
-    uint8_t   do_obmc;
-    uint8_t   do_warp;
+    uint8_t do_obmc;
+    uint8_t do_warp;
 #endif
 } ModeDecisionContext;
 
@@ -1276,13 +1276,17 @@ typedef void (*EbAv1LambdaAssignFunc)(PictureControlSet *pcs, uint32_t *fast_lam
 /**************************************
  * Extern Function Declarations
  **************************************/
-extern EbErrorType svt_aom_mode_decision_context_ctor(
-    ModeDecisionContext *ctx, EbColorFormat color_format, uint8_t sb_size, EncMode enc_mode, uint16_t max_block_cnt,
-    uint32_t encoder_bit_depth, EbFifo *mode_decision_configuration_input_fifo_ptr,
+extern EbErrorType svt_aom_mode_decision_context_ctor(ModeDecisionContext *ctx, EbColorFormat color_format,
+                                                      uint8_t sb_size, EncMode enc_mode, uint16_t max_block_cnt,
+                                                      uint32_t encoder_bit_depth,
+                                                      EbFifo  *mode_decision_configuration_input_fifo_ptr,
 #if OPT_NIC
-    EbFifo* mode_decision_output_fifo_ptr, uint8_t enable_hbd_mode_decision, uint8_t cfg_palette);
+                                                      EbFifo *mode_decision_output_fifo_ptr,
+                                                      uint8_t enable_hbd_mode_decision, uint8_t cfg_palette);
 #else
-    EbFifo *mode_decision_output_fifo_ptr, uint8_t enable_hbd_mode_decision, uint8_t cfg_palette, bool rtc_tune);
+                                                      EbFifo *mode_decision_output_fifo_ptr,
+                                                      uint8_t enable_hbd_mode_decision, uint8_t cfg_palette,
+                                                      bool rtc_tune);
 #endif
 
 extern const EbAv1LambdaAssignFunc svt_aom_av1_lambda_assignment_function_table[4];

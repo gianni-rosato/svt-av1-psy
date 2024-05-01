@@ -188,13 +188,12 @@ uint8_t svt_aom_get_tpl_group_level(uint8_t tpl, int8_t enc_mode, SvtAv1RcMode r
         tpl_group_level = 1;
     else if (enc_mode <= ENC_M10 || (rc_mode == SVT_AV1_RC_MODE_VBR && enc_mode <= ENC_M11))
         tpl_group_level = 3;
-    else 
+    else
         tpl_group_level = 4;
 #else
     if (!tpl) {
         tpl_group_level = 0;
-    }
-    else if (enc_mode <= ENC_M6) {
+    } else if (enc_mode <= ENC_M6) {
         tpl_group_level = 1;
     } else if (enc_mode <= ENC_M7) {
         tpl_group_level = 2;
@@ -300,7 +299,7 @@ static uint8_t get_tpl_params_level(int8_t enc_mode, SvtAv1RcMode rc_mode) {
 #else
 static uint8_t get_tpl_params_level(uint64_t dist_per_group, int8_t enc_mode, SvtAv1RcMode rc_mode) {
 #endif
-    uint8_t  tpl_params_level;
+    uint8_t tpl_params_level;
 #if !TUNE_M5
     uint64_t cplx_group_th = 10000;
 #endif
@@ -314,8 +313,7 @@ static uint8_t get_tpl_params_level(uint64_t dist_per_group, int8_t enc_mode, Sv
         else
             tpl_params_level = 2;
 #endif
-    }
-    else if (enc_mode <= ENC_M7) {
+    } else if (enc_mode <= ENC_M7) {
         tpl_params_level = 3;
     } else if (enc_mode <= ENC_M10 || (rc_mode == SVT_AV1_RC_MODE_VBR && enc_mode <= ENC_M11)) {
         tpl_params_level = 4;
@@ -325,14 +323,12 @@ static uint8_t get_tpl_params_level(uint64_t dist_per_group, int8_t enc_mode, Sv
 #else
     if (enc_mode <= ENC_M4) {
         tpl_params_level = 1;
-    }
-    else if (enc_mode <= ENC_M6) {
+    } else if (enc_mode <= ENC_M6) {
         if (dist_per_group < cplx_group_th)
             tpl_params_level = 3;
         else
             tpl_params_level = 2;
-    }
-    else if (enc_mode <= ENC_M10 || (rc_mode == SVT_AV1_RC_MODE_VBR && enc_mode <= ENC_M11)) {
+    } else if (enc_mode <= ENC_M10 || (rc_mode == SVT_AV1_RC_MODE_VBR && enc_mode <= ENC_M11)) {
         tpl_params_level = 4;
     } else {
         tpl_params_level = 5;
@@ -358,7 +354,7 @@ static void set_tpl_params(PictureParentControlSet *pcs, uint8_t tpl_level) {
         tpl_ctrls->subsample_tx            = 0;
         tpl_ctrls->subpel_depth            = FULL_PEL;
 #if OPT_TPL_SUB_LVL
-        tpl_ctrls->subpel_diag_refinement  = 0;
+        tpl_ctrls->subpel_diag_refinement = 0;
 #endif
         break;
     case 1:
@@ -372,7 +368,7 @@ static void set_tpl_params(PictureParentControlSet *pcs, uint8_t tpl_level) {
         tpl_ctrls->subsample_tx            = 0;
         tpl_ctrls->subpel_depth            = QUARTER_PEL;
 #if OPT_TPL_SUB_LVL
-        tpl_ctrls->subpel_diag_refinement  = 0;
+        tpl_ctrls->subpel_diag_refinement = 0;
 #endif
         break;
     case 2:
@@ -386,7 +382,7 @@ static void set_tpl_params(PictureParentControlSet *pcs, uint8_t tpl_level) {
         tpl_ctrls->subsample_tx            = 0;
         tpl_ctrls->subpel_depth            = QUARTER_PEL;
 #if OPT_TPL_SUB_LVL
-        tpl_ctrls->subpel_diag_refinement  = 0;
+        tpl_ctrls->subpel_diag_refinement = 0;
 #endif
         break;
     case 3:
@@ -400,7 +396,7 @@ static void set_tpl_params(PictureParentControlSet *pcs, uint8_t tpl_level) {
         tpl_ctrls->subsample_tx            = 0;
         tpl_ctrls->subpel_depth            = QUARTER_PEL;
 #if OPT_TPL_SUB_LVL
-        tpl_ctrls->subpel_diag_refinement  = 4;
+        tpl_ctrls->subpel_diag_refinement = 4;
 #endif
         break;
     case 4:
@@ -414,7 +410,7 @@ static void set_tpl_params(PictureParentControlSet *pcs, uint8_t tpl_level) {
         tpl_ctrls->subsample_tx            = 0;
         tpl_ctrls->subpel_depth            = FULL_PEL;
 #if OPT_TPL_SUB_LVL
-        tpl_ctrls->subpel_diag_refinement  = 4;
+        tpl_ctrls->subpel_diag_refinement = 4;
 #endif
         break;
     case 5:
@@ -428,7 +424,7 @@ static void set_tpl_params(PictureParentControlSet *pcs, uint8_t tpl_level) {
         tpl_ctrls->subsample_tx            = 2;
         tpl_ctrls->subpel_depth            = FULL_PEL;
 #if OPT_TPL_SUB_LVL
-        tpl_ctrls->subpel_diag_refinement  = 4;
+        tpl_ctrls->subpel_diag_refinement = 4;
 #endif
         break;
     default: assert(0); break;
@@ -539,8 +535,7 @@ void store_extended_group(PictureParentControlSet *pcs, InitialRateControlContex
         if (!pcs->tpl_group[pic_index]->tpl_params_ready) {
             set_tpl_params(
                 pcs->tpl_group[pic_index],
-                get_tpl_params_level(
-                    pcs->scs->static_config.enc_mode, pcs->scs->static_config.rate_control_mode));
+                get_tpl_params_level(pcs->scs->static_config.enc_mode, pcs->scs->static_config.rate_control_mode));
             pcs->tpl_group[pic_index]->tpl_params_ready = 1;
         }
     }

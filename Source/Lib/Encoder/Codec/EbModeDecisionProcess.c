@@ -162,13 +162,9 @@ EbErrorType svt_aom_mode_decision_context_ctor(ModeDecisionContext *ctx, EbColor
 #if OPT_NIC
                 uint8_t nic_level = svt_aom_get_nic_level(enc_mode, is_base, qp);
 #else
-                uint8_t nic_level         = svt_aom_get_nic_level(enc_mode, is_base, hl, qp, rtc_tune);
+            uint8_t nic_level = svt_aom_get_nic_level(enc_mode, is_base, hl, qp, rtc_tune);
 #endif
-#if OPT_DIST_NIC
-                uint8_t nic_scaling_level = svt_aom_set_nic_controls(NULL, NULL, nic_level);
-#else
                 uint8_t nic_scaling_level = svt_aom_set_nic_controls(NULL, nic_level);
-#endif
                 min_nic_scaling_level     = MIN(min_nic_scaling_level, nic_scaling_level);
             }
         }
@@ -583,27 +579,16 @@ static void av1_lambda_assign_md(PictureControlSet *pcs, ModeDecisionContext *ct
     Bool use_higher_lambda;
 #endif
 #if FIX_LAMBDA
-    if(pcs->scs->static_config.fast_decode) {
+    if (pcs->scs->static_config.fast_decode) {
 #endif
 #if TUNE_M5
-#if SLOW_DOWN_DECODER // shut lambda modulation
-    if (pcs->enc_mode <= ENC_M7)
-#else
-    if (pcs->enc_mode <= ENC_M4)
-#endif
+        if (pcs->enc_mode <= ENC_M4)
 #else
     if (pcs->enc_mode <= ENC_M5)
 #endif
-        use_higher_lambda = 0;
-#if SHUT_LAMBDA_MODULATION_FOR_M13
-    else if (pcs->enc_mode <= ENC_M11)
-        use_higher_lambda = 1;
-    else 
-        use_higher_lambda = 0;
-#else
-    else
-        use_higher_lambda = 1;
-#endif
+            use_higher_lambda = 0;
+        else
+            use_higher_lambda = 1;
 #if FIX_LAMBDA
     }
 #endif
@@ -614,8 +599,7 @@ static void av1_lambda_assign_md(PictureControlSet *pcs, ModeDecisionContext *ct
             ctx->fast_lambda_md[0] = (ctx->fast_lambda_md[0] * 200) >> 7;
             ctx->full_lambda_md[1] = (ctx->full_lambda_md[1] * 200) >> 7;
             ctx->fast_lambda_md[1] = (ctx->fast_lambda_md[1] * 200) >> 7;
-        }
-        else {
+        } else {
             ctx->full_lambda_md[0] = (ctx->full_lambda_md[0] * 150) >> 7;
             ctx->fast_lambda_md[0] = (ctx->fast_lambda_md[0] * 150) >> 7;
             ctx->full_lambda_md[1] = (ctx->full_lambda_md[1] * 150) >> 7;

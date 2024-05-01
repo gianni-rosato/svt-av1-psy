@@ -21,6 +21,7 @@
 #include "random.h"
 #include "util.h"
 
+#if !CLN_REMOVE_UNUSED_FUNCS  // TODO: remove this file
 namespace {
 typedef int64_t (*frame_error_func)(const uint8_t *const ref, int stride,
                                     const uint8_t *const dst, int p_width,
@@ -170,3 +171,4 @@ INSTANTIATE_TEST_CASE_P(
                        ::testing::ValuesIn(kBlockHeight)));
 
 }  // namespace
+#endif

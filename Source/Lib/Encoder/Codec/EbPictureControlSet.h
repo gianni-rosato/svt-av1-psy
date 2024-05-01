@@ -535,7 +535,7 @@ typedef struct TplControls {
     SUBPEL_FORCE_STOP
     subpel_depth;
 #if OPT_TPL_SUB_LVL
-    // Specifies the subpel accuracy for diagonal position(s) 
+    // Specifies the subpel accuracy for diagonal position(s)
     uint8_t subpel_diag_refinement;
 #endif
 } TplControls;
@@ -965,12 +965,12 @@ typedef struct PictureParentControlSet {
     uint8_t              sc_class1;
     uint8_t              sc_class2;
 #if OPT_NSQ_CLASSIFIER_1
-    uint8_t              sc_class3;
+    uint8_t sc_class3;
 #endif
-    SkipModeInfo         skip_mode_info;
-    uint64_t             picture_number_alt; // The picture number overlay includes all the overlay frames
-    uint8_t              is_alt_ref;
-    uint8_t              is_overlay;
+    SkipModeInfo                    skip_mode_info;
+    uint64_t                        picture_number_alt; // The picture number overlay includes all the overlay frames
+    uint8_t                         is_alt_ref;
+    uint8_t                         is_overlay;
     struct PictureParentControlSet *overlay_ppcs_ptr;
     struct PictureParentControlSet *alt_ref_ppcs_ptr;
     int32_t                         noise_levels_log1p_fp16[MAX_MB_PLANE];

@@ -605,13 +605,11 @@ void *svt_aom_mode_decision_configuration_kernel(void *input_ptr) {
             set_frame_coeff_lvl(pcs);
         }
 
-
 #if OPT_MED
         // Whether or not to modulate the level of prediction tools using me-distortion
         if (pcs->slice_type == I_SLICE) {
             pcs->me_dist_mod = 0;
-        }
-        else {
+        } else {
 #if TUNE_M4_2
             if (pcs->enc_mode <= ENC_M3)
 #else

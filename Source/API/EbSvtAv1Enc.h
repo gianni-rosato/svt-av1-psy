@@ -740,7 +740,7 @@ typedef struct EbSvtAv1EncConfiguration {
     int32_t manual_pred_struct_entry_num;
 #endif
 #if OPT_FAST_DECODE_LVLS
-   /* Decoder-speed-targeted encoder optimization level (produce bitstreams that can be decoded faster).
+    /* Decoder-speed-targeted encoder optimization level (produce bitstreams that can be decoded faster).
     * 0: No decoder speed optimization
     * -1, 1, 2, 3,..: Decoder speed optimization enabled
     */
