@@ -102,13 +102,13 @@ static void check_set_prio(void) {
         goto end;
     }
     pthread_t th;
-    if (pthread_create(&th, &attr, dummy_func, NULL)) {
+    if ((ret = pthread_create(&th, &attr, dummy_func, NULL))) {
         SVT_WARN("Failed to create thread: %s\n", strerror(ret));
         goto end;
     }
     can_use_prio = true;
 end:
-    if (pthread_attr_destroy(&attr)) {
+    if ((ret = pthread_attr_destroy(&attr))) {
         SVT_WARN("Failed to destroy thread attributes: %s\n", strerror(ret));
     }
 }
