@@ -158,12 +158,15 @@ EbHandle svt_create_thread(void *thread_function(void *), void *thread_context) 
     pthread_t *th = malloc(sizeof(*th));
     if (th == NULL) {
         SVT_ERROR("Failed to allocate thread handle\n");
+        pthread_attr_destroy(&attr);
         return NULL;
     }
 
-    if (pthread_create(th, &attr, thread_function, thread_context)) {
-        SVT_ERROR("Failed to create thread: %s\n", strerror(errno));
+    int ret;
+    if ((ret = pthread_create(th, &attr, thread_function, thread_context))) {
+        SVT_ERROR("Failed to create thread: %s\n", strerror(ret));
         free(th);
+        pthread_attr_destroy(&attr);
         return NULL;
     }
 
