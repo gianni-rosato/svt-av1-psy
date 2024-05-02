@@ -3822,8 +3822,10 @@ void set_multi_pass_params(SequenceControlSet *scs)
             scs->final_pass_preset = config->enc_mode;
             if (scs->final_pass_preset <= ENC_M8)
                 scs->static_config.enc_mode = ENC_M11;
+#if !CLN_MAP_PRESETS
             else if (scs->final_pass_preset <= ENC_M9)
                 scs->static_config.enc_mode = ENC_M12;
+#endif
             else
                 scs->static_config.enc_mode = MAX_ENC_PRESET;
             scs->static_config.rate_control_mode = SVT_AV1_RC_MODE_CQP_OR_CRF;
@@ -4285,7 +4287,11 @@ static void set_param_based_on_input(SequenceControlSet *scs)
     uint8_t list0_only_base_lvl = 0;
     if (scs->static_config.enc_mode <= ENC_M4)
         list0_only_base_lvl = 0;
+#if CLN_MAP_PRESETS
+    else if (scs->static_config.enc_mode <= ENC_M5)
+#else
     else if (scs->static_config.enc_mode <= ENC_M6)
+#endif
         list0_only_base_lvl = 3;
     else
         list0_only_base_lvl = 4;
@@ -4367,7 +4373,11 @@ static void set_param_based_on_input(SequenceControlSet *scs)
             mrp_level = 7;
         }
 #endif
+#if CLN_MAP_PRESETS
+        else if (scs->static_config.enc_mode <= ENC_M5) {
+#else
         else if (scs->static_config.enc_mode <= ENC_M6) {
+#endif
             mrp_level = 7;
         }
         // any changes for preset ENC_M8 and higher should be separated for VBR and CRF in the control structure below
@@ -4379,7 +4389,11 @@ static void set_param_based_on_input(SequenceControlSet *scs)
             if (scs->static_config.enc_mode <= ENC_M10)
 #endif
                 mrp_level = 9;
+#if CLN_MAP_PRESETS
+            else if (scs->static_config.enc_mode <= ENC_M11)
+#else
             else if (scs->static_config.enc_mode <= ENC_M12)
+#endif
                 mrp_level = 10;
             else
                 mrp_level = 0;
@@ -4478,6 +4492,17 @@ static void copy_api_from_app(
     scs->static_config.multiply_keyint = config_struct->multiply_keyint;
     scs->static_config.intra_refresh_type = ((EbSvtAv1EncConfiguration*)config_struct)->intra_refresh_type;
     scs->static_config.enc_mode = ((EbSvtAv1EncConfiguration*)config_struct)->enc_mode;
+#if CLN_MAP_PRESETS
+    if (scs->static_config.enc_mode == ENC_M6) {
+        scs->static_config.enc_mode = ENC_M7;
+        SVT_WARN("Preset M6 is mapped to M7.\n");
+    }
+    else if (scs->static_config.enc_mode == ENC_M12) {
+        scs->static_config.enc_mode = ENC_M13;
+        SVT_WARN("Preset M12 is mapped to M13.\n");
+    }
+#endif
+
     EbInputResolution input_resolution;
     svt_aom_derive_input_resolution(
         &input_resolution,
@@ -4627,7 +4652,11 @@ static void copy_api_from_app(
 #else
             (input_resolution >= INPUT_SIZE_1080p_RANGE && scs->static_config.enc_mode >= ENC_M9) ||
 #endif
+#if CLN_MAP_PRESETS
+            !(scs->static_config.enc_mode <= ENC_M11) || input_resolution >= INPUT_SIZE_4K_RANGE
+#else
             !(scs->static_config.enc_mode <= ENC_M12) || input_resolution >= INPUT_SIZE_4K_RANGE
+#endif
                 ? 4
                 : 5;
     }

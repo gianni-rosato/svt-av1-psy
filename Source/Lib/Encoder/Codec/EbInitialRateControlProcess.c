@@ -184,7 +184,11 @@ uint8_t svt_aom_get_tpl_group_level(uint8_t tpl, int8_t enc_mode, SvtAv1RcMode r
 #if OPT_TPL_SUB_LVL
     if (!tpl)
         tpl_group_level = 0;
+#if CLN_MAP_PRESETS
+    else if (enc_mode <= ENC_M5)
+#else
     else if (enc_mode <= ENC_M6)
+#endif
         tpl_group_level = 1;
     else if (enc_mode <= ENC_M10 || (rc_mode == SVT_AV1_RC_MODE_VBR && enc_mode <= ENC_M11))
         tpl_group_level = 3;

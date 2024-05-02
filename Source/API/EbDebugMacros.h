@@ -109,6 +109,7 @@ extern "C" {
 #define TUNE_LIMIT_FD_M1                          1 // Limit fast-decode mode to M1-M10
 #define OPT_LD                                    1 // Tune LD
 #define CLN_REMOVE_UNUSED_FUNCS                   1 // Remove unused functions; removes a file
+#define CLN_MAP_PRESETS                           1 // Map M6 to M7 and M12 to M13
 
 //FOR DEBUGGING - Do not remove
 #define OPT_LD_LATENCY2         1 // Latency optimization for low delay - to keep the Macro for backwards testing until 3.0
