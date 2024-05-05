@@ -1554,6 +1554,7 @@ EB_API EbErrorType svt_av1_enc_init(EbComponentType *svt_enc_component)
         input_data.variance_octile = enc_handle_ptr->scs_instance_array[instance_index]->scs->static_config.variance_octile;
         input_data.sharpness = enc_handle_ptr->scs_instance_array[instance_index]->scs->static_config.sharpness;
         input_data.qp_scale_compress_strength = enc_handle_ptr->scs_instance_array[instance_index]->scs->static_config.qp_scale_compress_strength;
+        input_data.frame_luma_bias = enc_handle_ptr->scs_instance_array[instance_index]->scs->static_config.frame_luma_bias;
         input_data.static_config = enc_handle_ptr->scs_instance_array[instance_index]->scs->static_config;
 
         EB_NEW(
@@ -4598,6 +4599,9 @@ static void copy_api_from_app(
 
     // QP scaling compression
     scs->static_config.qp_scale_compress_strength = config_struct->qp_scale_compress_strength;
+
+    // Frame-level luma bias
+    scs->static_config.frame_luma_bias = config_struct->frame_luma_bias;
     return;
 }
 
