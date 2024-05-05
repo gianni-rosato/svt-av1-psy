@@ -1222,6 +1222,7 @@ typedef struct PictureControlSetInitData {
     Bool    enable_alt_curve;
     int8_t  sharpness;
     uint8_t qp_scale_compress_strength;
+    uint8_t frame_luma_bias;
 } PictureControlSetInitData;
 
 typedef struct Av1Comp {
