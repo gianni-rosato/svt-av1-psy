@@ -1013,11 +1013,18 @@ typedef struct EbSvtAv1EncConfiguration {
      */
     uint8_t qp_scale_compress_strength;
 
+    /* @brief Experimental frame-level luma bias to improve quality in dark scenes
+     * 0: no bias, stock behavior
+     * 1-4: enable low-luma bias, the higher the number the stronger the bias
+     * Default is 0
+     */
+    uint8_t frame_luma_bias;
+
     /*Add 128 Byte Padding to Struct to avoid changing the size of the public configuration struct*/
 #if CLN_LP_LVLS
     uint8_t padding[128 - sizeof(Bool) - 2 * sizeof(uint8_t) - sizeof(uint32_t)];
 #else
-    uint8_t padding[128 - 2 * sizeof(Bool) - 4 * sizeof(uint8_t) - sizeof(int8_t)];
+    uint8_t padding[128 - 2 * sizeof(Bool) - 5 * sizeof(uint8_t) - sizeof(int8_t)];
 #endif
 
 } EbSvtAv1EncConfiguration;
