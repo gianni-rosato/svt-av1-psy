@@ -918,6 +918,11 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet *scs) {
         return_error = EB_ErrorBadParameter;
     }
 
+    if (config->frame_luma_bias > 4) {
+        SVT_ERROR("Instance %u: Frame-level luma bias value must be between 0 and 4\n", channel_number + 1);
+        return_error = EB_ErrorBadParameter;
+    }
+
     return return_error;
 }
 
@@ -1069,6 +1074,7 @@ EbErrorType svt_av1_set_default_params(EbSvtAv1EncConfiguration *config_ptr) {
     config_ptr->sharpness                         = 0; 
     config_ptr->extended_crf_qindex_offset        = 0;
     config_ptr->qp_scale_compress_strength        = 1;
+    config_ptr->frame_luma_bias                   = 0;
     return return_error;
 }
 
@@ -1191,9 +1197,10 @@ void svt_av1_print_lib_params(SequenceControlSet *scs) {
                      config->film_grain_denoise_strength);
         }
 
-        SVT_INFO("SVT [config]: Sharpness / QP scale compress strength \t\t\t: %d / %d\n",
+        SVT_INFO("SVT [config]: Sharpness / QP scale compress strength / Frame low-luma bias \t\t\t: %d / %d / %d\n",
                  config->sharpness,
-                 config->qp_scale_compress_strength);
+                 config->qp_scale_compress_strength,
+                 config->frame_luma_bias);
     }
 #ifdef DEBUG_BUFFERS
     SVT_INFO("SVT [config]: INPUT / OUTPUT \t\t\t\t\t\t\t: %d / %d\n",
@@ -2063,7 +2070,8 @@ EB_API EbErrorType svt_av1_enc_parse_parameter(EbSvtAv1EncConfiguration *config_
         {"variance-boost-strength", &config_struct->variance_boost_strength},
         {"variance-octile", &config_struct->variance_octile},
         {"enable-alt-curve", &config_struct->enable_alt_curve},
-        {"qp-scale-compress-strength", &config_struct->qp_scale_compress_strength}
+        {"qp-scale-compress-strength", &config_struct->qp_scale_compress_strength},
+        {"frame-luma-bias", &config_struct->frame_luma_bias}
     };
     const size_t uint8_opts_size = sizeof(uint8_opts) / sizeof(uint8_opts[0]);
 
