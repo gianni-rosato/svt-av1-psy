@@ -206,6 +206,8 @@
 
 #define QP_SCALE_COMPRESS_STRENGTH_TOKEN "--qp-scale-compress-strength"
 
+#define FRAME_LUMA_BIAS_TOKEN "--frame-luma-bias"
+
 static EbErrorType validate_error(EbErrorType err, const char *token, const char *value) {
     switch (err) {
     case EB_ErrorNone: return EB_ErrorNone;
@@ -1242,6 +1244,11 @@ ConfigEntry config_entry_psy[] = {
      QP_SCALE_COMPRESS_STRENGTH_TOKEN,
      "[PSY] QP scale compress strength, default is 1 [0-3]",
      set_cfg_generic_token},
+    // Frame-level low-luma bias
+    {SINGLE_INPUT,
+     FRAME_LUMA_BIAS_TOKEN,
+     "[PSY] Adjusts the frame's QP based on the frame's average luma value, default is 0 [0 to 4]",
+     set_cfg_generic_token},
     // Termination
     {SINGLE_INPUT, NULL, NULL, NULL}};
 
@@ -1433,6 +1440,9 @@ ConfigEntry config_entry[] = {
 
     // QP scale compression
     {SINGLE_INPUT, QP_SCALE_COMPRESS_STRENGTH_TOKEN, "QpScaleCompressStrength", set_cfg_generic_token},
+
+    // Frame-level low-luma bias
+    {SINGLE_INPUT, FRAME_LUMA_BIAS_TOKEN, "FrameLumaBias", set_cfg_generic_token},
 
     // Termination
     {SINGLE_INPUT, NULL, NULL, NULL}};
