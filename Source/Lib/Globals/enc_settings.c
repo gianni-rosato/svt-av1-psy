@@ -907,8 +907,8 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet *scs) {
         return_error = EB_ErrorBadParameter;
     }
 
-    if (config->frame_luma_bias > 4) {
-        SVT_ERROR("Instance %u: Frame-level luma bias value must be between 0 and 4\n", channel_number + 1);
+    if (config->frame_luma_bias > 100) {
+        SVT_ERROR("Instance %u: Frame-level luma bias value must be between 0 and 100\n", channel_number + 1);
         return_error = EB_ErrorBadParameter;
     }
 
