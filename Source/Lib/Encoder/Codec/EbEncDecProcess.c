@@ -2714,6 +2714,7 @@ void recode_loop_update_q(PictureParentControlSet *ppcs, int *const loop, int *c
                           int *const q_high, const int top_index, const int bottom_index, int *const undershoot_seen,
                           int *const overshoot_seen, int *const low_cr_seen, const int loop_count);
 void svt_aom_sb_qp_derivation_tpl_la(PictureControlSet *pcs);
+void normalize_sb_delta_q(PictureControlSet *pcs);
 void mode_decision_configuration_init_qp_update(PictureControlSet *pcs);
 void svt_aom_init_enc_dec_segement(PictureParentControlSet *ppcs);
 
@@ -2770,6 +2771,12 @@ static void recode_loop_decision_maker(PictureControlSet *pcs, SequenceControlSe
                 SuperBlock *sb_ptr = pcs->sb_ptr_array[sb_addr];
                 sb_ptr->qindex     = quantizer_to_qindex[pcs->picture_qp];
             }
+        }
+
+        if (scs->static_config.variance_boost_strength && pcs->ppcs->frm_hdr.delta_q_params.delta_q_present)
+        {
+            // adjust delta q res and normalize superblock delta q values to reduce signaling overhead
+            normalize_sb_delta_q(pcs);
         }
     } else {
         ppcs->loop_count = 0;
