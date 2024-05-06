@@ -1247,7 +1247,7 @@ ConfigEntry config_entry_psy[] = {
     // Frame-level low-luma bias
     {SINGLE_INPUT,
      FRAME_LUMA_BIAS_TOKEN,
-     "[PSY] Adjusts the frame's QP based on the frame's average luma value, default is 0 [0 to 4]",
+     "[PSY] Adjusts the frame's QP based on the frame's average luma value, default is 0 [0 to 100]",
      set_cfg_generic_token},
     // Termination
     {SINGLE_INPUT, NULL, NULL, NULL}};
