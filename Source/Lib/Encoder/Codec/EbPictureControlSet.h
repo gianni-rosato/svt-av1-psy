@@ -954,16 +954,27 @@ typedef struct PictureParentControlSet {
     int32_t              film_grain_params_present; // todo (AN): Do we need this flag at picture level?
     int8_t               cdef_level;
     Bool                 enable_restoration; // TRUE if restoration filtering is enabled for the current frame
-    uint8_t              palette_level;
-    uint8_t              sc_class0;
-    uint8_t              sc_class1;
-    uint8_t              sc_class2;
-    uint8_t              sc_class3;
-    SkipModeInfo         skip_mode_info;
-    uint64_t             picture_number_alt; // The picture number overlay includes all the overlay frames
-    uint8_t              is_alt_ref;
-    uint8_t              is_overlay;
+
+    uint8_t palette_level;
+
+    uint8_t sc_class0;
+
+    uint8_t sc_class1;
+
+    uint8_t sc_class2;
+
+    uint8_t sc_class3;
+
+    SkipModeInfo skip_mode_info;
+
+    uint64_t picture_number_alt; // The picture number overlay includes all the overlay frames
+
+    uint8_t is_alt_ref;
+
+    uint8_t is_overlay;
+
     struct PictureParentControlSet *overlay_ppcs_ptr;
+
     struct PictureParentControlSet *alt_ref_ppcs_ptr;
     int32_t                         noise_levels_log1p_fp16[MAX_MB_PLANE];
     int32_t                         pic_decision_reorder_queue_idx;
