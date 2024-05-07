@@ -128,11 +128,7 @@ EbErrorType svt_aom_mode_decision_context_ctor(ModeDecisionContext *ctx, EbColor
                                                EncMode enc_mode, uint16_t max_block_cnt, uint32_t encoder_bit_depth,
                                                EbFifo *mode_decision_configuration_input_fifo_ptr,
                                                EbFifo *mode_decision_output_fifo_ptr, uint8_t enable_hbd_mode_decision,
-#if OPT_NIC
                                                uint8_t cfg_palette) {
-#else
-                                               uint8_t cfg_palette, bool rtc_tune) {
-#endif
     uint32_t buffer_index;
     uint32_t cand_index;
 
@@ -153,24 +149,14 @@ EbErrorType svt_aom_mode_decision_context_ctor(ModeDecisionContext *ctx, EbColor
     // determine MAX_NICS for a given preset
     // get the min scaling level (the smallest scaling level is the most conservative)
     uint8_t min_nic_scaling_level = NICS_SCALING_LEVELS - 1;
-#if !OPT_NIC
-    for (uint8_t hl = 0; hl < MAX_TEMPORAL_LAYERS; hl++) {
-#endif
         for (uint8_t is_base = 0; is_base < 2; is_base++) {
             // min QP is 1 b/c 0 is lossless and is not supported
             for (uint8_t qp = 1; qp <= MAX_QP_VALUE; qp++) {
-#if OPT_NIC
                 uint8_t nic_level = svt_aom_get_nic_level(enc_mode, is_base, qp);
-#else
-            uint8_t nic_level = svt_aom_get_nic_level(enc_mode, is_base, hl, qp, rtc_tune);
-#endif
                 uint8_t nic_scaling_level = svt_aom_set_nic_controls(NULL, nic_level);
                 min_nic_scaling_level     = MIN(min_nic_scaling_level, nic_scaling_level);
             }
         }
-#if !OPT_NIC
-    }
-#endif
     uint8_t stage1_scaling_num = MD_STAGE_NICS_SCAL_NUM[min_nic_scaling_level][MD_STAGE_1];
 
     // scale max_nics
@@ -244,7 +230,6 @@ EbErrorType svt_aom_mode_decision_context_ctor(ModeDecisionContext *ctx, EbColor
     }
 
     // Allocate buffers for obmc prediction
-#if OPT_OBMC_LVLS
     uint8_t obmc_allowed = 0;
     for (uint8_t is_base = 0; is_base < 2; is_base++) {
         // min QP is 1 b/c 0 is lossless and is not supported
@@ -254,20 +239,6 @@ EbErrorType svt_aom_mode_decision_context_ctor(ModeDecisionContext *ctx, EbColor
             obmc_allowed |= svt_aom_get_obmc_level(enc_mode, qp, is_base);
         }
     }
-#else
-    uint8_t obmc_allowed = 0;
-    for (uint8_t fast_decode = 0; fast_decode < 2; fast_decode++) {
-        for (EbInputResolution input_resolution = 0; input_resolution < INPUT_SIZE_COUNT; input_resolution++) {
-            if (obmc_allowed)
-                break;
-#if OPT_OBMC_DIST
-            obmc_allowed |= svt_aom_get_obmc_level(enc_mode, fast_decode, input_resolution);
-#else
-            obmc_allowed |= svt_aom_get_obmc_level(NULL, enc_mode, fast_decode, input_resolution);
-#endif
-        }
-    }
-#endif
     if (obmc_allowed) {
         const uint8_t bits = ctx->hbd_md > EB_8_BIT_MD ? 2 : 1;
         EB_MALLOC(ctx->obmc_buff_0, sb_size * sb_size * bits * MAX_MB_PLANE * sizeof(ctx->obmc_buff_0[0]));
@@ -564,56 +535,12 @@ static void av1_lambda_assign_md(PictureControlSet *pcs, ModeDecisionContext *ct
             }
         }
     }
-#if ADD_LAMBDA_WEIGHT_SGN
     if (pcs->lambda_weight) {
         ctx->full_lambda_md[0] = (ctx->full_lambda_md[0] * pcs->lambda_weight) >> 7;
         ctx->fast_lambda_md[0] = (ctx->fast_lambda_md[0] * pcs->lambda_weight) >> 7;
         ctx->full_lambda_md[1] = (ctx->full_lambda_md[1] * pcs->lambda_weight) >> 7;
         ctx->fast_lambda_md[1] = (ctx->fast_lambda_md[1] * pcs->lambda_weight) >> 7;
     }
-#else
-#if LAMBDA_SKIP_BIAS
-#if FIX_LAMBDA
-    Bool use_higher_lambda = 0;
-#else
-    Bool use_higher_lambda;
-#endif
-#if FIX_LAMBDA
-    if (pcs->scs->static_config.fast_decode) {
-#endif
-#if TUNE_M5
-        if (pcs->enc_mode <= ENC_M4)
-#else
-    if (pcs->enc_mode <= ENC_M5)
-#endif
-            use_higher_lambda = 0;
-        else
-            use_higher_lambda = 1;
-#if FIX_LAMBDA
-    }
-#endif
-    if (use_higher_lambda) {
-#if HIGHER_LAMBDA_EXTREME_RIGHT_BAND
-        if (pcs->picture_qp >= 57) {
-            ctx->full_lambda_md[0] = (ctx->full_lambda_md[0] * 200) >> 7;
-            ctx->fast_lambda_md[0] = (ctx->fast_lambda_md[0] * 200) >> 7;
-            ctx->full_lambda_md[1] = (ctx->full_lambda_md[1] * 200) >> 7;
-            ctx->fast_lambda_md[1] = (ctx->fast_lambda_md[1] * 200) >> 7;
-        } else {
-            ctx->full_lambda_md[0] = (ctx->full_lambda_md[0] * 150) >> 7;
-            ctx->fast_lambda_md[0] = (ctx->fast_lambda_md[0] * 150) >> 7;
-            ctx->full_lambda_md[1] = (ctx->full_lambda_md[1] * 150) >> 7;
-            ctx->fast_lambda_md[1] = (ctx->fast_lambda_md[1] * 150) >> 7;
-        }
-#else
-        ctx->full_lambda_md[0] = (ctx->full_lambda_md[0] * 150) >> 7;
-        ctx->fast_lambda_md[0] = (ctx->fast_lambda_md[0] * 150) >> 7;
-        ctx->full_lambda_md[1] = (ctx->full_lambda_md[1] * 150) >> 7;
-        ctx->fast_lambda_md[1] = (ctx->fast_lambda_md[1] * 150) >> 7;
-#endif
-    }
-#endif
-#endif
     ctx->full_lambda_md[1] *= 16;
     ctx->fast_lambda_md[1] *= 4;
 

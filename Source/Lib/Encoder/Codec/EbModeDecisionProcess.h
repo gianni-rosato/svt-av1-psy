@@ -127,17 +127,10 @@ typedef struct InterIntraCompCtrls {
 } InterIntraCompCtrls;
 typedef struct ObmcControls {
     uint8_t enabled;
-#if OPT_OBMC_LVLS
     // Specifies max block size to refine
     uint8_t max_blk_size_to_refine;
     // Specifies max block size to test
     uint8_t max_blk_size;
-#else
-    // if true, cap the max block size to refine to 16x16
-    Bool max_blk_size_to_refine_16x16;
-    // if true, cap the max block size to test to 16x16
-    Bool max_blk_size_16x16;
-#endif
     // Specifies the level the obmc refinement
     // 0: Full/Sub @ MDS0, 1: Full/Sub @ MDS1, 2: Only Sub MDS1, 3: Full/Sub @ MDS3, 4: Only Sub MDS3
     uint8_t refine_level;
@@ -149,10 +142,6 @@ typedef struct ObmcControls {
     uint8_t fpel_search_range;
     // Whether to search diagonal positions @ the full-pel of OBMC
     uint8_t fpel_search_diag;
-#if !OPT_OBMC_LVLS
-    // if true, use pme/me pre-mds0 distortion(s) and qp to early exit
-    uint8_t qp_dist_early_exit;
-#endif
 } ObmcControls;
 typedef struct TxtControls {
     uint8_t enabled;
@@ -607,10 +596,6 @@ typedef struct NsqSearchCtrls {
     // For non-H/V partitions, skip testing the partition if its signaling rate cost is significantly higher than the signaling rate cost of the
     // best partition.  Specified as a percentage TH. 0 is off, higher is more aggressive.
     uint32_t non_HV_split_rate_th;
-#if !OPT_NEW_NSQ_LVLS
-    // Apply an offset to non_HV_split_rate_th
-    bool non_HV_split_rate_modulation;
-#endif
     // Offset applied to rate thresholds for 16x16 and smaller block sizes. Higher is more aggressive; 0 is off.
     uint32_t rate_th_offset_lte16;
     // If the distortion (or rate) component of the SQ cost is more than component_multiple_th times the rate (or distortion) component, skip the NSQ shapes
@@ -678,10 +663,6 @@ typedef struct WmCtrls {
     uint16_t upper_band_th;
     // Shut the approximation(s) if refinement @ mds1 or mds3
     Bool shut_approx_if_not_mds0;
-#if !OPT_WARP_LVLS
-    // if true, use pme/me pre-mds0 distortion(s) and qp to early exit
-    uint8_t qp_dist_early_exit;
-#endif
 } WmCtrls;
 typedef struct UvCtrls {
     uint8_t enabled;
@@ -1025,9 +1006,6 @@ typedef struct ModeDecisionContext {
     Bipred3x3Controls bipred3x3_ctrls;
     uint8_t           redundant_blk;
     uint8_t           nic_level;
-#if !CNL_INJ_NON_SIMPLE_MODES
-    uint8_t svt_aom_inject_inter_candidates;
-#endif
     uint8_t          *cfl_temp_luma_recon;
     uint16_t         *cfl_temp_luma_recon16bit;
     Bool              blk_skip_decision;
@@ -1264,10 +1242,6 @@ typedef struct ModeDecisionContext {
     // SSIM_LVL_1: use ssim cost to find best candidate in product_full_mode_decision()
     // SSIM_LVL_2: addition to level 1, also use ssim cost to find best tx type in tx_type_search()
     SsimLevel tune_ssim_level;
-#if !OPT_WARP_LVLS
-    uint8_t do_obmc;
-    uint8_t do_warp;
-#endif
 } ModeDecisionContext;
 
 typedef void (*EbAv1LambdaAssignFunc)(PictureControlSet *pcs, uint32_t *fast_lambda, uint32_t *full_lambda,
@@ -1280,14 +1254,8 @@ extern EbErrorType svt_aom_mode_decision_context_ctor(ModeDecisionContext *ctx, 
                                                       uint8_t sb_size, EncMode enc_mode, uint16_t max_block_cnt,
                                                       uint32_t encoder_bit_depth,
                                                       EbFifo  *mode_decision_configuration_input_fifo_ptr,
-#if OPT_NIC
                                                       EbFifo *mode_decision_output_fifo_ptr,
                                                       uint8_t enable_hbd_mode_decision, uint8_t cfg_palette);
-#else
-                                                      EbFifo *mode_decision_output_fifo_ptr,
-                                                      uint8_t enable_hbd_mode_decision, uint8_t cfg_palette,
-                                                      bool rtc_tune);
-#endif
 
 extern const EbAv1LambdaAssignFunc svt_aom_av1_lambda_assignment_function_table[4];
 

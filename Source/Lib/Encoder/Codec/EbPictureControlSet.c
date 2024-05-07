@@ -400,15 +400,8 @@ EbErrorType pcs_update_param(PictureControlSet *pcs) {
     if ((is_16bit) || (scs->is_16bit_pipeline)) {
         svt_picture_buffer_desc_update(pcs->input_frame16bit, (EbPtr)&coeff_buffer_desc_init_data);
     }
-#if OPT_SG
     if (svt_aom_get_enable_restoration(
             scs->static_config.enc_mode, scs->static_config.enable_restoration_filtering, scs->input_resolution)) {
-#else
-    if (svt_aom_get_enable_restoration(scs->static_config.enc_mode,
-                                       scs->static_config.enable_restoration_filtering,
-                                       scs->input_resolution,
-                                       scs->static_config.fast_decode)) {
-#endif
         set_restoration_unit_size(scs->max_input_luma_width, scs->max_input_luma_height, 1, 1, pcs->rst_info);
     }
     pcs->frame_width  = scs->max_input_luma_width;
@@ -500,16 +493,9 @@ static EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr
     object_ptr->temp_lf_recon_pic_16bit           = (EbPictureBufferDesc *)NULL;
     object_ptr->temp_lf_recon_pic                 = (EbPictureBufferDesc *)NULL;
     object_ptr->scaled_input_pic                  = (EbPictureBufferDesc *)NULL;
-#if OPT_SG
     if (svt_aom_get_enable_restoration(init_data_ptr->enc_mode,
                                        init_data_ptr->static_config.enable_restoration_filtering,
                                        init_data_ptr->input_resolution)) {
-#else
-    if (svt_aom_get_enable_restoration(init_data_ptr->enc_mode,
-                                       init_data_ptr->static_config.enable_restoration_filtering,
-                                       init_data_ptr->input_resolution,
-                                       init_data_ptr->static_config.fast_decode)) {
-#endif
         set_restoration_unit_size(
             init_data_ptr->picture_width, init_data_ptr->picture_height, 1, 1, object_ptr->rst_info);
 

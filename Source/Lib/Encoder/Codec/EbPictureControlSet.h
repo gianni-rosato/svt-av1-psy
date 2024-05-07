@@ -390,9 +390,7 @@ typedef struct PictureControlSet {
     Bool             pic_bypass_encdec;
     EncMode          enc_mode;
     InputCoeffLvl    coeff_lvl;
-#if OPT_MED
     bool me_dist_mod; // Whether or not to modulate the level of prediction tools using me-distortion
-#endif
     int32_t          cdef_preset[MAX_TILE_CNTS][4];
     WienerInfo       wiener_info[MAX_TILE_CNTS][MAX_MB_PLANE];
     SgrprojInfo      sgrproj_info[MAX_TILE_CNTS][MAX_MB_PLANE];
@@ -439,9 +437,7 @@ typedef struct PictureControlSet {
     uint8_t    approx_inter_rate;
     uint8_t    skip_intra;
     PicVqCtrls vq_ctrls;
-#if ADD_LAMBDA_WEIGHT_SGN
     uint16_t lambda_weight;
-#endif
     // scaled input picture is only used in loop restoration for recon size is
     // different with input frame when reference scaling is enabled
     EbPictureBufferDesc *scaled_input_pic;
@@ -534,10 +530,8 @@ typedef struct TplControls {
     // the max precision for TPL subpel
     SUBPEL_FORCE_STOP
     subpel_depth;
-#if OPT_TPL_SUB_LVL
     // Specifies the subpel accuracy for diagonal position(s)
     uint8_t subpel_diag_refinement;
-#endif
 } TplControls;
 
 typedef struct {
@@ -964,9 +958,7 @@ typedef struct PictureParentControlSet {
     uint8_t              sc_class0;
     uint8_t              sc_class1;
     uint8_t              sc_class2;
-#if OPT_NSQ_CLASSIFIER_1
     uint8_t sc_class3;
-#endif
     SkipModeInfo                    skip_mode_info;
     uint64_t                        picture_number_alt; // The picture number overlay includes all the overlay frames
     uint8_t                         is_alt_ref;
@@ -1137,9 +1129,7 @@ typedef struct PictureParentControlSet {
     uint32_t tf_ahd_error_to_central;
     // Average absolute histogram deviation of all frames in the TF window to the current (central) frame
     uint32_t tf_avg_ahd_error;
-#if TF_BRIGHTNESS_CHECK_V1
     uint64_t tf_avg_luma;
-#endif
     bool     tf_active_region_present;
     bool     seq_param_changed;
     uint64_t norm_me_dist;
