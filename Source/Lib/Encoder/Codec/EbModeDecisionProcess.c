@@ -149,14 +149,14 @@ EbErrorType svt_aom_mode_decision_context_ctor(ModeDecisionContext *ctx, EbColor
     // determine MAX_NICS for a given preset
     // get the min scaling level (the smallest scaling level is the most conservative)
     uint8_t min_nic_scaling_level = NICS_SCALING_LEVELS - 1;
-        for (uint8_t is_base = 0; is_base < 2; is_base++) {
-            // min QP is 1 b/c 0 is lossless and is not supported
-            for (uint8_t qp = 1; qp <= MAX_QP_VALUE; qp++) {
-                uint8_t nic_level = svt_aom_get_nic_level(enc_mode, is_base, qp);
-                uint8_t nic_scaling_level = svt_aom_set_nic_controls(NULL, nic_level);
-                min_nic_scaling_level     = MIN(min_nic_scaling_level, nic_scaling_level);
-            }
+    for (uint8_t is_base = 0; is_base < 2; is_base++) {
+        // min QP is 1 b/c 0 is lossless and is not supported
+        for (uint8_t qp = 1; qp <= MAX_QP_VALUE; qp++) {
+            uint8_t nic_level         = svt_aom_get_nic_level(enc_mode, is_base, qp);
+            uint8_t nic_scaling_level = svt_aom_set_nic_controls(NULL, nic_level);
+            min_nic_scaling_level     = MIN(min_nic_scaling_level, nic_scaling_level);
         }
+    }
     uint8_t stage1_scaling_num = MD_STAGE_NICS_SCAL_NUM[min_nic_scaling_level][MD_STAGE_1];
 
     // scale max_nics

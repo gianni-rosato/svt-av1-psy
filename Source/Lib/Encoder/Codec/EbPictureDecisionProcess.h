@@ -101,7 +101,7 @@ typedef struct PictureDecisionContext {
     uint8_t                  last_i_picture_sc_class0;
     uint8_t                  last_i_picture_sc_class1;
     uint8_t                  last_i_picture_sc_class2;
-    uint8_t last_i_picture_sc_class3;
+    uint8_t                  last_i_picture_sc_class3;
     uint64_t                 last_long_base_pic;
     uint64_t                 key_poc;
     uint8_t                  tf_level;

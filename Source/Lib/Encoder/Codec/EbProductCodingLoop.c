@@ -10141,7 +10141,7 @@ static void faster_md_settings_nsq(PictureControlSet *pcs, ModeDecisionContext *
         ctx->nsq_search_ctrls.nsq_split_cost_th    = MIN(60, ctx->nsq_search_ctrls.nsq_split_cost_th);
         ctx->nsq_search_ctrls.H_vs_V_split_rate_th = MAX(60, ctx->nsq_search_ctrls.H_vs_V_split_rate_th);
         ctx->nsq_search_ctrls.non_HV_split_rate_th = MAX(60, ctx->nsq_search_ctrls.non_HV_split_rate_th);
-        ctx->params_status = 1;
+        ctx->params_status                         = 1;
     }
 }
 /*
@@ -10248,9 +10248,9 @@ static void update_nsq_settings(PictureControlSet *pcs, ModeDecisionContext *ctx
     // Reset the NSQ setting if previous-SQ is_high_energy
     svt_aom_set_nsq_search_ctrls(pcs, ctx, pcs->nsq_search_level, pcs->ppcs->input_resolution);
     // Derive area energy
-    uint32_t energy = ctx->blk_geom->sq_size < 64
-        ? ctx->b32_satd[(ctx->blk_geom->org_x / 32) + ((ctx->blk_geom->org_y / 32) << 1)]
-        : MAX(ctx->b32_satd[0], MAX(ctx->b32_satd[1], MAX(ctx->b32_satd[2], ctx->b32_satd[3])));
+    uint32_t energy      = ctx->blk_geom->sq_size < 64
+             ? ctx->b32_satd[(ctx->blk_geom->org_x / 32) + ((ctx->blk_geom->org_y / 32) << 1)]
+             : MAX(ctx->b32_satd[0], MAX(ctx->b32_satd[1], MAX(ctx->b32_satd[2], ctx->b32_satd[3])));
     uint32_t input_size  = (pcs->ppcs->frame_width * pcs->ppcs->frame_height) / 10000;
     uint32_t high_energy = CLIP3(500, 100000, (int)((40000 - (125 * input_size))));
 

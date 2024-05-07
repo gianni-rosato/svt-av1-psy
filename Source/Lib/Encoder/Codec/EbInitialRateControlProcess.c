@@ -310,7 +310,7 @@ static void set_tpl_params(PictureParentControlSet *pcs, uint8_t tpl_level) {
         tpl_ctrls->dispenser_search_level  = 0;
         tpl_ctrls->subsample_tx            = 0;
         tpl_ctrls->subpel_depth            = FULL_PEL;
-        tpl_ctrls->subpel_diag_refinement = 0;
+        tpl_ctrls->subpel_diag_refinement  = 0;
         break;
     case 1:
         tpl_ctrls->compute_rate            = 1;
@@ -322,7 +322,7 @@ static void set_tpl_params(PictureParentControlSet *pcs, uint8_t tpl_level) {
         tpl_ctrls->dispenser_search_level  = 0;
         tpl_ctrls->subsample_tx            = 0;
         tpl_ctrls->subpel_depth            = QUARTER_PEL;
-        tpl_ctrls->subpel_diag_refinement = 0;
+        tpl_ctrls->subpel_diag_refinement  = 0;
         break;
     case 2:
         tpl_ctrls->compute_rate            = 0;
@@ -334,7 +334,7 @@ static void set_tpl_params(PictureParentControlSet *pcs, uint8_t tpl_level) {
         tpl_ctrls->dispenser_search_level  = 0;
         tpl_ctrls->subsample_tx            = 0;
         tpl_ctrls->subpel_depth            = QUARTER_PEL;
-        tpl_ctrls->subpel_diag_refinement = 0;
+        tpl_ctrls->subpel_diag_refinement  = 0;
         break;
     case 3:
         tpl_ctrls->compute_rate            = 0;
@@ -346,7 +346,7 @@ static void set_tpl_params(PictureParentControlSet *pcs, uint8_t tpl_level) {
         tpl_ctrls->dispenser_search_level  = 0;
         tpl_ctrls->subsample_tx            = 0;
         tpl_ctrls->subpel_depth            = QUARTER_PEL;
-        tpl_ctrls->subpel_diag_refinement = 4;
+        tpl_ctrls->subpel_diag_refinement  = 4;
         break;
     case 4:
         tpl_ctrls->compute_rate            = 0;
@@ -358,7 +358,7 @@ static void set_tpl_params(PictureParentControlSet *pcs, uint8_t tpl_level) {
         tpl_ctrls->dispenser_search_level  = 0;
         tpl_ctrls->subsample_tx            = 0;
         tpl_ctrls->subpel_depth            = FULL_PEL;
-        tpl_ctrls->subpel_diag_refinement = 4;
+        tpl_ctrls->subpel_diag_refinement  = 4;
         break;
     case 5:
         tpl_ctrls->compute_rate            = 0;
@@ -370,7 +370,7 @@ static void set_tpl_params(PictureParentControlSet *pcs, uint8_t tpl_level) {
         tpl_ctrls->dispenser_search_level  = 1;
         tpl_ctrls->subsample_tx            = 2;
         tpl_ctrls->subpel_depth            = FULL_PEL;
-        tpl_ctrls->subpel_diag_refinement = 4;
+        tpl_ctrls->subpel_diag_refinement  = 4;
         break;
     default: assert(0); break;
     }

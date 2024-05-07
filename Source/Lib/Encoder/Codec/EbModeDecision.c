@@ -185,7 +185,7 @@ MotionMode svt_aom_obmc_motion_mode_allowed(
     MvReferenceFrame rf0, MvReferenceFrame rf1, PredictionMode mode) {
     if (ctx->obmc_ctrls.trans_face_off && !situation)
         return SIMPLE_TRANSLATION;
-        // check if should cap the max block size for obmc
+    // check if should cap the max block size for obmc
 
     if (block_size_wide[bsize] > ctx->obmc_ctrls.max_blk_size || block_size_high[bsize] > ctx->obmc_ctrls.max_blk_size)
         return SIMPLE_TRANSLATION;
@@ -1044,9 +1044,9 @@ void unipred_3x3_candidates_injection(const SequenceControlSet *scs, PictureCont
 }
 static void bipred_3x3_candidates_injection(const SequenceControlSet *scs, PictureControlSet *pcs,
                                             ModeDecisionContext *ctx, uint32_t *candidate_total_cnt) {
-    uint32_t           cand_total_cnt = (*candidate_total_cnt);
-    const FrameHeader *frm_hdr        = &pcs->ppcs->frm_hdr;
-    const MeSbResults *me_results     = pcs->ppcs->pa_me_data->me_results[ctx->me_sb_addr];
+    uint32_t               cand_total_cnt      = (*candidate_total_cnt);
+    const FrameHeader     *frm_hdr             = &pcs->ppcs->frm_hdr;
+    const MeSbResults     *me_results          = pcs->ppcs->pa_me_data->me_results[ctx->me_sb_addr];
     const uint8_t          total_me_cnt        = me_results->total_me_candidate_index[ctx->me_block_offset];
     const MeCandidate     *me_block_results    = &me_results->me_candidate_array[ctx->me_cand_offset];
     ModeDecisionCandidate *cand_array          = ctx->fast_cand_array;
@@ -3508,7 +3508,6 @@ static void inject_inter_candidates_light_pd1(PictureControlSet *pcs, ModeDecisi
 }
 static void svt_aom_inject_inter_candidates(PictureControlSet *pcs, ModeDecisionContext *ctx,
                                             const SequenceControlSet *scs, uint32_t *candidate_total_cnt) {
-
     FrameHeader *frm_hdr             = &pcs->ppcs->frm_hdr;
     uint32_t     cand_total_cnt      = *candidate_total_cnt;
     Bool         is_compound_enabled = (frm_hdr->reference_mode == SINGLE_REFERENCE) ? 0 : 1;

@@ -1254,7 +1254,7 @@ extern EbErrorType svt_aom_mode_decision_context_ctor(ModeDecisionContext *ctx, 
                                                       uint8_t sb_size, EncMode enc_mode, uint16_t max_block_cnt,
                                                       uint32_t encoder_bit_depth,
                                                       EbFifo  *mode_decision_configuration_input_fifo_ptr,
-                                                      EbFifo *mode_decision_output_fifo_ptr,
+                                                      EbFifo  *mode_decision_output_fifo_ptr,
                                                       uint8_t enable_hbd_mode_decision, uint8_t cfg_palette);
 
 extern const EbAv1LambdaAssignFunc svt_aom_av1_lambda_assignment_function_table[4];

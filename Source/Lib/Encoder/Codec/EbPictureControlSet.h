@@ -390,7 +390,7 @@ typedef struct PictureControlSet {
     Bool             pic_bypass_encdec;
     EncMode          enc_mode;
     InputCoeffLvl    coeff_lvl;
-    bool me_dist_mod; // Whether or not to modulate the level of prediction tools using me-distortion
+    bool             me_dist_mod; // Whether or not to modulate the level of prediction tools using me-distortion
     int32_t          cdef_preset[MAX_TILE_CNTS][4];
     WienerInfo       wiener_info[MAX_TILE_CNTS][MAX_MB_PLANE];
     SgrprojInfo      sgrproj_info[MAX_TILE_CNTS][MAX_MB_PLANE];
@@ -437,7 +437,7 @@ typedef struct PictureControlSet {
     uint8_t    approx_inter_rate;
     uint8_t    skip_intra;
     PicVqCtrls vq_ctrls;
-    uint16_t lambda_weight;
+    uint16_t   lambda_weight;
     // scaled input picture is only used in loop restoration for recon size is
     // different with input frame when reference scaling is enabled
     EbPictureBufferDesc *scaled_input_pic;
@@ -958,11 +958,11 @@ typedef struct PictureParentControlSet {
     uint8_t              sc_class0;
     uint8_t              sc_class1;
     uint8_t              sc_class2;
-    uint8_t sc_class3;
-    SkipModeInfo                    skip_mode_info;
-    uint64_t                        picture_number_alt; // The picture number overlay includes all the overlay frames
-    uint8_t                         is_alt_ref;
-    uint8_t                         is_overlay;
+    uint8_t              sc_class3;
+    SkipModeInfo         skip_mode_info;
+    uint64_t             picture_number_alt; // The picture number overlay includes all the overlay frames
+    uint8_t              is_alt_ref;
+    uint8_t              is_overlay;
     struct PictureParentControlSet *overlay_ppcs_ptr;
     struct PictureParentControlSet *alt_ref_ppcs_ptr;
     int32_t                         noise_levels_log1p_fp16[MAX_MB_PLANE];
