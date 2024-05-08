@@ -639,10 +639,10 @@ static EbErrorType load_default_buffer_configuration_settings(
         uint32_t n_extra_mg;
         if (scs->static_config.rate_control_mode != SVT_AV1_RC_MODE_CQP_OR_CRF)
         {
-            if ((core_count < PARALLEL_LEVEL_4_RANGE) || (scs->input_resolution > INPUT_SIZE_8K_RANGE)) {
+            if (core_count < PARALLEL_LEVEL_4_RANGE) {
                 n_extra_mg = 0;
             }
-            else if ((core_count >= PARALLEL_LEVEL_4_RANGE) && (core_count < PARALLEL_LEVEL_8_RANGE)) {
+            else if (((core_count >= PARALLEL_LEVEL_4_RANGE) && (core_count < PARALLEL_LEVEL_8_RANGE)) || (scs->input_resolution > INPUT_SIZE_8K_RANGE)) {
                 n_extra_mg = 1;
             }
             else if ((core_count >= PARALLEL_LEVEL_8_RANGE) && (core_count < PARALLEL_LEVEL_16_RANGE)) {
@@ -653,10 +653,10 @@ static EbErrorType load_default_buffer_configuration_settings(
             }
         }
         else {
-            if ((core_count < PARALLEL_LEVEL_4_RANGE) || (scs->input_resolution > INPUT_SIZE_8K_RANGE)) {
+            if (core_count < PARALLEL_LEVEL_4_RANGE) {
                 n_extra_mg = 0;
             }
-            else if ((core_count >= PARALLEL_LEVEL_4_RANGE) && (core_count < PARALLEL_LEVEL_8_RANGE)) {
+            else if (((core_count >= PARALLEL_LEVEL_4_RANGE) && (core_count < PARALLEL_LEVEL_8_RANGE)) || (scs->input_resolution > INPUT_SIZE_8K_RANGE)) {
                 n_extra_mg = 1;
             }
             else if ((core_count >= PARALLEL_LEVEL_8_RANGE) && (core_count < PARALLEL_LEVEL_16_RANGE)) {
@@ -3988,8 +3988,8 @@ static void set_param_based_on_input(SequenceControlSet *scs)
             tpl_lad_mg = 0;
 
         // special conditions for higher resolutions in order to decrease memory usage for tpl_lad_mg
-    if (scs->input_resolution >= INPUT_SIZE_8K_RANGE) {
-            tpl_lad_mg = 0;
+        if (scs->input_resolution >= INPUT_SIZE_8K_RANGE) {
+            tpl_lad_mg = MIN(1, tpl_lad_mg);
     }
         scs->tpl_lad_mg = MIN(2, tpl_lad_mg);// lad_mg is capped to 2 because tpl was optimised only for 1,2 and 3 mini-gops
         if (scs->static_config.rate_control_mode == SVT_AV1_RC_MODE_CQP_OR_CRF)
