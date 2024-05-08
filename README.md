@@ -34,7 +34,7 @@ License 1.0. See [LICENSE](LICENSE.md) and [PATENTS](PATENTS.md) for details.
 - [ARM Build Guide](Docs/ARM-Build-Guide.md)
 
 **Common Questions/Issues**
-- [Why build with LTO?] (Docs/CommonQuestions.md#why-build-with-lto)
+- [Why build with LTO?](Docs/CommonQuestions.md#why-build-with-lto)
 - [What presets do](Docs/CommonQuestions.md#what-presets-do)
 - [Scene change detection](Docs/CommonQuestions.md#scene-change-detection)
 - [GOP size selection](Docs/CommonQuestions.md#gop-size-selection)

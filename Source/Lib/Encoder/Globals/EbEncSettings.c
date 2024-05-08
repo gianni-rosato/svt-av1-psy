@@ -44,15 +44,6 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet *scs) {
         SVT_ERROR("Instance %u: EncoderMode must be in the range of [-1-%d]\n", channel_number + 1, MAX_ENC_PRESET);
         return_error = EB_ErrorBadParameter;
     }
-#if !REMOVE_M13_WARN
-    if (config->enc_mode == MAX_ENC_PRESET) {
-        SVT_WARN(
-            "EncoderMode (preset): %d was developed for the sole purpose of debugging and or "
-            "running fast convex-hull encoding. This configuration should not be used for any "
-            "benchmarking or quality analysis\n",
-            MAX_ENC_PRESET);
-    }
-#endif
     if (scs->max_input_luma_width < 64) {
         SVT_ERROR("Instance %u: Source Width must be at least 64\n", channel_number + 1);
         return_error = EB_ErrorBadParameter;

@@ -2666,11 +2666,7 @@ static void tf_ld_controls(SequenceControlSet* scs, uint8_t tf_level) {
         scs->tf_params_per_type[1].modulate_pics = 0;
         scs->tf_params_per_type[1].max_num_past_pics = 1;
         scs->tf_params_per_type[1].max_num_future_pics = 0;
-#if FIX_TF_M13
         scs->tf_params_per_type[1].hme_me_level = 4;
-#else
-        scs->tf_params_per_type[1].hme_me_level = 3;
-#endif
         scs->tf_params_per_type[1].half_pel_mode = 0;
         scs->tf_params_per_type[1].quarter_pel_mode = 0;
         scs->tf_params_per_type[1].eight_pel_mode = 0;
@@ -2700,11 +2696,7 @@ static void tf_ld_controls(SequenceControlSet* scs, uint8_t tf_level) {
         scs->tf_params_per_type[1].modulate_pics = 0;
         scs->tf_params_per_type[1].max_num_past_pics = 1;
         scs->tf_params_per_type[1].max_num_future_pics = 0;
-#if FIX_TF_M13
         scs->tf_params_per_type[1].hme_me_level = 4;
-#else
-        scs->tf_params_per_type[1].hme_me_level = 3;
-#endif
         scs->tf_params_per_type[1].half_pel_mode = 0;
         scs->tf_params_per_type[1].quarter_pel_mode = 0;
         scs->tf_params_per_type[1].eight_pel_mode = 0;
@@ -3025,11 +3017,7 @@ void tf_controls(SequenceControlSet* scs, uint8_t tf_level) {
         scs->tf_params_per_type[2].modulate_pics = 1;
         scs->tf_params_per_type[2].max_num_past_pics = MIN((1 << scs->static_config.hierarchical_levels) / 2, svt_aom_tf_max_ref_per_struct(scs->static_config.hierarchical_levels, 2, 0));
         scs->tf_params_per_type[2].max_num_future_pics = MIN((1 << scs->static_config.hierarchical_levels) / 2, svt_aom_tf_max_ref_per_struct(scs->static_config.hierarchical_levels, 2, 1));
-#if TF_HME_ME_
         scs->tf_params_per_type[2].hme_me_level = 2;
-#else
-        scs->tf_params_per_type[2].hme_me_level = 1;
-#endif
         scs->tf_params_per_type[2].half_pel_mode = 1;
         scs->tf_params_per_type[2].quarter_pel_mode = 1;
         scs->tf_params_per_type[2].eight_pel_mode = 1;
@@ -3268,7 +3256,6 @@ void tf_controls(SequenceControlSet* scs, uint8_t tf_level) {
         // L1 TF Params
         scs->tf_params_per_type[2].enabled = 0;
         break;
-#if FIX_TF_M13
     case 9:
         // I_SLICE TF Params
         scs->tf_params_per_type[0].enabled = 1;
@@ -3319,7 +3306,6 @@ void tf_controls(SequenceControlSet* scs, uint8_t tf_level) {
         // L1 TF Params
         scs->tf_params_per_type[2].enabled = 0;
         break;
-#endif
     default:
         assert(0);
         break;
@@ -3386,55 +3372,26 @@ static void derive_tf_params(SequenceControlSet *scs) {
     if (do_tf == 0) {
         tf_level = 0;
     }
-#if TUNE_SHIFT_MR_M0
     else if (enc_mode <= ENC_M1) {
-#else
-    else if (enc_mode <= ENC_M0) {
-#endif
         tf_level = 1;
     }
-#if TUNE_M4_2
     else if (enc_mode <= ENC_M3) {
         tf_level = 2;
     }
     else if (enc_mode <= ENC_M4) {
         tf_level = 3;
 }
-#else
-    else if (enc_mode <= ENC_M4) {
-        tf_level = 2;
-    }
-#endif
-#if TUNE_M8_2
     else if (enc_mode <= ENC_M8) {
-#else
-    else if (enc_mode <= ENC_M7) {
-#endif
         tf_level = 4;
     }
-#if TUNE_M9_2
     else if (enc_mode <= ENC_M9) {
-#else
-    else if (enc_mode <= ENC_M8) {
-#endif
         tf_level = resolution <= INPUT_SIZE_720p_RANGE && hierarchical_levels <= 4 ? 5 : 6;
     }
-#if !TUNE_M10_2
-    else if (enc_mode <= ENC_M10) {
-        tf_level = 7;
-    }
-#endif
-#if FIX_TF_M13
     else if (enc_mode <= ENC_M11) {
         tf_level = 8;
     } else {
         tf_level = 9;
      }
-#else
-    else {
-        tf_level = 8;
-    }
-#endif
     tf_controls(scs, tf_level);
 }
 
@@ -3449,7 +3406,6 @@ static void set_list0_only_base(SequenceControlSet* scs, uint8_t list0_only_base
     case 0:
         ctrls->enabled = 0;
         break;
-#if OPT_LIST1_REMOVAL
     case 1:
         ctrls->enabled = 1;
         ctrls->list0_only_base_th = 35;
@@ -3463,25 +3419,6 @@ static void set_list0_only_base(SequenceControlSet* scs, uint8_t list0_only_base
         ctrls->enabled = 1;
         ctrls->list0_only_base_th = 100;
         break;
-#else
-    case 1:
-        ctrls->enabled = 1;
-        ctrls->list0_only_base_th = 35;
-        break;
-    case 2:
-        ctrls->enabled = 1;
-        ctrls->list0_only_base_th = 40;
-        break;
-    case 3:
-        ctrls->enabled = 1;
-        ctrls->list0_only_base_th = 50;
-        break;
-    case 4:
-        ctrls->enabled = 1;
-        ctrls->list0_only_base_th = 100;
-        break;
-    default: assert(0); break;
-#endif
     }
 }
 /*
@@ -3822,10 +3759,6 @@ void set_multi_pass_params(SequenceControlSet *scs)
             scs->final_pass_preset = config->enc_mode;
             if (scs->final_pass_preset <= ENC_M8)
                 scs->static_config.enc_mode = ENC_M11;
-#if !CLN_MAP_PRESETS
-            else if (scs->final_pass_preset <= ENC_M9)
-                scs->static_config.enc_mode = ENC_M12;
-#endif
             else
                 scs->static_config.enc_mode = MAX_ENC_PRESET;
             scs->static_config.rate_control_mode = SVT_AV1_RC_MODE_CQP_OR_CRF;
@@ -4051,7 +3984,6 @@ static void set_param_based_on_input(SequenceControlSet *scs)
             // update the look ahead size
             update_look_ahead(scs);
     }
-#if FIX_RESIZE_R2R
     // when resize mode is used, use sb 64 because of a r2r when 128 is used
     // In low delay mode, sb size is set to 64
     // in 240P resolution, sb size is set to 64
@@ -4059,61 +3991,16 @@ static void set_param_based_on_input(SequenceControlSet *scs)
         scs->static_config.pred_structure == SVT_AV1_PRED_LOW_DELAY_B ||
         (scs->input_resolution == INPUT_SIZE_240p_RANGE) ||
         scs->static_config.enable_variance_boost)
-#else
-    // In low delay mode, sb size is set to 64
-    // In two pass encoding, the first pass uses sb size=64. Also when tpl is used
-    // in 240P resolution, sb size is set to 64
-    // In variance boost mode, sb size is set to 64
-    if (scs->static_config.pred_structure == SVT_AV1_PRED_LOW_DELAY_B ||
-        (scs->input_resolution == INPUT_SIZE_240p_RANGE) ||
-        scs->static_config.enable_variance_boost)
-#endif
         scs->super_block_size = 64;
     else
         if (scs->static_config.enc_mode <= ENC_M1)
             scs->super_block_size = 128;
-#if TUNE_M5
-#if TUNE_M7
         else if (scs->static_config.enc_mode <= ENC_M7) {
-#else
-        else if (scs->static_config.enc_mode <= ENC_M5) {
-#endif
-#else
-        else if (scs->static_config.enc_mode <= ENC_M4) {
-#endif
             if (scs->static_config.qp <= 56)
                 scs->super_block_size = 64;
             else
                 scs->super_block_size = 128;
         }
-#if !TUNE_M5
-        else if (scs->static_config.enc_mode <= ENC_M5) {
-            if(scs->input_resolution <= INPUT_SIZE_360p_RANGE)
-                scs->super_block_size = 64;
-            else {
-                if (scs->static_config.qp <= 56)
-                    scs->super_block_size = 64;
-                else
-                    scs->super_block_size = 128;
-            }
-        }
-#endif
-#if !TUNE_M8 // sb_128
-#if TUNE_M7
-        else if (scs->static_config.enc_mode <= ENC_M8) {
-#else
-        else if (scs->static_config.enc_mode <= ENC_M7) {
-#endif
-            if (scs->input_resolution <= INPUT_SIZE_480p_RANGE)
-                scs->super_block_size = 64;
-            else {
-                if (scs->static_config.qp <= 56)
-                    scs->super_block_size = 64;
-                else
-                    scs->super_block_size = 128;
-            }
-        }
-#endif
         else
             scs->super_block_size = 64;
     // When switch frame is on, all renditions must have same super block size. See spec 5.5.1, 5.9.15.
@@ -4283,35 +4170,19 @@ static void set_param_based_on_input(SequenceControlSet *scs)
         scs->over_boundary_block_mode = scs->over_bndry_blk;
     svt_aom_set_mfmv_config(scs);
 
-#if OPT_LIST1_REMOVAL
     uint8_t list0_only_base_lvl = 0;
     if (scs->static_config.enc_mode <= ENC_M4)
         list0_only_base_lvl = 0;
-#if CLN_MAP_PRESETS
     else if (scs->static_config.enc_mode <= ENC_M5)
-#else
-    else if (scs->static_config.enc_mode <= ENC_M6)
-#endif
         list0_only_base_lvl = 3;
     else
         list0_only_base_lvl = 4;
 
     // QP-banding
-#if SMOOTH_RIGHT
     if (scs->static_config.qp <= (uint32_t)(scs->static_config.enc_mode <= ENC_M7 ? 44 : 43))
-#else
-    if (scs->static_config.qp <= 43)
-#endif
         list0_only_base_lvl = list0_only_base_lvl + 1;
     else if (scs->static_config.qp > 51)
         list0_only_base_lvl = MAX(0, (int) ((int) list0_only_base_lvl - 1));
-#else
-    uint8_t list0_only_base_lvl = 0;
-    if (scs->static_config.enc_mode <= ENC_M4)
-        list0_only_base_lvl = 0;
-    else
-        list0_only_base_lvl = 4;
-#endif
     set_list0_only_base(scs, list0_only_base_lvl);
 
     if (scs->static_config.rate_control_mode == SVT_AV1_RC_MODE_VBR || scs->static_config.rate_control_mode == SVT_AV1_RC_MODE_CBR ||
@@ -4351,58 +4222,26 @@ static void set_param_based_on_input(SequenceControlSet *scs)
         }
     }
     else {
-#if TUNE_SHIFT_MR_M0
         if (scs->static_config.enc_mode <= ENC_MR) {
             mrp_level = 1;
         }
         else if (scs->static_config.enc_mode <= ENC_M2) {
-#else
-        if (scs->static_config.enc_mode <= ENC_M2) {
-#endif
             mrp_level = 2;
         }
-#if TUNE_M4
         else if (scs->static_config.enc_mode <= ENC_M3) {
-#else
-        else if (scs->static_config.enc_mode <= ENC_M4) {
-#endif
             mrp_level = 5;
         }
-#if !CLN_REMOVE_USELESS_CHECKS
         else if (scs->static_config.enc_mode <= ENC_M5) {
-            mrp_level = 7;
-        }
-#endif
-#if CLN_MAP_PRESETS
-        else if (scs->static_config.enc_mode <= ENC_M5) {
-#else
-        else if (scs->static_config.enc_mode <= ENC_M6) {
-#endif
             mrp_level = 7;
         }
         // any changes for preset ENC_M8 and higher should be separated for VBR and CRF in the control structure below
         else if (scs->static_config.rate_control_mode != SVT_AV1_RC_MODE_VBR) {
-#if TUNE_M11
-#if TUNE_M10_2
             if (scs->static_config.enc_mode <= ENC_M9)
-#else
-            if (scs->static_config.enc_mode <= ENC_M10)
-#endif
                 mrp_level = 9;
-#if CLN_MAP_PRESETS
             else if (scs->static_config.enc_mode <= ENC_M11)
-#else
-            else if (scs->static_config.enc_mode <= ENC_M12)
-#endif
                 mrp_level = 10;
             else
                 mrp_level = 0;
-#else
-            if (scs->static_config.enc_mode <= ENC_M12)
-                mrp_level = 9;
-            else
-                mrp_level = 0;
-#endif
         }
         else {
             mrp_level = 12;
@@ -4417,15 +4256,7 @@ static void set_param_based_on_input(SequenceControlSet *scs)
         scs->vq_ctrls.sharpness_ctrls.tf == 1                ||
         scs->static_config.enable_variance_boost)
         scs->calculate_variance = 1;
-#if TUNE_M8_2
     else if (scs->static_config.enc_mode <= ENC_M7)
-#else
-#if TUNE_M9 // variance
-    else if (scs->static_config.enc_mode <= ENC_M8)
-#else
-    else if (scs->static_config.enc_mode <= ENC_M9)
-#endif
-#endif
         scs->calculate_variance = 1;
     else
         scs->calculate_variance = 0;
@@ -4492,7 +4323,6 @@ static void copy_api_from_app(
     scs->static_config.multiply_keyint = config_struct->multiply_keyint;
     scs->static_config.intra_refresh_type = ((EbSvtAv1EncConfiguration*)config_struct)->intra_refresh_type;
     scs->static_config.enc_mode = ((EbSvtAv1EncConfiguration*)config_struct)->enc_mode;
-#if CLN_MAP_PRESETS
     if (scs->static_config.enc_mode == ENC_M6) {
         scs->static_config.enc_mode = ENC_M7;
         SVT_WARN("Preset M6 is mapped to M7.\n");
@@ -4501,18 +4331,11 @@ static void copy_api_from_app(
         scs->static_config.enc_mode = ENC_M13;
         SVT_WARN("Preset M12 is mapped to M13.\n");
     }
-#endif
 
     EbInputResolution input_resolution;
     svt_aom_derive_input_resolution(
         &input_resolution,
         scs->max_input_luma_width * scs->max_input_luma_height);
-#if !USE_DEFAULT_M13_FOR_360p_480p
-    if (scs->static_config.pred_structure == SVT_AV1_PRED_RANDOM_ACCESS && scs->static_config.enc_mode > ENC_M12 && input_resolution <= INPUT_SIZE_360p_RANGE) {
-        scs->static_config.enc_mode = ENC_M12;
-        SVT_WARN("Setting preset to M12 as it is the highest supported preset for 360p and lower resolutions in Random Access mode\n");
-    }
-#endif
     if (scs->static_config.pred_structure == SVT_AV1_PRED_RANDOM_ACCESS && scs->static_config.enc_mode > ENC_M11 && input_resolution >= INPUT_SIZE_4K_RANGE) {
         scs->static_config.enc_mode = ENC_M11;
         SVT_WARN("Setting preset to M11 as it is the highest supported preset for 4k and higher resolutions in Random Access mode\n");
@@ -4573,17 +4396,10 @@ static void copy_api_from_app(
 #else
     if (scs->static_config.fast_decode == 1) {
 #endif
-#if TUNE_LIMIT_FD_M1
         if (scs->static_config.enc_mode <= ENC_M0 || scs->static_config.enc_mode >= ENC_M11) {
             SVT_WARN("The fast decode option is not supported in M%d.\n", scs->static_config.enc_mode);
             SVT_WARN("Decoder speedup is only supported in presets M1-M10.\n");
             SVT_WARN("Switching off decoder speedup optimizations.\n");
-#else
-        if (scs->static_config.enc_mode <= ENC_MR || scs->static_config.enc_mode >= ENC_M11) {
-            SVT_WARN("The fast decode option is not supported in M%d.\n", scs->static_config.enc_mode);
-            SVT_WARN("Decoder speedup is only supported in presets M0-M10.\n");
-            SVT_WARN("Switching off decoder speedup optimizations.\n");
-#endif
             scs->static_config.fast_decode = 0;
         }
     }
@@ -4647,16 +4463,8 @@ static void copy_api_from_app(
             scs->static_config.fast_decode == 1 ||
 #endif
             scs->static_config.rate_control_mode == SVT_AV1_RC_MODE_VBR || scs->static_config.rate_control_mode == SVT_AV1_RC_MODE_CBR ||
-#if TUNE_M9_2
             (input_resolution >= INPUT_SIZE_1080p_RANGE && scs->static_config.enc_mode >= ENC_M10) ||
-#else
-            (input_resolution >= INPUT_SIZE_1080p_RANGE && scs->static_config.enc_mode >= ENC_M9) ||
-#endif
-#if CLN_MAP_PRESETS
             !(scs->static_config.enc_mode <= ENC_M11) || input_resolution >= INPUT_SIZE_4K_RANGE
-#else
-            !(scs->static_config.enc_mode <= ENC_M12) || input_resolution >= INPUT_SIZE_4K_RANGE
-#endif
                 ? 4
                 : 5;
     }

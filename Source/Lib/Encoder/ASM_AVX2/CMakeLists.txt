@@ -49,7 +49,6 @@ set(all_files
     av1_quantize_avx2.c
     corner_match_avx2.c
     dwt_avx2.c
-    enc_warp_plane_avx2.c
     encodetxb_avx2.c
     fft_avx2.c
     highbd_fwd_txfm_avx2.c

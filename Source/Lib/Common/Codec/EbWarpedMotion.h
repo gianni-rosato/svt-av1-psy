@@ -42,9 +42,6 @@ extern "C" {
 #define DEFAULT_WMTYPE AFFINE
 
 extern const int16_t svt_aom_warped_filter[WARPEDPIXEL_PREC_SHIFTS * 3 + 1][8];
-#if !CLN_REMOVE_UNUSED_FUNCS
-extern const int svt_aom_error_measure_lut[512];
-#endif
 
 EB_ALIGN(16)
 static const uint8_t warp_pad_left[14][16] = {

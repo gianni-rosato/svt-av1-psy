@@ -1767,17 +1767,9 @@ static void av1_make_masked_warp_inter_predictor(uint8_t *src_ptr, uint8_t *src_
 static void calc_target_weighted_pred(PictureControlSet *pcs, ModeDecisionContext *ctx, const AV1_COMMON *cm,
                                       const MacroBlockD *xd, int mi_row, int mi_col, const uint8_t *above,
                                       int above_stride, const uint8_t *left, int left_stride) {
-#if OPT_OBMC_LVLS
     if (block_size_wide[ctx->blk_geom->bsize] > ctx->obmc_ctrls.max_blk_size_to_refine ||
         block_size_high[ctx->blk_geom->bsize] > ctx->obmc_ctrls.max_blk_size_to_refine)
         return;
-#else
-    if (ctx->obmc_ctrls.max_blk_size_to_refine_16x16) {
-        if (block_size_wide[ctx->blk_geom->bsize] > 16 || block_size_high[ctx->blk_geom->bsize] > 16) {
-            return;
-        }
-    }
-#endif
     uint8_t         is16bit  = 0;
     const BlockSize bsize    = ctx->blk_geom->bsize;
     const int       bw       = xd->n4_w << MI_SIZE_LOG2;

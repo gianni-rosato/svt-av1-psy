@@ -2748,9 +2748,7 @@ static void  av1_generate_rps_info(
         pcs->sc_class0 = pcs->alt_ref_ppcs_ptr->sc_class0;
         pcs->sc_class1 = pcs->alt_ref_ppcs_ptr->sc_class1;
         pcs->sc_class2 = pcs->alt_ref_ppcs_ptr->sc_class2;
-#if OPT_NSQ_CLASSIFIER_1
         pcs->sc_class3 = pcs->alt_ref_ppcs_ptr->sc_class3;
-#endif
     }
 /***************************************************************************************************
  * Initialize the overlay frame
@@ -3312,7 +3310,6 @@ static EbErrorType derive_tf_window_params(
         // Calc the avg_ahd_error
         centre_pcs->tf_avg_ahd_error = 0;
         if (centre_pcs->past_altref_nframes + centre_pcs->future_altref_nframes) {
-#if TF_BRIGHTNESS_CHECK_V1
             uint64_t tot_luma = 0;
             int tot_err = 0;
 
@@ -3324,15 +3321,6 @@ static EbErrorType derive_tf_window_params(
                 }
             }
             centre_pcs->tf_avg_luma = tot_luma / (centre_pcs->past_altref_nframes + centre_pcs->future_altref_nframes);
-#else
-            int tot_err = 0;
-
-
-            for (int i = 0; i < (centre_pcs->past_altref_nframes + centre_pcs->future_altref_nframes + 1); i++) {
-                if (i != centre_pcs->past_altref_nframes)
-                    tot_err += pcs->temp_filt_pcs_list[i]->tf_ahd_error_to_central;
-            }
-#endif
             centre_pcs->tf_avg_ahd_error = tot_err / (centre_pcs->past_altref_nframes + centre_pcs->future_altref_nframes);
         }
     }
@@ -3961,33 +3949,21 @@ static void perform_sc_detection(SequenceControlSet* scs, PictureParentControlSe
                 if (scs->input_resolution <= INPUT_SIZE_1080p_RANGE)
                     svt_aom_is_screen_content(pcs);
                 else
-#if OPT_NSQ_CLASSIFIER_1
                     pcs->sc_class0 = pcs->sc_class1 = pcs->sc_class2 = pcs->sc_class3 = 0;
-#else
-                    pcs->sc_class0 = pcs->sc_class1 = pcs->sc_class2 = 0;
-#endif
             }
             else
-#if OPT_NSQ_CLASSIFIER_1
                 pcs->sc_class0 = pcs->sc_class1 = pcs->sc_class2 = pcs->sc_class3 = scs->static_config.screen_content_mode;
-#else
-                pcs->sc_class0 = pcs->sc_class1 = pcs->sc_class2 = scs->static_config.screen_content_mode;
-#endif
         }
         ctx->last_i_picture_sc_class0 = pcs->sc_class0;
         ctx->last_i_picture_sc_class1 = pcs->sc_class1;
         ctx->last_i_picture_sc_class2 = pcs->sc_class2;
-#if OPT_NSQ_CLASSIFIER_1
         ctx->last_i_picture_sc_class3 = pcs->sc_class3;
-#endif
     }
     else {
         pcs->sc_class0 = ctx->last_i_picture_sc_class0;
         pcs->sc_class1 = ctx->last_i_picture_sc_class1;
         pcs->sc_class2 = ctx->last_i_picture_sc_class2;
-#if OPT_NSQ_CLASSIFIER_1
         pcs->sc_class3 = ctx->last_i_picture_sc_class3;
-#endif
     }
 }
 
