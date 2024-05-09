@@ -963,6 +963,17 @@ INSTANTIATE_TEST_SUITE_P(
 
 #endif
 
+#ifdef ARCH_AARCH64
+
+INSTANTIATE_TEST_SUITE_P(
+    NEON_medium, TemporalFilterTestPlanewiseHbd,
+    ::testing::Combine(
+        ::testing::Values(svt_av1_apply_temporal_filter_planewise_medium_hbd_c),
+        ::testing::Values(
+            svt_av1_apply_temporal_filter_planewise_medium_hbd_neon)));
+
+#endif
+
 typedef void (*get_final_filtered_pixels_fn)(
     struct MeContext *me_ctx, EbByte *src_center_ptr_start,
     uint16_t **altref_buffer_highbd_start, uint32_t **accum, uint16_t **count,

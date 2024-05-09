@@ -609,6 +609,183 @@ static void apply_filtering_central_loop_lbd(uint16_t w, uint16_t h, uint8_t *sr
     }
 }
 
+static uint32_t calculate_squared_errors_sum_no_div_highbd_neon(const uint16_t *s, int s_stride, const uint16_t *p,
+                                                                int p_stride, unsigned int w, unsigned int h,
+                                                                int const shift_factor) {
+    assert(w % 16 == 0 && "block width must be multiple of 16");
+    unsigned int i, j;
+
+    int32x4_t sum = vdupq_n_s32(0);
+
+    for (i = 0; i < h; i++) {
+        for (j = 0; j < w; j += 8) {
+            const uint16x8_t s_16 = vld1q_u16(s + i * s_stride + j);
+            const uint16x8_t p_16 = vld1q_u16(p + i * p_stride + j);
+
+            const int16x8_t dif = vreinterpretq_s16_u16(vsubq_u16(s_16, p_16));
+            sum = vaddq_s32(sum, vpaddq_s32(vmull_s16(vget_low_s16(dif), vget_low_s16(dif)), vmull_high_s16(dif, dif)));
+        }
+    }
+
+    sum = vpaddq_s32(sum, sum);
+    sum = vpaddq_s32(sum, sum);
+
+    return vgetq_lane_s32(vshrq_n_s32(sum, shift_factor), 0);
+}
+
+static void calculate_squared_errors_sum_2x8xh_no_div_highbd_neon(const uint16_t *s, int s_stride, const uint16_t *p,
+                                                                  int p_stride, unsigned int h, int shift_factor,
+                                                                  uint32_t *output) {
+    int32x4_t sum_0 = vdupq_n_s32(0);
+    int32x4_t sum_1 = vdupq_n_s32(0);
+
+    for (unsigned int i = 0; i < h; i++) {
+        const uint16x8_t s_8_0 = vld1q_u16(s + i * s_stride);
+        const uint16x8_t s_8_1 = vld1q_u16(s + i * s_stride + 8);
+        const uint16x8_t p_8_0 = vld1q_u16(p + i * p_stride);
+        const uint16x8_t p_8_1 = vld1q_u16(p + i * p_stride + 8);
+
+        const int16x8_t dif_0 = vreinterpretq_s16_u16(vsubq_u16(s_8_0, p_8_0));
+        const int16x8_t dif_1 = vreinterpretq_s16_u16(vsubq_u16(s_8_1, p_8_1));
+
+        sum_0 = vaddq_s32(
+            sum_0, vpaddq_s32(vmull_s16(vget_low_s16(dif_0), vget_low_s16(dif_0)), vmull_high_s16(dif_0, dif_0)));
+        sum_1 = vaddq_s32(
+            sum_1, vpaddq_s32(vmull_s16(vget_low_s16(dif_1), vget_low_s16(dif_1)), vmull_high_s16(dif_1, dif_1)));
+    }
+    sum_0 = vpaddq_s32(sum_0, sum_0);
+    sum_0 = vpaddq_s32(sum_0, sum_0);
+    sum_1 = vpaddq_s32(sum_1, sum_1);
+    sum_1 = vpaddq_s32(sum_1, sum_1);
+
+    output[0] = vgetq_lane_s32(vshrq_n_s32(sum_0, shift_factor), 0);
+    output[1] = vgetq_lane_s32(vshrq_n_s32(sum_1, shift_factor), 0);
+}
+
+static void svt_av1_apply_temporal_filter_planewise_medium_hbd_partial_neon(
+    struct MeContext *me_ctx, const uint16_t *y_src, int y_src_stride, const uint16_t *y_pre, int y_pre_stride,
+    unsigned int block_width, unsigned int block_height, uint32_t *y_accum, uint16_t *y_count, uint32_t tf_decay_factor,
+    uint32_t luma_window_error_quad_fp8[4], int is_chroma, uint32_t encoder_bit_depth) {
+    unsigned int i, j, k, subblock_idx;
+
+    const int32_t  idx_32x32               = me_ctx->tf_block_col + me_ctx->tf_block_row * 2;
+    const int      shift_factor            = ((encoder_bit_depth - 8) * 2);
+    const uint32_t distance_threshold_fp16 = AOMMAX((me_ctx->tf_mv_dist_th << 16) / 10,
+                                                    1 << 16); //TODO Change to FP8
+
+    //Calculation for every quarter
+    uint32_t  d_factor_fp8[4];
+    uint32_t  block_error_fp8[4];
+    uint32_t  chroma_window_error_quad_fp8[4];
+    uint32_t *window_error_quad_fp8 = is_chroma ? chroma_window_error_quad_fp8 : luma_window_error_quad_fp8;
+
+    if (me_ctx->tf_32x32_block_split_flag[idx_32x32]) {
+        for (i = 0; i < 4; ++i) {
+            const int32_t  col          = me_ctx->tf_16x16_mv_x[idx_32x32 * 4 + i];
+            const int32_t  row          = me_ctx->tf_16x16_mv_y[idx_32x32 * 4 + i];
+            const uint32_t distance_fp4 = sqrt_fast(((uint32_t)(col * col + row * row)) << 8);
+            d_factor_fp8[i]             = AOMMAX((distance_fp4 << 12) / (distance_threshold_fp16 >> 8), 1 << 8);
+            FP_ASSERT(me_ctx->tf_16x16_block_error[idx_32x32 * 4 + i] < ((uint64_t)1 << 35));
+            block_error_fp8[i] = (uint32_t)(me_ctx->tf_16x16_block_error[idx_32x32 * 4 + i] >> 4);
+        }
+    } else {
+        tf_decay_factor <<= 1;
+        const int32_t col = me_ctx->tf_32x32_mv_x[idx_32x32];
+        const int32_t row = me_ctx->tf_32x32_mv_y[idx_32x32];
+
+        const uint32_t distance_fp4 = sqrt_fast(((uint32_t)(col * col + row * row)) << 8);
+        d_factor_fp8[0] = d_factor_fp8[1] = d_factor_fp8[2] = d_factor_fp8[3] = AOMMAX(
+            (distance_fp4 << 12) / (distance_threshold_fp16 >> 8), 1 << 8);
+        FP_ASSERT(me_ctx->tf_32x32_block_error[idx_32x32] < ((uint64_t)1 << 35));
+        block_error_fp8[0] = block_error_fp8[1] = block_error_fp8[2] = block_error_fp8[3] =
+            (uint32_t)(me_ctx->tf_32x32_block_error[idx_32x32] >> 6);
+    }
+
+    if (block_width == 32) {
+        window_error_quad_fp8[0] = calculate_squared_errors_sum_no_div_highbd_neon(
+            y_src, y_src_stride, y_pre, y_pre_stride, 16, 16, shift_factor);
+        window_error_quad_fp8[1] = calculate_squared_errors_sum_no_div_highbd_neon(
+            y_src + 16, y_src_stride, y_pre + 16, y_pre_stride, 16, 16, shift_factor);
+        window_error_quad_fp8[2] = calculate_squared_errors_sum_no_div_highbd_neon(
+            y_src + y_src_stride * 16, y_src_stride, y_pre + y_pre_stride * 16, y_pre_stride, 16, 16, shift_factor);
+        window_error_quad_fp8[3] = calculate_squared_errors_sum_no_div_highbd_neon(y_src + y_src_stride * 16 + 16,
+                                                                                   y_src_stride,
+                                                                                   y_pre + y_pre_stride * 16 + 16,
+                                                                                   y_pre_stride,
+                                                                                   16,
+                                                                                   16,
+                                                                                   shift_factor);
+
+    } else {
+        calculate_squared_errors_sum_2x8xh_no_div_highbd_neon(
+            y_src, y_src_stride, y_pre, y_pre_stride, 8, shift_factor, window_error_quad_fp8);
+
+        calculate_squared_errors_sum_2x8xh_no_div_highbd_neon(y_src + y_src_stride * 8,
+                                                              y_src_stride,
+                                                              y_pre + y_pre_stride * 8,
+                                                              y_pre_stride,
+                                                              8,
+                                                              shift_factor,
+                                                              &window_error_quad_fp8[2]);
+        window_error_quad_fp8[0] <<= 2;
+        window_error_quad_fp8[1] <<= 2;
+        window_error_quad_fp8[2] <<= 2;
+        window_error_quad_fp8[3] <<= 2;
+    }
+
+    if (is_chroma) {
+        for (i = 0; i < 4; ++i) {
+            FP_ASSERT(((int64_t)window_error_quad_fp8[i] * 5 + luma_window_error_quad_fp8[i]) < ((int64_t)1 << 31));
+            window_error_quad_fp8[i] = (window_error_quad_fp8[i] * 5 + luma_window_error_quad_fp8[i]) / 6;
+        }
+    }
+
+    uint16x8_t adjusted_weight_int16[4];
+    uint32x4_t adjusted_weight_int32[4];
+
+    for (subblock_idx = 0; subblock_idx < 4; subblock_idx++) {
+        const uint32_t combined_error_fp8 = (window_error_quad_fp8[subblock_idx] * TF_WINDOW_BLOCK_BALANCE_WEIGHT +
+                                             block_error_fp8[subblock_idx]) /
+            (TF_WINDOW_BLOCK_BALANCE_WEIGHT + 1);
+
+        const uint64_t avg_err_fp10  = ((combined_error_fp8 >> 3) * (d_factor_fp8[subblock_idx] >> 3));
+        uint32_t       scaled_diff16 = (uint32_t)AOMMIN(
+            /*((16*avg_err)<<8)*/ (avg_err_fp10) / AOMMAX((tf_decay_factor >> 10), 1), 7 * 16);
+        const int adjusted_weight = (expf_tab_fp16[scaled_diff16] * TF_WEIGHT_SCALE) >> 16;
+
+        adjusted_weight_int16[subblock_idx] = vdupq_n_u16(adjusted_weight);
+        adjusted_weight_int32[subblock_idx] = vdupq_n_u32(adjusted_weight);
+    }
+
+    for (i = 0; i < block_height; i++) {
+        const int subblock_idx_h = (i >= block_height / 2) * 2;
+        for (j = 0; j < block_width; j += 8) {
+            k = i * y_pre_stride + j;
+
+            //y_count[k] += adjusted_weight;
+            uint16x8_t count_array = vld1q_u16(y_count + k);
+            count_array = vaddq_u16(count_array, adjusted_weight_int16[subblock_idx_h + (j >= block_width / 2)]);
+            vst1q_u16(y_count + k, count_array);
+
+            //y_accum[k] += adjusted_weight * pixel_value;
+            uint32x4_t       accumulator_array1 = vld1q_u32(y_accum + k);
+            uint32x4_t       accumulator_array2 = vld1q_u32(y_accum + k + 4);
+            const uint16x8_t frame2_array       = vld1q_u16(y_pre + k);
+            uint32x4_t       frame2_array_u32_1 = vmovl_u16(vget_low_u16(frame2_array));
+            uint32x4_t       frame2_array_u32_2 = vmovl_u16(vget_high_u16(frame2_array));
+            frame2_array_u32_1                  = vmulq_u32(frame2_array_u32_1,
+                                           adjusted_weight_int32[subblock_idx_h + (j >= block_width / 2)]);
+            frame2_array_u32_2                  = vmulq_u32(frame2_array_u32_2,
+                                           adjusted_weight_int32[subblock_idx_h + (j >= block_width / 2)]);
+
+            accumulator_array1 = vaddq_u32(accumulator_array1, frame2_array_u32_1);
+            accumulator_array2 = vaddq_u32(accumulator_array2, frame2_array_u32_2);
+            vst1q_u32(y_accum + k, accumulator_array1);
+            vst1q_u32(y_accum + k + 4, accumulator_array2);
+        }
+    }
+}
+
 static void apply_filtering_central_loop_hbd(uint16_t w, uint16_t h, uint16_t *src, uint16_t src_stride,
                                              uint32_t *accum, uint16_t *count) {
     assert(w % 8 == 0);
@@ -666,5 +843,57 @@ void svt_aom_apply_filtering_central_highbd_neon(struct MeContext    *me_ctx,
             blk_width_ch, blk_height_ch, src_16bit[C_U], src_stride_ch, accum[C_U], count[C_U]);
         apply_filtering_central_loop_hbd(
             blk_width_ch, blk_height_ch, src_16bit[C_V], src_stride_ch, accum[C_V], count[C_V]);
+    }
+}
+
+void svt_av1_apply_temporal_filter_planewise_medium_hbd_neon(
+    struct MeContext *me_ctx, const uint16_t *y_src, int y_src_stride, const uint16_t *y_pre, int y_pre_stride,
+    const uint16_t *u_src, const uint16_t *v_src, int uv_src_stride, const uint16_t *u_pre, const uint16_t *v_pre,
+    int uv_pre_stride, unsigned int block_width, unsigned int block_height, int ss_x, int ss_y, uint32_t *y_accum,
+    uint16_t *y_count, uint32_t *u_accum, uint16_t *u_count, uint32_t *v_accum, uint16_t *v_count,
+    uint32_t encoder_bit_depth) {
+    uint32_t luma_window_error_quad_fp8[4];
+
+    svt_av1_apply_temporal_filter_planewise_medium_hbd_partial_neon(me_ctx,
+                                                                    y_src,
+                                                                    y_src_stride,
+                                                                    y_pre,
+                                                                    y_pre_stride,
+                                                                    (unsigned int)block_width,
+                                                                    (unsigned int)block_height,
+                                                                    y_accum,
+                                                                    y_count,
+                                                                    me_ctx->tf_decay_factor_fp16[C_Y],
+                                                                    luma_window_error_quad_fp8,
+                                                                    0,
+                                                                    encoder_bit_depth);
+    if (me_ctx->tf_chroma) {
+        svt_av1_apply_temporal_filter_planewise_medium_hbd_partial_neon(me_ctx,
+                                                                        u_src,
+                                                                        uv_src_stride,
+                                                                        u_pre,
+                                                                        uv_pre_stride,
+                                                                        (unsigned int)block_width >> ss_x,
+                                                                        (unsigned int)block_height >> ss_y,
+                                                                        u_accum,
+                                                                        u_count,
+                                                                        me_ctx->tf_decay_factor_fp16[C_U],
+                                                                        luma_window_error_quad_fp8,
+                                                                        1,
+                                                                        encoder_bit_depth);
+
+        svt_av1_apply_temporal_filter_planewise_medium_hbd_partial_neon(me_ctx,
+                                                                        v_src,
+                                                                        uv_src_stride,
+                                                                        v_pre,
+                                                                        uv_pre_stride,
+                                                                        (unsigned int)block_width >> ss_x,
+                                                                        (unsigned int)block_height >> ss_y,
+                                                                        v_accum,
+                                                                        v_count,
+                                                                        me_ctx->tf_decay_factor_fp16[C_V],
+                                                                        luma_window_error_quad_fp8,
+                                                                        1,
+                                                                        encoder_bit_depth);
     }
 }
