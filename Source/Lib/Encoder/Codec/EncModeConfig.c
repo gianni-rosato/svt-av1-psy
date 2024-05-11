@@ -1542,7 +1542,7 @@ static uint8_t get_dlf_level(EncMode enc_mode, uint8_t is_not_last_layer, Bool f
             case 1: dlf_level = is_base ? 3 : 4; break;
             case 2: dlf_level = is_base ? 3 : 5; break;
             case 3: dlf_level = is_base ? 3 : is_not_last_layer ? 5 : 0; break;
-            default: break;
+            default: dlf_level = is_base ? 3 : 4; break;
             }
         }
 #else
