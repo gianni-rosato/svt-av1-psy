@@ -285,17 +285,17 @@ INIT_YMM avx2
 %endif
     RET
 
-%macro BLEND_H_ROW 2 0; dst_off, tmp_off
-    movu                 m0,     [dstq+32*(%1+0)]
-    psubw                m2, m0, [tmpq+32*(%2+0)]
-    movu                 m1,     [dstq+32*(%1+1)]
-    psubw                m3, m1, [tmpq+32*(%2+1)]
+%macro BLEND_H_ROW 2
+    movu                 m0,     [dstq+32*%2]
+    psubw                m2, m0, [tmpq+32*%1]
+    movu                 m1,     [dstq+32*(%2+1)]
+    psubw                m3, m1, [tmpq+32*(%1+1)]
     pmulhrsw             m2, m4
     pmulhrsw             m3, m4
     paddw                m0, m2
     paddw                m1, m3
-    movu   [dstq+32*(%1+0)], m0
-    movu   [dstq+32*(%1+1)], m1
+    movu   [dstq+32*%2], m0
+    movu   [dstq+32*(%2+1)], m1
 %endmacro
 
 INIT_XMM avx2
