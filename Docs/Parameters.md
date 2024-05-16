@@ -77,7 +77,7 @@ For more information on valid values for specific keys, refer to the [EbEncSetti
 | **PinnedExecution**              | --pin                       | [0-1]                          | 0           | Pin the execution to the first --lp cores. Overwritten to 1 when `--ss` is set. Refer to Appendix A.1         |
 | **TargetSocket**                 | --ss                        | [-1,1]                         | -1          | Specifies which socket to run on, assumes a max of two sockets. Refer to Appendix A.1                         |
 | **FastDecode**                   | --fast-decode               | [0,1]                          | 0           | Tune settings to output bitstreams that can be decoded faster, [0 = OFF, 1 = ON]. Defaults to 5 temporal layers structure but may override with --hierarchical-levels|
-| **Tune**                         | --tune                      | [0,2]                          | 1           | Specifies whether to use PSNR or VQ as the tuning metric [0 = VQ, 1 = PSNR, 2 = SSIM]                         |
+| **Tune**                         | --tune                      | [0-2]                          | 1           | Specifies whether to use PSNR or VQ as the tuning metric [0 = VQ, 1 = PSNR, 2 = SSIM]                         |
 
 ## Rate Control Options
 

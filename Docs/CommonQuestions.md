@@ -21,50 +21,48 @@ Generally speaking, presets 1-3 represent extremely high efficiency, for
 use when encode time is not important and quality/size of the resulting
 video file is critical. Presets 4-6 are commonly used by home enthusiasts
 as they represent a balance of efficiency and reasonable compute time. Presets
-between 7 and 12 are used for fast and real-time encoding. Preset 13 is even
-faster but not intended for direct human consumption--it can be used, for
-example, as a per-scene quality metric in VOD applications. One
+between 7 and 13 are used for fast and real-time encoding. One
 should use the lowest preset that is tolerable.
 
 The features enabled or changed by each preset are as follows
 
-| **Category**                | **Feature**                                 | **0** | **1** | **2** | **3** | **4** | **5** | **6** | **7** | **8** | **9** | **10** | **11** | **12** |
-| --------------------------- | ------------------------------------------  | ----  | ----  | ----  | ----  | ----  | ----  | ----  | ----  | ----  | ----  | -----  | -----  | -----  |
-| Prediction structure & RC   | Hierarchical levels                         | 6L    | 6L    | 6L    | 6L    | 6L    | 6L    | 6L    | 6L    | 6L    | 6L    | 6L     | 6L     | 6L     |
-|                             | aq-mode                                     | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON     | ON     | ON     |
-|                             | max reference frame count                   | 7     | 7     | 7     | 7     | 7     | 5     | 5     | 5     | 5     | 5     | 5      | 5      | 5      |
-| Motion Estimation           | Full pel Motion Estimation                  | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON     | ON     | ON     |
-|                             | Hierarchical ME                             | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON     | ON     | ON     |
-|                             | subpel                                      | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON     | ON     | ON     |
-| Block Partitioning          | sb size                                     | 128   | 128   | 128   | 128   | 128   | 128   | 128   | 128   | 64    | 64    | 64     | 64     | 64     |
-|                             | min block size                              | 4     | 4     | 4     | 4     | 4     | 4     | 4     | 4     | 8     | 8     | 8      | 8      | 8      |
-|                             | Non-square partitions                       | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | OFF    | OFF    | OFF    |
-| AV1 mode decision features  | DC                                          | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON     | ON     | ON     |
-|                             | Smooth, Smooth_V, Smooth_H                  | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON     | ON     | ON     |
-|                             | Directional Angular modes                   | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON     | ON     | ON     |
-|                             | Paeth                                       | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON     | OFF    | OFF    |
-|                             | Chroma from Luma (CfL)                      | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON     | ON     | ON     |
-|                             | Filter intra                                | ON    | ON    | ON    | ON    | OFF   | OFF   | OFF   | OFF   | OFF   | OFF   | OFF    | OFF    | OFF    |
-|                             | Intra block copy (IBC) (SC)                 | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON     | OFF    | OFF    |
-|                             | Palette prediction (SC)                     | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON     | ON     | ON     |
-|                             | Single-reference prediction                 | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON     | ON     | ON     |
-|                             | Compound-reference prediction               | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON     | ON     | ON     |
-|                             | Eighth-pel f(resolution, qindex)            | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON     | ON     | ON     |
-|                             | Interpolation Filter Search                 | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON     | ON     | ON     |
-|                             | Warped motion compensation                  | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON     | ON     | ON     |
-|                             | Global motion compensation                  | ON    | ON    | ON    | ON    | OFF   | OFF   | OFF   | OFF   | OFF   | OFF   | OFF    | OFF    | OFF    |
-|                             | Motion Field Motion Vector (MFMV)           | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON     | ON     | OFF    |
-|                             | Overlapped Block Motion Compensation (OBMC) | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON     | ON     | OFF    |
-|                             | Inter-Intra prediction                      | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON     | ON     | ON     |
-|                             | Wedge prediction                            | ON    | ON    | ON    | ON    | OFF   | OFF   | OFF   | OFF   | OFF   | OFF   | OFF    | OFF    | OFF    |
-|                             | Difference-weighted prediction              | ON    | ON    | ON    | ON    | OFF   | OFF   | OFF   | OFF   | OFF   | OFF   | OFF    | OFF    | OFF    |
-|                             | Distance-weighted prediction                | ON    | ON    | ON    | ON    | OFF   | OFF   | OFF   | OFF   | OFF   | OFF   | OFF    | OFF    | OFF    |
-| Transform                   | Transform type search                       | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON     | ON     | ON     |
-|                             | Transform Size search                       | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON     | ON     | ON     |
-| AV1 inloop filters          | Deblocking Filter                           | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON     | ON     | ON     |
-|                             | CDEF                                        | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON     | ON     | ON     |
-|                             | Restoration Filter - Wiener Filter          | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | OFF    | OFF    | OFF    |
-|                             | Restoration Filter - SG Filter              | ON    | ON    | ON    | ON    | ON    | OFF   | OFF   | OFF   | OFF   | OFF   | OFF    | OFF    | OFF    |
+| **Category**                | **Feature**                                 | **0** | **1** | **2** | **3** | **4** | **5** | **6** | **7** | **8** | **9** | **10** | **11** | **12** | **13** |
+| --------------------------- | ------------------------------------------  | ----  | ----  | ----  | ----  | ----  | ----  | ----  | ----  | ----  | ----  | -----  | -----  | -----  | -----  |
+| Prediction structure & RC   | Hierarchical levels                         | 6L    | 6L    | 6L    | 6L    | 6L    | 6L    | 6L    | 6L    | 6L    | 6L    | 6L     | 6L     | 6L     | 6L     |
+|                             | aq-mode                                     | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON     | ON     | ON     | ON     |
+|                             | max reference frame count                   | 7     | 7     | 7     | 7     | 5     | 5     | 5     | 5     | 5     | 5     | 5      | 5      | 2      | 2      |
+| Motion Estimation           | Full pel Motion Estimation                  | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON     | ON     | ON     | ON     |
+|                             | Hierarchical ME                             | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON     | ON     | ON     | ON     |
+|                             | subpel                                      | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON     | ON     | ON     | ON     |
+| Block Partitioning          | sb size                                     | 128   | 128   | 128   | 128   | 128   | 128   | 128   | 128   | 64    | 64    | 64     | 64     | 64     | 64     |
+|                             | min block size                              | 4     | 4     | 4     | 4     | 4     | 4     | 8     | 8     | 8     | 8     | 8      | 8      | 8      | 8      |
+|                             | Non-square partitions                       | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON     | ON     | ON     | ON     |
+| AV1 mode decision features  | DC                                          | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON     | ON     | ON     | ON     |
+|                             | Smooth, Smooth_V, Smooth_H                  | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON     | ON     | ON     | ON     |
+|                             | Directional Angular modes                   | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON     | ON     | ON     | ON     |
+|                             | Paeth                                       | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON     | OFF    | OFF    | OFF    |
+|                             | Chroma from Luma (CfL)                      | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON     | ON     | ON     | ON     |
+|                             | Filter intra                                | ON    | ON    | ON    | ON    | OFF   | OFF   | OFF   | OFF   | OFF   | OFF   | OFF    | OFF    | OFF    | OFF    |
+|                             | Intra block copy (IBC) (SC)                 | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON     | OFF    | OFF    | OFF    |
+|                             | Palette prediction (SC)                     | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON     | ON     | OFF    | OFF    |
+|                             | Single-reference prediction                 | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON     | ON     | ON     | ON     |
+|                             | Compound-reference prediction               | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON     | ON     | ON     | ON     |
+|                             | Eighth-pel f(resolution, qindex)            | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON     | ON     | ON     | ON     |
+|                             | Interpolation Filter Search                 | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON     | ON     | ON     | ON     |
+|                             | Warped motion compensation                  | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON     | ON     | ON     | ON     |
+|                             | Global motion compensation                  | ON    | ON    | ON    | ON    | OFF   | OFF   | OFF   | OFF   | OFF   | OFF   | OFF    | OFF    | OFF    | OFF    |
+|                             | Motion Field Motion Vector (MFMV)           | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON     | ON     | OFF    | OFF    |
+|                             | Overlapped Block Motion Compensation (OBMC) | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON     | OFF    | OFF    | OFF    |
+|                             | Inter-Intra prediction                      | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON     | ON     | OFF    | OFF    |
+|                             | Wedge prediction                            | ON    | ON    | ON    | OFF   | OFF   | OFF   | OFF   | OFF   | OFF   | OFF   | OFF    | OFF    | OFF    | OFF    |
+|                             | Difference-weighted prediction              | ON    | ON    | ON    | OFF   | OFF   | OFF   | OFF   | OFF   | OFF   | OFF   | OFF    | OFF    | OFF    | OFF    |
+|                             | Distance-weighted prediction                | ON    | ON    | ON    | OFF   | OFF   | OFF   | OFF   | OFF   | OFF   | OFF   | OFF    | OFF    | OFF    | OFF    |
+| Transform                   | Transform type search                       | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON     | ON     | ON     | ON     |
+|                             | Transform Size search                       | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON     | ON     | ON     | ON     |
+| AV1 inloop filters          | Deblocking Filter                           | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON     | ON     | ON     | ON     |
+|                             | CDEF                                        | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON     | ON     | ON     | ON     |
+|                             | Restoration Filter - Wiener Filter          | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | OFF    | OFF    | OFF    | OFF    |
+|                             | Restoration Filter - SG Filter              | ON    | ON    | ON    | ON    | OFF   | OFF   | OFF   | OFF   | OFF   | OFF   | OFF    | OFF    | OFF    | OFF    |
 
 
 # Scene Change Detection
