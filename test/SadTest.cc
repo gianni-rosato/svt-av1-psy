@@ -615,6 +615,9 @@ class sad_LoopTest : public ::testing::WithParamInterface<sad_LoopTestParam>,
             svt_sad_loop_kernel_avx512_intrin
 #endif
 #endif
+#ifdef ARCH_AARCH64
+                svt_sad_loop_kernel_neon,
+#endif
         };
 
         uint64_t best_sad0 = UINT64_MAX;
@@ -698,6 +701,9 @@ class sad_LoopTest : public ::testing::WithParamInterface<sad_LoopTestParam>,
 #if EN_AVX512_SUPPORT
             svt_sad_loop_kernel_avx512_intrin
 #endif
+#endif
+#ifdef ARCH_AARCH64
+                svt_sad_loop_kernel_neon,
 #endif
         };
 

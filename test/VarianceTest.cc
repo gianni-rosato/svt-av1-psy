@@ -128,11 +128,15 @@ TEST_P(MseTest, MaxTest) {
     run_max_test();
 };
 
-INSTANTIATE_TEST_SUITE_P(
+#ifdef ARCH_X86_64
+
+INSTANTIATE_TEST_CASE_P(
     Variance, MseTest,
     ::testing::Values(
         TestMseParam(16, 16, &svt_aom_mse16x16_sse2, &svt_aom_mse16x16_c),
         TestMseParam(16, 16, &svt_aom_mse16x16_avx2, &svt_aom_mse16x16_c)));
+
+#endif
 
 class MseTestHighbd : public ::testing::TestWithParam<TestMseParamHighbd> {
   public:
@@ -217,10 +221,14 @@ TEST_P(MseTestHighbd, MaxTest) {
     run_max_test();
 };
 
-INSTANTIATE_TEST_SUITE_P(Variance, MseTestHighbd,
-                         ::testing::Values(TestMseParamHighbd(
-                             16, 16, &svt_aom_highbd_8_mse16x16_sse2,
-                             &svt_aom_highbd_8_mse16x16_c)));
+#ifdef ARCH_X86_64
+
+INSTANTIATE_TEST_CASE_P(Variance, MseTestHighbd,
+                        ::testing::Values(TestMseParamHighbd(
+                            16, 16, &svt_aom_highbd_8_mse16x16_sse2,
+                            &svt_aom_highbd_8_mse16x16_c)));
+
+#endif  // ARCH_X86_64
 
 // sum of squares test
 static uint32_t mb_ss_ref(const int16_t *src) {
@@ -401,7 +409,9 @@ TEST_P(VarianceTest, OneQuarterTest) {
     run_one_quarter_test();
 };
 
-INSTANTIATE_TEST_SUITE_P(
+#ifdef ARCH_X86_64
+
+INSTANTIATE_TEST_CASE_P(
     Variance, VarianceTest,
     ::testing::Values(
         VarianceParam(4, 4, &svt_aom_variance4x4_c, &svt_aom_variance4x4_sse2),
@@ -502,6 +512,45 @@ INSTANTIATE_TEST_SUITE_P(
                       VarianceParam(128, 128, &svt_aom_variance128x128_c,
                                     &svt_aom_variance128x128_avx512)));
 #endif
+
+#endif  // ARCH_X86_64
+
+#ifdef ARCH_AARCH64
+
+INSTANTIATE_TEST_CASE_P(
+    Variance_NEON, VarianceTest,
+    ::testing::Values(VarianceParam(16, 4, &svt_aom_variance16x4_c,
+                                    &svt_aom_variance16x4_neon),
+                      VarianceParam(16, 8, &svt_aom_variance16x8_c,
+                                    &svt_aom_variance16x8_neon),
+                      VarianceParam(16, 16, &svt_aom_variance16x16_c,
+                                    &svt_aom_variance16x16_neon),
+                      VarianceParam(16, 32, &svt_aom_variance16x32_c,
+                                    &svt_aom_variance16x32_neon),
+                      VarianceParam(16, 64, &svt_aom_variance16x64_c,
+                                    &svt_aom_variance16x64_neon),
+                      VarianceParam(32, 8, &svt_aom_variance32x8_c,
+                                    &svt_aom_variance32x8_neon),
+                      VarianceParam(32, 16, &svt_aom_variance32x16_c,
+                                    &svt_aom_variance32x16_neon),
+                      VarianceParam(32, 32, &svt_aom_variance32x32_c,
+                                    &svt_aom_variance32x32_neon),
+                      VarianceParam(32, 64, &svt_aom_variance32x64_c,
+                                    &svt_aom_variance32x64_neon),
+                      VarianceParam(64, 16, &svt_aom_variance64x16_c,
+                                    &svt_aom_variance64x16_neon),
+                      VarianceParam(64, 32, &svt_aom_variance64x32_c,
+                                    &svt_aom_variance64x32_neon),
+                      VarianceParam(64, 64, &svt_aom_variance64x64_c,
+                                    &svt_aom_variance64x64_neon),
+                      VarianceParam(64, 128, &svt_aom_variance64x128_c,
+                                    &svt_aom_variance64x128_neon),
+                      VarianceParam(128, 64, &svt_aom_variance128x64_c,
+                                    &svt_aom_variance128x64_neon),
+                      VarianceParam(128, 128, &svt_aom_variance128x128_c,
+                                    &svt_aom_variance128x128_neon)));
+
+#endif  // ARCH_AARCH64
 
 typedef unsigned int (*SubpixVarMxNFunc)(const uint8_t *a, int a_stride,
                                          int xoffset, int yoffset,
@@ -638,6 +687,8 @@ void AvxSubpelVarianceTest::ExtremeRefTest() {
         }
     }
 }
+
+#ifdef ARCH_X86_64
 
 const TestParams kArraySubpelVariance_sse2[] = {
     {7,
@@ -981,6 +1032,8 @@ const TestParams kArraySubpelVariance_avx512[] = {
 INSTANTIATE_TEST_SUITE_P(AVX512, AvxSubpelVarianceTest,
                          ::testing::ValuesIn(kArraySubpelVariance_avx512));
 #endif
+
+#endif  // ARCH_X86_64
 
 TEST_P(AvxSubpelVarianceTest, Ref) {
     RefTest();

@@ -108,7 +108,7 @@ static INLINE void variance_16xh_neon(const uint8_t *src, int src_stride, const 
 static INLINE void variance_large_neon(const uint8_t *src, int src_stride, const uint8_t *ref, int ref_stride, int w,
                                        int h, int h_limit, uint32_t *sse, int *sum) {
     int32x4_t sum_s32    = vdupq_n_s32(0);
-    int32x4_t sse_s32[2] = {vdupq_n_s32(0), vdupq_n_s32(0)};
+    int32x4_t sse_s32[4] = {vdupq_n_s32(0), vdupq_n_s32(0), vdupq_n_s32(0), vdupq_n_s32(0)};
 
     // 'h_limit' is the number of 'w'-width rows we can process before our 16-bit
     // accumulator overflows. After hitting this limit we accumulate into 32-bit
@@ -116,27 +116,53 @@ static INLINE void variance_large_neon(const uint8_t *src, int src_stride, const
     int h_tmp = h > h_limit ? h_limit : h;
 
     int i = 0;
+
+    const bool odd_chunks = (w / 16) % 2;
+
     do {
         int16x8_t sum_s16[2] = {vdupq_n_s16(0), vdupq_n_s16(0)};
         do {
             int j = 0;
             do {
-                uint8x16_t s = vld1q_u8(src + j);
-                uint8x16_t r = vld1q_u8(ref + j);
+                {
+                    uint8x16_t s      = vld1q_u8(src + j);
+                    uint8x16_t r      = vld1q_u8(ref + j);
+                    int16x8_t  diff_l = vreinterpretq_s16_u16(vsubl_u8(vget_low_u8(s), vget_low_u8(r)));
+                    int16x8_t  diff_h = vreinterpretq_s16_u16(vsubl_u8(vget_high_u8(s), vget_high_u8(r)));
+                    sum_s16[0]        = vaddq_s16(sum_s16[0], diff_l);
+                    sum_s16[1]        = vaddq_s16(sum_s16[1], diff_h);
+                    sse_s32[0]        = vmlal_s16(sse_s32[0], vget_low_s16(diff_l), vget_low_s16(diff_l));
+                    sse_s32[1]        = vmlal_s16(sse_s32[1], vget_high_s16(diff_l), vget_high_s16(diff_l));
+                    sse_s32[2]        = vmlal_s16(sse_s32[2], vget_low_s16(diff_h), vget_low_s16(diff_h));
+                    sse_s32[3]        = vmlal_s16(sse_s32[3], vget_high_s16(diff_h), vget_high_s16(diff_h));
+                }
+                {
+                    uint8x16_t s      = vld1q_u8(src + j + 16);
+                    uint8x16_t r      = vld1q_u8(ref + j + 16);
+                    int16x8_t  diff_l = vreinterpretq_s16_u16(vsubl_u8(vget_low_u8(s), vget_low_u8(r)));
+                    int16x8_t  diff_h = vreinterpretq_s16_u16(vsubl_u8(vget_high_u8(s), vget_high_u8(r)));
+                    sum_s16[0]        = vaddq_s16(sum_s16[0], diff_l);
+                    sum_s16[1]        = vaddq_s16(sum_s16[1], diff_h);
+                    sse_s32[0]        = vmlal_s16(sse_s32[0], vget_low_s16(diff_l), vget_low_s16(diff_l));
+                    sse_s32[1]        = vmlal_s16(sse_s32[1], vget_high_s16(diff_l), vget_high_s16(diff_l));
+                    sse_s32[2]        = vmlal_s16(sse_s32[2], vget_low_s16(diff_h), vget_low_s16(diff_h));
+                    sse_s32[3]        = vmlal_s16(sse_s32[3], vget_high_s16(diff_h), vget_high_s16(diff_h));
+                }
+                j += 32;
+            } while (j < (w - 16));
 
-                int16x8_t diff_l = vreinterpretq_s16_u16(vsubl_u8(vget_low_u8(s), vget_low_u8(r)));
-                int16x8_t diff_h = vreinterpretq_s16_u16(vsubl_u8(vget_high_u8(s), vget_high_u8(r)));
-
-                sum_s16[0] = vaddq_s16(sum_s16[0], diff_l);
-                sum_s16[1] = vaddq_s16(sum_s16[1], diff_h);
-
-                sse_s32[0] = vmlal_s16(sse_s32[0], vget_low_s16(diff_l), vget_low_s16(diff_l));
-                sse_s32[1] = vmlal_s16(sse_s32[1], vget_high_s16(diff_l), vget_high_s16(diff_l));
-                sse_s32[0] = vmlal_s16(sse_s32[0], vget_low_s16(diff_h), vget_low_s16(diff_h));
-                sse_s32[1] = vmlal_s16(sse_s32[1], vget_high_s16(diff_h), vget_high_s16(diff_h));
-
-                j += 16;
-            } while (j < w);
+            if (odd_chunks) {
+                uint8x16_t s      = vld1q_u8(src + j);
+                uint8x16_t r      = vld1q_u8(ref + j);
+                int16x8_t  diff_l = vreinterpretq_s16_u16(vsubl_u8(vget_low_u8(s), vget_low_u8(r)));
+                int16x8_t  diff_h = vreinterpretq_s16_u16(vsubl_u8(vget_high_u8(s), vget_high_u8(r)));
+                sum_s16[0]        = vaddq_s16(sum_s16[0], diff_l);
+                sum_s16[1]        = vaddq_s16(sum_s16[1], diff_h);
+                sse_s32[0]        = vmlal_s16(sse_s32[0], vget_low_s16(diff_l), vget_low_s16(diff_l));
+                sse_s32[1]        = vmlal_s16(sse_s32[1], vget_high_s16(diff_l), vget_high_s16(diff_l));
+                sse_s32[2]        = vmlal_s16(sse_s32[2], vget_low_s16(diff_h), vget_low_s16(diff_h));
+                sse_s32[3]        = vmlal_s16(sse_s32[3], vget_high_s16(diff_h), vget_high_s16(diff_h));
+            }
 
             src += src_stride;
             ref += ref_stride;
@@ -150,7 +176,8 @@ static INLINE void variance_large_neon(const uint8_t *src, int src_stride, const
     } while (i < h);
 
     *sum = horizontal_add_s32x4(sum_s32);
-    *sse = (uint32_t)horizontal_add_s32x4(vaddq_s32(sse_s32[0], sse_s32[1]));
+    *sse = (uint32_t)horizontal_add_s32x4(
+        vaddq_s32(vaddq_s32(sse_s32[0], sse_s32[1]), vaddq_s32(sse_s32[2], sse_s32[3])));
 }
 
 static INLINE void variance_32xh_neon(const uint8_t *src, int src_stride, const uint8_t *ref, int ref_stride, int h,
