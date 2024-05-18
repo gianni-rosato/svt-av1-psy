@@ -269,7 +269,7 @@ The optimization of the TX size search focuses on two areas:
 ## Notes
 
 The feature settings that are described in this document were compiled at
-v2.0.0 of the code and may not reflect the current status of the code. The
+v2.1.0 of the code and may not reflect the current status of the code. The
 description in this document represents an example showing how features would
 interact with the SVT architecture. For the most up-to-date settings, it's
 recommended to review the section of the code implementing this feature.

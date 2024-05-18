@@ -1,5 +1,26 @@
 # Changelog
 
+## [2.1.0] - 2024-05-17
+
+API updates
+- One config parameter added within the padding size. Config param structure size remains unchanged
+- Presets 6 and 12 are now pointing to presets 7 and 13 respectively due to the lack of spacing between the presets
+- Further preset shuffling is being discussed in #2152
+
+Encoder
+- Added variance boost support to improve visual quality for the tune vq mode
+- Improve the tradeoffs for the random access mode across presets:
+-   Speedup of 12-40% presets M0, M3, M5 and M6 while maintaining similar quality levels
+-   Improved the compression efficiency of presets M11-M13 by 1-2% (!2213)
+- Added ARM optimizations for functions with c_only equivalent
+
+Cleanup Build and bug fixes and documentation
+- Use nasm as a default assembler and yasm as a fallback
+- Fix performance regression for systems with multiple processor groups
+- Enable building SvtAv1ApiTests and SvtAv1E2ETests for arm
+- Added variance boost documentation
+- Added a mailmap file to map duplicate git generated emails to the appropriate author
+
 ## [2.0.0] - 2024-03-13
 
 Major API updates
