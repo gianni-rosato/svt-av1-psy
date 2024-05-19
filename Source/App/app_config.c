@@ -1968,7 +1968,11 @@ int get_version(int argc, char *argv[]) {
 #if defined(_WIN64) || defined(_MSC_VER) || defined(_WIN32)
     printf("PSY Release: %s\n", svt_psy_get_version());
 #else
-    printf("PSY Release: \x1b[32m%s\x1b[0m\n", svt_psy_get_version());
+    if (strcmp(svt_psy_get_version(), "N/A")) {
+        printf("PSY Release: \x1b[32m%s\x1b[0m\n", svt_psy_get_version());
+    } else {
+        printf("PSY Release: \x1b[38;5;248m%s\x1b[0m\n", svt_psy_get_version());
+    }
 #endif
     return 1;
 }
