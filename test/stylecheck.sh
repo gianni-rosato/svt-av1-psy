@@ -105,7 +105,7 @@ if ! type "$CLANG_FORMAT_DIFF" > /dev/null 2>&1; then
     exit 1
 fi
 
-diff_output=$(cd "$REPO_DIR" && git diff "$FETCH_HEAD" | python3 "$CLANG_FORMAT_DIFF" -p1)
+diff_output=$(cd "$REPO_DIR" && git diff "$FETCH_HEAD" | python3 "$CLANG_FORMAT_DIFF" -p1) || true
 if [ -n "$diff_output" ]; then
     cat >&2 << 'FOE'
 clang-format check failed!
