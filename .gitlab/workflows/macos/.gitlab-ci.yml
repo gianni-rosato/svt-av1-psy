@@ -10,7 +10,8 @@
   extends: .common-ci-base
   stage: compile
   tags:
-    - macos-ci
+    - macos
+    - shell
   variables:
     !reference [.compiler-variables]
   script: !reference [.compiler-script]
@@ -19,7 +20,9 @@
   extends: .common-ci-base
   stage: test
   tags:
-    - macos-ci
+    - macos
+    - shell
+    - x86
   before_script:
     - |
       for file in $TEST_FILES; do
@@ -28,6 +31,10 @@
 
 .macos-unit-test-base:
   extends: .macos-test-base
+  tags:
+    - macos
+    - shell
+    - x86
   artifacts:
     when: always
     reports:
@@ -39,24 +46,53 @@
 # Compile jobs
 #
 
-macOS (Static, Tests):
+# Xcode compilation test
+macOS (Xcode):
   extends: .macos-compiler-base
+  tags:
+    - macos
+    - shell
+    - x86 # limit to x86 only for now.
   variables:
     CMAKE_GENERATOR: Xcode
-  parallel:
-    matrix:
-      - CMAKE_GENERATOR: Xcode
-      - CMAKE_GENERATOR: Ninja
-        EXTRA_CMAKE_FLAGS: -DBUILD_TESTING=ON
-        EXTRA_CFLAGS: -Wno-error -g
-        EXTRA_CXXFLAGS: -Wno-error -g
-        PREFIX_DIR: ${CI_PROJECT_DIR}/SVT-Install/
-        TARGET: install
+
+# x86 compilation test
+macOS (Static, Tests):
+  extends: .macos-compiler-base
+  tags:
+    - macos
+    - shell
+    - x86
+  variables:
+    CMAKE_GENERATOR: Ninja
+    EXTRA_CMAKE_FLAGS: -DBUILD_TESTING=ON # -DCMAKE_OSX_ARCHITECTURES="arm64;x86_64" # universal binaries are currently broken
+    EXTRA_CFLAGS: -Wno-error -g
+    EXTRA_CXXFLAGS: -Wno-error -g
+    PREFIX_DIR: ${CI_PROJECT_DIR}/SVT-Install/
+    TARGET: install
   artifacts:
     expire_in: 1 day
     paths:
-      - Bin/Release/SvtAv1EncApp
-      - Bin/Release/SvtAv1DecApp
+      - Bin/Release/*
+      - SVT-Install/*
+
+# m1 compilation test
+macOS (Static, Tests, m1):
+  extends: .macos-compiler-base
+  tags:
+    - macos
+    - shell
+    - m1
+  variables:
+    CMAKE_GENERATOR: Ninja
+    EXTRA_CMAKE_FLAGS: -DBUILD_TESTING=ON # -DCMAKE_OSX_ARCHITECTURES="arm64;x86_64" # universal binaries are currently broken
+    EXTRA_CFLAGS: -Wno-error -g
+    EXTRA_CXXFLAGS: -Wno-error -g
+    PREFIX_DIR: ${CI_PROJECT_DIR}/SVT-Install/
+    TARGET: install
+  artifacts:
+    expire_in: 1 day
+    paths:
       - Bin/Release/*
       - SVT-Install/*
 
