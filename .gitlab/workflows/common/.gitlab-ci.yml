@@ -55,7 +55,7 @@
       $EXTRA_CMAKE_FLAGS
     EOF
 
-  - cmake
+  - time cmake
     -B Build
     -DREPRODUCIBLE_BUILDS=ON
     -DCMAKE_BUILD_TYPE="$CMAKE_BUILD_TYPE"
@@ -70,7 +70,7 @@
       cat Build/CMakeFiles/CMakeError.log;
       exit 1;
     }
-  - cmake --build Build --config "$CMAKE_BUILD_TYPE" ${TARGET:+--target $TARGET}
+  - time cmake --build Build --config "$CMAKE_BUILD_TYPE" ${TARGET:+--target $TARGET}
   - ccache -s
 
 .linux-extract-videos:
@@ -115,16 +115,16 @@
   done
 
 .ffmpeg-before-script-git-setup:
-  - git config --global user.email "ci@gitlab.com"
-  - git config --global user.name "GitLab CI"
+  - time git config --global user.email "ci@gitlab.com"
+  - time git config --global user.name "GitLab CI"
 
 .ffmpeg-before-script-clone:
-  - git clone $PWD svtav1-src
-  - git clone https://aomedia.googlesource.com/aom aom-src
-  - git clone https://chromium.googlesource.com/webm/libvpx libvpx-src
-  - git clone https://code.videolan.org/videolan/dav1d.git dav1d-src
-  - git clone https://github.com/Netflix/vmaf.git vmaf-src
-  - git clone https://github.com/FFmpeg/FFmpeg.git ffmpeg-src
+  - time git clone $PWD svtav1-src
+  - time git clone https://aomedia.googlesource.com/aom aom-src
+  - time git clone https://chromium.googlesource.com/webm/libvpx libvpx-src
+  - time git clone https://code.videolan.org/videolan/dav1d.git dav1d-src
+  - time git clone https://github.com/Netflix/vmaf.git vmaf-src
+  - time git clone https://github.com/FFmpeg/FFmpeg.git ffmpeg-src
 
 .ffmpeg-before-script-export:
   - true "${CMAKE_BUILD_TYPE:=Release}" "${BUILD_SHARED_LIBS:=OFF}" "${PREFIX_DIR:=/usr/local}"
@@ -133,7 +133,7 @@
 
 # SVT-AV1
 .ffmpeg-svtav1-script:
-  - cmake
+  - time cmake
     -S svtav1-src
     -B svtav1-build
     -DCMAKE_BUILD_TYPE="$CMAKE_BUILD_TYPE"
@@ -142,11 +142,11 @@
     -DBUILD_APPS=OFF
     -DBUILD_DEC=OFF
     -DREPRODUCIBLE_BUILDS=ON
-  - cmake --build svtav1-build --config Release --target install
+  - time cmake --build svtav1-build --config Release --target install
   - FFMPEG_CONFIG_FLAGS="${FFMPEG_CONFIG_FLAGS:+$FFMPEG_CONFIG_FLAGS }--enable-libsvtav1"
 # aom
 .ffmpeg-aom-script:
-  - cmake
+  - time cmake
     -S aom-src
     -B aom-build
     -DCMAKE_BUILD_TYPE="$CMAKE_BUILD_TYPE"
@@ -157,13 +157,13 @@
     -DENABLE_DOCS=0
     -DENABLE_TESTDATA=0
     -DENABLE_TOOLS=0
-  - cmake --build aom-build --config Release --target install
+  - time cmake --build aom-build --config Release --target install
   - FFMPEG_CONFIG_FLAGS="${FFMPEG_CONFIG_FLAGS:+$FFMPEG_CONFIG_FLAGS }--enable-libaom"
 # libvpx
 .ffmpeg-libvpx-script:
   - mkdir vpx-build
   - cd vpx-build
-  - dash ../libvpx-src/configure
+  - time dash ../libvpx-src/configure
     --disable-dependency-tracking
     --disable-docs
     --disable-examples
@@ -179,12 +179,12 @@
     --enable-vp9-highbitdepth
     --enable-vp9-postproc
     --prefix="${PREFIX_DIR}"
-  - make -j $(getconf _NPROCESSORS_ONLN 2>/dev/null || sysctl -n hw.ncpu) install
+  - time make -j $(getconf _NPROCESSORS_ONLN 2>/dev/null || sysctl -n hw.ncpu) install
   - cd -
   - FFMPEG_CONFIG_FLAGS="${FFMPEG_CONFIG_FLAGS:+$FFMPEG_CONFIG_FLAGS }--enable-libvpx"
 # dav1d
 .ffmpeg-dav1d-script:
-  - meson setup
+  - time meson setup
     --default-library static
     --buildtype release
     --libdir lib
@@ -193,11 +193,11 @@
     -Denable_examples=false
     -Denable_tools=false
     dav1d-build dav1d-src
-  - meson install -C dav1d-build
+  - time meson install -C dav1d-build
   - FFMPEG_CONFIG_FLAGS="${FFMPEG_CONFIG_FLAGS:+$FFMPEG_CONFIG_FLAGS }--enable-libdav1d"
 # vmaf
 .ffmpeg-vmaf-script:
-  - meson setup
+  - time meson setup
     --default-library static
     --buildtype release
     --libdir lib
@@ -207,14 +207,14 @@
     -Dbuilt_in_models=true
     -Denable_float=true
     vmaf-build vmaf-src/libvmaf
-  - meson install -C vmaf-build
+  - time meson install -C vmaf-build
   - FFMPEG_CONFIG_FLAGS="${FFMPEG_CONFIG_FLAGS:+$FFMPEG_CONFIG_FLAGS }--enable-libvmaf"
 # FFmpeg
 # Uses ld=CXX for libvmaf to autolink the stdc++ library
 .ffmpeg-ffmpeg-script:
   - mkdir ffmpeg-build
   - cd ffmpeg-build
-  - dash ../ffmpeg-src/configure
+  - time dash ../ffmpeg-src/configure
     --arch=x86_64
     --pkg-config-flags="--static"
     --cc="${CC:-ccache gcc}"
@@ -224,7 +224,7 @@
     --prefix="${PREFIX_DIR}"
     ${FFMPEG_CONFIG_FLAGS}
     --disable-shared || { less ffbuild/config.log; exit 1; }
-  - make -j $(getconf _NPROCESSORS_ONLN 2>/dev/null || sysctl -n hw.ncpu) install
+  - time make -j $(getconf _NPROCESSORS_ONLN 2>/dev/null || sysctl -n hw.ncpu) install
   - cp ./ffmpeg $CI_PROJECT_DIR
 
 # Extends bases

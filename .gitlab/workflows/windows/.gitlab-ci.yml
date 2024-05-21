@@ -113,7 +113,7 @@ Win64 FFmpeg (Static):
   script:
     # SVT-AV1
     - |
-      cmake `
+      time cmake `
         -S svtav1-src `
         -B svtav1-build `
         -DCMAKE_BUILD_TYPE=Release `
@@ -122,10 +122,10 @@ Win64 FFmpeg (Static):
         -DBUILD_APPS=OFF `
         -DBUILD_DEC=OFF `
         -DREPRODUCIBLE_BUILDS=ON
-      cmake --build svtav1-build --config Release --target install
+      time cmake --build svtav1-build --config Release --target install
     # aom
     - |
-      cmake `
+      time cmake `
         -S aom-src `
         -B aom-build `
         -DCMAKE_BUILD_TYPE=Release `
@@ -136,12 +136,12 @@ Win64 FFmpeg (Static):
         -DENABLE_DOCS=0 `
         -DENABLE_TESTDATA=0 `
         -DENABLE_TOOLS=0
-      cmake --build aom-build --config Release --target install
+      time cmake --build aom-build --config Release --target install
     # libvpx
     - |
       mkdir vpx-build
       cd vpx-build
-      dash ../libvpx-src/configure `
+      time dash ../libvpx-src/configure `
         --disable-dependency-tracking `
         --disable-docs `
         --disable-examples `
@@ -157,11 +157,11 @@ Win64 FFmpeg (Static):
         --enable-vp9-highbitdepth `
         --enable-vp9-postproc `
         --prefix="$env:PREFIX_DIR"
-      make -j $((Get-CimInstance Win32_ComputerSystem).NumberOfLogicalProcessors + 2) install
+      time make -j $((Get-CimInstance Win32_ComputerSystem).NumberOfLogicalProcessors + 2) install
       cd ..
     # dav1d
     - |
-      meson setup `
+      time meson setup `
         --default-library static `
         --buildtype release `
         --libdir lib `
@@ -170,10 +170,10 @@ Win64 FFmpeg (Static):
         -Denable_examples=false `
         -Denable_tools=false `
         dav1d-build dav1d-src
-      meson install -C dav1d-build
+      time meson install -C dav1d-build
     # vmaf
     - |
-      meson setup `
+      time meson setup `
         --default-library static `
         --buildtype release `
         --libdir lib `
@@ -183,14 +183,14 @@ Win64 FFmpeg (Static):
         -Dbuilt_in_models=true `
         -Denable_float=true `
         vmaf-build vmaf-src/libvmaf
-      meson install -C vmaf-build
+      time meson install -C vmaf-build
 
     # FFmpeg
     # Uses ld=CXX for libvmaf to autolink the stdc++ library
     - |
       mkdir ffmpeg-build
       cd ffmpeg-build
-      bash ../ffmpeg-src/configure `
+      time bash ../ffmpeg-src/configure `
         --arch=x86_64 `
         --pkg-config-flags="--static" `
         --cc="${env:CC}" `
@@ -204,7 +204,7 @@ Win64 FFmpeg (Static):
         --enable-libvmaf `
         --enable-libvpx `
         --disable-shared
-      make -j $((Get-CimInstance Win32_ComputerSystem).NumberOfLogicalProcessors + 2) install
+      time make -j $((Get-CimInstance Win32_ComputerSystem).NumberOfLogicalProcessors + 2) install
       cp ./ffmpeg.exe $env:CI_PROJECT_DIR
     - ccache -s
   artifacts:
