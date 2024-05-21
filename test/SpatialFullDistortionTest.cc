@@ -572,6 +572,17 @@ INSTANTIATE_TEST_SUITE_P(
 
 #endif
 
+#ifdef ARCH_AARCH64
+
+INSTANTIATE_TEST_CASE_P(
+    FullDistortionKernel16FuncTest_NEON, FullDistortionKernel16BitsFuncTest,
+    ::testing::Combine(
+        ::testing::ValuesIn(TEST_AREA_SIZES),
+        ::testing::ValuesIn(TEST_PATTERNS),
+        ::testing::Values(svt_full_distortion_kernel16_bits_neon)));
+
+#endif
+
 typedef void (*fullDistortionKernel32BitsFunc)(
     int32_t *coeff, uint32_t coeff_stride, int32_t *recon_coeff,
     uint32_t recon_coeff_stride, uint64_t distortion_result[DIST_CALC_TOTAL],

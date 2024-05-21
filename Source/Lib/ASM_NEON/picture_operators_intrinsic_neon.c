@@ -286,6 +286,116 @@ void svt_aom_hadamard_32x32_neon(const int16_t *src_diff, ptrdiff_t src_stride, 
     }
 }
 
+static INLINE uint32x4_t full_distortion_kernel4_neon_intrin(const uint16_t *const input, const uint16_t *const recon) {
+    const uint16x4_t in      = vld1_u16(input);
+    const uint16x4_t re      = vld1_u16(recon);
+    const uint16x4_t max     = vmax_u16(in, re);
+    const uint16x4_t min     = vmin_u16(in, re);
+    const uint16x4_t diff    = vsub_u16(max, min);
+    const uint32x4_t diff_32 = vmull_u16(diff, diff);
+    return diff_32;
+}
+
+static INLINE uint32x4_t full_distortion_kernel8_neon_intrin(uint16x8_t in, uint16x8_t re) {
+    const uint16x8_t max     = vmaxq_u16(in, re);
+    const uint16x8_t min     = vminq_u16(in, re);
+    const uint16x8_t diff    = vsubq_u16(max, min);
+    const uint32x4_t diff_32 = vpaddq_u32(vmull_u16(vget_low_u16(diff), vget_low_u16(diff)),
+                                          vmull_high_u16(diff, diff));
+    return diff_32;
+}
+
+uint64_t svt_full_distortion_kernel16_bits_neon(uint8_t *input, uint32_t input_offset, uint32_t input_stride,
+                                                uint8_t *recon, int32_t recon_offset, uint32_t recon_stride,
+                                                uint32_t area_width, uint32_t area_height) {
+    const uint32_t leftover    = area_width & 7; // area_width % 8
+    int64x2_t      sum64       = vdupq_n_s64(0);
+    uint16_t      *input_16bit = (uint16_t *)input;
+    uint16_t      *recon_16bit = (uint16_t *)recon;
+    input_16bit += input_offset;
+    recon_16bit += recon_offset;
+
+    const uint32x4_t zero = vdupq_n_u32(0);
+
+    if (leftover) { // (leftover == 4)
+        const uint16_t       *inp     = input_16bit + area_width - leftover;
+        const uint16_t       *rec     = recon_16bit + area_width - leftover;
+        const uint16_t *const inp_end = inp + area_height * input_stride;
+
+        do {
+            const uint32x4_t sum32 = full_distortion_kernel4_neon_intrin(inp, rec);
+            inp += input_stride;
+            rec += recon_stride;
+
+            sum64 = vaddq_s64(sum64,
+                              vaddq_s64(vreinterpretq_s64_u32(vzip1q_u32(sum32, zero)),
+                                        vreinterpretq_s64_u32(vzip2q_u32(sum32, zero))));
+        } while (inp < inp_end);
+    }
+
+    area_width -= leftover; // area width will be now a multiple of 8
+
+    if (area_width) {
+        const uint16_t *inp = input_16bit;
+        const uint16_t *rec = recon_16bit;
+
+        if (area_width == 8) {
+            const uint16_t *const inp_end = inp + area_height * input_stride;
+            do {
+                const uint32x4_t sum32 = full_distortion_kernel8_neon_intrin(vld1q_u16(inp), vld1q_u16(rec));
+                inp += input_stride;
+                rec += recon_stride;
+
+                sum64 = vaddq_s64(sum64,
+                                  vaddq_s64(vreinterpretq_s64_u32(vzip1q_u32(sum32, zero)),
+                                            vreinterpretq_s64_u32(vzip2q_u32(sum32, zero))));
+            } while (inp < inp_end);
+
+        } else if (area_width == 16) {
+            const uint16_t *const inp_end = inp + area_height * input_stride;
+            do {
+                const uint32x4_t sum32 = vaddq_u32(
+                    full_distortion_kernel8_neon_intrin(vld1q_u16(inp), vld1q_u16(rec)),
+                    full_distortion_kernel8_neon_intrin(vld1q_u16(inp + 8), vld1q_u16(rec + 8)));
+                inp += input_stride;
+                rec += recon_stride;
+                sum64 = vaddq_s64(sum64,
+                                  vaddq_s64(vreinterpretq_s64_u32(vzip1q_u32(sum32, zero)),
+                                            vreinterpretq_s64_u32(vzip2q_u32(sum32, zero))));
+            } while (inp < inp_end);
+        } else {
+            for (uint32_t h = 0; h < area_height; h++) {
+                uint32_t w = 0;
+
+                for (; w + 16 < area_width; w += 16) {
+                    const uint32x4_t sum32_0 = full_distortion_kernel8_neon_intrin(vld1q_u16(inp + w),
+                                                                                   vld1q_u16(rec + w));
+                    const uint32x4_t sum32_1 = full_distortion_kernel8_neon_intrin(vld1q_u16(inp + w + 8),
+                                                                                   vld1q_u16(rec + w + 8));
+
+                    sum64 = vaddq_s64(sum64,
+                                      vaddq_s64(vaddq_s64(vreinterpretq_s64_u32(vzip1q_u32(sum32_0, zero)),
+                                                          vreinterpretq_s64_u32(vzip2q_u32(sum32_0, zero))),
+                                                vaddq_s64(vreinterpretq_s64_u32(vzip1q_u32(sum32_1, zero)),
+                                                          vreinterpretq_s64_u32(vzip2q_u32(sum32_1, zero)))));
+                }
+
+                for (; w < area_width; w += 8) {
+                    const uint32x4_t sum32 = full_distortion_kernel8_neon_intrin(vld1q_u16(inp + w),
+                                                                                 vld1q_u16(rec + w));
+                    sum64                  = vaddq_s64(sum64,
+                                      vaddq_s64(vreinterpretq_s64_u32(vzip1q_u32(sum32, zero)),
+                                                vreinterpretq_s64_u32(vzip2q_u32(sum32, zero))));
+                }
+                inp += input_stride;
+                rec += recon_stride;
+            }
+        }
+    }
+
+    return vgetq_lane_s64(sum64, 0) + vgetq_lane_s64(sum64, 1);
+}
+
 void svt_full_distortion_kernel32_bits_neon(int32_t *coeff, uint32_t coeff_stride, int32_t *recon_coeff,
                                             uint32_t recon_coeff_stride, uint64_t distortion_result[DIST_CALC_TOTAL],
                                             uint32_t area_width, uint32_t area_height) {
