@@ -71,6 +71,7 @@
       exit 1;
     }
   - cmake --build Build --config "$CMAKE_BUILD_TYPE" ${TARGET:+--target $TARGET}
+  - ccache -s
 
 .linux-extract-videos:
   - cp /*.zst .
