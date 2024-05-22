@@ -121,7 +121,10 @@ Win64 FFmpeg (Static):
         -DCMAKE_INSTALL_PREFIX="$env:PREFIX_DIR" `
         -DBUILD_APPS=OFF `
         -DBUILD_DEC=OFF `
-        -DREPRODUCIBLE_BUILDS=ON
+        -DREPRODUCIBLE_BUILDS=ON || $(
+          Get-Content svtav1-build/CMakeFiles/CMakeConfigureLog.yaml
+          exit 1
+        )
       time cmake --build svtav1-build --config Release --target install
     # aom
     - |
