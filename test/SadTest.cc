@@ -616,7 +616,7 @@ class sad_LoopTest : public ::testing::WithParamInterface<sad_LoopTestParam>,
 #endif
 #endif
 #ifdef ARCH_AARCH64
-                svt_sad_loop_kernel_neon,
+                svt_sad_loop_kernel_neon
 #endif
         };
 
@@ -703,7 +703,7 @@ class sad_LoopTest : public ::testing::WithParamInterface<sad_LoopTestParam>,
 #endif
 #endif
 #ifdef ARCH_AARCH64
-                svt_sad_loop_kernel_neon,
+                svt_sad_loop_kernel_neon
 #endif
         };
 

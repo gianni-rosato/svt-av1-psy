@@ -156,12 +156,12 @@ void svt_av1_highbd_jnt_convolve_y_neon(const uint16_t *src, int32_t src_stride,
                 s[7 + 8] = vzip2q_u16(s7, s8);
 
                 const int32x4_t res_a0       = svt_aom_convolve(s, coeffs_y);
-                int32x4_t       res_a_round0 = vshlq_n_s32(res_a0, FILTER_BITS - conv_params->round_0);
-                res_a_round0 = vshrq_n_s32(vaddq_s32(res_a_round0, round_const_y), conv_params->round_1);
+                int32x4_t       res_a_round0 = vshlq_s32(res_a0, vdupq_n_s32(FILTER_BITS - conv_params->round_0));
+                res_a_round0 = vshlq_s32(vaddq_s32(res_a_round0, round_const_y), vdupq_n_s32(-conv_params->round_1));
 
                 const int32x4_t res_a1       = svt_aom_convolve(s + 8, coeffs_y);
-                int32x4_t       res_a_round1 = vshlq_n_s32(res_a1, FILTER_BITS - conv_params->round_0);
-                res_a_round1 = vshrq_n_s32(vaddq_s32(res_a_round1, round_const_y), conv_params->round_1);
+                int32x4_t       res_a_round1 = vshlq_s32(res_a1, vdupq_n_s32(FILTER_BITS - conv_params->round_0));
+                res_a_round1 = vshlq_s32(vaddq_s32(res_a_round1, round_const_y), vdupq_n_s32(-conv_params->round_1));
 
                 const int32x4_t res_unsigned_lo_0 = vaddq_s32(res_a_round0, offset_const);
                 const int32x4_t res_unsigned_lo_1 = vaddq_s32(res_a_round1, offset_const);
@@ -205,12 +205,14 @@ void svt_av1_highbd_jnt_convolve_y_neon(const uint16_t *src, int32_t src_stride,
                     }
                 } else {
                     const int32x4_t res_b0       = svt_aom_convolve(s + 4, coeffs_y);
-                    int32x4_t       res_b_round0 = vshlq_n_s32(res_b0, FILTER_BITS - conv_params->round_0);
-                    res_b_round0 = vshrq_n_s32(vaddq_s32(res_b_round0, round_const_y), conv_params->round_1);
+                    int32x4_t       res_b_round0 = vshlq_s32(res_b0, vdupq_n_s32(FILTER_BITS - conv_params->round_0));
+                    res_b_round0                 = vshlq_s32(vaddq_s32(res_b_round0, round_const_y),
+                                             vdupq_n_s32(-conv_params->round_1));
 
                     const int32x4_t res_b1       = svt_aom_convolve(s + 4 + 8, coeffs_y);
-                    int32x4_t       res_b_round1 = vshlq_n_s32(res_b1, FILTER_BITS - conv_params->round_0);
-                    res_b_round1 = vshrq_n_s32(vaddq_s32(res_b_round1, round_const_y), conv_params->round_1);
+                    int32x4_t       res_b_round1 = vshlq_s32(res_b1, vdupq_n_s32(FILTER_BITS - conv_params->round_0));
+                    res_b_round1                 = vshlq_s32(vaddq_s32(res_b_round1, round_const_y),
+                                             vdupq_n_s32(-conv_params->round_1));
 
                     int32x4_t res_unsigned_hi_0 = vaddq_s32(res_b_round0, offset_const);
                     int32x4_t res_unsigned_hi_1 = vaddq_s32(res_b_round1, offset_const);

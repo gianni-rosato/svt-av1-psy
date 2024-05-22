@@ -18,10 +18,14 @@
 #include "utility.h"
 #include "mcomp.h"
 
+static INLINE uint16x8_t sad16_neon_init(uint8x16_t src, uint8x16_t ref) {
+    const uint8x16_t abs_diff = vabdq_u8(src, ref);
+    return vpaddlq_u8(abs_diff);
+}
+
 static INLINE void sad16_neon(uint8x16_t src, uint8x16_t ref, uint16x8_t *const sad_sum) {
-    uint8x16_t abs_diff;
-    abs_diff = vabdq_u8(src, ref);
-    *sad_sum = vpadalq_u8(*sad_sum, abs_diff);
+    const uint8x16_t abs_diff = vabdq_u8(src, ref);
+    *sad_sum                  = vpadalq_u8(*sad_sum, abs_diff);
 }
 
 /* Find the position of the first occurrence of 'value' in the vector 'x'.
@@ -381,8 +385,7 @@ static INLINE uint32x4_t sadwxhx4d_large_neon(const uint8_t *src, uint32_t src_s
                                               uint32_t ref_stride, uint32_t w, uint32_t h, uint32_t h_overflow) {
     uint32x4_t sum[4];
     uint16x8_t sum_lo[4], sum_hi[4];
-    uint8x16_t s0, s1;
-    uint32_t   i, j, ref_offset, h_limit;
+    uint32_t   h_limit;
 
     sum[0] = vdupq_n_u32(0);
     sum[1] = vdupq_n_u32(0);
@@ -391,8 +394,7 @@ static INLINE uint32x4_t sadwxhx4d_large_neon(const uint8_t *src, uint32_t src_s
 
     h_limit = h > h_overflow ? h_overflow : h;
 
-    ref_offset = 0;
-    i          = 0;
+    uint32_t i = 0;
     do {
         sum_lo[0] = vdupq_n_u16(0);
         sum_lo[1] = vdupq_n_u16(0);
@@ -403,25 +405,28 @@ static INLINE uint32x4_t sadwxhx4d_large_neon(const uint8_t *src, uint32_t src_s
         sum_hi[2] = vdupq_n_u16(0);
         sum_hi[3] = vdupq_n_u16(0);
         do {
-            j = 0;
+            const uint8_t       *loop_src       = src;
+            const uint8_t       *loop_ref       = ref;
+            const uint8_t *const loop_src_limit = loop_src + w;
             do {
-                s0 = vld1q_u8(src + j);
-                sad16_neon(s0, vld1q_u8(ref + 0 + ref_offset + j), &sum_lo[0]);
-                sad16_neon(s0, vld1q_u8(ref + 1 + ref_offset + j), &sum_lo[1]);
-                sad16_neon(s0, vld1q_u8(ref + 2 + ref_offset + j), &sum_lo[2]);
-                sad16_neon(s0, vld1q_u8(ref + 3 + ref_offset + j), &sum_lo[3]);
+                const uint8x16_t s0 = vld1q_u8(loop_src);
+                sad16_neon(s0, vld1q_u8(loop_ref + 0), &sum_lo[0]);
+                sad16_neon(s0, vld1q_u8(loop_ref + 1), &sum_lo[1]);
+                sad16_neon(s0, vld1q_u8(loop_ref + 2), &sum_lo[2]);
+                sad16_neon(s0, vld1q_u8(loop_ref + 3), &sum_lo[3]);
 
-                s1 = vld1q_u8(src + j + 16);
-                sad16_neon(s1, vld1q_u8(ref + 0 + ref_offset + j + 16), &sum_hi[0]);
-                sad16_neon(s1, vld1q_u8(ref + 1 + ref_offset + j + 16), &sum_hi[1]);
-                sad16_neon(s1, vld1q_u8(ref + 2 + ref_offset + j + 16), &sum_hi[2]);
-                sad16_neon(s1, vld1q_u8(ref + 3 + ref_offset + j + 16), &sum_hi[3]);
+                const uint8x16_t s1 = vld1q_u8(loop_src + 16);
+                sad16_neon(s1, vld1q_u8(loop_ref + 0 + 16), &sum_hi[0]);
+                sad16_neon(s1, vld1q_u8(loop_ref + 1 + 16), &sum_hi[1]);
+                sad16_neon(s1, vld1q_u8(loop_ref + 2 + 16), &sum_hi[2]);
+                sad16_neon(s1, vld1q_u8(loop_ref + 3 + 16), &sum_hi[3]);
 
-                j += 32;
-            } while (j < w);
+                loop_src += 32;
+                loop_ref += 32;
+            } while (loop_src < loop_src_limit);
 
             src += src_stride;
-            ref_offset += ref_stride;
+            ref += ref_stride;
         } while (++i < h_limit);
 
         sum[0] = vpadalq_u16(sum[0], sum_lo[0]);
@@ -452,36 +457,40 @@ static INLINE uint32x4_t sad64xhx4d_neon(const uint8_t *src, uint32_t src_stride
 static INLINE uint32x4_t sad32xhx4d_neon(const uint8_t *src, uint32_t src_stride, const uint8_t *ref,
                                          uint32_t ref_stride, uint32_t h) {
     uint16x8_t sum_lo[4], sum_hi[4];
-    uint8x16_t s0, s1;
-    uint32_t   i, ref_offset;
 
-    sum_lo[0] = vdupq_n_u16(0);
-    sum_lo[1] = vdupq_n_u16(0);
-    sum_lo[2] = vdupq_n_u16(0);
-    sum_lo[3] = vdupq_n_u16(0);
-    sum_hi[0] = vdupq_n_u16(0);
-    sum_hi[1] = vdupq_n_u16(0);
-    sum_hi[2] = vdupq_n_u16(0);
-    sum_hi[3] = vdupq_n_u16(0);
+    const uint8x16_t s0_init = vld1q_u8(src);
+    sum_lo[0]                = sad16_neon_init(s0_init, vld1q_u8(ref + 0));
+    sum_lo[1]                = sad16_neon_init(s0_init, vld1q_u8(ref + 1));
+    sum_lo[2]                = sad16_neon_init(s0_init, vld1q_u8(ref + 2));
+    sum_lo[3]                = sad16_neon_init(s0_init, vld1q_u8(ref + 3));
 
-    ref_offset = 0;
-    i          = h;
-    do {
-        s0 = vld1q_u8(src);
-        sad16_neon(s0, vld1q_u8(ref + 0 + ref_offset), &sum_lo[0]);
-        sad16_neon(s0, vld1q_u8(ref + 1 + ref_offset), &sum_lo[1]);
-        sad16_neon(s0, vld1q_u8(ref + 2 + ref_offset), &sum_lo[2]);
-        sad16_neon(s0, vld1q_u8(ref + 3 + ref_offset), &sum_lo[3]);
+    const uint8x16_t s1_init = vld1q_u8(src + 16);
+    sum_hi[0]                = sad16_neon_init(s1_init, vld1q_u8(ref + 0 + 16));
+    sum_hi[1]                = sad16_neon_init(s1_init, vld1q_u8(ref + 1 + 16));
+    sum_hi[2]                = sad16_neon_init(s1_init, vld1q_u8(ref + 2 + 16));
+    sum_hi[3]                = sad16_neon_init(s1_init, vld1q_u8(ref + 3 + 16));
 
-        s1 = vld1q_u8(src + 16);
-        sad16_neon(s1, vld1q_u8(ref + 0 + ref_offset + 16), &sum_hi[0]);
-        sad16_neon(s1, vld1q_u8(ref + 1 + ref_offset + 16), &sum_hi[1]);
-        sad16_neon(s1, vld1q_u8(ref + 2 + ref_offset + 16), &sum_hi[2]);
-        sad16_neon(s1, vld1q_u8(ref + 3 + ref_offset + 16), &sum_hi[3]);
+    const uint8_t *const src_limit = src + src_stride * h;
+
+    src += src_stride;
+    ref += ref_stride;
+
+    while (src < src_limit) {
+        const uint8x16_t s0 = vld1q_u8(src);
+        sad16_neon(s0, vld1q_u8(ref + 0), &sum_lo[0]);
+        sad16_neon(s0, vld1q_u8(ref + 1), &sum_lo[1]);
+        sad16_neon(s0, vld1q_u8(ref + 2), &sum_lo[2]);
+        sad16_neon(s0, vld1q_u8(ref + 3), &sum_lo[3]);
+
+        const uint8x16_t s1 = vld1q_u8(src + 16);
+        sad16_neon(s1, vld1q_u8(ref + 0 + 16), &sum_hi[0]);
+        sad16_neon(s1, vld1q_u8(ref + 1 + 16), &sum_hi[1]);
+        sad16_neon(s1, vld1q_u8(ref + 2 + 16), &sum_hi[2]);
+        sad16_neon(s1, vld1q_u8(ref + 3 + 16), &sum_hi[3]);
 
         src += src_stride;
-        ref_offset += ref_stride;
-    } while (--i != 0);
+        ref += ref_stride;
+    }
 
     return horizontal_long_add_4d_u16x8(sum_lo, sum_hi);
 }
@@ -490,26 +499,28 @@ static INLINE uint32x4_t sad16xhx4d_neon(const uint8_t *src, uint32_t src_stride
                                          uint32_t ref_stride, uint32_t h) {
     uint16x8_t sum_u16[4];
     uint32x4_t sum_u32[4];
-    uint8x16_t s;
-    uint32_t   ref_offset, i;
 
-    sum_u16[0] = vdupq_n_u16(0);
-    sum_u16[1] = vdupq_n_u16(0);
-    sum_u16[2] = vdupq_n_u16(0);
-    sum_u16[3] = vdupq_n_u16(0);
+    const uint8x16_t s_init = vld1q_u8(src);
+    sum_u16[0]              = sad16_neon_init(s_init, vld1q_u8(ref + 0));
+    sum_u16[1]              = sad16_neon_init(s_init, vld1q_u8(ref + 1));
+    sum_u16[2]              = sad16_neon_init(s_init, vld1q_u8(ref + 2));
+    sum_u16[3]              = sad16_neon_init(s_init, vld1q_u8(ref + 3));
 
-    ref_offset = 0;
-    i          = h;
-    do {
-        s = vld1q_u8(src);
-        sad16_neon(s, vld1q_u8(ref + 0 + ref_offset), &sum_u16[0]);
-        sad16_neon(s, vld1q_u8(ref + 1 + ref_offset), &sum_u16[1]);
-        sad16_neon(s, vld1q_u8(ref + 2 + ref_offset), &sum_u16[2]);
-        sad16_neon(s, vld1q_u8(ref + 3 + ref_offset), &sum_u16[3]);
+    const uint8_t *const src_limit = src + src_stride * h;
+
+    src += src_stride;
+    ref += ref_stride;
+
+    while (src < src_limit) {
+        const uint8x16_t s = vld1q_u8(src);
+        sad16_neon(s, vld1q_u8(ref + 0), &sum_u16[0]);
+        sad16_neon(s, vld1q_u8(ref + 1), &sum_u16[1]);
+        sad16_neon(s, vld1q_u8(ref + 2), &sum_u16[2]);
+        sad16_neon(s, vld1q_u8(ref + 3), &sum_u16[3]);
 
         src += src_stride;
-        ref_offset += ref_stride;
-    } while (--i != 0);
+        ref += ref_stride;
+    }
 
     sum_u32[0] = vpaddlq_u16(sum_u16[0]);
     sum_u32[1] = vpaddlq_u16(sum_u16[1]);
