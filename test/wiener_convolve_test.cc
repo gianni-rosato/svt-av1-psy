@@ -451,6 +451,7 @@ class AV1WienerConvolveHbdTest
         (void)tap;
     }
 };
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(AV1WienerConvolveHbdTest);
 
 TEST_P(AV1WienerConvolveLbdTest, random_test) {
     run_random_test(1000);
@@ -460,6 +461,7 @@ TEST_P(AV1WienerConvolveLbdTest, DISABLED_speed_test) {
     run_speed_test();
 }
 
+#ifdef ARCH_X86_64
 INSTANTIATE_TEST_SUITE_P(
     SSE2, AV1WienerConvolveLbdTest,
     ::testing::Combine(
@@ -479,6 +481,15 @@ INSTANTIATE_TEST_SUITE_P(
         ::testing::ValuesIn(test_block_size_table),
         ::testing::Values(svt_av1_wiener_convolve_add_src_avx512)));
 #endif
+#endif  // ARCH_X86_64
+
+#ifdef ARCH_AARCH64
+INSTANTIATE_TEST_SUITE_P(
+    NEON, AV1WienerConvolveLbdTest,
+    ::testing::Combine(
+        ::testing::ValuesIn(test_block_size_table),
+        ::testing::Values(svt_av1_wiener_convolve_add_src_neon)));
+#endif  // ARCH_AARCH64
 
 TEST_P(AV1WienerConvolveHbdTest, random_test) {
     run_random_test(1000);
@@ -488,6 +499,7 @@ TEST_P(AV1WienerConvolveHbdTest, DISABLED_speed_test) {
     run_speed_test();
 }
 
+#ifdef ARCH_X86_64
 INSTANTIATE_TEST_SUITE_P(
     SSSE3, AV1WienerConvolveHbdTest,
     ::testing::Combine(
@@ -501,5 +513,6 @@ INSTANTIATE_TEST_SUITE_P(
         ::testing::ValuesIn(test_block_size_table),
         ::testing::Values(svt_av1_highbd_wiener_convolve_add_src_avx2),
         testing::Values(8, 10, 12)));
+#endif  // ARCH_X86_64
 
 }  // namespace

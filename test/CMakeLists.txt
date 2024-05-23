@@ -93,7 +93,8 @@ set(multi_arch_files
     VarianceTest.cc
     convolve_test.cc
     quantize_func_test.cc
-    selfguided_filter_test.cc)
+    selfguided_filter_test.cc
+    wiener_convolve_test.cc)
 
 if(HAVE_X86_PLATFORM)
   set(x86_arch_files
@@ -131,8 +132,7 @@ if(HAVE_X86_PLATFORM)
       subtract_avg_cfl_test.cc
       warp_filter_test.cc
       warp_filter_test_util.cc
-      warp_filter_test_util.h
-      wiener_convolve_test.cc)
+      warp_filter_test_util.h)
 endif()
 
 if(HAVE_ARM_PLATFORM)
