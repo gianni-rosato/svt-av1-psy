@@ -774,7 +774,7 @@ static int svt_av1_get_q_index_from_qstep_ratio(int leaf_qindex, double qstep_ra
     return qindex;
 }
 static const double r0_weight[3] = {0.75 /* I_SLICE */, 0.9 /* BASE */, 1 /* NON-BASE */};
-static const double qp_scale_compress_weight[4] = {1, 1.125, 1.25, 1.375};
+static const double qp_scale_compress_weight[7] = {1, 1.125, 1.25, 1.375, 1.5, 1.625, 1.75};
 /******************************************************
  * crf_qindex_calc
  * Assign the q_index per frame.

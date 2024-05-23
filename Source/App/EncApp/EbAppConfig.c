@@ -1242,7 +1242,7 @@ ConfigEntry config_entry_psy[] = {
     // QP scale compress
     {SINGLE_INPUT,
      QP_SCALE_COMPRESS_STRENGTH_TOKEN,
-     "[PSY] QP scale compress strength, default is 1 [0-3]",
+     "[PSY] QP scale compress strength, default is 1 [0-6]",
      set_cfg_generic_token},
     // Frame-level low-luma bias
     {SINGLE_INPUT,

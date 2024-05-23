@@ -925,8 +925,8 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet *scs) {
         return_error = EB_ErrorBadParameter;
     }
 
-    if (config->qp_scale_compress_strength > 3) {
-        SVT_ERROR("Instance %u: QP scale compress strength must be between 0 and 3\n", channel_number + 1);
+    if (config->qp_scale_compress_strength > 6) {
+        SVT_ERROR("Instance %u: QP scale compress strength must be between 0 and 6\n", channel_number + 1);
         return_error = EB_ErrorBadParameter;
     }
 
