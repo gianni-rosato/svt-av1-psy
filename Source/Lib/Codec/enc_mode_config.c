@@ -7244,6 +7244,11 @@ that use 8x8 blocks will lose significant BD-Rate as the parent 16x16 me data wi
     else
         ctx->pd1_lvl_refinement = 2;
     svt_aom_set_nsq_geom_ctrls(ctx, pcs->nsq_geom_level, NULL, NULL, NULL);
+
+    if (scs->static_config.max_32_tx_size) {
+        // Ensure we allow at least 32x32 transforms
+        ctx->depth_removal_ctrls.disallow_below_64x64 = FALSE;
+    }
 }
 static void set_depth_early_exit_ctrls(ModeDecisionContext *ctx, uint8_t early_exit_level) {
     DepthEarlyExitCtrls *ctrls = &ctx->depth_early_exit_ctrls;
