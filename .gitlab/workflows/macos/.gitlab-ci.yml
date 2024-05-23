@@ -120,6 +120,32 @@ macOS Unit Tests:
     - cmake --build Build --target TestVectors
     - python3 gtest_parallel.py --print_test_times --shard_index=$SHARD_INDEX --shard_count=$TOTAL_SHARDS ./Bin/Release/SvtAv1UnitTests ./Bin/Release/SvtAv1E2ETests -- --gtest_output="xml:reports/{#}.xml"
 
+macOS Unit Tests (m1):
+  extends: .macos-unit-test-base
+  variables:
+    SVT_AV1_TEST_VECTOR_PATH: $CI_PROJECT_DIR/test/vectors
+    TOTAL_SHARDS: 4
+  parallel:
+    matrix:
+      - SHARD_INDEX: [0, 1, 2, 3]
+  cache:
+    key: testvectors
+    paths:
+      - test/vectors
+    policy: pull-push
+  tags:
+    - macos
+    - shell
+    - m1
+  before_script:
+    - curl -Ls "https://raw.githubusercontent.com/1480c1/gtest-parallel/unique_id/gtest_parallel.py" > gtest_parallel.py
+  script:
+    - cmake -B Build -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=ON
+    - cmake --build Build --target TestVectors
+    - python3 gtest_parallel.py --print_test_times --shard_index=$SHARD_INDEX --shard_count=$TOTAL_SHARDS ./Bin/Release/SvtAv1UnitTests ./Bin/Release/SvtAv1E2ETests -- --gtest_output="xml:reports/{#}.xml"
+  needs:
+    - macOS (Static, Tests, m1)
+
 macOS Enc Test:
   extends: .macos-test-base
   variables:
