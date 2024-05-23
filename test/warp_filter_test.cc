@@ -11,6 +11,7 @@
  */
 #include "gtest/gtest.h"
 #include "warp_filter_test_util.h"
+
 using libaom_test::AV1HighbdWarpFilter::AV1HighbdWarpFilterTest;
 using libaom_test::AV1WarpFilter::AV1WarpFilterTest;
 using std::make_tuple;
@@ -38,6 +39,7 @@ TEST_P(AV1HighbdWarpFilterTest, DISABLED_Speed) {
     RunSpeedTest(std::get<4>(TEST_GET_PARAM(0)));
 }
 
+#ifdef ARCH_X86_64
 INSTANTIATE_TEST_SUITE_P(
     AVX2, AV1WarpFilterTest,
     libaom_test::AV1WarpFilter::BuildParams(svt_av1_warp_affine_avx2));
@@ -53,4 +55,12 @@ INSTANTIATE_TEST_SUITE_P(AVX2, AV1HighbdWarpFilterTest,
 INSTANTIATE_TEST_SUITE_P(SSE4_1, AV1HighbdWarpFilterTest,
                          libaom_test::AV1HighbdWarpFilter::BuildParams(
                              svt_av1_highbd_warp_affine_sse4_1));
+#endif  // ARCH_X86_64
+
+#ifdef ARCH_AARCH64
+INSTANTIATE_TEST_SUITE_P(
+    NEON, AV1WarpFilterTest,
+    libaom_test::AV1WarpFilter::BuildParams(svt_av1_warp_affine_neon));
+#endif  // ARCH_AARCH64
+
 }  // namespace

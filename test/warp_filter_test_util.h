@@ -87,6 +87,7 @@ class AV1HighbdWarpFilterTest
 
     svt_av1_test_tool::SVTRandom *rnd_;
 };
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(AV1HighbdWarpFilterTest);
 
 }  // namespace AV1HighbdWarpFilter
 
