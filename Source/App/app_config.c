@@ -208,6 +208,8 @@
 
 #define FRAME_LUMA_BIAS_TOKEN "--frame-luma-bias"
 
+#define MAX_32_TX_SIZE_TOKEN "--max-32-tx-size"
+
 static EbErrorType validate_error(EbErrorType err, const char *token, const char *value) {
     switch (err) {
     case EB_ErrorNone: return EB_ErrorNone;
@@ -1249,6 +1251,11 @@ ConfigEntry config_entry_psy[] = {
      FRAME_LUMA_BIAS_TOKEN,
      "[PSY] Adjusts the frame's QP based on the frame's average luma value, default is 0 [0 to 100]",
      set_cfg_generic_token},
+    // Max 32 tx size
+    {SINGLE_INPUT,
+     MAX_32_TX_SIZE_TOKEN,
+     "[PSY] Limits the allowed transform sizes to a maximum of 32x32, default is 0 [0-1]",
+     set_cfg_generic_token},
     // Termination
     {SINGLE_INPUT, NULL, NULL, NULL}};
 
@@ -1443,6 +1450,9 @@ ConfigEntry config_entry[] = {
 
     // Frame-level low-luma bias
     {SINGLE_INPUT, FRAME_LUMA_BIAS_TOKEN, "FrameLumaBias", set_cfg_generic_token},
+
+     // Max 32 tx size
+    {SINGLE_INPUT, MAX_32_TX_SIZE_TOKEN, "Max32TxSize", set_cfg_generic_token},
 
     // Termination
     {SINGLE_INPUT, NULL, NULL, NULL}};

@@ -1555,6 +1555,7 @@ EB_API EbErrorType svt_av1_enc_init(EbComponentType *svt_enc_component)
         input_data.sharpness = enc_handle_ptr->scs_instance_array[instance_index]->scs->static_config.sharpness;
         input_data.qp_scale_compress_strength = enc_handle_ptr->scs_instance_array[instance_index]->scs->static_config.qp_scale_compress_strength;
         input_data.frame_luma_bias = enc_handle_ptr->scs_instance_array[instance_index]->scs->static_config.frame_luma_bias;
+        input_data.max_32_tx_size = enc_handle_ptr->scs_instance_array[instance_index]->scs->static_config.max_32_tx_size;
         input_data.static_config = enc_handle_ptr->scs_instance_array[instance_index]->scs->static_config;
 
         EB_NEW(
@@ -3992,6 +3993,9 @@ static void set_param_based_on_input(SequenceControlSet *scs)
     if (scs->static_config.variance_boost_strength >= 4) {
         SVT_WARN("Aggressive variance boost strength used. This is a curve that's only useful under specific situations. Use with caution!\n");
     }
+    if (scs->static_config.max_32_tx_size && scs->static_config.qp >= 20) {
+        SVT_WARN("Restricting transform sizes to a max of 32x32 might reduce coding efficiency at low to medium fidelity settings. Use with caution!\n");
+    }
     // scs->static_config.hierarchical_levels = (scs->static_config.rate_control_mode > 1) ? 3 : scs->static_config.hierarchical_levels;
     if (scs->static_config.restricted_motion_vector && scs->super_block_size == 128) {
         scs->static_config.restricted_motion_vector = FALSE;
@@ -4602,6 +4606,9 @@ static void copy_api_from_app(
 
     // Frame-level luma bias
     scs->static_config.frame_luma_bias = config_struct->frame_luma_bias;
+
+    // Max 32 TX size
+    scs->static_config.max_32_tx_size = config_struct->max_32_tx_size;
     return;
 }
 
