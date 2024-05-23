@@ -130,6 +130,20 @@ macOS Enc Test:
   needs:
     - macOS (Static, Tests)
 
+macOS Enc Test(m1):
+  extends: .macos-test-base
+  tags:
+    - macos
+    - shell
+    - m1
+  variables:
+    TEST_FILES: akiyo_cif.y4m Chimera-Aerial_480x264_2997fps_10bit_420_150frames.y4m
+  script: !reference [.enc-test-script]
+  parallel: !reference [.enc-test-parallel]
+  artifacts: !reference [.enc-test-artifacts]
+  needs:
+    - macOS (Static, Tests, m1)
+
 macOS FFmpeg (Static):
   extends: .macos-test-base
   stage: compile
