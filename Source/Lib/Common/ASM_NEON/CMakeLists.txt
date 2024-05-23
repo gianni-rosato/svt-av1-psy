@@ -12,6 +12,7 @@
 # Common/ASM_NEON Directory CMakeLists.txt
 
 # Include Common Subdirectories
+enable_language(ASM) # needed for .S files
 add_library(COMMON_ASM_NEON OBJECT)
 target_sources(
   COMMON_ASM_NEON
@@ -43,5 +44,8 @@ target_include_directories(
   PRIVATE ${PROJECT_SOURCE_DIR}/Source/Lib/Common/Codec/
   PRIVATE ${PROJECT_SOURCE_DIR}/Source/Lib/Common/C_DEFAULT/
   PRIVATE ${PROJECT_SOURCE_DIR}/Source/Lib/Common/ASM_NEON/)
-set_source_files_properties(dav1d_asm.S dav1d_util.S itx.S PROPERTIES LANGUAGE
-                                                                      C)
+
+# Causes the files to be explicitly compiled with `-x c`, which is wrong.
+# https://cmake.org/cmake/help/git-master/policy/CMP0119.html
+# set_source_files_properties(dav1d_asm.S dav1d_util.S itx.S PROPERTIES LANGUAGE
+#                                                                       C)
