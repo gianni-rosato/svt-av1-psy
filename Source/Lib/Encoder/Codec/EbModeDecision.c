@@ -4461,7 +4461,7 @@ uint32_t svt_aom_product_full_mode_decision(
 {
     SequenceControlSet *scs = pcs->scs;
     uint32_t lowest_cost_index = best_candidate_index_array[0];
-    const bool use_ssim_full_cost = ctx->tune_ssim_level > SSIM_LVL_0 ? true : false;
+    const bool use_ssim_full_cost = ctx->tune_ssim_level > SSIM_LVL_0 ? false : false;
 
     // Find the candidate with the lowest cost
     // Only need to sort if have multiple candidates
