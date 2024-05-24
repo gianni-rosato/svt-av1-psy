@@ -2067,7 +2067,7 @@ void svt_aom_full_loop_uv(PictureControlSet *pcs, ModeDecisionContext *ctx, Mode
                                                (((txb_origin_y >> 3) << 3) * cand_bf->quant->stride_cb)) >>
                     1;
 
-                if (ssim_level == SSIM_LVL_1 || ssim_level == SSIM_LVL_3) {
+                if (ssim_level < SSIM_LVL_1) {
                     txb_full_distortion[DIST_SSIM][1][DIST_CALC_PREDICTION] = svt_spatial_full_distortion_ssim_kernel(
                         input_pic->buffer_cb,
                         input_chroma_txb_origin_index,
@@ -2244,7 +2244,7 @@ void svt_aom_full_loop_uv(PictureControlSet *pcs, ModeDecisionContext *ctx, Mode
                                                (((txb_origin_y >> 3) << 3) * cand_bf->quant->stride_cb)) >>
                     1;
 
-                if (ssim_level == SSIM_LVL_1 || ssim_level == SSIM_LVL_3) {
+                if (ssim_level < SSIM_LVL_1) {
                     txb_full_distortion[DIST_SSIM][2][DIST_CALC_PREDICTION] = svt_spatial_full_distortion_ssim_kernel(
                         input_pic->buffer_cr,
                         input_chroma_txb_origin_index,

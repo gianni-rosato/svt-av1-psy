@@ -4799,7 +4799,7 @@ static void tx_type_search(PictureControlSet *pcs, ModeDecisionContext *ctx, Mod
         }
     }
 
-    if (ssim_level > SSIM_LVL_1) {
+    if (ssim_level < SSIM_LVL_1) {
         const uint64_t ssd_cost_threshold       = (uint64_t)(cost_threshold_factor * best_cost_tx_search);
         uint64_t       best_ssim_cost_tx_search = (uint64_t)~0;
         for (int i = 0; i < candidate_num; ++i) {
@@ -4853,7 +4853,7 @@ static void tx_type_search(PictureControlSet *pcs, ModeDecisionContext *ctx, Mod
     cand_bf->cand->transform_type[ctx->txb_itr] = best_tx_type;
     // update with best_tx_type data
     (*y_coeff_bits) += y_txb_coeff_bits_txt[best_tx_type];
-    if (ssim_level == SSIM_LVL_1) {
+    if (ssim_level < SSIM_LVL_1) {
         EbPictureBufferDesc *recon_ptr      = (best_tx_type == DCT_DCT) ? cand_bf->recon : ctx->recon_ptr[best_tx_type];
         uint64_t             ssim_pred_dist = svt_spatial_full_distortion_ssim_kernel(input_pic->buffer_y,
                                                                           input_txb_origin_index,
@@ -4878,7 +4878,7 @@ static void tx_type_search(PictureControlSet *pcs, ModeDecisionContext *ctx, Mod
 
         y_full_distortion[DIST_SSIM][DIST_CALC_PREDICTION] += ssim_pred_dist;
         y_full_distortion[DIST_SSIM][DIST_CALC_RESIDUAL] += ssim_residual_dist;
-    } else if (ssim_level == SSIM_LVL_3) {
+    } else if (ssim_level < SSIM_LVL_1) {
         uint64_t ssim_pred_dist = svt_spatial_full_distortion_ssim_kernel(input_pic->buffer_y,
                                                                           input_txb_origin_index,
                                                                           input_pic->stride_y,
@@ -4893,7 +4893,7 @@ static void tx_type_search(PictureControlSet *pcs, ModeDecisionContext *ctx, Mod
         y_full_distortion[DIST_SSIM][DIST_CALC_RESIDUAL] +=
             txb_full_distortion_txt[DIST_SSIM][best_tx_type][DIST_CALC_RESIDUAL];
         y_full_distortion[DIST_SSIM][DIST_CALC_PREDICTION] += ssim_pred_dist;
-    } else if (ssim_level == SSIM_LVL_2) {
+    } else if (ssim_level < SSIM_LVL_1) {
         // it doesn't need to update y_full_distortion[DIST_SSIM] since ssim is only used to select best tx type
     }
 
@@ -5556,7 +5556,7 @@ static void perform_dct_dct_tx(PictureControlSet *pcs, ModeDecisionContext *ctx,
                                               pcs->ppcs->aligned_height - (ctx->sb_origin_y + tx_org_y));
         EbSpatialFullDistType spatial_full_dist_type_fun = ctx->hbd_md ? svt_full_distortion_kernel16_bits
                                                                        : svt_spatial_full_distortion_kernel;
-        if (ssim_level == SSIM_LVL_1 || ssim_level == SSIM_LVL_3) {
+        if (ssim_level < SSIM_LVL_1) {
             y_full_distortion[DIST_SSIM][DIST_CALC_PREDICTION] = svt_spatial_full_distortion_ssim_kernel(
                 input_pic->buffer_y,
                 input_txb_origin_index,
