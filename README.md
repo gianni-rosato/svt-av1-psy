@@ -87,6 +87,14 @@ We are always continuously improving SVT-AV1-PSY, and we always recommend using 
 
 For Linux, macOS, & Windows build instructions, see the [PSY Development](Docs/PSY-Development.md) page.
 
+# Branching Strategy
+
+The `master` branch contains stable, well-tested changes that are safe for widespread use by the community. We generally recommend choosing this branch.
+
+The `testing` branch contains beta-level changes that, although they have been found to generally be safe, may have unexpected effects on encode quality. We only recommend this branch for power users who want to help test svt-av1-psy and provide feedback on upcoming features.
+
+Any other branches should be assumed to be WIP feature branches. These are often pre-alpha-level experiments. We recommend avoiding these unless you are actively developing on them. These branches will eventually be merged into `testing` and then `master` if found to be successful, or abandoned if found to be unsuccessful.
+
 # Getting Involved
 
 For more information on SVT-AV1-PSY and this project's mission, see the [PSY Development](Docs/PSY-Development.md) page.
