@@ -113,7 +113,7 @@ Linux (GCC):
         EXTRA_CMAKE_FLAGS: -DENABLE_AVX512=ON
       - CC: aarch64-linux-gnu-gcc
         CXX: aarch64-linux-gnu-g++
-        EXTRA_CMAKE_FLAGS: -DCMAKE_TOOLCHAIN_FILE=$CI_PROJECT_DIR/aarch64-linux-gnu.cmake
+        EXTRA_CMAKE_FLAGS: -DCMAKE_TOOLCHAIN_FILE=$CI_PROJECT_DIR/cmake/toolchains/aarch64_toolchain.cmake
       - CC: powerpc64le-linux-gnu-gcc
         CXX: powerpc64le-linux-gnu-g++
         EXTRA_CMAKE_FLAGS: -DCMAKE_TOOLCHAIN_FILE=$CI_PROJECT_DIR/powerpc64le-linux-gnu.cmake -DCROSS=powerpc64le-linux-gnu-
@@ -122,10 +122,6 @@ Linux (GCC):
   before_script:
     - |
       case $CC in
-      aarch64-linux-gnu-gcc)
-        curl -Ls "https://aomedia.googlesource.com/aom/+/refs/heads/main/build/cmake/toolchains/arm64-linux-gcc.cmake?format=TEXT" |
-          base64 -d > aarch64-linux-gnu.cmake
-        ;;
       powerpc64le-linux-gnu-gcc)
         curl -Ls "https://aomedia.googlesource.com/aom/+/refs/heads/main/build/cmake/toolchains/ppc-linux-gcc.cmake?format=TEXT" |
           base64 -d > powerpc64le-linux-gnu.cmake
