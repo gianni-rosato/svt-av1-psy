@@ -8,10 +8,10 @@ Before building, please consider **enabling** link-time optimizations (LTO), whi
 - __Build Requirements__
   - Visual Studio* 2017 (download [here](https://www.visualstudio.com/vs/older-downloads/)) or 2019 (download [here](https://visualstudio.microsoft.com/downloads/))
   - CMake 3.16 or later (download [here](https://github.com/Kitware/CMake/releases/download/v3.24.2/cmake-3.24.2-windows-x86_64.msi))
-  - YASM Assembler version 1.2.0 or later
-    - Download the yasm exe from the following [link](http://www.tortall.net/projects/yasm/releases/yasm-1.3.0-win64.exe)
-    - Rename yasm-*-win64.exe to yasm.exe
-    - Copy yasm.exe into a location that is in the `PATH` environment variable
+  - NASM Assembler version 2.14 or later
+    - Download the nasm exe from the following [link](https://www.nasm.us/pub/nasm/releasebuilds/2.16.03/win64/nasm-2.16.03-win64.zip)
+    - Extract the archive
+    - Copy nasm.exe into a location that is in the `PATH` environment variable
 
 - __Build Instructions__
   - Build the project by following the steps below
@@ -37,7 +37,7 @@ Note - a Dockerfile is provided to build the encoder into a tiny Alpine Linux Do
 - __Build Requirements__
   - GCC 5.4.0 or later
   - CMake 3.16 or later
-  - YASM Assembler version 1.2.0 or later
+  - NASM Assembler version 2.14 or later
 
 - __Build Instructions__
   - `cd Build/linux`
