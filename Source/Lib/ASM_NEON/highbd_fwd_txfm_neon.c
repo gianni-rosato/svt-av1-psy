@@ -3659,7 +3659,10 @@ static INLINE void int16_array_with_stride_to_int32_array_without_stride(const i
                                                                          int32_t *output, int txfm1d_size) {
     int r, c;
     for (r = 0; r < txfm1d_size; r++) {
-        for (c = 0; c < txfm1d_size; c++) { output[r * txfm1d_size + c] = (int32_t)input[r * stride + c]; }
+        for (c = 0; c < txfm1d_size; c += 4) {
+            const int32x4_t value = vmovl_s16(vld1_s16(input + r * stride + c));
+            vst1q_s32(output + r * txfm1d_size + c, value);
+        }
     }
 }
 

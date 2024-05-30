@@ -1324,6 +1324,9 @@ extern "C" {
     void svt_aom_v_predictor_64x32_neon(uint8_t *dst, ptrdiff_t stride, const uint8_t *above,const uint8_t *left);
     void svt_aom_v_predictor_64x64_neon(uint8_t *dst, ptrdiff_t stride, const uint8_t *above,const uint8_t *left);
 
+    void svt_aom_copy_rect8_8bit_to_16bit_neon(uint16_t *dst, int32_t dstride, const uint8_t *src, int32_t sstride,
+                                               int32_t v, int32_t h);
+
     void svt_aom_h_predictor_4x4_neon(uint8_t *dst, ptrdiff_t stride, const uint8_t *above,const uint8_t *left);
     void svt_aom_h_predictor_4x8_neon(uint8_t *dst, ptrdiff_t stride, const uint8_t *above,const uint8_t *left);
     void svt_aom_h_predictor_4x16_neon(uint8_t *dst, ptrdiff_t stride, const uint8_t *above,const uint8_t *left);

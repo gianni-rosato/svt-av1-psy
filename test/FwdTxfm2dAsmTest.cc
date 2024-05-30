@@ -207,6 +207,19 @@ static const FwdTxfm2dFunc fwd_txfm_2d_N4_asm512_func[TX_SIZES_ALL] = {
 
 #ifdef ARCH_AARCH64
 
+static const FwdTxfm2dFunc fwd_txfm_2d_neon_func[TX_SIZES_ALL] = {
+    svt_av1_fwd_txfm2d_4x4_neon,   svt_av1_fwd_txfm2d_8x8_neon,
+    svt_av1_fwd_txfm2d_16x16_neon, svt_av1_fwd_txfm2d_32x32_neon,
+    svt_av1_fwd_txfm2d_64x64_neon, svt_av1_fwd_txfm2d_4x8_neon,
+    svt_av1_fwd_txfm2d_8x4_neon,   svt_av1_fwd_txfm2d_8x16_neon,
+    svt_av1_fwd_txfm2d_16x8_neon,  svt_av1_fwd_txfm2d_16x32_neon,
+    svt_av1_fwd_txfm2d_32x16_neon, svt_av1_fwd_txfm2d_32x64_neon,
+    svt_av1_fwd_txfm2d_64x32_neon, svt_av1_fwd_txfm2d_4x16_neon,
+    svt_av1_fwd_txfm2d_16x4_neon,  svt_av1_fwd_txfm2d_8x32_neon,
+    svt_av1_fwd_txfm2d_32x8_neon,  svt_av1_fwd_txfm2d_16x64_neon,
+    svt_av1_fwd_txfm2d_64x16_neon,
+};
+
 static const FwdTxfm2dFunc fwd_txfm_2d_N4_neon_func[TX_SIZES_ALL] = {
     NULL,
     NULL,
@@ -409,6 +422,20 @@ class FwdTxfm2dAsmTest : public ::testing::TestWithParam<FwdTxfm2dAsmParam> {
 #endif /* ARCH_X86_64 */
 
 #ifdef ARCH_AARCH64
+
+    void run_match_test_neon() {
+        FwdTxfm2dFunc ref_func = fwd_txfm_2d_c_func[tx_size_];
+        FwdTxfm2dFunc test_func = fwd_txfm_2d_neon_func[tx_size_];
+        execute_test(test_func, ref_func, DEFAULT_SHAPE);
+    }
+
+    void speed_test_neon() {
+        FwdTxfm2dFunc ref_func = fwd_txfm_2d_c_func[tx_size_];
+        FwdTxfm2dFunc test_func = fwd_txfm_2d_neon_func[tx_size_];
+        run_speed_test("C    AND NEON", test_func, ref_func);
+        run_speed_test(
+            "NEON AND N4  ", fwd_txfm_2d_N4_neon_func[tx_size_], test_func);
+    }
 
     void run_match_test_neon_N4() {
         FwdTxfm2dFunc test_func_neon = fwd_txfm_2d_N4_neon_func[tx_size_];
@@ -649,8 +676,16 @@ TEST_P(FwdTxfm2dAsmTest, DISABLED_speed_test_512) {
 
 #ifdef ARCH_AARCH64
 
+TEST_P(FwdTxfm2dAsmTest, match_test_neon) {
+    run_match_test_neon();
+}
+
 TEST_P(FwdTxfm2dAsmTest, match_test_neon_N4) {
     run_match_test_neon_N4();
+}
+
+TEST_P(FwdTxfm2dAsmTest, DISABLED_speed_test_neon) {
+    speed_test_neon();
 }
 
 #endif /* ARCH_AARCH64 */

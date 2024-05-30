@@ -142,7 +142,7 @@ TEST(AdaptiveScanTest, scan_tables_test) {
 }
 
 using svt_av1_test_tool::SVTRandom;
-TEST(CopyMiMapGrid, avx2) {
+TEST(CopyMiMapGrid, TestCopyGridMap) {
     SVTRandom rnd(0, (1 << 10) - 1);
     const int max_size = 100;
     ModeInfo *mi_grid_ref[max_size * max_size];
@@ -159,7 +159,14 @@ TEST(CopyMiMapGrid, avx2) {
         mi_grid_ref[0] = mi_grid_tst[0] = (ModeInfo *)((uint64_t)rnd.random());
 
         svt_copy_mi_map_grid_c(mi_grid_ref, stride, txb_height, txb_width);
+
+#if defined(ARCH_X86_64)
         svt_copy_mi_map_grid_avx2(mi_grid_tst, stride, txb_height, txb_width);
+#endif  // defined(ARCH_X86_64)
+
+#if defined(ARCH_AARCH64)
+        svt_copy_mi_map_grid_neon(mi_grid_tst, stride, txb_height, txb_width);
+#endif  // defined(ARCH_AARCH64)
 
         EXPECT_TRUE(memcmp(mi_grid_ref, mi_grid_tst, sizeof(mi_grid_ref)) == 0);
     }
@@ -174,7 +181,14 @@ TEST(CopyMiMapGrid, avx2) {
         mi_grid_ref[0] = mi_grid_tst[0] = (ModeInfo *)((uint64_t)rnd.random());
 
         svt_copy_mi_map_grid_c(mi_grid_ref, stride, cols, cols);
+
+#if defined(ARCH_X86_64)
         svt_copy_mi_map_grid_avx2(mi_grid_tst, stride, cols, cols);
+#endif  // defined(ARCH_X86_64)
+
+#if defined(ARCH_AARCH64)
+        svt_copy_mi_map_grid_neon(mi_grid_tst, stride, cols, cols);
+#endif  // defined(ARCH_AARCH64)
 
         EXPECT_TRUE(memcmp(mi_grid_ref, mi_grid_tst, sizeof(mi_grid_ref)) == 0);
     }

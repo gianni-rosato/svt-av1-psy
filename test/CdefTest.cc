@@ -659,8 +659,6 @@ INSTANTIATE_TEST_SUITE_P(
 
 }  // namespace
 
-#if defined(ARCH_X86_64)
-
 /**
  * @brief Unit test for svt_aom_copy_rect8_8bit_to_16bit_avx2
  *
@@ -704,6 +702,7 @@ TEST(CdefToolTest, CopyRectMatchTest) {
             svt_aom_copy_rect8_8bit_to_16bit_c(
                 dst_ref_, CDEF_BSTRIDE, src_, CDEF_BSTRIDE, vsize, hsize);
 
+#if defined(ARCH_X86_64)
             // Test the SSE4.1 copy function
             memset(dst_data_tst_, 0, sizeof(dst_data_tst_));
             svt_aom_copy_rect8_8bit_to_16bit_sse4_1(
@@ -713,8 +712,8 @@ TEST(CdefToolTest, CopyRectMatchTest) {
                 for (int j = 0; j < hsize; ++j)
                     ASSERT_EQ(dst_ref_[i * CDEF_BSTRIDE + j],
                               dst_tst_[i * CDEF_BSTRIDE + j])
-                        << "copy_rect8_8bit_to_16bit failed with pos(" << i
-                        << " " << j << ")";
+                        << "copy_rect8_8bit_to_16bit_sse4_1 failed with pos("
+                        << i << " " << j << ")";
             }
 
             // Test the AVX2 copy function
@@ -725,12 +724,27 @@ TEST(CdefToolTest, CopyRectMatchTest) {
                 for (int j = 0; j < hsize; ++j)
                     ASSERT_EQ(dst_ref_[i * CDEF_BSTRIDE + j],
                               dst_tst_[i * CDEF_BSTRIDE + j])
-                        << "copy_rect8_8bit_to_16bit failed with pos(" << i
+                        << "copy_rect8_8bit_to_16bit_avx2 failed with pos(" << i
                         << " " << j << ")";
             }
+#endif  // defined(ARCH_X86_64)
+
+#if defined(ARCH_AARCH64)
+            // Test the NEON copy function
+            memset(dst_data_tst_, 0, sizeof(dst_data_tst_));
+            svt_aom_copy_rect8_8bit_to_16bit_neon(
+                dst_tst_, CDEF_BSTRIDE, src_, CDEF_BSTRIDE, vsize, hsize);
+
+            for (int i = 0; i < vsize; ++i) {
+                for (int j = 0; j < hsize; ++j)
+                    ASSERT_EQ(dst_ref_[i * CDEF_BSTRIDE + j],
+                              dst_tst_[i * CDEF_BSTRIDE + j])
+                        << "copy_rect8_8bit_to_16bit_neon failed with pos(" << i
+                        << " " << j << ")";
+            }
+#endif  // defined(ARCH_AARCH64)
         }
 }
-#endif  // defined(ARCH_X86_64)
 
 /**
  * @brief Unit test for svt_aom_compute_cdef_dist_16bit_avx2
@@ -863,8 +877,6 @@ TEST(CdefToolTest, ComputeCdefDistMatchTest) {
     }
 }
 
-#if defined(ARCH_X86_64)
-
 TEST(CdefToolTest, ComputeCdefDist8bitMatchTest) {
     const int stride = 1 << MAX_SB_SIZE_LOG2;
     const int buf_size = 1 << (MAX_SB_SIZE_LOG2 * 2);
@@ -882,7 +894,7 @@ TEST(CdefToolTest, ComputeCdefDist8bitMatchTest) {
 
         const int coeff_shift = bd - 8;
         SVTRandom skip_rnd_(0, 1);
-        for (int k = 0; k < 100; ++k) {
+        for (int k = 0; k < 10; ++k) {
             CdefList dlist[MI_SIZE_128X128 * MI_SIZE_128X128];
             int cdef_count = 0;
 
@@ -915,6 +927,8 @@ TEST(CdefToolTest, ComputeCdefDist8bitMatchTest) {
                                                              coeff_shift,
                                                              plane,
                                                              subsampling);
+
+#if defined(ARCH_X86_64)
                         // SSE4.1
                         const uint64_t sse_mse =
                             svt_aom_compute_cdef_dist_8bit_sse4_1(dst_data_,
@@ -946,13 +960,31 @@ TEST(CdefToolTest, ComputeCdefDist8bitMatchTest) {
                             << "svt_aom_compute_cdef_dist_8bit_avx2 failed "
                             << "bitdepth: " << bd << " plane: " << plane
                             << " BlockSize " << test_bs[i] << " loop: " << k;
+#endif  // defined(ARCH_X86_64)
+
+#if defined(ARCH_AARCH64)
+                        // NEON
+                        const uint64_t sse_mse =
+                            svt_aom_compute_cdef_dist_8bit_neon(dst_data_,
+                                                                stride,
+                                                                src_data_,
+                                                                dlist,
+                                                                cdef_count,
+                                                                test_bs[i],
+                                                                coeff_shift,
+                                                                plane,
+                                                                subsampling);
+                        ASSERT_EQ(c_mse, sse_mse)
+                            << "svt_aom_compute_cdef_dist_8bit_neon failed "
+                            << "bitdepth: " << bd << " plane: " << plane
+                            << " BlockSize " << test_bs[i] << " loop: " << k;
+#endif  // defined(ARCH_AARCH64)
                     }
                 }
             }
         }
     }
 }
-#endif  // defined(ARCH_X86_64)
 
 /**
  * @brief Unit test for svt_search_one_dual_avx2

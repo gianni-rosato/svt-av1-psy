@@ -688,3 +688,32 @@ void svt_aom_downsample_2d_neon(uint8_t *input_samples, // input parameter, inpu
             input_samples, input_stride, input_area_width, input_area_height, decim_samples, decim_stride, decim_step);
     }
 }
+
+void svt_copy_mi_map_grid_neon(ModeInfo **mi_grid_ptr, uint32_t mi_stride, uint8_t num_rows, uint8_t num_cols) {
+    ModeInfo *target = mi_grid_ptr[0];
+    if (num_cols == 1) {
+        for (uint8_t mi_y = 0; mi_y < num_rows; mi_y++) {
+            const int32_t mi_idx = 0 + mi_y * mi_stride;
+            // width is 1 block (corresponds to block width 4)
+            mi_grid_ptr[mi_idx] = target;
+        }
+    } else if (num_cols == 2) {
+        const uint64x2_t target_sse = vdupq_n_u64((uint64_t)target);
+        for (uint8_t mi_y = 0; mi_y < num_rows; mi_y++) {
+            const int32_t mi_idx = 0 + mi_y * mi_stride;
+            // width is 2 blocks, so can copy 2 at once (corresponds to block width 8)
+            vst1q_u64((uint64_t *)&mi_grid_ptr[mi_idx], target_sse);
+        }
+    } else {
+        const uint64x2_t target_avx = vdupq_n_u64((uint64_t)target);
+        for (uint8_t mi_y = 0; mi_y < num_rows; mi_y++) {
+            for (uint8_t mi_x = 0; mi_x < num_cols; mi_x += 4) {
+                const int32_t mi_idx = mi_x + mi_y * mi_stride;
+                // width is >=4 blocks, so can copy 4 at once; (corresponds to block width >=16).
+                // All blocks >= 16 have widths that are divisible by 16, so it is ok to copy 4 blocks at once
+                vst1q_u64((uint64_t *)&mi_grid_ptr[mi_idx + 0], target_avx);
+                vst1q_u64((uint64_t *)&mi_grid_ptr[mi_idx + 2], target_avx);
+            }
+        }
+    }
+}

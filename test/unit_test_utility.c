@@ -41,8 +41,9 @@
 void svt_buf_random_void(void *const buf, const uint32_t sizeBuf) {
     uint8_t *const buffer = (uint8_t *)buf;
 
-    for (uint32_t i = 0; i < sizeBuf; i++)
+    for (uint32_t i = 0; i < sizeBuf; i++) {
         buffer[i] = (uint8_t)(rand() % 256);
+    }
 }
 
 void svt_buf_random_u8(uint8_t *const buf, const uint32_t sizeBuf) {

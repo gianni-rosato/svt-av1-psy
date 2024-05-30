@@ -152,6 +152,18 @@ static INLINE void array_reverse_transpose_8x8(int16x8_t *in, int16x8_t *res) {
     res[0] = vreinterpretq_s16_s32(vcombine_s32(vget_high_s32(tr1_6), vget_high_s32(tr1_7)));
 }
 
+void svt_aom_copy_rect8_8bit_to_16bit_neon(uint16_t *dst, int32_t dstride, const uint8_t *src, int32_t sstride,
+                                           int32_t v, int32_t h) {
+    int32_t i, j;
+    for (i = 0; i < v; i++) {
+        for (j = 0; j < (h & ~0x7); j += 8) {
+            const uint8x8_t row = vld1_u8(&src[i * sstride + j]);
+            vst1q_u16(&dst[i * dstride + j], vmovl_u8(row));
+        }
+        for (; j < h; j++) { dst[i * dstride + j] = src[i * sstride + j]; }
+    }
+}
+
 uint8_t svt_aom_cdef_find_dir_neon(const uint16_t *img, int32_t stride, int32_t *var, int32_t coeff_shift) {
     int16x8_t       lines[8];
     const int16x8_t const_128 = vdupq_n_s16(128);

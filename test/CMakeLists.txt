@@ -79,6 +79,7 @@ set(arch_neutral_files
     ../third_party/aom_dsp/src/entdec.c)
 
 set(multi_arch_files
+    AdaptiveScanTest.cc
     CdefTest.cc
     FwdTxfm2dAsmTest.cc
     InvTxfm2dAsmTest.cc

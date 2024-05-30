@@ -1351,6 +1351,7 @@ int32_t estimate_noise_fp16_c_wrapper(const uint16_t *src, int width,
     return svt_estimate_noise_fp16_c(
         (const uint8_t *)src, width, height, stride);
 }
+
 int32_t estimate_noise_fp16_neon_wrapper(const uint16_t *src, int width,
                                          int height, int stride, int bd) {
     UNUSED(bd);
