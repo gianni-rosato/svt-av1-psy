@@ -202,7 +202,6 @@ uint64_t svt_spatial_full_distortion_kernel_neon(uint8_t *src, uint32_t src_offs
     }
 }
 
-#if CONFIG_AV1_HIGHBITDEPTH
 static INLINE uint32_t highbd_sse_W8x1_neon(uint16x8_t q2, uint16x8_t q3) {
     uint32_t         sse;
     const uint32_t   sse1 = 0;
@@ -226,12 +225,13 @@ static INLINE uint32_t highbd_sse_W8x1_neon(uint16x8_t q2, uint16x8_t q3) {
     return sse;
 }
 
-int64_t aom_highbd_sse_neon(const uint8_t *a8, int a_stride, const uint8_t *b8, int b_stride, int width, int height) {
+int64_t svt_aom_highbd_sse_neon(const uint8_t *a8, int a_stride, const uint8_t *b8, int b_stride, int width,
+                                int height) {
     static const uint16_t k01234567[8] = {0, 1, 2, 3, 4, 5, 6, 7};
     const uint16x8_t      q0           = vld1q_u16(k01234567);
     int64_t               sse          = 0;
-    uint16_t             *a            = CONVERT_TO_SHORTPTR(a8);
-    uint16_t             *b            = CONVERT_TO_SHORTPTR(b8);
+    uint16_t             *a            = (uint16_t *)a8;
+    uint16_t             *b            = (uint16_t *)b8;
     int                   x, y;
     int                   addinc;
     uint16x4_t            d0, d1, d2, d3;
@@ -464,4 +464,3 @@ int64_t aom_highbd_sse_neon(const uint8_t *a8, int a_stride, const uint8_t *b8, 
     }
     return (int64_t)sse;
 }
-#endif

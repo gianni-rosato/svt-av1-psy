@@ -81,6 +81,7 @@ set(arch_neutral_files
 set(multi_arch_files
     AdaptiveScanTest.cc
     CdefTest.cc
+    CompoundUtilTest.cc
     FwdTxfm2dAsmTest.cc
     InvTxfm2dAsmTest.cc
     PackUnPackTest.cc
@@ -96,7 +97,6 @@ set(multi_arch_files
 
 if(HAVE_X86_PLATFORM)
   set(x86_arch_files
-      CompoundUtilTest.cc
       DeblockTest.cc
       noise_model_test.cc
       highbd_intra_prediction_tests.cc

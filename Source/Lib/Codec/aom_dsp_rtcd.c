@@ -530,7 +530,7 @@ void svt_aom_setup_rtcd_internal(EbCpuFlags flags) {
 #elif defined ARCH_AARCH64
     SET_NEON(hadamard_path, hadamard_path_c, hadamard_path_neon);
     SET_NEON(svt_aom_sse, svt_aom_sse_c, svt_aom_sse_neon);
-    SET_ONLY_C(svt_aom_highbd_sse, svt_aom_highbd_sse_c);
+    SET_NEON(svt_aom_highbd_sse, svt_aom_highbd_sse_c, svt_aom_highbd_sse_neon);
     SET_ONLY_C(svt_av1_wedge_compute_delta_squares, svt_av1_wedge_compute_delta_squares_c);
     SET_NEON(svt_av1_wedge_sign_from_residuals, svt_av1_wedge_sign_from_residuals_c, svt_av1_wedge_sign_from_residuals_neon);
     SET_NEON(svt_compute_cdef_dist_16bit, svt_aom_compute_cdef_dist_c, svt_aom_compute_cdef_dist_16bit_neon);
