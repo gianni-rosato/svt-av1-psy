@@ -553,7 +553,6 @@ class AV1ConvolveTest : public ::testing::TestWithParam<ConvolveParam> {
     Sample *output_tst_;          // aligned address
 };
 
-#ifdef ARCH_X86_64
 ::testing::internal::ParamGenerator<LowbdConvolveParam> BuildParamsLbd(
     int has_subx, int has_suby, lowbd_convolve_func func) {
     return ::testing::Combine(::testing::Values(8),
@@ -689,8 +688,6 @@ TEST_P(AV1LbdJntConvolveTest, DISABLED_SpeedTest) {
     speed_test();
 }
 
-#endif  // ARCH_X86_64
-
 #ifdef ARCH_X86_64
 
 INSTANTIATE_TEST_SUITE_P(ConvolveTest2D_AVX2, AV1LbdJntConvolveTest,
@@ -728,7 +725,17 @@ INSTANTIATE_TEST_SUITE_P(ConvolveTestCOPY_AVX512, AV1LbdJntConvolveTest,
 
 #endif  // ARCH_X86_64
 
-#ifdef ARCH_X86_64
+#ifdef ARCH_AARCH64
+INSTANTIATE_TEST_SUITE_P(ConvolveTest2D_NEON, AV1LbdJntConvolveTest,
+                         BuildParamsLbd(1, 1, svt_av1_jnt_convolve_2d_neon));
+INSTANTIATE_TEST_SUITE_P(ConvolveTestX_NEON, AV1LbdJntConvolveTest,
+                         BuildParamsLbd(1, 0, svt_av1_jnt_convolve_x_neon));
+INSTANTIATE_TEST_SUITE_P(ConvolveTestY_NEON, AV1LbdJntConvolveTest,
+                         BuildParamsLbd(0, 1, svt_av1_jnt_convolve_y_neon));
+INSTANTIATE_TEST_SUITE_P(ConvolveTestCOPY_NEON, AV1LbdJntConvolveTest,
+                         BuildParamsLbd(0, 0,
+                                        svt_av1_jnt_convolve_2d_copy_neon));
+#endif  // ARCH_AARCH64
 
 class AV1LbdSrConvolveTest : public AV1LbdConvolveTest {
   public:
@@ -752,8 +759,6 @@ TEST_P(AV1LbdSrConvolveTest, MatchTest) {
 TEST_P(AV1LbdSrConvolveTest, DISABLED_SpeedTest) {
     speed_test();
 }
-
-#endif  // ARCH_X86_64
 
 #ifdef ARCH_X86_64
 
@@ -789,6 +794,19 @@ INSTANTIATE_TEST_SUITE_P(ConvolveTestCOPY_AVX512, AV1LbdSrConvolveTest,
 #endif
 
 #endif  // ARCH_X86_64
+
+#ifdef ARCH_AARCH64
+
+INSTANTIATE_TEST_SUITE_P(ConvolveTest2D_NEON, AV1LbdSrConvolveTest,
+                         BuildParamsLbd(1, 1, svt_av1_convolve_2d_sr_neon));
+INSTANTIATE_TEST_SUITE_P(ConvolveTestX_NEON, AV1LbdSrConvolveTest,
+                         BuildParamsLbd(1, 0, svt_av1_convolve_x_sr_neon));
+INSTANTIATE_TEST_SUITE_P(ConvolveTestY_NEON, AV1LbdSrConvolveTest,
+                         BuildParamsLbd(0, 1, svt_av1_convolve_y_sr_neon));
+INSTANTIATE_TEST_SUITE_P(ConvolveTestCOPY_NEON, AV1LbdSrConvolveTest,
+                         BuildParamsLbd(0, 0,
+                                        svt_av1_convolve_2d_copy_sr_neon));
+#endif  // ARCH_AARCH64
 
 ::testing::internal::ParamGenerator<HighbdConvolveParam> BuildParamsHbd(
     int has_subx, int has_suby, highbd_convolve_func func) {
