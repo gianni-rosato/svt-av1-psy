@@ -99,8 +99,6 @@ if(HAVE_X86_PLATFORM)
       CompoundUtilTest.cc
       DeblockTest.cc
       noise_model_test.cc
-      blend_a64_mask_1d_test.cc
-      blend_a64_mask_test.cc
       highbd_intra_prediction_tests.cc
       highbd_intra_prediction_tests.h
       EncodeTxbAsmTest.cc
