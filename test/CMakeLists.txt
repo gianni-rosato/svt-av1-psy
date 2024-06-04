@@ -84,6 +84,7 @@ set(multi_arch_files
     CompoundUtilTest.cc
     DeblockTest.cc
     EncodeTxbAsmTest.cc
+    FilterIntraPredTest.cc
     FwdTxfm2dAsmTest.cc
     InvTxfm2dAsmTest.cc
     PackUnPackTest.cc
@@ -107,7 +108,6 @@ if(HAVE_X86_PLATFORM)
       highbd_intra_prediction_tests.cc
       highbd_intra_prediction_tests.h
       FFTTest.cc
-      FilterIntraPredTest.cc
       ForwardtransformTests.cc
       FwdTxfm1dTest.cc
       InvTxfm1dTest.cc
