@@ -221,11 +221,13 @@ class HbdLoopFilterTest
         lpf_ref_(start_ref_, p, blimit, limit, thresh, bd);
     }
 };
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(HbdLoopFilterTest);
 
 TEST_P(HbdLoopFilterTest, MatchTestRandomData) {
     run_test();
 }
 
+#ifdef ARCH_X86_64
 // target and reference functions in different cases
 /* clang-format off */
 const HbdLpfTestParam kHbdLoop8Test6[] = {
@@ -299,4 +301,22 @@ INSTANTIATE_TEST_SUITE_P(SSE2, LbdLoopFilterTest,
                          ::testing::ValuesIn(kLoop8Test6));
 INSTANTIATE_TEST_SUITE_P(SSE2, HbdLoopFilterTest,
                          ::testing::ValuesIn(kHbdLoop8Test6));
+#endif  // ARCH_X86_64
+
+#ifdef ARCH_AARCH64
+const LdbLpfTestParam kLoop8Test6[] = {
+    make_tuple(&svt_aom_lpf_horizontal_4_neon, &svt_aom_lpf_horizontal_4_c, 8),
+    make_tuple(&svt_aom_lpf_vertical_4_neon, &svt_aom_lpf_vertical_4_c, 8),
+    make_tuple(&svt_aom_lpf_horizontal_6_neon, &svt_aom_lpf_horizontal_6_c, 8),
+    make_tuple(&svt_aom_lpf_vertical_6_neon, &svt_aom_lpf_vertical_6_c, 8),
+    make_tuple(&svt_aom_lpf_horizontal_8_neon, &svt_aom_lpf_horizontal_8_c, 8),
+    make_tuple(&svt_aom_lpf_vertical_8_neon, &svt_aom_lpf_vertical_8_c, 8),
+    make_tuple(&svt_aom_lpf_horizontal_14_neon, &svt_aom_lpf_horizontal_14_c,
+               8),
+    make_tuple(&svt_aom_lpf_vertical_14_neon, &svt_aom_lpf_vertical_14_c, 8),
+};
+
+INSTANTIATE_TEST_SUITE_P(NEON, LbdLoopFilterTest,
+                         ::testing::ValuesIn(kLoop8Test6));
+#endif  // ARCH_AARCH64
 }  // namespace
