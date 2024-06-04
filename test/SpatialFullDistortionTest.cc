@@ -270,6 +270,14 @@ INSTANTIATE_TEST_SUITE_P(
 #endif
 #endif  // ARCH_X86_64
 
+#ifdef ARCH_AARCH64
+INSTANTIATE_TEST_SUITE_P(
+    NEON, SpatialFullDistortionKernelFuncTest,
+    ::testing::Combine(
+        ::testing::ValuesIn(TEST_AREA_SIZES),
+        ::testing::Values(svt_spatial_full_distortion_kernel_neon)));
+#endif  // ARCH_AARCH64
+
 class FullDistortionKernel16BitsFuncTest
     : public SpatialFullDistortionFuncTestBase,
       public ::testing::WithParamInterface<SpatialKernelTestParam> {
