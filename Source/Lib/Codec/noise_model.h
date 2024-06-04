@@ -21,7 +21,7 @@ extern "C" {
 #include "pic_buffer_desc.h"
 #include "object.h"
 
-#define DENOISING_BlockSize 32
+#define DENOISING_BlockSize 32 /* Unused in SVT-AV1-PSY */
 
 /*!\brief Wrapper of data required to represent linear system of eqns and soln.
      */
