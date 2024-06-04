@@ -83,6 +83,7 @@ set(multi_arch_files
     CdefTest.cc
     CompoundUtilTest.cc
     DeblockTest.cc
+    EncodeTxbAsmTest.cc
     FwdTxfm2dAsmTest.cc
     InvTxfm2dAsmTest.cc
     PackUnPackTest.cc
@@ -105,7 +106,6 @@ if(HAVE_X86_PLATFORM)
       noise_model_test.cc
       highbd_intra_prediction_tests.cc
       highbd_intra_prediction_tests.h
-      EncodeTxbAsmTest.cc
       FFTTest.cc
       FilterIntraPredTest.cc
       ForwardtransformTests.cc
