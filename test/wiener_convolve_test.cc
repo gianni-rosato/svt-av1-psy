@@ -83,19 +83,6 @@ static const BlkSize test_block_size_table[] = {
 
 static const int test_tap_table[] = {7, 5, 3};
 
-static const WienerConvolveFunc wiener_convolve_func_table[] = {
-    svt_av1_wiener_convolve_add_src_sse2,
-    svt_av1_wiener_convolve_add_src_avx2,
-#if EN_AVX512_SUPPORT
-    svt_av1_wiener_convolve_add_src_avx512
-#endif
-};
-
-static const HbdWienerConvolveFunc hbd_wiener_convolve_func_table[] = {
-    svt_av1_highbd_wiener_convolve_add_src_ssse3,
-    svt_av1_highbd_wiener_convolve_add_src_avx2,
-};
-
 template <typename Sample, typename FuncType, typename ParamType>
 class AV1WienerConvolveTest : public ::testing::TestWithParam<ParamType> {
   public:
@@ -474,9 +461,24 @@ TEST_P(AV1WienerConvolveLbdTest, DISABLED_speed_test) {
 }
 
 INSTANTIATE_TEST_SUITE_P(
-    AV1, AV1WienerConvolveLbdTest,
-    ::testing::Combine(::testing::ValuesIn(test_block_size_table),
-                       ::testing::ValuesIn(wiener_convolve_func_table)));
+    SSE2, AV1WienerConvolveLbdTest,
+    ::testing::Combine(
+        ::testing::ValuesIn(test_block_size_table),
+        ::testing::Values(svt_av1_wiener_convolve_add_src_sse2)));
+
+INSTANTIATE_TEST_SUITE_P(
+    AVX2, AV1WienerConvolveLbdTest,
+    ::testing::Combine(
+        ::testing::ValuesIn(test_block_size_table),
+        ::testing::Values(svt_av1_wiener_convolve_add_src_avx2)));
+
+#if EN_AVX512_SUPPORT
+INSTANTIATE_TEST_SUITE_P(
+    AVX512, AV1WienerConvolveLbdTest,
+    ::testing::Combine(
+        ::testing::ValuesIn(test_block_size_table),
+        ::testing::Values(svt_av1_wiener_convolve_add_src_avx512)));
+#endif
 
 TEST_P(AV1WienerConvolveHbdTest, random_test) {
     run_random_test(1000);
@@ -487,9 +489,17 @@ TEST_P(AV1WienerConvolveHbdTest, DISABLED_speed_test) {
 }
 
 INSTANTIATE_TEST_SUITE_P(
-    AV1, AV1WienerConvolveHbdTest,
-    ::testing::Combine(::testing::ValuesIn(test_block_size_table),
-                       ::testing::ValuesIn(hbd_wiener_convolve_func_table),
-                       testing::Values(8, 10, 12)));
+    SSSE3, AV1WienerConvolveHbdTest,
+    ::testing::Combine(
+        ::testing::ValuesIn(test_block_size_table),
+        ::testing::Values(svt_av1_highbd_wiener_convolve_add_src_ssse3),
+        testing::Values(8, 10, 12)));
+
+INSTANTIATE_TEST_SUITE_P(
+    AVX2, AV1WienerConvolveHbdTest,
+    ::testing::Combine(
+        ::testing::ValuesIn(test_block_size_table),
+        ::testing::Values(svt_av1_highbd_wiener_convolve_add_src_avx2),
+        testing::Values(8, 10, 12)));
 
 }  // namespace
