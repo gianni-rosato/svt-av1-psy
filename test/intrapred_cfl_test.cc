@@ -61,15 +61,8 @@ using CFL_PRED_LBD = void (*)(const int16_t *pred_buf_q3, uint8_t *pred,
  * BitDepth: 8bit and 10bit
  */
 template <typename Sample, typename FuncType>
-class CflPredTest {
+class CflPredTest : public ::testing::TestWithParam<FuncType> {
   public:
-    CflPredTest() {
-        bd_ = 8;
-        ref_func_ = nullptr;
-        tst_func_ = nullptr;
-        common_init();
-    }
-
     virtual ~CflPredTest() {
     }
 
@@ -156,30 +149,34 @@ class LbdCflPredTest : public CflPredTest<uint8_t, CFL_PRED_LBD> {
     LbdCflPredTest() {
         bd_ = 8;
         ref_func_ = svt_cfl_predict_lbd_c;
-        tst_func_ = svt_cfl_predict_lbd_avx2;
+        tst_func_ = GetParam();
         common_init();
     }
 };
+
+TEST_P(LbdCflPredTest, MatchTest) {
+    RunAllTest();
+}
+
+INSTANTIATE_TEST_SUITE_P(AVX2, LbdCflPredTest,
+                         ::testing::Values(svt_cfl_predict_lbd_avx2));
 
 class HbdCflPredTest : public CflPredTest<uint16_t, CFL_PRED_HBD> {
   public:
     HbdCflPredTest() {
         bd_ = 10;
         ref_func_ = svt_cfl_predict_hbd_c;
-        tst_func_ = svt_cfl_predict_hbd_avx2;
+        tst_func_ = GetParam();
         common_init();
     }
 };
 
-#define TEST_CLASS(tc_name, type_name)     \
-    TEST(tc_name, match_test) {            \
-        type_name *test = new type_name(); \
-        test->RunAllTest();                \
-        delete test;                       \
-    }
+TEST_P(HbdCflPredTest, MatchTest) {
+    RunAllTest();
+}
 
-TEST_CLASS(LbdCflPredMatchTest, LbdCflPredTest)
-TEST_CLASS(HbdCflPredMatchTest, HbdCflPredTest)
+INSTANTIATE_TEST_SUITE_P(AVX2, HbdCflPredTest,
+                         ::testing::Values(svt_cfl_predict_hbd_avx2));
 
 typedef void (*AomUpsampledPredFunc)(MacroBlockD *,
                                      const struct AV1Common *const, int, int,
@@ -272,7 +269,7 @@ TEST_P(AomUpsampledPredTest, MatchTest) {
 }
 
 INSTANTIATE_TEST_SUITE_P(
-    UPSAMPLED_PRED_TEST, AomUpsampledPredTest,
+    SSE2, AomUpsampledPredTest,
     ::testing::Combine(
         ::testing::Range(BLOCK_4X4, BlockSizeS_ALL),
         ::testing::Values(svt_aom_upsampled_pred_sse2),
@@ -340,7 +337,7 @@ TEST_P(CflLumaSubsamplingLbdTest, MatchTest) {
 }
 
 INSTANTIATE_TEST_SUITE_P(
-    CFL_LUMA_SUBSAMPLING_LBD, CflLumaSubsamplingLbdTest,
+    AVX2, CflLumaSubsamplingLbdTest,
     ::testing::Combine(
         ::testing::Range(BLOCK_4X4, BlockSizeS_ALL),
         ::testing::Values(svt_cfl_luma_subsampling_420_lbd_avx2)));
@@ -405,7 +402,7 @@ TEST_P(CflLumaSubsamplingHbdTest, MatchTest) {
 }
 
 INSTANTIATE_TEST_SUITE_P(
-    CFL_LUMA_SUBSAMPLING_HBD, CflLumaSubsamplingHbdTest,
+    AVX2, CflLumaSubsamplingHbdTest,
     ::testing::Combine(
         ::testing::Range(BLOCK_4X4, BlockSizeS_ALL),
         ::testing::Values(svt_cfl_luma_subsampling_420_hbd_avx2)));
