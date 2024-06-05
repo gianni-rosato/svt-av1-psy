@@ -162,6 +162,7 @@ class HighbdIntraPredTest
         tst_func_(dst_tst_, stride_, above_row_, left_col_, bit_depth);
     }
 };
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(HighbdIntraPredTest);
 
 /** setup_test_env is implemented in test/TestEnv.c */
 extern "C" void setup_test_env();
@@ -193,6 +194,7 @@ TEST_P(LowbdIntraPredTest, match_test) {
                height,                                                        \
                10)
 
+#ifdef ARCH_X86_64
 const HBD_PARAMS HighbdIntraPredTestVectorAsmSSE2[] = {
     hbd_entry(dc_128, 4, 16, sse2),  hbd_entry(dc_128, 4, 4, sse2),
     hbd_entry(dc_128, 4, 8, sse2),   hbd_entry(dc_128, 8, 16, sse2),
@@ -311,6 +313,7 @@ INSTANTIATE_TEST_SUITE_P(AVX2, HighbdIntraPredTest,
 INSTANTIATE_TEST_SUITE_P(
     SSSE3, HighbdIntraPredTest,
     ::testing::ValuesIn(HighbdIntraPredTestVectorAsmSSSE3));
+#endif  // ARCH_X86_64
 
 // ---------------------------------------------------------------------------
 // Low Bit Depth Tests
@@ -321,6 +324,7 @@ INSTANTIATE_TEST_SUITE_P(
                height,                                                 \
                8)
 
+#ifdef ARCH_X86_64
 const LBD_PARAMS LowbdIntraPredTestVectorAsmSSE2[] = {
     lbd_entry(dc, 4, 4, sse2),        lbd_entry(dc, 8, 8, sse2),
     lbd_entry(dc, 16, 16, sse2),      lbd_entry(dc, 16, 32, sse2),
@@ -439,4 +443,110 @@ INSTANTIATE_TEST_SUITE_P(AVX2, LowbdIntraPredTest,
 
 INSTANTIATE_TEST_SUITE_P(SSSE3, LowbdIntraPredTest,
                          ::testing::ValuesIn(LowbdIntraPredTestVectorAsmSSSE3));
+#endif  // ARCH_X86_64
+
+#ifdef ARCH_AARCH64
+
+const LBD_PARAMS LowbdIntraPredTestVectorAsmNEON[] = {
+    lbd_entry(dc, 4, 4, neon),         lbd_entry(dc, 4, 8, neon),
+    lbd_entry(dc, 4, 16, neon),        lbd_entry(dc, 8, 4, neon),
+    lbd_entry(dc, 8, 8, neon),         lbd_entry(dc, 8, 16, neon),
+    lbd_entry(dc, 8, 32, neon),        lbd_entry(dc, 16, 4, neon),
+    lbd_entry(dc, 16, 8, neon),        lbd_entry(dc, 16, 16, neon),
+    lbd_entry(dc, 16, 32, neon),       lbd_entry(dc, 16, 64, neon),
+    lbd_entry(dc, 32, 8, neon),        lbd_entry(dc, 32, 16, neon),
+    lbd_entry(dc, 32, 32, neon),       lbd_entry(dc, 32, 64, neon),
+    lbd_entry(dc, 64, 16, neon),       lbd_entry(dc, 64, 32, neon),
+    lbd_entry(dc, 64, 64, neon),       lbd_entry(dc_top, 4, 4, neon),
+    lbd_entry(dc_top, 4, 8, neon),     lbd_entry(dc_top, 4, 16, neon),
+    lbd_entry(dc_top, 8, 4, neon),     lbd_entry(dc_top, 8, 8, neon),
+    lbd_entry(dc_top, 8, 16, neon),    lbd_entry(dc_top, 8, 32, neon),
+    lbd_entry(dc_top, 16, 4, neon),    lbd_entry(dc_top, 16, 8, neon),
+    lbd_entry(dc_top, 16, 16, neon),   lbd_entry(dc_top, 16, 32, neon),
+    lbd_entry(dc_top, 16, 64, neon),   lbd_entry(dc_top, 32, 8, neon),
+    lbd_entry(dc_top, 32, 16, neon),   lbd_entry(dc_top, 32, 32, neon),
+    lbd_entry(dc_top, 32, 64, neon),   lbd_entry(dc_top, 64, 16, neon),
+    lbd_entry(dc_top, 64, 32, neon),   lbd_entry(dc_top, 64, 64, neon),
+    lbd_entry(dc_left, 4, 4, neon),    lbd_entry(dc_left, 4, 8, neon),
+    lbd_entry(dc_left, 4, 16, neon),   lbd_entry(dc_left, 8, 4, neon),
+    lbd_entry(dc_left, 8, 8, neon),    lbd_entry(dc_left, 8, 16, neon),
+    lbd_entry(dc_left, 8, 32, neon),   lbd_entry(dc_left, 16, 4, neon),
+    lbd_entry(dc_left, 16, 8, neon),   lbd_entry(dc_left, 16, 16, neon),
+    lbd_entry(dc_left, 16, 32, neon),  lbd_entry(dc_left, 16, 64, neon),
+    lbd_entry(dc_left, 32, 8, neon),   lbd_entry(dc_left, 32, 16, neon),
+    lbd_entry(dc_left, 32, 32, neon),  lbd_entry(dc_left, 32, 64, neon),
+    lbd_entry(dc_left, 64, 16, neon),  lbd_entry(dc_left, 64, 32, neon),
+    lbd_entry(dc_left, 64, 64, neon),  lbd_entry(dc_128, 4, 4, neon),
+    lbd_entry(dc_128, 4, 8, neon),     lbd_entry(dc_128, 4, 16, neon),
+    lbd_entry(dc_128, 8, 4, neon),     lbd_entry(dc_128, 8, 8, neon),
+    lbd_entry(dc_128, 8, 16, neon),    lbd_entry(dc_128, 8, 32, neon),
+    lbd_entry(dc_128, 16, 4, neon),    lbd_entry(dc_128, 16, 8, neon),
+    lbd_entry(dc_128, 16, 16, neon),   lbd_entry(dc_128, 16, 32, neon),
+    lbd_entry(dc_128, 16, 64, neon),   lbd_entry(dc_128, 32, 8, neon),
+    lbd_entry(dc_128, 32, 16, neon),   lbd_entry(dc_128, 32, 32, neon),
+    lbd_entry(dc_128, 32, 64, neon),   lbd_entry(dc_128, 64, 16, neon),
+    lbd_entry(dc_128, 64, 32, neon),   lbd_entry(dc_128, 64, 64, neon),
+    lbd_entry(smooth_h, 4, 4, neon),   lbd_entry(smooth_h, 4, 8, neon),
+    lbd_entry(smooth_h, 4, 16, neon),  lbd_entry(smooth_h, 8, 4, neon),
+    lbd_entry(smooth_h, 8, 8, neon),   lbd_entry(smooth_h, 8, 16, neon),
+    lbd_entry(smooth_h, 8, 32, neon),  lbd_entry(smooth_h, 16, 4, neon),
+    lbd_entry(smooth_h, 16, 8, neon),  lbd_entry(smooth_h, 16, 16, neon),
+    lbd_entry(smooth_h, 16, 32, neon), lbd_entry(smooth_h, 16, 64, neon),
+    lbd_entry(smooth_h, 32, 8, neon),  lbd_entry(smooth_h, 32, 16, neon),
+    lbd_entry(smooth_h, 32, 32, neon), lbd_entry(smooth_h, 32, 64, neon),
+    lbd_entry(smooth_h, 64, 16, neon), lbd_entry(smooth_h, 64, 32, neon),
+    lbd_entry(smooth_h, 64, 64, neon), lbd_entry(smooth_v, 4, 4, neon),
+    lbd_entry(smooth_v, 4, 8, neon),   lbd_entry(smooth_v, 4, 16, neon),
+    lbd_entry(smooth_v, 8, 4, neon),   lbd_entry(smooth_v, 8, 8, neon),
+    lbd_entry(smooth_v, 8, 16, neon),  lbd_entry(smooth_v, 8, 32, neon),
+    lbd_entry(smooth_v, 16, 4, neon),  lbd_entry(smooth_v, 16, 8, neon),
+    lbd_entry(smooth_v, 16, 16, neon), lbd_entry(smooth_v, 16, 32, neon),
+    lbd_entry(smooth_v, 16, 64, neon), lbd_entry(smooth_v, 32, 8, neon),
+    lbd_entry(smooth_v, 32, 16, neon), lbd_entry(smooth_v, 32, 32, neon),
+    lbd_entry(smooth_v, 32, 64, neon), lbd_entry(smooth_v, 64, 16, neon),
+    lbd_entry(smooth_v, 64, 32, neon), lbd_entry(smooth_v, 64, 64, neon),
+    lbd_entry(smooth, 4, 4, neon),     lbd_entry(smooth, 4, 8, neon),
+    lbd_entry(smooth, 4, 16, neon),    lbd_entry(smooth, 8, 4, neon),
+    lbd_entry(smooth, 8, 8, neon),     lbd_entry(smooth, 8, 16, neon),
+    lbd_entry(smooth, 8, 32, neon),    lbd_entry(smooth, 16, 4, neon),
+    lbd_entry(smooth, 16, 8, neon),    lbd_entry(smooth, 16, 16, neon),
+    lbd_entry(smooth, 16, 32, neon),   lbd_entry(smooth, 16, 64, neon),
+    lbd_entry(smooth, 32, 8, neon),    lbd_entry(smooth, 32, 16, neon),
+    lbd_entry(smooth, 32, 32, neon),   lbd_entry(smooth, 32, 64, neon),
+    lbd_entry(smooth, 64, 16, neon),   lbd_entry(smooth, 64, 32, neon),
+    lbd_entry(smooth, 64, 64, neon),   lbd_entry(v, 4, 4, neon),
+    lbd_entry(v, 4, 8, neon),          lbd_entry(v, 4, 16, neon),
+    lbd_entry(v, 8, 4, neon),          lbd_entry(v, 8, 8, neon),
+    lbd_entry(v, 8, 16, neon),         lbd_entry(v, 8, 32, neon),
+    lbd_entry(v, 16, 4, neon),         lbd_entry(v, 16, 8, neon),
+    lbd_entry(v, 16, 16, neon),        lbd_entry(v, 16, 32, neon),
+    lbd_entry(v, 16, 64, neon),        lbd_entry(v, 32, 8, neon),
+    lbd_entry(v, 32, 16, neon),        lbd_entry(v, 32, 32, neon),
+    lbd_entry(v, 32, 64, neon),        lbd_entry(v, 64, 16, neon),
+    lbd_entry(v, 64, 32, neon),        lbd_entry(v, 64, 64, neon),
+    lbd_entry(h, 4, 4, neon),          lbd_entry(h, 4, 8, neon),
+    lbd_entry(h, 4, 16, neon),         lbd_entry(h, 8, 4, neon),
+    lbd_entry(h, 8, 8, neon),          lbd_entry(h, 8, 16, neon),
+    lbd_entry(h, 8, 32, neon),         lbd_entry(h, 16, 4, neon),
+    lbd_entry(h, 16, 8, neon),         lbd_entry(h, 16, 16, neon),
+    lbd_entry(h, 16, 32, neon),        lbd_entry(h, 16, 64, neon),
+    lbd_entry(h, 32, 8, neon),         lbd_entry(h, 32, 16, neon),
+    lbd_entry(h, 32, 32, neon),        lbd_entry(h, 32, 64, neon),
+    lbd_entry(h, 64, 16, neon),        lbd_entry(h, 64, 32, neon),
+    lbd_entry(h, 64, 64, neon),        lbd_entry(paeth, 4, 4, neon),
+    lbd_entry(paeth, 4, 8, neon),      lbd_entry(paeth, 4, 16, neon),
+    lbd_entry(paeth, 8, 4, neon),      lbd_entry(paeth, 8, 8, neon),
+    lbd_entry(paeth, 8, 16, neon),     lbd_entry(paeth, 8, 32, neon),
+    lbd_entry(paeth, 16, 4, neon),     lbd_entry(paeth, 16, 8, neon),
+    lbd_entry(paeth, 16, 16, neon),    lbd_entry(paeth, 16, 32, neon),
+    lbd_entry(paeth, 16, 64, neon),    lbd_entry(paeth, 32, 8, neon),
+    lbd_entry(paeth, 32, 16, neon),    lbd_entry(paeth, 32, 32, neon),
+    lbd_entry(paeth, 32, 64, neon),    lbd_entry(paeth, 64, 16, neon),
+    lbd_entry(paeth, 64, 32, neon),    lbd_entry(paeth, 64, 64, neon),
+};
+
+INSTANTIATE_TEST_SUITE_P(NEON, LowbdIntraPredTest,
+                         ::testing::ValuesIn(LowbdIntraPredTestVectorAsmNEON));
+#endif  // ARCH_AARCH64
+
 }  // namespace

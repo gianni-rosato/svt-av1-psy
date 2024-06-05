@@ -98,6 +98,7 @@ set(multi_arch_files
     hadamard_test.cc
     intrapred_cfl_test.cc
     intrapred_dr_test.cc
+    intrapred_test.cc
     quantize_func_test.cc
     selfguided_filter_test.cc
     warp_filter_test.cc
@@ -131,7 +132,6 @@ if(HAVE_X86_PLATFORM)
       dwt_test.cc
       frame_error_test.cc
       intrapred_edge_filter_test.cc
-      intrapred_test.cc
       subtract_avg_cfl_test.cc)
 endif()
 
