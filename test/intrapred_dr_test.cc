@@ -296,8 +296,15 @@ TEST_P(LowbdZ1PredTest, MatchTest) {
     RunAllTest();
 }
 
+#ifdef ARCH_X86_64
 INSTANTIATE_TEST_SUITE_P(AVX2, LowbdZ1PredTest,
                          ::testing::Values(svt_av1_dr_prediction_z1_avx2));
+#endif  // ARCH_X86_64
+
+#ifdef ARCH_AARCH64
+INSTANTIATE_TEST_SUITE_P(NEON, LowbdZ1PredTest,
+                         ::testing::Values(svt_av1_dr_prediction_z1_neon));
+#endif  // ARCH_AARCH64
 
 class LowbdZ2PredTest : public DrPredTest<uint8_t, Z2_LBD>,
                         public ::testing::TestWithParam<Z2_LBD> {
@@ -341,8 +348,15 @@ TEST_P(LowbdZ2PredTest, MatchTest) {
     RunAllTest();
 }
 
+#ifdef ARCH_X86_64
 INSTANTIATE_TEST_SUITE_P(AVX2, LowbdZ2PredTest,
                          ::testing::Values(svt_av1_dr_prediction_z2_avx2));
+#endif  // ARCH_X86_64
+
+#ifdef ARCH_AARCH64
+INSTANTIATE_TEST_SUITE_P(NEON, LowbdZ2PredTest,
+                         ::testing::Values(svt_av1_dr_prediction_z2_neon));
+#endif  // ARCH_AARCH64
 
 class LowbdZ3PredTest : public DrPredTest<uint8_t, Z3_LBD>,
                         public ::testing::TestWithParam<Z3_LBD> {
@@ -384,8 +398,15 @@ TEST_P(LowbdZ3PredTest, MatchTest) {
     RunAllTest();
 }
 
+#ifdef ARCH_X86_64
 INSTANTIATE_TEST_SUITE_P(AVX2, LowbdZ3PredTest,
                          ::testing::Values(svt_av1_dr_prediction_z3_avx2));
+#endif  // ARCH_X86_64
+
+#ifdef ARCH_AARCH64
+INSTANTIATE_TEST_SUITE_P(NEON, LowbdZ3PredTest,
+                         ::testing::Values(svt_av1_dr_prediction_z3_neon));
+#endif  // ARCH_AARCH64
 
 class HighbdZ1PredTest : public DrPredTest<uint16_t, Z1_HBD>,
                          public ::testing::TestWithParam<Z1_HBD> {
@@ -424,14 +445,17 @@ class HighbdZ1PredTest : public DrPredTest<uint16_t, Z1_HBD>,
                   bd_);
     }
 };
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(HighbdZ1PredTest);
 
 TEST_P(HighbdZ1PredTest, MatchTest) {
     RunAllTest();
 }
 
+#ifdef ARCH_X86_64
 INSTANTIATE_TEST_SUITE_P(
     AVX2, HighbdZ1PredTest,
     ::testing::Values(svt_av1_highbd_dr_prediction_z1_avx2));
+#endif  // ARCH_X86_64
 
 class HighbdZ2PredTest : public DrPredTest<uint16_t, Z2_HBD>,
                          public ::testing::TestWithParam<Z2_HBD> {
@@ -472,14 +496,17 @@ class HighbdZ2PredTest : public DrPredTest<uint16_t, Z2_HBD>,
                   bd_);
     }
 };
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(HighbdZ2PredTest);
 
 TEST_P(HighbdZ2PredTest, MatchTest) {
     RunAllTest();
 }
 
+#ifdef ARCH_X86_64
 INSTANTIATE_TEST_SUITE_P(
     AVX2, HighbdZ2PredTest,
     ::testing::Values(svt_av1_highbd_dr_prediction_z2_avx2));
+#endif  // ARCH_X86_64
 
 class HighbdZ3PredTest : public DrPredTest<uint16_t, Z3_HBD>,
                          public ::testing::TestWithParam<Z3_HBD> {
@@ -518,12 +545,15 @@ class HighbdZ3PredTest : public DrPredTest<uint16_t, Z3_HBD>,
                   bd_);
     }
 };
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(HighbdZ3PredTest);
 
 TEST_P(HighbdZ3PredTest, MatchTest) {
     RunAllTest();
 }
 
+#ifdef ARCH_X86_64
 INSTANTIATE_TEST_SUITE_P(
     AVX2, HighbdZ3PredTest,
     ::testing::Values(svt_av1_highbd_dr_prediction_z3_avx2));
+#endif  // ARCH_X86_64
 }  // namespace
