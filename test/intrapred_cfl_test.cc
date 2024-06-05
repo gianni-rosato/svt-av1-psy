@@ -153,13 +153,20 @@ class LbdCflPredTest : public CflPredTest<uint8_t, CFL_PRED_LBD> {
         common_init();
     }
 };
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(LbdCflPredTest);
 
 TEST_P(LbdCflPredTest, MatchTest) {
     RunAllTest();
 }
-
+#ifdef ARCH_X86_64
 INSTANTIATE_TEST_SUITE_P(AVX2, LbdCflPredTest,
                          ::testing::Values(svt_cfl_predict_lbd_avx2));
+#endif  // ARCH_X86_64
+
+#ifdef ARCH_AARCH64
+INSTANTIATE_TEST_SUITE_P(NEON, LbdCflPredTest,
+                         ::testing::Values(svt_aom_cfl_predict_lbd_neon));
+#endif  // ARCH_AARCH64
 
 class HbdCflPredTest : public CflPredTest<uint16_t, CFL_PRED_HBD> {
   public:
@@ -170,13 +177,16 @@ class HbdCflPredTest : public CflPredTest<uint16_t, CFL_PRED_HBD> {
         common_init();
     }
 };
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(HbdCflPredTest);
 
 TEST_P(HbdCflPredTest, MatchTest) {
     RunAllTest();
 }
 
+#ifdef ARCH_X86_64
 INSTANTIATE_TEST_SUITE_P(AVX2, HbdCflPredTest,
                          ::testing::Values(svt_cfl_predict_hbd_avx2));
+#endif  // ARCH_X86_64
 
 typedef void (*AomUpsampledPredFunc)(MacroBlockD *,
                                      const struct AV1Common *const, int, int,
@@ -213,10 +223,10 @@ class AomUpsampledPredTest
         memset(comp_pred_ref_, 1, sizeof(comp_pred_ref_));
         memset(comp_pred_tst_, 1, sizeof(comp_pred_tst_));
 
-        // Function svt_aom_upsampled_pred_sse2 call inside function pointer
-        // which have to be set properly
-        // by svt_aom_setup_common_rtcd_internal(), we want to test intrinsic
-        // version of it, so AVX2 flag is necessary
+        // Function svt_aom_upsampled_pred call inside function pointer
+        // which have to be set properly by
+        // svt_aom_setup_common_rtcd_internal(), we want to test intrinsic
+        // version of it, so feature flag is necessary
         uint64_t EbCpuFlags = TEST_GET_PARAM(5);
         svt_aom_setup_common_rtcd_internal(EbCpuFlags);
 
@@ -268,6 +278,7 @@ TEST_P(AomUpsampledPredTest, MatchTest) {
     run_test();
 }
 
+#ifdef ARCH_X86_64
 INSTANTIATE_TEST_SUITE_P(
     SSE2, AomUpsampledPredTest,
     ::testing::Combine(
@@ -276,6 +287,18 @@ INSTANTIATE_TEST_SUITE_P(
         ::testing::Values((int)USE_2_TAPS, (int)USE_4_TAPS, (int)USE_8_TAPS),
         ::testing::Values(0, 1, 2), ::testing::Values(0, 1, 2),
         ::testing::Values(EB_CPU_FLAGS_SSSE3, EB_CPU_FLAGS_AVX2)));
+#endif  // ARCH_X86_64
+
+#ifdef ARCH_AARCH64
+INSTANTIATE_TEST_SUITE_P(
+    NEON, AomUpsampledPredTest,
+    ::testing::Combine(::testing::Range(BLOCK_4X4, BlockSizeS_ALL),
+                       ::testing::Values(svt_aom_upsampled_pred_neon),
+                       ::testing::Values((int)USE_2_TAPS, (int)USE_4_TAPS,
+                                         (int)USE_8_TAPS),
+                       ::testing::Values(0, 1, 2), ::testing::Values(0, 1, 2),
+                       ::testing::Values(EB_CPU_FLAGS_NEON)));
+#endif  // ARCH_AARCH64
 
 typedef void (*CflLumaSubsamplingLbdFunc)(const uint8_t *, int32_t, int16_t *,
                                           int32_t, int32_t);
@@ -331,16 +354,19 @@ class CflLumaSubsamplingLbdTest
   private:
     SVTRandom rnd_;
 };
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(CflLumaSubsamplingLbdTest);
 
 TEST_P(CflLumaSubsamplingLbdTest, MatchTest) {
     run_test();
 }
 
+#ifdef ARCH_X86_64
 INSTANTIATE_TEST_SUITE_P(
     AVX2, CflLumaSubsamplingLbdTest,
     ::testing::Combine(
         ::testing::Range(BLOCK_4X4, BlockSizeS_ALL),
         ::testing::Values(svt_cfl_luma_subsampling_420_lbd_avx2)));
+#endif
 
 typedef void (*CflLumaSubsamplingHbdFunc)(const uint16_t *, int32_t, int16_t *,
                                           int32_t, int32_t);
@@ -396,15 +422,18 @@ class CflLumaSubsamplingHbdTest
   private:
     SVTRandom rnd_;
 };
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(CflLumaSubsamplingHbdTest);
 
 TEST_P(CflLumaSubsamplingHbdTest, MatchTest) {
     run_test();
 }
 
+#ifdef ARCH_X86_64
 INSTANTIATE_TEST_SUITE_P(
     AVX2, CflLumaSubsamplingHbdTest,
     ::testing::Combine(
         ::testing::Range(BLOCK_4X4, BlockSizeS_ALL),
         ::testing::Values(svt_cfl_luma_subsampling_420_hbd_avx2)));
+#endif  // ARCH_X86_64
 
 }  // namespace
