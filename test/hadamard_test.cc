@@ -274,9 +274,19 @@ INSTANTIATE_TEST_SUITE_P(
                       HadamardFuncWithSize(&svt_aom_hadamard_16x16_c, 16),
                       HadamardFuncWithSize(&svt_aom_hadamard_32x32_c, 32)));
 
+#ifdef ARCH_X86_64
 INSTANTIATE_TEST_SUITE_P(
     AVX2, HadamardLowbdTest,
     ::testing::Values(HadamardFuncWithSize(&svt_aom_hadamard_8x8_sse2, 8),
                       HadamardFuncWithSize(&svt_aom_hadamard_16x16_avx2, 16),
                       HadamardFuncWithSize(&svt_aom_hadamard_32x32_avx2, 32)));
+#endif  // ARCH_X86_64
+
+#ifdef ARCH_AARCH64
+INSTANTIATE_TEST_SUITE_P(
+    NEON, HadamardLowbdTest,
+    ::testing::Values(HadamardFuncWithSize(&svt_aom_hadamard_8x8_neon, 8),
+                      HadamardFuncWithSize(&svt_aom_hadamard_16x16_neon, 16),
+                      HadamardFuncWithSize(&svt_aom_hadamard_32x32_neon, 32)));
+#endif  // ARCH_AARCH64
 }  // namespace
