@@ -41,7 +41,9 @@ using svt_av1_test_tool::SVTRandom;
 #define TEST_OFFSET 10
 
 namespace {
-using FwdTxfm2dAsmParam = std::tuple<int, int>;
+using FwdTxfm2dAsmParam =
+    std::tuple<int, int, EB_TRANS_COEFF_SHAPE, const FwdTxfm2dFunc *,
+               const FwdTxfm2dFunc *>;
 
 #ifdef ARCH_X86_64
 
@@ -173,7 +175,7 @@ static const FwdTxfm2dFunc fwd_txfm_2d_avx512_func[TX_SIZES_ALL] = {
     av1_fwd_txfm2d_64x16_avx512,
 };
 
-static const FwdTxfm2dFunc fwd_txfm_2d_N2_asm512_func[TX_SIZES_ALL] = {
+static const FwdTxfm2dFunc fwd_txfm_2d_N2_avx512_func[TX_SIZES_ALL] = {
     NULL,
     NULL,
     NULL,
@@ -195,7 +197,7 @@ static const FwdTxfm2dFunc fwd_txfm_2d_N2_asm512_func[TX_SIZES_ALL] = {
     NULL,
 };
 
-static const FwdTxfm2dFunc fwd_txfm_2d_N4_asm512_func[TX_SIZES_ALL] = {
+static const FwdTxfm2dFunc fwd_txfm_2d_N4_avx512_func[TX_SIZES_ALL] = {
     NULL, NULL, NULL, NULL, av1_fwd_txfm2d_64x64_N4_avx512,
     NULL, NULL, NULL, NULL, NULL,
     NULL, NULL, NULL, NULL, NULL,
@@ -295,7 +297,10 @@ class FwdTxfm2dAsmTest : public ::testing::TestWithParam<FwdTxfm2dAsmParam> {
   public:
     FwdTxfm2dAsmTest()
         : tx_size_(static_cast<TxSize>(TEST_GET_PARAM(0))),
-          bd_(TEST_GET_PARAM(1)) {
+          bd_(TEST_GET_PARAM(1)),
+          shape_(TEST_GET_PARAM(2)),
+          ref_func_tbl_(TEST_GET_PARAM(3)),
+          test_func_tbl_(TEST_GET_PARAM(4)) {
         // input are signed value with bitdepth + 1 bits
         rnd_ = new SVTRandom(-(1 << bd_) + 1, (1 << bd_) - 1);
 
@@ -318,134 +323,17 @@ class FwdTxfm2dAsmTest : public ::testing::TestWithParam<FwdTxfm2dAsmParam> {
         aom_clear_system_state();
     }
 
-#ifdef ARCH_X86_64
-
-    void run_match_test_avx2() {
-        FwdTxfm2dFunc test_func = fwd_txfm_2d_avx2_func[tx_size_];
-        FwdTxfm2dFunc ref_func = fwd_txfm_2d_c_func[tx_size_];
-        execute_test(test_func, ref_func, DEFAULT_SHAPE);
+    void run_match_test() {
+        FwdTxfm2dFunc test_func = test_func_tbl_[tx_size_];
+        FwdTxfm2dFunc ref_func = ref_func_tbl_[tx_size_];
+        execute_test(test_func, ref_func, shape_);
     }
 
-#if EN_AVX512_SUPPORT
-    void run_match_test_avx512() {
-        FwdTxfm2dFunc test_func = fwd_txfm_2d_avx512_func[tx_size_];
-        FwdTxfm2dFunc ref_func = fwd_txfm_2d_avx2_func[tx_size_];
-        execute_test(test_func, ref_func, DEFAULT_SHAPE);
+    void speed_test() {
+        FwdTxfm2dFunc test_func = test_func_tbl_[tx_size_];
+        FwdTxfm2dFunc ref_func = ref_func_tbl_[tx_size_];
+        run_speed_test(test_func, ref_func);
     }
-#endif
-
-    void run_match_test_sse4_1() {
-        FwdTxfm2dFunc test_func = fwd_txfm_2d_sse4_1_func[tx_size_];
-        FwdTxfm2dFunc ref_func = fwd_txfm_2d_c_func[tx_size_];
-        execute_test(test_func, ref_func, DEFAULT_SHAPE);
-    }
-
-    void run_match_test_avx2_N2() {
-        FwdTxfm2dFunc test_func_avx2 = fwd_txfm_2d_N2_avx2_func[tx_size_];
-        FwdTxfm2dFunc test_func_c = fwd_txfm_2d_N2_c_func[tx_size_];
-        FwdTxfm2dFunc ref_func = fwd_txfm_2d_c_func[tx_size_];
-        execute_test(test_func_avx2, ref_func, N2_SHAPE);
-        execute_test(test_func_c, ref_func, N2_SHAPE);
-    }
-
-    void run_match_test_avx2_N4() {
-        FwdTxfm2dFunc test_func_avx2 = fwd_txfm_2d_N4_avx2_func[tx_size_];
-        FwdTxfm2dFunc test_func_c = fwd_txfm_2d_N4_c_func[tx_size_];
-        FwdTxfm2dFunc ref_func = fwd_txfm_2d_c_func[tx_size_];
-        execute_test(test_func_avx2, ref_func, N4_SHAPE);
-        execute_test(test_func_c, ref_func, N4_SHAPE);
-    }
-
-    void run_match_test_sse4_1_N2() {
-        FwdTxfm2dFunc test_func_sse4_1 = fwd_txfm_2d_N2_sse4_1_func[tx_size_];
-        FwdTxfm2dFunc test_func_c = fwd_txfm_2d_N2_c_func[tx_size_];
-        FwdTxfm2dFunc ref_func = fwd_txfm_2d_c_func[tx_size_];
-        execute_test(test_func_sse4_1, ref_func, N2_SHAPE);
-        execute_test(test_func_c, ref_func, N2_SHAPE);
-    }
-
-    void run_match_test_sse4_1_N4() {
-        FwdTxfm2dFunc test_func_sse4_1 = fwd_txfm_2d_N4_sse4_1_func[tx_size_];
-        FwdTxfm2dFunc test_func_c = fwd_txfm_2d_N4_c_func[tx_size_];
-        FwdTxfm2dFunc ref_func = fwd_txfm_2d_c_func[tx_size_];
-        execute_test(test_func_sse4_1, ref_func, N4_SHAPE);
-        execute_test(test_func_c, ref_func, N4_SHAPE);
-    }
-
-    void speed_test_avx2() {
-        FwdTxfm2dFunc test_func = fwd_txfm_2d_avx2_func[tx_size_];
-        FwdTxfm2dFunc ref_func = fwd_txfm_2d_c_func[tx_size_];
-        run_speed_test("C    AND AVX2", test_func, ref_func);
-        run_speed_test(
-            "AVX2 AND N2  ", fwd_txfm_2d_N2_avx2_func[tx_size_], test_func);
-        run_speed_test(
-            "AVX2 AND N4  ", fwd_txfm_2d_N4_avx2_func[tx_size_], test_func);
-    }
-
-    void speed_test_sse4_1() {
-        FwdTxfm2dFunc test_func = fwd_txfm_2d_sse4_1_func[tx_size_];
-        FwdTxfm2dFunc ref_func = fwd_txfm_2d_c_func[tx_size_];
-        run_speed_test("C    AND SSE4", test_func, ref_func);
-        run_speed_test(
-            "SSE4 AND N2  ", fwd_txfm_2d_N2_sse4_1_func[tx_size_], test_func);
-        run_speed_test(
-            "SSE4 AND N4  ", fwd_txfm_2d_N4_sse4_1_func[tx_size_], test_func);
-    }
-#if EN_AVX512_SUPPORT
-    void run_match_test_N2_512() {
-        FwdTxfm2dFunc test_func_asm = fwd_txfm_2d_N2_asm512_func[tx_size_];
-        FwdTxfm2dFunc ref_func = fwd_txfm_2d_c_func[tx_size_];
-        execute_test(test_func_asm, ref_func, N2_SHAPE);
-    }
-
-    void run_match_test_N4_512() {
-        FwdTxfm2dFunc test_func_asm = fwd_txfm_2d_N4_asm512_func[tx_size_];
-        FwdTxfm2dFunc ref_func = fwd_txfm_2d_c_func[tx_size_];
-        execute_test(test_func_asm, ref_func, N4_SHAPE);
-    }
-
-    void speed_test_512() {
-        FwdTxfm2dFunc test_func = fwd_txfm_2d_N2_asm512_func[tx_size_];
-        FwdTxfm2dFunc ref_func = fwd_txfm_2d_N2_avx2_func[tx_size_];
-        if (test_func && ref_func) {
-            run_speed_test("N2 AVX512 AVX2 ", test_func, ref_func);
-        }
-
-        test_func = fwd_txfm_2d_N4_asm512_func[tx_size_];
-        ref_func = fwd_txfm_2d_N2_avx2_func[tx_size_];
-        if (test_func && ref_func) {
-            run_speed_test("N4 AVX512 AVX2", test_func, ref_func);
-        }
-    }
-#endif /* EN_AVX512_SUPPORT */
-
-#endif /* ARCH_X86_64 */
-
-#ifdef ARCH_AARCH64
-
-    void run_match_test_neon() {
-        FwdTxfm2dFunc ref_func = fwd_txfm_2d_c_func[tx_size_];
-        FwdTxfm2dFunc test_func = fwd_txfm_2d_neon_func[tx_size_];
-        execute_test(test_func, ref_func, DEFAULT_SHAPE);
-    }
-
-    void speed_test_neon() {
-        FwdTxfm2dFunc ref_func = fwd_txfm_2d_c_func[tx_size_];
-        FwdTxfm2dFunc test_func = fwd_txfm_2d_neon_func[tx_size_];
-        run_speed_test("C    AND NEON", test_func, ref_func);
-        run_speed_test(
-            "NEON AND N4  ", fwd_txfm_2d_N4_neon_func[tx_size_], test_func);
-    }
-
-    void run_match_test_neon_N4() {
-        FwdTxfm2dFunc test_func_neon = fwd_txfm_2d_N4_neon_func[tx_size_];
-        FwdTxfm2dFunc test_func_c = fwd_txfm_2d_N4_c_func[tx_size_];
-        FwdTxfm2dFunc ref_func = fwd_txfm_2d_c_func[tx_size_];
-        execute_test(test_func_neon, ref_func, N4_SHAPE);
-        execute_test(test_func_c, ref_func, N4_SHAPE);
-    }
-
-#endif /* ARCH_AARCH64 */
 
   private:
     void execute_test(FwdTxfm2dFunc test_func, FwdTxfm2dFunc ref_func,
@@ -516,8 +404,7 @@ class FwdTxfm2dAsmTest : public ::testing::TestWithParam<FwdTxfm2dAsmParam> {
         }
     }
 
-    void run_speed_test(const char *name_cmp, FwdTxfm2dFunc test_func,
-                        FwdTxfm2dFunc ref_func) {
+    void run_speed_test(FwdTxfm2dFunc test_func, FwdTxfm2dFunc ref_func) {
         double time_c, time_o;
         uint64_t start_time_seconds, start_time_useconds;
         uint64_t middle_time_seconds, middle_time_useconds;
@@ -577,8 +464,8 @@ class FwdTxfm2dAsmTest : public ::testing::TestWithParam<FwdTxfm2dAsmParam> {
                                                         finish_time_useconds);
 
             printf(
-                "[%s]; Transform: ;%02ix%02i; %17s; Speed compare: ;%5.2fx\n",
-                name_cmp,
+                "C vs Opt; Transform: ;%02ix%02i; %17s; Speed compare: "
+                ";%5.2fx\n",
                 tx_size_wide[tx_size_],
                 tx_size_high[tx_size_],
                 tx_type_name[tx_type],
@@ -598,6 +485,9 @@ class FwdTxfm2dAsmTest : public ::testing::TestWithParam<FwdTxfm2dAsmParam> {
   private:
     const TxSize tx_size_; /**< input param tx_size */
     const int bd_;         /**< input param 8bit or 10bit */
+    EB_TRANS_COEFF_SHAPE shape_;
+    const FwdTxfm2dFunc *ref_func_tbl_;
+    const FwdTxfm2dFunc *test_func_tbl_;
     int width_;
     int height_;
     SVTRandom *rnd_;
@@ -612,88 +502,129 @@ class FwdTxfm2dAsmTest : public ::testing::TestWithParam<FwdTxfm2dAsmParam> {
     int32_t *output_ref_;  /**< aligned address for output ref */
 };
 
+TEST_P(FwdTxfm2dAsmTest, match_test) {
+    run_match_test();
+}
+
+TEST_P(FwdTxfm2dAsmTest, DISABLED_speed_test) {
+    speed_test();
+}
+
 #ifdef ARCH_X86_64
-
-TEST_P(FwdTxfm2dAsmTest, match_test_avx2) {
-    run_match_test_avx2();
-}
-
-#if EN_AVX512_SUPPORT
-TEST_P(FwdTxfm2dAsmTest, match_test_avx512) {
-    run_match_test_avx512();
-}
-#endif
-
-TEST_P(FwdTxfm2dAsmTest, match_test_sse4_1) {
-    run_match_test_sse4_1();
-}
-
-TEST_P(FwdTxfm2dAsmTest, match_test_avx2_N2) {
-    run_match_test_avx2_N2();
-}
-
-TEST_P(FwdTxfm2dAsmTest, match_test_avx2_N4) {
-    run_match_test_avx2_N4();
-}
-
-TEST_P(FwdTxfm2dAsmTest, match_test_sse4_1_N2) {
-    run_match_test_sse4_1_N2();
-}
-
-TEST_P(FwdTxfm2dAsmTest, match_test_sse4_1_N4) {
-    run_match_test_sse4_1_N4();
-}
-
-TEST_P(FwdTxfm2dAsmTest, DISABLED_speed_test_avx2) {
-    speed_test_avx2();
-}
-
-TEST_P(FwdTxfm2dAsmTest, DISABLED_speed_test_sse4_1) {
-    speed_test_sse4_1();
-}
-
-#if EN_AVX512_SUPPORT
-TEST_P(FwdTxfm2dAsmTest, match_test_N2_512) {
-    if (EB_CPU_FLAGS_AVX512F & svt_aom_get_cpu_flags_to_use()) {
-        run_match_test_N2_512();
-    }
-}
-
-TEST_P(FwdTxfm2dAsmTest, match_test_N4_512) {
-    if (EB_CPU_FLAGS_AVX512F & svt_aom_get_cpu_flags_to_use()) {
-        run_match_test_N4_512();
-    }
-}
-
-TEST_P(FwdTxfm2dAsmTest, DISABLED_speed_test_512) {
-    if (EB_CPU_FLAGS_AVX512F & svt_aom_get_cpu_flags_to_use()) {
-        speed_test_512();
-    }
-}
-#endif /* EN_AVX512_SUPPORT */
-
-#endif /* ARCH_X86_64 */
-
-#ifdef ARCH_AARCH64
-
-TEST_P(FwdTxfm2dAsmTest, match_test_neon) {
-    run_match_test_neon();
-}
-
-TEST_P(FwdTxfm2dAsmTest, match_test_neon_N4) {
-    run_match_test_neon_N4();
-}
-
-TEST_P(FwdTxfm2dAsmTest, DISABLED_speed_test_neon) {
-    speed_test_neon();
-}
-
-#endif /* ARCH_AARCH64 */
-
 INSTANTIATE_TEST_SUITE_P(
-    TX, FwdTxfm2dAsmTest,
+    SSE4_1, FwdTxfm2dAsmTest,
     ::testing::Combine(::testing::Range(static_cast<int>(TX_4X4),
                                         static_cast<int>(TX_SIZES_ALL), 1),
                        ::testing::Values(static_cast<int>(EB_EIGHT_BIT),
-                                         static_cast<int>(EB_TEN_BIT))));
+                                         static_cast<int>(EB_TEN_BIT)),
+                       ::testing::Values(DEFAULT_SHAPE),
+                       ::testing::Values(fwd_txfm_2d_c_func),
+                       ::testing::Values(fwd_txfm_2d_sse4_1_func)));
+
+INSTANTIATE_TEST_SUITE_P(
+    N2_SSE4_1, FwdTxfm2dAsmTest,
+    ::testing::Combine(::testing::Range(static_cast<int>(TX_4X4),
+                                        static_cast<int>(TX_SIZES_ALL), 1),
+                       ::testing::Values(static_cast<int>(EB_EIGHT_BIT),
+                                         static_cast<int>(EB_TEN_BIT)),
+                       ::testing::Values(N2_SHAPE),
+                       ::testing::Values(fwd_txfm_2d_N2_c_func),
+                       ::testing::Values(fwd_txfm_2d_N2_sse4_1_func)));
+
+INSTANTIATE_TEST_SUITE_P(
+    N4_SSE4_1, FwdTxfm2dAsmTest,
+    ::testing::Combine(::testing::Range(static_cast<int>(TX_4X4),
+                                        static_cast<int>(TX_SIZES_ALL), 1),
+                       ::testing::Values(static_cast<int>(EB_EIGHT_BIT),
+                                         static_cast<int>(EB_TEN_BIT)),
+                       ::testing::Values(N4_SHAPE),
+                       ::testing::Values(fwd_txfm_2d_N4_c_func),
+                       ::testing::Values(fwd_txfm_2d_N4_sse4_1_func)));
+
+INSTANTIATE_TEST_SUITE_P(
+    AVX2, FwdTxfm2dAsmTest,
+    ::testing::Combine(::testing::Range(static_cast<int>(TX_4X4),
+                                        static_cast<int>(TX_SIZES_ALL), 1),
+                       ::testing::Values(static_cast<int>(EB_EIGHT_BIT),
+                                         static_cast<int>(EB_TEN_BIT)),
+                       ::testing::Values(DEFAULT_SHAPE),
+                       ::testing::Values(fwd_txfm_2d_c_func),
+                       ::testing::Values(fwd_txfm_2d_avx2_func)));
+
+INSTANTIATE_TEST_SUITE_P(
+    N2_AVX2, FwdTxfm2dAsmTest,
+    ::testing::Combine(::testing::Range(static_cast<int>(TX_4X4),
+                                        static_cast<int>(TX_SIZES_ALL), 1),
+                       ::testing::Values(static_cast<int>(EB_EIGHT_BIT),
+                                         static_cast<int>(EB_TEN_BIT)),
+                       ::testing::Values(N2_SHAPE),
+                       ::testing::Values(fwd_txfm_2d_N2_c_func),
+                       ::testing::Values(fwd_txfm_2d_N2_avx2_func)));
+
+INSTANTIATE_TEST_SUITE_P(
+    N4_AVX2, FwdTxfm2dAsmTest,
+    ::testing::Combine(::testing::Range(static_cast<int>(TX_4X4),
+                                        static_cast<int>(TX_SIZES_ALL), 1),
+                       ::testing::Values(static_cast<int>(EB_EIGHT_BIT),
+                                         static_cast<int>(EB_TEN_BIT)),
+                       ::testing::Values(N4_SHAPE),
+                       ::testing::Values(fwd_txfm_2d_N4_c_func),
+                       ::testing::Values(fwd_txfm_2d_N4_avx2_func)));
+
+#if EN_AVX512_SUPPORT
+INSTANTIATE_TEST_SUITE_P(
+    AVX512, FwdTxfm2dAsmTest,
+    ::testing::Combine(::testing::Range(static_cast<int>(TX_4X4),
+                                        static_cast<int>(TX_SIZES_ALL), 1),
+                       ::testing::Values(static_cast<int>(EB_EIGHT_BIT),
+                                         static_cast<int>(EB_TEN_BIT)),
+                       ::testing::Values(DEFAULT_SHAPE),
+                       ::testing::Values(fwd_txfm_2d_c_func),
+                       ::testing::Values(fwd_txfm_2d_avx512_func)));
+
+INSTANTIATE_TEST_SUITE_P(
+    N2_AVX512, FwdTxfm2dAsmTest,
+    ::testing::Combine(::testing::Range(static_cast<int>(TX_4X4),
+                                        static_cast<int>(TX_SIZES_ALL), 1),
+                       ::testing::Values(static_cast<int>(EB_EIGHT_BIT),
+                                         static_cast<int>(EB_TEN_BIT)),
+                       ::testing::Values(N2_SHAPE),
+                       ::testing::Values(fwd_txfm_2d_N2_c_func),
+                       ::testing::Values(fwd_txfm_2d_N2_avx512_func)));
+
+INSTANTIATE_TEST_SUITE_P(
+    N4_AVX512, FwdTxfm2dAsmTest,
+    ::testing::Combine(::testing::Range(static_cast<int>(TX_4X4),
+                                        static_cast<int>(TX_SIZES_ALL), 1),
+                       ::testing::Values(static_cast<int>(EB_EIGHT_BIT),
+                                         static_cast<int>(EB_TEN_BIT)),
+                       ::testing::Values(N4_SHAPE),
+                       ::testing::Values(fwd_txfm_2d_N4_c_func),
+                       ::testing::Values(fwd_txfm_2d_N4_avx512_func)));
+
+#endif
+
+#endif  // ARCH_X86_64
+
+#ifdef ARCH_AARCH64
+INSTANTIATE_TEST_SUITE_P(
+    NEON, FwdTxfm2dAsmTest,
+    ::testing::Combine(::testing::Range(static_cast<int>(TX_4X4),
+                                        static_cast<int>(TX_SIZES_ALL), 1),
+                       ::testing::Values(static_cast<int>(EB_EIGHT_BIT),
+                                         static_cast<int>(EB_TEN_BIT)),
+                       ::testing::Values(DEFAULT_SHAPE),
+                       ::testing::Values(fwd_txfm_2d_c_func),
+                       ::testing::Values(fwd_txfm_2d_neon_func)));
+
+INSTANTIATE_TEST_SUITE_P(
+    N4_NEON, FwdTxfm2dAsmTest,
+    ::testing::Combine(::testing::Range(static_cast<int>(TX_4X4),
+                                        static_cast<int>(TX_SIZES_ALL), 1),
+                       ::testing::Values(static_cast<int>(EB_EIGHT_BIT),
+                                         static_cast<int>(EB_TEN_BIT)),
+                       ::testing::Values(N4_SHAPE),
+                       ::testing::Values(fwd_txfm_2d_N4_c_func),
+                       ::testing::Values(fwd_txfm_2d_N4_neon_func)));
+#endif
 }  // namespace
