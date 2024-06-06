@@ -92,6 +92,7 @@ set(multi_arch_files
     OBMCVarianceTest.cc
     PackUnPackTest.cc
     PictureOperatorTest.cc
+    QuantAsmTest.cc
     RestorationPickTest.cc
     SadTest.cc
     SpatialFullDistortionTest.cc
@@ -123,7 +124,6 @@ if(HAVE_X86_PLATFORM)
       MotionEstimationTest.cc
       PaletteModeUtilTest.cc
       PsnrTest.cc
-      QuantAsmTest.cc
       ResidualTest.cc
       SelfGuidedUtilTest.cc
       WedgeUtilTest.cc

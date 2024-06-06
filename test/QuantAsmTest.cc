@@ -236,6 +236,7 @@ class QuantizeBTest : public ::testing::TestWithParam<QuantizeParam> {
     TranLow *qcoeff_test_;
     TranLow *dqcoeff_test_;
 };
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(QuantizeBTest);
 
 /**
  * @brief AVX2/QuantizeBTest.input_zero_all
@@ -304,6 +305,7 @@ TEST_P(QuantizeBTest, input_random_all_q_all) {
     }
 }
 
+#ifdef ARCH_X86_64
 INSTANTIATE_TEST_SUITE_P(
     LBD_SSE4_1, QuantizeBTest,
     ::testing::Combine(::testing::Values(static_cast<int>(TX_16X16),
@@ -335,6 +337,7 @@ INSTANTIATE_TEST_SUITE_P(
                                          static_cast<int>(TX_64X64)),
                        ::testing::Values(static_cast<int>(EB_TEN_BIT)),
                        ::testing::Values(svt_aom_highbd_quantize_b_avx2)));
+#endif  // ARCH_X86_64
 
 class QuantizeBQmTest : public QuantizeBTest {
   protected:
@@ -455,6 +458,7 @@ class QuantizeBQmTest : public QuantizeBTest {
     const QmVal *qmatrix_[NUM_QM_LEVELS][3][TX_SIZES_ALL];
     int qm_level_;
 };
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(QuantizeBQmTest);
 
 /**
  * @brief AVX2/QuantizeBTest.input_zero_all
@@ -523,6 +527,7 @@ TEST_P(QuantizeBQmTest, input_random_all_q_all) {
     }
 }
 
+#ifdef ARCH_X86_64
 INSTANTIATE_TEST_SUITE_P(
     LBD_AVX2, QuantizeBQmTest,
     ::testing::Combine(::testing::Values(static_cast<int>(TX_16X16),
@@ -538,4 +543,15 @@ INSTANTIATE_TEST_SUITE_P(
                                          static_cast<int>(TX_64X64)),
                        ::testing::Values(static_cast<int>(EB_TEN_BIT)),
                        ::testing::Values(svt_av1_highbd_quantize_b_qm_avx2)));
+#endif  // ARCH_X86_64
+
+#ifdef ARCH_AARCH64
+INSTANTIATE_TEST_SUITE_P(
+    LBD_NEON, QuantizeBTest,
+    ::testing::Combine(::testing::Values(static_cast<int>(TX_16X16),
+                                         static_cast<int>(TX_32X32),
+                                         static_cast<int>(TX_64X64)),
+                       ::testing::Values(static_cast<int>(EB_EIGHT_BIT)),
+                       ::testing::Values(svt_aom_quantize_b_neon)));
+#endif  // ARCH_AARCH64
 }  // namespace QuantizeAsmTest
