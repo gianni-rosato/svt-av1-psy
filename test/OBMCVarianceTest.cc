@@ -97,26 +97,39 @@ TEST_P(OBMCVarianceTest, RunCheckOutput) {
     run_test(1000);
 };
 
-#define OBMC_VAR_FUNC_C(W, H) svt_aom_obmc_variance##W##x##H##_c
-#define OBMC_VAR_FUNC_SSE4_1(W, H) svt_aom_obmc_variance##W##x##H##_sse4_1
-#define OBMC_VAR_FUNC_AVX2(W, H) svt_aom_obmc_variance##W##x##H##_avx2
-#define GEN_OBMC_VAR_TEST_PARAM(W, H)                              \
-    ObmcVarParam(OBMC_VAR_FUNC_C(W, H), OBMC_VAR_FUNC_AVX2(W, H)), \
-        ObmcVarParam(OBMC_VAR_FUNC_C(W, H), OBMC_VAR_FUNC_SSE4_1(W, H))
-#define GEN_TEST_PARAMS(GEN_PARAM)                                          \
-    GEN_PARAM(128, 128), GEN_PARAM(128, 64), GEN_PARAM(64, 128),            \
-        GEN_PARAM(64, 64), GEN_PARAM(64, 32), GEN_PARAM(32, 64),            \
-        GEN_PARAM(32, 32), GEN_PARAM(32, 16), GEN_PARAM(16, 32),            \
-        GEN_PARAM(16, 16), GEN_PARAM(16, 8), GEN_PARAM(8, 16),              \
-        GEN_PARAM(8, 8), GEN_PARAM(8, 4), GEN_PARAM(4, 8), GEN_PARAM(4, 4), \
-        GEN_PARAM(4, 16), GEN_PARAM(16, 4), GEN_PARAM(8, 32),               \
-        GEN_PARAM(32, 8), GEN_PARAM(16, 64), GEN_PARAM(64, 16)
+#define OBMC_VAR_FUNC(W, H, opt) svt_aom_obmc_variance##W##x##H##_##opt
+#define GEN_OBMC_VAR_TEST_PARAM(W, H, opt) \
+    ObmcVarParam(OBMC_VAR_FUNC(W, H, c), OBMC_VAR_FUNC(W, H, opt))
+#define GEN_TEST_PARAMS(GEN_PARAM, opt)                                       \
+    {                                                                         \
+        GEN_PARAM(128, 128, opt), GEN_PARAM(128, 64, opt),                    \
+            GEN_PARAM(64, 128, opt), GEN_PARAM(64, 64, opt),                  \
+            GEN_PARAM(64, 32, opt), GEN_PARAM(32, 64, opt),                   \
+            GEN_PARAM(32, 32, opt), GEN_PARAM(32, 16, opt),                   \
+            GEN_PARAM(16, 32, opt), GEN_PARAM(16, 16, opt),                   \
+            GEN_PARAM(16, 8, opt), GEN_PARAM(8, 16, opt),                     \
+            GEN_PARAM(8, 8, opt), GEN_PARAM(8, 4, opt), GEN_PARAM(4, 8, opt), \
+            GEN_PARAM(4, 4, opt), GEN_PARAM(4, 16, opt),                      \
+            GEN_PARAM(16, 4, opt), GEN_PARAM(8, 32, opt),                     \
+            GEN_PARAM(32, 8, opt), GEN_PARAM(16, 64, opt),                    \
+            GEN_PARAM(64, 16, opt)                                            \
+    }
 
-static const ObmcVarParam obmc_var_test_params[] = {
-    GEN_TEST_PARAMS(GEN_OBMC_VAR_TEST_PARAM)};
+#ifdef ARCH_X86_64
+INSTANTIATE_TEST_SUITE_P(
+    SSE4_1, OBMCVarianceTest,
+    ::testing::ValuesIn(GEN_TEST_PARAMS(GEN_OBMC_VAR_TEST_PARAM, sse4_1)));
 
-INSTANTIATE_TEST_SUITE_P(OBMC, OBMCVarianceTest,
-                         ::testing::ValuesIn(obmc_var_test_params));
+INSTANTIATE_TEST_SUITE_P(
+    AVX2, OBMCVarianceTest,
+    ::testing::ValuesIn(GEN_TEST_PARAMS(GEN_OBMC_VAR_TEST_PARAM, avx2)));
+#endif  // ARCH_x86_64
+
+#ifdef ARCH_AARCH64
+INSTANTIATE_TEST_SUITE_P(
+    NEON, OBMCVarianceTest,
+    ::testing::ValuesIn(GEN_TEST_PARAMS(GEN_OBMC_VAR_TEST_PARAM, neon)));
+#endif  // ARCH_AARCH64
 
 using ObmcSubPixVarFunc = unsigned int (*)(const uint8_t *pre, int pre_stride,
                                            int xoffset, int yoffset,
@@ -201,19 +214,23 @@ TEST_P(OBMCSubPixelVarianceTest, RunCheckOutput) {
     run_test(1000);
 };
 
-#define OBMC_SUB_PIX_VAR_FUNC_C(W, H) \
-    svt_aom_obmc_sub_pixel_variance##W##x##H##_c
-#define OBMC_SUB_PIX_VAR_FUNC_SSE41(W, H) \
-    svt_aom_obmc_sub_pixel_variance##W##x##H##_sse4_1
-#define GEN_OBMC_SUB_PIX_VAR_TEST_PARAM(W, H)         \
-    ObmcSubPixVarParam(OBMC_SUB_PIX_VAR_FUNC_C(W, H), \
-                       OBMC_SUB_PIX_VAR_FUNC_SSE41(W, H))
+#define OBMC_SUB_PIX_VAR_FUNC(W, H, opt) \
+    svt_aom_obmc_sub_pixel_variance##W##x##H##_##opt
+#define GEN_OBMC_SUB_PIX_VAR_TEST_PARAM(W, H, opt)     \
+    ObmcSubPixVarParam(OBMC_SUB_PIX_VAR_FUNC(W, H, c), \
+                       OBMC_SUB_PIX_VAR_FUNC(W, H, opt))
 
-static const ObmcSubPixVarParam obmc_sub_pix_var_test_params[] = {
-    GEN_TEST_PARAMS(GEN_OBMC_SUB_PIX_VAR_TEST_PARAM)};
+#ifdef ARCH_X86_64
+INSTANTIATE_TEST_SUITE_P(SSE4_1, OBMCSubPixelVarianceTest,
+                         ::testing::ValuesIn(GEN_TEST_PARAMS(
+                             GEN_OBMC_SUB_PIX_VAR_TEST_PARAM, sse4_1)));
+#endif  // ARCH_X86_64
 
-INSTANTIATE_TEST_SUITE_P(OBMC, OBMCSubPixelVarianceTest,
-                         ::testing::ValuesIn(obmc_sub_pix_var_test_params));
+#ifdef ARCH_AARCH64
+INSTANTIATE_TEST_SUITE_P(NEON, OBMCSubPixelVarianceTest,
+                         ::testing::ValuesIn(GEN_TEST_PARAMS(
+                             GEN_OBMC_SUB_PIX_VAR_TEST_PARAM, neon)));
+#endif  // ARCH_AARCH64
 
 using CalcTargetWeightedPredFn = void (*)(uint8_t, MacroBlockD *, int, uint8_t,
                                           MbModeInfo *, void *, const int);
@@ -341,11 +358,13 @@ class CalcTargetWeightedPredTest
     uint8_t *tmp_tst;
     int stride;
 };
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(CalcTargetWeightedPredTest);
 
 TEST_P(CalcTargetWeightedPredTest, RunCheckOutput) {
     run_test();
 };
 
+#ifdef ARCH_X86_64
 INSTANTIATE_TEST_SUITE_P(CalcTargetWeightedPredTestAbove,
                          CalcTargetWeightedPredTest,
                          ::testing::Values(::testing::make_tuple(
@@ -357,5 +376,6 @@ INSTANTIATE_TEST_SUITE_P(CalcTargetWeightedPredTestLeft,
                          ::testing::Values(::testing::make_tuple(
                              &svt_av1_calc_target_weighted_pred_left_c,
                              &svt_av1_calc_target_weighted_pred_left_avx2)));
+#endif  // ARCH_X86_64
 
 }  // namespace

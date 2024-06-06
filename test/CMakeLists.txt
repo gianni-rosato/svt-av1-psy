@@ -89,6 +89,7 @@ set(multi_arch_files
     FwdTxfm2dAsmTest.cc
     InvTxfm2dAsmTest.cc
     OBMCSadTest.cc
+    OBMCVarianceTest.cc
     PackUnPackTest.cc
     PictureOperatorTest.cc
     RestorationPickTest.cc
@@ -120,7 +121,6 @@ if(HAVE_X86_PLATFORM)
       FwdTxfm2dTest.cc
       HbdVarianceTest.cc
       MotionEstimationTest.cc
-      OBMCVarianceTest.cc
       PaletteModeUtilTest.cc
       PsnrTest.cc
       QuantAsmTest.cc
