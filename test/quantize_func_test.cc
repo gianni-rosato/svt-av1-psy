@@ -262,8 +262,6 @@ class QuantizeLbdTest : public QuantizeTest<QuantizeParam, QuantizeFunc> {
     }
 };
 
-#ifdef ARCH_X86_64
-
 TEST_P(QuantizeLbdTest, ZeroInput) {
     FillCoeffZero();
     QuantizeRun(false);
@@ -378,8 +376,6 @@ TEST_P(QuantizeLbdTest, DISABLED_Speed) {
     }
 }
 
-#endif  // ARCH_X86_64
-
 class QuantizeHbdTest : public QuantizeTest<QuantizeHbdParam, QuantizeHbdFunc> {
   protected:
     QuantizeHbdTest() {
@@ -471,8 +467,7 @@ class QuantizeHbdTest : public QuantizeTest<QuantizeHbdParam, QuantizeHbdFunc> {
         }
     }
 };
-
-#ifdef ARCH_X86_64
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(QuantizeHbdTest);
 
 TEST_P(QuantizeHbdTest, ZeroInput) {
     FillCoeffZero();
@@ -589,8 +584,6 @@ TEST_P(QuantizeHbdTest, DISABLED_Speed) {
                (time_c / time_o));
     }
 }
-
-#endif  // ARCH_X86_64
 
 class QuantizeQmTest : public QuantizeTest<QuantizeQmParam, QuantizeQmFunc> {
   protected:
@@ -735,8 +728,7 @@ class QuantizeQmTest : public QuantizeTest<QuantizeQmParam, QuantizeQmFunc> {
     const QmVal *qmatrix_[NUM_QM_LEVELS][3][TX_SIZES_ALL];
     int qm_level_;
 };
-
-#ifdef ARCH_X86_64
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(QuantizeQmTest);
 
 TEST_P(QuantizeQmTest, ZeroInput) {
     FillCoeffZero();
@@ -770,11 +762,8 @@ TEST_P(QuantizeQmTest, CoeffHalfDequant) {
     QuantizeRun(false, 25, 1);
 }
 
-#endif  // ARCH_X86_64
-
-#ifdef ARCH_X86_64
-
 using QuantizeQmHbdTest = QuantizeQmTest;
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(QuantizeQmHbdTest);
 
 TEST_P(QuantizeQmHbdTest, ZeroInput) {
     FillCoeffZero();
@@ -807,8 +796,6 @@ TEST_P(QuantizeQmHbdTest, CoeffHalfDequant) {
     FillCoeff(16);
     QuantizeRun(false, 25, 1);
 }
-
-#endif  // ARCH_X86_64
 
 using std::make_tuple;
 
@@ -986,9 +973,33 @@ INSTANTIATE_TEST_SUITE_P(AVX2, QuantizeQmTest,
                          ::testing::ValuesIn(kQmParamArrayAvx2));
 INSTANTIATE_TEST_SUITE_P(AVX2, QuantizeQmHbdTest,
                          ::testing::ValuesIn(kQmParamHbdArrayAvx2));
-
 #endif  // HAS_AVX2
 #endif  // ARCH_X86_64
+
+#ifdef ARCH_AARCH64
+const QuantizeParam kQParamArrayNeon[] = {
+    make_tuple(&svt_av1_quantize_fp_c, &svt_av1_quantize_fp_neon,
+               static_cast<TxSize>(TX_16X16), TYPE_FP, EB_EIGHT_BIT),
+    make_tuple(&svt_av1_quantize_fp_c, &svt_av1_quantize_fp_neon,
+               static_cast<TxSize>(TX_4X16), TYPE_FP, EB_EIGHT_BIT),
+    make_tuple(&svt_av1_quantize_fp_c, &svt_av1_quantize_fp_neon,
+               static_cast<TxSize>(TX_16X4), TYPE_FP, EB_EIGHT_BIT),
+    make_tuple(&svt_av1_quantize_fp_c, &svt_av1_quantize_fp_neon,
+               static_cast<TxSize>(TX_32X8), TYPE_FP, EB_EIGHT_BIT),
+    make_tuple(&svt_av1_quantize_fp_c, &svt_av1_quantize_fp_neon,
+               static_cast<TxSize>(TX_8X32), TYPE_FP, EB_EIGHT_BIT),
+    make_tuple(&svt_av1_quantize_fp_32x32_c, &svt_av1_quantize_fp_32x32_neon,
+               static_cast<TxSize>(TX_32X32), TYPE_FP, EB_EIGHT_BIT),
+    make_tuple(&svt_av1_quantize_fp_32x32_c, &svt_av1_quantize_fp_32x32_neon,
+               static_cast<TxSize>(TX_16X64), TYPE_FP, EB_EIGHT_BIT),
+    make_tuple(&svt_av1_quantize_fp_32x32_c, &svt_av1_quantize_fp_32x32_neon,
+               static_cast<TxSize>(TX_64X16), TYPE_FP, EB_EIGHT_BIT),
+    make_tuple(&svt_av1_quantize_fp_64x64_c, &svt_av1_quantize_fp_64x64_neon,
+               static_cast<TxSize>(TX_64X64), TYPE_FP, EB_EIGHT_BIT)};
+
+INSTANTIATE_TEST_SUITE_P(NEON, QuantizeLbdTest,
+                         ::testing::ValuesIn(kQParamArrayNeon));
+#endif  // ARCH_AARCH64
 
 using ComputeCulLevelFunc = uint8_t (*)(const int16_t *const scan,
                                         const int32_t *const quant_coeff,
