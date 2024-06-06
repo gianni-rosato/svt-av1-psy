@@ -55,7 +55,6 @@ using QuantizeFunc = void (*)(const TranLow *coeff_ptr, intptr_t n_coeffs,
 using QuantizeParam = std::tuple<int, int, QuantizeFunc>;
 
 using svt_av1_test_tool::SVTRandom;  // to generate the random
-class QuantizeBQmTest;
 /**
  * @brief Unit test for quantize avx2 functions:
  * - svt_aom_highbd_quantize_b_avx2
@@ -85,7 +84,7 @@ class QuantizeBTest : public ::testing::TestWithParam<QuantizeParam> {
           bd_(static_cast<EbBitDepth>(TEST_GET_PARAM(1))),
           log_scale(0) {
         n_coeffs_ = av1_get_max_eob(tx_size_);
-        coeff_min_ = -(1 << (7 + bd_));
+        coeff_min_ = -(1 << (7 + bd_)) + 1;
         coeff_max_ = (1 << (7 + bd_)) - 1;
         rnd_ = new SVTRandom(coeff_min_, coeff_max_);
 
@@ -238,6 +237,105 @@ class QuantizeBTest : public ::testing::TestWithParam<QuantizeParam> {
     TranLow *dqcoeff_test_;
 };
 
+/**
+ * @brief AVX2/QuantizeBTest.input_zero_all
+ *
+ * test output data consistency of quantize C and avx2 functions with
+ * input coef: all 0
+ * q_index: 0
+ */
+TEST_P(QuantizeBTest, input_zero_all) {
+    fill_coeff_const(0, n_coeffs_, 0);
+    run_quantize(0);
+}
+
+/**
+ * @brief AVX2/QuantizeBTest.input_dcac_minmax_q_n
+ *
+ * test output data consistency of quantize C and avx2 functions with
+ * input coef: combine dc min/max with 1st ac min/max, other ac all 0
+ * q_index: 0 ~ QINDEX_RANGE, step 25
+ */
+TEST_P(QuantizeBTest, input_dcac_minmax_q_n) {
+    fill_coeff_const(2, n_coeffs_, 0);
+    for (int q = 0; q < QINDEX_RANGE; q += 25) {
+        fill_coeff_const(0, 1, coeff_min_);
+        fill_coeff_const(1, 2, coeff_min_);
+        run_quantize(q);
+        fill_coeff_const(0, 1, coeff_min_);
+        fill_coeff_const(1, 2, coeff_max_);
+        run_quantize(q);
+        fill_coeff_const(0, 1, coeff_max_);
+        fill_coeff_const(1, 2, coeff_min_);
+        run_quantize(q);
+        fill_coeff_const(0, 1, coeff_max_);
+        fill_coeff_const(1, 2, coeff_max_);
+        run_quantize(q);
+    }
+}
+
+/**
+ * @brief AVX2/QuantizeBTest.input_random_dc_only
+ *
+ * test output data consistency of quantize C and avx2 functions with
+ * input coef: dc random and ac all 0
+ * q_index: 0
+ */
+TEST_P(QuantizeBTest, input_random_dc_only) {
+    fill_coeff_const(1, n_coeffs_, 0);
+    fill_coeff_random(0, 1);
+    run_quantize(0);
+}
+
+/**
+ * @brief AVX2/QuantizeBTest.input_random_all_q_all
+ *
+ * loop test output data consistency of quantize C and avx2 functions with
+ * input coef: dc random and ac all random
+ * q_index: from 0 to QINDEX_RANGE-1
+ */
+TEST_P(QuantizeBTest, input_random_all_q_all) {
+    const int num_tests = 10;
+    for (int q = 0; q < QINDEX_RANGE; ++q) {
+        for (int i = 0; i < num_tests; ++i) {
+            fill_coeff_random(0, n_coeffs_);
+            run_quantize(q);
+        }
+    }
+}
+
+INSTANTIATE_TEST_SUITE_P(
+    LBD_SSE4_1, QuantizeBTest,
+    ::testing::Combine(::testing::Values(static_cast<int>(TX_16X16),
+                                         static_cast<int>(TX_32X32),
+                                         static_cast<int>(TX_64X64)),
+                       ::testing::Values(static_cast<int>(EB_EIGHT_BIT)),
+                       ::testing::Values(svt_aom_quantize_b_sse4_1)));
+
+INSTANTIATE_TEST_SUITE_P(
+    LBD_AVX2, QuantizeBTest,
+    ::testing::Combine(::testing::Values(static_cast<int>(TX_16X16),
+                                         static_cast<int>(TX_32X32),
+                                         static_cast<int>(TX_64X64)),
+                       ::testing::Values(static_cast<int>(EB_EIGHT_BIT)),
+                       ::testing::Values(svt_aom_quantize_b_avx2)));
+
+INSTANTIATE_TEST_SUITE_P(
+    HBD_SSE4_1, QuantizeBTest,
+    ::testing::Combine(::testing::Values(static_cast<int>(TX_16X16),
+                                         static_cast<int>(TX_32X32),
+                                         static_cast<int>(TX_64X64)),
+                       ::testing::Values(static_cast<int>(EB_TEN_BIT)),
+                       ::testing::Values(svt_aom_highbd_quantize_b_sse4_1)));
+
+INSTANTIATE_TEST_SUITE_P(
+    HBD_AVX2, QuantizeBTest,
+    ::testing::Combine(::testing::Values(static_cast<int>(TX_16X16),
+                                         static_cast<int>(TX_32X32),
+                                         static_cast<int>(TX_64X64)),
+                       ::testing::Values(static_cast<int>(EB_TEN_BIT)),
+                       ::testing::Values(svt_aom_highbd_quantize_b_avx2)));
+
 class QuantizeBQmTest : public QuantizeBTest {
   protected:
     QuantizeBQmTest() : QuantizeBTest() {
@@ -365,10 +463,6 @@ class QuantizeBQmTest : public QuantizeBTest {
  * input coef: all 0
  * q_index: 0
  */
-TEST_P(QuantizeBTest, input_zero_all) {
-    fill_coeff_const(0, n_coeffs_, 0);
-    run_quantize(0);
-}
 TEST_P(QuantizeBQmTest, input_zero_all) {
     fill_coeff_const(0, n_coeffs_, 0);
     run_quantize(0);
@@ -381,23 +475,6 @@ TEST_P(QuantizeBQmTest, input_zero_all) {
  * input coef: combine dc min/max with 1st ac min/max, other ac all 0
  * q_index: 0 ~ QINDEX_RANGE, step 25
  */
-TEST_P(QuantizeBTest, input_dcac_minmax_q_n) {
-    fill_coeff_const(2, n_coeffs_, 0);
-    for (int q = 0; q < QINDEX_RANGE; q += 25) {
-        fill_coeff_const(0, 1, coeff_min_);
-        fill_coeff_const(1, 2, coeff_min_);
-        run_quantize(q);
-        fill_coeff_const(0, 1, coeff_min_);
-        fill_coeff_const(1, 2, coeff_max_);
-        run_quantize(q);
-        fill_coeff_const(0, 1, coeff_max_);
-        fill_coeff_const(1, 2, coeff_min_);
-        run_quantize(q);
-        fill_coeff_const(0, 1, coeff_max_);
-        fill_coeff_const(1, 2, coeff_max_);
-        run_quantize(q);
-    }
-}
 TEST_P(QuantizeBQmTest, input_dcac_minmax_q_n) {
     fill_coeff_const(2, n_coeffs_, 0);
     for (int q = 0; q < QINDEX_RANGE; q += 25) {
@@ -423,11 +500,6 @@ TEST_P(QuantizeBQmTest, input_dcac_minmax_q_n) {
  * input coef: dc random and ac all 0
  * q_index: 0
  */
-TEST_P(QuantizeBTest, input_random_dc_only) {
-    fill_coeff_const(1, n_coeffs_, 0);
-    fill_coeff_random(0, 1);
-    run_quantize(0);
-}
 TEST_P(QuantizeBQmTest, input_random_dc_only) {
     fill_coeff_const(1, n_coeffs_, 0);
     fill_coeff_random(0, 1);
@@ -441,15 +513,6 @@ TEST_P(QuantizeBQmTest, input_random_dc_only) {
  * input coef: dc random and ac all random
  * q_index: from 0 to QINDEX_RANGE-1
  */
-TEST_P(QuantizeBTest, input_random_all_q_all) {
-    const int num_tests = 10;
-    for (int q = 0; q < QINDEX_RANGE; ++q) {
-        for (int i = 0; i < num_tests; ++i) {
-            fill_coeff_random(0, n_coeffs_);
-            run_quantize(q);
-        }
-    }
-}
 TEST_P(QuantizeBQmTest, input_random_all_q_all) {
     const int num_tests = 10;
     for (int q = 0; q < QINDEX_RANGE; ++q) {
@@ -460,44 +523,19 @@ TEST_P(QuantizeBQmTest, input_random_all_q_all) {
     }
 }
 
-#ifndef FULL_UNIT_TEST
 INSTANTIATE_TEST_SUITE_P(
-    QuantLBD, QuantizeBTest,
-    ::testing::Combine(::testing::Values(static_cast<int>(TX_16X16),
-                                         static_cast<int>(TX_32X32),
-                                         static_cast<int>(TX_64X64)),
-                       ::testing::Values(static_cast<int>(EB_EIGHT_BIT)),
-                       ::testing::Values(svt_aom_quantize_b_sse4_1,
-                                         svt_aom_quantize_b_avx2)));
-INSTANTIATE_TEST_SUITE_P(
-    QuantHBD, QuantizeBTest,
-    ::testing::Combine(::testing::Values(static_cast<int>(TX_16X16),
-                                         static_cast<int>(TX_32X32),
-                                         static_cast<int>(TX_64X64)),
-                       ::testing::Values(static_cast<int>(EB_TEN_BIT)),
-                       ::testing::Values(svt_aom_highbd_quantize_b_sse4_1,
-                                         svt_aom_highbd_quantize_b_avx2)));
-INSTANTIATE_TEST_SUITE_P(
-    QuantLBD, QuantizeBQmTest,
+    LBD_AVX2, QuantizeBQmTest,
     ::testing::Combine(::testing::Values(static_cast<int>(TX_16X16),
                                          static_cast<int>(TX_32X32),
                                          static_cast<int>(TX_64X64)),
                        ::testing::Values(static_cast<int>(EB_EIGHT_BIT)),
                        ::testing::Values(svt_av1_quantize_b_qm_avx2)));
+
 INSTANTIATE_TEST_SUITE_P(
-    QuantHBD, QuantizeBQmTest,
+    HBD_AVX2, QuantizeBQmTest,
     ::testing::Combine(::testing::Values(static_cast<int>(TX_16X16),
                                          static_cast<int>(TX_32X32),
                                          static_cast<int>(TX_64X64)),
                        ::testing::Values(static_cast<int>(EB_TEN_BIT)),
                        ::testing::Values(svt_av1_highbd_quantize_b_qm_avx2)));
-#else
-INSTANTIATE_TEST_SUITE_P(
-    Quant, QuantizeBTest,
-    ::testing::Combine(::testing::Range(static_cast<int>(TX_4X4),
-                                        static_cast<int>(TX_SIZES_ALL), 1),
-                       ::testing::Values(static_cast<int>(EB_EIGHT_BIT),
-                                         static_cast<int>(EB_TEN_BIT))));
-#endif  // FULL_UNIT_TEST
-
 }  // namespace QuantizeAsmTest
