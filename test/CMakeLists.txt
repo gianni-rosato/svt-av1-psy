@@ -84,16 +84,17 @@ set(arch_neutral_files
     )
 
 set(multi_arch_files
+    CdefTest.cc
     FwdTxfm2dAsmTest.cc
     InvTxfm2dAsmTest.cc
     PictureOperatorTest.cc
+    RestorationPickTest.cc
     SadTest.cc
-    selfguided_filter_test.cc
-    CdefTest.cc
     SpatialFullDistortionTest.cc
     TemporalFilterTestPlanewise.cc
+    VarianceTest.cc
     convolve_2d_test.cc
-    RestorationPickTest.cc
+    selfguided_filter_test.cc
     )
 
 if(HAVE_X86_PLATFORM)
@@ -123,7 +124,6 @@ if(HAVE_X86_PLATFORM)
         QuantAsmTest.cc
         ResidualTest.cc
         SelfGuidedUtilTest.cc
-        VarianceTest.cc
         WedgeUtilTest.cc
         av1_convolve_scale_test.cc
         compute_mean_test.cc
