@@ -1334,6 +1334,23 @@ int32_t estimate_noise_fp16_avx2_wrapper(const uint16_t *src, int width,
 
 #endif
 
+#ifdef ARCH_AARCH64
+
+int32_t estimate_noise_fp16_c_wrapper(const uint16_t *src, int width,
+                                      int height, int stride, int bd) {
+    UNUSED(bd);
+    return svt_estimate_noise_fp16_c(
+        (const uint8_t *)src, width, height, stride);
+}
+int32_t estimate_noise_fp16_neon_wrapper(const uint16_t *src, int width,
+                                         int height, int stride, int bd) {
+    UNUSED(bd);
+    return svt_estimate_noise_fp16_neon(
+        (const uint8_t *)src, width, height, stride);
+}
+
+#endif
+
 typedef int32_t (*EstimateNoiseFuncFP)(const uint16_t *src, int width,
                                        int height, int stride, int bd);
 
@@ -1413,6 +1430,18 @@ INSTANTIATE_TEST_CASE_P(
                        ::testing::Values(3840, 1920, 1280, 800, 640, 360),
                        ::testing::Values(2160, 1080, 720, 600, 480, 240),
                        ::testing::Values(10, 12)));
+
+#endif
+
+#ifdef ARCH_AARCH64
+
+INSTANTIATE_TEST_CASE_P(
+    NEON_lbd, EstimateNoiseTestFP,
+    ::testing::Combine(::testing::Values(estimate_noise_fp16_c_wrapper),
+                       ::testing::Values(estimate_noise_fp16_neon_wrapper),
+                       ::testing::Values(3840, 1920, 1280, 800, 640, 360),
+                       ::testing::Values(2160, 1080, 720, 600, 480, 240),
+                       ::testing::Values(8)));
 
 #endif
 
