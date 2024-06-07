@@ -9,18 +9,31 @@ if ! type git > /dev/null 2>&1; then
     exit 1
 fi
 
+# set (in/ex)clusions using $@
+set -- \
+':/' \
+':!Config/ExampleFilmGrainTable.tbl' \
+':!*.patch' \
+':!third_party' \
+':!test/e2e_test/test_vector_list.txt' \
+':!test/vectors/smoking_test.cfg' \
+':!test/vectors/video_src.cfg' \
+':!*.png' \
+':!*.PNG' \
+':!*.pdf'
+
 git config --global --add safe.directory "$REPO_DIR" || true
 
 git -C "$REPO_DIR" fetch --all -pf > /dev/null 2>&1 || true
 
 echo "Checking for tabs" >&2
-! git -C "$REPO_DIR" --no-pager grep -InP "\t" -- . ':!third_party/**/*' ':!Config/ExampleFilmGrainTable.tbl' || ret=1
+! git -C "$REPO_DIR" --no-pager grep -InP "\t" -- "$@" || ret=1
 
 echo "Checking for carriage returns" >&2
-! git -C "$REPO_DIR" --no-pager grep -InP "\r" -- . ':!third_party/**/*' || ret=1
+! git -C "$REPO_DIR" --no-pager grep -InP "\r" -- "$@" || ret=1
 
 echo "Checking for trailing spaces" >&2
-! git -C "$REPO_DIR" --no-pager grep -InP " $" -- . ':!third_party/**/*' ':!*.patch' || ret=1
+! git -C "$REPO_DIR" --no-pager grep -InP " $" -- "$@" || ret=1
 
 # Test only "new" commits, that is, commits that are not upstream on
 # the default branch.
@@ -54,15 +67,7 @@ while read -r filename; do
         ret=1
     fi
 done << EOF
-$(
-    git -C "$REPO_DIR" diff --name-only --diff-filter=d "$FETCH_HEAD" -- . \
-        ':!third_party' ':!test/e2e_test/test_vector_list.txt' \
-        ':!test/vectors/smoking_test.cfg' \
-        ':!test/vectors/video_src.cfg' \
-        ':!*.png' \
-        ':!*.PNG' \
-        ':!*.pdf'
-)
+$(git -C "$REPO_DIR" diff --name-only --diff-filter=d "$FETCH_HEAD" -- "$@")
 EOF
 
 while read -r i; do
@@ -105,7 +110,7 @@ if ! type "$CLANG_FORMAT_DIFF" > /dev/null 2>&1; then
     exit 1
 fi
 
-diff_output=$(cd "$REPO_DIR" && git diff "$FETCH_HEAD" | python3 "$CLANG_FORMAT_DIFF" -p1) || true
+diff_output=$(cd "$REPO_DIR" && git diff "$FETCH_HEAD" -- "$@" | python3 "$CLANG_FORMAT_DIFF" -p1) || true
 if [ -n "$diff_output" ]; then
     cat >&2 << 'FOE'
 clang-format check failed!
