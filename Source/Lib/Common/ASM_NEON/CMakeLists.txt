@@ -24,6 +24,7 @@ target_sources(
   PUBLIC compound_convolve_neon.c
   PUBLIC convolve_2d_neon.c
   PUBLIC convolve_neon.c
+  PUBLIC highbd_convolve_2d_neon.c
   PUBLIC highbd_inv_txfm_neon.c
   PUBLIC EbBlend_a64_mask_neon.c
   PUBLIC EbDeblockingFilter_Intrinsic_neon.c
