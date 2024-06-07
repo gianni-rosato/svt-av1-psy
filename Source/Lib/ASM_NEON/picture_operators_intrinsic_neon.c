@@ -1074,11 +1074,11 @@ void svt_full_distortion_kernel_cbf_zero32_bits_neon(int32_t *coeff, uint32_t co
 }
 
 /******************************************************************************************************
-                                       svt_residual_kernel16bit_neon_intrin
+                                       svt_residual_kernel16bit_neon
 ******************************************************************************************************/
-void svt_residual_kernel16bit_neon_intrin(uint16_t *input, uint32_t input_stride, uint16_t *pred, uint32_t pred_stride,
-                                          int16_t *residual, uint32_t residual_stride, uint32_t area_width,
-                                          uint32_t area_height) {
+void svt_residual_kernel16bit_neon(uint16_t *input, uint32_t input_stride, uint16_t *pred, uint32_t pred_stride,
+                                   int16_t *residual, uint32_t residual_stride, uint32_t area_width,
+                                   uint32_t area_height) {
     if (area_width == 4) {
         for (uint32_t height = 0; height < area_height; height += 2) {
             const uint16x4_t residual64_0 = vsub_u16(vld1_u16(input), vld1_u16(pred));

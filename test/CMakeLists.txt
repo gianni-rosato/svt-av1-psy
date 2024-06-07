@@ -93,6 +93,7 @@ set(multi_arch_files
     PackUnPackTest.cc
     PictureOperatorTest.cc
     QuantAsmTest.cc
+    ResidualTest.cc
     RestorationPickTest.cc
     SadTest.cc
     SpatialFullDistortionTest.cc
@@ -124,7 +125,6 @@ if(HAVE_X86_PLATFORM)
       MotionEstimationTest.cc
       PaletteModeUtilTest.cc
       PsnrTest.cc
-      ResidualTest.cc
       SelfGuidedUtilTest.cc
       WedgeUtilTest.cc
       av1_convolve_scale_test.cc

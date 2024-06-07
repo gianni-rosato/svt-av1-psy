@@ -229,6 +229,7 @@ TEST_P(ResidualKernel8BitTest, DISABLED_SpeedTest) {
     speed_test();
 };
 
+#ifdef ARCH_X86_64
 INSTANTIATE_TEST_SUITE_P(
     SSE4_1, ResidualKernel8BitTest,
     ::testing::Combine(::testing::ValuesIn(TEST_AREA_SIZES),
@@ -248,6 +249,15 @@ INSTANTIATE_TEST_SUITE_P(
                        ::testing::ValuesIn(TEST_PATTERNS),
                        ::testing::Values(svt_residual_kernel8bit_avx512)));
 #endif
+#endif  // ARCH_X86_64
+
+#ifdef ARCH_AARCH64
+INSTANTIATE_TEST_SUITE_P(
+    NEON, ResidualKernel8BitTest,
+    ::testing::Combine(::testing::ValuesIn(TEST_AREA_SIZES),
+                       ::testing::ValuesIn(TEST_PATTERNS),
+                       ::testing::Values(svt_residual_kernel8bit_neon)));
+#endif  // ARCH_AARCH64
 
 typedef void (*svt_residual_kernel16bit_func)(
     uint16_t *input, uint32_t input_stride, uint16_t *pred,
@@ -357,11 +367,13 @@ class ResidualKernel16BitTest
     int16_t *residual1_, *residual2_;
     uint32_t test_size_;
 };
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(ResidualKernel16BitTest);
 
 TEST_P(ResidualKernel16BitTest, MatchTest) {
     run_test();
 };
 
+#ifdef ARCH_X86_64
 INSTANTIATE_TEST_SUITE_P(
     SSE2, ResidualKernel16BitTest,
     ::testing::Combine(
@@ -374,5 +386,14 @@ INSTANTIATE_TEST_SUITE_P(
     ::testing::Combine(::testing::ValuesIn(TEST_AREA_SIZES),
                        ::testing::ValuesIn(TEST_PATTERNS),
                        ::testing::Values(svt_residual_kernel16bit_avx2)));
+#endif  // ARCH_X86_64
+
+#ifdef ARCH_AARCH64
+INSTANTIATE_TEST_SUITE_P(
+    NEON, ResidualKernel16BitTest,
+    ::testing::Combine(::testing::ValuesIn(TEST_AREA_SIZES),
+                       ::testing::ValuesIn(TEST_PATTERNS),
+                       ::testing::Values(svt_residual_kernel16bit_neon)));
+#endif  // ARCH_AARCH64
 
 }  // namespace
