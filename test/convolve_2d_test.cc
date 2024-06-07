@@ -1075,7 +1075,7 @@ class AV1HbdJntConvolve2DTest : public AV1HbdConvolve2DTest {
             } else if (has_subx == 1) {
                 func_tst_ = func_ref_;  // not yet ported
             } else if (has_suby == 1) {
-                func_tst_ = func_ref_;  // not yet ported
+                func_tst_ = svt_av1_highbd_jnt_convolve_y_neon;
             } else {
                 func_tst_ = func_ref_;  // not yet ported
             }
@@ -1129,9 +1129,8 @@ INSTANTIATE_TEST_CASE_P(NEON_ConvolveTest2D, AV1HbdJntConvolve2DTest,
 // not yet ported
 // INSTANTIATE_TEST_CASE_P(NEON_ConvolveTestX, AV1HbdJntConvolve2DTest,
 //                         BuildParams(1, 0, 2, 1));
-// not yet ported
-// INSTANTIATE_TEST_CASE_P(NEON_ConvolveTestY, AV1HbdJntConvolve2DTest,
-//                         BuildParams(0, 1, 2, 1));
+INSTANTIATE_TEST_CASE_P(NEON_ConvolveTestY, AV1HbdJntConvolve2DTest,
+                        BuildParams(0, 1, 2, 1));
 
 #endif  // ARCH_AARCH64
 
