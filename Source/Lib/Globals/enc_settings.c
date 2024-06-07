@@ -902,7 +902,6 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet *scs) {
 
     if (config->enable_alt_curve > 1) {
         SVT_ERROR("Instance %u: Enable alt curve must be between 0 and 1\n", channel_number + 1);
-        return_error = EB_ErrorBadParameter;
     }
 
     if (config->sharpness > 7 || config->sharpness < -7) {
@@ -917,16 +916,6 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet *scs) {
 
     if (config->frame_luma_bias > 100) {
         SVT_ERROR("Instance %u: Frame-level luma bias value must be between 0 and 100\n", channel_number + 1);
-        return_error = EB_ErrorBadParameter;
-    }
-
-    if (config->max_32_tx_size > 1) {
-        SVT_ERROR("Instance %u: Max 32 tx size must be between 0 and 1\n", channel_number + 1);
-        return_error = EB_ErrorBadParameter;
-    }
-
-    if (config->adaptive_film_grain > 1) {
-        SVT_ERROR("Instance %u: Enable adaptive film grain must be between 0 and 1\n", channel_number + 1);
         return_error = EB_ErrorBadParameter;
     }
 
@@ -1080,12 +1069,11 @@ EbErrorType svt_av1_set_default_params(EbSvtAv1EncConfiguration *config_ptr) {
     config_ptr->variance_boost_strength           = 2;
     config_ptr->variance_octile                   = 6;
     config_ptr->enable_alt_curve                  = FALSE;
-    config_ptr->sharpness                         = 0;
+    config_ptr->sharpness                         = 0; 
     config_ptr->extended_crf_qindex_offset        = 0;
     config_ptr->qp_scale_compress_strength        = 1;
     config_ptr->frame_luma_bias                   = 0;
     config_ptr->max_32_tx_size                    = FALSE;
-    config_ptr->adaptive_film_grain               = TRUE;
     return return_error;
 }
 
@@ -1204,17 +1192,10 @@ void svt_av1_print_lib_params(SequenceControlSet *scs) {
         }
 
         if (config->film_grain_denoise_strength != 0) {
-            if (config->adaptive_film_grain) {
-                SVT_INFO("SVT [config]: film grain synth / denoising / level / adaptive blocksize \t: %d / %d / %d / True\n",
-                         1,
-                         config->film_grain_denoise_apply,
-                         config->film_grain_denoise_strength);
-            } else {
-                SVT_INFO("SVT [config]: film grain synth / denoising / level / adaptive blocksize \t: %d / %d / %d / False\n",
-                         1,
-                         config->film_grain_denoise_apply,
-                         config->film_grain_denoise_strength);
-            }
+            SVT_INFO("SVT [config]: film grain synth / denoising / level \t\t\t\t: %d / %d / %d\n",
+                     1,
+                     config->film_grain_denoise_apply,
+                     config->film_grain_denoise_strength);
         }
 
         SVT_INFO("SVT [config]: Sharpness / QP scale compress strength / Frame low-luma bias \t: %d / %d / %d\n",
@@ -2201,7 +2182,6 @@ EB_API EbErrorType svt_av1_enc_parse_parameter(EbSvtAv1EncConfiguration *config_
         {"enable-variance-boost", &config_struct->enable_variance_boost},
         {"enable-alt-curve", &config_struct->enable_alt_curve},
         {"max-32-tx-size", &config_struct->max_32_tx_size},
-        {"adaptive-film-grain", &config_struct->adaptive_film_grain},
     };
     const size_t bool_opts_size = sizeof(bool_opts) / sizeof(bool_opts[0]);
 
