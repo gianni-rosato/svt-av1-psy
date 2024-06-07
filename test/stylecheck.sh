@@ -95,17 +95,17 @@ fi
 
 CLANG_FORMAT_URL=https://raw.githubusercontent.com/llvm/llvm-project/main/clang/tools/clang-format/clang-format-diff.py
 
-if type /usr/share/clang/clang-format-diff.py > /dev/null 2>&1; then
+if test -f /usr/share/clang/clang-format-diff.py > /dev/null 2>&1; then
     CLANG_FORMAT_DIFF="/usr/share/clang/clang-format-diff.py"
 else
-    if ! type "$REPO_DIR/test/clang-format-diff.py" > /dev/null 2>&1; then
-        curl -ls -o "$REPO_DIR/test/clang-format-diff.py" "$CLANG_FORMAT_URL" ||
-            wget -q -O "$REPO_DIR/test/clang-format-diff.py" "$CLANG_FORMAT_URL"
+    if ! test -f "$REPO_DIR/test/clang-format-diff.py" > /dev/null 2>&1; then
+        curl -ls -o "$REPO_DIR/test/clang-format-diff.py" "$CLANG_FORMAT_URL" > /dev/null ||
+            wget -q -O "$REPO_DIR/test/clang-format-diff.py" "$CLANG_FORMAT_URL" > /dev/null
     fi
     CLANG_FORMAT_DIFF="$REPO_DIR/test/clang-format-diff.py"
 fi
 
-if ! type "$CLANG_FORMAT_DIFF" > /dev/null 2>&1; then
+if ! test -f "$CLANG_FORMAT_DIFF" > /dev/null 2>&1; then
     echo "ERROR: clang-format-diff.py not found, can't continue" >&2
     exit 1
 fi
