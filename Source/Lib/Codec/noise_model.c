@@ -17,7 +17,6 @@
 #include "mathutils.h"
 #include "svt_log.h"
 #include "aom_dsp_rtcd.h"
-#include "EbPictureControlSet.h"
 
 static const int32_t k_max_lag = 4;
 
@@ -2129,11 +2128,6 @@ EbErrorType svt_aom_denoise_and_model_ctor(AomDenoiseAndModel *object_ptr, EbPtr
     chroma_sub_log2[1]         = (init_data_ptr->encoder_color_format >= EB_YUV422 ? 1 : 2) - 1;
 
     object_ptr->dctor = denoise_and_model_dctor;
-
-    // int32_t DenoiseBlockSize = !(object_init_data_ptr->adaptive_film_grain) ? 32
-    //                             : (init_data_ptr->width * init_data_ptr->height) >= INPUT_SIZE_8K_TH ? 32
-    //                                 : (init_data_ptr->width * init_data_ptr->height) >= INPUT_SIZE_4K_TH ? 16
-    //                                     : 8;
 
     int32_t DenoiseBlockSize = (init_data_ptr->width * init_data_ptr->height) >= INPUT_SIZE_8K_TH ? 32
                                     : (init_data_ptr->width * init_data_ptr->height) >= INPUT_SIZE_4K_TH ? 16
