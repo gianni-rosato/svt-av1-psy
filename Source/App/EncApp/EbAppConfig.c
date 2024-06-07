@@ -213,6 +213,8 @@
 
 #define MAX_32_TX_SIZE_TOKEN "--max-32-tx-size"
 
+#define ADAPTIVE_FILM_GRAIN_TOKEN "--adaptive-film-grain"
+
 static EbErrorType validate_error(EbErrorType err, const char *token, const char *value) {
     switch (err) {
     case EB_ErrorNone: return EB_ErrorNone;
@@ -1281,6 +1283,11 @@ ConfigEntry config_entry_psy[] = {
      MAX_32_TX_SIZE_TOKEN,
      "[PSY] Limits the allowed transform sizes to a maximum of 32x32, default is 0 [0-1]",
      set_cfg_generic_token},
+    // Adaptive film grain
+    {SINGLE_INPUT,
+     ADAPTIVE_FILM_GRAIN_TOKEN,
+     "[PSY] Adapts film grain blocksize based on video resolution, default is 1 [0-1]",
+     set_cfg_generic_token},
     // Termination
     {SINGLE_INPUT, NULL, NULL, NULL}};
 
@@ -1481,6 +1488,9 @@ ConfigEntry config_entry[] = {
 
      // Max 32 tx size
     {SINGLE_INPUT, MAX_32_TX_SIZE_TOKEN, "Max32TxSize", set_cfg_generic_token},
+
+    // Adaptive film grain
+    {SINGLE_INPUT, ADAPTIVE_FILM_GRAIN_TOKEN, "AdaptiveFilmGrain", set_cfg_generic_token},
 
     // Termination
     {SINGLE_INPUT, NULL, NULL, NULL}};
