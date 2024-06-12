@@ -4586,11 +4586,14 @@ static void copy_api_from_app(
         SVT_WARN("Quantization matrices will be forced off since both min and max quant matrix levels are set to 15\n");
         scs->static_config.enable_qm = 0;
     }
-    // Work around a VQ issue that creates blocking with QMs and presets 5 and faster: https://gitlab.com/AOMediaCodec/SVT-AV1/-/issues/2189
+
+#ifdef ARCH_AARCH64
+    // Work around a VQ issue that creates blocking with QMs and presets 5 and faster on ARM environments with NEON: https://gitlab.com/AOMediaCodec/SVT-AV1/-/issues/2189
     if (scs->static_config.enable_qm && scs->static_config.enc_mode >= ENC_M5) {
-        SVT_WARN("Quantization matrices will be turned off for presets 5 and higher\n");
+        SVT_WARN("Quantization matrices will be turned off for presets 5 and higher on NEON-enabled environments\n");
         scs->static_config.enable_qm = 0;
     }
+#endif
 
     scs->static_config.startup_mg_size = config_struct->startup_mg_size;
     scs->static_config.enable_roi_map = config_struct->enable_roi_map;
