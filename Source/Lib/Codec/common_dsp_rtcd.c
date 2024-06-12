@@ -28,6 +28,11 @@
 #include "cpuinfo.h"
 #endif
 
+#if defined ARCH_AARCH64 && defined(__linux__)
+// For reading the HWCAP flags
+#include <sys/auxv.h>
+#endif
+
 /*
  * DSP deprecated flags
  */
@@ -116,6 +121,46 @@ EbCpuFlags svt_aom_get_cpu_flags_to_use() {
 }
 #else
 #if defined ARCH_AARCH64
+
+#if defined(__linux__)
+
+// Define hwcap values ourselves: building with an old auxv header where these
+// hwcap values are not defined should not prevent features from being enabled.
+#define AOM_AARCH64_HWCAP_CRC32 (1 << 7)
+#define AOM_AARCH64_HWCAP_ASIMDDP (1 << 20)
+#define AOM_AARCH64_HWCAP_SVE (1 << 22)
+#define AOM_AARCH64_HWCAP2_SVE2 (1 << 1)
+#define AOM_AARCH64_HWCAP2_I8MM (1 << 13)
+
+EbCpuFlags svt_aom_get_cpu_flags(void) {
+#if HAVE_ARM_CRC32 || HAVE_NEON_DOTPROD || HAVE_SVE
+  unsigned long hwcap = getauxval(AT_HWCAP);
+#endif
+#if HAVE_NEON_I8MM || HAVE_SVE2
+  unsigned long hwcap2 = getauxval(AT_HWCAP2);
+#endif
+
+  EbCpuFlags flags = EB_CPU_FLAGS_NEON;  // Neon is mandatory in Armv8.0-A.
+#if HAVE_ARM_CRC32
+  if (hwcap & AOM_AARCH64_HWCAP_CRC32) flags |= EB_CPU_FLAGS_ARM_CRC32;
+#endif  // HAVE_ARM_CRC32
+#if HAVE_NEON_DOTPROD
+  if (hwcap & AOM_AARCH64_HWCAP_ASIMDDP) flags |= EB_CPU_FLAGS_NEON_DOTPROD;
+#endif  // HAVE_NEON_DOTPROD
+#if HAVE_NEON_I8MM
+  if (hwcap2 & AOM_AARCH64_HWCAP2_I8MM) flags |= EB_CPU_FLAGS_NEON_I8MM;
+#endif  // HAVE_NEON_I8MM
+#if HAVE_SVE
+  if (hwcap & AOM_AARCH64_HWCAP_SVE) flags |= EB_CPU_FLAGS_SVE;
+#endif  // HAVE_SVE
+#if HAVE_SVE2
+  if (hwcap2 & AOM_AARCH64_HWCAP2_SVE2) flags |= EB_CPU_FLAGS_SVE2;
+#endif  // HAVE_SVE2
+  return flags;
+}
+
+#else // __linux__
+
 EbCpuFlags svt_aom_get_cpu_flags() {
     EbCpuFlags flags = 0;
 
@@ -126,10 +171,24 @@ EbCpuFlags svt_aom_get_cpu_flags() {
     return flags;
 }
 
+#endif
+
 EbCpuFlags svt_aom_get_cpu_flags_to_use() {
     EbCpuFlags flags = svt_aom_get_cpu_flags();
+
+    // Restrict flags: FEAT_I8MM assumes that FEAT_DotProd is available.
+    if (!(flags & EB_CPU_FLAGS_NEON_DOTPROD)) flags &= ~EB_CPU_FLAGS_NEON_I8MM;
+
+    // Restrict flags: SVE assumes that FEAT_{DotProd,I8MM} are available.
+    if (!(flags & EB_CPU_FLAGS_NEON_DOTPROD)) flags &= ~EB_CPU_FLAGS_SVE;
+    if (!(flags & EB_CPU_FLAGS_NEON_I8MM)) flags &= ~EB_CPU_FLAGS_SVE;
+
+    // Restrict flags: SVE2 assumes that FEAT_SVE is available.
+    if (!(flags & EB_CPU_FLAGS_SVE)) flags &= ~EB_CPU_FLAGS_SVE2;
+
     return flags;
 }
+
 #else
 EbCpuFlags svt_aom_get_cpu_flags_to_use() {
   return 0;

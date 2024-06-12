@@ -438,7 +438,19 @@ typedef uint64_t EbCpuFlags;
 #define EB_CPU_FLAGS_AVX512BW (1 << 14)
 #define EB_CPU_FLAGS_AVX512VL (1 << 15)
 #elif defined(ARCH_AARCH64)
+// Armv8.0-A mandatory Neon instructions.
 #define EB_CPU_FLAGS_NEON (1 << 0)
+// Armv8.0-A optional CRC32 instructions, mandatory from Armv8.1-A.
+#define EB_CPU_FLAGS_ARM_CRC32 (1 << 1)
+// Armv8.2-A optional Neon dot-product instructions, mandatory from Armv8.4-A.
+#define EB_CPU_FLAGS_NEON_DOTPROD (1 << 2)
+// Armv8.2-A optional Neon i8mm instructions, mandatory from Armv8.6-A.
+#define EB_CPU_FLAGS_NEON_I8MM (1 << 3)
+// Armv8.2-A optional SVE instructions, mandatory from Armv9.0-A.
+#define EB_CPU_FLAGS_SVE (1 << 4)
+// Armv9.0-A SVE2 instructions.
+#define EB_CPU_FLAGS_SVE2 (1 << 5)
+
 #endif
 #define EB_CPU_FLAGS_INVALID (1ULL << (sizeof(EbCpuFlags) * 8ULL - 1ULL))
 #define EB_CPU_FLAGS_ALL ((EB_CPU_FLAGS_INVALID >> 1) - 1)

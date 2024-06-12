@@ -146,20 +146,25 @@ static const char *get_asm_level_name_str(EbCpuFlags cpu_flags) {
         const char *name;
         EbCpuFlags flags;
     } param_maps[] = {
-        {"c",       0},
+        {"c",            0},
 #ifdef ARCH_X86_64
-        {"mmx",     EB_CPU_FLAGS_MMX},
-        {"sse",     EB_CPU_FLAGS_SSE},
-        {"sse2",    EB_CPU_FLAGS_SSE2},
-        {"sse3",    EB_CPU_FLAGS_SSE3},
-        {"ssse3",   EB_CPU_FLAGS_SSSE3},
-        {"sse4_1",  EB_CPU_FLAGS_SSE4_1},
-        {"sse4_2",  EB_CPU_FLAGS_SSE4_2},
-        {"avx",     EB_CPU_FLAGS_AVX},
-        {"avx2",    EB_CPU_FLAGS_AVX2},
-        {"avx512",  EB_CPU_FLAGS_AVX512F},
+        {"mmx",          EB_CPU_FLAGS_MMX},
+        {"sse",          EB_CPU_FLAGS_SSE},
+        {"sse2",         EB_CPU_FLAGS_SSE2},
+        {"sse3",         EB_CPU_FLAGS_SSE3},
+        {"ssse3",        EB_CPU_FLAGS_SSSE3},
+        {"sse4_1",       EB_CPU_FLAGS_SSE4_1},
+        {"sse4_2",       EB_CPU_FLAGS_SSE4_2},
+        {"avx",          EB_CPU_FLAGS_AVX},
+        {"avx2",         EB_CPU_FLAGS_AVX2},
+        {"avx512",       EB_CPU_FLAGS_AVX512F},
 #elif defined(ARCH_AARCH64)
-        {"neon",    EB_CPU_FLAGS_NEON}
+        {"neon",         EB_CPU_FLAGS_NEON},
+        {"crc32",        EB_CPU_FLAGS_ARM_CRC32},
+        {"neon_dotprod", EB_CPU_FLAGS_NEON_DOTPROD},
+        {"neon_i8mm",    EB_CPU_FLAGS_NEON_I8MM},
+        {"sve",          EB_CPU_FLAGS_SVE},
+        {"sve2",         EB_CPU_FLAGS_SVE2}
 #endif
     };
     const uint32_t para_map_size = sizeof(param_maps) / sizeof(param_maps[0]);

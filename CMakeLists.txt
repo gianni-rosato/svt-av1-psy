@@ -97,6 +97,84 @@ if(NOT COMPILE_C_ONLY AND HAVE_X86_PLATFORM)
     enable_language(ASM_NASM)
     add_definitions(-DARCH_X86_64=1)
 elseif(NOT COMPILE_C_ONLY AND HAVE_ARM_PLATFORM)
+    set(ARM64_FLAVORS "NEON;ARM_CRC32;NEON_DOTPROD;NEON_I8MM;SVE;SVE2")
+    set(ARM_CRC32_DEFAULT_FLAG "-march=armv8-a+crc")
+    set(NEON_DOTPROD_DEFAULT_FLAG "-march=armv8.2-a+dotprod")
+    set(NEON_I8MM_DEFAULT_FLAG "-march=armv8.2-a+dotprod+i8mm")
+    set(SVE_DEFAULT_FLAG "-march=armv8.2-a+dotprod+i8mm+sve")
+    set(SVE2_DEFAULT_FLAG "-march=armv9-a+i8mm+sve2") # SVE2 is a v9-only feature
+
+    option(ENABLE_NEON "Enables Neon optimizations on AArch64 targets." ON)
+    option(ENABLE_ARM_CRC32 "Enables Arm CRC32 optimizations." ON)
+    option(ENABLE_NEON_DOTPROD
+      "Enables Armv8.2-A Neon DotProd optimizations on AArch64 targets." ON)
+    option(ENABLE_NEON_I8MM
+      "Enables Armv8.2-A Neon I8MM optimizations on AArch64 targets." ON)
+    option(ENABLE_SVE "Enables Armv8.2-A SVE optimizations on AArch64 targets." ON)
+    option(ENABLE_SVE2 "Enables Armv9-A SVE2 optimizations on AArch64 targets." ON)
+
+    # Check that the compiler flag to enable each flavor is supported by the
+    # compiler. This may not be the case for new architecture features on old
+    # compiler versions.
+    set(C_MAIN "\nint main(void) { return 0; }")
+    foreach(flavor ${ARM64_FLAVORS})
+        if(ENABLE_${flavor} AND NOT DEFINED ${flavor}_FLAG)
+            set(${flavor}_FLAG "${${flavor}_DEFAULT_FLAG}")
+
+            # Do not use check_c_compiler_flag here since the regex used to match
+            # against stderr does not recognise the "invalid feature modifier" error
+            # produced by certain versions of GCC, leading to the feature being
+            # incorrectly marked as available.
+            set(OLD_CMAKE_REQURED_FLAGS ${CMAKE_REQUIRED_FLAGS})
+            set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} ${AOM_${flavor}_FLAG}")
+            unset(${flavor}_FLAG_SUPPORTED)
+            check_c_source_compiles("static void function(void) {} ${C_MAIN}" ${flavor}_FLAG_SUPPORTED)
+            set(CMAKE_REQUIRED_FLAGS ${OLD_CMAKE_REQURED_FLAGS})
+
+            if(NOT ${flavor}_FLAG_SUPPORTED)
+              set(ENABLE_${flavor} 0)
+            endif()
+        endif()
+    endforeach()
+
+    # SVE and SVE2 require that the Neon-SVE bridge header is also available.
+    if(ENABLE_SVE OR ENABLE_SVE2)
+        set(OLD_CMAKE_REQUIRED_FLAGS ${CMAKE_REQUIRED_FLAGS})
+        set(OLD_CMAKE_TRY_COMPILE_TARGET_TYPE ${CMAKE_TRY_COMPILE_TARGET_TYPE})
+        set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} ${SVE_FLAG}")
+        set(CMAKE_TRY_COMPILE_TARGET_TYPE STATIC_LIBRARY)
+        check_c_source_compiles("
+#ifndef __ARM_NEON_SVE_BRIDGE
+#error 1
+#endif
+#include <arm_sve.h>
+#include <arm_neon_sve_bridge.h>" HAVE_SVE_HEADERS)
+        # Check whether the compiler can compile SVE functions that require
+        # backup/restore of SVE registers according to AAPCS. Clang for Windows used
+        # to fail this, see https://github.com/llvm/llvm-project/issues/80009.
+        check_c_source_compiles("
+#include <arm_sve.h>
+void other(void);
+svfloat32_t func(svfloat32_t a) {
+  other();
+  return a;
+} ${C_MAIN}" CAN_COMPILE_SVE)
+        set(CMAKE_REQUIRED_FLAGS ${OLD_CMAKE_REQURED_FLAGS})
+        set(CMAKE_TRY_COMPILE_TARGET_TYPE ${OLD_CMAKE_TRY_COMPILE_TARGET_TYPE})
+        if(NOT HAVE_SVE_HEADERS OR NOT CAN_COMPILE_SVE)
+            set(ENABLE_SVE 0)
+            set(ENABLE_SVE2 0)
+        endif()
+    endif()
+
+    foreach(flavor ${ARM64_FLAVORS})
+        if(ENABLE_${flavor})
+            add_compile_definitions(HAVE_${flavor}=1)
+        else()
+            add_compile_definitions(HAVE_${flavor}=0)
+        endif()
+    endforeach()
+
     add_definitions(-DARCH_AARCH64=1)
 endif()
 
