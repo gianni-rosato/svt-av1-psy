@@ -1,11 +1,10 @@
-# Scalable Video Technology for AV1 (SVT-AV1 Encoder and Decoder)
+# Scalable Video Technology for AV1 (SVT-AV1 Encoder)
 
-The Scalable Video Technology for AV1 (SVT-AV1 Encoder and Decoder) is an
-AV1-compliant software encoder/decoder library. The work on the SVT-AV1 encoder
+The Scalable Video Technology for AV1 (SVT-AV1 Encoder) is an
+AV1-compliant software encoder library. The work on the SVT-AV1 encoder
 targets the development of a production-quality AV1-encoder with performance
 levels applicable to a wide range of applications, from premium VOD to
-real-time and live encoding/transcoding. The SVT-AV1 decoder implementation
-targets future codec research activities.
+real-time and live encoding/transcoding.
 
 The SVT-AV1 project was initially founded by Intel in partnership with Netflix,
 and was then [adopted](https://aomedia.org/press%20releases/aomedia-software-implementation-working-group-to-bring-av1-to-more-video-platforms/)
@@ -28,7 +27,6 @@ License 1.0. See [LICENSE](LICENSE.md) and [PATENTS](PATENTS.md) for details.
 - [System Requirements](Docs/System-Requirements.md)
 - [How to run SVT-AV1 within ffmpeg](Docs/Ffmpeg.md)
 - [Standalone Encoder Usage](Docs/svt-av1_encoder_user_guide.md)
-- [Decoder Usage](Docs/svt-av1_decoder_user_guide.md)
 - [List of All Parameters](Docs/Parameters.md)
 - [Build Guide](Docs/Build-Guide.md)
 - [ARM Build Guide](Docs/ARM-Build-Guide.md)
@@ -63,7 +61,6 @@ License 1.0. See [LICENSE](LICENSE.md) and [PATENTS](PATENTS.md) for details.
 
 **Design Documents**
 - [Encoder Design](Docs/svt-av1-encoder-design.md)
-- [Decoder Design](Docs/svt-av1-decoder-design.md)
 
 **Technical Appendices**
 - [Adaptive Prediction Structure Appendix](Docs/Appendix-Adaptive-Prediction-Structure.md)

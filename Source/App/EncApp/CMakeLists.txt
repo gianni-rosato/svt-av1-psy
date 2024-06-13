@@ -17,7 +17,6 @@ include_directories(${PROJECT_SOURCE_DIR}/Source/API/)
 set(all_files
     ../../API/EbDebugMacros.h
     ../../API/EbSvtAv1.h
-    ../../API/EbSvtAv1Dec.h
     ../../API/EbSvtAv1Enc.h
     ../../API/EbSvtAv1ErrorCodes.h
     ../../API/EbSvtAv1ExtFrameBuf.h

@@ -1,17 +1,17 @@
 /*
-* Copyright(c) 2019 Netflix, Inc.
-*
-* This source code is subject to the terms of the BSD 2 Clause License and
-* the Alliance for Open Media Patent License 1.0. If the BSD 2 Clause License
-* was not distributed with this source code in the LICENSE file, you can
-* obtain it at https://www.aomedia.org/license/software-license. If the Alliance for Open
-* Media Patent License 1.0 was not distributed with this source code in the
-* PATENTS file, you can obtain it at https://www.aomedia.org/license/patent-license.
-*/
+ * Copyright(c) 2019 Netflix, Inc.
+ *
+ * This source code is subject to the terms of the BSD 2 Clause License and
+ * the Alliance for Open Media Patent License 1.0. If the BSD 2 Clause License
+ * was not distributed with this source code in the LICENSE file, you can
+ * obtain it at https://www.aomedia.org/license/software-license. If the
+ * Alliance for Open Media Patent License 1.0 was not distributed with this
+ * source code in the PATENTS file, you can obtain it at
+ * https://www.aomedia.org/license/patent-license.
+ */
 
 #include "EbDefinitions.h"
 #include "EbBitstreamUnit.h"
-
 #include "EbDecBitstream.h"
 
 /* Function used for Bitstream structure initialization
@@ -19,21 +19,21 @@ Assumes data is aligned to 4 bytes. If not aligned  then all Bitstream
 accesses will be unaligned and hence  costlier. Since this is codec memory that
 holds emulation prevented data, assumption of aligned to 4 bytes is valid */
 void svt_aom_dec_bits_init(Bitstrm *bs, const uint8_t *data, size_t numbytes) {
-    uint32_t  cur_word;
-    uint32_t  nxt_word;
-    uint32_t  temp;
+    uint32_t cur_word;
+    uint32_t nxt_word;
+    uint32_t temp;
     uint32_t *buf;
-    buf          = (uint32_t *)data;
-    temp         = *buf++;
-    cur_word     = TO_BIG_ENDIAN(temp);
-    temp         = *buf++;
-    nxt_word     = TO_BIG_ENDIAN(temp);
+    buf = (uint32_t *)data;
+    temp = *buf++;
+    cur_word = TO_BIG_ENDIAN(temp);
+    temp = *buf++;
+    nxt_word = TO_BIG_ENDIAN(temp);
     bs->bit_ofst = 0;
     bs->buf_base = (uint8_t *)data;
-    bs->buf      = buf;
+    bs->buf = buf;
     bs->cur_word = cur_word;
     bs->nxt_word = nxt_word;
-    bs->buf_max  = (uint8_t *)data + numbytes + 8;
+    bs->buf_max = (uint8_t *)data + numbytes + 8;
     return;
 }
 
@@ -43,14 +43,17 @@ uint32_t svt_aom_dec_get_bits(Bitstrm *bs, uint32_t numbits) {
     uint32_t bits_read;
     if (0 == numbits)
         return 0;
-    GET_BITS(bits_read, bs->buf, bs->bit_ofst, bs->cur_word, bs->nxt_word, numbits);
+    GET_BITS(
+        bits_read, bs->buf, bs->bit_ofst, bs->cur_word, bs->nxt_word, numbits);
     return bits_read;
 }
 
-/* Get unsigned integer represented by a variable number of little-endian bytes */
-void svt_aom_dec_get_bits_leb128(Bitstrm *bs, size_t available, size_t *value, size_t *length) {
+/* Get unsigned integer represented by a variable number of little-endian bytes
+ */
+void svt_aom_dec_get_bits_leb128(Bitstrm *bs, size_t available, size_t *value,
+                                 size_t *length) {
     (void)available;
-    *value  = 0;
+    *value = 0;
     *length = 0;
 
     for (int i = 0; i < 8; i++) {
@@ -62,14 +65,16 @@ void svt_aom_dec_get_bits_leb128(Bitstrm *bs, size_t available, size_t *value, s
     }
 }
 
-/* Get variable length unsigned n-bit number appearing directly in the Bitstream */
+/* Get variable length unsigned n-bit number appearing directly in the Bitstream
+ */
 uint32_t svt_aom_dec_get_bits_uvlc(Bitstrm *bs) {
     int leading_zeros = 0;
-    while (leading_zeros < 32 && !svt_aom_dec_get_bits(bs, 1)) ++leading_zeros;
+    while (leading_zeros < 32 && !svt_aom_dec_get_bits(bs, 1))
+        ++leading_zeros;
     // Maximum 32 bits.
     if (leading_zeros == 32)
         return UINT32_MAX;
-    const uint32_t base  = (1u << leading_zeros) - 1;
+    const uint32_t base = (1u << leading_zeros) - 1;
     const uint32_t value = svt_aom_dec_get_bits(bs, leading_zeros);
     return base + value;
 }
@@ -78,7 +83,7 @@ uint32_t svt_aom_dec_get_bits_uvlc(Bitstrm *bs) {
 uint32_t svt_aom_dec_get_bits_ns(Bitstrm *bs, uint32_t n) {
     if (n <= 1)
         return 0;
-    int w = get_msb(n) + 1; //w = FloorLog2(n) + 1
+    int w = get_msb(n) + 1;  // w = FloorLog2(n) + 1
     int m = (1 << w) - n;
     int v = svt_aom_dec_get_bits(bs, w - 1);
     if (v < m)
@@ -88,7 +93,7 @@ uint32_t svt_aom_dec_get_bits_ns(Bitstrm *bs, uint32_t n) {
 
 /* Signed integer converted from an n bits unsigned integer in the Bitstream */
 int32_t svt_aom_dec_get_bits_su(Bitstrm *bs, uint32_t n) {
-    int value     = svt_aom_dec_get_bits(bs, n);
+    int value = svt_aom_dec_get_bits(bs, n);
     int sign_mask = 1 << (n - 1);
     if (value & sign_mask)
         value = value - 2 * sign_mask;
@@ -98,18 +103,21 @@ int32_t svt_aom_dec_get_bits_su(Bitstrm *bs, uint32_t n) {
 /* Unsigned little-endian n-byte number appearing directly in the Bitstream */
 uint32_t svt_aom_dec_get_bits_le(Bitstrm *bs, uint32_t n) {
     uint32_t t = 0;
-    for (uint32_t i = 0; i < n; i++) t += svt_aom_dec_get_bits(bs, 8) << (i * 8);
+    for (uint32_t i = 0; i < n; i++)
+        t += svt_aom_dec_get_bits(bs, 8) << (i * 8);
     return t;
 }
 
 uint32_t svt_aom_get_position(Bitstrm *bs) {
-    return (uint32_t)(((((uint8_t *)bs->buf) - bs->buf_base) * 8) - WORD_SIZE /*nxt_word*/
+    return (uint32_t)(((((uint8_t *)bs->buf) - bs->buf_base) * 8) -
+                      WORD_SIZE /*nxt_word*/
                       - (WORD_SIZE - bs->bit_ofst) /*cur_word*/);
 }
 
 uint8_t *svt_aom_get_bitsteam_buf(Bitstrm *bs) {
     uint8_t *bitsteam_buf = (uint8_t *)bs->buf;
-    bitsteam_buf -= ((WORD_SIZE /*nxt_word*/ >> 3) + ((WORD_SIZE - bs->bit_ofst) /*cur_word*/ >> 3));
+    bitsteam_buf -= ((WORD_SIZE /*nxt_word*/ >> 3) +
+                     ((WORD_SIZE - bs->bit_ofst) /*cur_word*/ >> 3));
 
     assert(bitsteam_buf == (bs->buf_base + (svt_aom_get_position(bs) >> 3)));
 

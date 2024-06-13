@@ -88,8 +88,6 @@ For each enable-*, there is a disable-* option, and vice versa.
 -g, --gen, gen=*        Set CMake generator
 -i, --install, install  Install build [Default release]
 -j, --jobs, jobs=*      Set number of jobs for make/CMake [$jobs]
-    --no-enc, no-enc    Don't build the encoder app and libs
-    --no-dec, no-dec    Don't build the decoder app and libs
     --no-apps, no-apps  Don't build the apps, only build the libs
 -p, --prefix, prefix=*  Set installation prefix
     --pgo-dir,          Directory to store the pgo profiles
@@ -308,8 +306,6 @@ parse_options() {
         gen=*) CMAKE_EXTRA_FLAGS="$CMAKE_EXTRA_FLAGS -G${1#*=}" && shift ;;
         install) build_install=true && shift ;;
         jobs=*) jobs="${1#*=}" && shift ;;
-        no-enc) CMAKE_EXTRA_FLAGS="$CMAKE_EXTRA_FLAGS -DBUILD_ENC=OFF" && shift ;;
-        no-dec) CMAKE_EXTRA_FLAGS="$CMAKE_EXTRA_FLAGS -DBUILD_DEC=OFF" && shift ;;
         no-apps) CMAKE_EXTRA_FLAGS="$CMAKE_EXTRA_FLAGS -DBUILD_APPS=OFF" && shift ;;
         prefix=*) CMAKE_EXTRA_FLAGS="$CMAKE_EXTRA_FLAGS -DCMAKE_INSTALL_PREFIX=${1#*=}" && shift ;;
         pgo-dir=*) CMAKE_EXTRA_FLAGS="$CMAKE_EXTRA_FLAGS -DSVT_AV1_PGO_DIR=${1#*=}" && shift ;;
@@ -383,8 +379,6 @@ else
             debug) parse_options debug && shift ;;
             disable* | enable*) parse_options "$match" && shift ;;
             install) parse_options install && shift ;;
-            no-enc) parse_options no-enc && shift ;;
-            no-dec) parse_options no-dec && shift ;;
             no-apps) parse_options no-apps && shift ;;
             pgo-compile-gen) parse_options pgo-compile-gen && shift ;;
             pgo-compile-use) parse_options pgo-compile-use && shift ;;
@@ -507,8 +501,6 @@ else
             pgo-compile-gen) parse_options pgo-compile-gen && shift ;;
             pgo-compile-use) parse_options pgo-compile-use && shift ;;
             pgo-videos=*) parse_options pgo-videos="${1#*=}" && shift ;;
-            no-enc) parse_options no-enc && shift ;;
-            no-dec) parse_options no-dec && shift ;;
             no-apps) parse_options no-apps && shift ;;
             target_system=*) parse_options target_system="${1#*=}" && shift ;;
             android-ndk=*) parse_options android-ndk="${1#*=}" && shift ;;
