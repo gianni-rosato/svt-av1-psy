@@ -1106,12 +1106,12 @@ INSTANTIATE_TEST_SUITE_P(ConvolveTestY, AV1HbdJntConvolve2DTest,
 // not yet ported
 // INSTANTIATE_TEST_SUITE_P(NEON_COPY, AV1HbdJntConvolve2DTest,
 //                         BuildParams(0, 0, 2, 1));
-INSTANTIATE_TEST_CASE_P(NEON_ConvolveTest2D, AV1HbdJntConvolve2DTest,
-                        BuildParams(1, 1, 2, 1));
-INSTANTIATE_TEST_CASE_P(NEON_ConvolveTestX, AV1HbdJntConvolve2DTest,
-                        BuildParams(1, 0, 2, 1));
-INSTANTIATE_TEST_CASE_P(NEON_ConvolveTestY, AV1HbdJntConvolve2DTest,
-                        BuildParams(0, 1, 2, 1));
+INSTANTIATE_TEST_SUITE_P(NEON_ConvolveTest2D, AV1HbdJntConvolve2DTest,
+                         BuildParams(1, 1, 2, 1));
+INSTANTIATE_TEST_SUITE_P(NEON_ConvolveTestX, AV1HbdJntConvolve2DTest,
+                         BuildParams(1, 0, 2, 1));
+INSTANTIATE_TEST_SUITE_P(NEON_ConvolveTestY, AV1HbdJntConvolve2DTest,
+                         BuildParams(0, 1, 2, 1));
 
 #endif  // ARCH_AARCH64
 
@@ -1179,36 +1179,36 @@ TEST_P(AV1HbdSrConvolve2DTest, DISABLED_SpeedTest) {
 
 #ifdef ARCH_X86_64
 
-INSTANTIATE_TEST_CASE_P(SSS3E_ConvolveTestX, AV1HbdSrConvolve2DTest,
-                        BuildParams(1, 0, 1, 1));
-INSTANTIATE_TEST_CASE_P(SSS3E_ConvolveTest2D, AV1HbdSrConvolve2DTest,
-                        BuildParams(1, 1, 1, 1));
-INSTANTIATE_TEST_CASE_P(SSS3E_ConvolveTestY, AV1HbdSrConvolve2DTest,
-                        BuildParams(0, 1, 1, 1));
-INSTANTIATE_TEST_CASE_P(SSS3E_ConvolveTestCopy, AV1HbdSrConvolve2DTest,
-                        BuildParams(0, 0, 1, 1));
+INSTANTIATE_TEST_SUITE_P(SSS3E_ConvolveTestX, AV1HbdSrConvolve2DTest,
+                         BuildParams(1, 0, 1, 1));
+INSTANTIATE_TEST_SUITE_P(SSS3E_ConvolveTest2D, AV1HbdSrConvolve2DTest,
+                         BuildParams(1, 1, 1, 1));
+INSTANTIATE_TEST_SUITE_P(SSS3E_ConvolveTestY, AV1HbdSrConvolve2DTest,
+                         BuildParams(0, 1, 1, 1));
+INSTANTIATE_TEST_SUITE_P(SSS3E_ConvolveTestCopy, AV1HbdSrConvolve2DTest,
+                         BuildParams(0, 0, 1, 1));
 
-INSTANTIATE_TEST_CASE_P(ConvolveTestX, AV1HbdSrConvolve2DTest,
-                        BuildParams(1, 0, 0, 1));
-INSTANTIATE_TEST_CASE_P(ConvolveTest2D, AV1HbdSrConvolve2DTest,
-                        BuildParams(1, 1, 0, 1));
-INSTANTIATE_TEST_CASE_P(ConvolveTestY, AV1HbdSrConvolve2DTest,
-                        BuildParams(0, 1, 0, 1));
-INSTANTIATE_TEST_CASE_P(ConvolveTestCopy, AV1HbdSrConvolve2DTest,
-                        BuildParams(0, 0, 0, 1));
+INSTANTIATE_TEST_SUITE_P(ConvolveTestX, AV1HbdSrConvolve2DTest,
+                         BuildParams(1, 0, 0, 1));
+INSTANTIATE_TEST_SUITE_P(ConvolveTest2D, AV1HbdSrConvolve2DTest,
+                         BuildParams(1, 1, 0, 1));
+INSTANTIATE_TEST_SUITE_P(ConvolveTestY, AV1HbdSrConvolve2DTest,
+                         BuildParams(0, 1, 0, 1));
+INSTANTIATE_TEST_SUITE_P(ConvolveTestCopy, AV1HbdSrConvolve2DTest,
+                         BuildParams(0, 0, 0, 1));
 
 #endif  // ARCH_X86_64
 
 #ifdef ARCH_AARCH64
 
-// INSTANTIATE_TEST_CASE_P(NEON_ConvolveTestX, AV1HbdSrConvolve2DTest,
+// INSTANTIATE_TEST_SUITE_P(NEON_ConvolveTestX, AV1HbdSrConvolve2DTest,
 //                         BuildParams(1, 0, 2, 1));            Not yet
 //                         implemented
-INSTANTIATE_TEST_CASE_P(NEON_ConvolveTest2D, AV1HbdSrConvolve2DTest,
-                        BuildParams(1, 1, 2, 1));
-INSTANTIATE_TEST_CASE_P(NEON_ConvolveTestY, AV1HbdSrConvolve2DTest,
-                        BuildParams(0, 1, 2, 1));
-// INSTANTIATE_TEST_CASE_P(NEON_ConvolveTestCopy, AV1HbdSrConvolve2DTest,
+INSTANTIATE_TEST_SUITE_P(NEON_ConvolveTest2D, AV1HbdSrConvolve2DTest,
+                         BuildParams(1, 1, 2, 1));
+INSTANTIATE_TEST_SUITE_P(NEON_ConvolveTestY, AV1HbdSrConvolve2DTest,
+                         BuildParams(0, 1, 2, 1));
+// INSTANTIATE_TEST_SUITE_P(NEON_ConvolveTestCopy, AV1HbdSrConvolve2DTest,
 //                         BuildParams(0, 0, 2, 1));            Not yet
 //                         implemented
 

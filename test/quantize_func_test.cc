@@ -262,6 +262,8 @@ class QuantizeLbdTest : public QuantizeTest<QuantizeParam, QuantizeFunc> {
     }
 };
 
+#ifdef ARCH_X86_64
+
 TEST_P(QuantizeLbdTest, ZeroInput) {
     FillCoeffZero();
     QuantizeRun(false);
@@ -376,6 +378,8 @@ TEST_P(QuantizeLbdTest, DISABLED_Speed) {
     }
 }
 
+#endif  // ARCH_X86_64
+
 class QuantizeHbdTest : public QuantizeTest<QuantizeHbdParam, QuantizeHbdFunc> {
   protected:
     QuantizeHbdTest() {
@@ -467,6 +471,8 @@ class QuantizeHbdTest : public QuantizeTest<QuantizeHbdParam, QuantizeHbdFunc> {
         }
     }
 };
+
+#ifdef ARCH_X86_64
 
 TEST_P(QuantizeHbdTest, ZeroInput) {
     FillCoeffZero();
@@ -583,6 +589,8 @@ TEST_P(QuantizeHbdTest, DISABLED_Speed) {
                (time_c / time_o));
     }
 }
+
+#endif  // ARCH_X86_64
 
 class QuantizeQmTest : public QuantizeTest<QuantizeQmParam, QuantizeQmFunc> {
   protected:
@@ -728,6 +736,8 @@ class QuantizeQmTest : public QuantizeTest<QuantizeQmParam, QuantizeQmFunc> {
     int qm_level_;
 };
 
+#ifdef ARCH_X86_64
+
 TEST_P(QuantizeQmTest, ZeroInput) {
     FillCoeffZero();
     QuantizeRun(false);
@@ -759,6 +769,10 @@ TEST_P(QuantizeQmTest, CoeffHalfDequant) {
     FillCoeff(16);
     QuantizeRun(false, 25, 1);
 }
+
+#endif  // ARCH_X86_64
+
+#ifdef ARCH_X86_64
 
 using QuantizeQmHbdTest = QuantizeQmTest;
 
@@ -793,6 +807,8 @@ TEST_P(QuantizeQmHbdTest, CoeffHalfDequant) {
     FillCoeff(16);
     QuantizeRun(false, 25, 1);
 }
+
+#endif  // ARCH_X86_64
 
 using std::make_tuple;
 

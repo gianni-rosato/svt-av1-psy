@@ -216,7 +216,6 @@ void svt_av1_highbd_jnt_convolve_y_neon(const uint16_t *src, int32_t src_stride,
     const int             fo_vert    = filter_params_y->taps / 2 - 1;
     const uint16_t *const src_ptr    = src - fo_vert * src_stride;
 
-    assert(bits >= 0);
     int       i, j;
     const int do_average       = conv_params->do_average;
     const int use_jnt_comp_avg = conv_params->use_jnt_comp_avg;

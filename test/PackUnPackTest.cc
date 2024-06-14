@@ -306,7 +306,7 @@ TEST_P(PackMsbTest, PackMsbTest) {
 
 #ifdef ARCH_X86_64
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     PACKMSB, PackMsbTest,
     ::testing::Combine(::testing::ValuesIn(TEST_PACK_SIZES),
                        ::testing::Values(svt_compressed_packmsb_sse4_1_intrin,
@@ -322,12 +322,12 @@ INSTANTIATE_TEST_SUITE_P(
 
 #ifdef ARCH_AARCH64
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     PACKMSB, PackMsbTest,
     ::testing::Combine(::testing::ValuesIn(TEST_PACK_SIZES),
                        ::testing::Values(svt_compressed_packmsb_neon)));
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     PACKMSB_EXTEND, PackMsbTest,
     ::testing::Combine(::testing::ValuesIn(TEST_PACK_SIZES_EXTEND),
                        ::testing::Values(svt_compressed_packmsb_neon)));
@@ -466,7 +466,7 @@ TEST_P(Unpack2bCompress, Unpack2bCompress) {
 
 #ifdef ARCH_X86_64
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     UNPACK2BCOMPRESS, Unpack2bCompress,
     ::testing::Combine(::testing::ValuesIn(TEST_PACK_SIZES),
                        ::testing::Values(svt_unpack_and_2bcompress_sse4_1,
@@ -493,17 +493,17 @@ INSTANTIATE_TEST_SUITE_P(
 
 #ifdef ARCH_AARCH64
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     UNPACK2BCOMPRESS, Unpack2bCompress,
     ::testing::Combine(::testing::ValuesIn(TEST_PACK_SIZES),
                        ::testing::Values(svt_unpack_and_2bcompress_neon)));
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     UNPACK2BCOMPRESS_EXTEND, Unpack2bCompress,
     ::testing::Combine(::testing::ValuesIn(TEST_PACK_SIZES_EXTEND),
                        ::testing::Values(svt_unpack_and_2bcompress_neon)));
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     UNPACK2BCOMPRESS_EXTEND2, Unpack2bCompress,
     ::testing::Combine(::testing::Values(AreaSize(32, 1), AreaSize(32, 2),
                                          AreaSize(32, 3), AreaSize(32, 5),

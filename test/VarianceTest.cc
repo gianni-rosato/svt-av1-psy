@@ -120,6 +120,8 @@ class MseTest : public ::testing::TestWithParam<TestMseParam> {
     MSE_NXM_FUNC mse_ref_;
 };
 
+#ifdef ARCH_X86_64
+
 TEST_P(MseTest, MatchTest) {
     run_match_test();
 };
@@ -128,9 +130,7 @@ TEST_P(MseTest, MaxTest) {
     run_max_test();
 };
 
-#ifdef ARCH_X86_64
-
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     Variance, MseTest,
     ::testing::Values(
         TestMseParam(16, 16, &svt_aom_mse16x16_sse2, &svt_aom_mse16x16_c),
@@ -213,6 +213,8 @@ class MseTestHighbd : public ::testing::TestWithParam<TestMseParamHighbd> {
     MSE_HIGHBD_NXM_FUNC mse_ref_;
 };
 
+#ifdef ARCH_X86_64
+
 TEST_P(MseTestHighbd, MatchTest) {
     run_match_test();
 };
@@ -221,12 +223,10 @@ TEST_P(MseTestHighbd, MaxTest) {
     run_max_test();
 };
 
-#ifdef ARCH_X86_64
-
-INSTANTIATE_TEST_CASE_P(Variance, MseTestHighbd,
-                        ::testing::Values(TestMseParamHighbd(
-                            16, 16, &svt_aom_highbd_8_mse16x16_sse2,
-                            &svt_aom_highbd_8_mse16x16_c)));
+INSTANTIATE_TEST_SUITE_P(Variance, MseTestHighbd,
+                         ::testing::Values(TestMseParamHighbd(
+                             16, 16, &svt_aom_highbd_8_mse16x16_sse2,
+                             &svt_aom_highbd_8_mse16x16_c)));
 
 #endif  // ARCH_X86_64
 
@@ -411,7 +411,7 @@ TEST_P(VarianceTest, OneQuarterTest) {
 
 #ifdef ARCH_X86_64
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     Variance, VarianceTest,
     ::testing::Values(
         VarianceParam(4, 4, &svt_aom_variance4x4_c, &svt_aom_variance4x4_sse2),
@@ -517,7 +517,7 @@ INSTANTIATE_TEST_SUITE_P(
 
 #ifdef ARCH_AARCH64
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     Variance_NEON, VarianceTest,
     ::testing::Values(VarianceParam(16, 4, &svt_aom_variance16x4_c,
                                     &svt_aom_variance16x4_neon),
@@ -1033,12 +1033,13 @@ INSTANTIATE_TEST_SUITE_P(AVX512, AvxSubpelVarianceTest,
                          ::testing::ValuesIn(kArraySubpelVariance_avx512));
 #endif
 
-#endif  // ARCH_X86_64
-
 TEST_P(AvxSubpelVarianceTest, Ref) {
     RefTest();
 }
 TEST_P(AvxSubpelVarianceTest, ExtremeRef) {
     ExtremeRefTest();
 }
+
+#endif  // ARCH_X86_64
+
 }  // namespace

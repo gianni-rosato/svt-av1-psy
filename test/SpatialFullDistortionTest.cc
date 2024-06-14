@@ -194,9 +194,7 @@ INSTANTIATE_TEST_SUITE_P(
 #endif
 
 typedef enum { VAL_MIN, VAL_MAX, VAL_RANDOM } TestPattern;
-#ifdef ARCH_X86_64
 TestPattern TEST_PATTERNS[] = {VAL_MIN, VAL_MAX, VAL_RANDOM};
-#endif  // ARCH_X86_64
 typedef std::tuple<uint32_t, uint32_t> AreaSize;
 
 /**
@@ -574,7 +572,7 @@ INSTANTIATE_TEST_SUITE_P(
 
 #ifdef ARCH_AARCH64
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     FullDistortionKernel16FuncTest_NEON, FullDistortionKernel16BitsFuncTest,
     ::testing::Combine(
         ::testing::ValuesIn(TEST_AREA_SIZES),
@@ -757,7 +755,7 @@ INSTANTIATE_TEST_SUITE_P(
 
 #ifdef ARCH_AARCH64
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     NEON, fullDistortionKernelCbfZero32Bits,
     ::testing::Values(svt_full_distortion_kernel_cbf_zero32_bits_neon));
 

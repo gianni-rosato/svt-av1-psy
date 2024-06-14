@@ -1446,7 +1446,7 @@ INSTANTIATE_TEST_SUITE_P(
 
 #ifdef ARCH_AARCH64
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     NEON_lbd, EstimateNoiseTestFP,
     ::testing::Combine(::testing::Values(estimate_noise_fp16_c_wrapper),
                        ::testing::Values(estimate_noise_fp16_neon_wrapper),
