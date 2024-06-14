@@ -28,10 +28,16 @@
 #include "cpuinfo.h"
 #endif
 
-#if defined ARCH_AARCH64 && defined(__linux__)
+#if defined ARCH_AARCH64
+
+#if defined(__linux__)
 // For reading the HWCAP flags
 #include <sys/auxv.h>
+#elif defined(__APPLE__)
+#include <stdbool.h>
+#include <sys/sysctl.h>
 #endif
+#endif  // ARCH_AARCH64
 
 /*
  * DSP deprecated flags
@@ -159,7 +165,36 @@ EbCpuFlags svt_aom_get_cpu_flags(void) {
   return flags;
 }
 
-#else // __linux__
+#elif defined(__APPLE__) // end __linux__
+
+// sysctlbyname() parameter documentation for instruction set characteristics:
+// https://developer.apple.com/documentation/kernel/1387446-sysctlbyname/determining_instruction_set_characteristics
+#if HAVE_ARM_CRC32 || HAVE_NEON_DOTPROD || HAVE_NEON_I8MM
+static INLINE bool have_feature(const char *feature) {
+  int64_t feature_present = 0;
+  size_t size = sizeof(feature_present);
+  if (sysctlbyname(feature, &feature_present, &size, NULL, 0) != 0) {
+    return false;
+  }
+  return feature_present;
+}
+#endif
+
+EbCpuFlags svt_aom_get_cpu_flags(void) {
+  EbCpuFlags flags = EB_CPU_FLAGS_NEON;
+#if HAVE_ARM_CRC32
+  if (have_feature("hw.optional.armv8_crc32")) flags |= EB_CPU_FLAGS_ARM_CRC32;
+#endif  // HAVE_ARM_CRC32
+#if HAVE_NEON_DOTPROD
+  if (have_feature("hw.optional.arm.FEAT_DotProd")) flags |= EB_CPU_FLAGS_NEON_DOTPROD;
+#endif  // HAVE_NEON_DOTPROD
+#if HAVE_NEON_I8MM
+  if (have_feature("hw.optional.arm.FEAT_I8MM")) flags |= EB_CPU_FLAGS_NEON_I8MM;
+#endif  // HAVE_NEON_I8MM
+  return flags;
+}
+
+#else // end __APPLE__
 
 EbCpuFlags svt_aom_get_cpu_flags() {
     EbCpuFlags flags = 0;
