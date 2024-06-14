@@ -18,6 +18,7 @@
  * @author Cidana-Edmond Cidana-Ryan Cidana-Wenyao
  *
  ******************************************************************************/
+#include <algorithm>
 
 #include "EbSvtAv1Enc.h"
 #include "Y4mVideoSource.h"

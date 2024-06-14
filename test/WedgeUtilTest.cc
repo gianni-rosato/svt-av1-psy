@@ -328,7 +328,7 @@ TEST_P(AomSumSquaresTest, MatchTest) {
     run_test();
 }
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     SUM_SQUARES_TEST, AomSumSquaresTest,
     ::testing::Combine(::testing::Range(BLOCK_4X4, BlockSizeS_ALL),
                        ::testing::Values(svt_aom_sum_squares_i16_sse2)));

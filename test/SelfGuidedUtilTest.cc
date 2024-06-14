@@ -340,8 +340,8 @@ static const PixelProjErrorTestParam lbd_test_vector[] = {
 #endif
 };
 
-INSTANTIATE_TEST_CASE_P(RST, PixelProjErrorLbdTest,
-                        ::testing::ValuesIn(lbd_test_vector));
+INSTANTIATE_TEST_SUITE_P(RST, PixelProjErrorLbdTest,
+                         ::testing::ValuesIn(lbd_test_vector));
 
 class PixelProjErrorHbdTest : public PixelProjErrorTest<uint16_t> {
   protected:
@@ -386,8 +386,8 @@ static const PixelProjErrorTestParam hbd_test_vector[] = {
     make_tuple(svt_av1_highbd_pixel_proj_error_avx2,
                svt_av1_highbd_pixel_proj_error_c)};
 
-INSTANTIATE_TEST_CASE_P(RST, PixelProjErrorHbdTest,
-                        ::testing::ValuesIn(hbd_test_vector));
+INSTANTIATE_TEST_SUITE_P(RST, PixelProjErrorHbdTest,
+                         ::testing::ValuesIn(hbd_test_vector));
 
 // test svt_get_proj_subspace
 TEST(SelfGuidedToolsTest, GetProjSubspaceMatchTest) {

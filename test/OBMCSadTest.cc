@@ -21,14 +21,6 @@
  *
  ******************************************************************************/
 #include "gtest/gtest.h"
-// workaround to eliminate the compiling warning on linux
-// The macro will conflict with definition in gtest.h
-#ifdef __USE_GNU
-#undef __USE_GNU  // defined in EbThreads.h
-#endif
-#ifdef _GNU_SOURCE
-#undef _GNU_SOURCE  // defined in EbThreads.h
-#endif
 #include "aom_dsp_rtcd.h"
 #include "random.h"
 #include "util.h"
@@ -115,7 +107,7 @@ TEST_P(OBMCsad_Test, RunCheckOutput) {
 static const Obmcsad_Param obmc_sad_test_params[] = {
     GEN_TEST_PARAMS(GEN_OBMC_SAD_TEST_PARAM)};
 
-INSTANTIATE_TEST_CASE_P(OBMC, OBMCsad_Test,
-                        ::testing::ValuesIn(obmc_sad_test_params));
+INSTANTIATE_TEST_SUITE_P(OBMC, OBMCsad_Test,
+                         ::testing::ValuesIn(obmc_sad_test_params));
 
 }  // namespace

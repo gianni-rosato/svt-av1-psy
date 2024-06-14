@@ -199,6 +199,6 @@ TEST_P(CodingOptionTest, CheckEncOptionsUsingBitstream) {
     run_death_test();
 }
 
-INSTANTIATE_TEST_CASE_P(SvtAv1, CodingOptionTest,
-                        ::testing::ValuesIn(default_enc_settings),
-                        EncTestSetting::GetSettingName);
+INSTANTIATE_TEST_SUITE_P(SvtAv1, CodingOptionTest,
+                         ::testing::ValuesIn(default_enc_settings),
+                         EncTestSetting::GetSettingName);

@@ -230,7 +230,7 @@ typedef struct EncTestSetting {
                                     const EncTestSetting& setting) {
         return os << setting.get_setting_str();
     }
-    // used in INSTANTIATE_TEST_CASE_P to append the param info into the test
+    // used in INSTANTIATE_TEST_SUITE_P to append the param info into the test
     // name
     static std::string GetSettingName(
         const ::testing::TestParamInfo<EncTestSetting> setting) {

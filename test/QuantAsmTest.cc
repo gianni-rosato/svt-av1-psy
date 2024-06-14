@@ -28,15 +28,6 @@
 
 #include "gtest/gtest.h"
 
-// Workaround to eliminate the compiling warning on linux
-// The macro will conflict with definition in gtest.h
-#ifdef __USE_GNU
-#undef __USE_GNU  // defined in EbThreads.h
-#endif
-#ifdef _GNU_SOURCE
-#undef _GNU_SOURCE  // defined in EbThreads.h
-#endif
-
 #include "EbDefinitions.h"
 #include "EbTransforms.h"
 #include "EbPictureControlSet.h"
@@ -470,7 +461,7 @@ TEST_P(QuantizeBQmTest, input_random_all_q_all) {
 }
 
 #ifndef FULL_UNIT_TEST
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     QuantLBD, QuantizeBTest,
     ::testing::Combine(::testing::Values(static_cast<int>(TX_16X16),
                                          static_cast<int>(TX_32X32),
@@ -478,7 +469,7 @@ INSTANTIATE_TEST_CASE_P(
                        ::testing::Values(static_cast<int>(EB_EIGHT_BIT)),
                        ::testing::Values(svt_aom_quantize_b_sse4_1,
                                          svt_aom_quantize_b_avx2)));
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     QuantHBD, QuantizeBTest,
     ::testing::Combine(::testing::Values(static_cast<int>(TX_16X16),
                                          static_cast<int>(TX_32X32),
@@ -486,14 +477,14 @@ INSTANTIATE_TEST_CASE_P(
                        ::testing::Values(static_cast<int>(EB_TEN_BIT)),
                        ::testing::Values(svt_aom_highbd_quantize_b_sse4_1,
                                          svt_aom_highbd_quantize_b_avx2)));
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     QuantLBD, QuantizeBQmTest,
     ::testing::Combine(::testing::Values(static_cast<int>(TX_16X16),
                                          static_cast<int>(TX_32X32),
                                          static_cast<int>(TX_64X64)),
                        ::testing::Values(static_cast<int>(EB_EIGHT_BIT)),
                        ::testing::Values(svt_av1_quantize_b_qm_avx2)));
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     QuantHBD, QuantizeBQmTest,
     ::testing::Combine(::testing::Values(static_cast<int>(TX_16X16),
                                          static_cast<int>(TX_32X32),
@@ -501,7 +492,7 @@ INSTANTIATE_TEST_CASE_P(
                        ::testing::Values(static_cast<int>(EB_TEN_BIT)),
                        ::testing::Values(svt_av1_highbd_quantize_b_qm_avx2)));
 #else
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     Quant, QuantizeBTest,
     ::testing::Combine(::testing::Range(static_cast<int>(TX_4X4),
                                         static_cast<int>(TX_SIZES_ALL), 1),

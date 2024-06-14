@@ -26,14 +26,6 @@
 #include <stdlib.h>
 #include <limits.h>
 #include <new>
-// workaround to eliminate the compiling warning on linux
-// The macro will conflict with definition in gtest.h
-#ifdef __USE_GNU
-#undef __USE_GNU  // defined in EbThreads.h
-#endif
-#ifdef _GNU_SOURCE
-#undef _GNU_SOURCE  // defined in EbThreads.h
-#endif
 
 #include "EbDefinitions.h"
 #include "EbPictureOperators.h"
@@ -342,8 +334,9 @@ TEST_P(ResidualKernelTest, 16bitMatchTest) {
     run_16bit_test_avx2();
 };
 
-INSTANTIATE_TEST_CASE_P(ResidualUtil, ResidualKernelTest,
-                        ::testing::Combine(::testing::ValuesIn(TEST_AREA_SIZES),
-                                           ::testing::ValuesIn(TEST_PATTERNS)));
+INSTANTIATE_TEST_SUITE_P(
+    ResidualUtil, ResidualKernelTest,
+    ::testing::Combine(::testing::ValuesIn(TEST_AREA_SIZES),
+                       ::testing::ValuesIn(TEST_PATTERNS)));
 
 }  // namespace

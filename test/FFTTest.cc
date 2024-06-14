@@ -25,16 +25,8 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <sstream>
-#include "gtest/gtest.h"
-// workaround to eliminate the compiling warning on linux
-// The macro will conflict with definition in gtest.h
-#ifdef __USE_GNU
-#undef __USE_GNU  // defined in EbThreads.h
-#endif
-#ifdef _GNU_SOURCE
-#undef _GNU_SOURCE  // defined in EbThreads.h
-#endif
 
+#include "gtest/gtest.h"
 #include "random.h"
 #include "util.h"
 #include "EbUtility.h"
@@ -188,7 +180,7 @@ TEST_P(FFT2DTest, run_fft_ifft_check) {
     run_fft_ifft_check();
 }
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     FFT, FFT2DTest,
     ::testing::Values(
         FFT2DTestParam(svt_aom_fft2x2_float_c, svt_aom_fft2x2_float_c,
@@ -286,7 +278,7 @@ TEST_P(IFFT2DTest, run_ifft_accuracy_check) {
     run_ifft_accuracy_check();
 }
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     IFFT, IFFT2DTest,
     ::testing::Values(
         IFFT2DTestParam(svt_aom_ifft2x2_float_c, svt_aom_ifft2x2_float_c, 2),

@@ -21,14 +21,6 @@
  *
  ******************************************************************************/
 #include "gtest/gtest.h"
-// workaround to eliminate the compiling warning on linux
-// The macro will conflict with definition in gtest.h
-#ifdef __USE_GNU
-#undef __USE_GNU  // defined in EbThreads.h
-#endif
-#ifdef _GNU_SOURCE
-#undef _GNU_SOURCE  // defined in EbThreads.h
-#endif
 #include "aom_dsp_rtcd.h"
 #include "random.h"
 #include "util.h"
@@ -123,8 +115,8 @@ TEST_P(OBMCVarianceTest, RunCheckOutput) {
 static const ObmcVarParam obmc_var_test_params[] = {
     GEN_TEST_PARAMS(GEN_OBMC_VAR_TEST_PARAM)};
 
-INSTANTIATE_TEST_CASE_P(OBMC, OBMCVarianceTest,
-                        ::testing::ValuesIn(obmc_var_test_params));
+INSTANTIATE_TEST_SUITE_P(OBMC, OBMCVarianceTest,
+                         ::testing::ValuesIn(obmc_var_test_params));
 
 using ObmcSubPixVarFunc = unsigned int (*)(const uint8_t *pre, int pre_stride,
                                            int xoffset, int yoffset,
@@ -220,8 +212,8 @@ TEST_P(OBMCSubPixelVarianceTest, RunCheckOutput) {
 static const ObmcSubPixVarParam obmc_sub_pix_var_test_params[] = {
     GEN_TEST_PARAMS(GEN_OBMC_SUB_PIX_VAR_TEST_PARAM)};
 
-INSTANTIATE_TEST_CASE_P(OBMC, OBMCSubPixelVarianceTest,
-                        ::testing::ValuesIn(obmc_sub_pix_var_test_params));
+INSTANTIATE_TEST_SUITE_P(OBMC, OBMCSubPixelVarianceTest,
+                         ::testing::ValuesIn(obmc_sub_pix_var_test_params));
 
 using CalcTargetWeightedPredFn = void (*)(uint8_t, MacroBlockD *, int, uint8_t,
                                           MbModeInfo *, void *, const int);
@@ -354,16 +346,16 @@ TEST_P(CalcTargetWeightedPredTest, RunCheckOutput) {
     run_test();
 };
 
-INSTANTIATE_TEST_CASE_P(CalcTargetWeightedPredTestAbove,
-                        CalcTargetWeightedPredTest,
-                        ::testing::Values(::testing::make_tuple(
-                            &svt_av1_calc_target_weighted_pred_above_c,
-                            &svt_av1_calc_target_weighted_pred_above_avx2)));
+INSTANTIATE_TEST_SUITE_P(CalcTargetWeightedPredTestAbove,
+                         CalcTargetWeightedPredTest,
+                         ::testing::Values(::testing::make_tuple(
+                             &svt_av1_calc_target_weighted_pred_above_c,
+                             &svt_av1_calc_target_weighted_pred_above_avx2)));
 
-INSTANTIATE_TEST_CASE_P(CalcTargetWeightedPredTestLeft,
-                        CalcTargetWeightedPredTest,
-                        ::testing::Values(::testing::make_tuple(
-                            &svt_av1_calc_target_weighted_pred_left_c,
-                            &svt_av1_calc_target_weighted_pred_left_avx2)));
+INSTANTIATE_TEST_SUITE_P(CalcTargetWeightedPredTestLeft,
+                         CalcTargetWeightedPredTest,
+                         ::testing::Values(::testing::make_tuple(
+                             &svt_av1_calc_target_weighted_pred_left_c,
+                             &svt_av1_calc_target_weighted_pred_left_avx2)));
 
 }  // namespace

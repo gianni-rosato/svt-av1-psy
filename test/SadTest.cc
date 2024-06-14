@@ -35,14 +35,7 @@
 #include <stdlib.h>
 #include <limits.h>
 #include <new>
-// workaround to eliminate the compiling warning on linux
-// The macro will conflict with definition in gtest.h
-#ifdef __USE_GNU
-#undef __USE_GNU  // defined in EbThreads.h
-#endif
-#ifdef _GNU_SOURCE
-#undef _GNU_SOURCE  // defined in EbThreads.h
-#endif
+
 #include "gtest/gtest.h"
 #include "aom_dsp_rtcd.h"
 #include "EbComputeSAD.h"
@@ -449,6 +442,7 @@ class SADTestSubSample
             << avx2_sad << ") error, ref: " << ref_sad;
     }
 };
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(SADTestSubSample);
 
 TEST_P(SADTestSubSample, SADTestSubSample) {
     test_sad_sizes(TEST_BLOCK_SIZES,
@@ -458,7 +452,7 @@ TEST_P(SADTestSubSample, SADTestSubSample) {
 
 #ifdef ARCH_X86_64
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     SAD, SADTestSubSample,
     ::testing::Combine(
         ::testing::ValuesIn(TEST_PATTERNS),
@@ -529,6 +523,7 @@ class SADTest : public ::testing::WithParamInterface<Testsad_Param_nxm_kernel>,
             << avx2_sad << ") error, ref: " << ref_sad;
     }
 };
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(SADTest);
 
 TEST_P(SADTest, SADTest) {
     test_sad_sizes(TEST_BLOCK_SIZES,
@@ -537,7 +532,7 @@ TEST_P(SADTest, SADTest) {
 
 #ifdef ARCH_X86_64
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     SAD, SADTest,
     ::testing::Combine(::testing::ValuesIn(TEST_PATTERNS),
                        ::testing::Values(svt_nxm_sad_kernel_helper_sse4_1,
@@ -801,10 +796,11 @@ TEST_P(sad_LoopTest, DISABLED_sad_LoopSpeedTest) {
         sizeof(TEST_BLOCK_SIZES_SMALL) / sizeof(TEST_BLOCK_SIZES_SMALL[0]));
 }
 
-INSTANTIATE_TEST_CASE_P(LOOPSAD, sad_LoopTest,
-                        ::testing::Combine(::testing::ValuesIn(TEST_PATTERNS),
-                                           ::testing::ValuesIn(TEST_LOOP_AREAS),
-                                           ::testing::Values(0, 1)));
+INSTANTIATE_TEST_SUITE_P(
+    LOOPSAD, sad_LoopTest,
+    ::testing::Combine(::testing::ValuesIn(TEST_PATTERNS),
+                       ::testing::ValuesIn(TEST_LOOP_AREAS),
+                       ::testing::Values(0, 1)));
 
 /**
  * best_sadmxn in GetEightsad_Test,Allsad_CalculationTest and
@@ -1085,7 +1081,7 @@ TEST_P(Allsad_CalculationTest, 8x8_16x16_Test_neon) {
 
 #endif
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     ALLSAD, Allsad_CalculationTest,
     ::testing::Combine(::testing::ValuesIn(TEST_PATTERNS),
                        ::testing::ValuesIn(TEST_SAD_PATTERNS)));
@@ -1310,7 +1306,7 @@ TEST_P(Extsad_CalculationTest, Extsad_8x8Test_neon) {
 
 #endif
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     EXTSAD, Extsad_CalculationTest,
     ::testing::Combine(::testing::ValuesIn(TEST_PATTERNS),
                        ::testing::ValuesIn(TEST_SAD_PATTERNS)));
@@ -1359,6 +1355,7 @@ class InitializeBuffer32
     uint32_t value;
     SVTRandom rnd_;
 };
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(InitializeBuffer32);
 
 #ifdef ARCH_X86_64
 
@@ -1368,9 +1365,9 @@ TEST_P(InitializeBuffer32, InitializeBuffer) {
 
 #endif
 
-INSTANTIATE_TEST_CASE_P(InitializeBuffer32, InitializeBuffer32,
-                        ::testing::Combine(::testing::Values(2, 3, 4),
-                                           ::testing::Values(1, 2, 3)));
+INSTANTIATE_TEST_SUITE_P(InitializeBuffer32, InitializeBuffer32,
+                         ::testing::Combine(::testing::Values(2, 3, 4),
+                                            ::testing::Values(1, 2, 3)));
 /**
  * @Brief Base class for SAD test. SADTestBasesad_16Bit handle test vector in
  * memory, provide SAD and SAD avg reference function
@@ -1620,8 +1617,8 @@ TEST_P(SADTestSubSample16bit, SADTestSubSample16bit) {
         sizeof(TEST_BLOCK_SAD_SIZES) / sizeof(TEST_BLOCK_SAD_SIZES[0]));
 }
 
-INSTANTIATE_TEST_CASE_P(SAD, SADTestSubSample16bit,
-                        ::testing::ValuesIn(TEST_PATTERNS));
+INSTANTIATE_TEST_SUITE_P(SAD, SADTestSubSample16bit,
+                         ::testing::ValuesIn(TEST_PATTERNS));
 
 TEST_P(SADTestSubSample16bit, DISABLED_Speed) {
     speed_sad_sizes(
@@ -1901,7 +1898,7 @@ TEST_P(PmeSadLoopTest, DISABLED_PmeSadLoopSpeedTest) {
 
 #endif
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     PME_LOOPSAD, PmeSadLoopTest,
     ::testing::Combine(::testing::ValuesIn(TEST_PATTERNS),
                        ::testing::ValuesIn(TEST_LOOP_AREAS)));

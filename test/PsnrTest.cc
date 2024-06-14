@@ -26,14 +26,6 @@
  ******************************************************************************/
 
 #include "gtest/gtest.h"
-// workaround to eliminate the compiling warning on linux
-// The macro will conflict with definition in gtest.h
-#ifdef __USE_GNU
-#undef __USE_GNU  // defined in EbThreads.h
-#endif
-#ifdef _GNU_SOURCE
-#undef _GNU_SOURCE  // defined in EbThreads.h
-#endif
 #include "EbPsnr.h"
 #include "random.h"
 #include "util.h"
@@ -199,18 +191,7 @@ class PsnrCalcTest : public ::testing::TestWithParam<ParamType> {
                                   lbd_src_ for reference*/
 };
 
-class PsnrCalcLbdTest : public PsnrCalcTest<uint8_t, PsnrCalcParam> {
-  protected:
-    PsnrCalcLbdTest() {
-        width_ = TEST_GET_PARAM(0);
-        height_ = TEST_GET_PARAM(1);
-        calc_.y_sse_part_func = svt_aom_get_y_sse_part;
-        calc_.u_sse_part_func = svt_aom_get_u_sse_part;
-        calc_.v_sse_part_func = svt_aom_get_v_sse_part;
-    }
-};
-
-static const PsnrCalcParam psnr_lbd_test_vector[] = {
+static const PsnrCalcParam psnr_test_vector[] = {
     PsnrCalcParam(3840, 2160),
     PsnrCalcParam(1920, 1080),
     PsnrCalcParam(720, 480),
@@ -218,9 +199,6 @@ static const PsnrCalcParam psnr_lbd_test_vector[] = {
     PsnrCalcParam(180, 120),
     PsnrCalcParam(64, 64),
 };
-
-INSTANTIATE_TEST_CASE_P(AV1, PsnrCalcLbdTest,
-                        ::testing::ValuesIn(psnr_lbd_test_vector));
 
 class PsnrCalcHbdTest : public PsnrCalcTest<uint16_t, PsnrCalcHbdParam> {
   public:
@@ -378,9 +356,9 @@ TEST_P(PsnrCalcHbdTest, RunPartialAccuracyCheck) {
 
 static const uint32_t bit_depth_table[] = {8, 10, 12};
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     AV1, PsnrCalcHbdTest,
-    ::testing::Combine(::testing::ValuesIn(psnr_lbd_test_vector),
+    ::testing::Combine(::testing::ValuesIn(psnr_test_vector),
                        ::testing::ValuesIn(bit_depth_table)));
 
 }  // namespace

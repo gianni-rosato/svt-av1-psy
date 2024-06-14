@@ -44,10 +44,10 @@ typedef void (*TemporalFilterFuncHbd)(
 
 #define MAX_STRIDE 256
 
-typedef std::tuple<TemporalFilterFunc, TemporalFilterFunc, int>
+typedef std::tuple<TemporalFilterFunc, TemporalFilterFunc>
     TemporalFilterWithParam;
 
-typedef std::tuple<TemporalFilterFuncHbd, TemporalFilterFuncHbd, int>
+typedef std::tuple<TemporalFilterFuncHbd, TemporalFilterFuncHbd>
     TemporalFilterWithParamHbd;
 
 static void TemporalFilterFillMeContexts(MeContext *cnt1, MeContext *cnt2) {
@@ -146,7 +146,6 @@ class TemporalFilterTestPlanewise
         setup_test_env();
         ref_func = TEST_GET_PARAM(0);
         tst_func = TEST_GET_PARAM(1);
-        use_fixed_point = TEST_GET_PARAM(2);
 
         for (int color_channel = 0; color_channel < COLOR_CHANNELS;
              color_channel++) {
@@ -255,7 +254,6 @@ class TemporalFilterTestPlanewise
 
     uint32_t stride[COLOR_CHANNELS];
     uint32_t stride_pred[COLOR_CHANNELS];
-    int use_fixed_point;
     float tf_decay_factor[COLOR_CHANNELS];
 };
 
@@ -460,24 +458,24 @@ TEST_P(TemporalFilterTestPlanewise, DISABLED_Speed) {
 
 #ifdef ARCH_X86_64
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     AVX2_medium, TemporalFilterTestPlanewise,
     ::testing::Combine(
         ::testing::Values(svt_av1_apply_temporal_filter_planewise_medium_c),
-        ::testing::Values(svt_av1_apply_temporal_filter_planewise_medium_sse4_1,
-                          svt_av1_apply_temporal_filter_planewise_medium_avx2),
-        ::testing::Values(1)));
+        ::testing::Values(
+            svt_av1_apply_temporal_filter_planewise_medium_sse4_1,
+            svt_av1_apply_temporal_filter_planewise_medium_avx2)));
 
 #endif
 
 #ifdef ARCH_AARCH64
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     Neon_medium, TemporalFilterTestPlanewise,
     ::testing::Combine(
         ::testing::Values(svt_av1_apply_temporal_filter_planewise_medium_c),
-        ::testing::Values(svt_av1_apply_temporal_filter_planewise_medium_neon),
-        ::testing::Values(1)));
+        ::testing::Values(
+            svt_av1_apply_temporal_filter_planewise_medium_neon)));
 
 #endif
 class TemporalFilterTestPlanewiseHbd
@@ -598,7 +596,6 @@ class TemporalFilterTestPlanewiseHbd
     uint32_t stride[COLOR_CHANNELS];
     uint32_t stride_pred[COLOR_CHANNELS];
 
-    int use_fixed_point;
     float tf_decay_factor[COLOR_CHANNELS];
     uint32_t encoder_bit_depth;
 };
@@ -940,6 +937,7 @@ void TemporalFilterTestPlanewiseHbd::RunTest(int width, int height,
             encoder_bit_depth);
     }
 }
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(TemporalFilterTestPlanewiseHbd);
 
 TEST_P(TemporalFilterTestPlanewiseHbd, OperationCheck) {
     for (int height = 32; height <= 32; height = height * 2) {
@@ -955,14 +953,13 @@ TEST_P(TemporalFilterTestPlanewiseHbd, DISABLED_Speed) {
 
 #ifdef ARCH_X86_64
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     AVX2_medium, TemporalFilterTestPlanewiseHbd,
     ::testing::Combine(
         ::testing::Values(svt_av1_apply_temporal_filter_planewise_medium_hbd_c),
         ::testing::Values(
             svt_av1_apply_temporal_filter_planewise_medium_hbd_sse4_1,
-            svt_av1_apply_temporal_filter_planewise_medium_hbd_avx2),
-        ::testing::Values(1)));
+            svt_av1_apply_temporal_filter_planewise_medium_hbd_avx2)));
 
 #endif
 
@@ -1391,6 +1388,7 @@ class EstimateNoiseTestFP
     uint32_t encoder_bit_depth;
     int stride;
 };
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(EstimateNoiseTestFP);
 
 TEST_P(EstimateNoiseTestFP, fixed_point) {
     RunTest();
@@ -1398,7 +1396,7 @@ TEST_P(EstimateNoiseTestFP, fixed_point) {
 
 #ifdef ARCH_X86_64
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     AVX2_lbd, EstimateNoiseTestFP,
     ::testing::Combine(::testing::Values(estimate_noise_fp16_c_wrapper),
                        ::testing::Values(estimate_noise_fp16_avx2_wrapper),
@@ -1406,7 +1404,7 @@ INSTANTIATE_TEST_CASE_P(
                        ::testing::Values(2160, 1080, 720, 600, 480, 240),
                        ::testing::Values(8)));
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     AVX2_hbd, EstimateNoiseTestFP,
     ::testing::Combine(::testing::Values(svt_estimate_noise_highbd_fp16_c),
                        ::testing::Values(svt_estimate_noise_highbd_fp16_avx2),

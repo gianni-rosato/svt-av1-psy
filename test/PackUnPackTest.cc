@@ -32,14 +32,6 @@
 #include <stdlib.h>
 #include <limits.h>
 #include <new>
-// workaround to eliminate the compiling warning on linux
-// The macro will conflict with definition in gtest.h
-#ifdef __USE_GNU
-#undef __USE_GNU  // defined in EbThreads.h
-#endif
-#ifdef _GNU_SOURCE
-#undef _GNU_SOURCE  // defined in EbThreads.h
-#endif
 
 #include "EbDefinitions.h"
 #include "EbPackUnPack_C.h"
@@ -191,7 +183,7 @@ TEST_P(PackTest, PackTest) {
     run_test();
 };
 
-INSTANTIATE_TEST_CASE_P(PACK, PackTest, ::testing::ValuesIn(TEST_PACK_SIZES));
+INSTANTIATE_TEST_SUITE_P(PACK, PackTest, ::testing::ValuesIn(TEST_PACK_SIZES));
 
 // test svt_compressed_packmsb_sse4_1_intrin
 // test svt_compressed_packmsb_avx2_intrin
@@ -304,13 +296,13 @@ TEST_P(PackMsbTest, PackMsbTest) {
     run_test();
 };
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     PACKMSB, PackMsbTest,
     ::testing::Combine(::testing::ValuesIn(TEST_PACK_SIZES),
                        ::testing::Values(svt_compressed_packmsb_sse4_1_intrin,
                                          svt_compressed_packmsb_avx2_intrin)));
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     PACKMSB_EXTEND, PackMsbTest,
     ::testing::Combine(::testing::ValuesIn(TEST_PACK_SIZES_EXTEND),
                        ::testing::Values(svt_compressed_packmsb_sse4_1_intrin,
@@ -446,19 +438,19 @@ TEST_P(Unpack2bCompress, Unpack2bCompress) {
     run_test();
 };
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     UNPACK2BCOMPRESS, Unpack2bCompress,
     ::testing::Combine(::testing::ValuesIn(TEST_PACK_SIZES),
                        ::testing::Values(svt_unpack_and_2bcompress_sse4_1,
                                          svt_unpack_and_2bcompress_avx2)));
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     UNPACK2BCOMPRESS_EXTEND, Unpack2bCompress,
     ::testing::Combine(::testing::ValuesIn(TEST_PACK_SIZES_EXTEND),
                        ::testing::Values(svt_unpack_and_2bcompress_sse4_1,
                                          svt_unpack_and_2bcompress_avx2)));
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     UNPACK2BCOMPRESS_EXTEND2, Unpack2bCompress,
     ::testing::Combine(::testing::Values(AreaSize(32, 1), AreaSize(32, 2),
                                          AreaSize(32, 3), AreaSize(32, 5),
@@ -599,8 +591,8 @@ TEST_P(Pack2dTest, Pack2dTest) {
     run_2d_test();
 };
 
-INSTANTIATE_TEST_CASE_P(PACK2D, Pack2dTest,
-                        ::testing::ValuesIn(TEST_COMMON_SIZES));
+INSTANTIATE_TEST_SUITE_P(PACK2D, Pack2dTest,
+                         ::testing::ValuesIn(TEST_COMMON_SIZES));
 
 // test svt_enc_un_pack8_bit_data_avx2_intrin
 // Similar assumption that the width is multiple of 4, using
@@ -779,8 +771,8 @@ TEST_P(UnPackTest, UnPack2dTest) {
     run_2d_test();
 };
 
-INSTANTIATE_TEST_CASE_P(UNPACK, UnPackTest,
-                        ::testing::ValuesIn(TEST_COMMON_SIZES));
+INSTANTIATE_TEST_SUITE_P(UNPACK, UnPackTest,
+                         ::testing::ValuesIn(TEST_COMMON_SIZES));
 
 // test svt_unpack_avg_avx2_intrin
 // only width of {4, 8, 16, 32, 64} are implemented in
@@ -972,7 +964,7 @@ TEST_P(UnPackAvgTest, UnPackSubAvgTest) {
     run_sub_avg_test();
 };
 
-INSTANTIATE_TEST_CASE_P(UNPACKAVG, UnPackAvgTest,
-                        ::testing::ValuesIn(TEST_AVG_SIZES));
+INSTANTIATE_TEST_SUITE_P(UNPACKAVG, UnPackAvgTest,
+                         ::testing::ValuesIn(TEST_AVG_SIZES));
 
 }  // namespace

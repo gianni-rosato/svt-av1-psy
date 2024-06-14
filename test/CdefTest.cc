@@ -26,15 +26,8 @@
  ******************************************************************************/
 #include <cstdlib>
 #include <string>
+
 #include "gtest/gtest.h"
-// workaround to eliminate the compiling warning on linux
-// The macro will conflict with definition in gtest.h
-#ifdef __USE_GNU
-#undef __USE_GNU  // defined in EbThreads.h
-#endif
-#ifdef _GNU_SOURCE
-#undef _GNU_SOURCE  // defined in EbThreads.h
-#endif
 #include "EbDefinitions.h"
 #include "aom_dsp_rtcd.h"
 #include "EbEncCdef.h"
@@ -379,7 +372,7 @@ TEST_P(CDEFBlockTest, DISABLED_SpeedTest) {
 // structs as arguments, which makes the v256 type of the intrinsics
 // hard to support, so optimizations for this target are disabled.
 #if defined(_WIN64) || !defined(_MSC_VER) || defined(__clang__)
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     Cdef, CDEFBlockTest,
     ::testing::Combine(
         ::testing::Values(&svt_cdef_filter_block_avx2),
@@ -388,7 +381,7 @@ INSTANTIATE_TEST_CASE_P(
         ::testing::Range(0, 16), ::testing::Range(8, 13, 2),
         ::testing::ValuesIn(svt_cdef_filter_block_8xn_16_func_table)));
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     Cdef_sse4_1, CDEFBlockTest,
     ::testing::Combine(
         ::testing::Values(&svt_cdef_filter_block_avx2),
@@ -401,7 +394,7 @@ INSTANTIATE_TEST_CASE_P(
 #endif  // defined(ARCH_X86_64)
 
 #if defined(ARCH_AARCH64)
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     Cdef_neon, CDEFBlockTest,
     ::testing::Combine(
         ::testing::Values(&svt_cdef_filter_block_neon),
@@ -502,7 +495,7 @@ TEST_P(CDEFFindDirTest, MatchTest) {
 // structs as arguments, which makes the v256 type of the intrinsics
 // hard to support, so optimizations for this target are disabled.
 #if defined(_WIN64) || !defined(_MSC_VER) || defined(__clang__)
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     Cdef, CDEFFindDirTest,
     ::testing::Values(
         make_tuple(&svt_aom_cdef_find_dir_sse4_1, &svt_aom_cdef_find_dir_c),
@@ -513,7 +506,7 @@ INSTANTIATE_TEST_CASE_P(
 
 #if defined(ARCH_AARCH64)
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     Cdef, CDEFFindDirTest,
     ::testing::Values(make_tuple(&svt_aom_cdef_find_dir_neon,
                                  &svt_aom_cdef_find_dir_c)));
@@ -644,7 +637,7 @@ TEST_P(CDEFFindDirDualTest, MatchTest) {
 // structs as arguments, which makes the v256 type of the intrinsics
 // hard to support, so optimizations for this target are disabled.
 #if defined(_WIN64) || !defined(_MSC_VER) || defined(__clang__)
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     Cdef, CDEFFindDirDualTest,
     ::testing::Values(make_tuple(&svt_aom_cdef_find_dir_dual_sse4_1,
                                  &svt_aom_cdef_find_dir_dual_c),
@@ -657,7 +650,7 @@ INSTANTIATE_TEST_CASE_P(
 
 #if defined(ARCH_AARCH64)
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     Cdef, CDEFFindDirDualTest,
     ::testing::Values(make_tuple(&svt_aom_cdef_find_dir_dual_neon,
                                  &svt_aom_cdef_find_dir_dual_c)));

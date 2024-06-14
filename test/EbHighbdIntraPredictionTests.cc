@@ -1173,7 +1173,7 @@ TEST_P(GetGRadientHistTest, MatchTest) {
     run_test();
 }
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     GET_GRADIENT_HIST, GetGRadientHistTest,
     ::testing::Combine(::testing::Range(BLOCK_4X4, BlockSizeS_ALL),
                        ::testing::Values(svt_av1_get_gradient_hist_avx2)));

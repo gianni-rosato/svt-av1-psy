@@ -23,15 +23,8 @@
 #include <cmath>
 #include <cstdlib>
 #include <string>
+
 #include "gtest/gtest.h"
-// workaround to eliminate the compiling warning on linux
-// The macro will conflict with definition in gtest.h
-#ifdef __USE_GNU
-#undef __USE_GNU  // defined in EbThreads.h
-#endif
-#ifdef _GNU_SOURCE
-#undef _GNU_SOURCE  // defined in EbThreads.h
-#endif
 #include "EbDefinitions.h"
 #include "aom_dsp_rtcd.h"
 #include "random.h"
@@ -302,8 +295,8 @@ const LdbLpfTestParam kLoop8Test6[] = {
 };
 /* clang-format on */
 
-INSTANTIATE_TEST_CASE_P(SSE2, LbdLoopFilterTest,
-                        ::testing::ValuesIn(kLoop8Test6));
-INSTANTIATE_TEST_CASE_P(SSE2, HbdLoopFilterTest,
-                        ::testing::ValuesIn(kHbdLoop8Test6));
+INSTANTIATE_TEST_SUITE_P(SSE2, LbdLoopFilterTest,
+                         ::testing::ValuesIn(kLoop8Test6));
+INSTANTIATE_TEST_SUITE_P(SSE2, HbdLoopFilterTest,
+                         ::testing::ValuesIn(kHbdLoop8Test6));
 }  // namespace

@@ -25,15 +25,8 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <new>
+
 #include "gtest/gtest.h"
-// workaround to eliminate the compiling warning on linux
-// The macro will conflict with definition in gtest.h
-#ifdef __USE_GNU
-#undef __USE_GNU  // defined in EbThreads.h
-#endif
-#ifdef _GNU_SOURCE
-#undef _GNU_SOURCE  // defined in EbThreads.h
-#endif
 #include "aom_dsp_rtcd.h"
 #include "EbDefinitions.h"
 #include "EbUtility.h"
@@ -444,8 +437,8 @@ static const HbdVarianceParam HbdTestVector[] = {
     HbdVarianceParam(128, 128, 10, svt_aom_highbd_10_variance128x128_avx2),
 };
 
-INSTANTIATE_TEST_CASE_P(Variance, HbdVarianceTest,
-                        ::testing::ValuesIn(HbdTestVector));
+INSTANTIATE_TEST_SUITE_P(Variance, HbdVarianceTest,
+                         ::testing::ValuesIn(HbdTestVector));
 
 /**
  * @brief Unit test for different implementation of HBD variance with size 16x16
@@ -592,7 +585,7 @@ TEST_P(HbdSquareVarianceNoRoundTest, MatchTest) {
     run_match_test(10);
 };
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     Variance, HbdSquareVarianceNoRoundTest,
     ::testing::Combine(::testing::Values(16, 32),
                        ::testing::Values(svt_aom_variance_highbd_sse4_1,

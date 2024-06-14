@@ -267,14 +267,14 @@ TEST_P(HadamardLowbdTest, VaryStride) {
     VaryStride();
 }
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     C, HadamardLowbdTest,
     ::testing::Values(HadamardFuncWithSize(&svt_aom_hadamard_4x4_c, 4),
                       HadamardFuncWithSize(&svt_aom_hadamard_8x8_c, 8),
                       HadamardFuncWithSize(&svt_aom_hadamard_16x16_c, 16),
                       HadamardFuncWithSize(&svt_aom_hadamard_32x32_c, 32)));
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     AVX2, HadamardLowbdTest,
     ::testing::Values(HadamardFuncWithSize(&svt_aom_hadamard_8x8_sse2, 8),
                       HadamardFuncWithSize(&svt_aom_hadamard_16x16_avx2, 16),

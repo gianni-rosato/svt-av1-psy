@@ -271,14 +271,14 @@ TEST_P(AomUpsampledPredTest, MatchTest) {
     run_test();
 }
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     UPSAMPLED_PRED_TEST, AomUpsampledPredTest,
-    ::testing::Combine(::testing::Range(BLOCK_4X4, BlockSizeS_ALL),
-                       ::testing::Values(svt_aom_upsampled_pred_sse2),
-                       ::testing::Values(USE_2_TAPS, USE_4_TAPS, USE_8_TAPS),
-                       ::testing::Values(0, 1, 2), ::testing::Values(0, 1, 2),
-                       ::testing::Values(EB_CPU_FLAGS_SSSE3,
-                                         EB_CPU_FLAGS_AVX2)));
+    ::testing::Combine(
+        ::testing::Range(BLOCK_4X4, BlockSizeS_ALL),
+        ::testing::Values(svt_aom_upsampled_pred_sse2),
+        ::testing::Values((int)USE_2_TAPS, (int)USE_4_TAPS, (int)USE_8_TAPS),
+        ::testing::Values(0, 1, 2), ::testing::Values(0, 1, 2),
+        ::testing::Values(EB_CPU_FLAGS_SSSE3, EB_CPU_FLAGS_AVX2)));
 
 typedef void (*CflLumaSubsamplingLbdFunc)(const uint8_t *, int32_t, int16_t *,
                                           int32_t, int32_t);
@@ -339,7 +339,7 @@ TEST_P(CflLumaSubsamplingLbdTest, MatchTest) {
     run_test();
 }
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     CFL_LUMA_SUBSAMPLING_LBD, CflLumaSubsamplingLbdTest,
     ::testing::Combine(
         ::testing::Range(BLOCK_4X4, BlockSizeS_ALL),
@@ -404,7 +404,7 @@ TEST_P(CflLumaSubsamplingHbdTest, MatchTest) {
     run_test();
 }
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     CFL_LUMA_SUBSAMPLING_HBD, CflLumaSubsamplingHbdTest,
     ::testing::Combine(
         ::testing::Range(BLOCK_4X4, BlockSizeS_ALL),

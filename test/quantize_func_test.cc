@@ -17,14 +17,6 @@
 #include "random.h"
 #include "util.h"
 
-// workaround to eliminate the compiling warning on linux
-// The macro will conflict with definition in gtest.h
-#ifdef __USE_GNU
-#undef __USE_GNU  // defined in EbThreads.h
-#endif
-#ifdef _GNU_SOURCE
-#undef _GNU_SOURCE  // defined in EbThreads.h
-#endif
 #include "EbDefinitions.h"
 #include "EbPictureControlSet.h"
 #include "EbTransforms.h"
@@ -966,16 +958,16 @@ const QuantizeQmParam kQmParamHbdArrayAvx2[] = {
                &svt_av1_highbd_quantize_fp_qm_avx2,
                static_cast<TxSize>(TX_8X32), TYPE_FP, EB_TEN_BIT)};
 
-INSTANTIATE_TEST_CASE_P(AVX2, QuantizeLbdTest,
-                        ::testing::ValuesIn(kQParamArrayAvx2));
-INSTANTIATE_TEST_CASE_P(SSE4_1, QuantizeHbdTest,
-                        ::testing::ValuesIn(kQHbdParamArraySse41));
-INSTANTIATE_TEST_CASE_P(AVX2, QuantizeHbdTest,
-                        ::testing::ValuesIn(kQHbdParamArrayAvx2));
-INSTANTIATE_TEST_CASE_P(AVX2, QuantizeQmTest,
-                        ::testing::ValuesIn(kQmParamArrayAvx2));
-INSTANTIATE_TEST_CASE_P(AVX2, QuantizeQmHbdTest,
-                        ::testing::ValuesIn(kQmParamHbdArrayAvx2));
+INSTANTIATE_TEST_SUITE_P(AVX2, QuantizeLbdTest,
+                         ::testing::ValuesIn(kQParamArrayAvx2));
+INSTANTIATE_TEST_SUITE_P(SSE4_1, QuantizeHbdTest,
+                         ::testing::ValuesIn(kQHbdParamArraySse41));
+INSTANTIATE_TEST_SUITE_P(AVX2, QuantizeHbdTest,
+                         ::testing::ValuesIn(kQHbdParamArrayAvx2));
+INSTANTIATE_TEST_SUITE_P(AVX2, QuantizeQmTest,
+                         ::testing::ValuesIn(kQmParamArrayAvx2));
+INSTANTIATE_TEST_SUITE_P(AVX2, QuantizeQmHbdTest,
+                         ::testing::ValuesIn(kQmParamHbdArrayAvx2));
 
 TEST(ComputeCulLevel, avx2) {
     SVTRandom rnd(0, (1 << 10) - 1);

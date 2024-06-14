@@ -30,14 +30,6 @@
 #include "util.h"
 #include "gtest/gtest.h"
 
-// workaround to eliminate the compiling warning on linux
-// The macro will conflict with definition in gtest.h
-#ifdef __USE_GNU
-#undef __USE_GNU  // defined in EbThreads.h
-#endif
-#ifdef _GNU_SOURCE
-#undef _GNU_SOURCE  // defined in EbThreads.h
-#endif
 #include "EbDefinitions.h"
 #include "EbTransforms.h"
 
@@ -136,7 +128,7 @@ TEST_P(AV1InvTxfm1dTest, run_inv_accuracy_check) {
     run_inv_accuracy_check();
 }
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     TX, AV1InvTxfm1dTest,
     ::testing::Values(
         InvTxfm1dParam(TXFM_TYPE_DCT4, 2), InvTxfm1dParam(TXFM_TYPE_DCT8, 2),

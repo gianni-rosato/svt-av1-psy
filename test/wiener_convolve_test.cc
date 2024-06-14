@@ -22,14 +22,6 @@
  ******************************************************************************/
 
 #include "gtest/gtest.h"
-// workaround to eliminate the compiling warning on linux
-// The macro will conflict with definition in gtest.h
-#ifdef __USE_GNU
-#undef __USE_GNU  // defined in EbThreads.h
-#endif
-#ifdef _GNU_SOURCE
-#undef _GNU_SOURCE  // defined in EbThreads.h
-#endif
 #include "aom_dsp_rtcd.h"
 #include "convolve.h"
 #include "EbDefinitions.h"
@@ -481,7 +473,7 @@ TEST_P(AV1WienerConvolveLbdTest, DISABLED_speed_test) {
     run_speed_test();
 }
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     AV1, AV1WienerConvolveLbdTest,
     ::testing::Combine(::testing::ValuesIn(test_block_size_table),
                        ::testing::ValuesIn(wiener_convolve_func_table)));
@@ -494,7 +486,7 @@ TEST_P(AV1WienerConvolveHbdTest, DISABLED_speed_test) {
     run_speed_test();
 }
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     AV1, AV1WienerConvolveHbdTest,
     ::testing::Combine(::testing::ValuesIn(test_block_size_table),
                        ::testing::ValuesIn(hbd_wiener_convolve_func_table),

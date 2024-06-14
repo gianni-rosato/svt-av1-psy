@@ -14,15 +14,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-// Workaround to eliminate the compiling warning on linux
-// The macro will conflict with definition in gtest.h
-#ifdef __USE_GNU
-#undef __USE_GNU  // defined in EbThreads.h
-#endif
-#ifdef _GNU_SOURCE
-#undef _GNU_SOURCE  // defined in EbThreads.h
-#endif
-
 #include "random.h"
 #include "aom_dsp_rtcd.h"
 #include "EbDefinitions.h"
@@ -174,6 +165,7 @@ void SpatialFullDistortionTest::RunSpeedTest() {
             time_c / time_o);
     }
 }
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(SpatialFullDistortionTest);
 
 TEST_P(SpatialFullDistortionTest, CheckOutput) {
     RunCheckOutput();
@@ -185,16 +177,16 @@ TEST_P(SpatialFullDistortionTest, DISABLED_Speed) {
 
 #ifdef ARCH_X86_64
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     AVX2, SpatialFullDistortionTest,
     ::testing::Values(svt_spatial_full_distortion_kernel_avx2));
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     SSE4_1, SpatialFullDistortionTest,
     ::testing::Values(svt_spatial_full_distortion_kernel_sse4_1));
 
 #if EN_AVX512_SUPPORT
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     AVX512, SpatialFullDistortionTest,
     ::testing::Values(svt_spatial_full_distortion_kernel_avx512));
 #endif
@@ -202,7 +194,9 @@ INSTANTIATE_TEST_CASE_P(
 #endif
 
 typedef enum { VAL_MIN, VAL_MAX, VAL_RANDOM } TestPattern;
+#ifdef ARCH_X86_64
 TestPattern TEST_PATTERNS[] = {VAL_MIN, VAL_MAX, VAL_RANDOM};
+#endif  // ARCH_X86_64
 typedef std::tuple<uint32_t, uint32_t> AreaSize;
 
 /**
@@ -367,6 +361,8 @@ void SpatialFullDistortionKernelFuncTest::RunCheckOutput() {
             << "Compare Spatial distortion result error";
     }
 }
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(
+    SpatialFullDistortionKernelFuncTest);
 
 TEST_P(SpatialFullDistortionKernelFuncTest, SpatialKernelFuncTest) {
     RunCheckOutput();
@@ -375,7 +371,7 @@ TEST_P(SpatialFullDistortionKernelFuncTest, SpatialKernelFuncTest) {
 #ifdef ARCH_X86_64
 
 #if EN_AVX512_SUPPORT
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     SpatialKernelFunc, SpatialFullDistortionKernelFuncTest,
     ::testing::Combine(
         ::testing::ValuesIn(TEST_AREA_SIZES),
@@ -385,7 +381,7 @@ INSTANTIATE_TEST_CASE_P(
                           svt_spatial_full_distortion_kernel_avx512)));
 #else
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     SpatialKernelFunc, SpatialFullDistortionKernelFuncTest,
     ::testing::Combine(
         ::testing::ValuesIn(TEST_AREA_SIZES),
@@ -547,6 +543,8 @@ void FullDistortionKernel16BitsFuncTest::RunSpeedTest() {
             time_c / time_o);
     }
 }
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(
+    FullDistortionKernel16BitsFuncTest);
 
 TEST_P(FullDistortionKernel16BitsFuncTest, FullDistortionKernel16FuncTest) {
     RunCheckOutput();
@@ -558,14 +556,14 @@ TEST_P(FullDistortionKernel16BitsFuncTest, DISABLED_Speed) {
 
 #ifdef ARCH_X86_64
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     FullDistortionKernel16FuncTest_SSE4_1, FullDistortionKernel16BitsFuncTest,
     ::testing::Combine(
         ::testing::ValuesIn(TEST_AREA_SIZES),
         ::testing::ValuesIn(TEST_PATTERNS),
         ::testing::Values(svt_full_distortion_kernel16_bits_sse4_1)));
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     FullDistortionKernel16FuncTest, FullDistortionKernel16BitsFuncTest,
     ::testing::Combine(
         ::testing::ValuesIn(TEST_AREA_SIZES),
@@ -654,11 +652,11 @@ TEST_P(fullDistortionKernel32Bits, CheckOutput) {
 
 #ifdef ARCH_X86_64
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     SSE4_1, fullDistortionKernel32Bits,
     ::testing::Values(svt_full_distortion_kernel32_bits_sse4_1));
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     AVX2, fullDistortionKernel32Bits,
     ::testing::Values(svt_full_distortion_kernel32_bits_avx2));
 
@@ -666,7 +664,7 @@ INSTANTIATE_TEST_CASE_P(
 
 #ifdef ARCH_AARCH64
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     NEON, fullDistortionKernel32Bits,
     ::testing::Values(svt_full_distortion_kernel32_bits_neon));
 
@@ -727,6 +725,8 @@ void fullDistortionKernelCbfZero32Bits::RunCheckOutput() {
         }
     }
 }
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(
+    fullDistortionKernelCbfZero32Bits);
 
 TEST_P(fullDistortionKernelCbfZero32Bits, CheckOutput) {
     RunCheckOutput();
@@ -734,11 +734,11 @@ TEST_P(fullDistortionKernelCbfZero32Bits, CheckOutput) {
 
 #ifdef ARCH_X86_64
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     SSE4_1, fullDistortionKernelCbfZero32Bits,
     ::testing::Values(svt_full_distortion_kernel_cbf_zero32_bits_sse4_1));
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     AVX2, fullDistortionKernelCbfZero32Bits,
     ::testing::Values(svt_full_distortion_kernel_cbf_zero32_bits_avx2));
 

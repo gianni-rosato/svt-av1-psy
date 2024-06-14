@@ -22,16 +22,10 @@
  * @author Cidana-Edmond
  *
  ******************************************************************************/
+#include <algorithm>
 #include <vector>
+
 #include "gtest/gtest.h"
-// workaround to eliminate the compiling warning on linux
-// The macro will conflict with definition in gtest.h
-#ifdef __USE_GNU
-#undef __USE_GNU  // defined in EbThreads.h
-#endif
-#ifdef _GNU_SOURCE
-#undef _GNU_SOURCE  // defined in EbThreads.h
-#endif
 #include "EbDefinitions.h"
 #include "EbUtility.h"
 #include "random.h"
@@ -320,8 +314,8 @@ TEST_P(KMeansTest, CheckOutput2D) {
     run_test_2d(1000);
 };
 
-INSTANTIATE_TEST_CASE_P(PalleteMode, KMeansTest,
-                        ::testing::Range(PALETTE_MIN_SIZE, PALETTE_MAX_SIZE));
+INSTANTIATE_TEST_SUITE_P(PalleteMode, KMeansTest,
+                         ::testing::Range(PALETTE_MIN_SIZE, PALETTE_MAX_SIZE));
 
 typedef void (*av1_k_means_func)(const int *data, int *centroids,
                                  uint8_t *indices, int n, int k, int max_itr);
@@ -543,7 +537,7 @@ TEST_P(Av1KMeansDim, DISABLED_speed) {
     speed();
 };
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     Av1KMeansDim, Av1KMeansDim,
     ::testing::Combine(::testing::ValuesIn(TEST_PATTERNS),
                        ::testing::ValuesIn(TEST_BLOCK_SIZES),

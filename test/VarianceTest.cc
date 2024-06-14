@@ -26,14 +26,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <new>
-// workaround to eliminate the compiling warning on linux
-// The macro will conflict with definition in gtest.h
-#ifdef __USE_GNU
-#undef __USE_GNU  // defined in EbThreads.h
-#endif
-#ifdef _GNU_SOURCE
-#undef _GNU_SOURCE  // defined in EbThreads.h
-#endif
+
 #include "aom_dsp_rtcd.h"
 #include "random.h"
 #include "util.h"
@@ -135,7 +128,7 @@ TEST_P(MseTest, MaxTest) {
     run_max_test();
 };
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     Variance, MseTest,
     ::testing::Values(
         TestMseParam(16, 16, &svt_aom_mse16x16_sse2, &svt_aom_mse16x16_c),
@@ -224,10 +217,10 @@ TEST_P(MseTestHighbd, MaxTest) {
     run_max_test();
 };
 
-INSTANTIATE_TEST_CASE_P(Variance, MseTestHighbd,
-                        ::testing::Values(TestMseParamHighbd(
-                            16, 16, &svt_aom_highbd_8_mse16x16_sse2,
-                            &svt_aom_highbd_8_mse16x16_c)));
+INSTANTIATE_TEST_SUITE_P(Variance, MseTestHighbd,
+                         ::testing::Values(TestMseParamHighbd(
+                             16, 16, &svt_aom_highbd_8_mse16x16_sse2,
+                             &svt_aom_highbd_8_mse16x16_c)));
 
 // sum of squares test
 static uint32_t mb_ss_ref(const int16_t *src) {
@@ -287,6 +280,7 @@ class SumSquareTest : public ::testing::TestWithParam<SUM_SQUARE_FUNC> {
         }
     }
 };
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(SumSquareTest);
 
 TEST_P(SumSquareTest, ConstTest) {
     run_const_test();
@@ -407,7 +401,7 @@ TEST_P(VarianceTest, OneQuarterTest) {
     run_one_quarter_test();
 };
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     Variance, VarianceTest,
     ::testing::Values(
         VarianceParam(4, 4, &svt_aom_variance4x4_c, &svt_aom_variance4x4_sse2),
@@ -451,7 +445,7 @@ INSTANTIATE_TEST_CASE_P(
         VarianceParam(128, 128, &svt_aom_variance128x128_c,
                       &svt_aom_variance128x128_avx2)));
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     Variance_SSE2, VarianceTest,
     ::testing::Values(VarianceParam(16, 4, &svt_aom_variance16x4_c,
                                     &svt_aom_variance16x4_sse2),
@@ -485,7 +479,7 @@ INSTANTIATE_TEST_CASE_P(
                                     &svt_aom_variance128x128_sse2)));
 
 #if EN_AVX512_SUPPORT
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     Variance_AVX512, VarianceTest,
     ::testing::Values(VarianceParam(32, 8, &svt_aom_variance32x8_c,
                                     &svt_aom_variance32x8_avx512),
@@ -756,8 +750,8 @@ const TestParams kArraySubpelVariance_sse2[] = {
      &svt_aom_sub_pixel_variance4x16_sse2,
      0,
      &svt_aom_sub_pixel_variance4x16_c}};
-INSTANTIATE_TEST_CASE_P(SSE2, AvxSubpelVarianceTest,
-                        ::testing::ValuesIn(kArraySubpelVariance_sse2));
+INSTANTIATE_TEST_SUITE_P(SSE2, AvxSubpelVarianceTest,
+                         ::testing::ValuesIn(kArraySubpelVariance_sse2));
 
 const TestParams kArraySubpelVariance_ssse3[] = {
     {7,
@@ -870,8 +864,8 @@ const TestParams kArraySubpelVariance_ssse3[] = {
      &svt_aom_sub_pixel_variance4x16_ssse3,
      0,
      &svt_aom_sub_pixel_variance4x16_c}};
-INSTANTIATE_TEST_CASE_P(SSSE3, AvxSubpelVarianceTest,
-                        ::testing::ValuesIn(kArraySubpelVariance_ssse3));
+INSTANTIATE_TEST_SUITE_P(SSSE3, AvxSubpelVarianceTest,
+                         ::testing::ValuesIn(kArraySubpelVariance_ssse3));
 
 const TestParams kArraySubpelVariance_avx2[] = {
     {7,
@@ -939,8 +933,8 @@ const TestParams kArraySubpelVariance_avx2[] = {
      &svt_aom_sub_pixel_variance16x4_avx2,
      0,
      &svt_aom_sub_pixel_variance16x4_c}};
-INSTANTIATE_TEST_CASE_P(AVX2, AvxSubpelVarianceTest,
-                        ::testing::ValuesIn(kArraySubpelVariance_avx2));
+INSTANTIATE_TEST_SUITE_P(AVX2, AvxSubpelVarianceTest,
+                         ::testing::ValuesIn(kArraySubpelVariance_avx2));
 
 #if EN_AVX512_SUPPORT
 const TestParams kArraySubpelVariance_avx512[] = {
@@ -984,8 +978,8 @@ const TestParams kArraySubpelVariance_avx512[] = {
      &svt_aom_sub_pixel_variance32x16_avx512,
      0,
      &svt_aom_sub_pixel_variance32x16_c}};
-INSTANTIATE_TEST_CASE_P(AVX512, AvxSubpelVarianceTest,
-                        ::testing::ValuesIn(kArraySubpelVariance_avx512));
+INSTANTIATE_TEST_SUITE_P(AVX512, AvxSubpelVarianceTest,
+                         ::testing::ValuesIn(kArraySubpelVariance_avx512));
 #endif
 
 TEST_P(AvxSubpelVarianceTest, Ref) {

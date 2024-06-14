@@ -375,10 +375,10 @@ static PicSizeParam pic_size_vector[] = {
     make_tuple(3840, 2160, 4480),
 };
 
-INSTANTIATE_TEST_CASE_P(Resize, ResizePlaneLbdTest,
-                        ::testing::Combine(::testing::ValuesIn(pic_size_vector),
-                                           ::testing::Range(8, 16),
-                                           ::testing::Values(8)));
+INSTANTIATE_TEST_SUITE_P(
+    Resize, ResizePlaneLbdTest,
+    ::testing::Combine(::testing::ValuesIn(pic_size_vector),
+                       ::testing::Range(8, 16), ::testing::Values(8)));
 
 class ResizePlaneHbdTest : public ResizePlaneTest<uint16_t> {
   protected:
@@ -526,8 +526,8 @@ TEST_P(ResizePlaneHbdTest, DISABLED_SpeedTestWithRandomValue) {
     run_speed_test(true);
 }
 
-INSTANTIATE_TEST_CASE_P(Resize, ResizePlaneHbdTest,
-                        ::testing::Combine(::testing::ValuesIn(pic_size_vector),
-                                           ::testing::Range(8, 16),
-                                           ::testing::Values(10, 12)));
+INSTANTIATE_TEST_SUITE_P(
+    Resize, ResizePlaneHbdTest,
+    ::testing::Combine(::testing::ValuesIn(pic_size_vector),
+                       ::testing::Range(8, 16), ::testing::Values(10, 12)));
 }  // namespace

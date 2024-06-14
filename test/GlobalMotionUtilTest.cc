@@ -25,15 +25,8 @@
  *
  ******************************************************************************/
 #include <vector>
+
 #include "gtest/gtest.h"
-// workaround to eliminate the compiling warning on linux
-// The macro will conflict with definition in gtest.h
-#ifdef __USE_GNU
-#undef __USE_GNU  // defined in EbThreads.h
-#endif
-#ifdef _GNU_SOURCE
-#undef _GNU_SOURCE  // defined in EbThreads.h
-#endif
 #include "EbDefinitions.h"
 #include "EbUtility.h"
 extern "C" {
@@ -356,7 +349,7 @@ TEST_P(RansacIntTest, CheckOutput) {
     run_test(1000);
 };
 
-INSTANTIATE_TEST_CASE_P(GlobalMotion, RansacIntTest,
-                        ::testing::ValuesIn(transform_table));
+INSTANTIATE_TEST_SUITE_P(GlobalMotion, RansacIntTest,
+                         ::testing::ValuesIn(transform_table));
 
 }  // namespace

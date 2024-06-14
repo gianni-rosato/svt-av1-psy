@@ -67,7 +67,6 @@ static inline bool compare_image(const VideoFrame *recon,
     uint32_t height = recon->disp_height;
 
     // luma
-    uint32_t index = 0;
     for (uint32_t l = 0; l < height; l++) {
         const uint8_t *s = recon->planes[0] + l * recon->stride[0];
         const uint8_t *d = ref_frame->planes[0] + l * ref_frame->stride[0];
@@ -82,12 +81,10 @@ static inline bool compare_image(const VideoFrame *recon,
                 printf("pixel index(%u--%u) luma compare failed!\n", l, r);
                 return false;
             }
-            index++;
         }
     }
 
     // cb
-    index = 0;
     for (uint32_t l = 0; l < (height + subsample_y) >> subsample_y; l++) {
         const uint8_t *s = recon->planes[1] + l * recon->stride[1];
         const uint8_t *d = ref_frame->planes[1] + l * ref_frame->stride[1];
@@ -102,12 +99,10 @@ static inline bool compare_image(const VideoFrame *recon,
                 printf("pixel index(%u--%u) cb compare failed!\n", l, r);
                 return false;
             }
-            index++;
         }
     }
 
     // cr
-    index = 0;
     for (uint32_t l = 0; l < (height + subsample_y) >> subsample_y; l++) {
         const uint8_t *s = recon->planes[2] + l * recon->stride[2];
         const uint8_t *d = ref_frame->planes[2] + l * ref_frame->stride[2];
@@ -122,7 +117,6 @@ static inline bool compare_image(const VideoFrame *recon,
                 printf("pixel index(%u--%u) cr compare failed!\n", l, r);
                 return false;
             }
-            index++;
         }
     }
 

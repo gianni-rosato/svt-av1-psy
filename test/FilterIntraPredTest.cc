@@ -21,14 +21,6 @@
  *
  ******************************************************************************/
 #include "gtest/gtest.h"
-// workaround to eliminate the compiling warning on linux
-// The macro will conflict with definition in gtest.h
-#ifdef __USE_GNU
-#undef __USE_GNU  // defined in EbThreads.h
-#endif
-#ifdef _GNU_SOURCE
-#undef _GNU_SOURCE  // defined in EbThreads.h
-#endif
 #include "aom_dsp_rtcd.h"
 #include "random.h"
 #include "util.h"
@@ -125,7 +117,8 @@ const TxSize TX_SIZE_TABLE[] = {TX_4X4,
                                 TX_8X32,
                                 TX_32X8};
 
-INSTANTIATE_TEST_CASE_P(AV1, FilterIntraPredTest,
-                        ::testing::Combine(::testing::ValuesIn(PRED_MODE_TABLE),
-                                           ::testing::ValuesIn(TX_SIZE_TABLE)));
+INSTANTIATE_TEST_SUITE_P(
+    AV1, FilterIntraPredTest,
+    ::testing::Combine(::testing::ValuesIn(PRED_MODE_TABLE),
+                       ::testing::ValuesIn(TX_SIZE_TABLE)));
 }  // namespace

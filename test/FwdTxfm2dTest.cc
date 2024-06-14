@@ -27,14 +27,6 @@
 #include <stdlib.h>
 #include <new>
 
-// workaround to eliminate the compiling warning on linux
-// The macro will conflict with definition in gtest.h
-#ifdef __USE_GNU
-#undef __USE_GNU  // defined in EbThreads.h
-#endif
-#ifdef _GNU_SOURCE
-#undef _GNU_SOURCE  // defined in EbThreads.h
-#endif
 #include "EbDefinitions.h"
 #include "EbTransforms.h"
 
@@ -286,7 +278,7 @@ static std::vector<FwdTxfm2dParam> gen_txfm_2d_params() {
     return param_vec;
 }
 
-INSTANTIATE_TEST_CASE_P(TX, AV1FwdTxfm2dTest,
-                        ::testing::ValuesIn(gen_txfm_2d_params()));
+INSTANTIATE_TEST_SUITE_P(TX, AV1FwdTxfm2dTest,
+                         ::testing::ValuesIn(gen_txfm_2d_params()));
 
 }  // namespace

@@ -42,9 +42,12 @@ we test that here also.
 
 import os
 import re
-import sets
+try:
+  from sets import Set as set  # For Python 2.3 compatibility
+except ImportError:
+  pass
 import sys
-import gtest_test_utils
+from googletest.test import gtest_test_utils
 
 # Constants.
 
@@ -57,7 +60,7 @@ CAN_PASS_EMPTY_ENV = False
 if sys.executable:
   os.environ['EMPTY_VAR'] = ''
   child = gtest_test_utils.Subprocess(
-      [sys.executable, '-c', 'import os; print \'EMPTY_VAR\' in os.environ'])
+      [sys.executable, '-c', 'import os; print(\'EMPTY_VAR\' in os.environ)'])
   CAN_PASS_EMPTY_ENV = eval(child.output)
 
 
@@ -72,7 +75,7 @@ if sys.executable:
   os.environ['UNSET_VAR'] = 'X'
   del os.environ['UNSET_VAR']
   child = gtest_test_utils.Subprocess(
-      [sys.executable, '-c', 'import os; print \'UNSET_VAR\' not in os.environ'
+      [sys.executable, '-c', 'import os; print(\'UNSET_VAR\' not in os.environ)'
       ])
   CAN_UNSET_ENV = eval(child.output)
 
@@ -109,6 +112,9 @@ TEST_CASE_REGEX = re.compile(r'^\[\-+\] \d+ tests? from (\w+(/\w+)?)')
 
 # Regex for parsing test names from Google Test's output.
 TEST_REGEX = re.compile(r'^\[\s*RUN\s*\].*\.(\w+(/\w+)?)')
+
+# Regex for parsing disabled banner from Google Test's output
+DISABLED_BANNER_REGEX = re.compile(r'^\[\s*DISABLED\s*\] (.*)')
 
 # The command line flag to tell Google Test to output the list of tests it
 # will run.
@@ -203,6 +209,17 @@ def RunAndExtractTestList(args = None):
   return (tests_run, p.exit_code)
 
 
+def RunAndExtractDisabledBannerList(args=None):
+  """Runs the test program and returns tests that printed a disabled banner."""
+  p = gtest_test_utils.Subprocess([COMMAND] + (args or []), env=environ)
+  banners_printed = []
+  for line in p.output.split('\n'):
+    match = DISABLED_BANNER_REGEX.match(line)
+    if match is not None:
+      banners_printed.append(match.group(1))
+  return banners_printed
+
+
 def InvokeWithModifiedEnv(extra_env, function, *args, **kwargs):
   """Runs the given function and arguments in a modified environment."""
   try:
@@ -245,14 +262,14 @@ class GTestFilterUnitTest(gtest_test_utils.TestCase):
     for slice_var in list_of_sets:
       full_partition.extend(slice_var)
     self.assertEqual(len(set_var), len(full_partition))
-    self.assertEqual(sets.Set(set_var), sets.Set(full_partition))
+    self.assertEqual(set(set_var), set(full_partition))
 
   def AdjustForParameterizedTests(self, tests_to_run):
     """Adjust tests_to_run in case value parameterized tests are disabled."""
 
     global param_tests_present
     if not param_tests_present:
-      return list(sets.Set(tests_to_run) - sets.Set(PARAM_TESTS))
+      return list(set(tests_to_run) - set(PARAM_TESTS))
     else:
       return tests_to_run
 
@@ -609,6 +626,23 @@ class GTestFilterUnitTest(gtest_test_utils.TestCase):
 
       self.assert_(os.path.exists(shard_status_file))
       os.remove(shard_status_file)
+
+  def testDisabledBanner(self):
+    """Tests that the disabled banner prints only tests that match filter."""
+    make_filter = lambda s: ['--%s=%s' % (FILTER_FLAG, s)]
+
+    banners = RunAndExtractDisabledBannerList(make_filter('*'))
+    self.AssertSetEqual(banners, [
+        'BarTest.DISABLED_TestFour', 'BarTest.DISABLED_TestFive',
+        'BazTest.DISABLED_TestC'
+    ])
+
+    banners = RunAndExtractDisabledBannerList(make_filter('Bar*'))
+    self.AssertSetEqual(
+        banners, ['BarTest.DISABLED_TestFour', 'BarTest.DISABLED_TestFive'])
+
+    banners = RunAndExtractDisabledBannerList(make_filter('*-Bar*'))
+    self.AssertSetEqual(banners, ['BazTest.DISABLED_TestC'])
 
   if SUPPORTS_DEATH_TESTS:
     def testShardingWorksWithDeathTests(self):

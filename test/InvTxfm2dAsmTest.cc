@@ -26,14 +26,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <algorithm>
-// workaround to eliminate the compiling warning on linux
-// The macro will conflict with definition in gtest.h
-#ifdef __USE_GNU
-#undef __USE_GNU  // defined in EbThreads.h
-#endif
-#ifdef _GNU_SOURCE
-#undef _GNU_SOURCE  // defined in EbThreads.h
-#endif
+
 #include "EbDefinitions.h"
 #include "EbTransforms.h"
 #include "random.h"
@@ -187,6 +180,8 @@ static const InvSqrTxfmFuncPair inv_txfm_c_neon_func_pairs[TX_64X64 + 1] = {
 
 #endif  // ARCH_AARCH64
 
+#ifdef ARCH_X86_64
+
 // from TX_4X8 to TX_SIZES_ALL
 static const InvRectTxfm2dType1Func rect_type1_ref_funcs_c[TX_SIZES_ALL] = {
     // square transform
@@ -209,8 +204,6 @@ static const InvRectTxfm2dType1Func rect_type1_ref_funcs_c[TX_SIZES_ALL] = {
     svt_av1_inv_txfm2d_add_32x8_c,
     svt_av1_inv_txfm2d_add_16x64_c,
     svt_av1_inv_txfm2d_add_64x16_c};
-
-#ifdef ARCH_X86_64
 
 static const InvRectTxfm2dType1Func rect_type1_ref_funcs_sse4_1[TX_SIZES_ALL] =
     {
@@ -1017,7 +1010,7 @@ extern "C" void svt_av1_lowbd_inv_txfm2d_add_avx2(
     uint8_t *output_w, int32_t stride_w, TxType tx_type, TxSize tx_size,
     int32_t eob);
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     TX_ASM, InvTxfm2dAsmTest,
     ::testing::Combine(::testing::Values(svt_av1_lowbd_inv_txfm2d_add_ssse3,
                                          svt_av1_lowbd_inv_txfm2d_add_avx2),
@@ -1032,7 +1025,7 @@ extern "C" void svt_av1_lowbd_inv_txfm2d_add_neon(
     uint8_t *output_w, int32_t stride_w, TxType tx_type, TxSize tx_size,
     int32_t eob);
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     TX_ASM, InvTxfm2dAsmTest,
     ::testing::Combine(::testing::Values(svt_av1_lowbd_inv_txfm2d_add_neon),
                        ::testing::Values(static_cast<int>(EB_EIGHT_BIT),
@@ -1215,6 +1208,7 @@ class InvTxfm2dAddTest : public ::testing::TestWithParam<InvTxfm2AddParam> {
     uint16_t *output_ref_;
     LowbdInvTxfm2dAddFunc target_func_;
 };
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(InvTxfm2dAddTest);
 
 TEST_P(InvTxfm2dAddTest, svt_av1_inv_txfm_add) {
     // Reset all pointers to C
@@ -1229,7 +1223,7 @@ TEST_P(InvTxfm2dAddTest, svt_av1_inv_txfm_add) {
 
 #ifdef ARCH_X86_64
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     TX_ASM, InvTxfm2dAddTest,
     ::testing::Combine(::testing::Values(svt_av1_inv_txfm_add_ssse3,
                                          svt_av1_inv_txfm_add_avx2,

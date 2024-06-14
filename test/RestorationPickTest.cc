@@ -263,7 +263,7 @@ TEST_P(av1_compute_stats_test, DISABLED_speed) {
 
 #ifdef ARCH_X86_64
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     AV1_COMPUTE_STATS_AVX2, av1_compute_stats_test,
     ::testing::Combine(
         ::testing::Range(BLOCK_4X4, (BlockSize)(BlockSizeS_ALL + 2)),
@@ -273,7 +273,7 @@ INSTANTIATE_TEST_CASE_P(
         ::testing::Values(WIENER_WIN_CHROMA, WIENER_WIN, WIENER_WIN_3TAP)));
 
 #if EN_AVX512_SUPPORT
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     AV1_COMPUTE_STATS_AVX512, av1_compute_stats_test,
     ::testing::Combine(
         ::testing::Range(BLOCK_4X4, (BlockSize)(BlockSizeS_ALL + 2)),
@@ -535,6 +535,7 @@ class av1_compute_stats_test_hbd
             time_c / time_o);
     }
 };
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(av1_compute_stats_test);
 
 TEST_P(av1_compute_stats_test_hbd, match) {
     highbd_match_test();
@@ -545,7 +546,7 @@ TEST_P(av1_compute_stats_test_hbd, DISABLED_speed) {
 
 #ifdef ARCH_X86_64
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     AV1_COMPUTE_STATS_HBD_AVX2, av1_compute_stats_test_hbd,
     ::testing::Combine(
         ::testing::Range(BLOCK_4X4, (BlockSize)(BlockSizeS_ALL + 2)),
@@ -556,7 +557,7 @@ INSTANTIATE_TEST_CASE_P(
         ::testing::Values(EB_EIGHT_BIT, EB_TEN_BIT, EB_TWELVE_BIT)));
 
 #if EN_AVX512_SUPPORT
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     AV1_COMPUTE_STATS_HBD_AVX512, av1_compute_stats_test_hbd,
     ::testing::Combine(
         ::testing::Range(BLOCK_4X4, (BlockSize)(BlockSizeS_ALL + 2)),
@@ -570,7 +571,7 @@ INSTANTIATE_TEST_CASE_P(
 
 #ifdef ARCH_AARCH64
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     AV1_COMPUTE_STATS_HBD_NEON, av1_compute_stats_test_hbd,
     ::testing::Combine(
         ::testing::Range(BLOCK_4X4, (BlockSize)(BlockSizeS_ALL + 2)),

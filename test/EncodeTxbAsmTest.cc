@@ -26,15 +26,6 @@
 
 #include "gtest/gtest.h"
 
-// Workaround to eliminate the compiling warning on linux
-// The macro will conflict with definition in gtest.h
-#ifdef __USE_GNU
-#undef __USE_GNU  // defined in EbThreads.h
-#endif
-#ifdef _GNU_SOURCE
-#undef _GNU_SOURCE  // defined in EbThreads.h
-#endif
-
 #include "EbDefinitions.h"
 #include "EbTransforms.h"
 #include "util.h"
@@ -161,13 +152,13 @@ TEST_P(EncodeTxbTest, GetNzMapTest) {
         TEST_GET_PARAM(0), TEST_GET_PARAM(1), TEST_GET_PARAM(2));
 }
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     SSE2, EncodeTxbTest,
     ::testing::Combine(::testing::Values(&svt_av1_get_nz_map_contexts_sse2),
                        ::testing::Range(0, static_cast<int>(TX_TYPES), 1),
                        ::testing::Range(0, static_cast<int>(TX_SIZES_ALL), 1)));
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     AVX2, EncodeTxbTest,
     ::testing::Combine(::testing::Values(&svt_av1_get_nz_map_contexts_avx2),
                        ::testing::Range(0, static_cast<int>(TX_TYPES), 1),
@@ -306,18 +297,18 @@ TEST_P(EncodeTxbInitLevelTest, DISABLED_txb_init_levels_speed) {
     run_test(TEST_GET_PARAM(0), TEST_GET_PARAM(1), true);
 }
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     Entropy, EncodeTxbInitLevelTest,
     ::testing::Combine(::testing::Values(&svt_av1_txb_init_levels_avx2),
                        ::testing::Range(0, static_cast<int>(TX_SIZES_ALL), 1)));
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     Entropy_SSE41, EncodeTxbInitLevelTest,
     ::testing::Combine(::testing::Values(&svt_av1_txb_init_levels_sse4_1),
                        ::testing::Range(0, static_cast<int>(TX_SIZES_ALL), 1)));
 
 #if EN_AVX512_SUPPORT
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     EntropyAVX512, EncodeTxbInitLevelTest,
     ::testing::Combine(::testing::Values(&svt_av1_txb_init_levels_avx512),
                        ::testing::Range(0, static_cast<int>(TX_SIZES_ALL), 1)));

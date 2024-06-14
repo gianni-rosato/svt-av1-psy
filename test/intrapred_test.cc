@@ -291,8 +291,8 @@ const HBD_PARAMS HighbdIntraPredTestVectorAsm[] = {
     hbd_entry(paeth, 4, 16, avx2),
 };
 
-INSTANTIATE_TEST_CASE_P(intrapred, HighbdIntraPredTest,
-                        ::testing::ValuesIn(HighbdIntraPredTestVectorAsm));
+INSTANTIATE_TEST_SUITE_P(intrapred, HighbdIntraPredTest,
+                         ::testing::ValuesIn(HighbdIntraPredTestVectorAsm));
 
 // ---------------------------------------------------------------------------
 // Low Bit Depth Tests
@@ -406,6 +406,6 @@ const LBD_PARAMS LowbdIntraPredTestVectorAsm[] = {
     lbd_entry(paeth, 8, 4, ssse3),      lbd_entry(paeth, 8, 8, ssse3),
 };
 
-INSTANTIATE_TEST_CASE_P(intrapred, LowbdIntraPredTest,
-                        ::testing::ValuesIn(LowbdIntraPredTestVectorAsm));
+INSTANTIATE_TEST_SUITE_P(intrapred, LowbdIntraPredTest,
+                         ::testing::ValuesIn(LowbdIntraPredTestVectorAsm));
 }  // namespace

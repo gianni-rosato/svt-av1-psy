@@ -26,14 +26,6 @@
 #include <stdlib.h>
 #include <limits.h>
 #include <new>
-// workaround to eliminate the compiling warning on linux
-// The macro will conflict with definition in gtest.h
-#ifdef __USE_GNU
-#undef __USE_GNU  // defined in EbThreads.h
-#endif
-#ifdef _GNU_SOURCE
-#undef _GNU_SOURCE  // defined in EbThreads.h
-#endif
 
 #include "EbMcp_SSE2.h"
 #include "EbEncIntraPrediction.h"
@@ -205,9 +197,10 @@ TEST_P(PictureOperatorTest, AvgTest) {
     run_avg_test();
 };
 
-INSTANTIATE_TEST_CASE_P(PictureOperator, PictureOperatorTest,
-                        ::testing::Combine(::testing::ValuesIn(TEST_PU_SIZES),
-                                           ::testing::ValuesIn(TEST_PATTERNS)));
+INSTANTIATE_TEST_SUITE_P(
+    PictureOperator, PictureOperatorTest,
+    ::testing::Combine(::testing::ValuesIn(TEST_PU_SIZES),
+                       ::testing::ValuesIn(TEST_PATTERNS)));
 
 #endif
 
@@ -299,7 +292,7 @@ TEST_P(Downsample2DTest, test) {
 
 #if defined(ARCH_X86_64)
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     Downsample2D, Downsample2DTest,
     ::testing::Combine(::testing::ValuesIn(DOWNSAMPLE_SIZES),
                        ::testing::ValuesIn(DECIM_STEPS),
@@ -310,7 +303,7 @@ INSTANTIATE_TEST_CASE_P(
 
 #if defined(ARCH_AARCH64)
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     Downsample2D, Downsample2DTest,
     ::testing::Combine(::testing::ValuesIn(DOWNSAMPLE_SIZES),
                        ::testing::ValuesIn(DECIM_STEPS),

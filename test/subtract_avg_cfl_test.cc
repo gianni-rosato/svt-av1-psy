@@ -21,14 +21,7 @@
  ******************************************************************************/
 
 #include <sstream>
-// workaround to eliminate the compiling warning on linux
-// The macro will conflict with definition in gtest.h
-#ifdef __USE_GNU
-#undef __USE_GNU  // defined in EbThreads.h
-#endif
-#ifdef _GNU_SOURCE
-#undef _GNU_SOURCE  // defined in EbThreads.h
-#endif
+
 #include "gtest/gtest.h"
 #include "EbEncIntraPrediction.h"
 #include "aom_dsp_rtcd.h"
@@ -160,6 +153,6 @@ TEST_P(CflSubAvgTest, subtract_average_asm_test) {
     run_asm_compare_test(1000);
 }
 
-INSTANTIATE_TEST_CASE_P(AVX2, CflSubAvgTest, ::testing::ValuesIn(TEST_PARAMS));
+INSTANTIATE_TEST_SUITE_P(AVX2, CflSubAvgTest, ::testing::ValuesIn(TEST_PARAMS));
 
 }  // namespace

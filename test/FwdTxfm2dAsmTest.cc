@@ -26,16 +26,8 @@
 #include <stdlib.h>
 #include <new>
 #include <algorithm>
-#include "EbTime.h"
 
-// workaround to eliminate the compiling warning on linux
-// The macro will conflict with definition in gtest.h
-#ifdef __USE_GNU
-#undef __USE_GNU  // defined in EbThreads.h
-#endif
-#ifdef _GNU_SOURCE
-#undef _GNU_SOURCE  // defined in EbThreads.h
-#endif
+#include "EbTime.h"
 #include "EbDefinitions.h"
 #include "EbTransforms.h"
 #include "random.h"
@@ -239,6 +231,7 @@ static const FwdTxfm2dFunc fwd_txfm_2d_N4_neon_func[TX_SIZES_ALL] = {
 
 #endif /* ARCH_AARCH64*/
 
+#ifdef ARCH_X86_64
 static const FwdTxfm2dFunc fwd_txfm_2d_N2_c_func[TX_SIZES_ALL] = {
     svt_aom_transform_two_d_4x4_N2_c,   svt_aom_transform_two_d_8x8_N2_c,
     svt_aom_transform_two_d_16x16_N2_c, svt_aom_transform_two_d_32x32_N2_c,
@@ -251,6 +244,7 @@ static const FwdTxfm2dFunc fwd_txfm_2d_N2_c_func[TX_SIZES_ALL] = {
     svt_av1_fwd_txfm2d_32x8_N2_c,       svt_av1_fwd_txfm2d_16x64_N2_c,
     svt_av1_fwd_txfm2d_64x16_N2_c,
 };
+#endif
 
 static const FwdTxfm2dFunc fwd_txfm_2d_N4_c_func[TX_SIZES_ALL] = {
     svt_aom_transform_two_d_4x4_N4_c,   svt_aom_transform_two_d_8x8_N4_c,
@@ -661,7 +655,7 @@ TEST_P(FwdTxfm2dAsmTest, match_test_neon_N4) {
 
 #endif /* ARCH_AARCH64 */
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     TX, FwdTxfm2dAsmTest,
     ::testing::Combine(::testing::Range(static_cast<int>(TX_4X4),
                                         static_cast<int>(TX_SIZES_ALL), 1),

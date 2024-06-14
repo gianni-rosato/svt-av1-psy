@@ -262,7 +262,7 @@ TEST_P(SsimHbdTest, MatchTestWithRandomValue) {
     run_random_test(test_times);
 }
 
-INSTANTIATE_TEST_CASE_P(SSIM, SsimLbdTest, ::testing::Values(8));
-INSTANTIATE_TEST_CASE_P(SSIM, SsimHbdTest, ::testing::Values(10));
+INSTANTIATE_TEST_SUITE_P(SSIM, SsimLbdTest, ::testing::Values(8));
+INSTANTIATE_TEST_SUITE_P(SSIM, SsimHbdTest, ::testing::Values(10));
 
 }  // namespace

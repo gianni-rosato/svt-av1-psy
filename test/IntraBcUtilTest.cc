@@ -21,14 +21,6 @@
  ******************************************************************************/
 
 #include "gtest/gtest.h"
-// workaround to eliminate the compiling warning on linux
-// The macro will conflict with definition in gtest.h
-#ifdef __USE_GNU
-#undef __USE_GNU  // defined in EbThreads.h
-#endif
-#ifdef _GNU_SOURCE
-#undef _GNU_SOURCE  // defined in EbThreads.h
-#endif
 #include "EbDefinitions.h"
 #include "EbAdaptiveMotionVectorPrediction.h"
 #include "util.h"
@@ -136,7 +128,7 @@ TEST_P(DvValiationTest, IsDvValidate) {
     is_dv_validate();
 }
 
-INSTANTIATE_TEST_CASE_P(AV1, DvValiationTest,
-                        ::testing::ValuesIn(dv_validation_params));
+INSTANTIATE_TEST_SUITE_P(AV1, DvValiationTest,
+                         ::testing::ValuesIn(dv_validation_params));
 
 }  // namespace
