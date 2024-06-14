@@ -166,7 +166,7 @@ if(MSVC AND SVT_AV1_PGO)
     unset(SVT_AV1_PGO CACHE)
 endif()
 
-option(BUILD_APPS "Build Enc and Dec Apps" ON)
+option(BUILD_APPS "Build Enc Apps" ON)
 option(EXCLUDE_HASH "Disables the use of the git hash in the build to produce hash exact binaries, implies REPRODUCIBLE_BUILDS")
 option(REPRODUCIBLE_BUILDS "Disable use of certain C macros to always generate reproducable builds" ${EXCLUDE_HASH})
 if(SVT_AV1_PGO AND NOT BUILD_APPS)
@@ -407,8 +407,7 @@ macro(ASM_COMPILE_TO_TARGET target)
                     WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR})
             list(APPEND SIMD_OBJS "${SIMD_OBJ}")
         endforeach()
-        #target_sources(${target} PUBLIC ${SIMD_OBJS})
-        target_sources(common_lib INTERFACE ${SIMD_OBJS})
+        target_sources(${target} PUBLIC ${SIMD_OBJS})
     else()
         # For every other generator
         foreach(asm_file ${ARGN})
@@ -525,13 +524,12 @@ if(NOT IS_ABSOLUTE "${CMAKE_INSTALL_LIBDIR}")
 endif()
 
 # Add Subdirectories
-add_subdirectory(Source/Lib/Common)
-add_subdirectory(Source/Lib/Encoder)
+add_subdirectory(Source/Lib)
 if(BUILD_APPS)
-    add_subdirectory(Source/App/EncApp)
+    add_subdirectory(Source/App)
 endif()
 if(SVT_AV1_PGO)
-    set_target_properties(SvtAv1EncApp SvtAv1DecApp PROPERTIES EXCLUDE_FROM_ALL TRUE)
+    set_target_properties(SvtAv1EncApp PROPERTIES EXCLUDE_FROM_ALL TRUE)
     string(REPLACE ";" "::" SVT_AV1_PGO_CUSTOM_VIDEOS "${SVT_AV1_PGO_CUSTOM_VIDEOS}")
 
     add_custom_target(PGOCompileGen
@@ -539,25 +537,22 @@ if(SVT_AV1_PGO)
         COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR}
         --clean-first
         --target SvtAv1EncApp
-        --target SvtAv1DecApp
         COMMENT "Compiling with PGO generate"
-        DEPENDS SvtAv1EncApp SvtAv1DecApp)
+        DEPENDS SvtAv1EncApp)
     add_custom_target(PGOCompileGenUse
         ${CMAKE_COMMAND} ${CMAKE_BINARY_DIR} -DSVT_INTERNAL_PGO_GENERATE=ON -DSVT_INTERNAL_PGO_USE=ON
         COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR}
         --clean-first
         --target SvtAv1EncApp
-        --target SvtAv1DecApp
         COMMENT "Compiling PGO gen+use"
-        DEPENDS SvtAv1EncApp SvtAv1DecApp)
+        DEPENDS SvtAv1EncApp)
     add_custom_target(PGOCompileUse
         ${CMAKE_COMMAND} ${CMAKE_BINARY_DIR} -DSVT_INTERNAL_PGO_GENERATE=OFF -DSVT_INTERNAL_PGO_USE=ON
         COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR}
         --clean-first
         --target SvtAv1EncApp
-        --target SvtAv1DecApp
         COMMENT "Compiling PGO use"
-        DEPENDS SvtAv1EncApp SvtAv1DecApp)
+        DEPENDS SvtAv1EncApp)
 
     if(SVT_AV1_PGO_CUSTOM_VIDEOS)
         add_custom_target(PGOGenerateProfile ${CMAKE_COMMAND} -P
@@ -565,7 +560,6 @@ if(SVT_AV1_PGO)
             ${CMAKE_BINARY_DIR}
             ${SVT_AV1_PGO_CUSTOM_VIDEOS}
             $<TARGET_FILE:SvtAv1EncApp>
-            $<TARGET_FILE:SvtAv1DecApp>
             COMMENT "Generating PGO profile")
     else()
         add_custom_target(DownloadObjOneFast ${CMAKE_COMMAND} -P
@@ -577,7 +571,6 @@ if(SVT_AV1_PGO)
             ${CMAKE_BINARY_DIR}
             ${CMAKE_BINARY_DIR}/objective-1-fast
             $<TARGET_FILE:SvtAv1EncApp>
-            $<TARGET_FILE:SvtAv1DecApp>
             COMMENT "Generating PGO profile"
             DEPENDS DownloadObjOneFast)
     endif()

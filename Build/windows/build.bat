@@ -161,9 +161,6 @@ if -%1-==-- (
 ) else if /I "%1"=="lto" (
     set "cmake_eflags=%cmake_eflags% -DSVT_AV1_LTO=ON"
     shift
-) else if /I "%1"=="no-dec" (
-    set "cmake_eflags=%cmake_eflags% -DBUILD_DEC=OFF"
-    shift
 ) else if /I "%1"=="no-enc" (
     set "cmake_eflags=%cmake_eflags% -DBUILD_ENC=OFF"
     shift
@@ -182,6 +179,6 @@ goto :args
 
 :help
     echo Batch file to build SVT-AV1 on Windows
-    echo Usage: build.bat [2022^|2019^|2017^|2015^|clean] [release^|debug] [nobuild] [test] [shared^|static] [c-only] [avx512] [no-apps] [no-dec] [no-enc] [external-cpuinfo]
+    echo Usage: build.bat [2022^|2019^|2017^|2015^|clean] [release^|debug] [nobuild] [test] [shared^|static] [c-only] [avx512] [no-apps] [no-enc] [external-cpuinfo]
     exit /b 1
 goto :EOF

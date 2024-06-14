@@ -1,0 +1,306 @@
+#
+# Copyright(c) 2019 Intel Corporation
+#
+# This source code is subject to the terms of the BSD 2 Clause License and
+# the Alliance for Open Media Patent License 1.0. If the BSD 2 Clause License
+# was not distributed with this source code in the LICENSE file, you can
+# obtain it at https://www.aomedia.org/license/software-license. If the Alliance for Open
+# Media Patent License 1.0 was not distributed with this source code in the
+# PATENTS file, you can obtain it at https://www.aomedia.org/license/patent-license.
+#
+
+# Codec Directory CMakeLists.txt
+
+if(EXCLUDE_HASH)
+    set(PACKAGE_VERSION_STRING ${PROJECT_VERSION}${VERSION_TAG})
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/EbVersion.h.in EbVersion.h @ONLY)
+    add_custom_target(EbVersionHeaderGen)
+else()
+    add_custom_target(EbVersionHeaderGen
+        ${CMAKE_COMMAND}
+            -D INPUT_FILE=${CMAKE_CURRENT_SOURCE_DIR}/EbVersion.h.in
+            -D OUTPUT_FILE=EbVersion.h
+            -D GIT_ROOT_DIR=${PROJECT_SOURCE_DIR}
+            -D PACKAGE_VERSION_STRING=${PROJECT_VERSION}${VERSION_TAG}
+            -P ${CMAKE_CURRENT_SOURCE_DIR}/ConfigureGitVersion.cmake
+        BYPRODUCTS EbVersion.h
+        COMMENT "Generating version header"
+        VERBATIM)
+endif()
+
+if(NOT COMPILE_C_ONLY AND HAVE_X86_PLATFORM)
+# Include Encoder Subdirectories
+include_directories(${PROJECT_SOURCE_DIR}/Source/API/
+    ${PROJECT_SOURCE_DIR}/Source/Lib/Globals/
+    ${PROJECT_SOURCE_DIR}/Source/Lib/Codec/
+    ${PROJECT_SOURCE_DIR}/Source/Lib/C_DEFAULT/
+    ${PROJECT_SOURCE_DIR}/Source/Lib/ASM_SSE2/
+    ${PROJECT_SOURCE_DIR}/Source/Lib/ASM_SSSE3/
+    ${PROJECT_SOURCE_DIR}/Source/Lib/ASM_SSE4_1/
+    ${PROJECT_SOURCE_DIR}/Source/Lib/ASM_AVX2/
+    ${PROJECT_SOURCE_DIR}/Source/Lib/ASM_AVX512/
+    ${PROJECT_SOURCE_DIR}/third_party/fastfeat/
+    ${PROJECT_SOURCE_DIR}/third_party/cpuinfo/include/)
+elseif(NOT COMPILE_C_ONLY AND HAVE_ARM_PLATFORM)
+include_directories(${PROJECT_SOURCE_DIR}/Source/API/
+    ${PROJECT_SOURCE_DIR}/Source/Lib/Globals/
+    ${PROJECT_SOURCE_DIR}/Source/Lib/Codec/
+    ${PROJECT_SOURCE_DIR}/Source/Lib/C_DEFAULT/
+    ${PROJECT_SOURCE_DIR}/Source/Lib/ASM_NEON/
+    ${PROJECT_SOURCE_DIR}/third_party/fastfeat/
+    ${PROJECT_SOURCE_DIR}/third_party/cpuinfo/include/)
+else ()
+# Include Encoder Subdirectories
+include_directories(${PROJECT_SOURCE_DIR}/Source/API/
+    ${PROJECT_SOURCE_DIR}/Source/Lib/Globals/
+    ${PROJECT_SOURCE_DIR}/Source/Lib/Codec/
+    ${PROJECT_SOURCE_DIR}/Source/Lib/C_DEFAULT/
+    ${PROJECT_SOURCE_DIR}/third_party/fastfeat/
+    ${PROJECT_SOURCE_DIR}/third_party/cpuinfo/include/)
+endif ()
+
+set(all_files
+        Av1Common.h
+        EbAv1Structs.h
+        EbAvcStyleMcp.h
+        EbBitstreamUnit.c
+        EbBitstreamUnit.h
+        EbBlend_a64_mask.c
+        EbBlockStructures.c
+        EbBlockStructures.h
+        EbCabacContextModel.c
+        EbCabacContextModel.h
+        EbCdef.c
+        EbCdef.h
+        EbCoefficients.h
+        EbCommonUtils.h
+        EbDeblockingCommon.c
+        EbDeblockingCommon.h
+        EbDefinitions.h
+        EbInterPrediction.c
+        EbInterPrediction.h
+        EbIntraCommon.h
+        EbIntraPrediction.c
+        EbIntraPrediction.h
+        EbInvTransforms.c
+        EbInvTransforms.h
+        EbLog.c
+        EbLog.h
+        EbMalloc.c
+        EbMalloc.h
+        EbMcp.c
+        EbMcp.h
+        EbObject.h
+        EbPackUnPack.h
+        EbPictureBufferDesc.c
+        EbPictureBufferDesc.h
+        EbPictureOperators.c
+        EbPictureOperators.h
+        EbQMatrices.h
+        EbRestoration.c
+        EbRestoration.h
+        EbSegmentationParams.c
+        EbSegmentationParams.h
+        EbSuperRes.c
+        EbSuperRes.h
+        EbSystemResourceManager.c
+        EbSystemResourceManager.h
+        EbThreads.c
+        EbThreads.h
+        EbTime.c
+        EbTime.h
+        EbUtility.c
+        EbUtility.h
+        EbWarpedMotion.c
+        EbWarpedMotion.h
+        common_dsp_rtcd.c
+        common_dsp_rtcd.h
+        convolve.c
+        convolve.h
+        filter.h
+        grainSynthesis.c
+        grainSynthesis.h
+        EbAdaptiveMotionVectorPrediction.c
+        EbAdaptiveMotionVectorPrediction.h
+        EbCdefProcess.c
+        EbCdefProcess.h
+        EbCodingLoop.c
+        EbCodingLoop.h
+        EbCodingUnit.c
+        EbCodingUnit.h
+        EbComputeMean.h
+        EbComputeSAD.h
+        EbDeblockingFilter.c
+        EbDeblockingFilter.h
+        EbDlfProcess.c
+        EbDlfProcess.h
+        EbEncCdef.c
+        EbEncCdef.h
+        EbEncDecProcess.c
+        EbEncDecProcess.h
+        EbEncDecResults.c
+        EbEncDecResults.h
+        EbEncDecSegments.c
+        EbEncDecSegments.h
+        EbEncDecTasks.c
+        EbEncDecTasks.h
+        EbEncInterPrediction.c
+        EbEncInterPrediction.h
+        EbEncIntraPrediction.c
+        EbEncIntraPrediction.h
+        EbEncWarpedMotion.c
+        EbEncWarpedMotion.h
+        EbEncodeContext.c
+        EbEncodeContext.h
+        EbEntropyCoding.c
+        EbEntropyCoding.h
+        EbEntropyCodingObject.h
+        EbEntropyCodingProcess.c
+        EbEntropyCodingProcess.h
+        EbEntropyCodingResults.c
+        EbEntropyCodingResults.h
+        EbEntropyCodingUtil.h
+        EbFullLoop.c
+        EbFullLoop.h
+        EbGlobalMotionEstimation.c
+        EbGlobalMotionEstimation.h
+        EbGlobalMotionEstimationCost.c
+        EbGlobalMotionEstimationCost.h
+        EbInitialRateControlProcess.c
+        EbInitialRateControlProcess.h
+        EbInitialRateControlReorderQueue.c
+        EbInitialRateControlReorderQueue.h
+        EbInitialRateControlResults.c
+        EbInitialRateControlResults.h
+        EbLambdaRateTables.h
+        EbMdRateEstimation.c
+        EbMdRateEstimation.h
+        EbMeSadCalculation.c
+        EbMeSadCalculation.h
+        EbModeDecision.c
+        EbModeDecision.h
+        EbModeDecisionConfiguration.h
+        EbModeDecisionConfigurationProcess.c
+        EbModeDecisionConfigurationProcess.h
+        EbModeDecisionProcess.c
+        EbModeDecisionProcess.h
+        EbModeDecisionSegments.h
+        EbMotionEstimation.c
+        EbMotionEstimation.h
+        EbMotionEstimationContext.c
+        EbMotionEstimationContext.h
+        EbMotionEstimationLcuResults.h
+        EbMotionEstimationProcess.c
+        EbMotionEstimationProcess.h
+        EbMotionEstimationResults.c
+        EbMotionEstimationResults.h
+        EbMotionVectorUnit.h
+        EbMvMerge.h
+        EbNeighborArrays.c
+        EbNeighborArrays.h
+        EbPacketizationProcess.c
+        EbPacketizationProcess.h
+        EbPacketizationReorderQueue.c
+        EbPacketizationReorderQueue.h
+        EbPictureAnalysisProcess.c
+        EbPictureAnalysisProcess.h
+        EbPictureAnalysisResults.c
+        EbPictureAnalysisResults.h
+        EbPictureControlSet.c
+        EbPictureControlSet.h
+        EbPictureDecisionProcess.c
+        EbPictureDecisionProcess.h
+        EbPictureDecisionQueue.c
+        EbPictureDecisionQueue.h
+        EbPictureDecisionReorderQueue.c
+        EbPictureDecisionReorderQueue.h
+        EbPictureDecisionResults.c
+        EbPictureDecisionResults.h
+        EbPictureDemuxResults.c
+        EbPictureDemuxResults.h
+        EbPictureManagerProcess.c
+        EbPictureManagerProcess.h
+        EbPictureManagerQueue.c
+        EbPictureManagerQueue.h
+        EbPredictionStructure.c
+        EbPredictionStructure.h
+        EbProductCodingLoop.c
+        EbPsnr.c
+        EbPsnr.h
+        EbRateControlProcess.c
+        EbRateControlProcess.h
+        EbRateControlResults.c
+        EbRateControlResults.h
+        EbRateControlTables.c
+        EbRateControlTables.h
+        EbRateControlTasks.c
+        EbRateControlTasks.h
+        EbRateDistortionCost.c
+        EbRateDistortionCost.h
+        EbReferenceObject.c
+        EbReferenceObject.h
+        EbResize.c
+        EbResize.h
+        EbResourceCoordinationProcess.c
+        EbResourceCoordinationProcess.h
+        EbResourceCoordinationResults.c
+        EbResourceCoordinationResults.h
+        EbRestProcess.c
+        EbRestProcess.h
+        EbRestorationPick.c
+        EbRestorationPick.h
+        EbSegmentation.c
+        EbSegmentation.h
+        EbSequenceControlSet.c
+        EbSequenceControlSet.h
+        EbSourceBasedOperationsProcess.c
+        EbSourceBasedOperationsProcess.h
+        EbTemporalFiltering.c
+        EbTemporalFiltering.h
+        EbTransforms.c
+        EbTransforms.h
+        aom_dsp_rtcd.c
+        aom_dsp_rtcd.h
+        av1me.c
+        av1me.h
+        corner_detect.c
+        corner_detect.h
+        corner_match.c
+        corner_match.h
+        dwt.c
+        dwt.h
+        encoder.h
+        fft.c
+        fft_common.h
+        firstpass.c
+        firstpass.h
+        global_motion.c
+        global_motion.h
+        hash.c
+        hash.h
+        hash_motion.c
+        hash_motion.h
+        k_means_template.h
+        level.c
+        level.h
+        mathutils.h
+        mcomp.c
+        mcomp.h
+        mv.h
+        noise_model.c
+        noise_model.h
+        noise_util.c
+        noise_util.h
+        palette.c
+        pass2_strategy.c
+        pass2_strategy.h
+        random.h
+        ransac.c
+        ransac.h
+        vector.c
+        vector.h
+        EncModeConfig.c
+        EncModeConfig.h
+        )
+
+add_library(CODEC OBJECT ${all_files})

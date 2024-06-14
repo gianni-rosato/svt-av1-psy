@@ -19,24 +19,16 @@ include_directories(
   ${PROJECT_SOURCE_DIR}/third_party/googletest/include
   third_party/googletest/src
   ${PROJECT_SOURCE_DIR}/Source/API
-  ${PROJECT_SOURCE_DIR}/Source/Lib/Common/Codec
-  ${PROJECT_SOURCE_DIR}/Source/Lib/Common/C_DEFAULT/
-  ${PROJECT_SOURCE_DIR}/Source/Lib/Common/ASM_SSE2/
-  ${PROJECT_SOURCE_DIR}/Source/Lib/Common/ASM_SSSE3/
-  ${PROJECT_SOURCE_DIR}/Source/Lib/Common/ASM_SSE4_1/
-  ${PROJECT_SOURCE_DIR}/Source/Lib/Common/ASM_AVX2/
-  ${PROJECT_SOURCE_DIR}/Source/Lib/Common/ASM_AVX512/
-  ${PROJECT_SOURCE_DIR}/Source/Lib/Common/ASM_NEON/
-  ${PROJECT_SOURCE_DIR}/Source/Lib/Encoder/C_DEFAULT/
-  ${PROJECT_SOURCE_DIR}/Source/Lib/Encoder/ASM_SSE2/
-  ${PROJECT_SOURCE_DIR}/Source/Lib/Encoder/ASM_SSSE3/
-  ${PROJECT_SOURCE_DIR}/Source/Lib/Encoder/ASM_SSE4_1/
-  ${PROJECT_SOURCE_DIR}/Source/Lib/Encoder/ASM_AVX2/
-  ${PROJECT_SOURCE_DIR}/Source/Lib/Encoder/ASM_AVX512/
-  ${PROJECT_SOURCE_DIR}/Source/Lib/Encoder/ASM_NEON/
-  ${PROJECT_SOURCE_DIR}/Source/Lib/Encoder/Codec
-  ${PROJECT_SOURCE_DIR}/Source/Lib/Encoder/Globals
-  ${PROJECT_SOURCE_DIR}/Source/App/EncApp
+  ${PROJECT_SOURCE_DIR}/Source/Lib/C_DEFAULT/
+  ${PROJECT_SOURCE_DIR}/Source/Lib/ASM_SSE2/
+  ${PROJECT_SOURCE_DIR}/Source/Lib/ASM_SSSE3/
+  ${PROJECT_SOURCE_DIR}/Source/Lib/ASM_SSE4_1/
+  ${PROJECT_SOURCE_DIR}/Source/Lib/ASM_AVX2/
+  ${PROJECT_SOURCE_DIR}/Source/Lib/ASM_AVX512/
+  ${PROJECT_SOURCE_DIR}/Source/Lib/ASM_NEON/
+  ${PROJECT_SOURCE_DIR}/Source/Lib/Codec
+  ${PROJECT_SOURCE_DIR}/Source/Lib/Globals
+  ${PROJECT_SOURCE_DIR}/Source/App
   ${PROJECT_SOURCE_DIR}/Source/API
   ${PROJECT_SOURCE_DIR}/third_party/fastfeat/
   ${PROJECT_SOURCE_DIR}/third_party/aom_dsp/inc/)
@@ -150,32 +142,24 @@ if(HAVE_ARM_PLATFORM)
 endif()
 
 set(arch_neutral_lib_list
-    $<TARGET_OBJECTS:COMMON_CODEC>
     $<TARGET_OBJECTS:FASTFEAT>
-    $<TARGET_OBJECTS:COMMON_C_DEFAULT>
-    $<TARGET_OBJECTS:ENCODER_C_DEFAULT>
-    $<TARGET_OBJECTS:ENCODER_GLOBALS>
-    $<TARGET_OBJECTS:ENCODER_CODEC>
+    $<TARGET_OBJECTS:C_DEFAULT>
+    $<TARGET_OBJECTS:GLOBALS>
+    $<TARGET_OBJECTS:CODEC>
     gtest_all)
 
 if(HAVE_X86_PLATFORM)
   set(x86_arch_lib_list
-      $<TARGET_OBJECTS:COMMON_ASM_SSE2>
-      $<TARGET_OBJECTS:COMMON_ASM_SSSE3>
-      $<TARGET_OBJECTS:COMMON_ASM_SSE4_1>
-      $<TARGET_OBJECTS:COMMON_ASM_AVX2>
-      $<TARGET_OBJECTS:COMMON_ASM_AVX512>
-      $<TARGET_OBJECTS:ENCODER_ASM_SSE2>
-      $<TARGET_OBJECTS:ENCODER_ASM_SSSE3>
-      $<TARGET_OBJECTS:ENCODER_ASM_SSE4_1>
-      $<TARGET_OBJECTS:ENCODER_ASM_AVX2>
-      $<TARGET_OBJECTS:ENCODER_ASM_AVX512>
+      $<TARGET_OBJECTS:ASM_SSE2>
+      $<TARGET_OBJECTS:ASM_SSSE3>
+      $<TARGET_OBJECTS:ASM_SSE4_1>
+      $<TARGET_OBJECTS:ASM_AVX2>
+      $<TARGET_OBJECTS:ASM_AVX512>
       $<IF:$<BOOL:${USE_EXTERNAL_CPUINFO}>,cpuinfo::cpuinfo,cpuinfo_public>)
 endif()
 
 if(HAVE_ARM_PLATFORM)
-  set(arm_arch_lib_list $<TARGET_OBJECTS:COMMON_ASM_NEON>
-                        $<TARGET_OBJECTS:ENCODER_ASM_NEON>)
+  set(arm_arch_lib_list $<TARGET_OBJECTS:ASM_NEON>)
 endif()
 
 set(all_files ${arch_neutral_files} ${multi_arch_files} ${x86_arch_files}
