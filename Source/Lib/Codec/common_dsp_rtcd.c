@@ -36,6 +36,8 @@
 #elif defined(__APPLE__)
 #include <stdbool.h>
 #include <sys/sysctl.h>
+#elif defined(_MSC_VER)
+#include <windows.h>
 #endif
 #endif  // ARCH_AARCH64
 
@@ -194,7 +196,31 @@ EbCpuFlags svt_aom_get_cpu_flags(void) {
   return flags;
 }
 
-#else // end __APPLE__
+#elif defined(_MSC_VER)  // end __APPLE__
+
+// IsProcessorFeaturePresent() parameter documentation:
+// https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-isprocessorfeaturepresent#parameters
+EbCpuFlags svt_aom_get_cpu_flags(void) {
+  EbCpuFlags flags = EB_CPU_FLAGS_NEON;  // Neon is mandatory in Armv8.0-A.
+#if HAVE_ARM_CRC32
+  if (IsProcessorFeaturePresent(PF_ARM_V8_CRC32_INSTRUCTIONS_AVAILABLE)) {
+    flags |= EB_CPU_FLAGS_ARM_CRC32;
+  }
+#endif  // HAVE_ARM_CRC32
+#if HAVE_NEON_DOTPROD
+// Support for PF_ARM_V82_DP_INSTRUCTIONS_AVAILABLE was added in Windows SDK
+// 20348, supported by Windows 11 and Windows Server 2022.
+#if defined(PF_ARM_V82_DP_INSTRUCTIONS_AVAILABLE)
+  if (IsProcessorFeaturePresent(PF_ARM_V82_DP_INSTRUCTIONS_AVAILABLE)) {
+    flags |= EB_CPU_FLAGS_NEON_DOTPROD;
+  }
+#endif  // defined(PF_ARM_V82_DP_INSTRUCTIONS_AVAILABLE)
+#endif  // HAVE_NEON_DOTPROD
+// No I8MM or SVE feature detection available on Windows at time of writing.
+  return flags;
+}
+
+#else // end _MSC_VER
 
 EbCpuFlags svt_aom_get_cpu_flags() {
     EbCpuFlags flags = 0;
