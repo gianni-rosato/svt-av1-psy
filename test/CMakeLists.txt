@@ -87,13 +87,12 @@ set(multi_arch_files
     PictureOperatorTest.cc
     RestorationPickTest.cc
     SadTest.cc
-    selfguided_filter_test.cc
     SpatialFullDistortionTest.cc
     TemporalFilterTestPlanewise.cc
     VarianceTest.cc
     convolve_2d_test.cc
     quantize_func_test.cc
-)
+    selfguided_filter_test.cc)
 
 if(HAVE_X86_PLATFORM)
   set(x86_arch_files
