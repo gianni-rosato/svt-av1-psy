@@ -844,11 +844,11 @@ void svt_aom_setup_common_rtcd_internal(EbCpuFlags flags) {
     SET_ONLY_C(svt_av1_highbd_wiener_convolve_add_src, svt_av1_highbd_wiener_convolve_add_src_c);
     SET_NEON(svt_apply_selfguided_restoration, svt_apply_selfguided_restoration_c, svt_aom_apply_selfguided_restoration_neon);
     SET_NEON(svt_av1_selfguided_restoration, svt_av1_selfguided_restoration_c, svt_av1_selfguided_restoration_neon);
-    SET_ONLY_C(svt_av1_inv_txfm2d_add_4x4, svt_av1_inv_txfm2d_add_4x4_c);
+    SET_NEON(svt_av1_inv_txfm2d_add_4x4, svt_av1_inv_txfm2d_add_4x4_c, svt_av1_inv_txfm2d_add_4x4_neon);
     SET_ONLY_C(svt_av1_inv_txfm2d_add_4x8, svt_av1_inv_txfm2d_add_4x8_c);
     SET_ONLY_C(svt_av1_inv_txfm2d_add_4x16, svt_av1_inv_txfm2d_add_4x16_c);
     SET_ONLY_C(svt_av1_inv_txfm2d_add_8x4, svt_av1_inv_txfm2d_add_8x4_c);
-    SET_ONLY_C(svt_av1_inv_txfm2d_add_8x8, svt_av1_inv_txfm2d_add_8x8_c);
+    SET_NEON(svt_av1_inv_txfm2d_add_8x8, svt_av1_inv_txfm2d_add_8x8_c, svt_av1_inv_txfm2d_add_8x8_neon);
     SET_ONLY_C(svt_av1_inv_txfm2d_add_8x16, svt_av1_inv_txfm2d_add_8x16_c);
     SET_ONLY_C(svt_av1_inv_txfm2d_add_8x32, svt_av1_inv_txfm2d_add_8x32_c);
     SET_ONLY_C(svt_av1_inv_txfm2d_add_16x4, svt_av1_inv_txfm2d_add_16x4_c);

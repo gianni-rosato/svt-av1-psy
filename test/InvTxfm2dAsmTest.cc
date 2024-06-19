@@ -171,6 +171,8 @@ static bool is_tx_type_imp_64x64_neon(const TxType tx_type) {
 }
 
 static const InvSqrTxfmFuncPair inv_txfm_c_neon_func_pairs[TX_64X64 + 1] = {
+    SQR_FUNC_PAIRS(svt_av1_inv_txfm2d_add_4x4, neon, dct_adst_combine_imp),
+    SQR_FUNC_PAIRS(svt_av1_inv_txfm2d_add_8x8, neon, all_txtype_imp),
     SQR_FUNC_PAIRS(svt_av1_inv_txfm2d_add_16x16, neon, all_txtype_imp),
     SQR_FUNC_PAIRS(svt_av1_inv_txfm2d_add_32x32, neon,
                    is_tx_type_imp_32x32_neon),
@@ -980,6 +982,7 @@ TEST_P(InvTxfm2dAsmTest, sqr_txfm_match_test) {
             run_sqr_txfm_match_test(tx_size, 2);
 #endif
 #endif  // ARCH_X86_64
+
 #ifdef ARCH_AARCH64
         run_sqr_txfm_match_test(tx_size, 4);
 #endif  // ARCH_AARCH64

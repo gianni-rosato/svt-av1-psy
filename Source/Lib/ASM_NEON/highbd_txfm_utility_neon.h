@@ -27,6 +27,13 @@
         y3 = vreinterpretq_s32_s64(vzip2q_s64(vreinterpretq_s64_s32(u1), vreinterpretq_s64_s32(u3))); \
     } while (0)
 
+static INLINE void transpose_8x8(const int32x4_t *in, int32x4_t *out) {
+    TRANSPOSE_4X4(in[0], in[2], in[4], in[6], out[0], out[2], out[4], out[6]);
+    TRANSPOSE_4X4(in[1], in[3], in[5], in[7], out[8], out[10], out[12], out[14]);
+    TRANSPOSE_4X4(in[8], in[10], in[12], in[14], out[1], out[3], out[5], out[7]);
+    TRANSPOSE_4X4(in[9], in[11], in[13], in[15], out[9], out[11], out[13], out[15]);
+}
+
 static INLINE void transpose_16x16(const int32x4_t *in, int32x4_t *out) {
     // Upper left 8x8
     TRANSPOSE_4X4(in[0], in[4], in[8], in[12], out[0], out[4], out[8], out[12]);

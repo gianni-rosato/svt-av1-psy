@@ -1399,6 +1399,9 @@ extern "C" {
     void svt_enc_msb_pack2d_neon(uint8_t *in8_bit_buffer, uint32_t in8_stride, uint8_t *inn_bit_buffer,
                                  uint16_t *out16_bit_buffer, uint32_t inn_stride, uint32_t out_stride, uint32_t width,
                                  uint32_t height);
+    void svt_av1_inv_txfm2d_add_4x4_neon(const int32_t *input, uint16_t *output_r, int32_t stride_r, uint16_t *output_w, int32_t stride_w, TxType tx_type, int32_t bd);
+    void svt_av1_inv_txfm2d_add_8x8_neon(const int32_t *input, uint16_t *output_r, int32_t stride_r, uint16_t *output_w, int32_t stride_w, TxType tx_type, int32_t bd);
+
 #endif
 
 #ifdef ARCH_X86_64
