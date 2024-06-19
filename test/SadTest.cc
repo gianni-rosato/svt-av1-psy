@@ -496,6 +496,13 @@ INSTANTIATE_TEST_SUITE_P(
 
 #endif
 
+#ifdef ARCH_AARCH64
+INSTANTIATE_TEST_SUITE_P(
+    NEON, SADTest,
+    ::testing::Combine(::testing::ValuesIn(TEST_PATTERNS),
+                       ::testing::Values(svt_nxm_sad_kernel_helper_neon)));
+#endif  // ARCH_AARCH64
+
 typedef std::tuple<int16_t, int16_t> SearchArea;
 SearchArea TEST_LOOP_AREAS[] = {
     SearchArea(8, 15),    SearchArea(16, 31),   SearchArea(12, 31),
@@ -1923,5 +1930,13 @@ INSTANTIATE_TEST_SUITE_P(
                        ::testing::ValuesIn(TEST_LOOP_AREAS),
                        ::testing::Values(svt_pme_sad_loop_kernel_avx2)));
 #endif
+
+#ifdef ARCH_AARCH64
+INSTANTIATE_TEST_SUITE_P(
+    NEON, PmeSadLoopTest,
+    ::testing::Combine(::testing::ValuesIn(TEST_PATTERNS),
+                       ::testing::ValuesIn(TEST_LOOP_AREAS),
+                       ::testing::Values(svt_pme_sad_loop_kernel_neon)));
+#endif  // ARCH_AARCH64
 
 }  // namespace
