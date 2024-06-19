@@ -96,6 +96,7 @@ set(multi_arch_files
     ResidualTest.cc
     RestorationPickTest.cc
     SadTest.cc
+    SelfGuidedUtilTest.cc
     SpatialFullDistortionTest.cc
     TemporalFilterTestPlanewise.cc
     VarianceTest.cc
@@ -125,7 +126,6 @@ if(HAVE_X86_PLATFORM)
       MotionEstimationTest.cc
       PaletteModeUtilTest.cc
       PsnrTest.cc
-      SelfGuidedUtilTest.cc
       WedgeUtilTest.cc
       av1_convolve_scale_test.cc
       compute_mean_test.cc

@@ -329,6 +329,7 @@ TEST_P(PixelProjErrorLbdTest, DISABLED_SpeedTest) {
     run_speed_test(256, 0, 0);
 }
 
+#if ARCH_X86_64
 INSTANTIATE_TEST_SUITE_P(
     SSE4_1, PixelProjErrorLbdTest,
     ::testing::Values(make_tuple(svt_av1_lowbd_pixel_proj_error_sse4_1,
@@ -345,6 +346,14 @@ INSTANTIATE_TEST_SUITE_P(
     ::testing::Values(make_tuple(svt_av1_lowbd_pixel_proj_error_avx512,
                                  svt_av1_lowbd_pixel_proj_error_c)));
 #endif
+#endif  // ARCH_X86_64
+
+#if ARCH_AARCH64
+INSTANTIATE_TEST_SUITE_P(
+    NEON, PixelProjErrorLbdTest,
+    ::testing::Values(make_tuple(svt_av1_lowbd_pixel_proj_error_neon,
+                                 svt_av1_lowbd_pixel_proj_error_c)));
+#endif  // ARCH_AARCH64
 
 class PixelProjErrorHbdTest : public PixelProjErrorTest<uint16_t> {
   protected:
@@ -372,6 +381,7 @@ class PixelProjErrorHbdTest : public PixelProjErrorTest<uint16_t> {
   private:
     SVTRandom rnd12_;
 };
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(PixelProjErrorHbdTest);
 
 TEST_P(PixelProjErrorHbdTest, MatchTestWithRandomValue) {
     run_random_test(50, true);
@@ -383,6 +393,7 @@ TEST_P(PixelProjErrorHbdTest, MatchTestWithExtremeValue) {
     run_extreme_test();
 }
 
+#if ARCH_X86_64
 INSTANTIATE_TEST_SUITE_P(
     SSE4_1, PixelProjErrorHbdTest,
     ::testing::Values(make_tuple(svt_av1_highbd_pixel_proj_error_sse4_1,
@@ -621,5 +632,6 @@ TEST(SelfGuidedToolsTest, GetProjSubspaceMatchTestHbd) {
     svt_aom_free(output_);
     svt_aom_free(tmpbuf);
 }
+#endif  // ARCH_X86_64
 
 }  // namespace
