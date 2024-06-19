@@ -140,7 +140,7 @@ INSTANTIATE_TEST_SUITE_P(AVX2, MseTest,
                                                         &svt_aom_mse16x16_avx2,
                                                         &svt_aom_mse16x16_c)));
 
-#endif
+#endif  // ARCH_X86_64
 
 class MseTestHighbd : public ::testing::TestWithParam<TestMseParamHighbd> {
   public:
@@ -629,6 +629,11 @@ class SubpelVarianceTest : public ::testing::TestWithParam<TestParams> {
 GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(SubpelVarianceTest);
 
 void SubpelVarianceTest::RefTest() {
+#if ARCH_AARCH64
+    // Neon implementation of sub_pixel variance functions call variance
+    // functions through the pointers setup by rtcd, so set them up properly.
+    svt_aom_setup_rtcd_internal(EB_CPU_FLAGS_NEON);
+#endif
     SVTRandom rnd_(0, mask);
 
     for (int x = 0; x < 8; ++x) {
@@ -660,6 +665,12 @@ void SubpelVarianceTest::RefTest() {
 }
 
 void SubpelVarianceTest::ExtremeRefTest() {
+// TODO remove once PRs are merged
+#if ARCH_AARCH64
+    // Neon implementation of sub_pixel variance functions call variance
+    // functions through the pointers setup by rtcd, so set them up properly.
+    svt_aom_setup_rtcd_internal(EB_CPU_FLAGS_NEON);
+#endif
     SVTRandom rnd_(0, mask);
     // Compare against reference.
     // Src: Set the first half of values to 0, the second half to the maximum.
@@ -865,5 +876,59 @@ INSTANTIATE_TEST_SUITE_P(AVX512, SubpelVarianceTest,
                          ::testing::ValuesIn(kArraySubpelVariance_avx512));
 #endif
 #endif  // ARCH_X86_64
+
+#if ARCH_AARCH64
+const TestParams kArraySubpelVariance_neon[] = {
+    // clang-format off
+    { 7, 7, &svt_aom_sub_pixel_variance128x128_neon, 0,
+      &svt_aom_sub_pixel_variance128x128_c },
+    { 7, 6, &svt_aom_sub_pixel_variance128x64_neon, 0,
+      &svt_aom_sub_pixel_variance128x64_c },
+    { 6, 7, &svt_aom_sub_pixel_variance64x128_neon, 0,
+      &svt_aom_sub_pixel_variance64x128_c },
+    { 6, 6, &svt_aom_sub_pixel_variance64x64_neon, 0,
+      &svt_aom_sub_pixel_variance64x64_c },
+    { 6, 5, &svt_aom_sub_pixel_variance64x32_neon, 0,
+      &svt_aom_sub_pixel_variance64x32_c },
+    { 5, 6, &svt_aom_sub_pixel_variance32x64_neon, 0,
+      &svt_aom_sub_pixel_variance32x64_c },
+    { 5, 5, &svt_aom_sub_pixel_variance32x32_neon, 0,
+      &svt_aom_sub_pixel_variance32x32_c },
+    { 5, 4, &svt_aom_sub_pixel_variance32x16_neon, 0,
+      &svt_aom_sub_pixel_variance32x16_c },
+    { 4, 5, &svt_aom_sub_pixel_variance16x32_neon, 0,
+      &svt_aom_sub_pixel_variance16x32_c },
+    { 4, 4, &svt_aom_sub_pixel_variance16x16_neon, 0,
+      &svt_aom_sub_pixel_variance16x16_c },
+    { 4, 3, &svt_aom_sub_pixel_variance16x8_neon, 0,
+      &svt_aom_sub_pixel_variance16x8_c },
+    { 3, 4, &svt_aom_sub_pixel_variance8x16_neon, 0,
+      &svt_aom_sub_pixel_variance8x16_c },
+    { 3, 3, &svt_aom_sub_pixel_variance8x8_neon, 0,
+      &svt_aom_sub_pixel_variance8x8_c },
+    { 3, 2, &svt_aom_sub_pixel_variance8x4_neon, 0,
+      &svt_aom_sub_pixel_variance8x4_c },
+    { 2, 3, &svt_aom_sub_pixel_variance4x8_neon, 0,
+      &svt_aom_sub_pixel_variance4x8_c },
+    { 2, 2, &svt_aom_sub_pixel_variance4x4_neon, 0,
+      &svt_aom_sub_pixel_variance4x4_c },
+    { 6, 4, &svt_aom_sub_pixel_variance64x16_neon, 0,
+      &svt_aom_sub_pixel_variance64x16_c },
+    { 4, 6, &svt_aom_sub_pixel_variance16x64_neon, 0,
+      &svt_aom_sub_pixel_variance16x64_c },
+    { 5, 3, &svt_aom_sub_pixel_variance32x8_neon, 0,
+      &svt_aom_sub_pixel_variance32x8_c },
+    { 3, 5, &svt_aom_sub_pixel_variance8x32_neon, 0,
+      &svt_aom_sub_pixel_variance8x32_c },
+    { 4, 2, &svt_aom_sub_pixel_variance16x4_neon, 0,
+      &svt_aom_sub_pixel_variance16x4_c },
+    { 2, 4, &svt_aom_sub_pixel_variance4x16_neon, 0,
+      &svt_aom_sub_pixel_variance4x16_c }
+    // clang-format on
+};
+
+INSTANTIATE_TEST_SUITE_P(NEON, SubpelVarianceTest,
+                         ::testing::ValuesIn(kArraySubpelVariance_neon));
+#endif  // ARCH_AARCH64
 
 }  // namespace
