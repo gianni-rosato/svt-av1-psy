@@ -231,8 +231,6 @@ set(all_files
         EbRateControlProcess.h
         EbRateControlResults.c
         EbRateControlResults.h
-        EbRateControlTables.c
-        EbRateControlTables.h
         EbRateControlTasks.c
         EbRateControlTasks.h
         EbRateDistortionCost.c
@@ -281,7 +279,6 @@ set(all_files
         hash_motion.c
         hash_motion.h
         k_means_template.h
-        level.c
         level.h
         mathutils.h
         mcomp.c
