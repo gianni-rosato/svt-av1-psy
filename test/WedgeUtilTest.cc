@@ -166,6 +166,7 @@ TEST_P(WedgeSignFromResidualsTest, ExtremeTest) {
     MaskSignExtremeTest();
 }
 
+#if ARCH_X86_64
 INSTANTIATE_TEST_SUITE_P(
     SSE2, WedgeSignFromResidualsTest,
     ::testing::Values(svt_av1_wedge_sign_from_residuals_sse2));
@@ -173,6 +174,13 @@ INSTANTIATE_TEST_SUITE_P(
 INSTANTIATE_TEST_SUITE_P(
     AVX2, WedgeSignFromResidualsTest,
     ::testing::Values(svt_av1_wedge_sign_from_residuals_avx2));
+#endif  // ARCH_X86_64
+
+#if ARCH_AARCH64
+INSTANTIATE_TEST_SUITE_P(
+    NEON, WedgeSignFromResidualsTest,
+    ::testing::Values(svt_av1_wedge_sign_from_residuals_neon));
+#endif  // ARCH_AARCH64
 
 // test svt_av1_wedge_compute_delta_squares
 using WedgeComputeDeltaSquaresFunc = void (*)(int16_t *d, const int16_t *a,
@@ -221,15 +229,18 @@ class WedgeComputeDeltaSquaresTest
 
     WedgeComputeDeltaSquaresFunc test_func_;
 };
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(WedgeComputeDeltaSquaresTest);
 
 // element-by-element calculate the difference of square
 TEST_P(WedgeComputeDeltaSquaresTest, ComputeDeltaSquareTest) {
     ComputeDeltaSquareTest();
 }
 
+#if ARCH_X86_64
 INSTANTIATE_TEST_SUITE_P(
     AVX2, WedgeComputeDeltaSquaresTest,
     ::testing::Values(svt_av1_wedge_compute_delta_squares_avx2));
+#endif  // ARCH_X86_64
 
 // test svt_av1_wedge_sse_from_residuals
 using WedgeSseFromResidualsFunc = uint64_t (*)(const int16_t *r1,
@@ -337,6 +348,7 @@ TEST_P(WedgeSseFromResidualsTest, ExtremeTest) {
     SseFromResidualExtremeTest();
 }
 
+#if ARCH_X86_64
 INSTANTIATE_TEST_SUITE_P(
     SSE2, WedgeSseFromResidualsTest,
     ::testing::Values(svt_av1_wedge_sse_from_residuals_sse2));
@@ -344,6 +356,13 @@ INSTANTIATE_TEST_SUITE_P(
 INSTANTIATE_TEST_SUITE_P(
     AVX2, WedgeSseFromResidualsTest,
     ::testing::Values(svt_av1_wedge_sse_from_residuals_avx2));
+#endif  // ARCH_X86_64
+
+#if ARCH_AARCH64
+INSTANTIATE_TEST_SUITE_P(
+    NEON, WedgeSseFromResidualsTest,
+    ::testing::Values(svt_av1_wedge_sse_from_residuals_neon));
+#endif  // ARCH_AARCH64
 
 typedef uint64_t (*AomSumSquaresI16Func)(const int16_t *, uint32_t);
 typedef ::testing::tuple<BlockSize, AomSumSquaresI16Func> AomHSumSquaresParam;
@@ -384,14 +403,17 @@ class AomSumSquaresTest : public ::testing::TestWithParam<AomHSumSquaresParam> {
   private:
     SVTRandom rnd_;
 };
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(AomSumSquaresTest);
 
 TEST_P(AomSumSquaresTest, MatchTest) {
     run_test();
 }
 
+#if ARCH_X86_64
 INSTANTIATE_TEST_SUITE_P(
     SSE2, AomSumSquaresTest,
     ::testing::Combine(::testing::Range(BLOCK_4X4, BlockSizeS_ALL),
                        ::testing::Values(svt_aom_sum_squares_i16_sse2)));
+#endif  // ARCH_X86_64
 
 }  // namespace
