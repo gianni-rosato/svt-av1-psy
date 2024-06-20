@@ -71,8 +71,9 @@ if(NOT COMPILE_C_ONLY AND HAVE_X86_PLATFORM)
     add_subdirectory(ASM_SSSE3)
     add_subdirectory(ASM_SSE4_1)
     add_subdirectory(ASM_AVX2)
-    add_subdirectory(ASM_AVX512)
-
+    if(ENABLE_AVX512)
+        add_subdirectory(ASM_AVX512)
+    endif()
 elseif(NOT COMPILE_C_ONLY AND HAVE_ARM_PLATFORM)
     target_include_directories(SvtAv1Enc PRIVATE ${PROJECT_SOURCE_DIR}/Source/Lib/ASM_NEON/)
     add_subdirectory(ASM_NEON)
@@ -89,8 +90,11 @@ if(NOT COMPILE_C_ONLY AND HAVE_X86_PLATFORM)
         $<TARGET_OBJECTS:ASM_SSE2>
         $<TARGET_OBJECTS:ASM_SSSE3>
         $<TARGET_OBJECTS:ASM_SSE4_1>
-        $<TARGET_OBJECTS:ASM_AVX2>
-        $<TARGET_OBJECTS:ASM_AVX512>)
+        $<TARGET_OBJECTS:ASM_AVX2>)
+    if(ENABLE_AVX512)
+        target_sources(SvtAv1Enc PRIVATE
+            $<TARGET_OBJECTS:ASM_AVX512>)
+    endif()
 elseif(NOT COMPILE_C_ONLY AND HAVE_ARM_PLATFORM)
     target_sources(SvtAv1Enc PRIVATE
         $<TARGET_OBJECTS:ASM_NEON>)

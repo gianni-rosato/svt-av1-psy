@@ -154,8 +154,11 @@ if(HAVE_X86_PLATFORM)
       $<TARGET_OBJECTS:ASM_SSSE3>
       $<TARGET_OBJECTS:ASM_SSE4_1>
       $<TARGET_OBJECTS:ASM_AVX2>
-      $<TARGET_OBJECTS:ASM_AVX512>
       $<IF:$<BOOL:${USE_EXTERNAL_CPUINFO}>,cpuinfo::cpuinfo,cpuinfo_public>)
+  if(ENABLE_AVX512)
+    list(APPEND x86_arch_lib_list
+      $<TARGET_OBJECTS:ASM_AVX512>)
+  endif()
 endif()
 
 if(HAVE_ARM_PLATFORM)
