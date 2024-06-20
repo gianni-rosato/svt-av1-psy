@@ -780,6 +780,14 @@ INSTANTIATE_TEST_SUITE_P(
 
 #endif  // ARCH_X86_64
 
+#ifdef ARCH_AARCH64
+INSTANTIATE_TEST_SUITE_P(
+    dav1d_NEON, InvTxfm2dAddTest,
+    ::testing::Combine(::testing::Values(svt_dav1d_inv_txfm_add_neon),
+                       ::testing::Values(static_cast<int>(EB_EIGHT_BIT),
+                                         static_cast<int>(EB_TEN_BIT))));
+#endif  // ARCH_AARCH64
+
 using HandleTransformFunc = uint64_t (*)(int32_t *output);
 
 using HandleTransformParam =
