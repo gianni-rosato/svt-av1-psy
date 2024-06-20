@@ -16,40 +16,41 @@ enable_language(ASM) # needed for .S files
 add_library(ASM_NEON OBJECT)
 target_sources(
   ASM_NEON
-  PUBLIC av1_quantize_neon.c
-  PUBLIC encodetxb_neon.c
-  PUBLIC EbComputeSAD_neon.c
-  PUBLIC EbCdef_neon.c
-  PUBLIC EbTemporalFiltering_neon.c
-  PUBLIC hadmard_path_neon.c
-  PUBLIC highbd_fwd_txfm_neon.c
-  PUBLIC obmc_sad_neon.c
-  PUBLIC obmc_variance_neon.c
-  PUBLIC pickrst_neon.c
-  PUBLIC sad_neon.c
-  PUBLIC variance_neon.c
   PUBLIC aom_convolve8_neon.c
   PUBLIC av1_inv_txfm_neon.c
   PUBLIC av1_inv_txfm_neon.c
+  PUBLIC av1_quantize_neon.c
+  PUBLIC blend_a64_mask_neon.c
   PUBLIC cdef_block_neon.c
   PUBLIC cdef_filter_block_neon.c
+  PUBLIC cdef_neon.c
   PUBLIC cfl_neon.c
   PUBLIC compound_convolve_neon.c
+  PUBLIC compute_sad_neon.c
   PUBLIC convolve_2d_neon.c
   PUBLIC convolve_neon.c
-  PUBLIC highbd_inv_txfm_neon.c
-  PUBLIC EbBlend_a64_mask_neon.c
-  PUBLIC EbDeblockingFilter_Intrinsic_neon.c
-  PUBLIC EbIntraPrediction_neon.c
-  PUBLIC EbPictureOperators_Intrinsic_neon.c
-  PUBLIC highbd_convolve_2d_neon.c
-  PUBLIC selfguided_neon.c
-  PUBLIC sse_neon.c
-  PUBLIC warp_plane_neon.c
-  PUBLIC wiener_convolve_neon.c
   PUBLIC dav1d_asm.S
   PUBLIC dav1d_util.S
-  PUBLIC itx.S)
+  PUBLIC deblocking_filter_intrinsic_neon.c
+  PUBLIC encodetxb_neon.c
+  PUBLIC hadmard_path_neon.c
+  PUBLIC highbd_convolve_2d_neon.c
+  PUBLIC highbd_fwd_txfm_neon.c
+  PUBLIC highbd_inv_txfm_neon.c
+  PUBLIC intra_prediction_neon.c
+  PUBLIC itx.S
+  PUBLIC obmc_sad_neon.c
+  PUBLIC obmc_variance_neon.c
+  PUBLIC pickrst_neon.c
+  PUBLIC picture_operators_intrinsic_neon.c
+  PUBLIC sad_neon.c
+  PUBLIC selfguided_neon.c
+  PUBLIC sse_neon.c
+  PUBLIC temporal_filtering_neon.c
+  PUBLIC variance_neon.c
+  PUBLIC warp_plane_neon.c
+  PUBLIC wiener_convolve_neon.c)
+
 target_include_directories(
   ASM_NEON
   PRIVATE ${PROJECT_SOURCE_DIR}/Source/API/
