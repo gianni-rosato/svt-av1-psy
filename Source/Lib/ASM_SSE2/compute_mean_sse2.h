@@ -15,7 +15,7 @@
 extern "C" {
 #endif
 
-#include "EbDefinitions.h"
+#include "definitions.h"
 
 uint64_t svt_aom_compute_subd_mean_of_squared_values8x8_sse2_intrin(
     uint8_t* input_samples, // input parameter, input samples Ptr

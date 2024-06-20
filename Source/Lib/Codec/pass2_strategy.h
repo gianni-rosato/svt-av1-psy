@@ -14,7 +14,7 @@
 
 #include "level.h"
 #include "encoder.h"
-#include "Av1Common.h"
+#include "av1_common.h"
 
 #ifdef __cplusplus
 extern "C" {

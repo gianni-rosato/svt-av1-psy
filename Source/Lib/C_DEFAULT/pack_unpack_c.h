@@ -15,7 +15,7 @@
 extern "C" {
 #endif
 
-#include "EbDefinitions.h"
+#include "definitions.h"
 
 void svt_unpack_and_2bcompress_c(uint16_t *in16b_buffer, uint32_t in16b_stride, uint8_t *out8b_buffer,
                                  uint32_t out8b_stride, uint8_t *out2b_buffer, uint32_t out2b_stride, uint32_t width,

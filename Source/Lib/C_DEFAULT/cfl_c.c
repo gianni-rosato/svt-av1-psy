@@ -9,7 +9,7 @@
 * PATENTS file, you can obtain it at https://www.aomedia.org/license/patent-license.
 */
 
-#include "EbDefinitions.h"
+#include "definitions.h"
 
 #define ROUND_POWER_OF_TWO_SIGNED(value, n) \
     (((value) < 0) ? -ROUND_POWER_OF_TWO(-(value), (n)) : ROUND_POWER_OF_TWO((value), (n)))

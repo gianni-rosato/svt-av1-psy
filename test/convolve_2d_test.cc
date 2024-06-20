@@ -37,11 +37,11 @@
 #include <stdlib.h>
 #include "gtest/gtest.h"
 #include "aom_dsp_rtcd.h"
-#include "EbDefinitions.h"
+#include "definitions.h"
 #include "random.h"
 #include "util.h"
-#include "EbTime.h"
-#include "EbUtility.h"
+#include "svt_time.h"
+#include "utility.h"
 #include "convolve.h"
 #include "filter.h"
 

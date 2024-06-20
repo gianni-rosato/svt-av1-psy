@@ -12,11 +12,11 @@
 
 #include <arm_neon.h>
 
-#include "EbDefinitions.h"
+#include "definitions.h"
 #include "common_dsp_rtcd.h"
 
 #include "highbd_txfm_utility_neon.h"
-#include "EbInvTransforms.h"
+#include "inv_transforms.h"
 
 static INLINE void round_shift_4x4(int32x4_t in[], int32_t shift) {
     const int32x4_t vshift = vdupq_n_s32(-shift); // sign change so that shift > 0 is a shift-right

@@ -26,13 +26,13 @@
 
 #include "gtest/gtest.h"
 
-#include "EbDefinitions.h"
-#include "EbTransforms.h"
+#include "definitions.h"
+#include "transforms.h"
 #include "util.h"
 #include "aom_dsp_rtcd.h"
 #include "TxfmCommon.h"
 #include "random.h"
-#include "EbTime.h"
+#include "svt_time.h"
 #include "encode_txb_ref_c.h"
 
 using svt_av1_test_tool::SVTRandom;  // to generate the random

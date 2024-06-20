@@ -22,9 +22,9 @@ link_directories(${CMAKE_ARCHIVE_OUTPUT_DIRECTORY}
                  ${CMAKE_LIBRARY_OUTPUT_DIRECTORY})
 
 set(all_files
-    ../../Source/App/EbAppInputy4m.c
-    ../../Source/App/EbAppContext.c
-    ../../Source/App/EbAppOutputivf.c
+    ../../Source/App/app_input_y4m.c
+    ../../Source/App/app_context.c
+    ../../Source/App/app_output_ivf.c
     CompareTools.h
     ConfigEncoder.cc
     ConfigEncoder.h
@@ -49,8 +49,8 @@ set(all_files
     Y4mVideoSource.h
     YuvVideoSource.cc
     YuvVideoSource.h
-    EbDecBitstream.h
-    EbDecBitstream.c)
+    dec_bitstream.h
+    dec_bitstream.c)
 
 set(lib_list
     SvtAv1Enc gtest_all

@@ -12,7 +12,7 @@
 #include <assert.h>
 #include <immintrin.h>
 #include "aom_dsp_rtcd.h"
-#include "EbEncInterPrediction.h"
+#include "enc_inter_prediction.h"
 
 ////////////////////////////////////////////////////////////////////////////////
 // 8 bit

@@ -9,7 +9,7 @@
  * PATENTS file, you can obtain it at https://www.aomedia.org/license/patent-license.
  */
 
-#include "EbTemporalFiltering.h"
+#include "temporal_filtering.h"
 
 // Division using multiplication and shifting. The C implementation does:
 // modifier *= 3;

@@ -12,7 +12,7 @@
 
 #include "synonyms.h"
 #include <emmintrin.h>
-#include "EbDefinitions.h"
+#include "definitions.h"
 
 #include "deblocking_filter_sse2.h"
 

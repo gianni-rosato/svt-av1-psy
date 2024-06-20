@@ -12,7 +12,7 @@
 #ifndef AV1_INV_TXFM_NEON_H_
 #define AV1_INV_TXFM_NEON_H_
 
-#include "EbDefinitions.h"
+#include "definitions.h"
 
 static INLINE void lowbd_inv_txfm2d_add_idtx_neon(const int32_t *input, uint8_t *output_r, int32_t stride_r,
                                                   uint8_t *output_w, int32_t stride_w, TxType tx_type, TxSize tx_size,

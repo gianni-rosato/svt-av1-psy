@@ -14,7 +14,7 @@
 
 //#include "av1/common/common.h"
 //#include "av1/common/enums.h"
-#include "EbDefinitions.h"
+#include "definitions.h"
 #define DWT_MAX_LENGTH 64
 // Note:
 // tran_low_t  is the datatype used for final transform coefficients.

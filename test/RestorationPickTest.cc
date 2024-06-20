@@ -12,9 +12,9 @@
 
 #include "gtest/gtest.h"
 #include "aom_dsp_rtcd.h"
-#include "EbDefinitions.h"
-#include "EbRestoration.h"
-#include "EbUnitTestUtility.h"
+#include "definitions.h"
+#include "restoration.h"
+#include "unit_test_utility.h"
 #include "util.h"
 
 #ifdef ARCH_X86_64
@@ -25,7 +25,7 @@
 
 #endif
 
-#include "EbRestorationPick.h"
+#include "restoration_pick.h"
 
 typedef void (*av1_compute_stats_func)(int32_t wiener_win, const uint8_t *dgd8,
                                        const uint8_t *src8, int32_t h_start,

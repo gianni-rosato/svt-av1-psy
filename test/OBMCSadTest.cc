@@ -24,7 +24,7 @@
 #include "aom_dsp_rtcd.h"
 #include "random.h"
 #include "util.h"
-#include "EbUtility.h"
+#include "utility.h"
 
 using std::tuple;
 using svt_av1_test_tool::SVTRandom;  // to generate the random

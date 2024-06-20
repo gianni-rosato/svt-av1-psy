@@ -31,7 +31,7 @@
 #include "random.h"
 #include "util.h"
 #include "gtest/gtest.h"
-#include "EbUtility.h"
+#include "utility.h"
 
 using svt_av1_test_tool::SVTRandom;  // to generate the random
 namespace {

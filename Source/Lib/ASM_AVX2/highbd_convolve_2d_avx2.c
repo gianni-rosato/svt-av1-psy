@@ -12,7 +12,7 @@
 #include <immintrin.h>
 #include <assert.h>
 
-#include "EbDefinitions.h"
+#include "definitions.h"
 #include "common_dsp_rtcd.h"
 
 #include "convolve_avx2.h"

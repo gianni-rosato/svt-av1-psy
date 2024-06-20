@@ -27,8 +27,8 @@
 #include <stdlib.h>
 #include <new>
 
-#include "EbDefinitions.h"
-#include "EbTransforms.h"
+#include "definitions.h"
+#include "transforms.h"
 
 #include "random.h"
 #include "TxfmRef.h"

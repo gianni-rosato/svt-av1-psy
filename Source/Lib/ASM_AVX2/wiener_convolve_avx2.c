@@ -15,7 +15,7 @@
 #include "common_dsp_rtcd.h"
 #include "convolve.h"
 #include "convolve_avx2.h"
-#include "EbDefinitions.h"
+#include "definitions.h"
 #include "synonyms.h"
 #include "synonyms_avx2.h"
 #include "wiener_convolve_avx2.h"

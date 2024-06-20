@@ -16,7 +16,7 @@
 
 #include "gtest/gtest.h"
 #include "aom_dsp_rtcd.h"
-#include "EbUnitTestUtility.h"
-#include "EbUtility.h"
+#include "unit_test_utility.h"
+#include "utility.h"
 #include "random.h"
 #include "util.h"

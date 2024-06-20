@@ -10,11 +10,11 @@
  */
 
 #include <immintrin.h>
-#include "EbDefinitions.h"
+#include "definitions.h"
 #include "memory_avx2.h"
 #include "common_dsp_rtcd.h"
-#include "EbInterPrediction.h"
-#include "EbResize.h"
+#include "inter_prediction.h"
+#include "resize.h"
 
 #ifndef _mm_storeu_si32
 #define _mm_storeu_si32(p, a) (void)(*(int *)(p) = _mm_cvtsi128_si32((a)))

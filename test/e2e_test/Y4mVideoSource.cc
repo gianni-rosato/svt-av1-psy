@@ -23,7 +23,7 @@
 #include <assert.h>
 #include "Y4mVideoSource.h"
 extern "C" {
-#include "EbAppInputy4m.h"
+#include "app_input_y4m.h"
 }
 using namespace svt_av1_video_source;
 

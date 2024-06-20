@@ -16,7 +16,7 @@
 extern "C" {
 #endif
 
-#include "EbDefinitions.h"
+#include "definitions.h"
 #include "filter.h"
 
 #define ROUND0_BITS 3

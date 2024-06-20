@@ -11,9 +11,9 @@
 */
 
 #include <assert.h>
-#include "EbDefinitions.h"
+#include "definitions.h"
 #include "aom_dsp_rtcd.h"
-#include "EbTransforms.h"
+#include "transforms.h"
 #include <immintrin.h>
 #include "txfm_common_avx2.h"
 

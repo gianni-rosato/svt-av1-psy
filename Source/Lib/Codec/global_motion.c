@@ -14,12 +14,12 @@
 #include <math.h>
 
 #include "global_motion.h"
-#include "EbUtility.h"
+#include "utility.h"
 #include "corner_detect.h"
 #include "corner_match.h"
 #include "ransac.h"
 
-#include "EbEncWarpedMotion.h"
+#include "enc_warped_motion.h"
 
 #define MIN_INLIER_PROB 0.1
 

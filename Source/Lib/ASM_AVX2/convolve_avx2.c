@@ -10,15 +10,15 @@
  */
 
 #include <immintrin.h>
-#include "EbDefinitions.h"
+#include "definitions.h"
 #include "common_dsp_rtcd.h"
 #include "convolve.h"
 #include "convolve_avx2.h"
-#include "EbInterPrediction.h"
+#include "inter_prediction.h"
 #include "memory_avx2.h"
 #include "synonyms.h"
 #include "synonyms_avx2.h"
-#include "EbUtility.h"
+#include "utility.h"
 
 static INLINE void sr_y_round_store_32_avx2(const __m256i res[2], uint8_t *const dst) {
     __m256i r[2];

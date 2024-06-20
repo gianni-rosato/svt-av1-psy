@@ -12,9 +12,9 @@
 #ifndef AOM_AV1_ENCODER_FIRSTPASS_H_
 #define AOM_AV1_ENCODER_FIRSTPASS_H_
 
-#include "EbDefinitions.h"
-#include "EbRateControlProcess.h"
-#include "EbPictureControlSet.h"
+#include "definitions.h"
+#include "rate_control_process.h"
+#include "picture_control_set.h"
 
 #ifdef __cplusplus
 extern "C" {

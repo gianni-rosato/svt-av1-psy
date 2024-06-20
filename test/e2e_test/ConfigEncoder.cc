@@ -13,7 +13,7 @@
 #include <string>
 
 extern "C" {
-#include "EbAppConfig.c"
+#include "app_config.c"
 }
 
 void set_enc_config(void *config_ptr, const char *name, const char *value) {

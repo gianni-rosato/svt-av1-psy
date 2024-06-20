@@ -16,7 +16,7 @@
 
 #include "convolve.h"
 #include "convolve_avx2.h"
-#include "EbDefinitions.h"
+#include "definitions.h"
 
 DECLARE_ALIGNED(64, static const uint8_t, filt_center_tap7_global_avx[64]) = {
     3, 255, 4,  255, 5, 255, 6, 255, 7,  255, 8, 255, 9, 255, 10, 255, 3, 255, 4,  255, 5, 255,

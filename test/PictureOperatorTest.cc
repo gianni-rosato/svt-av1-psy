@@ -28,13 +28,13 @@
 #include <new>
 
 #include "mcp_sse2.h"
-#include "EbEncIntraPrediction.h"
-#include "EbDefinitions.h"
+#include "enc_intra_prediction.h"
+#include "definitions.h"
 #include "random.h"
 #include "util.h"
 #include "common_dsp_rtcd.h"
 #include "aom_dsp_rtcd.h"
-#include "EbMotionEstimation.h"
+#include "motion_estimation.h"
 using svt_av1_test_tool::SVTRandom;  // to generate the random
 
 namespace {

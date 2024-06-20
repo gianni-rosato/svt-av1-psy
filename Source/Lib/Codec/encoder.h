@@ -18,9 +18,9 @@
 #include <stdbool.h>
 #include <stdio.h>
 
-#include "EbDefinitions.h"
-#include "Av1Common.h"
-#include "EbRateControlProcess.h"
+#include "definitions.h"
+#include "av1_common.h"
+#include "rate_control_process.h"
 #include "level.h"
 
 #ifdef __cplusplus

@@ -9,7 +9,7 @@
  * PATENTS file, you can obtain it at https://www.aomedia.org/license/patent-license.
  */
 
-#include "EbDefinitions.h"
+#include "definitions.h"
 #include <immintrin.h>
 
 #include "aom_dsp_rtcd.h"

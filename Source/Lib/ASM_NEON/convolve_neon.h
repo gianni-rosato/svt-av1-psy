@@ -12,7 +12,7 @@
 #ifndef AOM_AV1_COMMON_ARM_CONVOLVE_NEON_H_
 #define AOM_AV1_COMMON_ARM_CONVOLVE_NEON_H_
 
-#include "EbInterPrediction.h"
+#include "inter_prediction.h"
 
 static INLINE Bool is_convolve_2tap(const int16_t *const filter) {
     return (const void *)filter == (const void *)bilinear_filters;

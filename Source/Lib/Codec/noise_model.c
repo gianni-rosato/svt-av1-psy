@@ -15,7 +15,7 @@
 #include "noise_model.h"
 #include "noise_util.h"
 #include "mathutils.h"
-#include "EbLog.h"
+#include "svt_log.h"
 #include "aom_dsp_rtcd.h"
 
 static const int32_t k_max_lag = 4;

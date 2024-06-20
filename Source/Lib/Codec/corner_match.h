@@ -16,7 +16,7 @@
 #include <stdlib.h>
 #include <memory.h>
 #include "EbDebugMacros.h"
-#include "EbDefinitions.h"
+#include "definitions.h"
 
 typedef struct {
     int x, y;

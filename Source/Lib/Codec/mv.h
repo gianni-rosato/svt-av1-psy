@@ -12,7 +12,7 @@
 #ifndef AOM_AV1_COMMON_MV_H_
 #define AOM_AV1_COMMON_MV_H_
 
-#include "EbBlockStructures.h"
+#include "block_structures.h"
 
 #ifdef __cplusplus
 extern "C" {

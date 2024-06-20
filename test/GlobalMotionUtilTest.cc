@@ -27,8 +27,8 @@
 #include <vector>
 
 #include "gtest/gtest.h"
-#include "EbDefinitions.h"
-#include "EbUtility.h"
+#include "definitions.h"
+#include "utility.h"
 extern "C" {
 #include "ransac.h"
 }

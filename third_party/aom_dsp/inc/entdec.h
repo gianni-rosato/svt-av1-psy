@@ -12,7 +12,7 @@
 #ifndef AOM_AOM_DSP_ENTDEC_H_
 #define AOM_AOM_DSP_ENTDEC_H_
 #include <limits.h>
-#include "EbBitstreamUnit.h"
+#include "bitstream_unit.h"
 
 #ifdef __cplusplus
 extern "C" {

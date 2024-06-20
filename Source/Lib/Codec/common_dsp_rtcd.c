@@ -20,9 +20,8 @@
 
 #define RTCD_C
 #include "common_dsp_rtcd.h"
-#include "EbPictureOperators.h"
+#include "picture_operators.h"
 #include "pack_unpack_c.h"
-#include "EbAvcStyleMcp.h"
 
 #if defined ARCH_X86_64
 // for svt_aom_get_cpu_flags

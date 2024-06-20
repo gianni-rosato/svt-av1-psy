@@ -12,7 +12,7 @@
 #ifndef EBVARIANCE_SSE2_H
 #define EBVARIANCE_SSE2_H
 
-#include "EbDefinitions.h"
+#include "definitions.h"
 #include <assert.h>
 #include <emmintrin.h> // SSE2
 #include "aom_dsp_rtcd.h"

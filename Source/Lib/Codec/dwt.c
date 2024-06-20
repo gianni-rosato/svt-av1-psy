@@ -12,7 +12,7 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <math.h>
-#include "EbDefinitions.h"
+#include "definitions.h"
 //#include "config/av1_rtcd.h"
 #include "dwt.h"
 

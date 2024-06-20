@@ -13,7 +13,7 @@
 #define EbPictureOperators_Inline_AVX2_h
 
 #include <immintrin.h>
-#include "EbDefinitions.h"
+#include "definitions.h"
 #include "memory_avx2.h"
 #include "picture_operators_sse2.h"
 #include "synonyms.h"

@@ -15,25 +15,24 @@
 #include <stdio.h>
 
 #include "aom_dsp_rtcd.h"
-#include "EbDefinitions.h"
-#include "EbRateControlProcess.h"
-#include "EbSequenceControlSet.h"
-#include "EbPictureControlSet.h"
+#include "definitions.h"
+#include "rate_control_process.h"
+#include "sequence_control_set.h"
+#include "picture_control_set.h"
 #include "firstpass.h"
-#include "EbLog.h"
-#include "EbModeDecisionProcess.h"
-#include "EbCodingLoop.h"
+#include "svt_log.h"
+#include "mode_decision_process.h"
+#include "coding_loop.h"
 #include "dwt.h" // to move to firstpass.c
-#include "EbPictureDecisionProcess.h"
-#include "EbModeDecisionConfigurationProcess.h"
+#include "picture_decision_process.h"
+#include "mode_decision_configuration_process.h"
 #include "mv.h"
 #ifdef ARCH_X86_64
 #include <xmmintrin.h>
 #endif
-#include "EbMotionEstimation.h"
-#include "EbPictureDecisionResults.h"
+#include "motion_estimation.h"
+#include "picture_decision_results.h"
 
-//#include "EbMotionEstimationProcess.h"
 #undef _MM_HINT_T2
 #define _MM_HINT_T2 1
 

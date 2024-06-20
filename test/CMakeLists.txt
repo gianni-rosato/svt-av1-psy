@@ -59,9 +59,9 @@ endif()
 
 set(arch_neutral_files
     BitstreamWriterTest.cc
-    EbUnitTest.h
-    EbUnitTestUtility.c
-    EbUnitTestUtility.h
+    unit_test.h
+    unit_test_utility.c
+    unit_test_utility.h
     FilmGrainExpectedResult.h
     FilmGrainTest.cc
     GlobalMotionUtilTest.cc
@@ -95,11 +95,11 @@ if(HAVE_X86_PLATFORM)
       AdaptiveScanTest.cc
       CompoundUtilTest.cc
       DeblockTest.cc
-      EbNoiseModel_test.cc
-      EbBlend_a64_mask_1d_test.cc
-      EbBlend_a64_mask_test.cc
-      EbHighbdIntraPredictionTests.cc
-      EbHighbdIntraPredictionTests.h
+      noise_model_test.cc
+      blend_a64_mask_1d_test.cc
+      blend_a64_mask_test.cc
+      highbd_intra_prediction_tests.cc
+      highbd_intra_prediction_tests.h
       EncodeTxbAsmTest.cc
       FFTTest.cc
       FilterIntraPredTest.cc

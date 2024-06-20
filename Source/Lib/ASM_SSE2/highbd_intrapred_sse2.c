@@ -11,7 +11,7 @@
 
 #include <emmintrin.h>
 #include "highbd_intra_prediction_sse2.h"
-#include "EbDefinitions.h"
+#include "definitions.h"
 #include "common_dsp_rtcd.h"
 
 // -----------------------------------------------------------------------------

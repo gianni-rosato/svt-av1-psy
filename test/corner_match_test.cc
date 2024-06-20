@@ -13,10 +13,10 @@
 #include <stdlib.h>
 #include "gtest/gtest.h"
 #include "aom_dsp_rtcd.h"
-#include "EbDefinitions.h"
+#include "definitions.h"
 #include "random.h"
 #include "util.h"
-#include "EbUnitTestUtility.h"
+#include "unit_test_utility.h"
 #include "acm_random.h"
 #include "corner_match.h"
 

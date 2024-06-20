@@ -30,8 +30,8 @@
 
 #include <stdint.h>
 
-#include "EbDefinitions.h"
-#include "EbTransforms.h"
+#include "definitions.h"
+#include "transforms.h"
 #include "gtest/gtest.h"
 #include "util.h"
 

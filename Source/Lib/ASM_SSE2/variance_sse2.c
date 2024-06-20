@@ -8,7 +8,7 @@
  * Media Patent License 1.0 was not distributed with this source code in the
  * PATENTS file, you can obtain it at https://www.aomedia.org/license/patent-license.
  */
-#include "EbDefinitions.h"
+#include "definitions.h"
 #include <assert.h>
 #include <emmintrin.h> // SSE2
 #include "aom_dsp_rtcd.h"

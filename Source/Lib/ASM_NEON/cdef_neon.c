@@ -11,7 +11,7 @@
 
 #include <arm_neon.h>
 
-#include "EbDefinitions.h"
+#include "definitions.h"
 #include <math.h>
 
 static INLINE uint32_t sum32(const int32x4_t src) {

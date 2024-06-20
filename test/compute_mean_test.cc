@@ -27,7 +27,7 @@
 
 #include <sstream>
 #include "gtest/gtest.h"
-#include "EbComputeMean.h"
+#include "compute_mean.h"
 #include "random.h"
 #include "aom_dsp_rtcd.h"
 /**

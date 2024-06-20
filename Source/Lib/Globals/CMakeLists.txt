@@ -33,12 +33,12 @@ include_directories(
 endif()
 
 set(all_files
-        EbEncHandle.c
-        EbEncHandle.h
-        EbEncSettings.c
-        EbEncSettings.h
-        EbMetadataHandle.c
-        EbMetadataHandle.h
+        enc_handle.c
+        enc_handle.h
+        enc_settings.c
+        enc_settings.h
+        metadata_handle.c
+        metadata_handle.h
         )
 
 add_library(GLOBALS OBJECT ${all_files})

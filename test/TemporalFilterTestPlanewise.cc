@@ -12,12 +12,12 @@
 
 #include "aom_dsp_rtcd.h"
 #include "gtest/gtest.h"
-#include "EbTemporalFiltering.h"
+#include "temporal_filtering.h"
 #include "util.h"
 #include "random.h"
-#include "EbUtility.h"
-#include "EbUnitTestUtility.h"
-#include "EbUtility.h"
+#include "utility.h"
+#include "unit_test_utility.h"
+#include "utility.h"
 
 using svt_av1_test_tool::SVTRandom;
 

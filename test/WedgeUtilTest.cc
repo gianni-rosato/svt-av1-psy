@@ -23,8 +23,8 @@
  *
  ******************************************************************************/
 #include "gtest/gtest.h"
-#include "EbDefinitions.h"
-#include "EbUtility.h"
+#include "definitions.h"
+#include "utility.h"
 #include "aom_dsp_rtcd.h"
 #include "random.h"
 #include "util.h"

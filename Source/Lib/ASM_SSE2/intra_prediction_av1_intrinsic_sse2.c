@@ -9,10 +9,10 @@
 * PATENTS file, you can obtain it at https://www.aomedia.org/license/patent-license.
 */
 
-#include "EbDefinitions.h"
+#include "definitions.h"
 #include <emmintrin.h>
 #include "common_dsp_rtcd.h"
-#include "EbIntraPrediction.h"
+#include "intra_prediction.h"
 
 static INLINE __m128i dc_sum_16(const uint8_t *ref) {
     __m128i       x    = _mm_loadu_si128((__m128i const *)ref);

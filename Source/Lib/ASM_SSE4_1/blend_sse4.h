@@ -14,7 +14,7 @@
 
 #include <assert.h>
 
-#include "EbDefinitions.h"
+#include "definitions.h"
 #include <smmintrin.h>
 #include "synonyms.h"
 

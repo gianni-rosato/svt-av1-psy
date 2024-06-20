@@ -10,7 +10,7 @@
  */
 
 #include <immintrin.h>
-#include "EbDefinitions.h"
+#include "definitions.h"
 #include "memory_sse4_1.h"
 #include "common_dsp_rtcd.h"
 #include "convolve.h"

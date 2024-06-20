@@ -9,7 +9,7 @@
 * PATENTS file, you can obtain it at https://www.aomedia.org/license/patent-license.
 */
 
-#include "EbDefinitions.h"
+#include "definitions.h"
 
 #if EN_AVX512_SUPPORT
 #include <assert.h>
@@ -17,7 +17,7 @@
 #include <immintrin.h>
 #include "memory_avx2.h"
 #include "transpose_avx2.h"
-#include "EbUtility.h"
+#include "utility.h"
 #include "compute_sad_c.h"
 
 static INLINE void sad64_kernel_avx512(const __m512i s, const uint8_t *const ref, __m512i *const sum) {

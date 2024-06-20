@@ -27,13 +27,13 @@
 #include <stdlib.h>
 #include <algorithm>
 
-#include "EbDefinitions.h"
-#include "EbTransforms.h"
+#include "definitions.h"
+#include "transforms.h"
 #include "random.h"
 #include "util.h"
 #include "aom_dsp_rtcd.h"
-#include "EbTransforms.h"
-#include "EbUnitTestUtility.h"
+#include "transforms.h"
+#include "unit_test_utility.h"
 #include "TxfmCommon.h"
 
 #ifdef ARCH_X86_64

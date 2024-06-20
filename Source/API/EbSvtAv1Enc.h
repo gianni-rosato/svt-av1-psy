@@ -174,7 +174,7 @@ typedef enum EbSFrameMode {
 } EbSFrameMode;
 
 /* Indicates what prediction structure to use
- * was PredStructure in EbDefinitions.h
+ * was PredStructure in definitions.h
  * Only SVT_AV1_PRED_LOW_DELAY_B and SVT_AV1_PRED_RANDOM_ACCESS are valid
  */
 typedef enum SvtAv1PredStructure {

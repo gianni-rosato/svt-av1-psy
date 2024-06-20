@@ -15,7 +15,7 @@
 #include "common_dsp_rtcd.h"
 #include "aom_dsp_rtcd.h"
 #include "compute_sad_c.h"
-#include "EbUtility.h"
+#include "utility.h"
 #include "mcomp.h"
 
 static INLINE void sad16_neon(uint8x16_t src, uint8x16_t ref, uint16x8_t *const sad_sum) {

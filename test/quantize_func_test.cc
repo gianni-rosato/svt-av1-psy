@@ -17,11 +17,11 @@
 #include "random.h"
 #include "util.h"
 
-#include "EbDefinitions.h"
-#include "EbPictureControlSet.h"
-#include "EbTransforms.h"
-#include "EbUnitTestUtility.h"
-#include "EbQMatrices.h"
+#include "definitions.h"
+#include "picture_control_set.h"
+#include "transforms.h"
+#include "unit_test_utility.h"
+#include "q_matrices.h"
 
 namespace {
 using svt_av1_test_tool::SVTRandom;

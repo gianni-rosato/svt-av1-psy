@@ -10,9 +10,9 @@
  */
 
 #include "encode_txb_ref_c.h"
-#include "EbCommonUtils.h"
-#include "EbCoefficients.h"
-#include "EbFullLoop.h"
+#include "common_utils.h"
+#include "coefficients.h"
+#include "full_loop.h"
 
 static INLINE int get_nz_map_ctx(const uint8_t* const levels, const int coeff_idx, const int bwl, const int height,
                                  const int scan_idx, const int is_eob, const TxSize tx_size, const TxClass tx_class) {

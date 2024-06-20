@@ -212,7 +212,7 @@ reference pictures, motion estimation search range, target bit rate,
 etc.).
 
 The data structures associated with sequence control set objects are
-defined in EbSequenceControlSet.h.
+defined in sequence_control_set.h.
 
 #### Picture Control Set
 
@@ -222,7 +222,7 @@ lists, SB motion and mode information, etc.). The information carried by
 the results object has a lifetime of at most one picture time interval.
 
 The data structures associated with picture control set objects are
-defined in EbPictureControlSet.h.
+defined in picture_control_set.h.
 
 #### Picture Descriptors
 
@@ -237,7 +237,7 @@ color space, bit depth, picture dimensions, and pointers to memory
 locations containing the picture data.
 
 The data structures associated with picture descriptor objects are
-defined in EbPictureBufferDesc.h.
+defined in picture_buffer_desc.h.
 
 #### Results
 
@@ -251,7 +251,7 @@ encoder parameters (e.g., bit depth, color space, etc.) and implicitly
 in the case of system timing (e.g., when to begin execution).
 
 The data structures associated with results objects are defined in
-results header files, e.g, EbRateControlResults.h.
+results header files, e.g, rate_control_results.h.
 
 ## System Resource Manager (SRM)
 

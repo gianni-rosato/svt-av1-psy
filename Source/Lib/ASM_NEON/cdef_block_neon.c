@@ -8,7 +8,7 @@
  * Media Patent License 1.0 was not distributed with this source code in the
  * PATENTS file, you can obtain it at www.aomedia.org/license/patent.
  */
-#include "EbDefinitions.h"
+#include "definitions.h"
 #include <arm_neon.h>
 
 /* Here partial A is a 16-bit vector of the form: [x8 x7 x6 x5 x4 x3 x2 x1]

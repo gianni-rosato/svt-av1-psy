@@ -25,15 +25,15 @@
 #include <string>
 
 #include "gtest/gtest.h"
-#include "EbDefinitions.h"
+#include "definitions.h"
 #include "aom_dsp_rtcd.h"
 #include "random.h"
 #include "util.h"
-#include "EbUtility.h"
-#include "EbDeblockingFilter.h"
+#include "utility.h"
+#include "deblocking_filter.h"
 #include "acm_random.h"
 #include "deblocking_filter_sse2.h"
-#include "EbDeblockingCommon.h"
+#include "deblocking_common.h"
 
 using libaom_test::ACMRandom;
 using ::testing::make_tuple;

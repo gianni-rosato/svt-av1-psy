@@ -12,10 +12,10 @@
 #include <assert.h>
 
 #include "compute_sad_avx2.h"
-#include "EbDefinitions.h"
+#include "definitions.h"
 #include <immintrin.h>
 #include "memory_avx2.h"
-#include "EbComputeSAD.h"
+#include "compute_sad.h"
 #include "compute_sad_c.h"
 #include "mcomp.h"
 #define UPDATE_BEST(s, k, offset)        \

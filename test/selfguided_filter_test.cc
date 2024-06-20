@@ -15,11 +15,11 @@
 #include "gtest/gtest.h"
 #include "acm_random.h"
 #include "aom_dsp_rtcd.h"
-#include "EbDefinitions.h"
-#include "EbRestoration.h"
-#include "EbRestorationPick.h"
-#include "EbUnitTestUtility.h"
-#include "EbUtility.h"
+#include "definitions.h"
+#include "restoration.h"
+#include "restoration_pick.h"
+#include "unit_test_utility.h"
+#include "utility.h"
 #include "util.h"
 
 namespace {

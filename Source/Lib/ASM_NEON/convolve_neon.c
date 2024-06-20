@@ -10,7 +10,7 @@
 */
 
 #include "common_dsp_rtcd.h"
-#include "EbDefinitions.h"
+#include "definitions.h"
 #include "sum_neon.h"
 #include "mem_neon.h"
 #include "transpose_neon.h"

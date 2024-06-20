@@ -9,12 +9,12 @@
  * PATENTS file, you can obtain it at https://www.aomedia.org/license/patent-license.
  */
 
-#include "EbDefinitions.h"
+#include "definitions.h"
 #include "common_dsp_rtcd.h"
 
 #include "av1_inv_txfm_avx2.h"
 #include "av1_inv_txfm_ssse3.h"
-#include "EbInvTransforms.h"
+#include "inv_transforms.h"
 #include "transpose_sse2.h"
 #include "itx_lbd.h"
 

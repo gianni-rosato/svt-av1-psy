@@ -23,7 +23,7 @@
 
 #include <math.h>
 #include <stdio.h>
-#include "EbDefinitions.h"
+#include "definitions.h"
 #include "gtest/gtest.h"
 
 // Macros

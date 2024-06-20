@@ -12,8 +12,8 @@
 #ifndef AOM_AV1_ENCODER_ME_H_
 #define AOM_AV1_ENCODER_ME_H_
 
-#include "EbDefinitions.h"
-#include "EbCodingUnit.h"
+#include "definitions.h"
+#include "coding_unit.h"
 
 #ifdef __cplusplus
 extern "C" {

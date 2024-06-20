@@ -12,9 +12,9 @@
 #include <assert.h>
 #include <immintrin.h> /* AVX2 */
 
-#include "EbDefinitions.h"
+#include "definitions.h"
 #include "temporal_filtering_constants.h"
-#include "EbUtility.h"
+#include "utility.h"
 
 /*value [i:0-15] (sqrt((float)i)*65536.0*/
 static const uint32_t sqrt_array_fp16[16] = {0,

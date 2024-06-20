@@ -9,8 +9,8 @@
 * PATENTS file, you can obtain it at https://www.aomedia.org/license/patent-license.
 */
 
-//#include "EbUtility.h"
-#include "EbDefinitions.h"
+//#include "utility.h"
+#include "definitions.h"
 
 static void diffwtd_mask_d16(uint8_t *mask, int which_inverse, int mask_base, const CONV_BUF_TYPE *src0,
                              int src0_stride, const CONV_BUF_TYPE *src1, int src1_stride, int h, int w,

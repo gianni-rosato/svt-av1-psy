@@ -13,10 +13,10 @@
 #include <arm_neon.h>
 #include "aom_dsp_rtcd.h"
 #include "mem_neon.h"
-#include "EbInvTransforms.h"
-#include "EbTransforms.h"
+#include "inv_transforms.h"
+#include "transforms.h"
 #include "transpose_neon.h"
-#include "EbDefinitions.h"
+#include "definitions.h"
 
 void svt_aom_transform_config(TxType tx_type, TxSize tx_size, Txfm2dFlipCfg *cfg);
 

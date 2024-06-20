@@ -16,10 +16,10 @@
 
 #include "random.h"
 #include "aom_dsp_rtcd.h"
-#include "EbDefinitions.h"
+#include "definitions.h"
 #include "picture_operators_c.h"
-#include "EbPictureOperators.h"
-#include "EbUnitTestUtility.h"
+#include "picture_operators.h"
+#include "unit_test_utility.h"
 #include "util.h"
 
 namespace {

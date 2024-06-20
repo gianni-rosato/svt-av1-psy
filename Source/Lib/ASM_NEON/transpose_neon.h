@@ -13,7 +13,7 @@
 #define AOM_AOM_DSP_ARM_TRANSPOSE_NEON_H_
 
 #include <arm_neon.h>
-#include "EbDefinitions.h"
+#include "definitions.h"
 
 static INLINE void transpose_elems_inplace_u8_8x8(uint8x8_t *a0, uint8x8_t *a1, uint8x8_t *a2, uint8x8_t *a3,
                                                   uint8x8_t *a4, uint8x8_t *a5, uint8x8_t *a6, uint8x8_t *a7) {

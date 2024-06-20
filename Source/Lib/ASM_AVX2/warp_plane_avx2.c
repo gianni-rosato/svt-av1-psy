@@ -11,7 +11,7 @@
 
 #include <immintrin.h>
 #include "common_dsp_rtcd.h"
-#include "EbWarpedMotion.h"
+#include "warped_motion.h"
 
 /* This is a modified version of 'svt_aom_warped_filter' from warped_motion.c:
     * Each coefficient is stored in 8 bits instead of 16 bits

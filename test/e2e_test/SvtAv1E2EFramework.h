@@ -26,7 +26,7 @@
 #include "FrameQueue.h"
 #include "PerformanceCollect.h"
 #include "CompareTools.h"
-#include "EbDefinitions.h"
+#include "definitions.h"
 #include "RefDecoder.h"
 // Copied from EbAppProcessCmd.c
 #define LONG_ENCODE_FRAME_ENCODE 4000

@@ -14,7 +14,7 @@
 
 #include <immintrin.h> // AVX2
 #include "aom_dsp_rtcd.h"
-#include "EbRestoration.h"
+#include "restoration.h"
 #include "transpose_sse2.h"
 #include "transpose_avx2.h"
 

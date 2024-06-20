@@ -38,11 +38,11 @@
 
 #include "gtest/gtest.h"
 #include "aom_dsp_rtcd.h"
-#include "EbComputeSAD.h"
-#include "EbMeSadCalculation.h"
-#include "EbMotionEstimation.h"
-#include "EbMotionEstimationContext.h"
-#include "EbTime.h"
+#include "compute_sad.h"
+#include "me_sad_calculation.h"
+#include "motion_estimation.h"
+#include "motion_estimation_context.h"
+#include "svt_time.h"
 #include "random.h"
 #include "util.h"
 

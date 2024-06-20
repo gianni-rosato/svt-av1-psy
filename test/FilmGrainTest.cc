@@ -12,10 +12,10 @@
  */
 #include <stdlib.h>
 
-#include "EbDefinitions.h"
+#include "definitions.h"
 #include "grainSynthesis.h"
 #include "gtest/gtest.h"
-#include "EbUtility.h"
+#include "utility.h"
 #include "FilmGrainExpectedResult.h"
 #include "acm_random.h"
 #include "noise_model.h"
@@ -264,9 +264,9 @@ TEST_F(AddFilmGrainTest, MatchTest) {
 }
 
 extern "C" {
-#include "EbPictureControlSet.h"
-#include "EbPictureBufferDesc.h"
-#include "EbPictureAnalysisProcess.h"
+#include "picture_control_set.h"
+#include "picture_buffer_desc.h"
+#include "picture_analysis_process.h"
 }
 
 static void svt_picture_buffer_desc_dctor(EbPtr p) {

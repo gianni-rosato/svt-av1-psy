@@ -13,7 +13,7 @@
 #define EbHighbdIntraPrediction_SSE2_h
 
 #include <emmintrin.h>
-#include "EbDefinitions.h"
+#include "definitions.h"
 #include "common_dsp_rtcd.h"
 
 static INLINE __m128i dc_sum_4x32bit(const __m128i src) {

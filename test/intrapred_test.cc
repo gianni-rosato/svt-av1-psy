@@ -23,8 +23,8 @@
 
 #include "gtest/gtest.h"
 #include "aom_dsp_rtcd.h"
-#include "EbUtility.h"
-#include "EbDefinitions.h"
+#include "utility.h"
+#include "definitions.h"
 #include "random.h"
 
 namespace {

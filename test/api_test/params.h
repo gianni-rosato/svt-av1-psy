@@ -29,7 +29,7 @@
 #include <vector>
 #include "EbSvtAv1Enc.h"
 #include "gtest/gtest.h"
-#include "EbDefinitions.h"
+#include "definitions.h"
 
 using std::vector;
 
@@ -146,7 +146,7 @@ static const vector<uint32_t> invalid_hierarchical_levels = {
  * reference picture list 0 and the reference picture list 1 will contain the
  * same reference picture.
  *
- * Following values are supported and defined in EbDefinitions.h
+ * Following values are supported and defined in definitions.h
  * #define SVT_AV1_PRED_LOW_DELAY_P     0
  * #define SVT_AV1_PRED_LOW_DELAY_B     1
  * #define SVT_AV1_PRED_RANDOM_ACCESS   2

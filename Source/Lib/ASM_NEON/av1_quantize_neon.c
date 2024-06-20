@@ -15,7 +15,7 @@
 #include "aom_dsp_rtcd.h"
 #include "mem_neon.h"
 #include "sum_neon.h"
-#include "EbInvTransforms.h"
+#include "inv_transforms.h"
 
 static INLINE uint16_t get_max_eob(int16x8_t v_eobmax) { return (uint16_t)vmaxvq_s16(v_eobmax); }
 

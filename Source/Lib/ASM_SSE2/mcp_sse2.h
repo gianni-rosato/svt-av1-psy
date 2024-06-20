@@ -12,7 +12,7 @@
 #ifndef EBMCP_SSE2_H
 #define EBMCP_SSE2_H
 
-#include "EbDefinitions.h"
+#include "definitions.h"
 
 #ifdef __cplusplus
 extern "C" {

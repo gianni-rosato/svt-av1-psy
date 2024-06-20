@@ -11,8 +11,8 @@
 
 #include <math.h>
 #include <stdlib.h>
-#include "EbDefinitions.h"
-#include "EbModeDecisionProcess.h"
+#include "definitions.h"
+#include "mode_decision_process.h"
 #include "aom_dsp_rtcd.h"
 
 #define DIVIDE_AND_ROUND(x, y) (((x) + ((y) >> 1)) / (y))

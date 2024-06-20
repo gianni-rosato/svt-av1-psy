@@ -15,7 +15,7 @@
 #ifndef COMMON_DSP_RTCD_H_
 #define COMMON_DSP_RTCD_H_
 
-#include "EbDefinitions.h"
+#include "definitions.h"
 
 
 /*

@@ -10,9 +10,9 @@
  */
 #include <assert.h>
 #include <immintrin.h>
-#include "EbDefinitions.h"
+#include "definitions.h"
 #include "common_dsp_rtcd.h"
-#include "EbInvTransforms.h"
+#include "inv_transforms.h"
 #include "av1_inv_txfm_ssse3.h"
 #include "txfm_common_avx2.h"
 #include "itx_hbd.h"

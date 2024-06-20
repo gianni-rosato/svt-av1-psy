@@ -11,7 +11,7 @@
 
 #include <assert.h>
 #include "entdec.h"
-#include "EbCabacContextModel.h"
+#include "cabac_context_model.h"
 
 /*A range decoder.
   This is an entropy decoder based upon \cite{Mar79}, which is itself a

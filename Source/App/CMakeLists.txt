@@ -22,18 +22,18 @@ set(all_files
     ../API/EbSvtAv1ExtFrameBuf.h
     ../API/EbSvtAv1Formats.h
     ../API/EbSvtAv1Metadata.h
-    EbAppConfig.c
-    EbAppConfig.h
-    EbAppContext.c
-    EbAppContext.h
-    EbAppInputy4m.c
-    EbAppInputy4m.h
-    EbAppMain.c
-    EbAppOutputivf.c
-    EbAppOutputivf.h
-    EbAppProcessCmd.c
-    EbTime.c
-    EbTime.h
+    app_config.c
+    app_config.h
+    app_context.c
+    app_context.h
+    app_input_y4m.c
+    app_input_y4m.h
+    app_main.c
+    app_output_ivf.c
+    app_output_ivf.h
+    app_process_cmd.c
+    svt_time.c
+    svt_time.h
     )
 
 # App Source Files

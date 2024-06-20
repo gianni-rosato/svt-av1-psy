@@ -13,7 +13,7 @@
 #include <assert.h>
 #include <immintrin.h>
 
-#include "EbDefinitions.h"
+#include "definitions.h"
 
 #include "synonyms.h"
 #include "synonyms_avx2.h"

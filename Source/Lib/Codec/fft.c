@@ -9,7 +9,7 @@
  * PATENTS file, you can obtain it at https://www.aomedia.org/license/patent-license.
  */
 
-#include "EbDefinitions.h"
+#include "definitions.h"
 #include "fft_common.h"
 
 static INLINE void simple_transpose(const float *A, float *b, int32_t n) {

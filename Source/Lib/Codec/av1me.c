@@ -14,12 +14,12 @@
 #include <stdio.h>
 #include "av1me.h"
 #include "mcomp.h"
-#include "EbUtility.h"
-#include "EbPictureControlSet.h"
-#include "EbSequenceControlSet.h"
+#include "utility.h"
+#include "picture_control_set.h"
+#include "sequence_control_set.h"
 #include "aom_dsp_rtcd.h"
-#include "EbModeDecisionProcess.h"
-#include "EbAdaptiveMotionVectorPrediction.h"
+#include "mode_decision_process.h"
+#include "adaptive_motion_vector_prediction.h"
 
 int svt_aom_is_dv_valid(const MV dv, const MacroBlockD *xd, int mi_row, int mi_col, BlockSize bsize, int mib_size_log2);
 

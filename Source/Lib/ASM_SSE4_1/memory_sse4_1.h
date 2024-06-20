@@ -12,7 +12,7 @@
 #ifndef EbMemory_SSE4_1_h
 #define EbMemory_SSE4_1_h
 
-#include "EbDefinitions.h"
+#include "definitions.h"
 #include <smmintrin.h>
 
 static INLINE __m128i load8bit_4x2_sse4_1(const void *const src, const ptrdiff_t strideInByte) {

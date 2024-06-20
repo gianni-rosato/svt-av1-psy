@@ -12,7 +12,7 @@
 
 #include <assert.h>
 #include <smmintrin.h>
-#include "EbDefinitions.h"
+#include "definitions.h"
 #include "blend_sse4.h"
 #include "common_dsp_rtcd.h"
 

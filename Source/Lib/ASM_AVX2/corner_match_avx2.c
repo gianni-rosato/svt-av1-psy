@@ -11,7 +11,7 @@
 
 #include <immintrin.h>
 #include "corner_match.h"
-#include "EbDefinitions.h"
+#include "definitions.h"
 
 /* Compute quad of corr(im1, im2) * MATCH_SZ * stddev(im1), where the
 correlation/standard deviation are taken over MATCH_SZ by MATCH_SZ windows

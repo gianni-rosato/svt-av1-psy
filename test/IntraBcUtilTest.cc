@@ -21,8 +21,8 @@
  ******************************************************************************/
 
 #include "gtest/gtest.h"
-#include "EbDefinitions.h"
-#include "EbAdaptiveMotionVectorPrediction.h"
+#include "definitions.h"
+#include "adaptive_motion_vector_prediction.h"
 #include "util.h"
 
 namespace {

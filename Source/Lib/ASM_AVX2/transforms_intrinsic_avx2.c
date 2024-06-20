@@ -9,11 +9,11 @@
 * PATENTS file, you can obtain it at https://www.aomedia.org/license/patent-license.
 */
 
-#include "EbDefinitions.h"
+#include "definitions.h"
 
 #include <emmintrin.h>
 #include <immintrin.h>
-#include "EbMotionEstimation.h"
+#include "motion_estimation.h"
 
 static INLINE void energy_computation_kernel_avx2(const int32_t *const in, __m256i *const sum256) {
     const __m256i zero      = _mm256_setzero_si256();

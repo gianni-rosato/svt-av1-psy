@@ -12,7 +12,7 @@
 #include "synonyms.h"
 #include "synonyms_avx2.h"
 
-#include "EbDefinitions.h"
+#include "definitions.h"
 
 static INLINE __m256i calc_mask_d16_avx2(const __m256i *data_src0, const __m256i *data_src1, const __m256i *round_const,
                                          const __m256i *mask_base_16, const __m256i *clip_diff, int round) {

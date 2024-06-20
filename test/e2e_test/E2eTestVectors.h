@@ -24,7 +24,7 @@
 
 #include <map>
 #include "VideoSource.h"
-#include "EbDefinitions.h"
+#include "definitions.h"
 #include "ConfigEncoder.h"
 
 /** @defgroup svt_av1_e2e_test_vector Test vectors for E2E test

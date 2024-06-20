@@ -11,9 +11,9 @@
 
 #include <smmintrin.h>
 
-#include "EbDefinitions.h"
+#include "definitions.h"
 #include "common_dsp_rtcd.h"
-#include "EbRestoration.h"
+#include "restoration.h"
 #include "synonyms.h"
 #include "transpose_sse2.h"
 

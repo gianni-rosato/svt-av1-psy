@@ -13,7 +13,7 @@
 #include <smmintrin.h>
 
 #include "common_dsp_rtcd.h"
-#include "EbWarpedMotion.h"
+#include "warped_motion.h"
 
 extern int8_t eb_av1_filter_8bit[WARPEDPIXEL_PREC_SHIFTS * 3 + 1][8];
 

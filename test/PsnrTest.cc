@@ -26,7 +26,7 @@
  ******************************************************************************/
 
 #include "gtest/gtest.h"
-#include "EbPsnr.h"
+#include "svt_psnr.h"
 #include "random.h"
 #include "util.h"
 

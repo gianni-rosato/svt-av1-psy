@@ -9,7 +9,7 @@
 * PATENTS file, you can obtain it at https://www.aomedia.org/license/patent-license.
 */
 
-#include "EbDefinitions.h"
+#include "definitions.h"
 #include <smmintrin.h>
 
 void svt_av1_filter_intra_edge_sse4_1(uint8_t *p, int32_t sz, int32_t strength) {

@@ -8,10 +8,10 @@
  * Media Patent License 1.0 was not distributed with this source code in the
  * PATENTS file, you can obtain it at www.aomedia.org/license/patent.
  */
-#include "EbDefinitions.h"
+#include "definitions.h"
 #include <smmintrin.h>
-#include "EbCdef.h"
-#include "EbBitstreamUnit.h"
+#include "cdef.h"
+#include "bitstream_unit.h"
 
 typedef struct {
     __m128i val[2];

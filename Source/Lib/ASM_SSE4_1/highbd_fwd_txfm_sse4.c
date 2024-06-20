@@ -13,10 +13,10 @@
 #include <assert.h>
 #include <smmintrin.h> /* SSE4.1 */
 
-#include "EbDefinitions.h"
+#include "definitions.h"
 #include "aom_dsp_rtcd.h"
 #include <emmintrin.h>
-#include "EbTransforms.h"
+#include "transforms.h"
 #include "av1_txfm1d_sse4.h"
 
 static const int8_t *fwd_txfm_shift_ls[TX_SIZES_ALL] = {

@@ -23,9 +23,9 @@
 
 #include "gtest/gtest.h"
 #include "aom_dsp_rtcd.h"
-#include "EbDefinitions.h"
-#include "EbUtility.h"
-#include "EbUnitTestUtility.h"
+#include "definitions.h"
+#include "utility.h"
+#include "unit_test_utility.h"
 #include "random.h"
 #include "util.h"
 

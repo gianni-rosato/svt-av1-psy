@@ -13,11 +13,11 @@
 
 #include "transpose_neon.h"
 #include "aom_dsp_rtcd.h"
-#include "EbRestoration.h"
-#include "EbRestorationPick.h"
-#include "EbUtility.h"
+#include "restoration.h"
+#include "restoration_pick.h"
+#include "utility.h"
 #include "sum_neon.h"
-#include "EbDefinitions.h"
+#include "definitions.h"
 
 #define WIN_3TAP ((WIENER_WIN_3TAP - 1) * 2)
 #define WIN_7 ((WIENER_WIN - 1) * 2)

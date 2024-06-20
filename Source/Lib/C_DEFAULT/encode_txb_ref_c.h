@@ -13,7 +13,7 @@
 #define EncodeTxbRef_h
 
 #include <stdint.h>
-#include "EbCabacContextModel.h"
+#include "cabac_context_model.h"
 
 #ifdef __cplusplus
 extern "C" {

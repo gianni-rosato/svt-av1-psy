@@ -28,13 +28,13 @@
 
 #include "gtest/gtest.h"
 
-#include "EbDefinitions.h"
-#include "EbTransforms.h"
-#include "EbPictureControlSet.h"
+#include "definitions.h"
+#include "transforms.h"
+#include "picture_control_set.h"
 #include "aom_dsp_rtcd.h"
 #include "util.h"
 #include "random.h"
-#include "EbQMatrices.h"
+#include "q_matrices.h"
 
 namespace QuantizeAsmTest {
 extern "C" void svt_av1_build_quantizer(

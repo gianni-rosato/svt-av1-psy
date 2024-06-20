@@ -13,8 +13,8 @@
 #include <assert.h>
 
 #include "common_dsp_rtcd.h"
-#include "EbRestoration.h"
-#include "EbDefinitions.h"
+#include "restoration.h"
+#include "definitions.h"
 #include "mem_neon.h"
 #include "transpose_neon.h"
 

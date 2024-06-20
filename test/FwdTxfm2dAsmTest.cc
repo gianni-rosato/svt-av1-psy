@@ -27,15 +27,15 @@
 #include <new>
 #include <algorithm>
 
-#include "EbTime.h"
-#include "EbDefinitions.h"
-#include "EbTransforms.h"
+#include "svt_time.h"
+#include "definitions.h"
+#include "transforms.h"
 #include "random.h"
 #include "util.h"
 #include "aom_dsp_rtcd.h"
-#include "EbTransforms.h"
+#include "transforms.h"
 #include "TxfmCommon.h"
-#include "EbTime.h"
+#include "svt_time.h"
 
 using svt_av1_test_tool::SVTRandom;
 #define TEST_OFFSET 10

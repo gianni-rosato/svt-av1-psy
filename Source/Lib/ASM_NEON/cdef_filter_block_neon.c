@@ -10,10 +10,10 @@
  */
 
 #include <arm_neon.h>
-#include "EbCdef.h"
+#include "cdef.h"
 #include "common_dsp_rtcd.h"
-#include "EbDefinitions.h"
-#include "EbBitstreamUnit.h"
+#include "definitions.h"
+#include "bitstream_unit.h"
 
 static INLINE int16x8_t constrain_neon(uint16x8_t a, uint16x8_t b, unsigned int threshold, int adjdamp) {
     uint16x8_t       diff   = vabdq_u16(a, b);

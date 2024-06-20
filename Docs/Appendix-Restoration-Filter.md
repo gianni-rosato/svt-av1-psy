@@ -78,7 +78,7 @@ rest_segment_row_count = MIN(rest_seg_h,4);
 
 Each segment may consist of several restoration units.
 Each restoration unit is split into restoration processing units of size 64x64 for luma
-(```#define RESTORATION_PROC_UNIT_SIZE 64```(in ```EbRestoration.h```))
+(```#define RESTORATION_PROC_UNIT_SIZE 64```(in ```restoration.h```))
 
 ### Step 2 – Restoration filter search. Each segment goes through a search to identify the best Wiener filter parameters for each restoration unit in the segment (```restoration_seg_search```).
 
@@ -245,7 +245,7 @@ rest_segment_row_count = MIN(rest_seg_h,4);
 
 Each segment may consist of a number of restoration units. Each
 restoration unit is split into restoration processing units of size
-64x64 for luma (```#define RESTORATION_PROC_UNIT_SIZE 64```(in EbRestoration.h))
+64x64 for luma (```#define RESTORATION_PROC_UNIT_SIZE 64```(in restoration.h))
 
 #### Step 2 – Restoration filter search. Each segment goes through a search to identify the best SGRPROJ filter parameters for each restoration unit in the segment (```restoration_seg_search```).
 

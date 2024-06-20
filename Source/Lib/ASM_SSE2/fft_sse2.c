@@ -11,7 +11,7 @@
 
 #include <xmmintrin.h>
 
-#include "EbDefinitions.h"
+#include "definitions.h"
 #include "fft_common.h"
 
 static INLINE void transpose4x4(const float *A, float *b, const int32_t lda, const int32_t ldb) {

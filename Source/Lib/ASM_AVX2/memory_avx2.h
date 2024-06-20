@@ -13,7 +13,7 @@
 #define EbMemory_AVX2_h
 
 #include <immintrin.h>
-#include "EbDefinitions.h"
+#include "definitions.h"
 #include "common_dsp_rtcd.h"
 
 #ifdef __cplusplus

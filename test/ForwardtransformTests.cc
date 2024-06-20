@@ -11,10 +11,10 @@
  */
 
 #include "gtest/gtest.h"
-#include "EbDefinitions.h"
+#include "definitions.h"
 #include "aom_dsp_rtcd.h"
-#include "EbUnitTestUtility.h"
-#include "EbUnitTest.h"
+#include "unit_test_utility.h"
+#include "unit_test.h"
 
 #if EN_AVX512_SUPPORT
 

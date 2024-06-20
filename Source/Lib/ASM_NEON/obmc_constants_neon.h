@@ -12,7 +12,7 @@
 #ifndef AOM_OBMC_CONSTANTS_NEON_H_
 #define AOM_OBMC_CONSTANTS_NEON_H_
 
-#include "EbDefinitions.h"
+#include "definitions.h"
 
 extern const uint8_t obmc_variance_permute_idx[];
 

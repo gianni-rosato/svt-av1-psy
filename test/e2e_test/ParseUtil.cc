@@ -18,9 +18,9 @@
  *
  ******************************************************************************/
 
-#include "EbDefinitions.h"
-#include "EbAv1Structs.h"
-#include "EbDecBitstream.h"
+#include "definitions.h"
+#include "av1_structs.h"
+#include "dec_bitstream.h"
 #include "ParseUtil.h"
 #include "gtest/gtest.h"
 

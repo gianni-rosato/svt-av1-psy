@@ -12,7 +12,7 @@
 #ifndef EbPictureOperators_C_h
 #define EbPictureOperators_C_h
 
-#include "EbDefinitions.h"
+#include "definitions.h"
 #ifdef __cplusplus
 extern "C" {
 #endif

@@ -9,12 +9,12 @@
 * PATENTS file, you can obtain it at https://www.aomedia.org/license/patent-license.
 */
 
-#include "EbDefinitions.h"
+#include "definitions.h"
 
 #if EN_AVX512_SUPPORT
 #include <assert.h>
 #include "aom_dsp_rtcd.h"
-#include "EbTransforms.h"
+#include "transforms.h"
 #include <immintrin.h>
 #include "transpose_encoder_avx512.h"
 

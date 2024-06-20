@@ -13,7 +13,7 @@
 
 #include <immintrin.h>
 #include <stdint.h>
-#include "EbInvTransforms.h"
+#include "inv_transforms.h"
 
 #ifdef __cplusplus
 extern "C" {

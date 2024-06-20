@@ -25,7 +25,7 @@
 #include "YuvVideoSource.h"
 #include "DummyVideoSource.h"
 #include "gtest/gtest.h"
-#include "EbDefinitions.h"
+#include "definitions.h"
 #include "RefDecoder.h"
 #include "SvtAv1E2EFramework.h"
 #include "CompareTools.h"

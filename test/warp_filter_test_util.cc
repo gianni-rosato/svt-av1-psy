@@ -9,9 +9,9 @@
  * source code in the PATENTS file, you can obtain it at
  * https://www.aomedia.org/license/patent-license.
  */
-#include "EbDefinitions.h"
-#include "EbUnitTestUtility.h"
-#include "EbWarpedMotion.h"
+#include "definitions.h"
+#include "unit_test_utility.h"
+#include "warped_motion.h"
 #include "warp_filter_test_util.h"
 #include "convolve.h"
 

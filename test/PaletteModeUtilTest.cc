@@ -26,11 +26,11 @@
 #include <vector>
 
 #include "gtest/gtest.h"
-#include "EbDefinitions.h"
-#include "EbUtility.h"
+#include "definitions.h"
+#include "utility.h"
 #include "random.h"
 #include "util.h"
-#include "EbTime.h"
+#include "svt_time.h"
 #include "aom_dsp_rtcd.h"
 
 using std::tuple;

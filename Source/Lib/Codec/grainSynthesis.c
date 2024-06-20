@@ -18,7 +18,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include "grainSynthesis.h"
-#include "EbLog.h"
+#include "svt_log.h"
 
 // Samples with Gaussian distribution in the range of [-2048, 2047] (12 bits)
 // with zero mean and standard deviation of about 512.

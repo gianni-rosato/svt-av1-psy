@@ -10,7 +10,7 @@
 */
 
 #include "picture_operators_c.h"
-#include "EbUtility.h"
+#include "utility.h"
 #include "common_dsp_rtcd.h"
 /*********************************
 * Picture Average

@@ -13,7 +13,7 @@
 #define AOM_DSP_X86_SYNONYMS_H_
 
 #include <immintrin.h>
-#include "EbDefinitions.h"
+#include "definitions.h"
 #include "common_dsp_rtcd.h"
 //#define EB_TEST_SIMD_ALIGN
 

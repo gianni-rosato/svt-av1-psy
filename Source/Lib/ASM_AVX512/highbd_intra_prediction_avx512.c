@@ -9,13 +9,13 @@
 * PATENTS file, you can obtain it at https://www.aomedia.org/license/patent-license.
 */
 
-#include "EbDefinitions.h"
+#include "definitions.h"
 
 #if EN_AVX512_SUPPORT
 #include <immintrin.h>
 #include "highbd_intra_prediction_sse2.h"
 #include "common_dsp_rtcd.h"
-#include "EbIntraPrediction.h"
+#include "intra_prediction.h"
 #include "synonyms_avx512.h"
 
 #define FOUR 4U

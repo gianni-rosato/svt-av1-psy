@@ -30,13 +30,13 @@
  *
  ******************************************************************************/
 #include "gtest/gtest.h"
-#include "EbDefinitions.h"
-#include "EbUtility.h"
+#include "definitions.h"
+#include "utility.h"
 #include "aom_dsp_rtcd.h"
 #include "random.h"
 #include "convolve.h"
 #include "util.h"
-#include "EbEncInterPrediction.h"
+#include "enc_inter_prediction.h"
 
 using std::make_tuple;
 using svt_av1_test_tool::SVTRandom;

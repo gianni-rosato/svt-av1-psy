@@ -16,8 +16,8 @@
 #define AOM_DSP_RTCD_H_
 
 #include "common_dsp_rtcd.h"
-#include "EbDefinitions.h"
-#include "EbCodingUnit.h"
+#include "definitions.h"
+#include "coding_unit.h"
 
 #include "noise_model.h"
 

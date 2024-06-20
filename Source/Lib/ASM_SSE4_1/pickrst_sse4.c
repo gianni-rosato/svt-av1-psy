@@ -14,8 +14,8 @@
 
 #include "aom_dsp_rtcd.h"
 #include "transpose_sse2.h"
-#include "EbRestoration.h"
-#include "EbUtility.h"
+#include "restoration.h"
+#include "utility.h"
 #include "picture_operators_sse2.h"
 
 #define WIN_3TAP ((WIENER_WIN_3TAP - 1) * 2)

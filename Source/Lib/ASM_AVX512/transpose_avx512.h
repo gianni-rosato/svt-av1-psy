@@ -13,7 +13,7 @@
 #ifndef AOM_DSP_X86_TRANSPOSE_AVX512_H_
 #define AOM_DSP_X86_TRANSPOSE_AVX512_H_
 
-#include "EbDefinitions.h"
+#include "definitions.h"
 #include <immintrin.h> // AVX2
 
 #define TRANSPOSE_4X4_AVX512(x0, x1, x2, x3, y0, y1, y2, y3) \

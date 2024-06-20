@@ -11,7 +11,7 @@
 
 #include <immintrin.h>
 
-#include "EbDefinitions.h"
+#include "definitions.h"
 #include "fft_common.h"
 
 extern void svt_aom_transpose_float_sse2(const float *A, float *b, int32_t n);

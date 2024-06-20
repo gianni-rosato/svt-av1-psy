@@ -11,7 +11,7 @@
 
 #include "picture_operators_sse2.h"
 #include <emmintrin.h>
-#include "EbDefinitions.h"
+#include "definitions.h"
 
 /******************************************************************************************************
                                        svt_residual_kernel16bit_sse2_intrin

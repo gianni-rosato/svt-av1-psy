@@ -9,8 +9,8 @@
 * PATENTS file, you can obtain it at https://www.aomedia.org/license/patent-license.
 */
 
-//#include "EbUtility.h"
-#include "EbDefinitions.h"
+//#include "utility.h"
+#include "definitions.h"
 #include "common_dsp_rtcd.h"
 #define FILTER_INTRA_SCALE_BITS 4
 

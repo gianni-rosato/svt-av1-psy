@@ -11,12 +11,12 @@
 
 #include <immintrin.h> /* AVX2 */
 
-#include "EbDefinitions.h"
+#include "definitions.h"
 #include "synonyms.h"
 #include "synonyms_avx2.h"
 
-#include "EbCabacContextModel.h"
-#include "EbFullLoop.h"
+#include "cabac_context_model.h"
+#include "full_loop.h"
 
 static INLINE __m256i txb_init_levels_avx2(const TranLow *const coeff) {
     const __m256i idx   = _mm256_setr_epi32(0, 4, 1, 5, 2, 6, 3, 7);

@@ -21,10 +21,10 @@
 #include <stdlib.h>
 
 #include "gtest/gtest.h"
-#include "EbDefinitions.h"
-#include "EbTransforms.h"
+#include "definitions.h"
+#include "transforms.h"
 #include "TxfmCommon.h"
-#include "EbCabacContextModel.h"  // use tx_type_to_class
+#include "cabac_context_model.h"  // use tx_type_to_class
 #include "util.h"
 #include "random.h"
 

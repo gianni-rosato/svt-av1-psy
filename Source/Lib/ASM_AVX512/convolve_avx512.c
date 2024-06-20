@@ -9,7 +9,7 @@
 * PATENTS file, you can obtain it at https://www.aomedia.org/license/patent-license.
 */
 
-#include "EbDefinitions.h"
+#include "definitions.h"
 
 #if EN_AVX512_SUPPORT
 
@@ -18,7 +18,7 @@
 #include "convolve.h"
 #include "convolve_avx2.h"
 #include "convolve_avx512.h"
-#include "EbInterPrediction.h"
+#include "inter_prediction.h"
 #include "memory_avx2.h"
 #include "synonyms.h"
 

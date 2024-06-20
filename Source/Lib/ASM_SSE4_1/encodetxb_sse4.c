@@ -12,12 +12,12 @@
 #include <emmintrin.h> // SSE2
 #include <smmintrin.h> /* SSE4.1 */
 
-#include "EbDefinitions.h"
+#include "definitions.h"
 #include "synonyms.h"
 
-#include "EbCabacContextModel.h"
-#include "EbFullLoop.h"
-#include "EbMotionEstimation.h" //svt_aom_downsample_2d_c()
+#include "cabac_context_model.h"
+#include "full_loop.h"
+#include "motion_estimation.h" //svt_aom_downsample_2d_c()
 
 void svt_av1_txb_init_levels_sse4_1(const TranLow *const coeff, const int32_t width, const int32_t height,
                                     uint8_t *const levels) {

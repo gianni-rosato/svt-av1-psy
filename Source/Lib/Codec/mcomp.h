@@ -13,11 +13,11 @@
 #define AOM_AV1_ENCODER_MCOMP_H_
 
 #include "mv.h"
-#include "EbCodingUnit.h"
-#include "EbBlockStructures.h"
-#include "Av1Common.h"
+#include "coding_unit.h"
+#include "block_structures.h"
+#include "av1_common.h"
 #include "av1me.h"
-#include "EbRateDistortionCost.h"
+#include "rate_distortion_cost.h"
 
 #ifdef __cplusplus
 extern "C" {

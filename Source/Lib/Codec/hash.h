@@ -12,7 +12,7 @@
 #ifndef AOM_AV1_ENCODER_HASH_H_
 #define AOM_AV1_ENCODER_HASH_H_
 
-#include "EbDefinitions.h"
+#include "definitions.h"
 
 #ifdef __cplusplus
 extern "C" {

@@ -33,11 +33,11 @@
 #include <limits.h>
 #include <new>
 
-#include "EbDefinitions.h"
+#include "definitions.h"
 #include "pack_unpack_c.h"
-#include "EbEncIntraPrediction.h"
-#include "EbUnitTestUtility.h"
-#include "EbUtility.h"
+#include "enc_intra_prediction.h"
+#include "unit_test_utility.h"
+#include "utility.h"
 #include "random.h"
 #include "util.h"
 #include "common_dsp_rtcd.h"

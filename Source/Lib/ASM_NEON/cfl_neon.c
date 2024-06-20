@@ -9,7 +9,7 @@
  * PATENTS file, you can obtain it at www.aomedia.org/license/patent.
  */
 #include <arm_neon.h>
-#include "EbDefinitions.h"
+#include "definitions.h"
 
 /* Store half of a vector. */
 static INLINE void vsth_u8(uint8_t *ptr, uint8x8_t val) { vst1_lane_u32((uint32_t *)ptr, vreinterpret_u32_u8(val), 0); }

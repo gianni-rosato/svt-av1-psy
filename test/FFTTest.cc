@@ -29,7 +29,7 @@
 #include "gtest/gtest.h"
 #include "random.h"
 #include "util.h"
-#include "EbUtility.h"
+#include "utility.h"
 #include "aom_dsp_rtcd.h"
 
 using svt_av1_test_tool::SVTRandom;

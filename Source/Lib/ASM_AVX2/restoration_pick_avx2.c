@@ -9,8 +9,8 @@
 * PATENTS file, you can obtain it at https://www.aomedia.org/license/patent-license.
 */
 
-#include "EbDefinitions.h"
-#include "EbRestoration.h"
+#include "definitions.h"
+#include "restoration.h"
 #include <immintrin.h>
 #include <math.h>
 

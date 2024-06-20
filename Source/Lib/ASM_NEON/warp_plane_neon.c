@@ -14,9 +14,9 @@
 #include <memory.h>
 #include <math.h>
 
-#include "EbDefinitions.h"
+#include "definitions.h"
 #include "transpose_neon.h"
-#include "EbWarpedMotion.h"
+#include "warped_motion.h"
 #include "convolve.h"
 #include "sum_neon.h"
 

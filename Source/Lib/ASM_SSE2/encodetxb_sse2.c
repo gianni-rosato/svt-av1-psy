@@ -12,10 +12,10 @@
 #include <assert.h>
 #include <emmintrin.h> // SSE2
 #include <stdint.h>
-#include "EbDefinitions.h"
-#include "EbCabacContextModel.h"
-#include "EbCommonUtils.h"
-#include "EbFullLoop.h"
+#include "definitions.h"
+#include "cabac_context_model.h"
+#include "common_utils.h"
+#include "full_loop.h"
 
 static INLINE __m128i loadh_epi64(const void *const src, const __m128i s) {
     return _mm_castps_si128(_mm_loadh_pi(_mm_castsi128_ps(s), (const __m64 *)src));

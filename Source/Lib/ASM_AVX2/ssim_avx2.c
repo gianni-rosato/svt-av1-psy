@@ -10,7 +10,7 @@
  */
 
 #include <immintrin.h>
-#include "EbDefinitions.h"
+#include "definitions.h"
 
 #ifndef _mm_loadu_si32
 #define _mm_loadu_si32(p) _mm_cvtsi32_si128(*(unsigned int const *)(p))

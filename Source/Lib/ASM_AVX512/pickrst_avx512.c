@@ -9,7 +9,7 @@
 * PATENTS file, you can obtain it at https://www.aomedia.org/license/patent-license.
 */
 
-#include "EbDefinitions.h"
+#include "definitions.h"
 
 #if EN_AVX512_SUPPORT
 
@@ -17,8 +17,8 @@
 #include "synonyms.h"
 #include "aom_dsp_rtcd.h"
 #include "picture_operators_inline_avx2.h"
-#include "EbRestoration.h"
-#include "EbUtility.h"
+#include "restoration.h"
+#include "utility.h"
 #include "pickrst_avx2.h"
 #include "synonyms_avx512.h"
 #include "transpose_sse2.h"

@@ -13,8 +13,8 @@
 #define AOM_DSP_X86_CONVOLVE_AVX2_H_
 
 #include "convolve.h"
-#include "EbDefinitions.h"
-#include "EbInterPrediction.h"
+#include "definitions.h"
+#include "inter_prediction.h"
 #include "memory_avx2.h"
 #include "memory_sse4_1.h"
 #include "synonyms.h"

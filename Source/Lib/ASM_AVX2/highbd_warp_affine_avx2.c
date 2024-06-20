@@ -10,7 +10,7 @@
  */
 #include <immintrin.h>
 #include "common_dsp_rtcd.h"
-#include "EbWarpedMotion.h"
+#include "warped_motion.h"
 
 static INLINE __m256i load_2buffers(const uint8_t *ref8b_a, const uint8_t *ref2b_a, const uint8_t *ref8b_b,
                                     const uint8_t *ref2b_b) {

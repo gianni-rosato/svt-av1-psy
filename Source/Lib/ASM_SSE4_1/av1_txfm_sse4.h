@@ -13,7 +13,7 @@
 #define AV1_TXFM_SSE4_H_
 
 #include <smmintrin.h>
-#include "EbTransforms.h"
+#include "transforms.h"
 
 #ifdef __cplusplus
 extern "C" {

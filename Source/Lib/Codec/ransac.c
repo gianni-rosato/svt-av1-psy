@@ -17,7 +17,7 @@
 #include "mathutils.h"
 #include "random.h"
 #include "common_dsp_rtcd.h"
-#include "EbUtility.h"
+#include "utility.h"
 
 #define MAX_MINPTS 4
 #define MAX_DEGENERATE_ITER 10

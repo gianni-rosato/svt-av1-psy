@@ -12,10 +12,10 @@
 #ifndef AOM_AV1_ENCODER_HASH_MOTION_H_
 #define AOM_AV1_ENCODER_HASH_MOTION_H_
 
-#include "EbDefinitions.h"
-#include "EbCodingUnit.h"
+#include "definitions.h"
+#include "coding_unit.h"
 #include "vector.h"
-#include "EbPictureBufferDesc.h"
+#include "picture_buffer_desc.h"
 
 #ifdef __cplusplus
 extern "C" {

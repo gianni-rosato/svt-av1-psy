@@ -13,7 +13,7 @@
 #include <assert.h>
 #include "common_dsp_rtcd.h"
 #include "mem_neon.h"
-#include "EbDefinitions.h"
+#include "definitions.h"
 
 static INLINE uint8x16_t alpha_blend_a64_u8x16(uint8x16_t m, uint8x16_t a, uint8x16_t b) {
     uint16x8_t       blend_u16_lo, blend_u16_hi;

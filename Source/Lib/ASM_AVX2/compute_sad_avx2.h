@@ -12,7 +12,7 @@
 #ifndef EbComputeSAD_AVX2_h
 #define EbComputeSAD_AVX2_h
 
-#include "EbDefinitions.h"
+#include "definitions.h"
 #ifdef __cplusplus
 extern "C" {
 #endif

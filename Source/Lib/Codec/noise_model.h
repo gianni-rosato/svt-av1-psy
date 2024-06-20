@@ -18,8 +18,8 @@ extern "C" {
 
 #include <stdint.h>
 #include "grainSynthesis.h"
-#include "EbPictureBufferDesc.h"
-#include "EbObject.h"
+#include "picture_buffer_desc.h"
+#include "object.h"
 
 #define DENOISING_BlockSize 32
 

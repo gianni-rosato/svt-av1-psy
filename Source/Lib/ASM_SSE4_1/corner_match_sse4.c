@@ -11,7 +11,7 @@
 
 #include <smmintrin.h>
 #include "corner_match.h"
-#include "EbDefinitions.h"
+#include "definitions.h"
 
 DECLARE_ALIGNED(16, const uint8_t, svt_aom_compute_cross_byte_mask[8][16]) = {
     {255, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, //1x1

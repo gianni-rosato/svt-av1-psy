@@ -10,11 +10,11 @@
  */
 
 #include <arm_neon.h>
-#include "EbDefinitions.h"
-#include "EbCabacContextModel.h"
-#include "EbCommonUtils.h"
-#include "EbFullLoop.h"
-#include "EbMotionEstimation.h" //svt_aom_downsample_2d_c()
+#include "definitions.h"
+#include "cabac_context_model.h"
+#include "common_utils.h"
+#include "full_loop.h"
+#include "motion_estimation.h" //svt_aom_downsample_2d_c()
 
 void svt_av1_txb_init_levels_neon(const TranLow *const coeff, const int32_t width, const int32_t height,
                                   uint8_t *const levels) {

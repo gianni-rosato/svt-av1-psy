@@ -13,11 +13,11 @@
 #include <assert.h>
 #include <smmintrin.h> /* SSE4.1 */
 
-#include "EbDefinitions.h"
+#include "definitions.h"
 #include "common_dsp_rtcd.h"
 
 #include "highbd_txfm_utility_sse4.h"
-#include "EbInvTransforms.h"
+#include "inv_transforms.h"
 
 #include "av1_inv_txfm_ssse3.h"
 

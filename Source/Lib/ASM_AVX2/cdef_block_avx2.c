@@ -11,9 +11,9 @@
 
 #include <immintrin.h>
 #include "common_dsp_rtcd.h"
-#include "EbBitstreamUnit.h"
-#include "EbCdef.h"
-#include "EbDefinitions.h"
+#include "bitstream_unit.h"
+#include "cdef.h"
+#include "definitions.h"
 #include "memory_avx2.h"
 
 /* partial A is a 16-bit vector of the form:

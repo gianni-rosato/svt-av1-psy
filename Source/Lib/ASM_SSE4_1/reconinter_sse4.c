@@ -12,7 +12,7 @@
 #include <emmintrin.h> // SSE2
 #include <smmintrin.h> /* SSE4.1 */
 
-#include "EbDefinitions.h"
+#include "definitions.h"
 
 static INLINE __m128i calc_mask(const __m128i mask_base, const __m128i s0, const __m128i s1) {
     const __m128i diff = _mm_abs_epi16(_mm_sub_epi16(s0, s1));

@@ -13,7 +13,7 @@
 #define AOM_AOM_DSP_ARM_MEM_NEON_H_
 
 #include <arm_neon.h>
-#include "EbDefinitions.h"
+#include "definitions.h"
 #include "convolve.h"
 
 typedef int32_t tran_low_t;

@@ -10,7 +10,7 @@
  */
 
 #include <arm_neon.h>
-#include "EbDefinitions.h"
+#include "definitions.h"
 #include "mem_neon.h"
 #include "transpose_neon.h"
 

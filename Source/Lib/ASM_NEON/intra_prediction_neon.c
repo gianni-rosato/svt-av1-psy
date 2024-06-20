@@ -11,11 +11,11 @@
 
 #include <arm_neon.h>
 #include <assert.h>
-#include "EbDefinitions.h"
+#include "definitions.h"
 #include "mem_neon.h"
 #include "sum_neon.h"
 
-#include "EbIntraPrediction.h"
+#include "intra_prediction.h"
 
 /* ---------------------P R E D I C T I O N   Z 1--------------------------- */
 static INLINE void dr_prediction_z1_HxW_internal_neon_64(int H, int W, uint8x8_t *dst, const uint8_t *above,

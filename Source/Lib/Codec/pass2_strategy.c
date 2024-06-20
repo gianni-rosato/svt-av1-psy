@@ -17,13 +17,13 @@
 /*! @} - end defgroup gf_group_algo */
 #include <stdint.h>
 
-#include "EbDefinitions.h"
+#include "definitions.h"
 #include "level.h"
 #include "pass2_strategy.h"
-#include "EbRateControlProcess.h"
+#include "rate_control_process.h"
 #include "firstpass.h"
-#include "EbSequenceControlSet.h"
-#include "EbEntropyCoding.h"
+#include "sequence_control_set.h"
+#include "entropy_coding.h"
 
 static void init_gf_stats(GF_GROUP_STATS *gf_stats);
 // Calculate a modified Error used in distributing bits between easier and

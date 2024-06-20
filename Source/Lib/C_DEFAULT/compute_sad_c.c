@@ -10,7 +10,7 @@
 */
 
 #include "compute_sad_c.h"
-#include "EbUtility.h"
+#include "utility.h"
 /*******************************************
 *   returns NxM Sum of Absolute Differences
 Note: moved from picture operators.

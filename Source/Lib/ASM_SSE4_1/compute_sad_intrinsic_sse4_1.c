@@ -11,12 +11,12 @@
 
 #include <assert.h>
 
-#include "EbDefinitions.h"
+#include "definitions.h"
 #include "compute_sad_c.h"
-#include "EbUtility.h"
+#include "utility.h"
 #include <smmintrin.h>
 
-#include "EbComputeSAD.h"
+#include "compute_sad.h"
 #include "mcomp.h"
 
 #define UPDATE_BEST(s, k, offset)      \

@@ -9,7 +9,7 @@
 * PATENTS file, you can obtain it at www.aomedia.org/license/patent.
 */
 
-#include "EbDefinitions.h"
+#include "definitions.h"
 #include "mem_neon.h"
 #include "filter.h"
 #include "transpose_neon.h"

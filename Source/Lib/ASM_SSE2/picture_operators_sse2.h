@@ -13,7 +13,7 @@
 #define EbPictureOperators_SSE2_h
 
 #include <emmintrin.h>
-#include "EbDefinitions.h"
+#include "definitions.h"
 
 #ifdef __cplusplus
 extern "C" {

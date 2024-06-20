@@ -10,8 +10,8 @@
 */
 
 #include <tmmintrin.h>
-#include "EbDefinitions.h"
-#include "EbIntraPrediction.h"
+#include "definitions.h"
+#include "intra_prediction.h"
 #include "common_dsp_rtcd.h"
 
 // =============================================================================

@@ -14,7 +14,7 @@
 #define AOM_DSP_X86_TRANSPOSE_AVX2_H_
 
 #include <immintrin.h> // AVX2
-#include "EbDefinitions.h"
+#include "definitions.h"
 
 static INLINE __m256i _mm256_unpacklo_epi128(const __m256i in0, const __m256i in1) {
     return _mm256_inserti128_si256(in0, _mm256_castsi256_si128(in1), 1);

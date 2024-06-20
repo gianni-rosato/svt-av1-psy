@@ -21,11 +21,11 @@
 #include <math.h>
 #include <stdlib.h>
 #include <random>
-#include "EbCabacContextModel.h"
-#include "EbBitstreamUnit.h"
+#include "cabac_context_model.h"
+#include "bitstream_unit.h"
 #include "bitreader.h"
-#include "EbDefinitions.h"
-#include "EbPictureBufferDesc.h"
+#include "definitions.h"
+#include "picture_buffer_desc.h"
 #include "gtest/gtest.h"
 #include "random.h"
 

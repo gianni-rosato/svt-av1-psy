@@ -9,10 +9,10 @@
  * PATENTS file, you can obtain it at www.aomedia.org/license/patent.
  */
 
-#include "EbDefinitions.h"
+#include "definitions.h"
 #include "common_dsp_rtcd.h"
 
-#include "EbInvTransforms.h"
+#include "inv_transforms.h"
 #include "transpose_neon.h"
 #include "itx_lbd_neon.h"
 #include "av1_inv_txfm_neon.h"

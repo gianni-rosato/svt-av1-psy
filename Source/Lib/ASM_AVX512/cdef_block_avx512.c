@@ -9,13 +9,13 @@
 * PATENTS file, you can obtain it at https://www.aomedia.org/license/patent-license.
 */
 
-#include "EbDefinitions.h"
+#include "definitions.h"
 
 #if EN_AVX512_SUPPORT
 #include <immintrin.h>
 #include "common_dsp_rtcd.h"
-#include "EbBitstreamUnit.h"
-#include "EbCdef.h"
+#include "bitstream_unit.h"
+#include "cdef.h"
 #include "memory_avx2.h"
 
 static INLINE __m512i loadu_u16_8x4_avx512(const uint16_t *const src, const uint32_t stride) {

@@ -12,13 +12,13 @@
 
 #include "gtest/gtest.h"
 #include "aom_dsp_rtcd.h"
-#include "EbDefinitions.h"
+#include "definitions.h"
 #include "compute_sad_avx2.h"
 #include "compute_sad_c.h"
-#include "EbMeSadCalculation.h"
-#include "EbMotionEstimation.h"
-#include "EbUnitTest.h"
-#include "EbUnitTestUtility.h"
+#include "me_sad_calculation.h"
+#include "motion_estimation.h"
+#include "unit_test.h"
+#include "unit_test_utility.h"
 
 static const int num_sad = 22;
 

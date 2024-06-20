@@ -12,7 +12,7 @@
 #ifndef AOM_AV1_ENCODER_LEVEL_H_
 #define AOM_AV1_ENCODER_LEVEL_H_
 
-#include "EbDefinitions.h"
+#include "definitions.h"
 
 enum {
     SEQ_LEVEL_2_0,

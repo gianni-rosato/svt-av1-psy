@@ -12,10 +12,10 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "EbDefinitions.h"
+#include "definitions.h"
 #include "noise_util.h"
 #include "aom_dsp_rtcd.h"
-#include "EbLog.h"
+#include "svt_log.h"
 
 void *svt_aom_memalign(size_t align, size_t size);
 void  svt_aom_free(void *memblk);

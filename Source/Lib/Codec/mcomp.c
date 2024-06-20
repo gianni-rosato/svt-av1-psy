@@ -14,12 +14,12 @@
 #include <stdio.h>
 #include "mcomp.h"
 #include "mv.h"
-#include "Av1Common.h"
-#include "EbCodingUnit.h"
-#include "EbBlockStructures.h"
+#include "av1_common.h"
+#include "coding_unit.h"
+#include "block_structures.h"
 #include "av1me.h"
 #include "aom_dsp_rtcd.h"
-#include "EbRateDistortionCost.h"
+#include "rate_distortion_cost.h"
 // ============================================================================
 //  Cost of motion vectors
 // ============================================================================

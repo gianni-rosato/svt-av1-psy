@@ -12,7 +12,7 @@
 #ifndef EbDeblockingFilter_SSE2_h
 #define EbDeblockingFilter_SSE2_h
 
-#include "EbDefinitions.h"
+#include "definitions.h"
 
 #ifdef __cplusplus
 extern "C" {

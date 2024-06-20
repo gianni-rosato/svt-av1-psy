@@ -27,11 +27,11 @@
 #include <limits.h>
 #include <new>
 
-#include "EbDefinitions.h"
-#include "EbPictureOperators.h"
-#include "EbEncIntraPrediction.h"
-#include "EbUtility.h"
-#include "EbUnitTestUtility.h"
+#include "definitions.h"
+#include "picture_operators.h"
+#include "enc_intra_prediction.h"
+#include "utility.h"
+#include "unit_test_utility.h"
 #include "aom_dsp_rtcd.h"
 #include "random.h"
 #include "util.h"

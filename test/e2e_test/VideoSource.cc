@@ -19,7 +19,7 @@
  *
  ******************************************************************************/
 #include <stdio.h>
-#include "EbDefinitions.h"
+#include "definitions.h"
 #include "VideoSource.h"
 #include "random.h"
 
