@@ -18,7 +18,7 @@
 #include "synonyms.h"
 #include "synonyms_avx2.h"
 #include "convolve_avx2.h"
-#include "EbBlend_sse4.h"
+#include "blend_sse4.h"
 
 #include "common_dsp_rtcd.h"
 #include "mc.h"

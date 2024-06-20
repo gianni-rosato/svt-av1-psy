@@ -13,7 +13,7 @@
 #include <immintrin.h> /* AVX2 */
 
 #include "EbDefinitions.h"
-#include "./../ASM_SSE4_1/EbTemporalFiltering_constants.h"
+#include "temporal_filtering_constants.h"
 #include "EbUtility.h"
 
 /*value [i:0-15] (sqrt((float)i)*65536.0*/

@@ -28,32 +28,32 @@ if(CMAKE_C_COMPILER_ID STREQUAL "Intel" AND NOT WIN32)
 endif()
 
 set(all_files
-    EbCdef_sse4.c
-    EbComputeSAD_Intrinsic_SSE4_1.c
-    EbTemporalFiltering_SSE4_1.c
-    EbTemporalFiltering_constants.h
+    av1_convolve_scale_sse4.c
     av1_quantize_sse4_1.c
-    av1_txfm1d_sse4.h
     av1_txfm_sse4.h
+    av1_txfm1d_sse4.h
+    blend_a64_mask_sse4.c
+    blend_sse4.h
+    cdef_block_sse4_1.c
+    cdef_sse4.c
+    compute_sad_intrinsic_sse4_1.c
     corner_match_sse4.c
     encodetxb_sse4.c
-    highbd_fwd_txfm_sse4.c
-    obmc_variance_sse4.c
-    pickrst_sse4.c
-    EbBlend_a64_mask_sse4.c
-    EbBlend_sse4.h
-    EbIntraPrediction16bit_Intrinsic_SSE4_1.c
-    EbMemory_SSE4_1.h
-    EbPictureOperators_Intrinsic_SSE4_1.c
-    av1_convolve_scale_sse4.c
-    cdef_block_sse4_1.c
     filterintra_sse4.c
     highbd_convolve_2d_sse4.c
+    highbd_fwd_txfm_sse4.c
     highbd_inv_txfm_sse4.c
     highbd_jnt_convolve_sse4.c
     highbd_txfm_utility_sse4.h
+    intra_prediction16bit_intrinsic_sse4_1.c
+    memory_sse4_1.h
+    obmc_variance_sse4.c
+    pickrst_sse4.c
+    picture_operators_intrinsic_sse4_1.c
     reconinter_sse4.c
     selfguided_sse4.c
+    temporal_filtering_constants.h
+    temporal_filtering_sse4_1.c
     warp_plane_sse4.c
     )
 

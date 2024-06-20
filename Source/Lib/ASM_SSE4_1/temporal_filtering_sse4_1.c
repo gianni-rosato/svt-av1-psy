@@ -14,7 +14,7 @@
 #include <emmintrin.h>
 
 #include "EbDefinitions.h"
-#include "EbTemporalFiltering_constants.h"
+#include "temporal_filtering_constants.h"
 #include "EbUtility.h"
 
 /*value [i:0-15] (sqrt((float)i)*65536.0*/

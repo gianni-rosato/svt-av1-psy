@@ -14,7 +14,7 @@
 #include "convolve.h"
 #include "convolve_avx2.h"
 #include "EbDefinitions.h"
-#include "EbMemory_SSE4_1.h"
+#include "memory_sse4_1.h"
 
 static void jnt_convolve_2d_hor_2tap_avx2(const uint8_t *src, const int32_t src_stride, const int32_t w,
                                           const int32_t h, const InterpFilterParams *filter_params_x,

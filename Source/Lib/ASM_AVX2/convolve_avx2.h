@@ -16,7 +16,7 @@
 #include "EbDefinitions.h"
 #include "EbInterPrediction.h"
 #include "memory_avx2.h"
-#include "EbMemory_SSE4_1.h"
+#include "memory_sse4_1.h"
 #include "synonyms.h"
 
 #define LEFT_SHIFT (2 * FILTER_BITS - 3 - COMPOUND_ROUND1_BITS)

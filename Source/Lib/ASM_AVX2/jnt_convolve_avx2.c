@@ -14,7 +14,7 @@
 #include "convolve.h"
 #include "convolve_avx2.h"
 #include "EbDefinitions.h"
-#include "EbMemory_SSE4_1.h"
+#include "memory_sse4_1.h"
 
 SIMD_INLINE void jnt_y_comp_avg_2tap_32_avx2(const uint8_t *const src, const __m256i *const coeffs,
                                              const __m256i factor, const __m256i offset, const __m256i s0,
