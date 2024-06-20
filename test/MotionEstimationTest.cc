@@ -13,7 +13,7 @@
 #include "gtest/gtest.h"
 #include "aom_dsp_rtcd.h"
 #include "EbDefinitions.h"
-#include "EbComputeSAD_AVX2.h"
+#include "compute_sad_avx2.h"
 #include "EbComputeSAD_C.h"
 #include "EbMeSadCalculation.h"
 #include "EbMotionEstimation.h"

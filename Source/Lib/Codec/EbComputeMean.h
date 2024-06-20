@@ -12,8 +12,6 @@
 #ifndef EbComputeMean_h
 #define EbComputeMean_h
 
-//#include "EbComputeMean_SSE2.h"
-//#include "EbCombinedAveragingSAD_Intrinsic_AVX2.h"
 #include "EbDefinitions.h"
 
 #ifdef __cplusplus

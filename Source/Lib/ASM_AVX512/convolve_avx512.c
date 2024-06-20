@@ -19,7 +19,7 @@
 #include "convolve_avx2.h"
 #include "convolve_avx512.h"
 #include "EbInterPrediction.h"
-#include "EbMemory_AVX2.h"
+#include "memory_avx2.h"
 #include "synonyms.h"
 
 static INLINE __m512i sr_x_round_avx512(const __m512i src) {

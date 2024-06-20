@@ -11,7 +11,7 @@
 
 #include <immintrin.h>
 #include "EbDefinitions.h"
-#include "EbMemory_AVX2.h"
+#include "memory_avx2.h"
 #include "common_dsp_rtcd.h"
 #include "EbInterPrediction.h"
 #include "EbResize.h"

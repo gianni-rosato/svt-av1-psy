@@ -9,7 +9,7 @@
 * PATENTS file, you can obtain it at https://www.aomedia.org/license/patent-license.
 */
 #include "EbDefinitions.h"
-#include "EbMcp_SSE2.h" // THIS SHOULD BE _SSE2 in the future
+#include "mcp_sse2.h" // THIS SHOULD BE _SSE2 in the future
 #include <emmintrin.h>
 #include "common_dsp_rtcd.h"
 

@@ -11,7 +11,7 @@
 
 #include "EbDefinitions.h"
 #include <immintrin.h>
-#include "EbPictureOperators_Inline_AVX2.h"
+#include "picture_operators_inline_avx2.h"
 
 #include "EbPackUnPack_C.h"
 

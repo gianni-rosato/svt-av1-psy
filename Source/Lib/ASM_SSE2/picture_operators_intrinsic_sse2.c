@@ -9,7 +9,7 @@
 * PATENTS file, you can obtain it at https://www.aomedia.org/license/patent-license.
 */
 
-#include "EbPictureOperators_SSE2.h"
+#include "picture_operators_sse2.h"
 #include <emmintrin.h>
 #include "EbDefinitions.h"
 

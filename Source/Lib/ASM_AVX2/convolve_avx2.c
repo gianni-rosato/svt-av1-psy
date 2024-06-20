@@ -15,7 +15,7 @@
 #include "convolve.h"
 #include "convolve_avx2.h"
 #include "EbInterPrediction.h"
-#include "EbMemory_AVX2.h"
+#include "memory_avx2.h"
 #include "synonyms.h"
 #include "synonyms_avx2.h"
 #include "EbUtility.h"

@@ -11,7 +11,7 @@
 
 #include <smmintrin.h>
 #include "common_dsp_rtcd.h"
-#include "EbPictureOperators_SSE2.h"
+#include "picture_operators_sse2.h"
 #include "synonyms.h"
 #include "EbPackUnPack_C.h"
 

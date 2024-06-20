@@ -16,7 +16,7 @@
 #include <immintrin.h>
 #include "aom_dsp_rtcd.h"
 #include "EbCdef.h"
-#include "EbMemory_AVX2.h"
+#include "memory_avx2.h"
 #include "synonyms_avx512.h"
 
 uint64_t svt_search_one_dual_avx512(int *lev0, int *lev1, int nb_strengths, uint64_t **mse[2], int sb_count,

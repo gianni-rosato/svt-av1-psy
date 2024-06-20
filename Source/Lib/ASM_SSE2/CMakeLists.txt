@@ -25,45 +25,46 @@ if(CMAKE_C_COMPILER_ID STREQUAL "Intel" AND NOT WIN32)
 endif()
 
 set(all_files
-    EbComputeMean_Intrinsic_SSE2.c
-    EbComputeMean_SSE2.h
-    EbMeSadCalculation_Intrinsic_SSE2.c
-    EbVariance_SSE2.h
-    encodetxb_sse2.c
-    fft_sse2.c
-    highbd_variance_sse2.c
-    variance_sse2.c
-    EbAvcStyleMcp_Intrinsic_SSE2.c
-    EbDeblockingFilter_Intrinsic_SSE2.c
-    EbDeblockingFilter_SSE2.h
-    EbHighbdIntraPrediction_SSE2.h
-    EbIntraPrediction_AV1_Intrinsic_SSE2.c
-    EbMcp_SSE2.h
-    EbPackUnPack_Intrinsic_SSE2.c
-    EbPictureOperators_Intrinsic_SSE2.c
-    EbPictureOperators_SSE2.h
     av1_txfm_sse2.h
+    avc_style_mcp_intrinsic_sse.c
+    compute_mean_intrinsic_sse2.c
+    compute_mean_sse2.h
     convolve_2d_sse2.c
     convolve_sse2.c
+    deblocking_filter_intrinsic_sse2.c
+    deblocking_filter_sse2.h
+    encodetxb_sse2.c
+    fft_sse2.c
+    highbd_intra_prediction_sse2.h
     highbd_intrapred_sse2.c
     highbd_subtract_sse2.c
+    highbd_variance_sse2.c
+    intra_prediction_av1_intrinsic_sse2.c
     jnt_convolve_2d_sse2.c
     jnt_convolve_sse2.c
     lpf_common_sse2.h
+    mcp_sse2.h
+    me_sad_calculation_intrinsic_sse2.c
+    pack_unpack_intrinsic_sse2.c
+    picture_operators_intrinsic_sse2.c
+    picture_operators_sse2.h
     synonyms.h
     transpose_sse2.h
+    variance_sse2.c
+    variance_sse2.h
     wiener_convolve_sse2.c
     )
 
 set(asm_files
-    highbd_variance_impl_sse2.asm
-    subpel_variance_sse2.asm
-    x64RegisterUtil.asm
-    intrapred_sse2.asm
-    EbPictureOperators_SSE2.asm
-    highbd_intrapred_sse2_.asm
     aom_subpixel_8t_sse2.asm
-    subtract_sse2.asm)
+    highbd_intrapred_sse2_.asm
+    highbd_variance_impl_sse2.asm
+    intrapred_sse2.asm
+    picture_operators_sse2.asm
+    subpel_variance_sse2.asm
+    subtract_sse2.asm
+    x64RegisterUtil.asm
+    )
 
 add_library(ASM_SSE2 OBJECT ${all_files})
 

@@ -14,8 +14,8 @@
 
 #include <immintrin.h>
 #include "EbDefinitions.h"
-#include "EbMemory_AVX2.h"
-#include "EbPictureOperators_SSE2.h"
+#include "memory_avx2.h"
+#include "picture_operators_sse2.h"
 #include "synonyms.h"
 
 #ifdef __cplusplus

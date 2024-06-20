@@ -27,7 +27,7 @@
 #include <limits.h>
 #include <new>
 
-#include "EbMcp_SSE2.h"
+#include "mcp_sse2.h"
 #include "EbEncIntraPrediction.h"
 #include "EbDefinitions.h"
 #include "random.h"

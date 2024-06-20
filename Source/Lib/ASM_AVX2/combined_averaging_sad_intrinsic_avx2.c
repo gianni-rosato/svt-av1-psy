@@ -10,7 +10,7 @@
 */
 
 #include <immintrin.h>
-#include "EbMemory_AVX2.h"
+#include "memory_avx2.h"
 #include "EbMemory_SSE4_1.h"
 /********************************************************************************************************************************/
 uint64_t svt_compute_mean8x8_avx2_intrin(uint8_t *input_samples, // input parameter, input samples Ptr

@@ -16,7 +16,7 @@
 #include "common_dsp_rtcd.h"
 #include "EbBitstreamUnit.h"
 #include "EbCdef.h"
-#include "EbMemory_AVX2.h"
+#include "memory_avx2.h"
 
 static INLINE __m512i loadu_u16_8x4_avx512(const uint16_t *const src, const uint32_t stride) {
     const __m256i s0 = loadu_u16_8x2_avx2(src + 0 * stride, stride);

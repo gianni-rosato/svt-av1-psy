@@ -11,10 +11,10 @@
 
 #include <assert.h>
 
-#include "EbComputeSAD_AVX2.h"
+#include "compute_sad_avx2.h"
 #include "EbDefinitions.h"
 #include <immintrin.h>
-#include "EbMemory_AVX2.h"
+#include "memory_avx2.h"
 #include "EbComputeSAD.h"
 #include "EbComputeSAD_C.h"
 #include "mcomp.h"

@@ -16,7 +16,7 @@
 #include "transpose_sse2.h"
 #include "EbRestoration.h"
 #include "EbUtility.h"
-#include "EbPictureOperators_SSE2.h"
+#include "picture_operators_sse2.h"
 
 #define WIN_3TAP ((WIENER_WIN_3TAP - 1) * 2)
 #define WIN_CHROMA ((WIENER_WIN_CHROMA - 1) * 2)

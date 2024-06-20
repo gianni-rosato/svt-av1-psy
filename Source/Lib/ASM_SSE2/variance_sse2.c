@@ -12,7 +12,7 @@
 #include <assert.h>
 #include <emmintrin.h> // SSE2
 #include "aom_dsp_rtcd.h"
-#include "EbVariance_SSE2.h"
+#include "variance_sse2.h"
 #include "synonyms.h"
 
 #ifdef __cplusplus

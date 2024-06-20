@@ -13,9 +13,9 @@
 
 #if EN_AVX512_SUPPORT
 #include <assert.h>
-#include "EbComputeSAD_AVX2.h"
+#include "compute_sad_avx2.h"
 #include <immintrin.h>
-#include "EbMemory_AVX2.h"
+#include "memory_avx2.h"
 #include "transpose_avx2.h"
 #include "EbUtility.h"
 #include "EbComputeSAD_C.h"

@@ -10,8 +10,6 @@
 * PATENTS file, you can obtain it at https://www.aomedia.org/license/patent-license.
 */
 
-//#include "EbDeblockingFilter_SSE2.h"
-
 #include "EbNeighborArrays.h"
 #include "EbEncDecProcess.h"
 #include "EbDlfProcess.h"

@@ -14,7 +14,7 @@
 #include <emmintrin.h>
 #include "EbDefinitions.h"
 
-#include "EbDeblockingFilter_SSE2.h"
+#include "deblocking_filter_sse2.h"
 
 /***********************************************************************************/
 // synonyms.h

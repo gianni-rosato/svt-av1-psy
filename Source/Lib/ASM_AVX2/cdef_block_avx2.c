@@ -14,7 +14,7 @@
 #include "EbBitstreamUnit.h"
 #include "EbCdef.h"
 #include "EbDefinitions.h"
-#include "EbMemory_AVX2.h"
+#include "memory_avx2.h"
 
 /* partial A is a 16-bit vector of the form:
  [x8 x7 x6 x5 x4 x3 x2 x1] and partial b has the form:

@@ -13,7 +13,7 @@
 
 #if EN_AVX512_SUPPORT
 #include <immintrin.h>
-#include "EbHighbdIntraPrediction_SSE2.h"
+#include "highbd_intra_prediction_sse2.h"
 #include "common_dsp_rtcd.h"
 #include "EbIntraPrediction.h"
 #include "synonyms_avx512.h"
