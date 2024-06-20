@@ -38,65 +38,65 @@ if(MSVC)
 endif()
 
 set(all_files
-    EbCdef_AVX2.c
-    EbCombinedAveragingSAD_Intrinsic_AVX2.c
-    EbComputeSAD_AVX2.h
-    EbComputeSAD_Intrinsic_AVX2.c
-    EbNoiseModel_avx2.c
-    EbRestorationPick_AVX2.c
-    EbTemporalFiltering_AVX2.c
-    EbTransforms_Intrinsic_AVX2.c
+    aom_subpixel_8t_intrin_avx2.c
+    av1_inv_txfm_avx2.c
+    av1_inv_txfm_avx2.h
     av1_quantize_avx2.c
+    blend_a64_mask_avx2.c
+    cdef_avx2.c
+    cdef_block_avx2.c
+    cfl_avx2.c
+    combined_averaging_sad_intrinsic_avx2.c
+    compute_sad_avx2.h
+    compute_sad_intrinsic_avx2.c
+    convolve_2d_avx2.c
+    convolve_avx2.c
+    convolve_avx2.h
     corner_match_avx2.c
     dwt_avx2.c
     encodetxb_avx2.c
     fft_avx2.c
+    highbd_convolve_2d_avx2.c
+    highbd_convolve_avx2.c
     highbd_fwd_txfm_avx2.c
+    highbd_intra_prediction_avx2.c
+    highbd_inv_txfm_avx2.c
+    highbd_jnt_convolve_avx2.c
     highbd_quantize_intrin_avx2.c
     highbd_variance_avx2.c
+    highbd_warp_affine_avx2.c
+    inter_prediction_com_avx2.c
+    intra_prediction_intrinsic_avx2.c
+    itx_hbd.h
+    itx_lbd.h
+    jnt_convolve_2d_avx2.c
+    jnt_convolve_avx2.c
+    mc.h
+    memory_avx2.h
+    noise_model_avx2.c
     obmc_sad_avx2.c
     obmc_variance_avx2.c
+    pack_unpack_intrinsic_avx2.c
     palette_avx2.c
     pickrst_avx2.c
     pickrst_avx2.h
+    picture_operators_inline_avx2.h
+    picture_operators_intrinsic_avx2.c
     resize_avx2.c
-    sse_avx2.c
-    variance_avx2.c
-    variance_impl_avx2.c
-    ssim_avx2.c
-    EbBlend_a64_mask_avx2.c
-    EbHighbdIntraPrediction_AVX2.c
-    EbInterPredictionCom_avx2.c
-    EbIntraPrediction_Intrinsic_AVX2.c
-    EbMemory_AVX2.h
-    EbPackUnPack_Intrinsic_AVX2.c
-    EbPictureOperators_Inline_AVX2.h
-    EbPictureOperators_Intrinsic_AVX2.c
-    aom_subpixel_8t_intrin_avx2.c
-    av1_inv_txfm_avx2.c
-    av1_inv_txfm_avx2.h
-    cdef_block_avx2.c
-    cfl_avx2.c
-    convolve_2d_avx2.c
-    convolve_avx2.c
-    convolve_avx2.h
-    highbd_convolve_2d_avx2.c
-    highbd_convolve_avx2.c
-    highbd_inv_txfm_avx2.c
-    highbd_jnt_convolve_avx2.c
-    highbd_warp_affine_avx2.c
-    jnt_convolve_2d_avx2.c
-    jnt_convolve_avx2.c
+    restoration_pick_avx2.c
     selfguided_avx2.c
+    sse_avx2.c
+    ssim_avx2.c
     synonyms_avx2.h
+    temporal_filtering_avx2.c
+    transforms_intrinsic_avx2.c
     transpose_avx2.h
     txfm_common_avx2.h
+    variance_avx2.c
+    variance_impl_avx2.c
     warp_plane_avx2.c
     wiener_convolve_avx2.c
     wiener_convolve_avx2.h
-    itx_lbd.h
-    itx_hbd.h
-    mc.h
     )
 
 set(asm_files
