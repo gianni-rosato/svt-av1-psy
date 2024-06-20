@@ -17,6 +17,8 @@ set(ENC_VERSION_MINOR 1)
 set(ENC_VERSION_PATCH 0)
 set(ENC_VERSION ${ENC_VERSION_MAJOR}.${ENC_VERSION_MINOR}.${ENC_VERSION_PATCH})
 
+add_library(common_lib INTERFACE)
+
 if(${CMAKE_SYSTEM_NAME} STREQUAL "Android")
     find_library(M_LIB NAMES m)
     if(M_LIB)
@@ -46,25 +48,21 @@ include_directories(${PROJECT_SOURCE_DIR}/Source/API/
     ${PROJECT_SOURCE_DIR}/Source/Lib/Codec/
     ${PROJECT_SOURCE_DIR}/Source/Lib/C_DEFAULT/
     ${PROJECT_SOURCE_DIR}/third_party/fastfeat/)
-link_directories(${PROJECT_SOURCE_DIR}/Source/Lib/Codec/
-    ${PROJECT_SOURCE_DIR}/Source/Lib/C_DEFAULT/
-    ${PROJECT_SOURCE_DIR}/Source/Lib/Globals/)
+
+add_library(SvtAv1Enc)
+# Required for cmake to be able to tell Xcode how to link all of the object files
+if(CMAKE_GENERATOR STREQUAL "Xcode")
+    file(WRITE ${PROJECT_BINARY_DIR}/dummy.c "")
+    target_sources(SvtAv1Enc PRIVATE ${PROJECT_BINARY_DIR}/dummy.c)
+endif()
 
 add_subdirectory(C_DEFAULT)
 add_subdirectory(Codec)
 add_subdirectory(Globals)
 if(NOT COMPILE_C_ONLY AND HAVE_X86_PLATFORM)
     # Include Encoder Subdirectories
-    include_directories(
+    target_include_directories(SvtAv1Enc PRIVATE
         ${PROJECT_SOURCE_DIR}/Source/Lib/ASM_SSE2/
-        ${PROJECT_SOURCE_DIR}/Source/Lib/ASM_SSSE3/
-        ${PROJECT_SOURCE_DIR}/Source/Lib/ASM_SSE4_1/
-        ${PROJECT_SOURCE_DIR}/Source/Lib/ASM_AVX2/
-        ${PROJECT_SOURCE_DIR}/Source/Lib/ASM_AVX512/)
-
-    link_directories(
-        ${PROJECT_SOURCE_DIR}/Source/Lib/ASM_SSE2/
-        ${PROJECT_SOURCE_DIR}/Source/Lib/C_DEFAULT/
         ${PROJECT_SOURCE_DIR}/Source/Lib/ASM_SSSE3/
         ${PROJECT_SOURCE_DIR}/Source/Lib/ASM_SSE4_1/
         ${PROJECT_SOURCE_DIR}/Source/Lib/ASM_AVX2/
@@ -76,47 +74,31 @@ if(NOT COMPILE_C_ONLY AND HAVE_X86_PLATFORM)
     add_subdirectory(ASM_AVX512)
 
 elseif(NOT COMPILE_C_ONLY AND HAVE_ARM_PLATFORM)
-    include_directories(${PROJECT_SOURCE_DIR}/Source/Lib/ASM_NEON/)
-    link_directories(${PROJECT_SOURCE_DIR}/Source/Lib/ASM_NEON/
-        ${PROJECT_SOURCE_DIR}/Source/Lib/C_DEFAULT/)
+    target_include_directories(SvtAv1Enc PRIVATE ${PROJECT_SOURCE_DIR}/Source/Lib/ASM_NEON/)
     add_subdirectory(ASM_NEON)
 endif()
 
-set(all_files "")
-# Required for cmake to be able to tell Xcode how to link all of the object files
-if(CMAKE_GENERATOR STREQUAL "Xcode")
-    file(WRITE ${PROJECT_BINARY_DIR}/dummy.c "")
-    list(APPEND all_files ${PROJECT_BINARY_DIR}/dummy.c)
-endif()
-
 # Encoder Lib Source Files
+target_sources(SvtAv1Enc PRIVATE
+    $<TARGET_OBJECTS:FASTFEAT>
+    $<TARGET_OBJECTS:GLOBALS>
+    $<TARGET_OBJECTS:CODEC>
+    $<TARGET_OBJECTS:C_DEFAULT>)
 if(NOT COMPILE_C_ONLY AND HAVE_X86_PLATFORM)
-    add_library(SvtAv1Enc
-        ${all_files}
-        $<TARGET_OBJECTS:FASTFEAT>
-        $<TARGET_OBJECTS:GLOBALS>
-        $<TARGET_OBJECTS:CODEC>
-        $<TARGET_OBJECTS:C_DEFAULT>
+    target_sources(SvtAv1Enc PRIVATE
         $<TARGET_OBJECTS:ASM_SSE2>
         $<TARGET_OBJECTS:ASM_SSSE3>
         $<TARGET_OBJECTS:ASM_SSE4_1>
         $<TARGET_OBJECTS:ASM_AVX2>
         $<TARGET_OBJECTS:ASM_AVX512>)
 elseif(NOT COMPILE_C_ONLY AND HAVE_ARM_PLATFORM)
-    add_library(SvtAv1Enc
-        ${all_files}
-        $<TARGET_OBJECTS:FASTFEAT>
-        $<TARGET_OBJECTS:GLOBALS>
-        $<TARGET_OBJECTS:CODEC>
-        $<TARGET_OBJECTS:C_DEFAULT>
+    target_sources(SvtAv1Enc PRIVATE
         $<TARGET_OBJECTS:ASM_NEON>)
-else()
-    add_library(SvtAv1Enc
-        ${all_files}
-        $<TARGET_OBJECTS:FASTFEAT>
-        $<TARGET_OBJECTS:GLOBALS>
-        $<TARGET_OBJECTS:CODEC>
-        $<TARGET_OBJECTS:C_DEFAULT>)
+endif()
+
+get_target_property(common_lib_source common_lib INTERFACE_SOURCES)
+if(common_lib_source)
+    target_sources(SvtAv1Enc PRIVATE ${common_lib_source})
 endif()
 
 set_target_properties(SvtAv1Enc PROPERTIES VERSION ${ENC_VERSION})

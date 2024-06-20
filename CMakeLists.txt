@@ -407,7 +407,7 @@ macro(ASM_COMPILE_TO_TARGET target)
                     WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR})
             list(APPEND SIMD_OBJS "${SIMD_OBJ}")
         endforeach()
-        target_sources(${target} PUBLIC ${SIMD_OBJS})
+        target_sources(common_lib INTERFACE ${SIMD_OBJS})
     else()
         # For every other generator
         foreach(asm_file ${ARGN})
