@@ -43,24 +43,24 @@ if(CMAKE_C_COMPILER_ID STREQUAL "Intel")
 endif()
 
 set(all_files
-    EbCdef_AVX512.c
-    EbComputeSAD_Intrinsic_AVX512.c
-    encodetxb_avx512.c
-    highbd_fwd_txfm_AVX512.c
-    pickrst_avx512.c
-    transpose_encoder_avx512.h
-    variance_avx512.c
-    EbHighbdIntraPrediction_AVX512.c
-    EbPictureOperators_Intrinsic_AVX512.c
+    cdef_avx512.c
     cdef_block_avx512.c
+    compute_sad_intrinsic_avx512.c
     convolve_2d_avx512.c
     convolve_avx512.c
     convolve_avx512.h
+    encodetxb_avx512.c
+    highbd_fwd_txfm_AVX512.c
+    highbd_intra_prediction_avx512.c
     highbd_inv_txfm_avx512.c
     jnt_convolve_2d_avx512.c
     jnt_convolve_avx512.c
+    pickrst_avx512.c
+    picture_operators_intrinsic_avx512.c
     synonyms_avx512.h
     transpose_avx512.h
+    transpose_encoder_avx512.h
+    variance_avx512.c
     wiener_convolve_avx512.c
     )
 
