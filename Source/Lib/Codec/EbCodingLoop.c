@@ -26,7 +26,7 @@
 #include "aom_dsp_rtcd.h"
 #include "EbMdRateEstimation.h"
 #include "EbFullLoop.h"
-#include "EbPackUnPack_C.h"
+#include "pack_unpack_c.h"
 #include "EbEncInterPrediction.h"
 
 void               svt_aom_get_recon_pic(PictureControlSet *pcs, EbPictureBufferDesc **recon_ptr, Bool is_highbd);

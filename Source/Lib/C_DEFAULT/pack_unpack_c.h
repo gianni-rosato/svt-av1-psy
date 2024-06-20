@@ -9,8 +9,8 @@
 * PATENTS file, you can obtain it at https://www.aomedia.org/license/patent-license.
 */
 
-#ifndef EbPackUnPack_C_h
-#define EbPackUnPack_C_h
+#ifndef pack_unpack_c_h
+#define pack_unpack_c_h
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -52,4 +52,4 @@ void svt_convert_16bit_to_8bit_c(uint16_t *src, uint32_t src_stride, uint8_t *ds
 #ifdef __cplusplus
 }
 #endif
-#endif // EbPackUnPack_C_h
+#endif // pack_unpack_c_h

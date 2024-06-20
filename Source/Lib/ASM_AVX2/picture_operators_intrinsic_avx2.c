@@ -13,7 +13,7 @@
 #include <immintrin.h>
 #include "picture_operators_inline_avx2.h"
 
-#include "EbPackUnPack_C.h"
+#include "pack_unpack_c.h"
 
 #define _mm256_set_m128i(/* __m128i */ hi, /* __m128i */ lo) \
     _mm256_insertf128_si256(_mm256_castsi128_si256(lo), (hi), 0x1)

@@ -13,7 +13,7 @@
 
 #define AOM_RTCD_C
 #include "aom_dsp_rtcd.h"
-#include "EbComputeSAD_C.h"
+#include "compute_sad_c.h"
 #include "EbPictureAnalysisProcess.h"
 #include "EbTemporalFiltering.h"
 #include "EbComputeSAD.h"
@@ -21,7 +21,7 @@
 #include "EbPictureOperators.h"
 #include "EbComputeMean.h"
 #include "EbMeSadCalculation.h"
-#include "EbPackUnPack_C.h"
+#include "pack_unpack_c.h"
 
 /**************************************
  * Instruction Set Support

@@ -9,7 +9,7 @@
  * PATENTS file, you can obtain it at https://www.aomedia.org/license/patent-license.
  */
 
-#include "EncodeTxbRef_C.h"
+#include "encode_txb_ref_c.h"
 #include "EbCommonUtils.h"
 #include "EbCoefficients.h"
 #include "EbFullLoop.h"

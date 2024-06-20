@@ -13,7 +13,7 @@
 #ifndef EbPictureOperators_h
 #define EbPictureOperators_h
 
-#include "EbPictureOperators_C.h"
+#include "picture_operators_c.h"
 #include "EbDefinitions.h"
 #include "EbPictureBufferDesc.h"
 #ifdef __cplusplus

@@ -14,7 +14,7 @@
 #include "aom_dsp_rtcd.h"
 #include "EbDefinitions.h"
 #include "compute_sad_avx2.h"
-#include "EbComputeSAD_C.h"
+#include "compute_sad_c.h"
 #include "EbMeSadCalculation.h"
 #include "EbMotionEstimation.h"
 #include "EbUnitTest.h"

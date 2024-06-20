@@ -33,7 +33,7 @@
 #include "EbEncInterPrediction.h"
 #include "EbLog.h"
 #include <limits.h>
-#include "EbPackUnPack_C.h"
+#include "pack_unpack_c.h"
 
 #undef _MM_HINT_T2
 #define _MM_HINT_T2 1

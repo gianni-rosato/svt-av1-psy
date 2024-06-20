@@ -18,19 +18,19 @@ include_directories(${PROJECT_SOURCE_DIR}/Source/API/
     ${PROJECT_SOURCE_DIR}/Source/Lib/C_DEFAULT/)
 
 set(all_files
-    EbBlend_a64_mask_c.c
-    EbInterPrediction_c.c
-    EbIntraPrediction_c.c
-    EbPackUnPack_C.c
-    EbPackUnPack_C.h
-    EbPictureOperators_C.c
-    EbPictureOperators_C.h
+    blend_a64_mask_c.c
     cfl_c.c
+    compute_sad_c.c
+    compute_sad_c.h
+    encode_txb_ref_c.c
+    encode_txb_ref_c.h
     filterintra_c.c
-    EbComputeSAD_C.c
-    EbComputeSAD_C.h
-    EncodeTxbRef_C.c
-    EncodeTxbRef_C.h
+    inter_prediction_c.c
+    intra_prediction_c.c
+    pack_unpack_c.c
+    pack_unpack_c.h
+    picture_operators_c.c
+    picture_operators_c.h
     sad_av1.c
     variance.c
     )

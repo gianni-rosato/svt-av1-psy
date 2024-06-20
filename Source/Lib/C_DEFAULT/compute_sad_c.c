@@ -9,7 +9,7 @@
 * PATENTS file, you can obtain it at https://www.aomedia.org/license/patent-license.
 */
 
-#include "EbComputeSAD_C.h"
+#include "compute_sad_c.h"
 #include "EbUtility.h"
 /*******************************************
 *   returns NxM Sum of Absolute Differences

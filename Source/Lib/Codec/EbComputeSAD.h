@@ -14,7 +14,7 @@
 
 #include "EbDefinitions.h"
 #include "aom_dsp_rtcd.h"
-#include "EbComputeSAD_C.h"
+#include "compute_sad_c.h"
 #include "EbUtility.h"
 #ifdef __cplusplus
 extern "C" {

@@ -34,7 +34,7 @@
 #include <new>
 
 #include "EbDefinitions.h"
-#include "EbPackUnPack_C.h"
+#include "pack_unpack_c.h"
 #include "EbEncIntraPrediction.h"
 #include "EbUnitTestUtility.h"
 #include "EbUtility.h"

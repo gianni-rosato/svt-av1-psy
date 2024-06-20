@@ -57,7 +57,7 @@
 #include "EbDefinitions.h"
 #include "EbMetadataHandle.h"
 
-#include "EbPackUnPack_C.h"
+#include "pack_unpack_c.h"
 #include "EncModeConfig.h"
 
 #ifdef ARCH_X86_64

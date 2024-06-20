@@ -9,7 +9,7 @@
 * PATENTS file, you can obtain it at https://www.aomedia.org/license/patent-license.
 */
 
-#include "EbPackUnPack_C.h"
+#include "pack_unpack_c.h"
 #include "EbSvtAv1.h"
 
 /************************************************

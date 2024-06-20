@@ -33,7 +33,7 @@
 #include "TxfmCommon.h"
 #include "random.h"
 #include "EbTime.h"
-#include "EncodeTxbRef_C.h"
+#include "encode_txb_ref_c.h"
 
 using svt_av1_test_tool::SVTRandom;  // to generate the random
 namespace {

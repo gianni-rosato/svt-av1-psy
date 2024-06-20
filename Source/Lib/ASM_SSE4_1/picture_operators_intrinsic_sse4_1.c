@@ -13,7 +13,7 @@
 #include "common_dsp_rtcd.h"
 #include "picture_operators_sse2.h"
 #include "synonyms.h"
-#include "EbPackUnPack_C.h"
+#include "pack_unpack_c.h"
 
 static INLINE void spatial_full_distortion_kernel16_sse4_1_intrin(const uint8_t *const input,
                                                                   const uint8_t *const recon, __m128i *const sum) {

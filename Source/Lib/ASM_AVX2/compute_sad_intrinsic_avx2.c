@@ -16,7 +16,7 @@
 #include <immintrin.h>
 #include "memory_avx2.h"
 #include "EbComputeSAD.h"
-#include "EbComputeSAD_C.h"
+#include "compute_sad_c.h"
 #include "mcomp.h"
 #define UPDATE_BEST(s, k, offset)        \
     tem_sum_1 = _mm_extract_epi32(s, k); \

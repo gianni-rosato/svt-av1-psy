@@ -21,7 +21,7 @@
 #define RTCD_C
 #include "common_dsp_rtcd.h"
 #include "EbPictureOperators.h"
-#include "EbPackUnPack_C.h"
+#include "pack_unpack_c.h"
 #include "EbAvcStyleMcp.h"
 
 #if defined ARCH_X86_64

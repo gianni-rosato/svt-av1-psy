@@ -12,7 +12,7 @@
 #include <assert.h>
 
 #include "EbDefinitions.h"
-#include "EbComputeSAD_C.h"
+#include "compute_sad_c.h"
 #include "EbUtility.h"
 #include <smmintrin.h>
 

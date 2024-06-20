@@ -17,7 +17,7 @@
 #include "random.h"
 #include "aom_dsp_rtcd.h"
 #include "EbDefinitions.h"
-#include "EbPictureOperators_C.h"
+#include "picture_operators_c.h"
 #include "EbPictureOperators.h"
 #include "EbUnitTestUtility.h"
 #include "util.h"

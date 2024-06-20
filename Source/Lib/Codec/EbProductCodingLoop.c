@@ -31,7 +31,7 @@
 #include "av1me.h"
 #include "limits.h"
 
-#include "EbPackUnPack_C.h"
+#include "pack_unpack_c.h"
 #include "EbEncInterPrediction.h"
 #include "EncModeConfig.h"
 

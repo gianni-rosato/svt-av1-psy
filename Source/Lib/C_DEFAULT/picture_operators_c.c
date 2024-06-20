@@ -9,7 +9,7 @@
 * PATENTS file, you can obtain it at https://www.aomedia.org/license/patent-license.
 */
 
-#include "EbPictureOperators_C.h"
+#include "picture_operators_c.h"
 #include "EbUtility.h"
 #include "common_dsp_rtcd.h"
 /*********************************
