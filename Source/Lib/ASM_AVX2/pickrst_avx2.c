@@ -13,7 +13,7 @@
 #include "synonyms.h"
 #include "synonyms_avx2.h"
 #include "aom_dsp_rtcd.h"
-#include "picture_operators_inline_avx2.h"
+#include "pic_operators_inline_avx2.h"
 #include "restoration.h"
 #include "restoration_pick.h"
 #include "utility.h"

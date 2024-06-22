@@ -19,18 +19,18 @@
 #include "common_utils.h"
 #include "sequence_control_set.h"
 #include "mode_decision.h"
-#include "mode_decision_process.h"
+#include "md_process.h"
 #include "motion_estimation.h"
 
 #include "av1me.h"
 #include "hash.h"
 #include "enc_inter_prediction.h"
-#include "rate_distortion_cost.h"
+#include "rd_cost.h"
 #include "aom_dsp_rtcd.h"
 #include "svt_log.h"
 #include "resize.h"
 #include "mcomp.h"
-#include "source_based_operations_process.h"
+#include "src_ops_process.h"
 #define INC_MD_CAND_CNT(cnt, max_can_count)                  \
     MULTI_LINE_MACRO_BEGIN                                   \
     if (cnt + 1 < max_can_count)                             \

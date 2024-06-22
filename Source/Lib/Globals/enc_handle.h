@@ -14,8 +14,8 @@
 
 #include "definitions.h"
 #include "EbSvtAv1Enc.h"
-#include "picture_buffer_desc.h"
-#include "system_resource_manager.h"
+#include "pic_buffer_desc.h"
+#include "sys_resource_manager.h"
 #include "sequence_control_set.h"
 #include "object.h"
 

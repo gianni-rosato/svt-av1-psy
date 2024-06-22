@@ -1,11 +1,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "picture_control_set.h"
+#include "pcs.h"
 #include "resize.h"
 #include "enc_dec_process.h"
-#include "picture_decision_process.h"
-#include "picture_buffer_desc.h"
+#include "pd_process.h"
+#include "pic_buffer_desc.h"
 
 uint16_t svt_aom_get_max_can_count(EncMode enc_mode);
 void     svt_aom_md_pme_search_controls(ModeDecisionContext *ctx, uint8_t md_pme_level);

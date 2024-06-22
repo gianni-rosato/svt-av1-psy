@@ -13,8 +13,8 @@
 #ifndef EbTemporalFiltering_h
 #define EbTemporalFiltering_h
 
-#include "picture_control_set.h"
-#include "motion_estimation_process.h"
+#include "pcs.h"
+#include "me_process.h"
 
 // ALT-REF debug-specific defines
 

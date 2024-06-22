@@ -264,9 +264,9 @@ TEST_F(AddFilmGrainTest, MatchTest) {
 }
 
 extern "C" {
-#include "picture_control_set.h"
-#include "picture_buffer_desc.h"
-#include "picture_analysis_process.h"
+#include "pcs.h"
+#include "pic_buffer_desc.h"
+#include "pic_analysis_process.h"
 }
 
 static void svt_picture_buffer_desc_dctor(EbPtr p) {

@@ -30,7 +30,7 @@
 
 #include "definitions.h"
 #include "transforms.h"
-#include "picture_control_set.h"
+#include "pcs.h"
 #include "aom_dsp_rtcd.h"
 #include "util.h"
 #include "random.h"

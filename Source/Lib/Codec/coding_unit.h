@@ -12,8 +12,8 @@
 #ifndef EbCodingUnit_h
 #define EbCodingUnit_h
 
-#include "motion_estimation_sb_results.h"
-#include "picture_buffer_desc.h"
+#include "me_sb_results.h"
+#include "pic_buffer_desc.h"
 #include "block_structures.h"
 #include "cabac_context_model.h"
 #include "hash.h"

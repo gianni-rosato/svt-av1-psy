@@ -1,7 +1,7 @@
 #include "enc_mode_config.h"
 #include <stdlib.h>
 
-#include "rate_distortion_cost.h"
+#include "rd_cost.h"
 #include "aom_dsp_rtcd.h"
 #include "mode_decision.h"
 #include "coding_loop.h"

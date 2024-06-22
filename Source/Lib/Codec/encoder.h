@@ -20,7 +20,7 @@
 
 #include "definitions.h"
 #include "av1_common.h"
-#include "rate_control_process.h"
+#include "rc_process.h"
 #include "level.h"
 
 #ifdef __cplusplus

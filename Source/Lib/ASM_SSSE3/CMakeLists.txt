@@ -33,7 +33,7 @@ set(all_files
     av1_inv_txfm_ssse3.h
     highbd_convolve_2d_ssse3.c
     highbd_convolve_ssse3.c
-    highbd_intra_prediction_intrinsic_ssse3.c
+    highbd_intrapred_intrin_ssse3.c
     highbd_wiener_convolve_ssse3.c
     intrapred_ssse3.c
     jnt_convolve_ssse3.c

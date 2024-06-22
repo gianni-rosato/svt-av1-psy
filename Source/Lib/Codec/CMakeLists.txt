@@ -60,8 +60,8 @@ include_directories(${PROJECT_SOURCE_DIR}/Source/API/
 endif ()
 
 set(all_files
-        adaptive_motion_vector_prediction.c
-        adaptive_motion_vector_prediction.h
+        adaptive_mv_pred.c
+        adaptive_mv_pred.h
         aom_dsp_rtcd.c
         aom_dsp_rtcd.h
         av1_common.h
@@ -127,12 +127,12 @@ set(all_files
         encoder.h
         entropy_coding.c
         entropy_coding.h
-        entropy_coding_object.h
-        entropy_coding_process.c
-        entropy_coding_process.h
-        entropy_coding_results.c
-        entropy_coding_results.h
-        entropy_coding_util.h
+        ec_object.h
+        ec_process.c
+        ec_process.h
+        ec_results.c
+        ec_results.h
+        ec_util.h
         fft.c
         fft_common.h
         filter.h
@@ -142,22 +142,22 @@ set(all_files
         full_loop.h
         global_motion.c
         global_motion.h
-        global_motion_estimation.c
-        global_motion_estimation.h
-        global_motion_estimation_cost.c
-        global_motion_estimation_cost.h
+        global_me.c
+        global_me.h
+        global_me_cost.c
+        global_me_cost.h
         grainSynthesis.c
         grainSynthesis.h
         hash.c
         hash.h
         hash_motion.c
         hash_motion.h
-        initial_rate_control_process.c
-        initial_rate_control_process.h
-        initial_rate_control_reorder_queue.c
-        initial_rate_control_reorder_queue.h
-        initial_rate_control_results.c
-        initial_rate_control_results.h
+        initial_rc_process.c
+        initial_rc_process.h
+        initial_rc_reorder_queue.c
+        initial_rc_reorder_queue.h
+        initial_rc_results.c
+        initial_rc_results.h
         inter_prediction.c
         inter_prediction.h
         intra_prediction.c
@@ -178,19 +178,19 @@ set(all_files
         me_sad_calculation.h
         mode_decision.c
         mode_decision.h
-        mode_decision_configuration_process.c
-        mode_decision_configuration_process.h
-        mode_decision_process.c
-        mode_decision_process.h
+        md_config_process.c
+        md_config_process.h
+        md_process.c
+        md_process.h
         motion_estimation.c
         motion_estimation.h
-        motion_estimation_context.c
-        motion_estimation_context.h
-        motion_estimation_process.c
-        motion_estimation_process.h
-        motion_estimation_results.c
-        motion_estimation_results.h
-        motion_estimation_sb_results.h
+        me_context.c
+        me_context.h
+        me_process.c
+        me_process.h
+        me_results.c
+        me_results.h
+        me_sb_results.h
         motion_vector_unit.h
         mv.h
         mv_merge.h
@@ -208,45 +208,45 @@ set(all_files
         palette.c
         pass2_strategy.c
         pass2_strategy.h
-        picture_analysis_process.c
-        picture_analysis_process.h
-        picture_analysis_results.c
-        picture_analysis_results.h
-        picture_buffer_desc.c
-        picture_buffer_desc.h
-        picture_control_set.c
-        picture_control_set.h
-        picture_decision_process.c
-        picture_decision_process.h
-        picture_decision_queue.c
-        picture_decision_queue.h
-        picture_decision_reorder_queue.c
-        picture_decision_reorder_queue.h
-        picture_decision_results.c
-        picture_decision_results.h
-        picture_demux_results.c
-        picture_demux_results.h
-        picture_manager_process.c
-        picture_manager_process.h
-        picture_manager_queue.c
-        picture_manager_queue.h
-        picture_operators.c
-        picture_operators.h
-        prediction_structure.c
-        prediction_structure.h
+        pic_analysis_process.c
+        pic_analysis_process.h
+        pic_analysis_results.c
+        pic_analysis_results.h
+        pic_buffer_desc.c
+        pic_buffer_desc.h
+        pcs.c
+        pcs.h
+        pd_process.c
+        pd_process.h
+        pd_queue.c
+        pd_queue.h
+        pd_reorder_queue.c
+        pd_reorder_queue.h
+        pd_results.c
+        pd_results.h
+        pic_demux_results.c
+        pic_demux_results.h
+        pic_manager_process.c
+        pic_manager_process.h
+        pic_manager_queue.c
+        pic_manager_queue.h
+        pic_operators.c
+        pic_operators.h
+        pred_structure.c
+        pred_structure.h
         product_coding_loop.c
         q_matrices.h
         random.h
         ransac.c
         ransac.h
-        rate_control_process.c
-        rate_control_process.h
-        rate_control_results.c
-        rate_control_results.h
-        rate_control_tasks.c
-        rate_control_tasks.h
-        rate_distortion_cost.c
-        rate_distortion_cost.h
+        rc_process.c
+        rc_process.h
+        rc_results.c
+        rc_results.h
+        rc_tasks.c
+        rc_tasks.h
+        rd_cost.c
+        rd_cost.h
         reference_object.c
         reference_object.h
         resize.c
@@ -267,8 +267,8 @@ set(all_files
         segmentation_params.h
         sequence_control_set.c
         sequence_control_set.h
-        source_based_operations_process.c
-        source_based_operations_process.h
+        src_ops_process.c
+        src_ops_process.h
         super_res.c
         super_res.h
         svt_log.c
@@ -281,8 +281,8 @@ set(all_files
         svt_threads.h
         svt_time.c
         svt_time.h
-        system_resource_manager.c
-        system_resource_manager.h
+        sys_resource_manager.c
+        sys_resource_manager.h
         temporal_filtering.c
         temporal_filtering.h
         transforms.c

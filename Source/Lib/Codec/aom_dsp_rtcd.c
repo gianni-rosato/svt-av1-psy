@@ -14,11 +14,11 @@
 #define AOM_RTCD_C
 #include "aom_dsp_rtcd.h"
 #include "compute_sad_c.h"
-#include "picture_analysis_process.h"
+#include "pic_analysis_process.h"
 #include "temporal_filtering.h"
 #include "compute_sad.h"
 #include "motion_estimation.h"
-#include "picture_operators.h"
+#include "pic_operators.h"
 #include "compute_mean.h"
 #include "me_sad_calculation.h"
 #include "pack_unpack_c.h"

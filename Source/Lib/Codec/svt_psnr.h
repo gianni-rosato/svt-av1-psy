@@ -12,7 +12,7 @@
 #ifndef AOM_DSP_PSNR_H_
 #define AOM_DSP_PSNR_H_
 
-#include "picture_buffer_desc.h"
+#include "pic_buffer_desc.h"
 #include "definitions.h"
 #include "utility.h"
 #define MAX_PSNR 100.0

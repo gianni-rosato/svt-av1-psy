@@ -16,7 +16,7 @@ extern "C" {
 #endif
 
 #include "definitions.h"
-#include "picture_buffer_desc.h"
+#include "pic_buffer_desc.h"
 
 struct Yv12BufferConfig;
 struct Av1Comp;

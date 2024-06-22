@@ -14,9 +14,9 @@
 #define SVT_AV1_EBSEGMENTATION_H
 
 #include "definitions.h"
-#include "picture_control_set.h"
+#include "pcs.h"
 #include "sequence_control_set.h"
-#include "rate_control_process.h"
+#include "rc_process.h"
 #include "utility.h"
 
 void svt_aom_apply_segmentation_based_quantization(const BlockGeom *blk_geom, PictureControlSet *pcs,

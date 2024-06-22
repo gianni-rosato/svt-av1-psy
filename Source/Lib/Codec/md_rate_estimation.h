@@ -14,7 +14,7 @@
 #define EbMdRateEstimation_h
 
 #include "cabac_context_model.h"
-#include "picture_control_set.h"
+#include "pcs.h"
 #include "coding_unit.h"
 #ifdef __cplusplus
 extern "C" {

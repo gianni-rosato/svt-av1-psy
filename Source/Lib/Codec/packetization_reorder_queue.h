@@ -13,10 +13,10 @@
 #define EbPacketizationReorderQueue_h
 
 #include "definitions.h"
-#include "system_resource_manager.h"
-#include "prediction_structure.h"
+#include "sys_resource_manager.h"
+#include "pred_structure.h"
 #include "object.h"
-#include "entropy_coding_object.h"
+#include "ec_object.h"
 #ifdef __cplusplus
 extern "C" {
 #endif

@@ -18,7 +18,7 @@
 #include "deblocking_filter.h"
 #include "definitions.h"
 #include "sequence_control_set.h"
-#include "picture_control_set.h"
+#include "pcs.h"
 #include "aom_dsp_rtcd.h"
 void svt_aom_get_recon_pic(PictureControlSet *pcs, EbPictureBufferDesc **recon_ptr, Bool is_highbd);
 void svt_av1_loop_restoration_save_boundary_lines(const Yv12BufferConfig *frame, Av1Common *cm, int32_t after_cdef);

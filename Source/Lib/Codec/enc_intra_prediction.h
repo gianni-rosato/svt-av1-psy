@@ -12,7 +12,7 @@
 #ifndef EbEncIntraPrediction_h
 #define EbEncIntraPrediction_h
 
-#include "motion_estimation_process.h"
+#include "me_process.h"
 #include "mode_decision.h"
 #include "intra_prediction.h"
 

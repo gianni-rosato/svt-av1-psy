@@ -12,7 +12,7 @@
 #ifndef EbFullLoop_h
 #define EbFullLoop_h
 
-#include "mode_decision_process.h"
+#include "md_process.h"
 #include "common_utils.h"
 #include "inv_transforms.h"
 #include "transforms.h"

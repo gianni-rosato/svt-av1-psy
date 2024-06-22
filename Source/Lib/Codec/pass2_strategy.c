@@ -20,7 +20,7 @@
 #include "definitions.h"
 #include "level.h"
 #include "pass2_strategy.h"
-#include "rate_control_process.h"
+#include "rc_process.h"
 #include "firstpass.h"
 #include "sequence_control_set.h"
 #include "entropy_coding.h"

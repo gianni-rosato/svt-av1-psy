@@ -17,7 +17,7 @@
 #include <stdint.h>
 #include "aom_dsp_rtcd.h"
 #include "svt_log.h"
-#include "rate_distortion_cost.h"
+#include "rd_cost.h"
 
 void                   svt_aom_get_recon_pic(PictureControlSet *pcs, EbPictureBufferDesc **recon_ptr, Bool is_highbd);
 static INLINE uint64_t dist_8xn_16bit_c(const uint16_t *src, const uint16_t *dst, const int32_t dstride,

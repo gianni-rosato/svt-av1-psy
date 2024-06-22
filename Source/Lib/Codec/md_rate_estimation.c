@@ -17,7 +17,7 @@
 #include "filter.h"
 #include "entropy_coding.h"
 #include "bitstream_unit.h"
-#include "rate_distortion_cost.h"
+#include "rd_cost.h"
 #include "inter_prediction.h"
 
 static INLINE int32_t get_interinter_wedge_bits(BlockSize bsize) {

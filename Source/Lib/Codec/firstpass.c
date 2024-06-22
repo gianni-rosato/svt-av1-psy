@@ -16,22 +16,22 @@
 
 #include "aom_dsp_rtcd.h"
 #include "definitions.h"
-#include "rate_control_process.h"
+#include "rc_process.h"
 #include "sequence_control_set.h"
-#include "picture_control_set.h"
+#include "pcs.h"
 #include "firstpass.h"
 #include "svt_log.h"
-#include "mode_decision_process.h"
+#include "md_process.h"
 #include "coding_loop.h"
 #include "dwt.h" // to move to firstpass.c
-#include "picture_decision_process.h"
-#include "mode_decision_configuration_process.h"
+#include "pd_process.h"
+#include "md_config_process.h"
 #include "mv.h"
 #ifdef ARCH_X86_64
 #include <xmmintrin.h>
 #endif
 #include "motion_estimation.h"
-#include "picture_decision_results.h"
+#include "pd_results.h"
 
 #undef _MM_HINT_T2
 #define _MM_HINT_T2 1

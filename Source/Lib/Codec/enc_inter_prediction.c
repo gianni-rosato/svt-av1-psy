@@ -15,7 +15,7 @@
 #include "enc_inter_prediction.h"
 //#include "convolve.h"
 #include "aom_dsp_rtcd.h"
-#include "rate_distortion_cost.h"
+#include "rd_cost.h"
 #include "resize.h"
 #include "av1me.h"
 

@@ -14,7 +14,7 @@
 
 #include "coding_unit.h"
 #include "sequence_control_set.h"
-#include "mode_decision_process.h"
+#include "md_process.h"
 #include "enc_dec_process.h"
 
 #ifdef __cplusplus

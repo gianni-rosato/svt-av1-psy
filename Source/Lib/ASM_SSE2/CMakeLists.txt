@@ -26,27 +26,27 @@ endif()
 
 set(all_files
     av1_txfm_sse2.h
-    avc_style_mcp_intrinsic_sse.c
-    compute_mean_intrinsic_sse2.c
+    avc_style_mcp_intrin_sse.c
+    compute_mean_intrin_sse2.c
     compute_mean_sse2.h
     convolve_2d_sse2.c
     convolve_sse2.c
-    deblocking_filter_intrinsic_sse2.c
-    deblocking_filter_sse2.h
+    dlf_intrin_sse2.c
+    dlf_sse2.h
     encodetxb_sse2.c
     fft_sse2.c
-    highbd_intra_prediction_sse2.h
+    highbd_intrapred_sse2.h
     highbd_intrapred_sse2.c
     highbd_subtract_sse2.c
     highbd_variance_sse2.c
-    intra_prediction_av1_intrinsic_sse2.c
+    intra_pred_av1_intrin_sse2.c
     jnt_convolve_2d_sse2.c
     jnt_convolve_sse2.c
     lpf_common_sse2.h
     mcp_sse2.h
-    me_sad_calculation_intrinsic_sse2.c
-    pack_unpack_intrinsic_sse2.c
-    picture_operators_intrinsic_sse2.c
+    me_sad_calc_intrin_sse2.c
+    pack_unpack_intrin_sse2.c
+    pic_operators_intrin_sse2.c
     picture_operators_sse2.h
     synonyms.h
     transpose_sse2.h

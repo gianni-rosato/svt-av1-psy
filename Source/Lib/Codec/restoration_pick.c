@@ -12,7 +12,7 @@
 #include <math.h>
 
 #include "svt_psnr.h"
-#include "picture_control_set.h"
+#include "pcs.h"
 #include "aom_dsp_rtcd.h"
 #include "restoration.h"
 #include "restoration_pick.h"

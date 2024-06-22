@@ -11,7 +11,7 @@
 
 #include "hash.h"
 #include "hash_motion.h"
-#include "picture_control_set.h"
+#include "pcs.h"
 
 void             svt_aom_free(void *memblk);
 static const int crc_bits        = 16;

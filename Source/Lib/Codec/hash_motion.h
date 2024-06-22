@@ -15,7 +15,7 @@
 #include "definitions.h"
 #include "coding_unit.h"
 #include "vector.h"
-#include "picture_buffer_desc.h"
+#include "pic_buffer_desc.h"
 
 #ifdef __cplusplus
 extern "C" {

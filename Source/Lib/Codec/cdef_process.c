@@ -20,10 +20,10 @@
 #include "reference_object.h"
 #include "enc_cdef.h"
 #include "enc_dec_process.h"
-#include "picture_buffer_desc.h"
+#include "pic_buffer_desc.h"
 #include "sequence_control_set.h"
 #include "utility.h"
-#include "picture_control_set.h"
+#include "pcs.h"
 #include "resize.h"
 
 void svt_aom_copy_sb8_16(uint16_t *dst, int32_t dstride, const uint8_t *src, int32_t src_voffset, int32_t src_hoffset,

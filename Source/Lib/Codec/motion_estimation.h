@@ -16,11 +16,11 @@
 #include "definitions.h"
 #include "coding_unit.h"
 
-#include "motion_estimation_process.h"
-#include "motion_estimation_context.h"
-#include "picture_buffer_desc.h"
+#include "me_process.h"
+#include "me_context.h"
+#include "pic_buffer_desc.h"
 #include "reference_object.h"
-#include "picture_decision_process.h"
+#include "pd_process.h"
 #include "utility.h"
 #include "aom_dsp_rtcd.h"
 

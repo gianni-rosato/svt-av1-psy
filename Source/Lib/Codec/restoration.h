@@ -14,7 +14,7 @@
 
 #include <math.h>
 #include "definitions.h"
-#include "picture_buffer_desc.h"
+#include "pic_buffer_desc.h"
 #include "av1_structs.h"
 
 #ifdef __cplusplus

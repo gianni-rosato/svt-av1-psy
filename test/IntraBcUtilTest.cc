@@ -22,7 +22,7 @@
 
 #include "gtest/gtest.h"
 #include "definitions.h"
-#include "adaptive_motion_vector_prediction.h"
+#include "adaptive_mv_pred.h"
 #include "util.h"
 
 namespace {

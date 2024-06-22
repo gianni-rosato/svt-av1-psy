@@ -15,7 +15,7 @@
 #include "utility.h"
 #include "svt_log.h"
 #include "intra_prediction.h"
-#include "picture_control_set.h"
+#include "pcs.h"
 
 void svt_av1_upscale_normative_rows(const Av1Common *cm, const uint8_t *src, int src_stride, uint8_t *dst,
                                     int dst_stride, int rows, int sub_x, int bd, Bool is_16bit_pipeline);

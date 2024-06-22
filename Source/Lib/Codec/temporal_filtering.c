@@ -19,11 +19,11 @@
 #include "temporal_filtering.h"
 #include "compute_sad.h"
 #include "motion_estimation.h"
-#include "motion_estimation_process.h"
-#include "motion_estimation_context.h"
+#include "me_process.h"
+#include "me_context.h"
 #include "lambda_rate_tables.h"
-#include "picture_analysis_process.h"
-#include "mode_decision_process.h"
+#include "pic_analysis_process.h"
+#include "md_process.h"
 #include "mcp.h"
 #include "av1me.h"
 #ifdef ARCH_X86_64
@@ -38,7 +38,7 @@
 #undef _MM_HINT_T2
 #define _MM_HINT_T2 1
 
-#include "picture_decision_results.h"
+#include "pd_results.h"
 #include "utility.h"
 
 static const uint32_t subblock_xy_16x16[N_16X16_BLOCKS][2] = {{0, 0},

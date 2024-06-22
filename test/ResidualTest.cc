@@ -28,7 +28,7 @@
 #include <new>
 
 #include "definitions.h"
-#include "picture_operators.h"
+#include "pic_operators.h"
 #include "enc_intra_prediction.h"
 #include "utility.h"
 #include "unit_test_utility.h"

@@ -18,7 +18,7 @@
 #include "util.h"
 
 #include "definitions.h"
-#include "picture_control_set.h"
+#include "pcs.h"
 #include "transforms.h"
 #include "unit_test_utility.h"
 #include "q_matrices.h"

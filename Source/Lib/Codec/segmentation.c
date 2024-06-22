@@ -12,7 +12,7 @@
 
 #include "segmentation.h"
 #include "segmentation_params.h"
-#include "motion_estimation_context.h"
+#include "me_context.h"
 #include "common_dsp_rtcd.h"
 #if DEBUG_SEGMENT_QP || DEBUG_ROI
 #include "svt_log.h"

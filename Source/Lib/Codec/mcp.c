@@ -11,7 +11,7 @@
 
 #include <string.h>
 
-#include "picture_operators.h"
+#include "pic_operators.h"
 #include "common_dsp_rtcd.h"
 #include "svt_log.h"
 

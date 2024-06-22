@@ -14,17 +14,17 @@
 #define EbEntropyCoding_h
 
 #include "definitions.h"
-#include "entropy_coding_process.h"
+#include "ec_process.h"
 #include "coding_unit.h"
-#include "picture_buffer_desc.h"
+#include "pic_buffer_desc.h"
 #include "sequence_control_set.h"
-#include "picture_control_set.h"
+#include "pcs.h"
 #include "cabac_context_model.h"
 #include "mode_decision.h"
 #include "enc_intra_prediction.h"
 #include "bitstream_unit.h"
 #include "packetization_process.h"
-#include "mode_decision_process.h"
+#include "md_process.h"
 #include "inter_prediction.h"
 #include "EbSvtAv1Metadata.h"
 

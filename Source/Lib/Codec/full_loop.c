@@ -12,7 +12,7 @@
 
 #include "definitions.h"
 #include "full_loop.h"
-#include "rate_distortion_cost.h"
+#include "rd_cost.h"
 #include "aom_dsp_rtcd.h"
 
 void     svt_aom_residual_kernel(uint8_t *input, uint32_t input_offset, uint32_t input_stride, uint8_t *pred,

@@ -13,7 +13,7 @@
 #define EbEncDecTasks_h
 
 #include "definitions.h"
-#include "system_resource_manager.h"
+#include "sys_resource_manager.h"
 #include "object.h"
 #ifdef __cplusplus
 extern "C" {

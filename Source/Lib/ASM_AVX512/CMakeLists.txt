@@ -45,18 +45,18 @@ endif()
 set(all_files
     cdef_avx512.c
     cdef_block_avx512.c
-    compute_sad_intrinsic_avx512.c
+    compute_sad_intrin_avx512.c
     convolve_2d_avx512.c
     convolve_avx512.c
     convolve_avx512.h
     encodetxb_avx512.c
     highbd_fwd_txfm_AVX512.c
-    highbd_intra_prediction_avx512.c
+    highbd_intra_pred_avx512.c
     highbd_inv_txfm_avx512.c
     jnt_convolve_2d_avx512.c
     jnt_convolve_avx512.c
     pickrst_avx512.c
-    picture_operators_intrinsic_avx512.c
+    pic_operators_intrin_avx512.c
     synonyms_avx512.h
     transpose_avx512.h
     transpose_encoder_avx512.h

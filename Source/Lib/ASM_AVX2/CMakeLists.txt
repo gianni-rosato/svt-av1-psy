@@ -46,9 +46,9 @@ set(all_files
     cdef_avx2.c
     cdef_block_avx2.c
     cfl_avx2.c
-    combined_averaging_sad_intrinsic_avx2.c
+    comb_avg_sad_intrin_avx2.c
     compute_sad_avx2.h
-    compute_sad_intrinsic_avx2.c
+    compute_sad_intrin_avx2.c
     convolve_2d_avx2.c
     convolve_avx2.c
     convolve_avx2.h
@@ -59,14 +59,14 @@ set(all_files
     highbd_convolve_2d_avx2.c
     highbd_convolve_avx2.c
     highbd_fwd_txfm_avx2.c
-    highbd_intra_prediction_avx2.c
+    highbd_intra_pred_avx2.c
     highbd_inv_txfm_avx2.c
     highbd_jnt_convolve_avx2.c
     highbd_quantize_intrin_avx2.c
     highbd_variance_avx2.c
     highbd_warp_affine_avx2.c
     inter_prediction_com_avx2.c
-    intra_prediction_intrinsic_avx2.c
+    intra_pred_intrin_avx2.c
     itx_hbd.h
     itx_lbd.h
     jnt_convolve_2d_avx2.c
@@ -80,8 +80,8 @@ set(all_files
     palette_avx2.c
     pickrst_avx2.c
     pickrst_avx2.h
-    picture_operators_inline_avx2.h
-    picture_operators_intrinsic_avx2.c
+    pic_operators_inline_avx2.h
+    pic_operators_intrin_avx2.c
     resize_avx2.c
     restoration_pick_avx2.c
     selfguided_avx2.c
@@ -89,7 +89,7 @@ set(all_files
     ssim_avx2.c
     synonyms_avx2.h
     temporal_filtering_avx2.c
-    transforms_intrinsic_avx2.c
+    transforms_intrin_avx2.c
     transpose_avx2.h
     txfm_common_avx2.h
     variance_avx2.c

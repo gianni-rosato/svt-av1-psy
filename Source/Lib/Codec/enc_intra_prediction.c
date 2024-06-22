@@ -14,7 +14,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "enc_intra_prediction.h"
-#include "mode_decision_process.h"
+#include "md_process.h"
 #include "common_dsp_rtcd.h"
 
 IntraSize svt_aom_intra_unit[] =

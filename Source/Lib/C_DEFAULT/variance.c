@@ -13,7 +13,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "picture_control_set.h"
+#include "pcs.h"
 #include "convolve.h"
 #include "aom_dsp_rtcd.h"
 

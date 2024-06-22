@@ -20,7 +20,7 @@
 
 #define RTCD_C
 #include "common_dsp_rtcd.h"
-#include "picture_operators.h"
+#include "pic_operators.h"
 #include "pack_unpack_c.h"
 
 #if defined ARCH_X86_64

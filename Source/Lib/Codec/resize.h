@@ -14,7 +14,7 @@
 #define EbResize_h
 
 #include "definitions.h"
-#include "picture_buffer_desc.h"
+#include "pic_buffer_desc.h"
 #include "inter_prediction.h"
 #include "sequence_control_set.h"
 #include "super_res.h"

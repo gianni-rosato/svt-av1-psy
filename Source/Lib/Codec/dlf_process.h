@@ -12,9 +12,9 @@
 #ifndef EbDlfProcess_h
 #define EbDlfProcess_h
 
-#include "system_resource_manager.h"
+#include "sys_resource_manager.h"
 #include "object.h"
-#include "picture_buffer_desc.h"
+#include "pic_buffer_desc.h"
 #include "EbSvtAv1Formats.h"
 
 /**************************************

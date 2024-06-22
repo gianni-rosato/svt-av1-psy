@@ -18,7 +18,7 @@ extern "C" {
 
 #include <stdint.h>
 #include "grainSynthesis.h"
-#include "picture_buffer_desc.h"
+#include "pic_buffer_desc.h"
 #include "object.h"
 
 #define DENOISING_BlockSize 32

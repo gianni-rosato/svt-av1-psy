@@ -13,9 +13,9 @@
 #define EbEncDecProcess_h
 
 #include "definitions.h"
-#include "mode_decision_process.h"
-#include "system_resource_manager.h"
-#include "picture_buffer_desc.h"
+#include "md_process.h"
+#include "sys_resource_manager.h"
+#include "pic_buffer_desc.h"
 #include "mode_decision.h"
 #include "enc_inter_prediction.h"
 #include "entropy_coding.h"

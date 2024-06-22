@@ -12,7 +12,7 @@
 #ifndef EbAV1Structs_h
 #define EbAV1Structs_h
 
-#include "picture_buffer_desc.h"
+#include "pic_buffer_desc.h"
 #include "segmentation_params.h"
 
 #ifdef __cplusplus

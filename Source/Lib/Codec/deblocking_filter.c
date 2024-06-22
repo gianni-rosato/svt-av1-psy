@@ -15,7 +15,7 @@
 #include "deblocking_filter.h"
 #include "definitions.h"
 #include "utility.h"
-#include "picture_control_set.h"
+#include "pcs.h"
 #include "coding_unit.h"
 #include "sequence_control_set.h"
 #include "reference_object.h"

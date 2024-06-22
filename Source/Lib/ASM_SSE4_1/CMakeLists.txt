@@ -36,7 +36,7 @@ set(all_files
     blend_sse4.h
     cdef_block_sse4_1.c
     cdef_sse4.c
-    compute_sad_intrinsic_sse4_1.c
+    compute_sad_intrin_sse4_1.c
     corner_match_sse4.c
     encodetxb_sse4.c
     filterintra_sse4.c
@@ -45,11 +45,11 @@ set(all_files
     highbd_inv_txfm_sse4.c
     highbd_jnt_convolve_sse4.c
     highbd_txfm_utility_sse4.h
-    intra_prediction16bit_intrinsic_sse4_1.c
+    intrapred_16bit_intrin_sse4_1.c
     memory_sse4_1.h
     obmc_variance_sse4.c
     pickrst_sse4.c
-    picture_operators_intrinsic_sse4_1.c
+    pic_operators_intrin_sse4_1.c
     reconinter_sse4.c
     selfguided_sse4.c
     temporal_filtering_constants.h

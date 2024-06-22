@@ -16,18 +16,18 @@
 
 #include "definitions.h"
 #include "EbSvtAv1Enc.h"
-#include "picture_decision_reorder_queue.h"
-#include "picture_decision_queue.h"
-#include "picture_manager_queue.h"
+#include "pd_reorder_queue.h"
+#include "pd_queue.h"
+#include "pic_manager_queue.h"
 #include "packetization_reorder_queue.h"
-#include "initial_rate_control_reorder_queue.h"
+#include "initial_rc_reorder_queue.h"
 #include "cabac_context_model.h"
 #include "md_rate_estimation.h"
-#include "prediction_structure.h"
+#include "pred_structure.h"
 #include "object.h"
 #include "encoder.h"
 #include "firstpass.h"
-#include "rate_control_process.h"
+#include "rc_process.h"
 
 // *Note - the queues are small for testing purposes.  They should be increased when they are done.
 #define PRE_ASSIGNMENT_MAX_DEPTH 128 // should be large enough to hold an entire prediction period

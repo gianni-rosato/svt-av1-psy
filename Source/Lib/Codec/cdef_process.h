@@ -12,7 +12,7 @@
 #ifndef EbCdefProcess_h
 #define EbCdefProcess_h
 
-#include "system_resource_manager.h"
+#include "sys_resource_manager.h"
 #include "object.h"
 
 /**************************************

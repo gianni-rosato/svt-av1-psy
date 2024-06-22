@@ -15,7 +15,7 @@
 #include <inttypes.h>
 
 #include "aom_dsp_rtcd.h"
-#include "picture_control_set.h"
+#include "pcs.h"
 #include "sequence_control_set.h"
 #include "motion_estimation.h"
 #include "utility.h"

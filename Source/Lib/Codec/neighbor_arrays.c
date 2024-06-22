@@ -14,7 +14,7 @@
 
 #include "neighbor_arrays.h"
 #include "utility.h"
-#include "picture_operators.h"
+#include "pic_operators.h"
 #include "common_dsp_rtcd.h"
 #define UNUSED(x) (void)(x)
 

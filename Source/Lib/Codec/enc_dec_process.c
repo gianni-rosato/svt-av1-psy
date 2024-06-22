@@ -20,10 +20,10 @@
 #include "utility.h"
 //To fix warning C4013: 'svt_convert_16bit_to_8bit' undefined; assuming extern returning int
 #include "common_dsp_rtcd.h"
-#include "rate_distortion_cost.h"
-#include "picture_decision_process.h"
+#include "rd_cost.h"
+#include "pd_process.h"
 #include "firstpass.h"
-#include "picture_analysis_process.h"
+#include "pic_analysis_process.h"
 #include "resize.h"
 #include "enc_mode_config.h"
 

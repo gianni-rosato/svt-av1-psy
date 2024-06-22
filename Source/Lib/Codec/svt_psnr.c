@@ -13,7 +13,7 @@
 #include <assert.h>
 #include <math.h>
 #include "svt_psnr.h"
-#include "picture_buffer_desc.h"
+#include "pic_buffer_desc.h"
 #include "aom_dsp_rtcd.h"
 
 static int32_t encoder_variance(const uint8_t *a, int32_t a_stride, const uint8_t *b, int32_t b_stride, int32_t w,

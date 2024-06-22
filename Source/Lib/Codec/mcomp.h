@@ -17,7 +17,7 @@
 #include "block_structures.h"
 #include "av1_common.h"
 #include "av1me.h"
-#include "rate_distortion_cost.h"
+#include "rd_cost.h"
 
 #ifdef __cplusplus
 extern "C" {

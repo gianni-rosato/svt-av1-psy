@@ -13,10 +13,10 @@
 #include <string.h>
 
 #include "enc_handle.h"
-#include "system_resource_manager.h"
-#include "picture_control_set.h"
+#include "sys_resource_manager.h"
+#include "pcs.h"
 #include "sequence_control_set.h"
-#include "picture_buffer_desc.h"
+#include "pic_buffer_desc.h"
 #include "resource_coordination_process.h"
 #include "resource_coordination_results.h"
 #include "transforms.h"

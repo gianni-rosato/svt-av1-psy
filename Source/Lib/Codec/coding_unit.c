@@ -12,7 +12,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 
-#include "picture_control_set.h"
+#include "pcs.h"
 #include "utility.h"
 #include "enc_mode_config.h"
 

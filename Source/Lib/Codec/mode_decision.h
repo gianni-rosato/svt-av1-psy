@@ -14,11 +14,11 @@
 
 #include "definitions.h"
 #include "utility.h"
-#include "picture_control_set.h"
+#include "pcs.h"
 #include "coding_unit.h"
-#include "picture_buffer_desc.h"
-#include "adaptive_motion_vector_prediction.h"
-#include "picture_operators.h"
+#include "pic_buffer_desc.h"
+#include "adaptive_mv_pred.h"
+#include "pic_operators.h"
 #include "neighbor_arrays.h"
 #include "object.h"
 

@@ -25,7 +25,7 @@
 #include "bitstream_unit.h"
 #include "bitreader.h"
 #include "definitions.h"
-#include "picture_buffer_desc.h"
+#include "pic_buffer_desc.h"
 #include "gtest/gtest.h"
 #include "random.h"
 

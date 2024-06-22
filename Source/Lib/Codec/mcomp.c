@@ -19,7 +19,7 @@
 #include "block_structures.h"
 #include "av1me.h"
 #include "aom_dsp_rtcd.h"
-#include "rate_distortion_cost.h"
+#include "rd_cost.h"
 // ============================================================================
 //  Cost of motion vectors
 // ============================================================================

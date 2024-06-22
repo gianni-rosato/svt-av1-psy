@@ -13,12 +13,12 @@
 #include <stdlib.h>
 
 #include "definitions.h"
-#include "motion_estimation_sb_results.h"
+#include "me_sb_results.h"
 #include "utility.h"
-#include "rate_distortion_cost.h"
+#include "rd_cost.h"
 #include "full_loop.h"
-#include "picture_operators.h"
-#include "mode_decision_process.h"
+#include "pic_operators.h"
+#include "md_process.h"
 #include "transforms.h"
 #include "motion_estimation.h"
 #include "aom_dsp_rtcd.h"

@@ -19,7 +19,7 @@
 #include "resize.h"
 
 #include "aom_dsp_rtcd.h"
-#include "mode_decision_process.h"
+#include "md_process.h"
 #include "enc_inter_prediction.h"
 #include "svt_log.h"
 

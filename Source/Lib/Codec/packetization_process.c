@@ -12,19 +12,19 @@
 
 #include "enc_handle.h"
 #include "packetization_process.h"
-#include "entropy_coding_results.h"
+#include "ec_results.h"
 #include "sequence_control_set.h"
-#include "picture_control_set.h"
+#include "pcs.h"
 #include "entropy_coding.h"
-#include "rate_control_tasks.h"
+#include "rc_tasks.h"
 #include "svt_time.h"
-#include "mode_decision_process.h"
-#include "picture_demux_results.h"
+#include "md_process.h"
+#include "pic_demux_results.h"
 #include "svt_log.h"
 #include "EbSvtAv1ErrorCodes.h"
-#include "picture_decision_results.h"
+#include "pd_results.h"
 #include "restoration.h" // RDCOST_DBL
-#include "rate_control_process.h"
+#include "rc_process.h"
 #include "enc_mode_config.h"
 
 #define RDCOST_DBL_WITH_NATIVE_BD_DIST(RM, R, D, BD) RDCOST_DBL((RM), (R), (double)((D) >> (2 * (BD - 8))))

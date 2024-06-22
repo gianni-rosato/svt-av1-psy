@@ -32,7 +32,7 @@
 #include "utility.h"
 #include "deblocking_filter.h"
 #include "acm_random.h"
-#include "deblocking_filter_sse2.h"
+#include "dlf_sse2.h"
 #include "deblocking_common.h"
 
 using libaom_test::ACMRandom;

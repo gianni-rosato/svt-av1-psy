@@ -16,7 +16,7 @@
 #include "convolve.h"
 #include "common_dsp_rtcd.h"
 #include "utility.h"
-#include "picture_operators.h"
+#include "pic_operators.h"
 
 #define SCALE_SUBPEL_BITS 10
 #define SCALE_SUBPEL_SHIFTS (1 << SCALE_SUBPEL_BITS)

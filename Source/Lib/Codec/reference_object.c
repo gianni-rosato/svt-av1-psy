@@ -14,7 +14,7 @@
 
 #include "svt_threads.h"
 #include "reference_object.h"
-#include "picture_buffer_desc.h"
+#include "pic_buffer_desc.h"
 #include "utility.h"
 #include "enc_mode_config.h"
 

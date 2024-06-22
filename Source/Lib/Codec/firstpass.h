@@ -13,8 +13,8 @@
 #define AOM_AV1_ENCODER_FIRSTPASS_H_
 
 #include "definitions.h"
-#include "rate_control_process.h"
-#include "picture_control_set.h"
+#include "rc_process.h"
+#include "pcs.h"
 
 #ifdef __cplusplus
 extern "C" {
