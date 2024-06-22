@@ -70,10 +70,6 @@ static INLINE InterpFilters av1_broadcast_interp_filter(InterpFilter filter) {
     return av1_make_interp_filters(filter, filter);
 }
 
-static INLINE InterpFilter av1_unswitchable_filter(InterpFilter filter) {
-    return filter == SWITCHABLE ? EIGHTTAP_REGULAR : filter;
-}
-
 #define LOG_SWITCHABLE_FILTERS 2 /* (1 << LOG_SWITCHABLE_FILTERS) > SWITCHABLE_FILTERS */
 
 #define MAX_SUBPEL_TAPS 12

@@ -38,57 +38,6 @@ void generate_padding_r(EbByte src_pic, uint32_t src_stride, uint32_t row_width,
     }
 }
 
-/* Pad padding_height pixels on top for a block of width row_width */
-void generate_padding_t(EbByte src_pic, uint32_t src_stride, uint32_t row_width, uint32_t padding_height) {
-    uint32_t vertical_idx = padding_height;
-    EbByte   temp_src_pic;
-
-    temp_src_pic = src_pic;
-    while (vertical_idx) {
-        // top part data copy
-        temp_src_pic -= src_stride;
-        svt_memcpy(temp_src_pic, src_pic, sizeof(uint8_t) * row_width);
-        --vertical_idx;
-    }
-}
-
-/* Pad padding_height pixels in the bottom for a block of width row_width */
-void generate_padding_b(EbByte src_pic, uint32_t src_stride, uint32_t row_width, uint32_t row_height,
-                        uint32_t padding_height) {
-    uint32_t vertical_idx = padding_height;
-    EbByte   temp_src_pic, temp_src_pic_1;
-    temp_src_pic = temp_src_pic_1 = src_pic + (src_stride * (row_height - 1));
-    while (vertical_idx) {
-        // bottom part data copy
-        temp_src_pic += src_stride;
-        svt_memcpy(temp_src_pic, temp_src_pic_1, sizeof(uint8_t) * row_width);
-        --vertical_idx;
-    }
-}
-
-/* left padding for high bit depth */
-void generate_padding_l_hbd(EbByte src_pic, uint32_t src_stride, uint32_t row_height, uint32_t padding_width) {
-    uint32_t vertical_idx = row_height;
-    while (vertical_idx) {
-        // left padding
-        memset16bit((uint16_t*)(src_pic - padding_width), ((uint16_t*)(src_pic))[0], padding_width >> 1);
-        src_pic += src_stride;
-        --vertical_idx;
-    }
-}
-
-/* right padding for high bit depth */
-void generate_padding_r_hbd(EbByte src_pic, uint32_t src_stride, uint32_t row_width, uint32_t row_height,
-                            uint32_t padding_width) {
-    uint32_t vertical_idx = row_height;
-    while (vertical_idx) {
-        // right padding
-        memset16bit((uint16_t*)(src_pic + row_width), ((uint16_t*)(src_pic + row_width - 2))[0], padding_width >> 1);
-        src_pic += src_stride;
-        --vertical_idx;
-    }
-}
-
 /** svt_aom_generate_padding()
         is used to pad the target picture. The horizontal padding happens first and then the vertical padding.
  */

@@ -176,31 +176,6 @@ static INLINE void highbd_transpose8x8_sse2(__m128i *x0, __m128i *x1, __m128i *x
     highbd_transpose8x8_high_sse2(x0, x1, x2, x3, x4, x5, x6, x7, d4, d5, d6, d7);
 }
 
-// here in and out pointers (x and d arrays) should be different! we don't store
-// their values inside
-static INLINE void highbd_transpose8x16_sse2(__m128i *x0, __m128i *x1, __m128i *x2, __m128i *x3, __m128i *x4,
-                                             __m128i *x5, __m128i *x6, __m128i *x7, __m128i *d0, __m128i *d1,
-                                             __m128i *d2, __m128i *d3, __m128i *d4, __m128i *d5, __m128i *d6,
-                                             __m128i *d7) {
-    highbd_transpose8x8_sse2(x0, x1, x2, x3, x4, x5, x6, x7, d0, d1, d2, d3, d4, d5, d6, d7);
-    highbd_transpose8x8_sse2(x0 + 1,
-                             x1 + 1,
-                             x2 + 1,
-                             x3 + 1,
-                             x4 + 1,
-                             x5 + 1,
-                             x6 + 1,
-                             x7 + 1,
-                             d0 + 1,
-                             d1 + 1,
-                             d2 + 1,
-                             d3 + 1,
-                             d4 + 1,
-                             d5 + 1,
-                             d6 + 1,
-                             d7 + 1);
-}
-
 // Low bit depth functions
 static INLINE void transpose4x8_8x4_low_sse2(__m128i *x0, __m128i *x1, __m128i *x2, __m128i *x3, __m128i *d0,
                                              __m128i *d1, __m128i *d2, __m128i *d3) {

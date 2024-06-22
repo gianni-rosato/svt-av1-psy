@@ -127,9 +127,6 @@ void svt_aom_update_recon_neighbor_array16bit(NeighborArrayUnit *na_unit_ptr, ui
 void svt_aom_copy_neigh_arr(NeighborArrayUnit *na_src, NeighborArrayUnit *na_dst, uint32_t org_x, uint32_t org_y,
                             uint32_t bw, uint32_t bh, uint8_t neighbor_array_type_mask);
 
-void svt_aom_copy_neigh_arr_32(NeighborArrayUnit32 *na_src, NeighborArrayUnit32 *na_dst, uint32_t org_x, uint32_t org_y,
-                               uint32_t bw, uint32_t bh, uint8_t neighbor_array_type_mask);
-
 extern void svt_aom_neighbor_array_unit16bit_sample_write(NeighborArrayUnit *na_unit_ptr, uint16_t *src_ptr,
                                                           uint32_t stride, uint32_t src_origin_x, uint32_t src_origin_y,
                                                           uint32_t pic_origin_x, uint32_t pic_origin_y,

@@ -56,17 +56,6 @@ extern void pad_input_picture(EbByte src_pic, uint32_t src_stride, uint32_t orig
 extern void svt_aom_pad_input_picture_16bit(uint16_t* src_pic, uint32_t src_stride, uint32_t original_src_width,
                                             uint32_t original_src_height, uint32_t pad_right, uint32_t pad_bottom);
 
-void generate_padding_l(EbByte src_pic, uint32_t src_stride, uint32_t row_height, uint32_t padding_width);
-void generate_padding_r(EbByte src_pic, uint32_t src_stride, uint32_t row_width, uint32_t row_height,
-                        uint32_t padding_width);
-void generate_padding_t(EbByte src_pic, uint32_t src_stride, uint32_t row_width, uint32_t padding_height);
-void generate_padding_b(EbByte src_pic, uint32_t src_stride, uint32_t row_width, uint32_t row_height,
-                        uint32_t padding_height);
-
-void generate_padding_l_hbd(EbByte src_pic, uint32_t src_stride, uint32_t row_height, uint32_t padding_width);
-void generate_padding_r_hbd(EbByte src_pic, uint32_t src_stride, uint32_t row_width, uint32_t row_height,
-                            uint32_t padding_width);
-
 #ifdef __cplusplus
 }
 #endif

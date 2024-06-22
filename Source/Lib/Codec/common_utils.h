@@ -86,28 +86,6 @@ static INLINE TxType intra_mode_to_tx_type(PredictionMode pred_mode, UvPredictio
     return _intra_mode_to_tx_type[mode];
 }
 
-static INLINE TxType intra_mode_to_tx_type_dec(const BlockModeInfo *mbmi, PlaneType plane_type) {
-    static const TxType _intra_mode_to_tx_type[INTRA_MODES] = {
-        DCT_DCT, // DC
-        ADST_DCT, // V
-        DCT_ADST, // H
-        DCT_DCT, // D45
-        ADST_ADST, // D135
-        ADST_DCT, // D117
-        DCT_ADST, // D153
-        DCT_ADST, // D207
-        ADST_DCT, // D63
-        ADST_ADST, // SMOOTH
-        ADST_DCT, // SMOOTH_V
-        DCT_ADST, // SMOOTH_H
-        ADST_ADST, // PAETH
-    };
-    const PredictionMode mode = (plane_type == PLANE_TYPE_Y) ? mbmi->mode : get_uv_mode(mbmi->uv_mode);
-
-    assert(mode < INTRA_MODES);
-    return _intra_mode_to_tx_type[mode];
-}
-
 static INLINE int32_t is_chroma_reference(int32_t mi_row, int32_t mi_col, BlockSize bsize, int32_t subsampling_x,
                                           int32_t subsampling_y) {
     const int32_t bw      = mi_size_wide[bsize];

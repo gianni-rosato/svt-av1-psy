@@ -142,23 +142,6 @@ int svt_aom_is_smooth(const BlockModeInfoEnc *block_mi, int plane)
             uv_mode == UV_SMOOTH_H_PRED);
     }
 }
-int svt_aom_is_smooth_dec(const BlockModeInfo *block_mi, int plane)
-{
-    if (plane == 0) {
-        const PredictionMode mode = block_mi->mode;
-        return (mode == SMOOTH_PRED || mode == SMOOTH_V_PRED ||
-            mode == SMOOTH_H_PRED);
-    }
-    else {
-        // uv_mode is not set for inter blocks, so need to explicitly
-        // detect that case.
-        if (is_inter_block_dec(block_mi)) return 0;
-
-        const UvPredictionMode uv_mode = block_mi->uv_mode;
-        return (uv_mode == UV_SMOOTH_PRED || uv_mode == UV_SMOOTH_V_PRED ||
-            uv_mode == UV_SMOOTH_H_PRED);
-    }
-}
 
 int32_t svt_aom_use_intra_edge_upsample(int32_t bs0, int32_t bs1, int32_t delta, int32_t type)
 {
