@@ -1,5 +1,15 @@
 # Changelog
 
+## [2.1.1] - 2024-06-25
+
+Cleanup, bug fixes, and documentation improvements:
+- Removed the SVT-AV1 Decoder portion of the project. The last version containing the decoder is SVT-AV1 v2.1.0.
+- Updated the folder structure and library build order to reflect the removal of the decoder.
+- Renamed all files (except for API files) to remove the "Eb" prefix and changed them to camel_case format.
+- Updated the gtest version to v1.12.1.
+- Added CI support for ARM-based macOS machines.
+- Improved documentation for accuracy and completeness.
+
 ## [2.1.0] - 2024-05-17
 
 API updates
