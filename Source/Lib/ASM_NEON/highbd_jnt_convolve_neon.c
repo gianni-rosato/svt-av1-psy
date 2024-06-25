@@ -12,7 +12,7 @@
 #include <arm_neon.h>
 #include <assert.h>
 
-#include "EbDefinitions.h"
+#include "definitions.h"
 #include "common_dsp_rtcd.h"
 #include "convolve.h"
 

@@ -9,8 +9,8 @@
  * PATENTS file, you can obtain it at https://www.aomedia.org/license/patent-license.
  */
 
-#include "EbDefinitions.h"
-#include "EbMotionEstimation.h"
+#include "definitions.h"
+#include "motion_estimation.h"
 
 #include <arm_neon.h>
 

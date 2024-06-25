@@ -13,6 +13,7 @@
 #include "definitions.h"
 #include "mem_neon.h"
 #include "transpose_neon.h"
+#include "pack_unpack_c.h"
 
 static INLINE void residual_kernel4_neon(const uint8_t *restrict input, const uint32_t input_stride,
                                          const uint8_t *restrict pred, const uint32_t pred_stride, int16_t *residual,

@@ -15,8 +15,8 @@
 #include "mem_neon.h"
 #include "transpose_neon.h"
 #include "filter.h"
-#include "EbInterPrediction.h"
-#include "EbUtility.h"
+#include "inter_prediction.h"
+#include "utility.h"
 
 #define ROUND0_BITS 3
 
