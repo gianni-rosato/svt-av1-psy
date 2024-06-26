@@ -150,6 +150,9 @@ class PackTest : public ::testing::TestWithParam<AreaSize> {
     void run_test() {
         for (int i = 0; i < RANDOM_TIME; i++) {
             svt_buf_random_u8(in_bit_buffer_, test_size_);
+
+#ifdef ARCH_X86_64
+
             svt_c_pack_avx2_intrin(in_bit_buffer_,
                                    in_stride_,
                                    in_compn_bit_buffer1_,
@@ -174,6 +177,8 @@ class PackTest : public ::testing::TestWithParam<AreaSize> {
                 << "svt_c_pack_avx2_intrin failed at " << i
                 << "th test with size (" << area_width_ << "," << area_height_
                 << ")";
+
+#endif  // ARCH_X86_64
         }
     }
 
@@ -334,8 +339,6 @@ INSTANTIATE_TEST_SUITE_P(
 
 #endif  // ARCH_AARCH64
 
-// test svt_unpack_and_2bcompress_sse4_1
-// test svt_unpack_and_2bcompress_avx2
 typedef void (*svt_unpack_and_2bcompress_fn)(
     uint16_t *in16b_buffer, uint32_t in16b_stride, uint8_t *out8b_buffer,
     uint32_t out8b_stride, uint8_t *out2b_buffer, uint32_t out2b_stride,
@@ -657,6 +660,11 @@ class Pack2dTest : public ::testing::TestWithParam<AreaSize> {
                          out_16bit_buffer_sse2_,
                          out_16bit_buffer_c_);
 
+            EXPECT_FALSE(HasFailure())
+                << "svt_enc_msb_pack2d_{sse2,avx2}_intrin failed at " << i
+                << "th test with size (" << area_width_ << "," << area_height_
+                << ")";
+
 #endif  // ARCH_X86_64
 
 #ifdef ARCH_AARCH64
@@ -674,12 +682,12 @@ class Pack2dTest : public ::testing::TestWithParam<AreaSize> {
                          out_16bit_buffer_neon_,
                          out_16bit_buffer_c_);
 
-#endif  // ARCH_AARCH64
-
             EXPECT_FALSE(HasFailure())
-                << "svt_enc_msb_pack2d_{sse2,avx2}_intrin failed at " << i
+                << "svt_enc_msb_pack2d_neon_intrin failed at " << i
                 << "th test with size (" << area_width_ << "," << area_height_
                 << ")";
+
+#endif  // ARCH_AARCH64
         }
     }
 
@@ -707,8 +715,6 @@ TEST_P(Pack2dTest, Pack2dTest) {
 
 INSTANTIATE_TEST_SUITE_P(PACK2D, Pack2dTest,
                          ::testing::ValuesIn(TEST_COMMON_SIZES));
-
-#ifdef ARCH_X86_64
 
 // test svt_enc_un_pack8_bit_data_avx2_intrin
 // Similar assumption that the width is multiple of 4, using
@@ -788,6 +794,9 @@ class UnPackTest : public ::testing::TestWithParam<AreaSize> {
     void run_test() {
         for (int i = 0; i < RANDOM_TIME; i++) {
             svt_buf_random_u16(in_16bit_buffer_, test_size_);
+
+#ifdef ARCH_X86_64
+
             svt_enc_un_pack8_bit_data_avx2_intrin(in_16bit_buffer_,
                                                   in_stride_,
                                                   out_8bit_buffer1_,
@@ -810,12 +819,17 @@ class UnPackTest : public ::testing::TestWithParam<AreaSize> {
                 << "svt_enc_un_pack8_bit_data_avx2_intrin failed at " << i
                 << "th test with size (" << area_width_ << "," << area_height_
                 << ")";
+
+#endif  // ARCH_X86_64
         }
     }
 
     void run_2d_test() {
         for (int i = 0; i < RANDOM_TIME; i++) {
             svt_buf_random_u16(in_16bit_buffer_, test_size_);
+
+#ifdef ARCH_X86_64
+
             svt_enc_msb_un_pack2d_sse2_intrin(in_16bit_buffer_,
                                               in_stride_,
                                               out_8bit_buffer1_,
@@ -868,6 +882,43 @@ class UnPackTest : public ::testing::TestWithParam<AreaSize> {
                 << "svt_enc_msb_un_pack2d_avx2_intrin failed at " << i
                 << "th test with size (" << area_width_ << "," << area_height_
                 << ")";
+
+#endif  // ARCH_X86_64
+
+#ifdef ARCH_AARCH64
+
+            svt_enc_msb_un_pack2d_neon(in_16bit_buffer_,
+                                       in_stride_,
+                                       out_8bit_buffer1_,
+                                       out_nbit_buffer1_,
+                                       out_stride_,
+                                       out_stride_,
+                                       area_width_,
+                                       area_height_);
+            svt_enc_msb_un_pack2_d(in_16bit_buffer_,
+                                   in_stride_,
+                                   out_8bit_buffer2_,
+                                   out_nbit_buffer2_,
+                                   out_stride_,
+                                   out_stride_,
+                                   area_width_,
+                                   area_height_);
+
+            check_output(area_width_,
+                         area_height_,
+                         out_8bit_buffer1_,
+                         out_8bit_buffer2_);
+            check_output(area_width_,
+                         area_height_,
+                         out_nbit_buffer1_,
+                         out_nbit_buffer2_);
+
+            EXPECT_FALSE(HasFailure())
+                << "svt_enc_msb_un_pack2d_neon failed at " << i
+                << "th test with size (" << area_width_ << "," << area_height_
+                << ")";
+
+#endif  // ARCH_AARCH64
         }
     }
 
@@ -889,10 +940,6 @@ TEST_P(UnPackTest, UnPack2dTest) {
 
 INSTANTIATE_TEST_SUITE_P(UNPACK, UnPackTest,
                          ::testing::ValuesIn(TEST_COMMON_SIZES));
-
-#endif  // ARCH_X86_64
-
-#ifdef ARCH_X86_64
 
 // test svt_unpack_avg_avx2_intrin
 // only width of {4, 8, 16, 32, 64} are implemented in
@@ -993,6 +1040,9 @@ class UnPackAvgTest : public ::testing::TestWithParam<AreaSize> {
     void run_avg_test() {
         for (int i = 0; i < RANDOM_TIME; i++) {
             prepare_data();
+
+#ifdef ARCH_X86_64
+
             svt_unpack_avg_avx2_intrin(in_16bit_buffer1_,
                                        in_stride_,
                                        in_16bit_buffer2_,
@@ -1030,6 +1080,8 @@ class UnPackAvgTest : public ::testing::TestWithParam<AreaSize> {
                 << "svt_unpack_avg_{sse2,avx2}_intrin failed at " << i
                 << "th test with size (" << area_width_ << "," << area_height_
                 << ")";
+
+#endif  // ARCH_X86_64
         }
     }
 
@@ -1037,6 +1089,9 @@ class UnPackAvgTest : public ::testing::TestWithParam<AreaSize> {
         for (int i = 0; i < RANDOM_TIME; i++) {
             if (area_width_ > 4) {
                 prepare_data();
+
+#ifdef ARCH_X86_64
+
                 svt_unpack_avg_safe_sub_avx2_intrin(in_16bit_buffer1_,
                                                     in_stride_,
                                                     in_16bit_buffer2_,
@@ -1065,6 +1120,8 @@ class UnPackAvgTest : public ::testing::TestWithParam<AreaSize> {
                     << "svt_unpack_avg_safe_sub_avx2_intrin failed at " << i
                     << "th test with size (" << area_width_ << ","
                     << area_height_ << ")";
+
+#endif  // ARCH_X86_64
             }
         }
     }
@@ -1086,7 +1143,5 @@ TEST_P(UnPackAvgTest, UnPackSubAvgTest) {
 
 INSTANTIATE_TEST_SUITE_P(UNPACKAVG, UnPackAvgTest,
                          ::testing::ValuesIn(TEST_AVG_SIZES));
-
-#endif  // ARCH_X86_64
 
 }  // namespace
