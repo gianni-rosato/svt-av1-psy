@@ -4391,7 +4391,11 @@ static void set_param_based_on_input(SequenceControlSet *scs)
         if (scs->static_config.enc_mode <= ENC_MR) {
             mrp_level = 1;
         }
+#if TUNE_M2_2
+        else if (scs->static_config.enc_mode <= ENC_M1) {
+#else
         else if (scs->static_config.enc_mode <= ENC_M2) {
+#endif
             mrp_level = 2;
         }
         else if (scs->static_config.enc_mode <= ENC_M3) {

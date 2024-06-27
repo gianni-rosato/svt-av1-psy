@@ -54,6 +54,16 @@ extern "C" {
 #define OPT_L0_ONLY_BASE                          1 // Use variance in list0_only_base classifier
 #define TUNE_M5_2                                 1 // Tune M5
 #define OPTIMIZE_LP_LEVELS                        1 // Optimize multithreaded settings
+#define TUNE_M7                                   1 // Tune M7
+#define SHUT_QP_SMOOTHING                         1 // Shut QP smoothing
+#define OPT_DEPTH_LEVEL                           1 // Protect isolated cplx SB(s)
+#define OPT_DLF_FD                                1 // Opt DLF for M7 fast-decode
+#define TUNE_DR_M7_RES                            1 // Adopt 1080p depth-removal settings for 480p/720p in M7
+#define TUNE_M5_TPL                               1 // Tune M5 tpl settings
+#define TUNE_M0                                   1 // Tune M0
+#define TUNE_MR                                   1 // Tune MR
+#define TUNE_M1                                   1 // Tune M1
+#define TUNE_M2_2                                 1 // Tune M2
 
 //FOR DEBUGGING - Do not remove
 #define OPT_LD_LATENCY2         1 // Latency optimization for low delay - to keep the Macro for backwards testing until 3.0

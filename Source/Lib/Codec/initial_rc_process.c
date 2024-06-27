@@ -183,8 +183,15 @@ uint8_t svt_aom_get_tpl_group_level(uint8_t tpl, int8_t enc_mode, SvtAv1RcMode r
     uint8_t tpl_group_level;
     if (!tpl)
         tpl_group_level = 0;
+#if TUNE_M5_TPL
+    else if (enc_mode <= ENC_M4)
+        tpl_group_level = 1;
+    else if (enc_mode <= ENC_M5)
+        tpl_group_level = 2;
+#else
     else if (enc_mode <= ENC_M5)
         tpl_group_level = 1;
+#endif
     else if (enc_mode <= ENC_M10 || (rc_mode == SVT_AV1_RC_MODE_VBR && enc_mode <= ENC_M11))
         tpl_group_level = 3;
     else
