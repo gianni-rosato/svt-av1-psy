@@ -19,6 +19,7 @@
 extern "C" {
 #endif
 
+#if !CLN_REMOVE_UNUSED_MACROS
 #define BLK4X4_ADDR_TO_VERTICAL_EDGE_BS_ARRAY_IDX(blk_4x4_addr) \
     (((blk_4x4_addr) & (MAX_SB_SIZE_IN_4X4BLK - 1)) +           \
      (((blk_4x4_addr) / MAX_SB_SIZE_IN_4X4BLK) * MAX_SB_SIZE_IN_4X4BLK))
@@ -47,7 +48,7 @@ extern "C" {
 #define MAX_QP_VALUE_PLUS_INTRA_TC_OFFSET 53
 #define BETA_OFFSET_VALUE 12 // range -12 to 12
 #define TC_OFFSET_VALUE 12 //12 // range -12 to 12
-
+#endif
 typedef enum EdgeDir { VERT_EDGE = 0, HORZ_EDGE = 1, NUM_EDGE_DIRS } EdgeDir;
 
 typedef struct Av1DeblockingParameters {

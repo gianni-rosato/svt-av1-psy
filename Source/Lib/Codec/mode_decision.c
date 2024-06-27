@@ -3883,7 +3883,11 @@ static void inject_intra_candidates(
     PredictionMode              intra_mode_end = dc_cand_only_flag ? DC_PRED : ctx->intra_ctrls.intra_mode_end;
     uint32_t                    cand_total_cnt = *candidate_total_cnt;
     ModeDecisionCandidate    *cand_array = ctx->fast_cand_array;
+#if CLN_REMOVE_UNUSED_SCS
+    const Bool use_angle_delta = ctx->intra_ctrls.angular_pred_level ? av1_use_angle_delta(ctx->blk_geom->bsize) : 0;
+#else
     const Bool use_angle_delta = av1_use_angle_delta(ctx->blk_geom->bsize, ctx->intra_ctrls.angular_pred_level);
+#endif
     const uint8_t disable_angle_prediction = (ctx->intra_ctrls.angular_pred_level == 0);
     uint8_t directional_mode_skip_mask[INTRA_MODES] = { 0 };
     if (ctx->intra_ctrls.angular_pred_level >= 4) {

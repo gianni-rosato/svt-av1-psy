@@ -7339,7 +7339,11 @@ static void search_best_independent_uv_mode(PictureControlSet *pcs, EbPictureBuf
     unsigned int           uv_mode_total_count     = start_fast_buffer_index;
     UvPredictionMode       uv_mode_end             = (UvPredictionMode)ctx->intra_ctrls.intra_mode_end;
     uint8_t                uv_mode_start           = UV_DC_PRED;
+#if CLN_REMOVE_UNUSED_SCS
+    Bool      use_angle_delta          = ctx->intra_ctrls.angular_pred_level ? av1_use_angle_delta(ctx->blk_geom->bsize) : 0;
+#else
     Bool      use_angle_delta          = av1_use_angle_delta(ctx->blk_geom->bsize, ctx->intra_ctrls.angular_pred_level);
+#endif
     uint8_t   disable_angle_prediction = (ctx->intra_ctrls.angular_pred_level == 0);
     const int uv_angle_delta_shift     = 1;
     uint8_t   directional_mode_skip_mask[INTRA_MODES] = {0};

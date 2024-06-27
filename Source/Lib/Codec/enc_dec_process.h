@@ -28,8 +28,9 @@
 extern "C" {
 #endif
 
+#if !CLN_REMOVE_UNUSED_MACROS
 #define PM_STRIDE 4
-
+#endif
 /**************************************
      * Enc Dec Context
      **************************************/

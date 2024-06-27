@@ -245,6 +245,7 @@ typedef struct SequenceControlSet {
     uint8_t           passes;
     FirstPassControls first_pass_ctrls;
     uint8_t           final_pass_preset;
+#if !CLN_REMOVE_UNUSED_SCS
     /* Palette Mode
     *
     * -1: Default, 0: OFF, 1: Fully ON, 2 ... 6: Faster levels */
@@ -253,6 +254,7 @@ typedef struct SequenceControlSet {
     *
     * Default is -1. */
     int intra_angle_delta;
+#endif
     /* Specifies whether to use 16bit pipeline.
     *
     * 0: 8 bit pipeline.
@@ -265,6 +267,7 @@ typedef struct SequenceControlSet {
     *
     * Default is 128. */
     uint32_t super_block_size;
+#if !CLN_REMOVE_UNUSED_SCS
 
     /* Warped motion
     *
@@ -333,11 +336,12 @@ typedef struct SequenceControlSet {
     *
     * Default is -1. */
     int enable_intra_edge_filter;
-
+#endif
     /* Picture based rate estimation
     *
     * Default is - 1. */
     int pic_based_rate_est;
+#if !CLN_REMOVE_UNUSED_SCS
     /* Flag to control intraBC mode
     *  0      OFF
     *  1      slow
@@ -346,6 +350,7 @@ typedef struct SequenceControlSet {
     *
     * Default is -1 (DEFAULT behavior). */
     int intrabc_mode;
+#endif
 
     // MD Parameters
     /* Enable the use of HBD (10-bit) for 10 bit content at the mode decision step

@@ -4185,10 +4185,14 @@ static void set_param_based_on_input(SequenceControlSet *scs)
     // Set over_boundary_block_mode     Settings
     // 0                            0: not allowed
     // 1                            1: allowed
+#if CLN_REMOVE_UNUSED_SCS
+    scs->over_boundary_block_mode = 1;
+#else
     if (scs->over_bndry_blk == DEFAULT)
         scs->over_boundary_block_mode = 1;
     else
         scs->over_boundary_block_mode = scs->over_bndry_blk;
+#endif
     svt_aom_set_mfmv_config(scs);
 
     uint8_t list0_only_base_lvl = 0;
@@ -4316,6 +4320,9 @@ static void copy_api_from_app(
     scs->picture_analysis_number_of_regions_per_height =
         HIGHER_THAN_CLASS_1_REGION_SPLIT_PER_HEIGHT;
 
+#if CLN_REMOVE_UNUSED_SCS
+    scs->pic_based_rate_est = FALSE;
+#else
     scs->enable_warped_motion        = DEFAULT;
     scs->enable_global_motion        = TRUE;
     scs->enable_paeth                = DEFAULT;
@@ -4331,10 +4338,13 @@ static void copy_api_from_app(
     scs->filter_intra_level          = DEFAULT;
     scs->enable_intra_edge_filter    = DEFAULT;
     scs->pic_based_rate_est          = DEFAULT;
+#endif
     scs->block_mean_calc_prec        = BLOCK_MEAN_PREC_SUB;
+#if !CLN_REMOVE_UNUSED_SCS
     scs->palette_level = DEFAULT;
     scs->intra_angle_delta = DEFAULT;
     scs->intrabc_mode = DEFAULT;
+#endif
     scs->ten_bit_format = 0;
     scs->speed_control_flag = 0;
 

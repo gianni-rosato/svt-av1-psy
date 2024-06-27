@@ -119,6 +119,7 @@ typedef struct {
     // of the target bitrate.
     int vbrmax_section;
 } TwoPassCfg;
+#if !CLN_REMOVE_UNUSED_SCS
 /*!
  * \brief Main encoder configuration data structure.
  */
@@ -254,7 +255,7 @@ typedef struct AV1EncoderConfig {
 
     /*!\endcond */
 } AV1EncoderConfig;
-
+#endif
 typedef struct SwitchFrameCfg {
     // Indicates the number of frames after which a frame may be coded as an S-Frame.
     int32_t sframe_dist;

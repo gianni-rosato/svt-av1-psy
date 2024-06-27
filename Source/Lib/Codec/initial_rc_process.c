@@ -375,12 +375,14 @@ static void set_tpl_params(PictureParentControlSet *pcs, uint8_t tpl_level) {
     default: assert(0); break;
     }
 
+#if !CLN_REMOVE_UNUSED_SCS
     // Check user-defined settings for MAX intra mode
     if (scs->enable_paeth == 0)
         tpl_ctrls->intra_mode_end = MIN(tpl_ctrls->intra_mode_end, SMOOTH_H_PRED);
 
     if (scs->enable_smooth == 0)
         tpl_ctrls->intra_mode_end = MIN(tpl_ctrls->intra_mode_end, D67_PRED);
+#endif
 }
 
 /*

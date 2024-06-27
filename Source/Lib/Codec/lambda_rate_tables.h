@@ -16,6 +16,7 @@
 extern "C" {
 #endif
 
+#if !CLN_REMOVE_UNUSED_MACROS
 #define NUMBER_OF_INTRA_MODES_MINUS_TWO 34
 #define LUMA_INTRA_MODE_BITS_GRE31 \
     196608 // farctional number of bit required for signaling luma intra mode greater than 31
@@ -28,7 +29,9 @@ extern "C" {
 // Precision macros used in the mode decision
 #define BIT_ESTIMATE_PRECISION 15
 #define LAMBDA_PRECISION 16
+#endif
 #define COST_PRECISION 8
+#if !CLN_REMOVE_UNUSED_MACROS
 #define MD_SHIFT (BIT_ESTIMATE_PRECISION + LAMBDA_PRECISION - COST_PRECISION)
 #define MD_OFFSET (1 << (MD_SHIFT - 1))
 
@@ -40,9 +43,10 @@ extern "C" {
 
 // Precision macro used in the motion estimation search
 #define ME_SHIFT (BIT_ESTIMATE_PRECISION + LAMBDA_PRECISION)
-
+#endif
 // Syntax element macro
 #define ZERO_COST 0
+#if !CLN_REMOVE_UNUSED_MACROS
 #define TU_SPLIT_ZERO 0
 #define TU_SPLIT_TAB_OFFSET 4 // offset to parse transSubDivFlag tables
 #define CBF_TAB_OFFSET 3 // offset to parse Cbf tables
@@ -59,6 +63,7 @@ static const uint32_t intra_luma_mode_mapping[] = {
     3, 3, 3, 3, 3, 3, 3, 1, 1, 1, 1, 1, 1, 1, 3, 3, 3,
     3, 3, 3, 3, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3 // conversion to 3 modes
 };
+#endif
 static const uint32_t av1_lambda_mode_decision8_bit_sad[QINDEX_RANGE /*256*/] = {
     86,    173,   173,   194,   216,   238,   259,   259,   281,   303,   324,   346,   368,   389,   411,   411,
     433,   454,   476,   498,   519,   541,   563,   563,   584,   606,   628,   649,   671,   693,   693,   714,

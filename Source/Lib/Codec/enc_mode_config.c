@@ -120,7 +120,9 @@ bool svt_aom_need_gm_ref_info(EncMode enc_mode, bool super_res_off) {
 }
 
 uint8_t svt_aom_derive_gm_level(PictureParentControlSet *pcs, bool super_res_off) {
+#if !CLN_REMOVE_UNUSED_SCS
     SequenceControlSet *scs       = pcs->scs;
+#endif
     uint8_t             gm_level  = 0;
     const EncMode       enc_mode  = pcs->enc_mode;
     const uint8_t       is_islice = pcs->slice_type == I_SLICE;
@@ -129,7 +131,11 @@ uint8_t svt_aom_derive_gm_level(PictureParentControlSet *pcs, bool super_res_off
     // pics might be scaled in different size
     // super-res is ok for its reference pics are always upscaled
     // to original size
+#if CLN_REMOVE_UNUSED_SCS
+    if (!is_islice)
+#else
     if (scs->enable_global_motion && !is_islice)
+#endif
         gm_level = svt_aom_get_gm_core_level(enc_mode, super_res_off);
     return gm_level;
 }
@@ -1834,6 +1840,19 @@ void svt_aom_sig_deriv_multi_processes(SequenceControlSet *scs, PictureParentCon
     //TODO: we can force all frames in GOP with the same detection status of leading I frame.
     uint8_t intrabc_level = 0;
     if (is_islice) {
+#if CLN_REMOVE_UNUSED_SCS
+        if (rtc_tune) {
+            intrabc_level = 0;
+        }
+        else {
+            if (enc_mode <= ENC_M5)
+                intrabc_level = 1;
+            else if (enc_mode <= ENC_M10)
+                intrabc_level = 6;
+            else
+                intrabc_level = 0;
+        }
+#else
         if (scs->intrabc_mode == DEFAULT) {
             if (rtc_tune) {
                 intrabc_level = 0;
@@ -1848,6 +1867,7 @@ void svt_aom_sig_deriv_multi_processes(SequenceControlSet *scs, PictureParentCon
         } else {
             intrabc_level = (uint8_t)scs->intrabc_mode;
         }
+#endif
     } else {
         //this will enable sc tools for P frames. hence change Bitstream even if palette mode is OFF
         intrabc_level = 0;
@@ -1856,6 +1876,16 @@ void svt_aom_sig_deriv_multi_processes(SequenceControlSet *scs, PictureParentCon
     frm_hdr->allow_intrabc = pcs->intraBC_ctrls.enabled;
     // Set palette_level
     if (sc_class1) {
+#if CLN_REMOVE_UNUSED_SCS
+        if (rtc_tune)
+            pcs->palette_level = is_islice && sc_class1 ? 3 : is_islice ? 2 : 0;
+        else if (enc_mode <= ENC_M3)
+            pcs->palette_level = is_base ? 2 : 0;
+        else if (enc_mode <= ENC_M11)
+            pcs->palette_level = is_islice ? 2 : 0;
+        else
+            pcs->palette_level = 0;
+#else
         if (scs->palette_level == DEFAULT) { //auto mode; if not set by cfg
             if (rtc_tune)
                 pcs->palette_level = is_islice && sc_class1 ? 3 : is_islice ? 2 : 0;
@@ -1867,6 +1897,7 @@ void svt_aom_sig_deriv_multi_processes(SequenceControlSet *scs, PictureParentCon
                 pcs->palette_level = 0;
         } else
             pcs->palette_level = scs->palette_level;
+#endif
     } else
         pcs->palette_level = 0;
 
@@ -1946,10 +1977,14 @@ void svt_aom_sig_deriv_multi_processes(SequenceControlSet *scs, PictureParentCon
     // Set frame end cdf update mode      Settings
     // 0                                     OFF
     // 1                                     ON
+#if CLN_REMOVE_UNUSED_SCS
+    pcs->frame_end_cdf_update_mode = 1;
+#else
     if (scs->frame_end_cdf_update == DEFAULT)
         pcs->frame_end_cdf_update_mode = 1;
     else
         pcs->frame_end_cdf_update_mode = scs->frame_end_cdf_update;
+#endif
 
     (void)context_ptr;
 
@@ -2354,6 +2389,9 @@ void svt_aom_sig_deriv_pre_analysis_scs(SequenceControlSet *scs) {
         scs->seq_header.order_hint_info.enable_jnt_comp = 0;
         scs->seq_header.enable_masked_compound          = 0;
     }
+#if CLN_REMOVE_UNUSED_SCS
+    scs->seq_header.enable_intra_edge_filter = 1;
+#else
     if (scs->enable_intra_edge_filter == DEFAULT)
         scs->seq_header.enable_intra_edge_filter = 1;
     else
@@ -2363,6 +2401,7 @@ void svt_aom_sig_deriv_pre_analysis_scs(SequenceControlSet *scs) {
         scs->seq_header.pic_based_rate_est = 0;
     else
         scs->seq_header.pic_based_rate_est = (uint8_t)scs->pic_based_rate_est;
+#endif
 
     if (scs->static_config.enable_restoration_filtering == DEFAULT) {
         // As allocation has already happened based on the initial input resolution, the resolution
@@ -2382,10 +2421,14 @@ void svt_aom_sig_deriv_pre_analysis_scs(SequenceControlSet *scs) {
     else
         scs->seq_header.cdef_level = (uint8_t)(scs->static_config.cdef_level > 0);
 
+#if CLN_REMOVE_UNUSED_SCS
+    scs->seq_header.enable_warped_motion = 1;
+#else
     if (scs->enable_warped_motion == DEFAULT) {
         scs->seq_header.enable_warped_motion = 1;
     } else
         scs->seq_header.enable_warped_motion = (uint8_t)scs->enable_warped_motion;
+#endif
 }
 
 uint32_t hadamard_path_c(Buf2D residualBuf, Buf2D coeffBuf, Buf2D inputBuf, Buf2D predBuf, BlockSize bsize) {
@@ -6833,6 +6876,7 @@ static void set_intra_ctrls(PictureControlSet *pcs, ModeDecisionContext *ctx, ui
     if (ctx->pd_pass == PD_PASS_1) {
         ctx->skip_intra = pcs->skip_intra;
 
+#if !CLN_REMOVE_UNUSED_SCS
         // Check user-defined settings
         if (pcs->ppcs->scs->enable_paeth == 0)
             ctrls->intra_mode_end = MIN(ctrls->intra_mode_end, SMOOTH_H_PRED);
@@ -6842,6 +6886,7 @@ static void set_intra_ctrls(PictureControlSet *pcs, ModeDecisionContext *ctx, ui
 
         if (pcs->ppcs->scs->intra_angle_delta == 0)
             ctrls->angular_pred_level = 0;
+#endif
     } else {
         ctx->skip_intra = !(ctrls->enable_intra) || pcs->skip_intra;
         assert(IMPLIES(ctx->lpd0_ctrls.pd0_level == VERY_LIGHT_PD0, ctx->skip_intra == 1));
@@ -8355,8 +8400,10 @@ void svt_aom_sig_deriv_mode_decision_config(SequenceControlSet *scs, PictureCont
     }
 
     Bool enable_wm = pcs->wm_level ? 1 : 0;
+#if !CLN_REMOVE_UNUSED_SCS
     if (scs->enable_warped_motion != DEFAULT)
         enable_wm = (Bool)scs->enable_warped_motion;
+#endif
     // Note: local warp should be disabled when super-res or resize is ON
     // according to the AV1 spec 5.11.27
     frm_hdr->allow_warped_motion = enable_wm &&
@@ -8502,6 +8549,22 @@ void svt_aom_sig_deriv_mode_decision_config(SequenceControlSet *scs, PictureCont
     if (scs->low_latency_kf && is_islice)
         pcs->cfl_level = 0;
     // Set the level for new/nearest/near injection
+#if CLN_REMOVE_UNUSED_SCS
+    if (enc_mode <= ENC_MR)
+        pcs->new_nearest_near_comb_injection = 1;
+#if TUNE_M5
+#if TUNE_M7 // new_nearest_near_comb_injection
+    else if (enc_mode <= ENC_M7)
+#else
+    else if (enc_mode <= ENC_M5)
+#endif
+#else
+    else if (enc_mode <= ENC_M3)
+#endif
+        pcs->new_nearest_near_comb_injection = is_base ? 2 : 0;
+    else
+        pcs->new_nearest_near_comb_injection = 0;
+#else
 #if OPT_NRST_NR_NEW
     if (scs->new_nearest_comb_inject == DEFAULT) {
         if (enc_mode <= ENC_MR)
@@ -8519,6 +8582,7 @@ void svt_aom_sig_deriv_mode_decision_config(SequenceControlSet *scs, PictureCont
     else
         pcs->new_nearest_near_comb_injection = scs->new_nearest_comb_inject;
 #endif
+#endif
 
     // Set the level for unipred3x3 injection
     if (enc_mode <= ENC_M1)
@@ -8527,6 +8591,22 @@ void svt_aom_sig_deriv_mode_decision_config(SequenceControlSet *scs, PictureCont
         pcs->unipred3x3_injection = 0;
 
     // Set the level for bipred3x3 injection
+#if CLN_REMOVE_UNUSED_SCS
+#if TUNE_M2
+    if (enc_mode <= ENC_M1)
+#else
+    if (enc_mode <= ENC_M2)
+#endif
+        pcs->bipred3x3_injection = 2;
+#if TUNE_M5
+    else if (enc_mode <= ENC_M4)
+#else
+    else if (enc_mode <= ENC_M5)
+#endif
+        pcs->bipred3x3_injection = 4;
+    else
+        pcs->bipred3x3_injection = 0;
+#else
     if (scs->bipred_3x3_inject == DEFAULT) {
 #if TUNE_M2
         if (enc_mode <= ENC_M1)
@@ -8541,6 +8621,7 @@ void svt_aom_sig_deriv_mode_decision_config(SequenceControlSet *scs, PictureCont
     } else {
         pcs->bipred3x3_injection = scs->bipred_3x3_inject;
     }
+#endif
 
     // Set the level for inter-inter compound
     pcs->inter_compound_mode = get_inter_compound_level(enc_mode);
@@ -8563,11 +8644,15 @@ void svt_aom_sig_deriv_mode_decision_config(SequenceControlSet *scs, PictureCont
     }
 
     // Set the level the spatial sse @ full-loop
+#if CLN_REMOVE_UNUSED_SCS
+    pcs->spatial_sse_full_loop_level = 1;
+#else
     pcs->spatial_sse_full_loop_level = 0;
     if (scs->spatial_sse_full_loop_level == DEFAULT)
         pcs->spatial_sse_full_loop_level = 1;
     else
         pcs->spatial_sse_full_loop_level = scs->spatial_sse_full_loop_level;
+#endif
     //set the nsq_level
     pcs->nsq_geom_level   = svt_aom_get_nsq_geom_level(enc_mode, is_base, pcs->coeff_lvl);
     pcs->nsq_search_level = svt_aom_get_nsq_search_level(pcs, enc_mode, pcs->coeff_lvl, scs->static_config.qp);

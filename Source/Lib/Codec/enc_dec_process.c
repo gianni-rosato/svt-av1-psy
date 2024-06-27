@@ -3314,7 +3314,11 @@ void *svt_aom_mode_decision_kernel(void *input_ptr) {
                         mdc_ptr                     = &(ed_ctx->md_ctx->mdc_sb_array);
                         ed_ctx->sb_index            = sb_index;
                         if (pcs->cdf_ctrl.enabled) {
+#if CLN_REMOVE_UNUSED_SCS
+                            if (scs->pic_based_rate_est &&
+#else
                             if (scs->seq_header.pic_based_rate_est &&
+#endif
                                 scs->enc_dec_segment_row_count_array[pcs->temporal_layer_index] == 1 &&
                                 scs->enc_dec_segment_col_count_array[pcs->temporal_layer_index] == 1) {
                                 if (sb_index == 0)

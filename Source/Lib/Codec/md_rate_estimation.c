@@ -670,7 +670,11 @@ static AOM_INLINE void sum_intra_stats(PictureControlSet *pcs, BlkStruct *blk_pt
             update_cdf(fc->filter_intra_mode_cdf, blk_ptr->filter_intra_mode, FILTER_INTRA_MODES);
         }
     }
+#if CLN_REMOVE_UNUSED_SCS
+    if (av1_is_directional_mode(y_mode) && av1_use_angle_delta(bsize)) {
+#else
     if (av1_is_directional_mode(y_mode) && av1_use_angle_delta(bsize, pcs->ppcs->scs->intra_angle_delta)) {
+#endif
         update_cdf(fc->angle_delta_cdf[y_mode - V_PRED],
                    blk_ptr->angle_delta[PLANE_TYPE_Y] + MAX_ANGLE_DELTA,
                    2 * MAX_ANGLE_DELTA + 1);
@@ -697,7 +701,11 @@ static AOM_INLINE void sum_intra_stats(PictureControlSet *pcs, BlkStruct *blk_pt
         }
     }
     if (av1_is_directional_mode(get_uv_mode(uv_mode)) &&
+#if CLN_REMOVE_UNUSED_SCS
+        av1_use_angle_delta(bsize)) {
+#else
         av1_use_angle_delta(bsize, pcs->ppcs->scs->intra_angle_delta)) {
+#endif
         assert((uv_mode - UV_V_PRED) < DIRECTIONAL_MODES);
         assert((uv_mode - UV_V_PRED) >= 0);
         update_cdf(fc->angle_delta_cdf[uv_mode - UV_V_PRED],

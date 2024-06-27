@@ -425,6 +425,7 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet *scs) {
         return_error = EB_ErrorBadParameter;
     }
 
+#if !CLN_REMOVE_UNUSED_SCS
     // IntraBC
     if (scs->intrabc_mode > 3 || scs->intrabc_mode < -1) {
         SVT_ERROR("Instance %u: Invalid intraBC mode [0-3, -1 for default], your input: %i\n",
@@ -440,7 +441,7 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet *scs) {
             channel_number + 1);
         return_error = EB_ErrorBadParameter;
     }
-
+#endif
     if (scs->static_config.enable_adaptive_quantization > 2) {
         SVT_ERROR(
             "Instance %u : Invalid enable_adaptive_quantization. enable_adaptive_quantization must "

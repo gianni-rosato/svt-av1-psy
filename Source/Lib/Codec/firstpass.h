@@ -99,7 +99,9 @@ typedef struct {
 
 /*!\cond */
 
+#if !CLN_REMOVE_UNUSED_SCS
 struct AV1EncoderConfig;
+#endif
 struct TileDataEnc;
 
 void svt_av1_twopass_zero_stats(FIRSTPASS_STATS *section);
