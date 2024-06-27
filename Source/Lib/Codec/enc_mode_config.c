@@ -7991,6 +7991,10 @@ uint8_t svt_aom_get_update_cdf_level(EncMode enc_mode, SliceType is_islice, uint
 
     if (enc_mode <= ENC_M1)
         update_cdf_level = 1;
+#if TUNE_UPDATE_CDF
+    else if (enc_mode <= ENC_M3)
+        update_cdf_level = is_base ? 1 : 2;
+#endif
     else if (enc_mode <= ENC_M5)
         update_cdf_level = is_base ? 1 : 3;
     else if (enc_mode <= ENC_M9)
@@ -8498,10 +8502,23 @@ void svt_aom_sig_deriv_mode_decision_config(SequenceControlSet *scs, PictureCont
     if (scs->low_latency_kf && is_islice)
         pcs->cfl_level = 0;
     // Set the level for new/nearest/near injection
+#if OPT_NRST_NR_NEW
+    if (scs->new_nearest_comb_inject == DEFAULT) {
+        if (enc_mode <= ENC_MR)
+            pcs->new_nearest_near_comb_injection = 1;
+        else if (enc_mode <= ENC_M3)
+            pcs->new_nearest_near_comb_injection = is_base ? 2 : 0;
+        else
+            pcs->new_nearest_near_comb_injection = 0;
+    }
+    else
+        pcs->new_nearest_near_comb_injection = scs->new_nearest_comb_inject;
+#else
     if (scs->new_nearest_comb_inject == DEFAULT)
         pcs->new_nearest_near_comb_injection = 0;
     else
         pcs->new_nearest_near_comb_injection = scs->new_nearest_comb_inject;
+#endif
 
     // Set the level for unipred3x3 injection
     if (enc_mode <= ENC_M1)

@@ -2048,6 +2048,11 @@ static void inject_new_nearest_new_comb_candidates(const SequenceControlSet *scs
                         ++ctx->injected_mv_count;
                     }
                 }
+#if OPT_NRST_NR_NEW
+                // For level 2, only inject NEAREST_NEW/NEW_NEAREST candidates
+                if (ctx->new_nearest_near_comb_injection >= 2)
+                    continue;
+#endif
                 //NEW_NEARMV
                 {
                     uint8_t max_drl_index = svt_aom_get_max_drl_index(xd->ref_mv_count[ref_pair], NEW_NEARMV);

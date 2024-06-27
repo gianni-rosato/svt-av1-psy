@@ -3999,6 +3999,23 @@ static void set_param_based_on_input(SequenceControlSet *scs)
     else
         if (scs->static_config.enc_mode <= ENC_M1)
             scs->super_block_size = 128;
+#if TUNE_SB_SIZE_M2_RES
+        else if (scs->static_config.enc_mode <= ENC_M2) {
+
+            if (scs->input_resolution <= INPUT_SIZE_480p_RANGE) {
+                if (scs->static_config.qp <= 56)
+                    scs->super_block_size = 64;
+                else
+                    scs->super_block_size = 128;
+            }
+            else {
+                if (scs->static_config.qp <= 50)
+                    scs->super_block_size = 64;
+                else
+                    scs->super_block_size = 128;
+            }
+        }
+#endif
         else if (scs->static_config.enc_mode <= ENC_M7) {
             if (scs->static_config.qp <= 56)
                 scs->super_block_size = 64;

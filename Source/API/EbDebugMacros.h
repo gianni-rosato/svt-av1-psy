@@ -38,6 +38,9 @@ extern "C" {
 #define OPT_ME_ON_MV                              1 // Increase ME SA based on MV search centre
 #define OPT_MV_DIFF_RATE                          1 // Include drl rate when choosing best MV pred
 #define TUNE_COMP_LEVEL                           1 // Tune compound level for M1/2
+#define OPT_NRST_NR_NEW                           1 // Enable NRST_NEW, etc. prediction types
+#define TUNE_SB_SIZE_M2_RES                       1 // Use different QP th for 720p+ for SB size in M2
+#define TUNE_UPDATE_CDF                           1 // Tune M2,3 level of update cdf\
 
 //FOR DEBUGGING - Do not remove
 #define OPT_LD_LATENCY2         1 // Latency optimization for low delay - to keep the Macro for backwards testing until 3.0
