@@ -1304,6 +1304,14 @@ static void integer_search_b64(PictureParentControlSet *pcs, uint32_t b64_index,
             }
             search_area_width  = MIN((search_area_width * dist), me_ctx->me_sa.sa_max.width);
             search_area_height = MIN((search_area_height * dist), me_ctx->me_sa.sa_max.height);
+#if OPT_ME_ON_MV
+            if (me_ctx->mv_based_sa_adj.enabled && (!me_ctx->mv_based_sa_adj.nearest_ref_only || ref_pic_index == 0)) {
+                if (ABS(x_search_center) > me_ctx->mv_based_sa_adj.mv_size_th)
+                    search_area_width *= me_ctx->mv_based_sa_adj.sa_multiplier;
+                if (ABS(y_search_center) > me_ctx->mv_based_sa_adj.mv_size_th)
+                    search_area_height *= me_ctx->mv_based_sa_adj.sa_multiplier;
+            }
+#endif
 
             // Constrain x_ME to be a multiple of 8 (round up)
             // Update ME search reagion size based on hme-data

@@ -34,6 +34,11 @@
 extern "C" {
 #endif // __cplusplus
 
+#define TUNE_M2                                   1 // Tune M0-M2
+#define OPT_ME_ON_MV                              1 // Increase ME SA based on MV search centre
+#define OPT_MV_DIFF_RATE                          1 // Include drl rate when choosing best MV pred
+#define TUNE_COMP_LEVEL                           1 // Tune compound level for M1/2
+
 //FOR DEBUGGING - Do not remove
 #define OPT_LD_LATENCY2         1 // Latency optimization for low delay - to keep the Macro for backwards testing until 3.0
 #define OPT_FAST_DECODE_LVLS    0 // Add the ability to use different lvls for fast-deocde

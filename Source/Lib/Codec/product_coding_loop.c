@@ -2678,10 +2678,35 @@ static void read_refine_me_mvs_light_pd1(PictureControlSet *pcs, EbPictureBuffer
                     (skip_subpel_2 || (skip_zero_mv && me_mv_x == 0 && me_mv_y == 0));
 
                 if (subpel_enabled && !skip_subpel) {
+#if OPT_MV_DIFF_RATE
+                    if (no_mv_stack) {
+                        ctx->ref_mv.col = 0;
+                        ctx->ref_mv.row = 0;
+                    }
+                    else {
+                        IntMv best_pred_mv[2] = { {0}, {0} };
+                        uint8_t drl_index = 0;
+                        svt_aom_choose_best_av1_mv_pred(ctx,
+                            ctx->md_rate_est_ctx,
+                            ctx->blk_ptr,
+                            ref_pair,
+                            0,
+                            NEWMV,
+                            me_mv_x,
+                            me_mv_y,
+                            0,
+                            0,
+                            &drl_index,
+                            best_pred_mv);
+                        ctx->ref_mv.col = best_pred_mv[0].as_mv.col;
+                        ctx->ref_mv.row = best_pred_mv[0].as_mv.row;
+                    }
+#else
                     const MV as_mv = ctx->ref_mv_stack[rf[0]][0].this_mv.as_mv;
                     // Could use ctx->mvp_array[list][ref][0], but that requires the single ref MVP array to be init'd, but it is not in light-PD1 path
                     ctx->ref_mv.col                        = no_mv_stack ? 0 : (as_mv.col + 4) & ~0x07;
                     ctx->ref_mv.row                        = no_mv_stack ? 0 : (as_mv.row + 4) & ~0x07;
+#endif
                     ctx->post_subpel_me_mv_cost[list][ref] = md_subpel_search(
                         SPEL_ME,
                         pcs,
@@ -2726,7 +2751,9 @@ static void read_refine_me_mvs(PictureControlSet *pcs, ModeDecisionContext *ctx)
     const uint16_t     sqi_mds          = blk_geom->sqi_mds;
     const uint8_t      max_l0           = pcs->ppcs->pa_me_data->max_l0;
 
+#if !OPT_MV_DIFF_RATE
     const uint8_t shut_fast_rate = ctx->shut_fast_rate;
+#endif
 
     const bool          blk_avail_sqi      = ctx->avail_blk_flag[sqi_mds];
     const bool          b_w_ne_h           = blk_geom->bwidth != blk_geom->bheight;
@@ -2775,10 +2802,29 @@ static void read_refine_me_mvs(PictureControlSet *pcs, ModeDecisionContext *ctx)
                 clip_mv_on_pic_boundary(
                     ctx->blk_org_x, ctx->blk_org_y, blk_geom->bwidth, blk_geom->bheight, ref_pic, &me_mv_x, &me_mv_y);
                 // Set ref MV
+#if OPT_MV_DIFF_RATE
+                IntMv best_pred_mv[2] = { {0}, {0} };
+                uint8_t drl_index = 0;
+                svt_aom_choose_best_av1_mv_pred(ctx,
+                    ctx->md_rate_est_ctx,
+                    ctx->blk_ptr,
+                    ref_pair,
+                    0,
+                    NEWMV,
+                    me_mv_x,
+                    me_mv_y,
+                    0,
+                    0,
+                    &drl_index,
+                    best_pred_mv);
+                ctx->ref_mv.col = best_pred_mv[0].as_mv.col;
+                ctx->ref_mv.row = best_pred_mv[0].as_mv.row;
+#else
                 // Could use ctx->mvp_array[list][ref_idx][0], but that requires the single ref MVP array to be init'd, but it is not in light-PD1 path
                 const MV as_mv  = ctx->ref_mv_stack[rf[0]][0].this_mv.as_mv;
                 ctx->ref_mv.col = shut_fast_rate ? 0 : (as_mv.col + 4) & ~0x07;
                 ctx->ref_mv.row = shut_fast_rate ? 0 : (as_mv.row + 4) & ~0x07;
+#endif
                 if (b_w_ne_h) {
                     if (md_nsq_me_enabled) {
                         md_nsq_motion_search(
@@ -3084,9 +3130,11 @@ static void build_single_ref_mvp_array(PictureControlSet *pcs, ModeDecisionConte
                 (ctx->blk_org_x + input_pic->org_x);
 
             for (int8_t mvp_index = 0; mvp_index < ctx->mvp_count[list][ref]; mvp_index++) {
+#if !OPT_MV_DIFF_RATE
                 // Set a ref MV (MVP under eval) for the MVP under eval
                 ctx->ref_mv.col = ctx->mvp_array[list][ref][mvp_index].col;
                 ctx->ref_mv.row = ctx->mvp_array[list][ref][mvp_index].row;
+#endif
 
                 int32_t ref_origin_index = ref_pic->org_x +
                     (ctx->blk_org_x + (ctx->mvp_array[list][ref][mvp_index].col >> 3)) +
@@ -3241,8 +3289,27 @@ static void pme_search(PictureControlSet *pcs, ModeDecisionContext *ctx, EbPictu
                 }
             }
             // Set ref MV
+#if OPT_MV_DIFF_RATE
+            IntMv best_pred_mv[2] = { {0}, {0} };
+            uint8_t drl_index = 0;
+            svt_aom_choose_best_av1_mv_pred(ctx,
+                ctx->md_rate_est_ctx,
+                ctx->blk_ptr,
+                ref_pair,
+                0,
+                NEWMV,
+                best_search_mvx,
+                best_search_mvy,
+                0,
+                0,
+                &drl_index,
+                best_pred_mv);
+            ctx->ref_mv.col = best_pred_mv[0].as_mv.col;
+            ctx->ref_mv.row = best_pred_mv[0].as_mv.row;
+#else
             ctx->ref_mv.col  = best_mvp_x;
             ctx->ref_mv.row  = best_mvp_y;
+#endif
             ctx->enable_psad = ctx->md_pme_ctrls.enable_psad;
             md_full_pel_search(pcs,
                                ctx,

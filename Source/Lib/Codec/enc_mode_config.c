@@ -442,6 +442,33 @@ static void svt_aom_set_me_hme_ref_prune_ctrls(MeContext *me_ctx, uint8_t prune_
     }
 }
 
+#if OPT_ME_ON_MV
+static void svt_aom_set_mv_based_sa_ctrls(MeContext* me_ctx, uint8_t mv_sa_adj_level) {
+    MvBasedSearchAdj* mv_sa_adj_ctrls = &me_ctx->mv_based_sa_adj;
+
+    switch (mv_sa_adj_level) {
+    case 0:
+        mv_sa_adj_ctrls->enabled = 0;
+        break;
+    case 1:
+        mv_sa_adj_ctrls->enabled = 1;
+        mv_sa_adj_ctrls->nearest_ref_only = 0;
+        mv_sa_adj_ctrls->mv_size_th = 25;
+        mv_sa_adj_ctrls->sa_multiplier = 2;
+        break;
+    case 2:
+        mv_sa_adj_ctrls->enabled = 1;
+        mv_sa_adj_ctrls->nearest_ref_only = 1;
+        mv_sa_adj_ctrls->mv_size_th = 25;
+        mv_sa_adj_ctrls->sa_multiplier = 2;
+        break;
+    default:
+        assert(0);
+        break;
+    }
+}
+#endif
+
 static void svt_aom_set_me_sr_adjustment_ctrls(MeContext *me_ctx, uint8_t sr_adjustment_level) {
     MeSrCtrls *me_sr_adjustment_ctrls = &me_ctx->me_sr_adjustment_ctrls;
 
@@ -770,6 +797,16 @@ void svt_aom_sig_deriv_me(SequenceControlSet *scs, PictureParentControlSet *pcs,
         svt_aom_set_me_sr_adjustment_ctrls(me_ctx, 1);
     else
         svt_aom_set_me_sr_adjustment_ctrls(me_ctx, 3);
+
+#if OPT_ME_ON_MV
+    uint8_t mv_sa_adj_level = 0;
+    if (enc_mode <= ENC_M3)
+        mv_sa_adj_level = 2;
+    else
+        mv_sa_adj_level = 0;
+    svt_aom_set_mv_based_sa_ctrls(me_ctx, mv_sa_adj_level);
+#endif
+
     uint8_t me_8x8_var_lvl = 0;
     if (enc_mode <= ENC_MR)
         me_8x8_var_lvl = 1;
@@ -843,6 +880,10 @@ void svt_aom_sig_deriv_me_tf(PictureParentControlSet *pcs, MeContext *me_ctx) {
     // Set hme-based me sr adjustment level
     // ME SR adjustment is disallowed for TF in motion_estimate_sb()
     svt_aom_set_me_sr_adjustment_ctrls(me_ctx, 0);
+
+#if OPT_ME_ON_MV
+    svt_aom_set_mv_based_sa_ctrls(me_ctx, 0);
+#endif
 
     svt_aom_set_me_8x8_var_ctrls(me_ctx, 0);
     me_ctx->me_early_exit_th            = enc_mode <= ENC_M7 || resolution <= INPUT_SIZE_720p_RANGE
@@ -2189,14 +2230,22 @@ static void set_inter_comp_controls(ModeDecisionContext *ctx, uint8_t inter_comp
         inter_comp_ctrls->tot_comp_types      = MD_COMP_TYPES;
         inter_comp_ctrls->do_nearest_nearest  = 1;
         inter_comp_ctrls->do_near_near        = 1;
+#if TUNE_COMP_LEVEL
+        inter_comp_ctrls->do_me               = 1;
+#else
         inter_comp_ctrls->do_me               = 0;
+#endif
         inter_comp_ctrls->do_pme              = 0;
         inter_comp_ctrls->do_nearest_near_new = 0;
         inter_comp_ctrls->do_3x3_bi           = 0;
 
         inter_comp_ctrls->skip_mvp_on_ref_info = 1;
         inter_comp_ctrls->use_rate             = 0;
+#if TUNE_COMP_LEVEL
+        inter_comp_ctrls->pred0_to_pred1_mult  = 1;
+#else
         inter_comp_ctrls->pred0_to_pred1_mult  = 4;
+#endif
         inter_comp_ctrls->mvp_no_cmp_low_cmplx = 0;
         inter_comp_ctrls->mvp_no_diff_nsq      = 0;
         inter_comp_ctrls->mvp_no_wdg_var_th    = 0;
@@ -6931,6 +6980,9 @@ static void set_skip_sub_depth_ctrls(SkipSubDepthCtrls *skip_sub_depth_ctrls, ui
  */
 void svt_aom_sig_deriv_enc_dec_common(SequenceControlSet *scs, PictureControlSet *pcs, ModeDecisionContext *ctx) {
     EncMode enc_mode = pcs->enc_mode;
+#if TUNE_M2
+    const bool is_islice = pcs->slice_type == I_SLICE;
+#endif
 
     SuperBlock *sb_ptr = pcs->sb_ptr_array[ctx->sb_index];
     set_detect_high_freq_ctrls(ctx, pcs->vq_ctrls.detect_high_freq_lvl);
@@ -6970,7 +7022,11 @@ void svt_aom_sig_deriv_enc_dec_common(SequenceControlSet *scs, PictureControlSet
             depth_level = 2;
         }
     } else if (enc_mode <= ENC_M2) {
+#if TUNE_M2
+        if (pcs->coeff_lvl == LOW_LVL || is_islice) {
+#else
         if (pcs->coeff_lvl == LOW_LVL) {
+#endif
             depth_level = 2;
         } else if (pcs->coeff_lvl == HIGH_LVL) {
             depth_level = 4;
@@ -7669,7 +7725,11 @@ void svt_aom_sig_deriv_enc_dec(SequenceControlSet *scs, PictureControlSet *pcs, 
     md_subpel_pme_controls(ctx, ctx->md_subpel_pme_level);
     uint8_t rate_est_level = 0;
     if (pd_pass == PD_PASS_0) {
+#if TUNE_M2
+        if (enc_mode <= ENC_MR)
+#else
         if (enc_mode <= ENC_M2)
+#endif
             rate_est_level = 1;
         else
             rate_est_level = 2;
@@ -8086,7 +8146,11 @@ static void set_pic_lpd0_lvl(PictureControlSet *pcs, EncMode enc_mode) {
 }
 uint8_t get_inter_compound_level(EncMode enc_mode) {
     uint8_t comp_level;
+#if TUNE_COMP_LEVEL
+    if (enc_mode <= ENC_M0)
+#else
     if (enc_mode <= ENC_M1)
+#endif
         comp_level = 3;
     else if (enc_mode <= ENC_M2)
         comp_level = 4;
@@ -8447,7 +8511,11 @@ void svt_aom_sig_deriv_mode_decision_config(SequenceControlSet *scs, PictureCont
 
     // Set the level for bipred3x3 injection
     if (scs->bipred_3x3_inject == DEFAULT) {
+#if TUNE_M2
+        if (enc_mode <= ENC_M1)
+#else
         if (enc_mode <= ENC_M2)
+#endif
             pcs->bipred3x3_injection = 2;
         else if (enc_mode <= ENC_M5)
             pcs->bipred3x3_injection = 4;

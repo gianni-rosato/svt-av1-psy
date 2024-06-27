@@ -510,7 +510,7 @@ static void determine_compound_mode(PictureControlSet *pcs, ModeDecisionContext 
     }
 }
 
-void choose_best_av1_mv_pred(ModeDecisionContext *ctx, struct MdRateEstimationContext *md_rate_est_ctx,
+void svt_aom_choose_best_av1_mv_pred(ModeDecisionContext *ctx, struct MdRateEstimationContext *md_rate_est_ctx,
                              BlkStruct *blk_ptr, MvReferenceFrame ref_frame, uint8_t is_compound,
                              PredictionMode mode, // NEW or NEW_NEW
                              int16_t mv0x, int16_t mv0y, int16_t mv1x, int16_t mv1y,
@@ -567,6 +567,21 @@ void choose_best_av1_mv_pred(ModeDecisionContext *ctx, struct MdRateEstimationCo
                                                              MV_COST_WEIGHT);
                 }
             }
+
+#if OPT_MV_DIFF_RATE
+            const int32_t new_mv = (mode == NEWMV || mode == NEW_NEWMV);
+            if (new_mv) {
+                int32_t idx;
+                for (idx = 0; idx < 2; ++idx) {
+                    if (blk_ptr->av1xd->ref_mv_count[ref_frame] > idx + 1) {
+                        uint8_t drl_1_ctx = av1_drl_ctx(&(ctx->ref_mv_stack[ref_frame][0]), idx);
+                        mv_rate += ctx->md_rate_est_ctx->drl_mode_fac_bits[drl_1_ctx][drli != idx];
+                        if (drli == idx)
+                            break;
+                    }
+                }
+            }
+#endif
 
             if (mv_rate < best_mv_cost) {
                 best_mv_cost    = mv_rate;
@@ -976,7 +991,7 @@ void unipred_3x3_candidates_injection(const SequenceControlSet *scs, PictureCont
                     (ctx->injected_mv_count == 0 ||
                      mv_is_already_injected(ctx, to_inj_mv, to_inj_mv, to_inject_ref_type) == FALSE)) {
                     uint8_t drl_index = 0;
-                    choose_best_av1_mv_pred(ctx,
+                    svt_aom_choose_best_av1_mv_pred(ctx,
                                             ctx->md_rate_est_ctx,
                                             ctx->blk_ptr,
                                             to_inject_ref_type,
@@ -1139,7 +1154,7 @@ static void bipred_3x3_candidates_injection(const SequenceControlSet *scs, Pictu
                             (ctx->injected_mv_count == 0 ||
                              mv_is_already_injected(ctx, to_inj_mv0, to_inj_mv1, to_inject_ref_type) == FALSE)) {
                             uint8_t drl_index = 0;
-                            choose_best_av1_mv_pred(ctx,
+                            svt_aom_choose_best_av1_mv_pred(ctx,
                                                     ctx->md_rate_est_ctx,
                                                     ctx->blk_ptr,
                                                     to_inject_ref_type,
@@ -1255,7 +1270,7 @@ static void bipred_3x3_candidates_injection(const SequenceControlSet *scs, Pictu
                             (ctx->injected_mv_count == 0 ||
                              mv_is_already_injected(ctx, to_inj_mv0, to_inj_mv1, to_inject_ref_type) == FALSE)) {
                             uint8_t drl_index = 0;
-                            choose_best_av1_mv_pred(ctx,
+                            svt_aom_choose_best_av1_mv_pred(ctx,
                                                     ctx->md_rate_est_ctx,
                                                     ctx->blk_ptr,
                                                     to_inject_ref_type,
@@ -2313,7 +2328,7 @@ uint8_t svt_aom_wm_motion_refinement(PictureControlSet *pcs, ModeDecisionContext
 
     // Derive pred MV for best WM position
     IntMv best_pred_mv[2] = {{0}, {0}};
-    choose_best_av1_mv_pred(ctx,
+    svt_aom_choose_best_av1_mv_pred(ctx,
                             ctx->md_rate_est_ctx,
                             ctx->blk_ptr,
                             cand->ref_frame_type,
@@ -2568,7 +2583,7 @@ uint8_t svt_aom_obmc_motion_refinement(PictureControlSet *pcs, struct ModeDecisi
     single_motion_search(pcs, ctx, cand, best_mv, x, ctx->blk_geom->bsize, &ref_mv, &tmp_rate_mv, refine_level);
     cand->mv[ref_list_idx].x = x->best_mv.as_mv.col;
     cand->mv[ref_list_idx].y = x->best_mv.as_mv.row;
-    choose_best_av1_mv_pred(ctx,
+    svt_aom_choose_best_av1_mv_pred(ctx,
                             ctx->md_rate_est_ctx,
                             ctx->blk_ptr,
                             cand->ref_frame_type,
@@ -2739,7 +2754,7 @@ static void inject_new_candidates_light_pd1(PictureControlSet *pcs, struct ModeD
             if (ctx->injected_mv_count == 0 ||
                 mv_is_already_injected(ctx, to_inj_mv, to_inj_mv, to_inject_ref_type) == FALSE) {
                 uint8_t drl_index = 0;
-                choose_best_av1_mv_pred(ctx,
+                svt_aom_choose_best_av1_mv_pred(ctx,
                                         ctx->md_rate_est_ctx,
                                         ctx->blk_ptr,
                                         to_inject_ref_type,
@@ -2784,7 +2799,7 @@ static void inject_new_candidates_light_pd1(PictureControlSet *pcs, struct ModeD
                 if (ctx->injected_mv_count == 0 ||
                     mv_is_already_injected(ctx, to_inj_mv, to_inj_mv, to_inject_ref_type) == FALSE) {
                     uint8_t drl_index = 0;
-                    choose_best_av1_mv_pred(ctx,
+                    svt_aom_choose_best_av1_mv_pred(ctx,
                                             ctx->md_rate_est_ctx,
                                             ctx->blk_ptr,
                                             to_inject_ref_type,
@@ -2836,7 +2851,7 @@ static void inject_new_candidates_light_pd1(PictureControlSet *pcs, struct ModeD
                 if ((ctx->injected_mv_count == 0 ||
                      mv_is_already_injected(ctx, to_inj_mv0, to_inj_mv1, to_inject_ref_type) == FALSE)) {
                     uint8_t drl_index = 0;
-                    choose_best_av1_mv_pred(ctx,
+                    svt_aom_choose_best_av1_mv_pred(ctx,
                                             ctx->md_rate_est_ctx,
                                             ctx->blk_ptr,
                                             to_inject_ref_type,
@@ -2928,7 +2943,7 @@ static void inject_new_candidates(const SequenceControlSet *scs, struct ModeDeci
                 (ctx->injected_mv_count == 0 ||
                  mv_is_already_injected(ctx, to_inj_mv, to_inj_mv, to_inject_ref_type) == FALSE)) {
                 uint8_t drl_index = 0;
-                choose_best_av1_mv_pred(ctx,
+                svt_aom_choose_best_av1_mv_pred(ctx,
                                         ctx->md_rate_est_ctx,
                                         ctx->blk_ptr,
                                         to_inject_ref_type,
@@ -3031,7 +3046,7 @@ static void inject_new_candidates(const SequenceControlSet *scs, struct ModeDeci
                         (ctx->injected_mv_count == 0 ||
                          mv_is_already_injected(ctx, to_inj_mv0, to_inj_mv1, to_inject_ref_type) == FALSE)) {
                         uint8_t drl_index = 0;
-                        choose_best_av1_mv_pred(ctx,
+                        svt_aom_choose_best_av1_mv_pred(ctx,
                                                 ctx->md_rate_est_ctx,
                                                 ctx->blk_ptr,
                                                 to_inject_ref_type,
@@ -3312,7 +3327,7 @@ static void inject_pme_candidates(
                 inj_mv = inj_mv && inside_tile;
                 if (inj_mv) {
                     uint8_t drl_index = 0;
-                    choose_best_av1_mv_pred(ctx,
+                    svt_aom_choose_best_av1_mv_pred(ctx,
                                             ctx->md_rate_est_ctx,
                                             ctx->blk_ptr,
                                             frame_type,
@@ -3399,7 +3414,7 @@ static void inject_pme_candidates(
                     if ((ctx->injected_mv_count == 0 ||
                          mv_is_already_injected(ctx, to_inj_mv0, to_inj_mv1, to_inject_ref_type) == FALSE)) {
                         uint8_t drl_index = 0;
-                        choose_best_av1_mv_pred(ctx,
+                        svt_aom_choose_best_av1_mv_pred(ctx,
                                                 ctx->md_rate_est_ctx,
                                                 ctx->blk_ptr,
                                                 to_inject_ref_type,
@@ -3972,7 +3987,7 @@ static void inject_zz_backup_candidate(
     IntMv                  best_pred_mv[2] = { {0}, {0} };
     uint32_t               cand_total_cnt = (*candidate_total_cnt);
     cand_array[cand_total_cnt].drl_index = 0;
-    choose_best_av1_mv_pred(ctx,
+    svt_aom_choose_best_av1_mv_pred(ctx,
         ctx->md_rate_est_ctx,
         ctx->blk_ptr,
         svt_get_ref_frame_type(REF_LIST_0, 0),

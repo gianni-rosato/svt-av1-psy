@@ -188,6 +188,15 @@ int svt_is_interintra_allowed(uint8_t enable_inter_intra, BlockSize bsize, Predi
 int svt_aom_filter_intra_allowed_bsize(uint8_t enable_filter_intra, BlockSize bs);
 int svt_aom_filter_intra_allowed(uint8_t enable_filter_intra, BlockSize bsize, uint8_t palette_size, uint32_t mode);
 
+#if OPT_MV_DIFF_RATE // TODO: prefix with svt_aom
+void svt_aom_choose_best_av1_mv_pred(struct ModeDecisionContext* ctx, struct MdRateEstimationContext* md_rate_est_ctx,
+    BlkStruct* blk_ptr, MvReferenceFrame ref_frame, uint8_t is_compound,
+    PredictionMode mode, // NEW or NEW_NEW
+    int16_t mv0x, int16_t mv0y, int16_t mv1x, int16_t mv1y,
+    uint8_t* bestDrlIndex, // output
+    IntMv    best_pred_mv[2] // output
+);
+#endif
 static const uint32_t me_idx_85[] = {
     0,  1,  5,  21, 22, 29, 30, 6,  23, 24, 31, 32, 9,  37, 38, 45, 46, 10, 39, 40, 47, 48, 2,  7,  25, 26, 33, 34, 8,
     27, 28, 35, 36, 11, 41, 42, 49, 50, 12, 43, 44, 51, 52, 3,  13, 53, 54, 61, 62, 14, 55, 56, 63, 64, 17, 69, 70, 77,
