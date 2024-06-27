@@ -81,7 +81,6 @@ Linux (Alpine, musl):
     expire_in: 30 days
     paths:
       - musl/SvtAv1EncApp
-      - musl/SvtAv1DecApp
 
 Linux (Clang):
   extends: .linux-compiler-base
@@ -146,7 +145,6 @@ Linux (GCC 11, Static):
     expire_in: 30 days
     paths:
       - Bin/*/SvtAv1EncApp
-      - Bin/*/SvtAv1DecApp
 
 Linux (GCC 11, Tests, Static):
   extends: .linux-compiler-base
@@ -183,7 +181,6 @@ Linux (GCC 11, Default, Static):
     expire_in: 30 days
     paths:
       - Bin/*/SvtAv1EncApp
-      - Bin/*/SvtAv1DecApp
 
 Linux Sanitizer Compile:
   extends: .linux-compiler-base

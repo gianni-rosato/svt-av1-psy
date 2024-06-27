@@ -2,7 +2,7 @@
 
 # How to Contribute to SVT-AV1
 
-We welcome community contributions to the SVT-AV1 Encoder and Decoder. Thank
+We welcome community contributions to the SVT-AV1 Encoder. Thank
 you for your time! By contributing to the project, you agree to the license,
 patent and copyright terms in the AOM License and Patent License and to the
 release of your contribution under these terms. See [LICENSE](LICENSE.md) and

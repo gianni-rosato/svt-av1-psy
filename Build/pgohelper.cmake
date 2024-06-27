@@ -1,22 +1,21 @@
 #!/usr/bin/cmake -P
-# cmake -P Build/pgohelper.cmake $PWD/Build $PWD/objective-2-fast::$PWD/objective-1-fast $PWD/Bin/Release/SvtAv1EncApp $PWD/Bin/Release/SvtAv1DecApp
+# cmake -P Build/pgohelper.cmake $PWD/Build $PWD/objective-2-fast::$PWD/objective-1-fast $PWD/Bin/Release/SvtAv1EncApp
 
-if(CMAKE_ARGC LESS 7)
+if(CMAKE_ARGC LESS 6)
     message(
         FATAL_ERROR
-            "Usage: cmake -P ${CMAKE_ARGV2} build_dir /path/to/videofiles::additional_paths /path/to/SvtAv1EncApp /path/to/SvtAv1DecApp"
+            "Usage: cmake -P ${CMAKE_ARGV2} build_dir /path/to/videofiles::additional_paths /path/to/SvtAv1EncApp"
     )
 endif()
 
 set(BUILD_DIRECTORY "${CMAKE_ARGV3}")
 set(VIDEO_DIRECTORY "${CMAKE_ARGV4}")
 set(SvtAv1EncApp "${CMAKE_ARGV5}")
-set(SvtAv1DecApp "${CMAKE_ARGV6}")
 
-if(NOT EXISTS ${SvtAv1EncApp} OR NOT EXISTS ${SvtAv1DecApp})
+if(NOT EXISTS ${SvtAv1EncApp})
     message(
         FATAL_ERROR
-            "Can't run pgo if the binaries don't exist. Looked at ${SvtAv1EncApp} and ${SvtAv1DecApp}"
+            "Can't run pgo if the binaries don't exist. Looked at ${SvtAv1EncApp}"
     )
 endif()
 
@@ -36,9 +35,5 @@ foreach(video IN LISTS videofiles)
             "Running ${SvtAv1EncApp} -i ${video} -b ${BUILD_DIRECTORY}/${videoname}.ivf"
     )
     execute_process(COMMAND ${SvtAv1EncApp} -i ${video} -b
-                            ${BUILD_DIRECTORY}/${videoname}.ivf)
-    message(
-        STATUS "Running ${SvtAv1DecApp} -i ${BUILD_DIRECTORY}/${videoname}.ivf")
-    execute_process(COMMAND ${SvtAv1DecApp} -i
                             ${BUILD_DIRECTORY}/${videoname}.ivf)
 endforeach()
