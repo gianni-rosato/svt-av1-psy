@@ -92,14 +92,11 @@ set(multi_arch_files
     TemporalFilterTestPlanewise.cc
     VarianceTest.cc
     convolve_2d_test.cc
-    RestorationPickTest.cc
-    selfguided_filter_test.cc
     quantize_func_test.cc
 )
 
 if(HAVE_X86_PLATFORM)
   set(x86_arch_files
-      AdaptiveScanTest.cc
       CompoundUtilTest.cc
       DeblockTest.cc
       noise_model_test.cc
@@ -118,13 +115,11 @@ if(HAVE_X86_PLATFORM)
       MotionEstimationTest.cc
       OBMCSadTest.cc
       OBMCVarianceTest.cc
-      PackUnPackTest.cc
       PaletteModeUtilTest.cc
       PsnrTest.cc
       QuantAsmTest.cc
       ResidualTest.cc
       SelfGuidedUtilTest.cc
-      VarianceTest.cc
       WedgeUtilTest.cc
       av1_convolve_scale_test.cc
       compute_mean_test.cc
@@ -136,7 +131,6 @@ if(HAVE_X86_PLATFORM)
       intrapred_dr_test.cc
       intrapred_edge_filter_test.cc
       intrapred_test.cc
-      quantize_func_test.cc
       subtract_avg_cfl_test.cc
       warp_filter_test.cc
       warp_filter_test_util.cc
