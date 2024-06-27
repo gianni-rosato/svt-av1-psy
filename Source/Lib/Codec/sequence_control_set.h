@@ -40,8 +40,13 @@ typedef struct BitstreamLevel {
 typedef struct List0OnlyBase {
     // Specifies whether to use List1 for BASE frame(s) or not (0: OFF, 1: ON)
     uint8_t enabled;
+#if OPT_L0_ONLY_BASE
+    // Specifies the pic-average of the difference of SB-var and pic-varaince under which List1 is not used
+    uint16_t list0_only_base_th;
+#else
     // Specifies the percentage of ahd-based active region under which List1 is not used (0 to 100)
     uint8_t list0_only_base_th;
+#endif
 } List0OnlyBase;
 
 /************************************

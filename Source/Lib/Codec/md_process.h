@@ -1226,6 +1226,9 @@ typedef struct ModeDecisionContext {
     uint8_t lpd1_bypass_tx_th_div;
     // chroma components to compensate at MDS3 of LPD1
     COMPONENT_TYPE lpd1_chroma_comp;
+#if OPTIMIZE_LPD1_MDS0_DIST
+    uint8_t lpd1_shift_mds0_dist;
+#endif
     uint8_t        corrupted_mv_check;
     uint8_t        pred_mode_depth_refine;
     // when MD is done on 8bit, scale palette colors to 10bit (valid when bypass is 1)

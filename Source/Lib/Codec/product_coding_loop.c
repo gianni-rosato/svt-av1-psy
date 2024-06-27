@@ -1061,9 +1061,22 @@ static void fast_loop_core_light_pd1(ModeDecisionCandidateBuffer *cand_bf, Pictu
                                                            pred_y, pred->stride_y, src_y, input_pic->stride_y, &sse) /
                 3;
         else
+#if OPTIMIZE_LPD1_MDS0_DIST
+            if (ctx->lpd1_shift_mds0_dist) {
+                cand_bf->luma_fast_dist = luma_fast_dist = fn_ptr->vf(
+                    pred_y, pred->stride_y, src_y, input_pic->stride_y, &sse) >>
+                    3;
+            }
+            else {
+                cand_bf->luma_fast_dist = luma_fast_dist = fn_ptr->vf(
+                    pred_y, pred->stride_y, src_y, input_pic->stride_y, &sse) >>
+                    2;
+            }
+#else
             cand_bf->luma_fast_dist = luma_fast_dist = fn_ptr->vf(
                                                            pred_y, pred->stride_y, src_y, input_pic->stride_y, &sse) >>
                 3;
+#endif
     } else {
         assert(ctx->mds0_ctrls.mds0_dist_type == SAD);
         assert((ctx->blk_geom->bwidth >> 3) < 17);

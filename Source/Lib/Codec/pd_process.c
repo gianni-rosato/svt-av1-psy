@@ -823,6 +823,23 @@ static void initialize_mini_gop_activity_array(SequenceControlSet* scs, PictureP
     }
     ctx->list0_only = 0;
     if (scs->list0_only_base_ctrls.enabled) {
+#if OPT_L0_ONLY_BASE
+        if (scs->list0_only_base_ctrls.list0_only_base_th == ((uint16_t)~0)) {
+            ctx->list0_only = 1;
+        }
+        else {
+            if (scs->calculate_variance) {
+                uint32_t avg_diff = 0;
+                const uint16_t b64_total_count = pcs->b64_total_count;
+                for (uint16_t b64_idx = 0; b64_idx < b64_total_count; ++b64_idx) {
+                    avg_diff += ABS(pcs->variance[b64_idx][RASTER_SCAN_CU_INDEX_64x64] - pcs->pic_avg_variance);
+                }
+                avg_diff /= b64_total_count;
+                if (avg_diff < scs->list0_only_base_ctrls.list0_only_base_th)
+                    ctx->list0_only = 1;
+            }
+        }
+#else
         if (scs->list0_only_base_ctrls.list0_only_base_th >= 100) {
             ctx->list0_only = 1;
         } else {
@@ -838,6 +855,7 @@ static void initialize_mini_gop_activity_array(SequenceControlSet* scs, PictureP
             if (perc_active_region <= scs->list0_only_base_ctrls.list0_only_base_th)
                 ctx->list0_only = 1;
         }
+#endif
     }
 }
 

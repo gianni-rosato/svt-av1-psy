@@ -43,6 +43,16 @@ extern "C" {
 #define TUNE_UPDATE_CDF                           1 // Tune M2,3 level of update cdf
 #define CLN_REMOVE_UNUSED_MACROS                  1 // remove unused/useless macros
 #define CLN_REMOVE_UNUSED_SCS                     1 // Remove unused and useless signals under scs
+#define OPT_LPD1                                  1
+#if OPT_LPD1
+#define OPTIMIZE_LPD1_PATH                        1 // Optimize the LPD1-settings 
+#define OPTIMIZE_LPD1_MDS0_DIST                   1 // Unify the mds0-distortion weighing between LPD1 and regular-PD1
+#endif
+#define OPT_LPD0_DEFS                             1 // Use seq-qp instead of pic-qp for LPD0-level modulation, and optimize LPD0 level-8
+#define OPT_DLF                                   1 // Modulate the DLF-level using skip-information
+#define TUNE_M5                                   1 // Tune M5
+#define OPT_L0_ONLY_BASE                          1 // Use variance in list0_only_base classifier
+#define TUNE_M5_2                                 1 // Tune M5
 
 //FOR DEBUGGING - Do not remove
 #define OPT_LD_LATENCY2         1 // Latency optimization for low delay - to keep the Macro for backwards testing until 3.0

@@ -1613,7 +1613,9 @@ EB_API EbErrorType svt_av1_enc_init(EbComponentType *svt_enc_component)
         input_data.enable_adaptive_quantization = enc_handle_ptr->scs_instance_array[instance_index]->scs->static_config.enable_adaptive_quantization;
         input_data.calculate_variance = enc_handle_ptr->scs_instance_array[instance_index]->scs->calculate_variance;
         input_data.calc_hist = enc_handle_ptr->scs_instance_array[instance_index]->scs->calc_hist =
+#if !OPT_L0_ONLY_BASE
             (enc_handle_ptr->scs_instance_array[instance_index]->scs->list0_only_base_ctrls.enabled && enc_handle_ptr->scs_instance_array[instance_index]->scs->list0_only_base_ctrls.list0_only_base_th <= 100) ||
+#endif
             enc_handle_ptr->scs_instance_array[instance_index]->scs->static_config.scene_change_detection ||
             enc_handle_ptr->scs_instance_array[instance_index]->scs->vq_ctrls.sharpness_ctrls.scene_transition ||
             enc_handle_ptr->scs_instance_array[instance_index]->scs->tf_params_per_type[0].enabled ||
@@ -3410,6 +3412,28 @@ static void set_list0_only_base(SequenceControlSet* scs, uint8_t list0_only_base
     case 0:
         ctrls->enabled = 0;
         break;
+#if OPT_L0_ONLY_BASE
+    case 1:
+        ctrls->enabled = 1;
+        ctrls->list0_only_base_th = 500;
+        break;
+    case 2:
+        ctrls->enabled = 1;
+        ctrls->list0_only_base_th = 750;
+        break;
+    case 3:
+        ctrls->enabled = 1;
+        ctrls->list0_only_base_th = 1000;
+        break;
+    case 4:
+        ctrls->enabled = 1;
+        ctrls->list0_only_base_th = 1250;
+        break;
+    default:
+        ctrls->enabled = 1;
+        ctrls->list0_only_base_th = (uint16_t)~0;
+        break;
+#else
     case 1:
         ctrls->enabled = 1;
         ctrls->list0_only_base_th = 35;
@@ -3423,6 +3447,7 @@ static void set_list0_only_base(SequenceControlSet* scs, uint8_t list0_only_base
         ctrls->enabled = 1;
         ctrls->list0_only_base_th = 100;
         break;
+#endif
     }
 }
 /*
@@ -4198,6 +4223,18 @@ static void set_param_based_on_input(SequenceControlSet *scs)
     uint8_t list0_only_base_lvl = 0;
     if (scs->static_config.enc_mode <= ENC_M4)
         list0_only_base_lvl = 0;
+#if OPT_L0_ONLY_BASE
+    else if (scs->static_config.enc_mode <= ENC_M5)
+        list0_only_base_lvl = 3;
+    else if (scs->static_config.enc_mode <= ENC_M7)
+        list0_only_base_lvl = 4;
+    else
+        list0_only_base_lvl = 6;
+#if !OPT_LIST0_ONLY_HIGH_QP_BAND
+    if (scs->static_config.qp > 51)
+        list0_only_base_lvl = MAX(0, (int)((int)list0_only_base_lvl - 1));
+#endif
+#else
     else if (scs->static_config.enc_mode <= ENC_M5)
         list0_only_base_lvl = 3;
     else
@@ -4208,6 +4245,7 @@ static void set_param_based_on_input(SequenceControlSet *scs)
         list0_only_base_lvl = list0_only_base_lvl + 1;
     else if (scs->static_config.qp > 51)
         list0_only_base_lvl = MAX(0, (int) ((int) list0_only_base_lvl - 1));
+#endif
     set_list0_only_base(scs, list0_only_base_lvl);
 
     if (scs->static_config.rate_control_mode == SVT_AV1_RC_MODE_VBR || scs->static_config.rate_control_mode == SVT_AV1_RC_MODE_CBR ||
@@ -4256,7 +4294,11 @@ static void set_param_based_on_input(SequenceControlSet *scs)
         else if (scs->static_config.enc_mode <= ENC_M3) {
             mrp_level = 5;
         }
+#if TUNE_M5_2
+        else if (scs->static_config.enc_mode <= ENC_M4) {
+#else
         else if (scs->static_config.enc_mode <= ENC_M5) {
+#endif
             mrp_level = 7;
         }
         // any changes for preset ENC_M8 and higher should be separated for VBR and CRF in the control structure below
