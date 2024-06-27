@@ -53,6 +53,7 @@ extern "C" {
 #define TUNE_M5                                   1 // Tune M5
 #define OPT_L0_ONLY_BASE                          1 // Use variance in list0_only_base classifier
 #define TUNE_M5_2                                 1 // Tune M5
+#define OPTIMIZE_LP_LEVELS                        1 // Optimize multithreaded settings
 
 //FOR DEBUGGING - Do not remove
 #define OPT_LD_LATENCY2         1 // Latency optimization for low delay - to keep the Macro for backwards testing until 3.0

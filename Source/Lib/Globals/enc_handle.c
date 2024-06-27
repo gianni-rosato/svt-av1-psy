@@ -345,11 +345,20 @@ static void enc_switch_to_real_time(){
 #define CONS_CORE_COUNT         16
 #define LOW_SERVER_CORE_COUNT   48
 #define MED_SERVER_CORE_COUNT   128
+#if OPTIMIZE_LP_LEVELS
+
+#define PARALLEL_LEVEL_2_RANGE  2  // lp2
+#define PARALLEL_LEVEL_3_RANGE  5  // lp4
+#define PARALLEL_LEVEL_4_RANGE  11 // lp8
+#define PARALLEL_LEVEL_5_RANGE  23 // lp16
+#define PARALLEL_LEVEL_6_RANGE  47 // lp32
+#else
 #define PARALLEL_LEVEL_2_RANGE  2
 #define PARALLEL_LEVEL_4_RANGE  6
 #define PARALLEL_LEVEL_8_RANGE  12
 #define PARALLEL_LEVEL_16_RANGE 24
 #define PARALLEL_LEVEL_32_RANGE 48
+#endif
 
 int32_t set_parent_pcs(EbSvtAv1EncConfiguration*   config, uint32_t core_count, EbInputResolution res_class) {
     if (config){
@@ -637,6 +646,20 @@ static EbErrorType load_default_buffer_configuration_settings(
         }
         //Configure max needed buffers to process 1+n_extra_mg Mini-Gops in the pipeline. n extra MGs to feed to picMgr on top of current one.
         uint32_t n_extra_mg;
+#if OPTIMIZE_LP_LEVELS
+        if (core_count <= PARALLEL_LEVEL_3_RANGE) {
+            n_extra_mg = 0;
+        }
+        else if (core_count <= PARALLEL_LEVEL_4_RANGE) {
+            n_extra_mg = 1;
+        }
+        else if (core_count <= PARALLEL_LEVEL_5_RANGE) {
+            n_extra_mg = 2;
+        }
+        else {
+            n_extra_mg = scs->input_resolution <= INPUT_SIZE_1080p_RANGE ? 7 : scs->input_resolution <= INPUT_SIZE_8K_RANGE ? 5 : 0;
+        }
+#else
         if (scs->static_config.rate_control_mode != SVT_AV1_RC_MODE_CQP_OR_CRF)
         {
             if ((core_count < PARALLEL_LEVEL_4_RANGE) || (scs->input_resolution > INPUT_SIZE_8K_RANGE)) {
@@ -669,6 +692,7 @@ static EbErrorType load_default_buffer_configuration_settings(
                 n_extra_mg = scs->input_resolution <= INPUT_SIZE_1080p_RANGE ? 6 : scs->input_resolution <= INPUT_SIZE_8K_RANGE ? 5 : 0;
             }
         }
+#endif
 
         max_input  = min_input + (1 + mg_size) * n_extra_mg;
         max_parent = max_input;
@@ -687,6 +711,45 @@ static EbErrorType load_default_buffer_configuration_settings(
     }
 
 
+#if OPTIMIZE_LP_LEVELS
+    //#====================== Process Buffers ======================
+    scs->input_buffer_fifo_init_count = clamp(max_input, min_input, max_input);
+    scs->picture_control_set_pool_init_count = clamp(max_parent, min_parent, max_parent);
+    scs->pa_reference_picture_buffer_init_count = clamp(max_paref, min_paref, max_paref);
+    scs->tpl_reference_picture_buffer_init_count = min_tpl_ref;
+    scs->output_recon_buffer_fifo_init_count = scs->reference_picture_buffer_init_count = clamp(max_recon, min_recon, max_recon);
+    scs->me_pool_init_count = clamp(max_me, min_me, max_me);
+    scs->overlay_input_picture_buffer_init_count = min_overlay;
+
+    if (core_count == SINGLE_CORE_COUNT || MIN_PIC_PARALLELIZATION) {
+        scs->input_buffer_fifo_init_count                  = min_input;
+        scs->picture_control_set_pool_init_count           = min_parent;
+        scs->pa_reference_picture_buffer_init_count        = min_paref;
+        scs->tpl_reference_picture_buffer_init_count       = min_tpl_ref;
+        scs->reference_picture_buffer_init_count           = min_ref;
+        scs->picture_control_set_pool_init_count_child     = min_child;
+        scs->enc_dec_pool_init_count                       = min_child;
+        scs->me_pool_init_count                            = min_me;
+        scs->overlay_input_picture_buffer_init_count       = min_overlay;
+
+        scs->output_recon_buffer_fifo_init_count = MAX(scs->reference_picture_buffer_init_count, min_recon);
+    }
+    else if (core_count <= PARALLEL_LEVEL_2_RANGE) {
+        scs->picture_control_set_pool_init_count_child = scs->enc_dec_pool_init_count = clamp(2, min_child, max_child) + superres_count;
+    }
+    else if (core_count <= PARALLEL_LEVEL_3_RANGE) {
+        scs->picture_control_set_pool_init_count_child = scs->enc_dec_pool_init_count = clamp(8, min_child, max_child) + superres_count;
+    }
+    else if (core_count <= PARALLEL_LEVEL_4_RANGE) {
+        scs->picture_control_set_pool_init_count_child = scs->enc_dec_pool_init_count = clamp(12, min_child, max_child) + superres_count;
+    }
+    else if (core_count <= PARALLEL_LEVEL_5_RANGE) {
+        scs->picture_control_set_pool_init_count_child = scs->enc_dec_pool_init_count = clamp(16, min_child, max_child) + superres_count;
+    }
+    else {
+        scs->picture_control_set_pool_init_count_child = scs->enc_dec_pool_init_count = clamp(18, min_child, max_child) + superres_count;
+    }
+#else
     if (core_count == SINGLE_CORE_COUNT || MIN_PIC_PARALLELIZATION) {
         scs->input_buffer_fifo_init_count                  = min_input;
         scs->picture_control_set_pool_init_count           = min_parent;
@@ -741,6 +804,7 @@ static EbErrorType load_default_buffer_configuration_settings(
         scs->me_pool_init_count = clamp(max_me, min_me, max_me);
         scs->overlay_input_picture_buffer_init_count = min_overlay;
     }
+#endif
 
     //#====================== Inter process Fifos ======================
     scs->resource_coordination_fifo_init_count       = 300;
@@ -786,6 +850,44 @@ static EbErrorType load_default_buffer_configuration_settings(
         scs->total_process_init_count += (scs->cdef_process_init_count                        = 1);
         scs->total_process_init_count += (scs->rest_process_init_count                        = 1);
     }
+#if OPTIMIZE_LP_LEVELS
+    else if (core_count <= PARALLEL_LEVEL_2_RANGE) {
+        scs->total_process_init_count += (scs->source_based_operations_process_init_count     = 1);
+        scs->total_process_init_count += (scs->picture_analysis_process_init_count            = clamp(1, 1, max_pa_proc));
+        scs->total_process_init_count += (scs->motion_estimation_process_init_count           = clamp(20, 1, max_me_proc));
+        scs->total_process_init_count += (scs->tpl_disp_process_init_count                    = clamp(6, 1, max_tpl_proc));
+        scs->total_process_init_count += (scs->mode_decision_configuration_process_init_count = clamp(1, 1, max_mdc_proc));
+        scs->total_process_init_count += (scs->enc_dec_process_init_count                     = clamp(3, scs->picture_control_set_pool_init_count_child, max_md_proc));
+        scs->total_process_init_count += (scs->entropy_coding_process_init_count              = clamp(1, 1, max_ec_proc));
+        scs->total_process_init_count += (scs->dlf_process_init_count                         = clamp(1, 1, max_dlf_proc));
+        scs->total_process_init_count += (scs->cdef_process_init_count                        = clamp(6, 1, max_cdef_proc));
+        scs->total_process_init_count += (scs->rest_process_init_count                        = clamp(1, 1, max_rest_proc));
+    }
+    else if (core_count <= PARALLEL_LEVEL_3_RANGE) {
+        scs->total_process_init_count += (scs->source_based_operations_process_init_count     = 1);
+        scs->total_process_init_count += (scs->picture_analysis_process_init_count            = clamp(1, 1, max_pa_proc));
+        scs->total_process_init_count += (scs->motion_estimation_process_init_count           = clamp(25, 1, max_me_proc));
+        scs->total_process_init_count += (scs->tpl_disp_process_init_count                    = clamp(6, 1, max_tpl_proc));
+        scs->total_process_init_count += (scs->mode_decision_configuration_process_init_count = clamp(2, 1, max_mdc_proc));
+        scs->total_process_init_count += (scs->enc_dec_process_init_count                     = clamp(5, scs->picture_control_set_pool_init_count_child, max_md_proc));
+        scs->total_process_init_count += (scs->entropy_coding_process_init_count              = clamp(2, 1, max_ec_proc));
+        scs->total_process_init_count += (scs->dlf_process_init_count                         = clamp(2, 1, max_dlf_proc));
+        scs->total_process_init_count += (scs->cdef_process_init_count                        = clamp(6, 1, max_cdef_proc));
+        scs->total_process_init_count += (scs->rest_process_init_count                        = clamp(2, 1, max_rest_proc));
+    }
+    else {
+        scs->total_process_init_count += (scs->source_based_operations_process_init_count     = 1);
+        scs->total_process_init_count += (scs->picture_analysis_process_init_count            = clamp(1, 1, max_pa_proc));
+        scs->total_process_init_count += (scs->motion_estimation_process_init_count           = clamp(25, 1, max_me_proc));
+        scs->total_process_init_count += (scs->tpl_disp_process_init_count                    = clamp(6, 1, max_tpl_proc));
+        scs->total_process_init_count += (scs->mode_decision_configuration_process_init_count = clamp(2, 1, max_mdc_proc));
+        scs->total_process_init_count += (scs->enc_dec_process_init_count                     = clamp(6, scs->picture_control_set_pool_init_count_child, max_md_proc));
+        scs->total_process_init_count += (scs->entropy_coding_process_init_count              = clamp(2, 1, max_ec_proc));
+        scs->total_process_init_count += (scs->dlf_process_init_count                         = clamp(2, 1, max_dlf_proc));
+        scs->total_process_init_count += (scs->cdef_process_init_count                        = clamp(6, 1, max_cdef_proc));
+        scs->total_process_init_count += (scs->rest_process_init_count                        = clamp(4, 1, max_rest_proc));
+    }
+#else
     else if (core_count <= PARALLEL_LEVEL_2_RANGE) {
         scs->total_process_init_count += (scs->source_based_operations_process_init_count     = 1);
         scs->total_process_init_count += (scs->picture_analysis_process_init_count            = clamp(1, 1, max_pa_proc));
@@ -865,6 +967,7 @@ static EbErrorType load_default_buffer_configuration_settings(
             }
         }
     }
+#endif
 
     scs->total_process_init_count += 6; // single processes count
     if (scs->static_config.pass == 0 || scs->static_config.pass == 3){
