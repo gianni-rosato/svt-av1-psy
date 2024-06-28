@@ -2756,7 +2756,11 @@ static void exaustive_light_pd1_features(ModeDecisionContext *md_ctx, PicturePar
             md_ctx->md_pme_ctrls.enabled == 0 && md_ctx->txt_ctrls.enabled == 0 &&
             md_ctx->mds0_ctrls.mds0_dist_type != SSD && md_ctx->unipred3x3_injection == 0 &&
             md_ctx->bipred3x3_ctrls.enabled == 0 && md_ctx->inter_comp_ctrls.tot_comp_types == 1 &&
+#if OPT_FILTER_INTRA
+            md_ctx->md_pic_obmc_level == 0 && md_ctx->filter_intra_ctrls.enabled == 0 &&
+#else
             md_ctx->md_pic_obmc_level == 0 && md_ctx->md_filter_intra_level == 0 &&
+#endif
             md_ctx->new_nearest_near_comb_injection == 0 && md_ctx->md_palette_level == 0 &&
             ppcs->gm_ctrls.enabled == 0 &&
             // If TXS enabled at picture level, there are necessary context updates that must be added to LPD1

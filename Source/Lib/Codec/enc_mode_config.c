@@ -109,7 +109,11 @@ uint8_t svt_aom_get_gm_core_level(EncMode enc_mode, bool super_res_off) {
         if (enc_mode <= ENC_M0)
 #endif
             gm_level = 2;
+#if TUNE_M3
+        else if (enc_mode <= ENC_M2)
+#else
         else if (enc_mode <= ENC_M3)
+#endif
             gm_level = 4;
         else
             gm_level = 0;
@@ -165,10 +169,14 @@ static void set_hme_search_params(PictureParentControlSet *pcs, MeContext *me_ct
             me_ctx->hme_l0_sa.sa_min = (SearchArea){240, 240};
             me_ctx->hme_l0_sa.sa_max = (SearchArea){480, 480};
         }
+#if TUNE_M4
+    } else if (pcs->enc_mode <= ENC_M3) {
+#else
 #if TUNE_M5
     } else if (pcs->enc_mode <= ENC_M4) {
 #else
     } else if (pcs->enc_mode <= ENC_M5) {
+#endif
 #endif
         me_ctx->hme_l0_sa.sa_min = (SearchArea){32, 32};
         me_ctx->hme_l0_sa.sa_max = (SearchArea){192, 192};
@@ -319,9 +327,11 @@ static void set_me_search_params(SequenceControlSet *scs, PictureParentControlSe
     } else if (enc_mode <= ENC_M3) {
         me_ctx->me_sa.sa_min = (SearchArea){24, 24};
         me_ctx->me_sa.sa_max = (SearchArea){104, 104};
+#if !TUNE_M4
     } else if (enc_mode <= ENC_M4) {
         me_ctx->me_sa.sa_min = (SearchArea){24, 24};
         me_ctx->me_sa.sa_max = (SearchArea){80, 80};
+#endif
     } else if (enc_mode <= ENC_M7) {
         me_ctx->me_sa.sa_min = (SearchArea){16, 16};
         me_ctx->me_sa.sa_max = (SearchArea){64, 32};
@@ -2134,7 +2144,11 @@ void svt_aom_sig_deriv_multi_processes(SequenceControlSet *scs, PictureParentCon
             } else if (enc_mode <= ENC_M0)
 #endif
                 pcs->cdef_level = 1;
+#if TUNE_M3
+            else if (enc_mode <= ENC_M2)
+#else
             else if (enc_mode <= ENC_M3)
+#endif
                 pcs->cdef_level = 2;
             else if (enc_mode <= ENC_M4)
                 pcs->cdef_level = 4;
@@ -2850,8 +2864,14 @@ static EbErrorType svt_aom_check_high_freq(PictureControlSet *pcs, SuperBlock *s
         int dev = ((sum_b32_satd - pcs->ppcs->me_32x32_distortion[ctx->sb_index]) * 100) /
             pcs->ppcs->me_32x32_distortion[ctx->sb_index];
 
+#if OPT_DR
+        ctx->high_freq_satd_to_me = (uint32_t)dev;
         if (dev >= ctx->detect_high_freq_ctrls.satd_to_sad_dev_th)
             ctx->high_freq_present = 1;
+#else
+        if (dev >= ctx->detect_high_freq_ctrls.satd_to_sad_dev_th)
+            ctx->high_freq_present = 1;
+#endif
     }
     return return_error;
 }
@@ -3069,7 +3089,11 @@ static void set_depth_removal_level_controls(PictureControlSet *pcs, ModeDecisio
 
         int8_t qp_scale_factor = 0;
 
+#if OPT_DR
+        // modulate the depth-removal level using: (1) tpl-information, specifically the SB delta-qp, and (2) the high-freq information
+#else
         // Modulate depth_removal level for Layer0 frames based on the qp_offset band
+#endif
         if (pcs->ppcs->frm_hdr.delta_q_params.delta_q_present) {
             int diff = ctx->sb_ptr->qindex - quantizer_to_qindex[pcs->ppcs->picture_qp];
             if (diff <= -12)
@@ -3081,6 +3105,14 @@ static void set_depth_removal_level_controls(PictureControlSet *pcs, ModeDecisio
             else if (diff < 0)
                 depth_removal_level = MAX(0, (int)depth_removal_level - 1);
         }
+#if OPT_DR
+        if (ctx->high_freq_satd_to_me != (uint32_t)~0 && depth_removal_level > 2) {
+            if (ctx->high_freq_satd_to_me > 500)
+                depth_removal_level = MAX(0, MAX(2, (int)depth_removal_level - 2));
+            else if (ctx->high_freq_satd_to_me > 250)
+                depth_removal_level = MAX(0, MAX(2, (int)depth_removal_level - 1));
+        }
+#endif
 
         switch (depth_removal_level) {
         case 0: depth_removal_ctrls->enabled = 0; break;
@@ -5651,8 +5683,16 @@ void svt_aom_set_nsq_search_ctrls(PictureControlSet *pcs, ModeDecisionContext *c
     case 16:
         nsq_search_ctrls->enabled                   = 1;
         nsq_search_ctrls->sq_weight                 = 95;
+#if OPT_NSQ_PSQ_CPLX
+        nsq_search_ctrls->psq_cplx_lvl              = 3;
+#else
         nsq_search_ctrls->psq_cplx_lvl              = 2;
+#endif
+#if OPT_NSQ_PART0_PART1
+        nsq_search_ctrls->max_part0_to_part1_dev    = 50;
+#else
         nsq_search_ctrls->max_part0_to_part1_dev    = 40;
+#endif
         nsq_search_ctrls->nsq_split_cost_th         = 50;
         nsq_search_ctrls->lower_depth_split_cost_th = 10;
         nsq_search_ctrls->H_vs_V_split_rate_th      = 60;
@@ -5667,8 +5707,16 @@ void svt_aom_set_nsq_search_ctrls(PictureControlSet *pcs, ModeDecisionContext *c
     case 17:
         nsq_search_ctrls->enabled                   = 1;
         nsq_search_ctrls->sq_weight                 = 95;
+#if OPT_NSQ_PSQ_CPLX
+        nsq_search_ctrls->psq_cplx_lvl              = 3;
+#else
         nsq_search_ctrls->psq_cplx_lvl              = 2;
+#endif
+#if OPT_NSQ_PART0_PART1
+        nsq_search_ctrls->max_part0_to_part1_dev    = 50;
+#else
         nsq_search_ctrls->max_part0_to_part1_dev    = 40;
+#endif
         nsq_search_ctrls->nsq_split_cost_th         = 50;
         nsq_search_ctrls->lower_depth_split_cost_th = 10;
         nsq_search_ctrls->H_vs_V_split_rate_th      = 60;
@@ -5683,8 +5731,16 @@ void svt_aom_set_nsq_search_ctrls(PictureControlSet *pcs, ModeDecisionContext *c
     case 18:
         nsq_search_ctrls->enabled                   = 1;
         nsq_search_ctrls->sq_weight                 = 95;
+#if OPT_NSQ_PSQ_CPLX
+        nsq_search_ctrls->psq_cplx_lvl              = 3;
+#else
         nsq_search_ctrls->psq_cplx_lvl              = 2;
+#endif
+#if OPT_NSQ_PART0_PART1
+        nsq_search_ctrls->max_part0_to_part1_dev    = 75;
+#else
         nsq_search_ctrls->max_part0_to_part1_dev    = 50;
+#endif
         nsq_search_ctrls->nsq_split_cost_th         = 50;
         nsq_search_ctrls->lower_depth_split_cost_th = 10;
         nsq_search_ctrls->H_vs_V_split_rate_th      = 60;
@@ -6326,7 +6382,9 @@ static void set_detect_high_freq_ctrls(ModeDecisionContext *ctx, uint8_t detect_
         ctrls->high_satd_th        = 10000;
         ctrls->satd_to_sad_dev_th  = 500;
         ctrls->me_8x8_sad_var_th   = 2500;
+#if !OPT_DR
         ctrls->depth_removal_shift = 4;
+#endif
         ctrls->max_pic_lpd0_lvl    = 3;
         ctrls->max_pic_lpd1_lvl    = 3;
         ctrls->max_pd1_txt_lvl     = 8;
@@ -6336,7 +6394,9 @@ static void set_detect_high_freq_ctrls(ModeDecisionContext *ctx, uint8_t detect_
         ctrls->high_satd_th        = 15000;
         ctrls->satd_to_sad_dev_th  = 600;
         ctrls->me_8x8_sad_var_th   = 7500;
+#if !OPT_DR
         ctrls->depth_removal_shift = 4;
+#endif
         ctrls->max_pic_lpd0_lvl    = 3;
         ctrls->max_pic_lpd1_lvl    = 3;
         ctrls->max_pd1_txt_lvl     = 8;
@@ -6738,6 +6798,28 @@ static void set_txs_controls(PictureControlSet *pcs, ModeDecisionContext *ctx, u
     default: txs_ctrls->enabled = 0; break;
     }
 }
+#if OPT_FILTER_INTRA
+static void set_filter_intra_ctrls(ModeDecisionContext* ctx, uint8_t fi_lvl) {
+    FilterIntraCtrls* filter_intra_ctrls = &ctx->filter_intra_ctrls;
+
+    switch (fi_lvl) {
+    case 0:
+        filter_intra_ctrls->enabled = 0;
+        break;
+    case 1:
+        filter_intra_ctrls->enabled = 1;
+        filter_intra_ctrls->max_filter_intra_mode = FILTER_PAETH_PRED;
+        break;
+    case 2:
+        filter_intra_ctrls->enabled = 1;
+        filter_intra_ctrls->max_filter_intra_mode = FILTER_DC_PRED;
+        break;
+    default:
+        assert(0);
+        break;
+    }
+}
+#endif
 static void set_spatial_sse_full_loop_level(ModeDecisionContext *ctx, uint8_t spatial_sse_full_loop_level) {
     SpatialSSECtrls *spatial_sse_ctrls = &ctx->spatial_sse_ctrls;
 
@@ -7268,6 +7350,9 @@ void svt_aom_sig_deriv_enc_dec_common(SequenceControlSet *scs, PictureControlSet
     SuperBlock *sb_ptr = pcs->sb_ptr_array[ctx->sb_index];
     set_detect_high_freq_ctrls(ctx, pcs->vq_ctrls.detect_high_freq_lvl);
     ctx->high_freq_present = 0;
+#if OPT_DR
+    ctx->high_freq_satd_to_me = (uint32_t)~0;
+#endif
     const bool rtc_tune    = (scs->static_config.pred_structure == SVT_AV1_PRED_LOW_DELAY_B) ? true : false;
     if (ctx->detect_high_freq_ctrls.enabled) {
         svt_aom_check_high_freq(pcs, sb_ptr, ctx);
@@ -7326,7 +7411,11 @@ void svt_aom_sig_deriv_enc_dec_common(SequenceControlSet *scs, PictureControlSet
         } else {
             depth_level = 3;
         }
+#if TUNE_M4
+    } else if (enc_mode <= ENC_M4) {
+#else
     } else if (enc_mode <= ENC_M3) {
+#endif
         if (pcs->coeff_lvl == LOW_LVL) {
             depth_level = 2;
         } else if (pcs->coeff_lvl == HIGH_LVL) {
@@ -7501,10 +7590,14 @@ that use 8x8 blocks will lose significant BD-Rate as the parent 16x16 me data wi
         set_depth_removal_level_controls(
             pcs,
             ctx,
+#if OPT_DR
+            pcs->pic_depth_removal_level);
+#else
             ctx->high_freq_present
                 ? MAX(0,
                       (int)((int)pcs->pic_depth_removal_level - (int)ctx->detect_high_freq_ctrls.depth_removal_shift))
                 : pcs->pic_depth_removal_level);
+#endif
     }
     if (rtc_tune) {
         if (enc_mode <= ENC_M9)
@@ -8052,6 +8145,9 @@ void svt_aom_sig_deriv_enc_dec(SequenceControlSet *scs, PictureControlSet *pcs, 
     svt_aom_set_obmc_controls(ctx, ctx->md_pic_obmc_level);
     svt_aom_set_inter_intra_ctrls(ctx, pd_pass == PD_PASS_0 ? 0 : pcs->inter_intra_level);
     set_txs_controls(pcs, ctx, pd_pass == PD_PASS_0 ? 0 : pcs->txs_level);
+#if OPT_FILTER_INTRA
+    set_filter_intra_ctrls(ctx, pd_pass == PD_PASS_0 ? 0 : pcs->pic_filter_intra_level);
+#else
     // Set md_filter_intra_mode @ MD
     // md_filter_intra_level specifies whether filter intra would be active
     // for a given prediction candidate in mode decision.
@@ -8063,6 +8159,7 @@ void svt_aom_sig_deriv_enc_dec(SequenceControlSet *scs, PictureControlSet *pcs, 
         ctx->md_filter_intra_level = 0;
     else
         ctx->md_filter_intra_level = pcs->pic_filter_intra_level;
+#endif
     // Set md_allow_intrabc @ MD
     if (pd_pass == PD_PASS_0)
         ctx->md_allow_intrabc = 0;
@@ -8193,7 +8290,11 @@ void svt_aom_sig_deriv_enc_dec(SequenceControlSet *scs, PictureControlSet *pcs, 
 Used by svt_aom_sig_deriv_enc_dec and memory allocation
 */
 bool svt_aom_get_disallow_4x4(EncMode enc_mode, uint8_t is_base) {
+#if TUNE_M4
+    if (enc_mode <= ENC_M4)
+#else
     if (enc_mode <= ENC_M3)
+#endif
         return false;
 #if TUNE_M7 // disallow_4x4
     else if (enc_mode <= ENC_M7)
@@ -8213,7 +8314,11 @@ uint8_t svt_aom_get_nsq_geom_level(EncMode enc_mode, uint8_t is_base, InputCoeff
             nsq_geom_level = 2;
         else // regular or low
             nsq_geom_level = is_base ? 1 : 2;
+#if TUNE_M3
+    } else if (enc_mode <= ENC_M2) {
+#else
     } else if (enc_mode <= ENC_M3) {
+#endif
         nsq_geom_level = 2;
 #if TUNE_M7 // nsq_geom_level
     } else if (enc_mode <= ENC_M7) {
@@ -8762,6 +8867,14 @@ uint8_t get_filter_intra_level(EncMode enc_mode) {
     uint8_t filter_intra_level;
     if (enc_mode <= ENC_M3)
         filter_intra_level = 1;
+#if OPT_FILTER_INTRA
+#if TUNE_DEFAULT_M5
+    else if (enc_mode <= ENC_M5)
+#else
+    else if (enc_mode <= ENC_M4)
+#endif
+        filter_intra_level = 2;
+#endif
     else
         filter_intra_level = 0;
 
@@ -8772,7 +8885,11 @@ uint8_t svt_aom_get_inter_intra_level(EncMode enc_mode, uint8_t is_base, uint8_t
     uint8_t inter_intra_level = 0;
     if (enc_mode <= ENC_MR)
         inter_intra_level = 2;
+#if TUNE_M3
+    else if (enc_mode <= ENC_M2)
+#else
     else if (enc_mode <= ENC_M3)
+#endif
         inter_intra_level = (transition_present || is_base) ? 2 : 0;
     else if (enc_mode <= ENC_M11)
         inter_intra_level = transition_present ? 2 : 0;
@@ -9028,7 +9145,11 @@ void svt_aom_sig_deriv_mode_decision_config(SequenceControlSet *scs, PictureCont
         pcs->cand_reduction_level = 1;
     } else if (enc_mode <= ENC_M0)
         pcs->cand_reduction_level = 0;
+#if TUNE_M3
+    else if (enc_mode <= ENC_M2)
+#else
     else if (enc_mode <= ENC_M3)
+#endif
         pcs->cand_reduction_level = is_base ? 0 : 1;
 #if TUNE_M5_2
     else if (enc_mode <= ENC_M4) {
@@ -9390,6 +9511,27 @@ void svt_aom_sig_deriv_mode_decision_config(SequenceControlSet *scs, PictureCont
                     pcs->pic_depth_removal_level = is_base ? 3 : 4;
                 else
                     pcs->pic_depth_removal_level = is_base ? 1 : 2;
+#if OPT_DR
+            } 
+            else if (enc_mode <= ENC_M7) {
+                if (input_resolution <= INPUT_SIZE_360p_RANGE) {
+                    if (pcs->coeff_lvl == LOW_LVL)
+                        pcs->pic_depth_removal_level = is_base ? 1 : 2;
+                    else if (pcs->coeff_lvl == HIGH_LVL)
+                        pcs->pic_depth_removal_level = is_base ? 4 : 6;
+                    else
+                        pcs->pic_depth_removal_level = is_base ? 4 : 5;
+                }
+                else {
+                    if (pcs->coeff_lvl == LOW_LVL)
+                        pcs->pic_depth_removal_level = is_base ? 1 : 2;
+                    else if (pcs->coeff_lvl == HIGH_LVL)
+                        pcs->pic_depth_removal_level = is_base ? 4 : 7;
+                    else
+                        pcs->pic_depth_removal_level = is_base ? 4 : 6;
+                }
+
+#endif
             } else if (enc_mode <= ENC_M8) {
 #if TUNE_DR_M7_RES
                 if (input_resolution <= INPUT_SIZE_360p_RANGE) {

@@ -4324,7 +4324,11 @@ static void set_param_based_on_input(SequenceControlSet *scs)
     svt_aom_set_mfmv_config(scs);
 
     uint8_t list0_only_base_lvl = 0;
+#if TUNE_M4
+    if (scs->static_config.enc_mode <= ENC_M3)
+#else
     if (scs->static_config.enc_mode <= ENC_M4)
+#endif
         list0_only_base_lvl = 0;
 #if OPT_L0_ONLY_BASE
     else if (scs->static_config.enc_mode <= ENC_M5)
@@ -4398,9 +4402,14 @@ static void set_param_based_on_input(SequenceControlSet *scs)
 #endif
             mrp_level = 2;
         }
+#if TUNE_M4
+        else if (scs->static_config.enc_mode <= ENC_M4) {
+#else
         else if (scs->static_config.enc_mode <= ENC_M3) {
+#endif
             mrp_level = 5;
         }
+#if !TUNE_M4
 #if TUNE_M5_2
         else if (scs->static_config.enc_mode <= ENC_M4) {
 #else
@@ -4408,6 +4417,7 @@ static void set_param_based_on_input(SequenceControlSet *scs)
 #endif
             mrp_level = 7;
         }
+#endif
         // any changes for preset ENC_M8 and higher should be separated for VBR and CRF in the control structure below
         else if (scs->static_config.rate_control_mode != SVT_AV1_RC_MODE_VBR) {
             if (scs->static_config.enc_mode <= ENC_M9)

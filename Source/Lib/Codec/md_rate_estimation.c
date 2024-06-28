@@ -120,7 +120,11 @@ void svt_aom_estimate_syntax_rate(MdRateEstimationContext *md_rate_est_ctx, Bool
     if (pic_filter_intra_level) {
         svt_aom_get_syntax_rate_from_cdf(md_rate_est_ctx->filter_intra_mode_fac_bits, fc->filter_intra_mode_cdf, NULL);
         for (i = 0; i < BlockSizeS_ALL; ++i) {
+#if OPT_FILTER_INTRA
+            if (svt_aom_filter_intra_allowed_bsize(i))
+#else
             if (svt_aom_filter_intra_allowed_bsize(1, i))
+#endif
                 svt_aom_get_syntax_rate_from_cdf(
                     md_rate_est_ctx->filter_intra_fac_bits[i], fc->filter_intra_cdfs[i], NULL);
         }

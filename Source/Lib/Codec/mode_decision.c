@@ -66,6 +66,14 @@ int svt_is_interintra_allowed(uint8_t enable_inter_intra, BlockSize bsize, Predi
     return enable_inter_intra && svt_aom_is_interintra_allowed_bsize((const BlockSize)bsize) &&
         svt_aom_is_interintra_allowed_mode(mode) && svt_aom_is_interintra_allowed_ref(ref_frame);
 }
+#if OPT_FILTER_INTRA
+int svt_aom_filter_intra_allowed_bsize(BlockSize bs) {
+    return block_size_wide[bs] <= 32 && block_size_high[bs] <= 32;
+}
+int svt_aom_filter_intra_allowed(uint8_t enable_filter_intra, BlockSize bsize, uint8_t palette_size, uint32_t mode) {
+    return enable_filter_intra && mode == DC_PRED && palette_size == 0 && svt_aom_filter_intra_allowed_bsize(bsize);
+}
+#else
 int svt_aom_filter_intra_allowed_bsize(uint8_t enable_filter_intra, BlockSize bs) {
     if (!enable_filter_intra)
         return 0;
@@ -74,6 +82,7 @@ int svt_aom_filter_intra_allowed_bsize(uint8_t enable_filter_intra, BlockSize bs
 int svt_aom_filter_intra_allowed(uint8_t enable_filter_intra, BlockSize bsize, uint8_t palette_size, uint32_t mode) {
     return mode == DC_PRED && palette_size == 0 && svt_aom_filter_intra_allowed_bsize(enable_filter_intra, bsize);
 }
+#endif
 // returns the max inter-inter compound type based on settings and block size
 static MD_COMP_TYPE get_tot_comp_types_bsize(MD_COMP_TYPE tot_comp_types, BlockSize bsize) {
     return (svt_aom_get_wedge_params_bits(bsize) == 0) ? MIN(tot_comp_types, MD_COMP_WEDGE) : tot_comp_types;
@@ -3949,6 +3958,9 @@ static void inject_filter_intra_candidates(
                                      ctx->intra_ctrls.intra_mode_end >= H_PRED ? FILTER_H_PRED :
                                      ctx->intra_ctrls.intra_mode_end >= V_PRED ? FILTER_V_PRED :
                                      FILTER_DC_PRED;
+#if OPT_FILTER_INTRA
+    intra_mode_end = MIN(intra_mode_end, ctx->filter_intra_ctrls.max_filter_intra_mode);
+#endif
 
     FilterIntraMode             filter_intra_mode;
     uint32_t                    cand_total_cnt = *candidate_total_cnt;
@@ -4223,7 +4235,11 @@ EbErrorType generate_md_stage_0_cand(
                  dc_cand_only_flag,
                  &cand_total_cnt);
          }
+#if OPT_FILTER_INTRA
+         if (ctx->filter_intra_ctrls.enabled && svt_aom_filter_intra_allowed_bsize(ctx->blk_geom->bsize))
+#else
          if (svt_aom_filter_intra_allowed_bsize(ctx->md_filter_intra_level, ctx->blk_geom->bsize))
+#endif
              inject_filter_intra_candidates(
                  pcs,
                  ctx,

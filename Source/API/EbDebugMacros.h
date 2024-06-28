@@ -64,6 +64,15 @@ extern "C" {
 #define TUNE_MR                                   1 // Tune MR
 #define TUNE_M1                                   1 // Tune M1
 #define TUNE_M2_2                                 1 // Tune M2
+#define OPT_DR                                    1 // Modulate depth-removal level using high-frequency
+#define OPT_NSQ_PART0_PART1                       1 // Improve the modulation of the part0-to-part1 deviation-threshold: (1) the SQ-distortion to SQ-cost ratio:
+                                                    // bypass part0-to-part1 if the SQ-distortion to SQ-cost ratio is lower than 50%, and
+                                                    // (2) the SQ-pred_mode: apply a higher weight when pred-mode is NEW, and reduce the weight
+                                                    // when pred-mode is Merge
+#define OPT_NSQ_PSQ_CPLX                          1 // Apply a more aggressive psq_cplx_lvl to NSQ-level 16 and higher
+#define TUNE_M3                                   1 // Tune M3
+#define OPT_FILTER_INTRA                          1 // Optimize filter intra
+#define TUNE_M4                                   1 // Tune M4
 
 //FOR DEBUGGING - Do not remove
 #define OPT_LD_LATENCY2         1 // Latency optimization for low delay - to keep the Macro for backwards testing until 3.0

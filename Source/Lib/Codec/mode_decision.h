@@ -185,7 +185,11 @@ static INLINE int svt_aom_is_interintra_allowed_ref(const MvReferenceFrame rf[2]
 }
 int svt_is_interintra_allowed(uint8_t enable_inter_intra, BlockSize bsize, PredictionMode mode,
                               const MvReferenceFrame ref_frame[2]);
+#if OPT_FILTER_INTRA
+int svt_aom_filter_intra_allowed_bsize(BlockSize bs);
+#else
 int svt_aom_filter_intra_allowed_bsize(uint8_t enable_filter_intra, BlockSize bs);
+#endif
 int svt_aom_filter_intra_allowed(uint8_t enable_filter_intra, BlockSize bsize, uint8_t palette_size, uint32_t mode);
 
 #if OPT_MV_DIFF_RATE // TODO: prefix with svt_aom

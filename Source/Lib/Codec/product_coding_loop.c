@@ -1658,6 +1658,34 @@ static bool process_cand_itr(ModeDecisionCandidate *cand, uint8_t itr, Predictio
         // Eval regular only if itr=0 (i.e. skip angular and skip filter)
         if (cand->angle_delta[PLANE_TYPE_Y] != 0 || cand->filter_intra_mode != FILTER_INTRA_MODES)
             return false;
+#if OPT_FILTER_INTRA
+    }
+    else {
+        // Eval angular and filter intra if itr=1 (i.e. skip regular)
+        if (cand->angle_delta[PLANE_TYPE_Y] == 0 && cand->filter_intra_mode == FILTER_INTRA_MODES)
+            return false;
+
+        // Use regular info to reduce angular processing
+        // Eval the child-angular if the parent-angular is the best out of the regular modes (i.e. itr=0 eval)
+        if (cand->filter_intra_mode == FILTER_INTRA_MODES) {
+            if (best_reg_intra_mode != cand->pred_mode) {
+                if ((((regular_intra_cost[cand->pred_mode] - MAX(best_reg_intra_cost, 1)) * 100) /
+                    MAX(best_reg_intra_cost, 1)) > MDS0_REDUCE_ANGULAR_INTRA_TH)
+                    return false;
+            }
+        }
+        else {
+            // Eval filter candidates
+            // Always test FILTER_DC candidate
+            if (cand->filter_intra_mode == FILTER_DC_PRED)
+                return true;
+
+            // Only test other filter modes if the corresponding non-filter mode was chosen during the first pass
+            if (fimode_to_intramode[cand->filter_intra_mode] != best_reg_intra_mode)
+                return false;
+        }
+    }
+#else
     } else if (itr == 1) {
         // Eval angular only if itr=1 (i.e. skip regular and skip filter)
         if (cand->angle_delta[PLANE_TYPE_Y] == 0 || cand->filter_intra_mode != FILTER_INTRA_MODES)
@@ -1694,6 +1722,7 @@ static bool process_cand_itr(ModeDecisionCandidate *cand, uint8_t itr, Predictio
                 return false;
         }
     }
+#endif
     return true;
 }
 
@@ -1718,6 +1747,16 @@ static void md_stage_0(PictureControlSet *pcs, ModeDecisionContext *ctx,
         ? (int)MAX_MB_PLANE
         : 1;
 
+#if OPT_FILTER_INTRA
+    // Process CLASS_0 candidates through iterations at mds0;
+    // 1st iteration : evaluate the regular mode(s).
+    //
+    // 2nd iteration : evaluate the angular (pAngle!=0) mode(s) and filter-intra modes
+    //    - skip pAngle !=0 of a given mode, if pAngle==0 of the same mode is not the best after the 1st iteration
+    //      and if the cost to the best is significant
+    //    - skip filter-intra mode if regular winner does not match (e.g. test filter-paeth if Paeth is best at first pass). Always test filter-DC.
+    uint8_t tot_itr = (ctx->target_class != CAND_CLASS_0 || !ctx->cand_reduction_ctrls.mds0_reduce_intra) ? 1 : 2;
+#else
     // Process CLASS_0 candidates through iterations at mds0;
     // 1st iteration : evaluate the regular mode(s).
     //
@@ -1731,6 +1770,7 @@ static void md_stage_0(PictureControlSet *pcs, ModeDecisionContext *ctx,
     uint8_t tot_itr = (ctx->target_class != CAND_CLASS_0 || !ctx->cand_reduction_ctrls.mds0_reduce_intra) ? 1
         : (ctx->md_filter_intra_level)                                                                    ? 3
                                                                                                           : 2;
+#endif
 
     uint64_t       best_reg_intra_cost = MAX_CU_COST; // Derived at the 1st itr
     PredictionMode best_reg_intra_mode = INTRA_INVALID; // Derived at the 1st itr
@@ -9520,16 +9560,28 @@ static Bool update_skip_nsq_based_on_sq_recon_dist(ModeDecisionContext *ctx) {
     const uint32_t full_lambda     = ctx->hbd_md ? ctx->full_lambda_md[EB_10_BIT_MD] : ctx->full_lambda_md[EB_8_BIT_MD];
     const uint64_t dist            = RDCOST(full_lambda, 0, sq_blk_ptr->full_dist);
     const uint64_t dist_cost_ratio = (dist * 100) / sq_blk_ptr->default_cost;
+#if OPT_NSQ_PART0_PART1
+    const uint64_t min_ratio = 50;
+    const uint64_t max_ratio = 100;
+    const uint64_t modulated_th = (100 * (dist_cost_ratio - min_ratio)) / (max_ratio - min_ratio);
+#else
     const uint64_t min_ratio       = 0;
     const uint64_t max_ratio       = 100;
     const uint64_t modulated_th    = (100 * (dist_cost_ratio - min_ratio)) / (max_ratio - min_ratio);
+#endif
 
     // Modulate TH based on parent SQ pred_mode
     switch (sq_blk_ptr->pred_mode) {
     case NEWMV:
+#if OPT_NSQ_PART0_PART1
+    case NEW_NEWMV: max_part0_to_part1_dev = ((max_part0_to_part1_dev * 75) / 100); break;
+    case NEAREST_NEARESTMV:
+    case NEAR_NEARMV: max_part0_to_part1_dev *= 2; break;
+#else
     case NEW_NEWMV: max_part0_to_part1_dev = max_part0_to_part1_dev - ((max_part0_to_part1_dev * 75) / 100); break;
     case NEAREST_NEARESTMV:
     case NEAR_NEARMV: max_part0_to_part1_dev *= 3; break;
+#endif
     case GLOBALMV:
     case GLOBAL_GLOBALMV: max_part0_to_part1_dev <<= 2; break;
     default: break;
