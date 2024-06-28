@@ -193,12 +193,12 @@ int svt_aom_filter_intra_allowed_bsize(uint8_t enable_filter_intra, BlockSize bs
 int svt_aom_filter_intra_allowed(uint8_t enable_filter_intra, BlockSize bsize, uint8_t palette_size, uint32_t mode);
 
 #if OPT_MV_DIFF_RATE // TODO: prefix with svt_aom
-void svt_aom_choose_best_av1_mv_pred(struct ModeDecisionContext* ctx, struct MdRateEstimationContext* md_rate_est_ctx,
-    BlkStruct* blk_ptr, MvReferenceFrame ref_frame, uint8_t is_compound,
-    PredictionMode mode, // NEW or NEW_NEW
-    int16_t mv0x, int16_t mv0y, int16_t mv1x, int16_t mv1y,
-    uint8_t* bestDrlIndex, // output
-    IntMv    best_pred_mv[2] // output
+void svt_aom_choose_best_av1_mv_pred(struct ModeDecisionContext *ctx, struct MdRateEstimationContext *md_rate_est_ctx,
+                                     BlkStruct *blk_ptr, MvReferenceFrame ref_frame, uint8_t is_compound,
+                                     PredictionMode mode, // NEW or NEW_NEW
+                                     int16_t mv0x, int16_t mv0y, int16_t mv1x, int16_t mv1y,
+                                     uint8_t *bestDrlIndex, // output
+                                     IntMv    best_pred_mv[2] // output
 );
 #endif
 static const uint32_t me_idx_85[] = {

@@ -67,9 +67,7 @@ int svt_is_interintra_allowed(uint8_t enable_inter_intra, BlockSize bsize, Predi
         svt_aom_is_interintra_allowed_mode(mode) && svt_aom_is_interintra_allowed_ref(ref_frame);
 }
 #if OPT_FILTER_INTRA
-int svt_aom_filter_intra_allowed_bsize(BlockSize bs) {
-    return block_size_wide[bs] <= 32 && block_size_high[bs] <= 32;
-}
+int svt_aom_filter_intra_allowed_bsize(BlockSize bs) { return block_size_wide[bs] <= 32 && block_size_high[bs] <= 32; }
 int svt_aom_filter_intra_allowed(uint8_t enable_filter_intra, BlockSize bsize, uint8_t palette_size, uint32_t mode) {
     return enable_filter_intra && mode == DC_PRED && palette_size == 0 && svt_aom_filter_intra_allowed_bsize(bsize);
 }
@@ -520,11 +518,11 @@ static void determine_compound_mode(PictureControlSet *pcs, ModeDecisionContext 
 }
 
 void svt_aom_choose_best_av1_mv_pred(ModeDecisionContext *ctx, struct MdRateEstimationContext *md_rate_est_ctx,
-                             BlkStruct *blk_ptr, MvReferenceFrame ref_frame, uint8_t is_compound,
-                             PredictionMode mode, // NEW or NEW_NEW
-                             int16_t mv0x, int16_t mv0y, int16_t mv1x, int16_t mv1y,
-                             uint8_t *bestDrlIndex, // output
-                             IntMv    best_pred_mv[2] // output
+                                     BlkStruct *blk_ptr, MvReferenceFrame ref_frame, uint8_t is_compound,
+                                     PredictionMode mode, // NEW or NEW_NEW
+                                     int16_t mv0x, int16_t mv0y, int16_t mv1x, int16_t mv1y,
+                                     uint8_t *bestDrlIndex, // output
+                                     IntMv    best_pred_mv[2] // output
 ) {
     if (ctx->shut_fast_rate) {
         return;
@@ -1001,17 +999,17 @@ void unipred_3x3_candidates_injection(const SequenceControlSet *scs, PictureCont
                      mv_is_already_injected(ctx, to_inj_mv, to_inj_mv, to_inject_ref_type) == FALSE)) {
                     uint8_t drl_index = 0;
                     svt_aom_choose_best_av1_mv_pred(ctx,
-                                            ctx->md_rate_est_ctx,
-                                            ctx->blk_ptr,
-                                            to_inject_ref_type,
-                                            0,
-                                            NEWMV,
-                                            to_inject_mv_x,
-                                            to_inject_mv_y,
-                                            0,
-                                            0,
-                                            &drl_index,
-                                            best_pred_mv);
+                                                    ctx->md_rate_est_ctx,
+                                                    ctx->blk_ptr,
+                                                    to_inject_ref_type,
+                                                    0,
+                                                    NEWMV,
+                                                    to_inject_mv_x,
+                                                    to_inject_mv_y,
+                                                    0,
+                                                    0,
+                                                    &drl_index,
+                                                    best_pred_mv);
                     if (!ctx->corrupted_mv_check ||
                         is_valid_mv_diff(best_pred_mv, to_inj_mv, to_inj_mv, 0, frm_hdr->allow_high_precision_mv)) {
                         const uint8_t is_ii_allowed = svt_is_interintra_allowed(ctx->inter_intra_comp_ctrls.enabled,
@@ -1164,17 +1162,17 @@ static void bipred_3x3_candidates_injection(const SequenceControlSet *scs, Pictu
                              mv_is_already_injected(ctx, to_inj_mv0, to_inj_mv1, to_inject_ref_type) == FALSE)) {
                             uint8_t drl_index = 0;
                             svt_aom_choose_best_av1_mv_pred(ctx,
-                                                    ctx->md_rate_est_ctx,
-                                                    ctx->blk_ptr,
-                                                    to_inject_ref_type,
-                                                    1,
-                                                    NEW_NEWMV,
-                                                    to_inject_mv_x_l0,
-                                                    to_inject_mv_y_l0,
-                                                    to_inject_mv_x_l1,
-                                                    to_inject_mv_y_l1,
-                                                    &drl_index,
-                                                    best_pred_mv);
+                                                            ctx->md_rate_est_ctx,
+                                                            ctx->blk_ptr,
+                                                            to_inject_ref_type,
+                                                            1,
+                                                            NEW_NEWMV,
+                                                            to_inject_mv_x_l0,
+                                                            to_inject_mv_y_l0,
+                                                            to_inject_mv_x_l1,
+                                                            to_inject_mv_y_l1,
+                                                            &drl_index,
+                                                            best_pred_mv);
                             if (!ctx->corrupted_mv_check ||
                                 is_valid_mv_diff(best_pred_mv,
                                                  to_inj_mv0,
@@ -1280,17 +1278,17 @@ static void bipred_3x3_candidates_injection(const SequenceControlSet *scs, Pictu
                              mv_is_already_injected(ctx, to_inj_mv0, to_inj_mv1, to_inject_ref_type) == FALSE)) {
                             uint8_t drl_index = 0;
                             svt_aom_choose_best_av1_mv_pred(ctx,
-                                                    ctx->md_rate_est_ctx,
-                                                    ctx->blk_ptr,
-                                                    to_inject_ref_type,
-                                                    1,
-                                                    NEW_NEWMV,
-                                                    to_inject_mv_x_l0,
-                                                    to_inject_mv_y_l0,
-                                                    to_inject_mv_x_l1,
-                                                    to_inject_mv_y_l1,
-                                                    &drl_index,
-                                                    best_pred_mv);
+                                                            ctx->md_rate_est_ctx,
+                                                            ctx->blk_ptr,
+                                                            to_inject_ref_type,
+                                                            1,
+                                                            NEW_NEWMV,
+                                                            to_inject_mv_x_l0,
+                                                            to_inject_mv_y_l0,
+                                                            to_inject_mv_x_l1,
+                                                            to_inject_mv_y_l1,
+                                                            &drl_index,
+                                                            best_pred_mv);
                             if (!ctx->corrupted_mv_check ||
                                 is_valid_mv_diff(best_pred_mv,
                                                  to_inj_mv0,
@@ -2343,17 +2341,17 @@ uint8_t svt_aom_wm_motion_refinement(PictureControlSet *pcs, ModeDecisionContext
     // Derive pred MV for best WM position
     IntMv best_pred_mv[2] = {{0}, {0}};
     svt_aom_choose_best_av1_mv_pred(ctx,
-                            ctx->md_rate_est_ctx,
-                            ctx->blk_ptr,
-                            cand->ref_frame_type,
-                            0, // is_compound -> WM only allowed for unipred candidtes
-                            cand->pred_mode,
-                            cand->mv[list_idx].x,
-                            cand->mv[list_idx].y,
-                            0,
-                            0,
-                            &cand->drl_index,
-                            best_pred_mv);
+                                    ctx->md_rate_est_ctx,
+                                    ctx->blk_ptr,
+                                    cand->ref_frame_type,
+                                    0, // is_compound -> WM only allowed for unipred candidtes
+                                    cand->pred_mode,
+                                    cand->mv[list_idx].x,
+                                    cand->mv[list_idx].y,
+                                    0,
+                                    0,
+                                    &cand->drl_index,
+                                    best_pred_mv);
     cand->pred_mv[list_idx].x = best_pred_mv[0].as_mv.col;
     cand->pred_mv[list_idx].y = best_pred_mv[0].as_mv.row;
 
@@ -2598,17 +2596,17 @@ uint8_t svt_aom_obmc_motion_refinement(PictureControlSet *pcs, struct ModeDecisi
     cand->mv[ref_list_idx].x = x->best_mv.as_mv.col;
     cand->mv[ref_list_idx].y = x->best_mv.as_mv.row;
     svt_aom_choose_best_av1_mv_pred(ctx,
-                            ctx->md_rate_est_ctx,
-                            ctx->blk_ptr,
-                            cand->ref_frame_type,
-                            0, // is_compound -> OBMC only allowed for unipred candidtes
-                            cand->pred_mode,
-                            cand->mv[ref_list_idx].x,
-                            cand->mv[ref_list_idx].y,
-                            0,
-                            0,
-                            &cand->drl_index,
-                            best_pred_mv);
+                                    ctx->md_rate_est_ctx,
+                                    ctx->blk_ptr,
+                                    cand->ref_frame_type,
+                                    0, // is_compound -> OBMC only allowed for unipred candidtes
+                                    cand->pred_mode,
+                                    cand->mv[ref_list_idx].x,
+                                    cand->mv[ref_list_idx].y,
+                                    0,
+                                    0,
+                                    &cand->drl_index,
+                                    best_pred_mv);
     cand->pred_mv[ref_list_idx].x = best_pred_mv[0].as_mv.col;
     cand->pred_mv[ref_list_idx].y = best_pred_mv[0].as_mv.row;
     // Check that final chosen MV is valid
@@ -2769,17 +2767,17 @@ static void inject_new_candidates_light_pd1(PictureControlSet *pcs, struct ModeD
                 mv_is_already_injected(ctx, to_inj_mv, to_inj_mv, to_inject_ref_type) == FALSE) {
                 uint8_t drl_index = 0;
                 svt_aom_choose_best_av1_mv_pred(ctx,
-                                        ctx->md_rate_est_ctx,
-                                        ctx->blk_ptr,
-                                        to_inject_ref_type,
-                                        0,
-                                        NEWMV,
-                                        to_inject_mv_x,
-                                        to_inject_mv_y,
-                                        0,
-                                        0,
-                                        &drl_index,
-                                        best_pred_mv);
+                                                ctx->md_rate_est_ctx,
+                                                ctx->blk_ptr,
+                                                to_inject_ref_type,
+                                                0,
+                                                NEWMV,
+                                                to_inject_mv_x,
+                                                to_inject_mv_y,
+                                                0,
+                                                0,
+                                                &drl_index,
+                                                best_pred_mv);
                 if (!ctx->corrupted_mv_check ||
                     is_valid_mv_diff(
                         best_pred_mv, to_inj_mv, to_inj_mv, 0, pcs->ppcs->frm_hdr.allow_high_precision_mv)) {
@@ -2814,17 +2812,17 @@ static void inject_new_candidates_light_pd1(PictureControlSet *pcs, struct ModeD
                     mv_is_already_injected(ctx, to_inj_mv, to_inj_mv, to_inject_ref_type) == FALSE) {
                     uint8_t drl_index = 0;
                     svt_aom_choose_best_av1_mv_pred(ctx,
-                                            ctx->md_rate_est_ctx,
-                                            ctx->blk_ptr,
-                                            to_inject_ref_type,
-                                            0,
-                                            NEWMV,
-                                            to_inject_mv_x,
-                                            to_inject_mv_y,
-                                            0,
-                                            0,
-                                            &drl_index,
-                                            best_pred_mv);
+                                                    ctx->md_rate_est_ctx,
+                                                    ctx->blk_ptr,
+                                                    to_inject_ref_type,
+                                                    0,
+                                                    NEWMV,
+                                                    to_inject_mv_x,
+                                                    to_inject_mv_y,
+                                                    0,
+                                                    0,
+                                                    &drl_index,
+                                                    best_pred_mv);
                     if (!ctx->corrupted_mv_check ||
                         is_valid_mv_diff(
                             best_pred_mv, to_inj_mv, to_inj_mv, 0, pcs->ppcs->frm_hdr.allow_high_precision_mv)) {
@@ -2866,17 +2864,17 @@ static void inject_new_candidates_light_pd1(PictureControlSet *pcs, struct ModeD
                      mv_is_already_injected(ctx, to_inj_mv0, to_inj_mv1, to_inject_ref_type) == FALSE)) {
                     uint8_t drl_index = 0;
                     svt_aom_choose_best_av1_mv_pred(ctx,
-                                            ctx->md_rate_est_ctx,
-                                            ctx->blk_ptr,
-                                            to_inject_ref_type,
-                                            1,
-                                            NEW_NEWMV,
-                                            to_inject_mv_x_l0,
-                                            to_inject_mv_y_l0,
-                                            to_inject_mv_x_l1,
-                                            to_inject_mv_y_l1,
-                                            &drl_index,
-                                            best_pred_mv);
+                                                    ctx->md_rate_est_ctx,
+                                                    ctx->blk_ptr,
+                                                    to_inject_ref_type,
+                                                    1,
+                                                    NEW_NEWMV,
+                                                    to_inject_mv_x_l0,
+                                                    to_inject_mv_y_l0,
+                                                    to_inject_mv_x_l1,
+                                                    to_inject_mv_y_l1,
+                                                    &drl_index,
+                                                    best_pred_mv);
                     if (!ctx->corrupted_mv_check ||
                         is_valid_mv_diff(
                             best_pred_mv, to_inj_mv0, to_inj_mv1, 1, pcs->ppcs->frm_hdr.allow_high_precision_mv)) {
@@ -2958,17 +2956,17 @@ static void inject_new_candidates(const SequenceControlSet *scs, struct ModeDeci
                  mv_is_already_injected(ctx, to_inj_mv, to_inj_mv, to_inject_ref_type) == FALSE)) {
                 uint8_t drl_index = 0;
                 svt_aom_choose_best_av1_mv_pred(ctx,
-                                        ctx->md_rate_est_ctx,
-                                        ctx->blk_ptr,
-                                        to_inject_ref_type,
-                                        0,
-                                        NEWMV,
-                                        to_inject_mv_x,
-                                        to_inject_mv_y,
-                                        0,
-                                        0,
-                                        &drl_index,
-                                        best_pred_mv);
+                                                ctx->md_rate_est_ctx,
+                                                ctx->blk_ptr,
+                                                to_inject_ref_type,
+                                                0,
+                                                NEWMV,
+                                                to_inject_mv_x,
+                                                to_inject_mv_y,
+                                                0,
+                                                0,
+                                                &drl_index,
+                                                best_pred_mv);
                 if (!ctx->corrupted_mv_check ||
                     is_valid_mv_diff(
                         best_pred_mv, to_inj_mv, to_inj_mv, 0, pcs->ppcs->frm_hdr.allow_high_precision_mv)) {
@@ -3061,17 +3059,17 @@ static void inject_new_candidates(const SequenceControlSet *scs, struct ModeDeci
                          mv_is_already_injected(ctx, to_inj_mv0, to_inj_mv1, to_inject_ref_type) == FALSE)) {
                         uint8_t drl_index = 0;
                         svt_aom_choose_best_av1_mv_pred(ctx,
-                                                ctx->md_rate_est_ctx,
-                                                ctx->blk_ptr,
-                                                to_inject_ref_type,
-                                                1,
-                                                NEW_NEWMV,
-                                                to_inject_mv_x_l0,
-                                                to_inject_mv_y_l0,
-                                                to_inject_mv_x_l1,
-                                                to_inject_mv_y_l1,
-                                                &drl_index,
-                                                best_pred_mv);
+                                                        ctx->md_rate_est_ctx,
+                                                        ctx->blk_ptr,
+                                                        to_inject_ref_type,
+                                                        1,
+                                                        NEW_NEWMV,
+                                                        to_inject_mv_x_l0,
+                                                        to_inject_mv_y_l0,
+                                                        to_inject_mv_x_l1,
+                                                        to_inject_mv_y_l1,
+                                                        &drl_index,
+                                                        best_pred_mv);
                         if (!ctx->corrupted_mv_check ||
                             is_valid_mv_diff(
                                 best_pred_mv, to_inj_mv0, to_inj_mv1, 1, pcs->ppcs->frm_hdr.allow_high_precision_mv)) {
@@ -3342,17 +3340,17 @@ static void inject_pme_candidates(
                 if (inj_mv) {
                     uint8_t drl_index = 0;
                     svt_aom_choose_best_av1_mv_pred(ctx,
-                                            ctx->md_rate_est_ctx,
-                                            ctx->blk_ptr,
-                                            frame_type,
-                                            0,
-                                            NEWMV,
-                                            to_inject_mv_x,
-                                            to_inject_mv_y,
-                                            0,
-                                            0,
-                                            &drl_index,
-                                            best_pred_mv);
+                                                    ctx->md_rate_est_ctx,
+                                                    ctx->blk_ptr,
+                                                    frame_type,
+                                                    0,
+                                                    NEWMV,
+                                                    to_inject_mv_x,
+                                                    to_inject_mv_y,
+                                                    0,
+                                                    0,
+                                                    &drl_index,
+                                                    best_pred_mv);
                     if (!ctx->corrupted_mv_check ||
                         is_valid_mv_diff(
                             best_pred_mv, to_inj_mv, to_inj_mv, 0, pcs->ppcs->frm_hdr.allow_high_precision_mv)) {
@@ -3429,17 +3427,17 @@ static void inject_pme_candidates(
                          mv_is_already_injected(ctx, to_inj_mv0, to_inj_mv1, to_inject_ref_type) == FALSE)) {
                         uint8_t drl_index = 0;
                         svt_aom_choose_best_av1_mv_pred(ctx,
-                                                ctx->md_rate_est_ctx,
-                                                ctx->blk_ptr,
-                                                to_inject_ref_type,
-                                                1,
-                                                NEW_NEWMV,
-                                                to_inject_mv_x_l0,
-                                                to_inject_mv_y_l0,
-                                                to_inject_mv_x_l1,
-                                                to_inject_mv_y_l1,
-                                                &drl_index,
-                                                best_pred_mv);
+                                                        ctx->md_rate_est_ctx,
+                                                        ctx->blk_ptr,
+                                                        to_inject_ref_type,
+                                                        1,
+                                                        NEW_NEWMV,
+                                                        to_inject_mv_x_l0,
+                                                        to_inject_mv_y_l0,
+                                                        to_inject_mv_x_l1,
+                                                        to_inject_mv_y_l1,
+                                                        &drl_index,
+                                                        best_pred_mv);
                         if (!ctx->corrupted_mv_check ||
                             is_valid_mv_diff(
                                 best_pred_mv, to_inj_mv0, to_inj_mv1, 1, pcs->ppcs->frm_hdr.allow_high_precision_mv)) {

@@ -79,7 +79,7 @@ static INLINE int32_t frame_might_allow_ref_frame_mvs(const PictureParentControl
 
 // Returns 1 if this frame might use warped_motion
 #if CLN_REMOVE_UNUSED_SCS
-static INLINE int32_t frame_might_allow_warped_motion(const PictureParentControlSet* pcs, SequenceControlSet* scs) {
+static INLINE int32_t frame_might_allow_warped_motion(const PictureParentControlSet *pcs, SequenceControlSet *scs) {
     return !pcs->frm_hdr.error_resilient_mode && !frame_is_intra_only(pcs) && scs->seq_header.enable_warped_motion;
 }
 #else

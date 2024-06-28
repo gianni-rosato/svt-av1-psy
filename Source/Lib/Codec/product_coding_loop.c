@@ -1063,15 +1063,14 @@ static void fast_loop_core_light_pd1(ModeDecisionCandidateBuffer *cand_bf, Pictu
         else
 #if OPTIMIZE_LPD1_MDS0_DIST
             if (ctx->lpd1_shift_mds0_dist) {
-                cand_bf->luma_fast_dist = luma_fast_dist = fn_ptr->vf(
-                    pred_y, pred->stride_y, src_y, input_pic->stride_y, &sse) >>
-                    3;
-            }
-            else {
-                cand_bf->luma_fast_dist = luma_fast_dist = fn_ptr->vf(
-                    pred_y, pred->stride_y, src_y, input_pic->stride_y, &sse) >>
-                    2;
-            }
+            cand_bf->luma_fast_dist = luma_fast_dist = fn_ptr->vf(
+                                                           pred_y, pred->stride_y, src_y, input_pic->stride_y, &sse) >>
+                3;
+        } else {
+            cand_bf->luma_fast_dist = luma_fast_dist = fn_ptr->vf(
+                                                           pred_y, pred->stride_y, src_y, input_pic->stride_y, &sse) >>
+                2;
+        }
 #else
             cand_bf->luma_fast_dist = luma_fast_dist = fn_ptr->vf(
                                                            pred_y, pred->stride_y, src_y, input_pic->stride_y, &sse) >>
@@ -1659,8 +1658,7 @@ static bool process_cand_itr(ModeDecisionCandidate *cand, uint8_t itr, Predictio
         if (cand->angle_delta[PLANE_TYPE_Y] != 0 || cand->filter_intra_mode != FILTER_INTRA_MODES)
             return false;
 #if OPT_FILTER_INTRA
-    }
-    else {
+    } else {
         // Eval angular and filter intra if itr=1 (i.e. skip regular)
         if (cand->angle_delta[PLANE_TYPE_Y] == 0 && cand->filter_intra_mode == FILTER_INTRA_MODES)
             return false;
@@ -1670,11 +1668,10 @@ static bool process_cand_itr(ModeDecisionCandidate *cand, uint8_t itr, Predictio
         if (cand->filter_intra_mode == FILTER_INTRA_MODES) {
             if (best_reg_intra_mode != cand->pred_mode) {
                 if ((((regular_intra_cost[cand->pred_mode] - MAX(best_reg_intra_cost, 1)) * 100) /
-                    MAX(best_reg_intra_cost, 1)) > MDS0_REDUCE_ANGULAR_INTRA_TH)
+                     MAX(best_reg_intra_cost, 1)) > MDS0_REDUCE_ANGULAR_INTRA_TH)
                     return false;
             }
-        }
-        else {
+        } else {
             // Eval filter candidates
             // Always test FILTER_DC candidate
             if (cand->filter_intra_mode == FILTER_DC_PRED)
@@ -2735,30 +2732,29 @@ static void read_refine_me_mvs_light_pd1(PictureControlSet *pcs, EbPictureBuffer
                     if (no_mv_stack) {
                         ctx->ref_mv.col = 0;
                         ctx->ref_mv.row = 0;
-                    }
-                    else {
-                        IntMv best_pred_mv[2] = { {0}, {0} };
-                        uint8_t drl_index = 0;
+                    } else {
+                        IntMv   best_pred_mv[2] = {{0}, {0}};
+                        uint8_t drl_index       = 0;
                         svt_aom_choose_best_av1_mv_pred(ctx,
-                            ctx->md_rate_est_ctx,
-                            ctx->blk_ptr,
-                            ref_pair,
-                            0,
-                            NEWMV,
-                            me_mv_x,
-                            me_mv_y,
-                            0,
-                            0,
-                            &drl_index,
-                            best_pred_mv);
+                                                        ctx->md_rate_est_ctx,
+                                                        ctx->blk_ptr,
+                                                        ref_pair,
+                                                        0,
+                                                        NEWMV,
+                                                        me_mv_x,
+                                                        me_mv_y,
+                                                        0,
+                                                        0,
+                                                        &drl_index,
+                                                        best_pred_mv);
                         ctx->ref_mv.col = best_pred_mv[0].as_mv.col;
                         ctx->ref_mv.row = best_pred_mv[0].as_mv.row;
                     }
 #else
                     const MV as_mv = ctx->ref_mv_stack[rf[0]][0].this_mv.as_mv;
                     // Could use ctx->mvp_array[list][ref][0], but that requires the single ref MVP array to be init'd, but it is not in light-PD1 path
-                    ctx->ref_mv.col                        = no_mv_stack ? 0 : (as_mv.col + 4) & ~0x07;
-                    ctx->ref_mv.row                        = no_mv_stack ? 0 : (as_mv.row + 4) & ~0x07;
+                    ctx->ref_mv.col = no_mv_stack ? 0 : (as_mv.col + 4) & ~0x07;
+                    ctx->ref_mv.row = no_mv_stack ? 0 : (as_mv.row + 4) & ~0x07;
 #endif
                     ctx->post_subpel_me_mv_cost[list][ref] = md_subpel_search(
                         SPEL_ME,
@@ -2856,20 +2852,20 @@ static void read_refine_me_mvs(PictureControlSet *pcs, ModeDecisionContext *ctx)
                     ctx->blk_org_x, ctx->blk_org_y, blk_geom->bwidth, blk_geom->bheight, ref_pic, &me_mv_x, &me_mv_y);
                 // Set ref MV
 #if OPT_MV_DIFF_RATE
-                IntMv best_pred_mv[2] = { {0}, {0} };
-                uint8_t drl_index = 0;
+                IntMv   best_pred_mv[2] = {{0}, {0}};
+                uint8_t drl_index       = 0;
                 svt_aom_choose_best_av1_mv_pred(ctx,
-                    ctx->md_rate_est_ctx,
-                    ctx->blk_ptr,
-                    ref_pair,
-                    0,
-                    NEWMV,
-                    me_mv_x,
-                    me_mv_y,
-                    0,
-                    0,
-                    &drl_index,
-                    best_pred_mv);
+                                                ctx->md_rate_est_ctx,
+                                                ctx->blk_ptr,
+                                                ref_pair,
+                                                0,
+                                                NEWMV,
+                                                me_mv_x,
+                                                me_mv_y,
+                                                0,
+                                                0,
+                                                &drl_index,
+                                                best_pred_mv);
                 ctx->ref_mv.col = best_pred_mv[0].as_mv.col;
                 ctx->ref_mv.row = best_pred_mv[0].as_mv.row;
 #else
@@ -3343,25 +3339,25 @@ static void pme_search(PictureControlSet *pcs, ModeDecisionContext *ctx, EbPictu
             }
             // Set ref MV
 #if OPT_MV_DIFF_RATE
-            IntMv best_pred_mv[2] = { {0}, {0} };
-            uint8_t drl_index = 0;
+            IntMv   best_pred_mv[2] = {{0}, {0}};
+            uint8_t drl_index       = 0;
             svt_aom_choose_best_av1_mv_pred(ctx,
-                ctx->md_rate_est_ctx,
-                ctx->blk_ptr,
-                ref_pair,
-                0,
-                NEWMV,
-                best_search_mvx,
-                best_search_mvy,
-                0,
-                0,
-                &drl_index,
-                best_pred_mv);
+                                            ctx->md_rate_est_ctx,
+                                            ctx->blk_ptr,
+                                            ref_pair,
+                                            0,
+                                            NEWMV,
+                                            best_search_mvx,
+                                            best_search_mvy,
+                                            0,
+                                            0,
+                                            &drl_index,
+                                            best_pred_mv);
             ctx->ref_mv.col = best_pred_mv[0].as_mv.col;
             ctx->ref_mv.row = best_pred_mv[0].as_mv.row;
 #else
-            ctx->ref_mv.col  = best_mvp_x;
-            ctx->ref_mv.row  = best_mvp_y;
+            ctx->ref_mv.col = best_mvp_x;
+            ctx->ref_mv.row = best_mvp_y;
 #endif
             ctx->enable_psad = ctx->md_pme_ctrls.enable_psad;
             md_full_pel_search(pcs,
@@ -7393,12 +7389,12 @@ static void search_best_independent_uv_mode(PictureControlSet *pcs, EbPictureBuf
     UvPredictionMode       uv_mode_end             = (UvPredictionMode)ctx->intra_ctrls.intra_mode_end;
     uint8_t                uv_mode_start           = UV_DC_PRED;
 #if CLN_REMOVE_UNUSED_SCS
-    Bool      use_angle_delta          = ctx->intra_ctrls.angular_pred_level ? av1_use_angle_delta(ctx->blk_geom->bsize) : 0;
+    Bool use_angle_delta = ctx->intra_ctrls.angular_pred_level ? av1_use_angle_delta(ctx->blk_geom->bsize) : 0;
 #else
-    Bool      use_angle_delta          = av1_use_angle_delta(ctx->blk_geom->bsize, ctx->intra_ctrls.angular_pred_level);
+    Bool use_angle_delta = av1_use_angle_delta(ctx->blk_geom->bsize, ctx->intra_ctrls.angular_pred_level);
 #endif
-    uint8_t   disable_angle_prediction = (ctx->intra_ctrls.angular_pred_level == 0);
-    const int uv_angle_delta_shift     = 1;
+    uint8_t   disable_angle_prediction                = (ctx->intra_ctrls.angular_pred_level == 0);
+    const int uv_angle_delta_shift                    = 1;
     uint8_t   directional_mode_skip_mask[INTRA_MODES] = {0};
     // For aggressive angular levels, don't test angular candidate for certain modes
     if (ctx->intra_ctrls.angular_pred_level >= 4) {
@@ -9561,13 +9557,13 @@ static Bool update_skip_nsq_based_on_sq_recon_dist(ModeDecisionContext *ctx) {
     const uint64_t dist            = RDCOST(full_lambda, 0, sq_blk_ptr->full_dist);
     const uint64_t dist_cost_ratio = (dist * 100) / sq_blk_ptr->default_cost;
 #if OPT_NSQ_PART0_PART1
-    const uint64_t min_ratio = 50;
-    const uint64_t max_ratio = 100;
+    const uint64_t min_ratio    = 50;
+    const uint64_t max_ratio    = 100;
     const uint64_t modulated_th = (100 * (dist_cost_ratio - min_ratio)) / (max_ratio - min_ratio);
 #else
-    const uint64_t min_ratio       = 0;
-    const uint64_t max_ratio       = 100;
-    const uint64_t modulated_th    = (100 * (dist_cost_ratio - min_ratio)) / (max_ratio - min_ratio);
+    const uint64_t min_ratio    = 0;
+    const uint64_t max_ratio    = 100;
+    const uint64_t modulated_th = (100 * (dist_cost_ratio - min_ratio)) / (max_ratio - min_ratio);
 #endif
 
     // Modulate TH based on parent SQ pred_mode

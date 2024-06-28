@@ -213,9 +213,7 @@ static INLINE int get_palette_bsize_ctx(BlockSize bsize) {
 }
 
 #if CLN_REMOVE_UNUSED_SCS
-static INLINE Bool av1_use_angle_delta(BlockSize bsize) {
-    return bsize >= BLOCK_8X8;
-}
+static INLINE Bool av1_use_angle_delta(BlockSize bsize) { return bsize >= BLOCK_8X8; }
 #else
 static INLINE Bool av1_use_angle_delta(BlockSize bsize, uint8_t enable_angle_delta) {
     return (enable_angle_delta ? bsize >= BLOCK_8X8 : (Bool)enable_angle_delta);

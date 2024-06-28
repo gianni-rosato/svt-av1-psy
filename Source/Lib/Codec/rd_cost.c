@@ -637,11 +637,11 @@ uint64_t svt_aom_intra_fast_cost(PictureControlSet *pcs, struct ModeDecisionCont
         cand_bf->fast_luma_rate   = rate;
         cand_bf->fast_chroma_rate = 0;
 #if CLN_REMOVE_UNUSED_MACROS
-        uint64_t luma_sad = luma_distortion;
+        uint64_t luma_sad   = luma_distortion;
         uint64_t chromasad_ = chroma_distortion;
 #else
-        uint64_t luma_sad         = (LUMA_WEIGHT * luma_distortion) << AV1_COST_PRECISION;
-        uint64_t chromasad_       = chroma_distortion << AV1_COST_PRECISION;
+        uint64_t luma_sad   = (LUMA_WEIGHT * luma_distortion) << AV1_COST_PRECISION;
+        uint64_t chromasad_ = chroma_distortion << AV1_COST_PRECISION;
 #endif
         uint64_t total_distortion = luma_sad + chromasad_;
 
@@ -742,13 +742,13 @@ uint64_t svt_aom_intra_fast_cost(PictureControlSet *pcs, struct ModeDecisionCont
         cand_bf->fast_luma_rate   = luma_rate;
         cand_bf->fast_chroma_rate = chroma_rate;
 #if CLN_REMOVE_UNUSED_MACROS
-        luma_sad = luma_distortion;
+        luma_sad   = luma_distortion;
         chromasad_ = chroma_distortion;
 #else
-        luma_sad                  = (LUMA_WEIGHT * luma_distortion) << AV1_COST_PRECISION;
-        chromasad_                = chroma_distortion << AV1_COST_PRECISION;
+        luma_sad   = (LUMA_WEIGHT * luma_distortion) << AV1_COST_PRECISION;
+        chromasad_ = chroma_distortion << AV1_COST_PRECISION;
 #endif
-        total_distortion          = luma_sad + chromasad_;
+        total_distortion = luma_sad + chromasad_;
 
         rate = luma_rate + chroma_rate;
 
@@ -1126,13 +1126,13 @@ static uint64_t av1_inter_fast_cost_light(struct ModeDecisionContext *ctx, BlkSt
     cand_bf->fast_luma_rate   = luma_rate;
     cand_bf->fast_chroma_rate = chroma_rate;
 #if CLN_REMOVE_UNUSED_MACROS
-    luma_sad                  = luma_distortion;
-    chromasad_                = chroma_distortion;
+    luma_sad   = luma_distortion;
+    chromasad_ = chroma_distortion;
 #else
-    luma_sad                  = (LUMA_WEIGHT * luma_distortion) << AV1_COST_PRECISION;
-    chromasad_                = chroma_distortion << AV1_COST_PRECISION;
+    luma_sad   = (LUMA_WEIGHT * luma_distortion) << AV1_COST_PRECISION;
+    chromasad_ = chroma_distortion << AV1_COST_PRECISION;
 #endif
-    total_distortion          = luma_sad + chromasad_;
+    total_distortion = luma_sad + chromasad_;
     //if (blk_geom->has_uv == 0 && chromasad_ != 0)
     //    SVT_LOG("svt_aom_inter_fast_cost: Chroma error");
     rate = luma_rate + chroma_rate;
@@ -1378,13 +1378,13 @@ uint64_t svt_aom_inter_fast_cost(PictureControlSet *pcs, struct ModeDecisionCont
     cand_bf->fast_luma_rate   = luma_rate;
     cand_bf->fast_chroma_rate = chroma_rate;
 #if CLN_REMOVE_UNUSED_MACROS
-    luma_sad                  = luma_distortion;
-    chromasad_                = chroma_distortion;
+    luma_sad   = luma_distortion;
+    chromasad_ = chroma_distortion;
 #else
-    luma_sad                  = (LUMA_WEIGHT * luma_distortion) << AV1_COST_PRECISION;
-    chromasad_                = chroma_distortion << AV1_COST_PRECISION;
+    luma_sad   = (LUMA_WEIGHT * luma_distortion) << AV1_COST_PRECISION;
+    chromasad_ = chroma_distortion << AV1_COST_PRECISION;
 #endif
-    total_distortion          = luma_sad + chromasad_;
+    total_distortion = luma_sad + chromasad_;
     if (blk_geom->has_uv == 0 && chromasad_ != 0)
         SVT_ERROR("svt_aom_inter_fast_cost: Chroma error");
     rate = luma_rate + chroma_rate;

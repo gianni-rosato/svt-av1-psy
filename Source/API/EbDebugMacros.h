@@ -45,7 +45,7 @@ extern "C" {
 #define CLN_REMOVE_UNUSED_SCS                     1 // Remove unused and useless signals under scs
 #define OPT_LPD1                                  1
 #if OPT_LPD1
-#define OPTIMIZE_LPD1_PATH                        1 // Optimize the LPD1-settings 
+#define OPTIMIZE_LPD1_PATH                        1 // Optimize the LPD1-settings
 #define OPTIMIZE_LPD1_MDS0_DIST                   1 // Unify the mds0-distortion weighing between LPD1 and regular-PD1
 #endif
 #define OPT_LPD0_DEFS                             1 // Use seq-qp instead of pic-qp for LPD0-level modulation, and optimize LPD0 level-8

@@ -1088,12 +1088,12 @@ typedef struct ModeDecisionContext {
     // Control fast_coeff_est_level per mds
     uint8_t mds_fast_coeff_est_level;
     // Control subres_step per mds
-    uint8_t           mds_subres_step;
-    uint8_t           md_pic_obmc_level;
+    uint8_t mds_subres_step;
+    uint8_t md_pic_obmc_level;
 #if OPT_FILTER_INTRA
-    FilterIntraCtrls  filter_intra_ctrls;
+    FilterIntraCtrls filter_intra_ctrls;
 #else
-    uint8_t           md_filter_intra_level;
+    uint8_t md_filter_intra_level;
 #endif
     uint8_t           md_allow_intrabc;
     uint8_t           md_palette_level;
@@ -1243,11 +1243,11 @@ typedef struct ModeDecisionContext {
 #if OPTIMIZE_LPD1_MDS0_DIST
     uint8_t lpd1_shift_mds0_dist;
 #endif
-    uint8_t        corrupted_mv_check;
-    uint8_t        pred_mode_depth_refine;
+    uint8_t corrupted_mv_check;
+    uint8_t pred_mode_depth_refine;
     // when MD is done on 8bit, scale palette colors to 10bit (valid when bypass is 1)
-    uint8_t  scale_palette;
-    uint8_t  high_freq_present;
+    uint8_t scale_palette;
+    uint8_t high_freq_present;
 #if OPT_DR
     uint32_t high_freq_satd_to_me;
 #endif
