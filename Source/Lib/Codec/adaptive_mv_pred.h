@@ -16,7 +16,6 @@
 #include "pcs.h"
 #include "coding_unit.h"
 #include "neighbor_arrays.h"
-#include "mv_merge.h"
 #include "enc_warped_motion.h"
 
 #ifdef __cplusplus

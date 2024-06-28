@@ -24,7 +24,6 @@
 #include "lambda_rate_tables.h"
 #include "pic_analysis_process.h"
 #include "md_process.h"
-#include "mcp.h"
 #include "av1me.h"
 #ifdef ARCH_X86_64
 #include <xmmintrin.h>
@@ -81,9 +80,6 @@ static const uint32_t idx_32x32_to_idx_8x8[4][4][4] = {
 int32_t svt_aom_get_frame_update_type(SequenceControlSet *scs, PictureParentControlSet *pcs);
 int32_t svt_av1_compute_qdelta_fp(int32_t qstart_fp8, int32_t qtarget_fp8, EbBitDepth bit_depth);
 int32_t svt_av1_compute_qdelta(double qstart, double qtarget, EbBitDepth bit_depth);
-void svt_aom_generate_padding_compressed_10bit(EbByte src_pic, uint32_t src_stride,
-                                       uint32_t original_src_width, uint32_t original_src_height,
-                                       uint32_t padding_width, uint32_t padding_height);
 void svt_c_unpack_compressed_10bit(const uint8_t *inn_bit_buffer, uint32_t inn_stride,
                                    uint8_t *in_compn_bit_buffer, uint32_t out_stride,
                                    uint32_t height);

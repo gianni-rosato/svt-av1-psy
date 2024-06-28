@@ -13,7 +13,6 @@
 #define EbEncInterPrediction_h
 
 #include "mode_decision.h"
-#include "mcp.h"
 #include "filter.h"
 #include "convolve.h"
 #include "inter_prediction.h"

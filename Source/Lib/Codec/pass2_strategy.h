@@ -12,7 +12,6 @@
 #ifndef AOM_AV1_ENCODER_PASS2_STRATEGY_H_
 #define AOM_AV1_ENCODER_PASS2_STRATEGY_H_
 
-#include "level.h"
 #include "encoder.h"
 #include "av1_common.h"
 

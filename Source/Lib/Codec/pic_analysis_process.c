@@ -23,21 +23,12 @@
 #include "resource_coordination_results.h"
 #include "pic_analysis_process.h"
 #include "pic_analysis_results.h"
-#include "mcp.h"
 #include "reference_object.h"
 #include "utility.h"
 #include "me_context.h"
 #include "pic_operators.h"
 #include "resize.h"
 #include "av1me.h"
-
-void svt_aom_generate_padding_compressed_10bit(
-    EbByte   src_pic, //output paramter, pointer to the source picture to be padded.
-    uint32_t src_stride, //input paramter, the stride of the source picture to be padded.
-    uint32_t original_src_width, //input paramter, the width of the source picture which excludes the padding.
-    uint32_t original_src_height, //input paramter, the height of the source picture which excludes the padding.
-    uint32_t padding_width, //input paramter, the padding width.
-    uint32_t padding_height); //input paramter, the padding height.
 
 #define VARIANCE_PRECISION 16
 

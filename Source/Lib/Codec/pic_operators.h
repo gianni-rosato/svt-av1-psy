@@ -16,6 +16,7 @@
 #include "picture_operators_c.h"
 #include "definitions.h"
 #include "pic_buffer_desc.h"
+#include "svt_log.h"
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -74,6 +75,26 @@ EbErrorType svt_av1_picture_copy(EbPictureBufferDesc *src, uint32_t src_luma_ori
                                  uint32_t dst_luma_origin_index, uint32_t dst_chroma_origin_index, uint32_t area_width,
                                  uint32_t area_height, uint32_t chroma_area_width, uint32_t chroma_area_height,
                                  uint32_t component_mask, Bool hbd);
+
+void svt_aom_generate_padding(EbByte src_pic, uint32_t src_stride, uint32_t original_src_width,
+                              uint32_t original_src_height, uint32_t padding_width, uint32_t padding_height);
+
+void svt_aom_generate_padding_compressed_10bit(
+    EbByte   src_pic, //output paramter, pointer to the source picture to be padded.
+    uint32_t src_stride, //input paramter, the stride of the source picture to be padded.
+    uint32_t original_src_width, //input paramter, the width of the source picture which excludes the padding.
+    uint32_t original_src_height, //input paramter, the height of the source picture which excludes the padding.
+    uint32_t padding_width, //input paramter, the padding width.
+    uint32_t padding_height); //input paramter, the padding height.
+
+void svt_aom_generate_padding16_bit(uint16_t *src_pic, uint32_t src_stride, uint32_t original_src_width,
+                                    uint32_t original_src_height, uint32_t padding_width, uint32_t padding_height);
+
+void pad_input_picture(EbByte src_pic, uint32_t src_stride, uint32_t original_src_width, uint32_t original_src_height,
+                       uint32_t pad_right, uint32_t pad_bottom);
+
+void svt_aom_pad_input_picture_16bit(uint16_t *src_pic, uint32_t src_stride, uint32_t original_src_width,
+                                     uint32_t original_src_height, uint32_t pad_right, uint32_t pad_bottom);
 
 #ifdef __cplusplus
 }

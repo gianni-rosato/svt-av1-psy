@@ -16,7 +16,6 @@
 
 #include "EbSvtAv1.h"
 #include "entropy_coding.h"
-#include "ec_util.h"
 #include "utility.h"
 #include "transforms.h"
 #include "ec_process.h"

@@ -18,7 +18,6 @@
 #include <stdint.h>
 
 #include "definitions.h"
-#include "level.h"
 #include "pass2_strategy.h"
 #include "rc_process.h"
 #include "firstpass.h"

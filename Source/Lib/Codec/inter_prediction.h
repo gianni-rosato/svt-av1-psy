@@ -15,7 +15,6 @@
 #include "block_structures.h"
 #include "av1_structs.h"
 #include "object.h"
-#include "mcp.h"
 #include "filter.h"
 #include "convolve.h"
 #include "cabac_context_model.h"

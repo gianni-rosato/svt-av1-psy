@@ -51,8 +51,6 @@ void        svt_av1_loop_restoration_filter_frame(int32_t *rst_tmpbuf, Yv12Buffe
 EbErrorType psnr_calculations(PictureControlSet *pcs, SequenceControlSet *scs, Bool free_memory);
 EbErrorType svt_aom_ssim_calculations(PictureControlSet *pcs, SequenceControlSet *scs, Bool free_memory);
 void        pad_ref_and_set_flags(PictureControlSet *pcs, SequenceControlSet *scs);
-void        svt_aom_generate_padding(EbByte src_pic, uint32_t src_stride, uint32_t original_src_width,
-                                     uint32_t original_src_height, uint32_t padding_width, uint32_t padding_height);
 void        restoration_seg_search(int32_t *rst_tmpbuf, Yv12BufferConfig *org_fts, const Yv12BufferConfig *src,
                                    Yv12BufferConfig *trial_frame_rst, PictureControlSet *pcs, uint32_t segment_index);
 void        rest_finish_search(PictureControlSet *pcs);

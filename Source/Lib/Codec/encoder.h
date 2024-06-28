@@ -21,7 +21,6 @@
 #include "definitions.h"
 #include "av1_common.h"
 #include "rc_process.h"
-#include "level.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -45,7 +44,6 @@ enum aom_rc_mode {
     AOM_Q, /**< Constant Quality (Q) mode */
 };
 //**********************************************************************************************************************//
-//struct AV1LevelParams;
 
 /*!\endcond */
 /*!
@@ -125,9 +123,8 @@ typedef struct {
  */
 typedef struct AV1EncoderConfig {
     /*!\cond */
-    BITSTREAM_PROFILE profile;
-    aom_bit_depth_t   bit_depth; // Codec bit-depth.
-    int64_t           target_bandwidth; // bandwidth to be used in bits per second
+    aom_bit_depth_t bit_depth; // Codec bit-depth.
+    int64_t         target_bandwidth; // bandwidth to be used in bits per second
 
     // Configuration related to the input video.
     //InputCfg input_cfg;
@@ -247,8 +244,7 @@ typedef struct AV1EncoderConfig {
     // Configuration related to frequency of cost update.
     //CostUpdateFreq cost_upd_freq;
 
-    int       border_in_pixels;
-    AV1_LEVEL target_seq_level_idx[MAX_NUM_OPERATING_POINTS];
+    int border_in_pixels;
     // Bit mask to specify which tier each of the 32 possible operating points
     // conforms to.
     unsigned int tier_mask;

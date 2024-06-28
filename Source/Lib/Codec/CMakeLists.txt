@@ -132,7 +132,6 @@ set(all_files
         ec_process.h
         ec_results.c
         ec_results.h
-        ec_util.h
         fft.c
         fft_common.h
         filter.h
@@ -166,12 +165,9 @@ set(all_files
         inv_transforms.h
         k_means_template.h
         lambda_rate_tables.h
-        level.h
         mathutils.h
         mcomp.c
         mcomp.h
-        mcp.c
-        mcp.h
         md_rate_estimation.c
         md_rate_estimation.h
         me_sad_calculation.c
@@ -193,7 +189,6 @@ set(all_files
         me_sb_results.h
         motion_vector_unit.h
         mv.h
-        mv_merge.h
         neighbor_arrays.c
         neighbor_arrays.h
         noise_model.c
