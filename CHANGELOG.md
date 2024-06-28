@@ -1,5 +1,10 @@
 # Changelog
 
+## [2.1.2] - 2024-06-27
+
+Cleanup, bug fixes:
+- Fixed profile-guided-optimization build by removing the remaining decoder path
+
 ## [2.1.1] - 2024-06-25
 
 Cleanup, bug fixes, and documentation improvements:
