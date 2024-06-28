@@ -3489,14 +3489,22 @@ static void derive_tf_params(SequenceControlSet *scs) {
     }
     else if (enc_mode <= ENC_M4) {
         tf_level = 3;
-}
+    }
+#if OPT_DEFAULT_M8
+    else if (enc_mode <= ENC_M7) {
+#else
     else if (enc_mode <= ENC_M8) {
+#endif
         tf_level = 4;
     }
     else if (enc_mode <= ENC_M9) {
         tf_level = resolution <= INPUT_SIZE_720p_RANGE && hierarchical_levels <= 4 ? 5 : 6;
     }
+#if TUNE_M11
+    else if (enc_mode <= ENC_M10) {
+#else
     else if (enc_mode <= ENC_M11) {
+#endif
         tf_level = 8;
     } else {
         tf_level = 9;
@@ -4654,7 +4662,11 @@ static void copy_api_from_app(
 #endif
             scs->static_config.rate_control_mode == SVT_AV1_RC_MODE_VBR || scs->static_config.rate_control_mode == SVT_AV1_RC_MODE_CBR ||
             (input_resolution >= INPUT_SIZE_1080p_RANGE && scs->static_config.enc_mode >= ENC_M10) ||
+#if TUNE_M11
+            !(scs->static_config.enc_mode <= ENC_M10) || input_resolution >= INPUT_SIZE_4K_RANGE
+#else
             !(scs->static_config.enc_mode <= ENC_M11) || input_resolution >= INPUT_SIZE_4K_RANGE
+#endif
                 ? 4
                 : 5;
     }

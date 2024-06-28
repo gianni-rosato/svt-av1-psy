@@ -73,6 +73,13 @@ extern "C" {
 #define TUNE_M3                                   1 // Tune M3
 #define OPT_FILTER_INTRA                          1 // Optimize filter intra
 #define TUNE_M4                                   1 // Tune M4
+#define OPT_DEFAULT_M7                            1 // Tune M7
+#define TUNE_DEFAULT_M5                           1 // Tune M5
+#define OPT_DEFAULT_M8                            1 // Tune M8
+#define TUNE_M13                                  1 // Tune M13
+#define OPT_DEFAULT_M9                            1 // Tune M9
+#define TUNE_M11                                  1 // Tune M11
+#define OPT_DEFAULT_M10                           1 // Tune M10
 
 //FOR DEBUGGING - Do not remove
 #define OPT_LD_LATENCY2         1 // Latency optimization for low delay - to keep the Macro for backwards testing until 3.0
