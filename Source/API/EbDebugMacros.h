@@ -80,6 +80,8 @@ extern "C" {
 #define OPT_DEFAULT_M9                            1 // Tune M9
 #define TUNE_M11                                  1 // Tune M11
 #define OPT_DEFAULT_M10                           1 // Tune M10
+#define TUNE_LD                                   1 // TUNE LD
+#define OPT_DLF_THS                               1 // Adopt 1080p THs for 4k+ for disable_dlf_th
 
 //FOR DEBUGGING - Do not remove
 #define OPT_LD_LATENCY2         1 // Latency optimization for low delay - to keep the Macro for backwards testing until 3.0

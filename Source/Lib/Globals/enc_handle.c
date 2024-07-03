@@ -3474,8 +3474,13 @@ static void derive_tf_params(SequenceControlSet *scs) {
         if (do_tf == 0)
             tf_level = 0;
         else
+#if TUNE_LD
+            tf_level = scs->static_config.screen_content_mode == 1 ? 0 :
+            enc_mode <= ENC_M9 ? scs->input_resolution >= INPUT_SIZE_720p_RANGE ? 1 : 0 : scs->input_resolution >= INPUT_SIZE_720p_RANGE ? 2 : 0;
+#else
             tf_level = scs->static_config.screen_content_mode == 1 ? 0 :
             (enc_mode <= ENC_M9) ? 1 : scs->input_resolution >= INPUT_SIZE_720p_RANGE ? 2 : 0;
+#endif
         tf_ld_controls(scs, tf_level);
         return;
     }
@@ -4397,7 +4402,11 @@ static void set_param_based_on_input(SequenceControlSet *scs)
     uint8_t mrp_level;
 
     if (scs->static_config.pred_structure == SVT_AV1_PRED_LOW_DELAY_B) {
+#if TUNE_LD
+        if (scs->static_config.enc_mode <= ENC_M11) {
+#else
         if (scs->static_config.enc_mode <= ENC_M10) {
+#endif
             mrp_level = 10;
         }
         else {

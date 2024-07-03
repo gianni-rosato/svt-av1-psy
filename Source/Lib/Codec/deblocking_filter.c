@@ -23,10 +23,17 @@
 //#include "svt_log.h"
 #define DLF_MAX_LVL 4
 const int32_t  inter_frame_multiplier[INPUT_SIZE_COUNT]      = {6017, 6017, 6017, 12034, 12034, 12034, 12034};
+#if OPT_DLF_THS
+const uint32_t disable_dlf_th[DLF_MAX_LVL][INPUT_SIZE_COUNT] = {{0, 0, 0, 0, 0, 0, 0},
+                                                                {100, 200, 500, 800, 1000, 1000, 1000},
+                                                                {900, 1000, 2000, 3000, 4000, 4000, 4000},
+                                                                {6000, 7000, 8000, 9000, 10000, 10000, 10000}};
+#else
 const uint32_t disable_dlf_th[DLF_MAX_LVL][INPUT_SIZE_COUNT] = {{0, 0, 0, 0, 0, 0, 0},
                                                                 {100, 200, 500, 800, 1000, 1300, 1600},
                                                                 {900, 1000, 2000, 3000, 4000, 6000, 7000},
                                                                 {6000, 7000, 8000, 9000, 10000, 20000, 30000}};
+#endif
 void           svt_aom_get_recon_pic(PictureControlSet *pcs, EbPictureBufferDesc **recon_ptr, Bool is_highbd);
 /*************************************************************************************************
  * svt_av1_loop_filter_init
