@@ -1072,3 +1072,164 @@ void svt_full_distortion_kernel_cbf_zero32_bits_neon(int32_t *coeff, uint32_t co
     const uint64x2_t temp1 = vaddq_u64(sum, temp2);
     vst1q_u64(distortion_result, temp1);
 }
+
+/******************************************************************************************************
+                                       svt_residual_kernel16bit_neon_intrin
+******************************************************************************************************/
+void svt_residual_kernel16bit_neon_intrin(uint16_t *input, uint32_t input_stride, uint16_t *pred, uint32_t pred_stride,
+                                          int16_t *residual, uint32_t residual_stride, uint32_t area_width,
+                                          uint32_t area_height) {
+    if (area_width == 4) {
+        for (uint32_t height = 0; height < area_height; height += 2) {
+            const uint16x4_t residual64_0 = vsub_u16(vld1_u16(input), vld1_u16(pred));
+            const uint16x4_t residual64_1 = vsub_u16(vld1_u16((input + input_stride)), vld1_u16((pred + pred_stride)));
+
+            vst1_s16(residual, vreinterpret_s16_u16(residual64_0));
+            vst1_s16((residual + residual_stride), vreinterpret_s16_u16(residual64_1));
+
+            input += input_stride << 1;
+            pred += pred_stride << 1;
+            residual += residual_stride << 1;
+        }
+    } else if (area_width == 8) {
+        for (uint32_t height = 0; height < area_height; height += 2) {
+            const uint16x8_t residual0 = vsubq_u16(vld1q_u16(input), vld1q_u16(pred));
+            const uint16x8_t residual1 = vsubq_u16(vld1q_u16((input + input_stride)), vld1q_u16((pred + pred_stride)));
+
+            vst1q_s16(residual, vreinterpretq_s16_u16(residual0));
+            vst1q_s16((residual + residual_stride), vreinterpretq_s16_u16(residual1));
+
+            input += input_stride << 1;
+            pred += pred_stride << 1;
+            residual += residual_stride << 1;
+        }
+    } else if (area_width == 16) {
+        for (uint32_t height = 0; height < area_height; height += 2) {
+            const uint16x8_t residual0 = vsubq_u16(vld1q_u16(input), vld1q_u16(pred));
+            const uint16x8_t residual1 = vsubq_u16(vld1q_u16((input + 8)), vld1q_u16((pred + 8)));
+            const uint16x8_t residual2 = vsubq_u16(vld1q_u16((input + input_stride)), vld1q_u16((pred + pred_stride)));
+            const uint16x8_t residual3 = vsubq_u16(vld1q_u16((input + input_stride + 8)),
+                                                   vld1q_u16((pred + pred_stride + 8)));
+
+            vst1q_s16(residual, vreinterpretq_s16_u16(residual0));
+            vst1q_s16((residual + 8), vreinterpretq_s16_u16(residual1));
+            vst1q_s16((residual + residual_stride), vreinterpretq_s16_u16(residual2));
+            vst1q_s16((residual + residual_stride + 8), vreinterpretq_s16_u16(residual3));
+
+            input += input_stride << 1;
+            pred += pred_stride << 1;
+            residual += residual_stride << 1;
+        }
+    } else if (area_width == 32) {
+        for (uint32_t height = 0; height < area_height; height += 2) {
+            vst1q_s16(residual, vreinterpretq_s16_u16(vsubq_u16(vld1q_u16(input), vld1q_u16(pred))));
+            vst1q_s16((residual + 8), vreinterpretq_s16_u16(vsubq_u16(vld1q_u16((input + 8)), vld1q_u16((pred + 8)))));
+            vst1q_s16((residual + 16),
+                      vreinterpretq_s16_u16(vsubq_u16(vld1q_u16((input + 16)), vld1q_u16((pred + 16)))));
+            vst1q_s16((residual + 24),
+                      vreinterpretq_s16_u16(vsubq_u16(vld1q_u16((input + 24)), vld1q_u16((pred + 24)))));
+
+            vst1q_s16(
+                (residual + residual_stride),
+                vreinterpretq_s16_u16(vsubq_u16(vld1q_u16((input + input_stride)), vld1q_u16((pred + pred_stride)))));
+            vst1q_s16((residual + residual_stride + 8),
+                      vreinterpretq_s16_u16(
+                          vsubq_u16(vld1q_u16((input + input_stride + 8)), vld1q_u16((pred + pred_stride + 8)))));
+            vst1q_s16((residual + residual_stride + 16),
+                      vreinterpretq_s16_u16(
+                          vsubq_u16(vld1q_u16((input + input_stride + 16)), vld1q_u16((pred + pred_stride + 16)))));
+            vst1q_s16((residual + residual_stride + 24),
+                      vreinterpretq_s16_u16(
+                          vsubq_u16(vld1q_u16((input + input_stride + 24)), vld1q_u16((pred + pred_stride + 24)))));
+
+            input += input_stride << 1;
+            pred += pred_stride << 1;
+            residual += residual_stride << 1;
+        }
+    } else if (area_width == 64) { // Branch was not tested because the encoder had max txb_size of 32
+        for (uint32_t height = 0; height < area_height; height += 2) {
+            vst1q_s16(residual, vreinterpretq_s16_u16(vsubq_u16(vld1q_u16(input), vld1q_u16(pred))));
+            vst1q_s16((residual + 8), vreinterpretq_s16_u16(vsubq_u16(vld1q_u16((input + 8)), vld1q_u16((pred + 8)))));
+            vst1q_s16((residual + 16),
+                      vreinterpretq_s16_u16(vsubq_u16(vld1q_u16((input + 16)), vld1q_u16((pred + 16)))));
+            vst1q_s16((residual + 24),
+                      vreinterpretq_s16_u16(vsubq_u16(vld1q_u16((input + 24)), vld1q_u16((pred + 24)))));
+            vst1q_s16((residual + 32),
+                      vreinterpretq_s16_u16(vsubq_u16(vld1q_u16((input + 32)), vld1q_u16((pred + 32)))));
+            vst1q_s16((residual + 40),
+                      vreinterpretq_s16_u16(vsubq_u16(vld1q_u16((input + 40)), vld1q_u16((pred + 40)))));
+            vst1q_s16((residual + 48),
+                      vreinterpretq_s16_u16(vsubq_u16(vld1q_u16((input + 48)), vld1q_u16((pred + 48)))));
+            vst1q_s16((residual + 56),
+                      vreinterpretq_s16_u16(vsubq_u16(vld1q_u16((input + 56)), vld1q_u16((pred + 56)))));
+
+            vst1q_s16(
+                (residual + residual_stride),
+                vreinterpretq_s16_u16(vsubq_u16(vld1q_u16((input + input_stride)), vld1q_u16((pred + pred_stride)))));
+            vst1q_s16((residual + residual_stride + 8),
+                      vreinterpretq_s16_u16(
+                          vsubq_u16(vld1q_u16((input + input_stride + 8)), vld1q_u16((pred + pred_stride + 8)))));
+            vst1q_s16((residual + residual_stride + 16),
+                      vreinterpretq_s16_u16(
+                          vsubq_u16(vld1q_u16((input + input_stride + 16)), vld1q_u16((pred + pred_stride + 16)))));
+            vst1q_s16((residual + residual_stride + 24),
+                      vreinterpretq_s16_u16(
+                          vsubq_u16(vld1q_u16((input + input_stride + 24)), vld1q_u16((pred + pred_stride + 24)))));
+            vst1q_s16((residual + residual_stride + 32),
+                      vreinterpretq_s16_u16(
+                          vsubq_u16(vld1q_u16((input + input_stride + 32)), vld1q_u16((pred + pred_stride + 32)))));
+            vst1q_s16((residual + residual_stride + 40),
+                      vreinterpretq_s16_u16(
+                          vsubq_u16(vld1q_u16((input + input_stride + 40)), vld1q_u16((pred + pred_stride + 40)))));
+            vst1q_s16((residual + residual_stride + 48),
+                      vreinterpretq_s16_u16(
+                          vsubq_u16(vld1q_u16((input + input_stride + 48)), vld1q_u16((pred + pred_stride + 48)))));
+            vst1q_s16((residual + residual_stride + 56),
+                      vreinterpretq_s16_u16(
+                          vsubq_u16(vld1q_u16((input + input_stride + 56)), vld1q_u16((pred + pred_stride + 56)))));
+
+            input += input_stride << 1;
+            pred += pred_stride << 1;
+            residual += residual_stride << 1;
+        }
+    } else {
+        const uint32_t input_stride_diff    = 2 * input_stride - area_width;
+        const uint32_t pred_stride_diff     = 2 * pred_stride - area_width;
+        const uint32_t residual_stride_diff = 2 * residual_stride - area_width;
+
+        if (!(area_width & 7)) {
+            for (uint32_t height = 0; height < area_height; height += 2) {
+                for (uint32_t width = 0; width < area_width; width += 8) {
+                    vst1q_s16(residual, vreinterpretq_s16_u16(vsubq_u16(vld1q_u16(input), vld1q_u16(pred))));
+                    vst1q_s16((residual + residual_stride),
+                              vreinterpretq_s16_u16(
+                                  vsubq_u16(vld1q_u16((input + input_stride)), vld1q_u16((pred + pred_stride)))));
+
+                    input += 8;
+                    pred += 8;
+                    residual += 8;
+                }
+                input    = input + input_stride_diff;
+                pred     = pred + pred_stride_diff;
+                residual = residual + residual_stride_diff;
+            }
+        } else {
+            for (uint32_t height = 0; height < area_height; height += 2) {
+                for (uint32_t width = 0; width < area_width; width += 4) {
+                    vst1_s16(residual,
+                             vreinterpret_s16_u16(vget_low_u16(vsubq_u16(vld1q_u16(input), vld1q_u16(pred)))));
+                    vst1_s16((residual + residual_stride),
+                             vreinterpret_s16_u16(vget_low_u16(
+                                 vsubq_u16(vld1q_u16((input + input_stride)), vld1q_u16((pred + pred_stride))))));
+
+                    input += 4;
+                    pred += 4;
+                    residual += 4;
+                }
+                input += input_stride_diff;
+                pred += pred_stride_diff;
+                residual += residual_stride_diff;
+            }
+        }
+    }
+}

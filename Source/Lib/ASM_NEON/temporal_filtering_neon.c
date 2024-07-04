@@ -630,14 +630,16 @@ static uint32_t calculate_squared_errors_sum_no_div_highbd_neon(const uint16_t *
     sum = vpaddq_s32(sum, sum);
     sum = vpaddq_s32(sum, sum);
 
-    return vgetq_lane_s32(vshrq_n_s32(sum, shift_factor), 0);
+    return vgetq_lane_s32(vrshlq_s32(sum, vdupq_n_s32(-shift_factor)), 0);
 }
 
 static void calculate_squared_errors_sum_2x8xh_no_div_highbd_neon(const uint16_t *s, int s_stride, const uint16_t *p,
                                                                   int p_stride, unsigned int h, int shift_factor,
                                                                   uint32_t *output) {
-    int32x4_t sum_0 = vdupq_n_s32(0);
-    int32x4_t sum_1 = vdupq_n_s32(0);
+    const int32x4_t zero      = vdupq_n_s32(0);
+    int32x4_t       sum_0     = zero;
+    int32x4_t       sum_1     = zero;
+    const int32x4_t shift_vec = vdupq_n_s32(-shift_factor);
 
     for (unsigned int i = 0; i < h; i++) {
         const uint16x8_t s_8_0 = vld1q_u16(s + i * s_stride);
@@ -658,8 +660,8 @@ static void calculate_squared_errors_sum_2x8xh_no_div_highbd_neon(const uint16_t
     sum_1 = vpaddq_s32(sum_1, sum_1);
     sum_1 = vpaddq_s32(sum_1, sum_1);
 
-    output[0] = vgetq_lane_s32(vshrq_n_s32(sum_0, shift_factor), 0);
-    output[1] = vgetq_lane_s32(vshrq_n_s32(sum_1, shift_factor), 0);
+    output[0] = vgetq_lane_s32(vrshlq_s32(sum_0, shift_vec), 0);
+    output[1] = vgetq_lane_s32(vrshlq_s32(sum_1, shift_vec), 0);
 }
 
 static void svt_av1_apply_temporal_filter_planewise_medium_hbd_partial_neon(
@@ -896,4 +898,124 @@ void svt_av1_apply_temporal_filter_planewise_medium_hbd_neon(
                                                                         1,
                                                                         encoder_bit_depth);
     }
+}
+
+int32_t svt_estimate_noise_highbd_fp16_neon(const uint16_t *src, int width, int height, int stride, int bd) {
+    int64_t sum = 0;
+    int64_t num = 0;
+
+    //  A | B | C
+    //  D | E | F
+    //  G | H | I
+    // g_x = (A - I) + (G - C) + 2*(D - F)
+    // g_y = (A - I) - (G - C) + 2*(B - H)
+    // v   = 4*E - 2*(D+F+B+H) + (A+C+G+I)
+
+    const int16x8_t edge_treshold      = vdupq_n_s16(EDGE_THRESHOLD);
+    const int32x4_t zero               = vdupq_n_s32(0);
+    int32x4_t       num_accumulator_lo = zero;
+    int32x4_t       num_accumulator_hi = zero;
+    int32x4_t       sum_accumulator_lo = zero;
+    int32x4_t       sum_accumulator_hi = zero;
+    const int16x8_t shift              = vdupq_n_s16(8 - bd);
+
+    for (int i = 1; i < height - 1; ++i) {
+        int j = 1;
+        for (; j + 16 < width - 1; j += 16) {
+            const int k = i * stride + j;
+
+            const int16x8_t A_lo = vreinterpretq_s16_u16(vld1q_u16(&src[k - stride - 1]));
+            const int16x8_t A_hi = vreinterpretq_s16_u16(vld1q_u16(&src[k - stride + 7]));
+            const int16x8_t B_lo = vreinterpretq_s16_u16(vld1q_u16(&src[k - stride]));
+            const int16x8_t B_hi = vreinterpretq_s16_u16(vld1q_u16(&src[k - stride + 8]));
+            const int16x8_t C_lo = vreinterpretq_s16_u16(vld1q_u16(&src[k - stride + 1]));
+            const int16x8_t C_hi = vreinterpretq_s16_u16(vld1q_u16(&src[k - stride + 9]));
+            const int16x8_t D_lo = vreinterpretq_s16_u16(vld1q_u16(&src[k - 1]));
+            const int16x8_t D_hi = vreinterpretq_s16_u16(vld1q_u16(&src[k + 7]));
+            const int16x8_t E_lo = vreinterpretq_s16_u16(vld1q_u16(&src[k]));
+            const int16x8_t E_hi = vreinterpretq_s16_u16(vld1q_u16(&src[k + 8]));
+            const int16x8_t F_lo = vreinterpretq_s16_u16(vld1q_u16(&src[k + 1]));
+            const int16x8_t F_hi = vreinterpretq_s16_u16(vld1q_u16(&src[k + 9]));
+            const int16x8_t G_lo = vreinterpretq_s16_u16(vld1q_u16(&src[k + stride - 1]));
+            const int16x8_t G_hi = vreinterpretq_s16_u16(vld1q_u16(&src[k + stride + 7]));
+            const int16x8_t H_lo = vreinterpretq_s16_u16(vld1q_u16(&src[k + stride]));
+            const int16x8_t H_hi = vreinterpretq_s16_u16(vld1q_u16(&src[k + stride + 8]));
+            const int16x8_t I_lo = vreinterpretq_s16_u16(vld1q_u16(&src[k + stride + 1]));
+            const int16x8_t I_hi = vreinterpretq_s16_u16(vld1q_u16(&src[k + stride + 9]));
+
+            const int16x8_t A_m_I_lo   = vsubq_s16(A_lo, I_lo);
+            const int16x8_t A_m_I_hi   = vsubq_s16(A_hi, I_hi);
+            const int16x8_t G_m_C_lo   = vsubq_s16(G_lo, C_lo);
+            const int16x8_t G_m_C_hi   = vsubq_s16(G_hi, C_hi);
+            const int16x8_t D_m_Fx2_lo = vshlq_n_s16(vsubq_s16(D_lo, F_lo), 1);
+            const int16x8_t D_m_Fx2_hi = vshlq_n_s16(vsubq_s16(D_hi, F_hi), 1);
+            const int16x8_t B_m_Hx2_lo = vshlq_n_s16(vsubq_s16(B_lo, H_lo), 1);
+            const int16x8_t B_m_Hx2_hi = vshlq_n_s16(vsubq_s16(B_hi, H_hi), 1);
+
+            const int16x8_t gx_256_lo = vabsq_s16(vaddq_s16(vaddq_s16(A_m_I_lo, G_m_C_lo), D_m_Fx2_lo));
+            const int16x8_t gx_256_hi = vabsq_s16(vaddq_s16(vaddq_s16(A_m_I_hi, G_m_C_hi), D_m_Fx2_hi));
+            const int16x8_t gy_256_lo = vabdq_s16(vaddq_s16(B_m_Hx2_lo, A_m_I_lo), G_m_C_lo);
+            const int16x8_t gy_256_hi = vabdq_s16(vaddq_s16(B_m_Hx2_hi, A_m_I_hi), G_m_C_hi);
+            const int16x8_t ga_256_lo = vrshlq_s16(vaddq_s16(gx_256_lo, gy_256_lo), shift);
+            const int16x8_t ga_256_hi = vrshlq_s16(vaddq_s16(gx_256_hi, gy_256_hi), shift);
+
+            const int16x8_t D_F_B_Hx2_lo = vshlq_n_s16(vaddq_s16(vaddq_s16(D_lo, F_lo), vaddq_s16(B_lo, H_lo)), 1);
+            const int16x8_t D_F_B_Hx2_hi = vshlq_n_s16(vaddq_s16(vaddq_s16(D_hi, F_hi), vaddq_s16(B_hi, H_hi)), 1);
+            const int16x8_t A_C_G_I_lo   = vaddq_s16(vaddq_s16(A_lo, C_lo), vaddq_s16(G_lo, I_lo));
+            const int16x8_t A_C_G_I_hi   = vaddq_s16(vaddq_s16(A_hi, C_hi), vaddq_s16(G_hi, I_hi));
+            int16x8_t       v_256_lo     = vabdq_s16(vaddq_s16(A_C_G_I_lo, vshlq_n_s16(E_lo, 2)), D_F_B_Hx2_lo);
+            int16x8_t       v_256_hi     = vabdq_s16(vaddq_s16(A_C_G_I_hi, vshlq_n_s16(E_hi, 2)), D_F_B_Hx2_hi);
+
+            //if (ga < EDGE_THRESHOLD)
+            const int16x8_t cmp_lo = vreinterpretq_s16_u16(vshrq_n_u16(vcgtq_s16(edge_treshold, ga_256_lo), 15));
+            const int16x8_t cmp_hi = vreinterpretq_s16_u16(vshrq_n_u16(vcgtq_s16(edge_treshold, ga_256_hi), 15));
+
+            v_256_lo = vrshlq_s16(vmulq_s16(v_256_lo, cmp_lo), shift);
+            v_256_hi = vrshlq_s16(vmulq_s16(v_256_hi, cmp_hi), shift);
+
+            //num_accumulator and sum_accumulator have 32bit values
+            num_accumulator_lo = vaddq_s32(
+                num_accumulator_lo, vaddq_s32(vmovl_s16(vget_low_s16(cmp_lo)), vmovl_s16(vget_high_s16(cmp_lo))));
+            num_accumulator_hi = vaddq_s32(
+                num_accumulator_hi, vaddq_s32(vmovl_s16(vget_low_s16(cmp_hi)), vmovl_s16(vget_high_s16(cmp_hi))));
+            sum_accumulator_lo = vaddq_s32(
+                sum_accumulator_lo, vaddq_s32(vmovl_s16(vget_low_s16(v_256_lo)), vmovl_s16(vget_high_s16(v_256_lo))));
+            sum_accumulator_hi = vaddq_s32(
+                sum_accumulator_hi, vaddq_s32(vmovl_s16(vget_low_s16(v_256_hi)), vmovl_s16(vget_high_s16(v_256_hi))));
+        }
+        for (; j < width - 1; ++j) {
+            const int k = i * stride + j;
+
+            // Sobel gradients
+            const int g_x = (src[k - stride - 1] - src[k - stride + 1]) + (src[k + stride - 1] - src[k + stride + 1]) +
+                2 * (src[k - 1] - src[k + 1]);
+            const int g_y = (src[k - stride - 1] - src[k + stride - 1]) + (src[k - stride + 1] - src[k + stride + 1]) +
+                2 * (src[k - stride] - src[k + stride]);
+            const int ga = ROUND_POWER_OF_TWO(abs(g_x) + abs(g_y),
+                                              bd - 8); // divide by 2^2 and round up
+            if (ga < EDGE_THRESHOLD) { // Do not consider edge pixels to estimate the noise
+                // Find Laplacian
+                const int v = 4 * src[k] - 2 * (src[k - 1] + src[k + 1] + src[k - stride] + src[k + stride]) +
+                    (src[k - stride - 1] + src[k - stride + 1] + src[k + stride - 1] + src[k + stride + 1]);
+                sum += ROUND_POWER_OF_TWO(abs(v), bd - 8);
+                ++num;
+            }
+        }
+    }
+
+    int32x4_t sum_256_lo = vpaddq_s32(sum_accumulator_lo, num_accumulator_lo);
+    int32x4_t sum_256_hi = vpaddq_s32(sum_accumulator_hi, num_accumulator_hi);
+    sum_256_lo           = vpaddq_s32(sum_256_lo, sum_256_lo);
+    sum_256_hi           = vpaddq_s32(sum_256_hi, sum_256_hi);
+    sum_256_lo           = vaddq_s32(sum_256_lo, sum_256_hi);
+    sum += vgetq_lane_s32(sum_256_lo, 0);
+    num += vgetq_lane_s32(vextq_s32(sum_256_lo, zero, 1), 0);
+
+    // If very few smooth pels, return -1 since the estimate is unreliable
+    if (num < SMOOTH_THRESHOLD) {
+        return -65536 /*-1:fp16*/;
+    }
+
+    FP_ASSERT((((int64_t)sum * SQRT_PI_BY_2_FP16) / (6 * num)) < ((int64_t)1 << 31));
+    return (int32_t)((sum * SQRT_PI_BY_2_FP16) / (6 * num));
 }
