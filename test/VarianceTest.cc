@@ -223,8 +223,6 @@ TEST_P(MseTestHighbd, MaxTest) {
     run_max_test();
 };
 
-#ifdef ARCH_X86_64
-
 INSTANTIATE_TEST_SUITE_P(Variance, MseTestHighbd,
                          ::testing::Values(TestMseParamHighbd(
                              16, 16, &svt_aom_highbd_8_mse16x16_sse2,
@@ -1035,8 +1033,6 @@ const TestParams kArraySubpelVariance_avx512[] = {
 INSTANTIATE_TEST_SUITE_P(AVX512, AvxSubpelVarianceTest,
                          ::testing::ValuesIn(kArraySubpelVariance_avx512));
 #endif
-
-#endif  // ARCH_X86_64
 
 TEST_P(AvxSubpelVarianceTest, Ref) {
     RefTest();
