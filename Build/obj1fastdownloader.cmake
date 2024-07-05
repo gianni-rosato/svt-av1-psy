@@ -7,24 +7,22 @@ endif()
 
 set(BUILD_DIRECTORY ${CMAKE_ARGV3})
 
+# We only need to encode one short video during profiling, in order to execute
+# the code paths we want to optimise. Encoding 29 more files provides no
+# benefits and slows down the process to an unacceptable level.
+set(PROFILING_VIDEO "stefan_sif.y4m")
+
 set(EXPECTED_HASH
-    a4aab832a5dd67eb42687e2935c1044b87eabe0a96fc73550339150a8f05c5b1)
-set(TARHASH "")
-if(EXISTS ${BUILD_DIRECTORY}/objective-1-fast.tar.gz)
-    file(SHA256 "${BUILD_DIRECTORY}/objective-1-fast.tar.gz" TARHASH)
+    28c0dc1afdd9081d8004cc35f839f8d34cabc0fc8b677f9f70286be6bdbd9f57)
+set(FILEHASH "")
+if(EXISTS ${BUILD_DIRECTORY}/objective-1-fast/${PROFILING_VIDEO})
+    file(SHA256 "${BUILD_DIRECTORY}/objective-1-fast/${PROFILING_VIDEO}" FILEHASH)
 endif()
 
-if(NOT TARHASH STREQUAL EXPECTED_HASH)
+if(NOT FILEHASH STREQUAL EXPECTED_HASH)
     file(
-        DOWNLOAD https://media.xiph.org/video/derf/objective-1-fast.tar.gz
-        ${BUILD_DIRECTORY}/objective-1-fast.tar.gz
+        DOWNLOAD https://media.xiph.org/video/derf/y4m/${PROFILING_VIDEO}
+        ${BUILD_DIRECTORY}/objective-1-fast/${PROFILING_VIDEO}
         SHOW_PROGRESS
         EXPECTED_HASH SHA256=${EXPECTED_HASH})
-endif()
-if(NOT EXISTS ${BUILD_DIRECTORY}/TAR_DONE
-   OR NOT EXISTS ${BUILD_DIRECTORY}/objective-1-fast/DOTA2_60f_420.y4m)
-    execute_process(COMMAND ${CMAKE_COMMAND} -E tar xvf objective-1-fast.tar.gz
-                    WORKING_DIRECTORY ${BUILD_DIRECTORY})
-    execute_process(COMMAND ${CMAKE_COMMAND} -E touch TAR_DONE
-                    WORKING_DIRECTORY ${BUILD_DIRECTORY})
 endif()

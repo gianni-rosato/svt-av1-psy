@@ -33,6 +33,7 @@ License 1.0. See [LICENSE](LICENSE.md) and [PATENTS](PATENTS.md) for details.
 
 **Common Questions/Issues**
 - [Why build with LTO?](Docs/CommonQuestions.md#why-build-with-lto)
+- [Why build with PGO?](Docs/CommonQuestions.md#why-build-with-pgo)
 - [What presets do](Docs/CommonQuestions.md#what-presets-do)
 - [Scene change detection](Docs/CommonQuestions.md#scene-change-detection)
 - [GOP size selection](Docs/CommonQuestions.md#gop-size-selection)

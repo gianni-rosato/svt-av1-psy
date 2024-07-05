@@ -166,6 +166,13 @@ if(MSVC AND SVT_AV1_PGO)
     unset(SVT_AV1_PGO CACHE)
 endif()
 
+if(CMAKE_C_COMPILER_ID MATCHES "Clang" AND SVT_AV1_PGO)
+    find_program(LLVM_PROFDATA llvm-profdata)
+    if(NOT LLVM_PROFDATA)
+        message(FATAL_ERROR "llvm-profdata not found.")
+    endif()
+endif()
+
 option(BUILD_APPS "Build Enc Apps" ON)
 option(EXCLUDE_HASH "Disables the use of the git hash in the build to produce hash exact binaries, implies REPRODUCIBLE_BUILDS")
 option(REPRODUCIBLE_BUILDS "Disable use of certain C macros to always generate reproducable builds" ${EXCLUDE_HASH})
@@ -178,16 +185,21 @@ if(SVT_INTERNAL_PGO_USE)
         set(PGO_COMPILER_FLAGS "/GL")
         set(PGO_LINKER_FLAGS "/LTCG /USEPROFILE")
     else()
-        set(PGO_COMPILER_FLAGS "-fprofile-use=${SVT_AV1_PGO_DIR} -fprofile-correction")
-        set(PGO_LINKER_FLAGS "-fprofile-use=${SVT_AV1_PGO_DIR} -fprofile-correction")
+        set(PGO_COMPILER_FLAGS "-fprofile-use=${SVT_AV1_PGO_DIR}")
+        set(PGO_LINKER_FLAGS "-fprofile-use=${SVT_AV1_PGO_DIR}")
+        if (CMAKE_C_COMPILER_ID STREQUAL "GNU") # GCC
+            # We want unprofiled code optimised for speed, not size, so we mark the profiling data as "partial".
+            set(PGO_COMPILER_FLAGS "${PGO_COMPILER_FLAGS} -fprofile-correction -fprofile-partial-training")
+            set(PGO_LINKER_FLAGS "${PGO_LINKER_FLAGS} -fprofile-correction -fprofile-partial-training")
+        endif()
     endif()
 elseif(SVT_INTERNAL_PGO_GENERATE)
     if(MSVC)
         set(PGO_COMPILER_FLAGS "/GL")
         set(PGO_LINKER_FLAGS "/LTCG /GENPROFILE")
     else()
-        set(PGO_COMPILER_FLAGS "-fprofile-generate=${SVT_AV1_PGO_DIR} -fprofile-correction")
-        set(PGO_LINKER_FLAGS "-fprofile-generate=${SVT_AV1_PGO_DIR} -fprofile-correction")
+        set(PGO_COMPILER_FLAGS "-fprofile-generate=${SVT_AV1_PGO_DIR}")
+        set(PGO_LINKER_FLAGS "-fprofile-generate=${SVT_AV1_PGO_DIR}")
     endif()
 endif()
 
@@ -529,7 +541,6 @@ if(BUILD_APPS)
     add_subdirectory(Source/App)
 endif()
 if(SVT_AV1_PGO)
-    set_target_properties(SvtAv1EncApp PROPERTIES EXCLUDE_FROM_ALL TRUE)
     string(REPLACE ";" "::" SVT_AV1_PGO_CUSTOM_VIDEOS "${SVT_AV1_PGO_CUSTOM_VIDEOS}")
 
     add_custom_target(PGOCompileGen
@@ -538,21 +549,29 @@ if(SVT_AV1_PGO)
         --clean-first
         --target SvtAv1EncApp
         COMMENT "Compiling with PGO generate"
-        DEPENDS SvtAv1EncApp)
-    add_custom_target(PGOCompileGenUse
-        ${CMAKE_COMMAND} ${CMAKE_BINARY_DIR} -DSVT_INTERNAL_PGO_GENERATE=ON -DSVT_INTERNAL_PGO_USE=ON
-        COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR}
-        --clean-first
-        --target SvtAv1EncApp
-        COMMENT "Compiling PGO gen+use"
-        DEPENDS SvtAv1EncApp)
+        VERBATIM
+        USES_TERMINAL
+    )
+
+    if(CMAKE_C_COMPILER_ID MATCHES "Clang")
+        # We want unprofiled code optimised for speed, not size, so we mark the profiling data as "sparse".
+        set(PROFILE_MERGE_CMD sh -c "${LLVM_PROFDATA} merge --sparse=true *.profraw -o default.profdata")
+    else()
+        # Do nothing. GCC has no profile merging step.
+        set(PROFILE_MERGE_CMD)
+    endif()
+
     add_custom_target(PGOCompileUse
         ${CMAKE_COMMAND} ${CMAKE_BINARY_DIR} -DSVT_INTERNAL_PGO_GENERATE=OFF -DSVT_INTERNAL_PGO_USE=ON
+        COMMAND ${PROFILE_MERGE_CMD}
         COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR}
         --clean-first
         --target SvtAv1EncApp
         COMMENT "Compiling PGO use"
-        DEPENDS SvtAv1EncApp)
+        COMMAND_EXPAND_LISTS
+        VERBATIM
+        USES_TERMINAL
+    )
 
     if(SVT_AV1_PGO_CUSTOM_VIDEOS)
         add_custom_target(PGOGenerateProfile ${CMAKE_COMMAND} -P
@@ -560,29 +579,38 @@ if(SVT_AV1_PGO)
             ${CMAKE_BINARY_DIR}
             ${SVT_AV1_PGO_CUSTOM_VIDEOS}
             $<TARGET_FILE:SvtAv1EncApp>
-            COMMENT "Generating PGO profile")
+            COMMENT "Generating PGO profile"
+            VERBATIM
+            USES_TERMINAL
+        )
     else()
         add_custom_target(DownloadObjOneFast ${CMAKE_COMMAND} -P
             ${PROJECT_SOURCE_DIR}/Build/obj1fastdownloader.cmake
             ${CMAKE_BINARY_DIR}
-            COMMENT "Downloading objective-1-fast")
+            COMMENT "Downloading video file"
+            VERBATIM
+            USES_TERMINAL
+        )
         add_custom_target(PGOGenerateProfile ${CMAKE_COMMAND} -P
             ${PROJECT_SOURCE_DIR}/Build/pgohelper.cmake
             ${CMAKE_BINARY_DIR}
             ${CMAKE_BINARY_DIR}/objective-1-fast
             $<TARGET_FILE:SvtAv1EncApp>
             COMMENT "Generating PGO profile"
-            DEPENDS DownloadObjOneFast)
+            DEPENDS DownloadObjOneFast
+            VERBATIM
+            USES_TERMINAL
+        )
     endif()
 
-    add_custom_target(RunPGO ALL
+    add_custom_target(RunPGO
         ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --config $<CONFIG> --target PGOCompileGen
-        COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --config $<CONFIG> --target PGOGenerateProfile
-        COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --config $<CONFIG> --target PGOCompileGenUse
         COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --config $<CONFIG> --target PGOGenerateProfile
         COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --config $<CONFIG> --target PGOCompileUse
         COMMENT "Compiling PGO Binary"
-        DEPENDS PGOCompileUse)
+        VERBATIM
+        USES_TERMINAL
+    )
 endif()
 
 if(BUILD_TESTING)

@@ -5,7 +5,22 @@
 [[_TOC_]]
 
 # Why build with LTO
-The purpose of building with link-time optimization (LTO) enabled is to reduce the call and return overhead by inline expansion. This means that a function's call site will be replaced with the body of the function itself. In order for the inline expansion to occur, additional compile time is required.
+
+The purpose of building with link-time optimization (LTO) enabled is to reduce the call and return overhead by inline expansion - even across different files. This means that a function's call site will be replaced with the body of the function itself. In order for this inline expansion to occur, additional compile time and memory are required.
+
+# Why build with PGO
+
+Profile-guided optimization (PGO) reduces the compiler's guesswork on which
+parts of the code deserve more aggressive optimizations, by collecting a
+runtime profile of an instrumented version of the program, while it's encoding
+a video file. That profile is then used to compile an optimized version, which
+is slightly more performant than the usual build using compiler heuristics.
+
+PGO makes the build longer, by having to build the program twice and run it in
+between builds. It works with GCC and Clang, and using CMake directly
+requires you to specify the "RunPGO" target, instead of the default "all".
+
+PGO and LTO can be combined.
 
 # What Presets Do
 

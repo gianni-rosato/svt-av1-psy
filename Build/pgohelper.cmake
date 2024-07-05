@@ -19,6 +19,16 @@ if(NOT EXISTS ${SvtAv1EncApp})
     )
 endif()
 
+# Delete any existing Clang profiling data.
+
+file(GLOB OLD_FILES
+    "${BUILD_DIRECTORY}/*.profraw"
+    "${BUILD_DIRECTORY}/*.profdata"
+)
+if(OLD_FILES)
+    file(REMOVE ${OLD_FILES})
+endif()
+
 unset(videofiles)
 string(REPLACE "::" ";" VIDEO_DIRECTORY "${VIDEO_DIRECTORY}")
 
@@ -30,10 +40,11 @@ endforeach()
 foreach(video IN LISTS videofiles)
     get_filename_component(videoname "${video}" NAME_WE)
 
+    SET(ENCODING_COMMAND ${SvtAv1EncApp} -i ${video} -b "${BUILD_DIRECTORY}/${videoname}.ivf" --preset 2 --film-grain 8 --tune 0)
+    list(JOIN ENCODING_COMMAND " " ENCODING_COMMAND_STR)
     message(
         STATUS
-            "Running ${SvtAv1EncApp} -i ${video} -b ${BUILD_DIRECTORY}/${videoname}.ivf"
+            "Running ${ENCODING_COMMAND_STR}"
     )
-    execute_process(COMMAND ${SvtAv1EncApp} -i ${video} -b
-                            ${BUILD_DIRECTORY}/${videoname}.ivf)
+    execute_process(COMMAND ${ENCODING_COMMAND})
 endforeach()
