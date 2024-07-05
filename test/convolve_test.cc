@@ -1051,10 +1051,9 @@ INSTANTIATE_TEST_SUITE_P(
 INSTANTIATE_TEST_SUITE_P(ConvolveTest2D_NEON, AV1HbdSrConvolveTest,
                          BuildParamsHbd(1, 1,
                                         svt_av1_highbd_convolve_2d_sr_neon));
-// Not yet implemented
-// INSTANTIATE_TEST_SUITE_P(ConvolveTestX_NEON, AV1HbdSrConvolveTest,
-//                         BuildParamsHbd(1, 0,
-//                         svt_av1_highbd_convolve_x_sr_neon));
+INSTANTIATE_TEST_SUITE_P(ConvolveTestX_NEON, AV1HbdSrConvolveTest,
+                         BuildParamsHbd(1, 0,
+                                        svt_av1_highbd_convolve_x_sr_neon));
 INSTANTIATE_TEST_SUITE_P(ConvolveTestY_NEON, AV1HbdSrConvolveTest,
                          BuildParamsHbd(0, 1,
                                         svt_av1_highbd_convolve_y_sr_neon));
