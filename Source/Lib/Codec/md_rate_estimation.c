@@ -82,10 +82,25 @@ void svt_aom_estimate_syntax_rate(MdRateEstimationContext *md_rate_est_ctx, Bool
         // therefore, we must compute the syntax rate for two cases: 128x128 blocks and all other
         // blocks.
 
+#if FIX_PART_RATE_UPDATE
+        // Vert alike rate (128x128 and all other blocks)
+        partition_gather_vert_alike(cdf, fc->partition_cdf[i], BLOCK_8X8);
+        svt_aom_get_syntax_rate_from_cdf(md_rate_est_ctx->partition_vert_alike_fac_bits[i], cdf, NULL);
+
+        partition_gather_vert_alike(cdf, fc->partition_cdf[i], BLOCK_128X128);
+        svt_aom_get_syntax_rate_from_cdf(md_rate_est_ctx->partition_vert_alike_128x128_fac_bits[i], cdf, NULL);
+
+        // Horz alike rate (128x128 and all other blocks)
+        partition_gather_horz_alike(cdf, fc->partition_cdf[i], BLOCK_8X8);
+        svt_aom_get_syntax_rate_from_cdf(md_rate_est_ctx->partition_horz_alike_fac_bits[i], cdf, NULL);
+
+        partition_gather_horz_alike(cdf, fc->partition_cdf[i], BLOCK_128X128);
+        svt_aom_get_syntax_rate_from_cdf(md_rate_est_ctx->partition_horz_alike_128x128_fac_bits[i], cdf, NULL);
+#else
         // Vert alike rate (128x128 and all other blocks)
         partition_gather_vert_alike(cdf, fc->partition_cdf[i], BLOCK_8X8);
         // inverse map only needs 2 entries b/c cdf only has 2 active entries
-        static const int bot_inv_map[2] = {PARTITION_HORZ, PARTITION_SPLIT};
+        static const int bot_inv_map[2] = { PARTITION_HORZ, PARTITION_SPLIT };
         svt_aom_get_syntax_rate_from_cdf(md_rate_est_ctx->partition_vert_alike_fac_bits[i], cdf, bot_inv_map);
 
         partition_gather_vert_alike(cdf, fc->partition_cdf[i], BLOCK_128X128);
@@ -98,6 +113,7 @@ void svt_aom_estimate_syntax_rate(MdRateEstimationContext *md_rate_est_ctx, Bool
 
         partition_gather_horz_alike(cdf, fc->partition_cdf[i], BLOCK_128X128);
         svt_aom_get_syntax_rate_from_cdf(md_rate_est_ctx->partition_horz_alike_128x128_fac_bits[i], cdf, rhs_inv_map);
+#endif
     }
 
     for (i = 0; i < SKIP_CONTEXTS; ++i)

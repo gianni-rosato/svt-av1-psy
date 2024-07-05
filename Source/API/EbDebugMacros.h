@@ -82,6 +82,8 @@ extern "C" {
 #define OPT_DEFAULT_M10                           1 // Tune M10
 #define TUNE_LD                                   1 // TUNE LD
 #define OPT_DLF_THS                               1 // Adopt 1080p THs for 4k+ for disable_dlf_th
+#define FIX_PART_RATE_UPDATE                      1 // Fix how rate is derived for partition rate table
+#define FIX_PART_NEIGH_UPDATE                     1 // Fix partition neighbour updates
 
 //FOR DEBUGGING - Do not remove
 #define OPT_LD_LATENCY2         1 // Latency optimization for low delay - to keep the Macro for backwards testing until 3.0
