@@ -4663,9 +4663,9 @@ static void copy_api_from_app(
             scs->static_config.rate_control_mode == SVT_AV1_RC_MODE_VBR || scs->static_config.rate_control_mode == SVT_AV1_RC_MODE_CBR ||
             (input_resolution >= INPUT_SIZE_1080p_RANGE && scs->static_config.enc_mode >= ENC_M10) ||
 #if TUNE_M11
-            !(scs->static_config.enc_mode <= ENC_M10) || input_resolution >= INPUT_SIZE_4K_RANGE
+            !(scs->static_config.enc_mode <= ENC_M10) || input_resolution >= INPUT_SIZE_8K_RANGE
 #else
-            !(scs->static_config.enc_mode <= ENC_M11) || input_resolution >= INPUT_SIZE_4K_RANGE
+            !(scs->static_config.enc_mode <= ENC_M11) || input_resolution >= INPUT_SIZE_8K_RANGE
 #endif
                 ? 4
                 : 5;
