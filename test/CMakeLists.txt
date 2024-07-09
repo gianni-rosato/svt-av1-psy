@@ -96,6 +96,7 @@ set(multi_arch_files
     ResidualTest.cc
     RestorationPickTest.cc
     SadTest.cc
+    SatdTest.cc
     SelfGuidedUtilTest.cc
     SpatialFullDistortionTest.cc
     TemporalFilterTestPlanewise.cc
