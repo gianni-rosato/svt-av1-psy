@@ -41,11 +41,10 @@ if git -C "$REPO_DIR" fetch -q "${CI_MERGE_REQUEST_PROJECT_URL:-https://gitlab.c
     FETCH_HEAD=$(git -C "$REPO_DIR" rev-parse FETCH_HEAD)
 else
     # in case the fetch failed, maybe internet issues, try to resolve a local default branch's ref, checked-out or not
-    FETCH_HEAD=$(git -C "$REPO_DIR" rev-parse refs/remotes/origin/HEAD)
+    FETCH_HEAD=$(git -C "$REPO_DIR" rev-parse refs/remotes/origin/HEAD) ||
+        # default to master if we have no origin remote
+        FETCH_HEAD=master
 fi
-
-# default to master if we have no origin remote
-: "${FETCH_HEAD:=master}"
 
 if ! git -C "$REPO_DIR" merge-tree "$(git -C "$REPO_DIR" merge-base HEAD "$FETCH_HEAD")" HEAD "$FETCH_HEAD" > /dev/null 2>&1; then
     echo "ERROR: failed to simulate a merge, check to see if a merge is possible" >&2
