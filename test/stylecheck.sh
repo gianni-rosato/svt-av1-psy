@@ -11,16 +11,16 @@ fi
 
 # set (in/ex)clusions using $@
 set -- \
-':/' \
-':!Config/ExampleFilmGrainTable.tbl' \
-':!*.patch' \
-':!third_party' \
-':!test/e2e_test/test_vector_list.txt' \
-':!test/vectors/smoking_test.cfg' \
-':!test/vectors/video_src.cfg' \
-':!*.png' \
-':!*.PNG' \
-':!*.pdf'
+    ':/' \
+    ':!Config/ExampleFilmGrainTable.tbl' \
+    ':!*.patch' \
+    ':!third_party' \
+    ':!test/e2e_test/test_vector_list.txt' \
+    ':!test/vectors/smoking_test.cfg' \
+    ':!test/vectors/video_src.cfg' \
+    ':!*.png' \
+    ':!*.PNG' \
+    ':!*.pdf'
 
 git config --global --add safe.directory "$REPO_DIR" || true
 
