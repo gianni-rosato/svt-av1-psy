@@ -2014,7 +2014,11 @@ uint64_t svt_aom_partition_rate_cost(PictureParentControlSet *pcs, ModeDecisionC
     const int hbs       = (mi_size_wide[bsize] << 2) >> 1;
     const int has_rows  = (blk_org_y + hbs) < pcs->aligned_height;
     const int has_cols  = (blk_org_x + hbs) < pcs->aligned_width;
-
+#if FIX_PART_INCOMP_RATE
+    // Don't consider blocks outside the picture
+    if (blk_org_y >= pcs->aligned_height || blk_org_x >= pcs->aligned_width)
+        return 0;
+#endif
     if (!has_rows && !has_cols) {
         return 0;
     }
