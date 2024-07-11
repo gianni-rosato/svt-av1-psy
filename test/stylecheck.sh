@@ -46,11 +46,13 @@ else
         FETCH_HEAD=master
 fi
 
-if ! git -C "$REPO_DIR" merge-tree "$(git -C "$REPO_DIR" merge-base HEAD "$FETCH_HEAD")" HEAD "$FETCH_HEAD" > /dev/null 2>&1; then
+if ! git -C "$REPO_DIR" merge-tree --write-tree HEAD "$FETCH_HEAD" > /dev/null 2>&1; then
     echo "ERROR: failed to simulate a merge, check to see if a merge is possible" >&2
 fi
 
-if git -C "$REPO_DIR" diff --exit-code --diff-filter=d --name-only "^$FETCH_HEAD" > /dev/null 2>&1; then
+MERGE_BASE=$(git -C "$REPO_DIR" merge-base HEAD "$FETCH_HEAD")
+
+if git -C "$REPO_DIR" diff --exit-code --diff-filter=d --name-only "^$MERGE_BASE" > /dev/null 2>&1; then
     echo "No differences to upstream's default, skipping further tests"
     exit "${ret:-0}"
 fi
@@ -66,7 +68,7 @@ while read -r filename; do
         ret=1
     fi
 done << EOF
-$(git -C "$REPO_DIR" diff --name-only --diff-filter=d "$FETCH_HEAD" -- "$@")
+$(git -C "$REPO_DIR" diff --name-only --diff-filter=d "$MERGE_BASE" -- "$@")
 EOF
 
 while read -r i; do
@@ -84,7 +86,7 @@ while read -r i; do
         printf "Warning: fixup commit detected: %s\n" "$i"
     fi
 done << EOF
-$(git -C "$REPO_DIR" rev-list HEAD "^$FETCH_HEAD")
+$(git -C "$REPO_DIR" rev-list HEAD "^$MERGE_BASE")
 EOF
 
 if ! type python3 > /dev/null 2>&1; then
@@ -109,7 +111,7 @@ if ! test -f "$CLANG_FORMAT_DIFF"; then
     exit "${ret:-0}"
 fi
 
-diff_output=$(cd "$REPO_DIR" && git diff "$FETCH_HEAD" -- "$@" | python3 "$CLANG_FORMAT_DIFF" -p1) || true
+diff_output=$(cd "$REPO_DIR" && git diff "$MERGE_BASE" -- "$@" | python3 "$CLANG_FORMAT_DIFF" -p1) || true
 if [ -n "$diff_output" ]; then
     cat >&2 << 'FOE'
 clang-format check failed!
