@@ -52,7 +52,7 @@ fi
 
 if git -C "$REPO_DIR" diff --exit-code --diff-filter=d --name-only "^$FETCH_HEAD" > /dev/null 2>&1; then
     echo "No differences to upstream's default, skipping further tests"
-    exit 0
+    exit "${ret:-0}"
 fi
 
 while read -r filename; do
@@ -105,8 +105,8 @@ else
 fi
 
 if ! test -f "$CLANG_FORMAT_DIFF"; then
-    echo "ERROR: clang-format-diff.py not found, can't continue" >&2
-    exit 1
+    echo "WARNING: clang-format-diff.py not found, can't continue" >&2
+    exit "${ret:-0}"
 fi
 
 diff_output=$(cd "$REPO_DIR" && git diff "$FETCH_HEAD" -- "$@" | python3 "$CLANG_FORMAT_DIFF" -p1) || true
