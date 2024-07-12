@@ -34,7 +34,11 @@ static void get_sb128_me_data(PictureControlSet *pcs, ModeDecisionContext *ctx, 
     uint32_t dist_8               = pcs->ppcs->me_8x8_distortion[me_sb_addr];
     uint32_t me_8x8_cost_variance = pcs->ppcs->me_8x8_cost_variance[me_sb_addr];
     int      count                = 1;
+#if FIX_SB128_ME_INFO_DERIVATION
+    if (me_sb_x + 1 < me_pic_width_in_sb) {
+#else
     if (me_sb_x + 1 <= me_pic_width_in_sb) {
+#endif
         dist_64 += pcs->ppcs->me_64x64_distortion[me_sb_addr + 1];
         dist_32 += pcs->ppcs->me_32x32_distortion[me_sb_addr + 1];
         dist_16 += pcs->ppcs->me_16x16_distortion[me_sb_addr + 1];
@@ -42,7 +46,11 @@ static void get_sb128_me_data(PictureControlSet *pcs, ModeDecisionContext *ctx, 
         me_8x8_cost_variance = MAX(me_8x8_cost_variance, pcs->ppcs->me_8x8_cost_variance[me_sb_addr + 1]);
         count++;
     }
+#if FIX_SB128_ME_INFO_DERIVATION
+    if (me_sb_y + 1 < me_pic_height_in_sb) {
+#else
     if (me_sb_y + 1 <= me_pic_height_in_sb) {
+#endif
         dist_64 += pcs->ppcs->me_64x64_distortion[me_sb_addr + me_pic_width_in_sb];
         dist_32 += pcs->ppcs->me_32x32_distortion[me_sb_addr + me_pic_width_in_sb];
         dist_16 += pcs->ppcs->me_16x16_distortion[me_sb_addr + me_pic_width_in_sb];
@@ -51,7 +59,11 @@ static void get_sb128_me_data(PictureControlSet *pcs, ModeDecisionContext *ctx, 
                                    pcs->ppcs->me_8x8_cost_variance[me_sb_addr + me_pic_width_in_sb]);
         count++;
     }
+#if FIX_SB128_ME_INFO_DERIVATION
+    if (me_sb_x + 1 < me_pic_width_in_sb && me_sb_y + 1 < me_pic_height_in_sb) {
+#else
     if (me_sb_y + 1 <= me_pic_height_in_sb && me_sb_x + 1 <= me_pic_width_in_sb) {
+#endif
         dist_64 += pcs->ppcs->me_64x64_distortion[me_sb_addr + me_pic_width_in_sb + 1];
         dist_32 += pcs->ppcs->me_32x32_distortion[me_sb_addr + me_pic_width_in_sb + 1];
         dist_16 += pcs->ppcs->me_16x16_distortion[me_sb_addr + me_pic_width_in_sb + 1];
