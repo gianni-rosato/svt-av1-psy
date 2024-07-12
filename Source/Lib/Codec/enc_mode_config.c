@@ -1653,8 +1653,8 @@ static void dlf_level_modulation(PictureControlSet *pcs, uint8_t *default_dlf_le
 #endif
 #if OPT_FAST_DECODE_LVLS
 #if OPT_DLF
-static uint8_t get_dlf_level(PictureControlSet *pcs, EncMode enc_mode, uint8_t is_not_last_layer, int8_t fast_decode,
-                             EbInputResolution resolution, bool rtc_tune, uint8_t sc_class1, int qp, int is_base) {
+static uint8_t get_dlf_level(PictureControlSet* pcs, EncMode enc_mode, uint8_t is_not_last_layer, Bool fast_decode,
+    EbInputResolution resolution, bool rtc_tune, uint8_t sc_class1, int is_base) {
 #else
 static uint8_t get_dlf_level(EncMode enc_mode, uint8_t is_not_last_layer, int8_t fast_decode,
                              EbInputResolution resolution, bool rtc_tune, uint8_t sc_class1, int qp, int is_base) {
@@ -7397,6 +7397,7 @@ void svt_aom_sig_deriv_enc_dec_common(SequenceControlSet *scs, PictureControlSet
     // Level 1: [-2, +2] depth refinement
     // Level 2: [-1, +1] depth refinement
     uint8_t depth_level = 0;
+
     if (pcs->ppcs->sc_class1) {
 #if TUNE_LD
         if (rtc_tune) {
