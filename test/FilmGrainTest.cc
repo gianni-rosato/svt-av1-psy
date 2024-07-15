@@ -406,7 +406,7 @@ class DenoiseModelRunTest : public ::testing::Test {
 
         memset(&output_film_grain, 0, sizeof(output_film_grain));
 
-#ifdef ARCH_X86_64
+#if defined(ARCH_X86_64) || defined(ARCH_AARCH64)
         EbCpuFlags cpu_flags = svt_aom_get_cpu_flags_to_use();
 #else
         EbCpuFlags cpu_flags = 0;

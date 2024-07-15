@@ -24,7 +24,7 @@
 /** setup_test_env is a util for unit test setup environment without create a
  * encoder */
 void setup_test_env() {
-#ifdef ARCH_X86_64
+#if defined(ARCH_X86_64) || defined(ARCH_AARCH64)
     EbCpuFlags cpu_flags = svt_aom_get_cpu_flags_to_use();
 #else
     EbCpuFlags cpu_flags = 0;
