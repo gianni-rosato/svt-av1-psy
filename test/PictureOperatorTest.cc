@@ -43,8 +43,7 @@ typedef enum { REF_MAX, SRC_MAX, RANDOM } TestPattern;
 
 typedef std::tuple<uint32_t, uint32_t> PUSize;
 
-#if defined(ARCH_X86_64)
-
+#ifdef ARCH_X86_64
 TestPattern TEST_PATTERNS[] = {REF_MAX, SRC_MAX, RANDOM};
 
 PUSize TEST_PU_SIZES[] = {
@@ -57,8 +56,19 @@ PUSize TEST_PU_SIZES[] = {
     PUSize(64, 24), PUSize(48, 24), PUSize(32, 24), PUSize(24, 32),
     PUSize(48, 48), PUSize(48, 16), PUSize(48, 32), PUSize(16, 48),
     PUSize(32, 48), PUSize(48, 64), PUSize(64, 48)};
+#endif  // ARCH_X86_64
 
-typedef std::tuple<PUSize, TestPattern> TestParam;
+using PictureOperatorFunc = void (*)(EbByte src0, uint32_t src0_stride,
+                                     EbByte src1, uint32_t src1_stride,
+                                     EbByte dst, uint32_t dst_stride,
+                                     uint32_t area_width, uint32_t area_height);
+
+using PictureOperatorFunc1Line = void (*)(EbByte src0, EbByte src1, EbByte dst,
+                                          uint32_t area_width);
+
+typedef std::tuple<PUSize, TestPattern, PictureOperatorFunc,
+                   PictureOperatorFunc1Line>
+    TestParam;
 
 /**
  * @brief Unit test for Picture functions in PU size include:
@@ -89,7 +99,9 @@ class PictureOperatorTest : public ::testing::Test,
     PictureOperatorTest()
         : pu_width_(std::get<0>(TEST_GET_PARAM(0))),
           pu_height_(std::get<1>(TEST_GET_PARAM(0))),
-          test_pattern_(TEST_GET_PARAM(1)) {
+          test_pattern_(TEST_GET_PARAM(1)),
+          test_func_(TEST_GET_PARAM(2)),
+          test_func_1line_(TEST_GET_PARAM(3)) {
         tst_size = 2 * 64 * 64;
         tst_stride_ = 2 * 64;
         tst1_aligned_ = (uint8_t *)svt_aom_memalign(8, tst_size);
@@ -139,14 +151,14 @@ class PictureOperatorTest : public ::testing::Test,
 
     void run_avg_test() {
         prepare_data();
-        svt_picture_average_kernel_sse2_intrin(tst1_aligned_,
-                                               tst_stride_,
-                                               tst2_aligned_,
-                                               tst_stride_,
-                                               dst1_aligned_,
-                                               tst_stride_,
-                                               pu_width_,
-                                               pu_height_);
+        test_func_(tst1_aligned_,
+                   tst_stride_,
+                   tst2_aligned_,
+                   tst_stride_,
+                   dst1_aligned_,
+                   tst_stride_,
+                   pu_width_,
+                   pu_height_);
         svt_picture_average_kernel_c(tst1_aligned_,
                                      tst_stride_,
                                      tst2_aligned_,
@@ -169,10 +181,10 @@ class PictureOperatorTest : public ::testing::Test,
             << "in pu for " << fail_pixel_count << "times,"
             << " at func: [picture average] ";
 
-        svt_picture_average_kernel1_line_sse2_intrin(
-            tst1_aligned_, tst2_aligned_, dst1_aligned_, pu_width_);
         svt_picture_average_kernel1_line_c(
             tst1_aligned_, tst2_aligned_, dst2_aligned_, pu_width_);
+        test_func_1line_(
+            tst1_aligned_, tst2_aligned_, dst1_aligned_, pu_width_);
 
         fail_pixel_count = 0;
         for (uint16_t k = 0; k < pu_width_; k++) {
@@ -188,21 +200,27 @@ class PictureOperatorTest : public ::testing::Test,
     int tst_size;
     uint32_t pu_width_, pu_height_;
     TestPattern test_pattern_;
+    PictureOperatorFunc test_func_;
+    PictureOperatorFunc1Line test_func_1line_;
     uint32_t tst_stride_;
     uint8_t *tst1_aligned_, *tst2_aligned_;
     uint8_t *dst1_aligned_, *dst2_aligned_;
 };
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(PictureOperatorTest);
 
 TEST_P(PictureOperatorTest, AvgTest) {
     run_avg_test();
 };
 
+#if defined(ARCH_X86_64)
 INSTANTIATE_TEST_SUITE_P(
-    PictureOperator, PictureOperatorTest,
-    ::testing::Combine(::testing::ValuesIn(TEST_PU_SIZES),
-                       ::testing::ValuesIn(TEST_PATTERNS)));
+    SSE2, PictureOperatorTest,
+    ::testing::Combine(
+        ::testing::ValuesIn(TEST_PU_SIZES), ::testing::ValuesIn(TEST_PATTERNS),
+        ::testing::Values(svt_picture_average_kernel_sse2_intrin),
+        ::testing::Values(svt_picture_average_kernel1_line_sse2_intrin)));
 
-#endif
+#endif  // ARCH_X86_64
 
 typedef void (*downsample_2d_fn)(uint8_t *input_samples, uint32_t input_stride,
                                  uint32_t input_area_width,
@@ -293,18 +311,23 @@ TEST_P(Downsample2DTest, test) {
 #if defined(ARCH_X86_64)
 
 INSTANTIATE_TEST_SUITE_P(
-    Downsample2D, Downsample2DTest,
+    SSE4_1, Downsample2DTest,
     ::testing::Combine(::testing::ValuesIn(DOWNSAMPLE_SIZES),
                        ::testing::ValuesIn(DECIM_STEPS),
-                       ::testing::Values(svt_aom_downsample_2d_sse4_1,
-                                         svt_aom_downsample_2d_avx2)));
+                       ::testing::Values(svt_aom_downsample_2d_sse4_1)));
+
+INSTANTIATE_TEST_SUITE_P(
+    AVX2, Downsample2DTest,
+    ::testing::Combine(::testing::ValuesIn(DOWNSAMPLE_SIZES),
+                       ::testing::ValuesIn(DECIM_STEPS),
+                       ::testing::Values(svt_aom_downsample_2d_avx2)));
 
 #endif
 
 #if defined(ARCH_AARCH64)
 
 INSTANTIATE_TEST_SUITE_P(
-    Downsample2D, Downsample2DTest,
+    NEON, Downsample2DTest,
     ::testing::Combine(::testing::ValuesIn(DOWNSAMPLE_SIZES),
                        ::testing::ValuesIn(DECIM_STEPS),
                        ::testing::Values(svt_aom_downsample_2d_neon)));
