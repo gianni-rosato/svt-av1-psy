@@ -14,12 +14,12 @@
  * @file CdefTest.cc
  *
  * @brief Unit test for cdef tools:
- * * svt_aom_cdef_find_dir_avx2
- * * svt_aom_cdef_find_dir_dual_avx2
- * * svt_cdef_filter_block_avx2
- * * svt_aom_compute_cdef_dist_16bit_avx2
- * * svt_aom_copy_rect8_8bit_to_16bit_avx2
- * * svt_search_one_dual_avx2
+ * * svt_aom_cdef_find_dir
+ * * svt_aom_cdef_find_dir_dual
+ * * svt_cdef_filter_block
+ * * svt_aom_compute_cdef_dist_16bit
+ * * svt_aom_copy_rect8_8bit_to_16bit
+ * * svt_search_one_dual
  *
  * @author Cidana-Wenyao
  *
@@ -63,7 +63,7 @@ using cdef_dir_param_t =
     ::testing::tuple<CdefFilterBlockFunc, CdefFilterBlockFunc, BlockSize, int,
                      int, svt_cdef_filter_block_8xn_16_func>;
 /**
- * @brief Unit test for svt_cdef_filter_block_avx2
+ * @brief Unit test for svt_cdef_filter_block
  *
  * Test strategy:
  * Feed src data generated randomly and all possible input,
@@ -373,7 +373,7 @@ TEST_P(CDEFBlockTest, DISABLED_SpeedTest) {
 // hard to support, so optimizations for this target are disabled.
 #if defined(_WIN64) || !defined(_MSC_VER) || defined(__clang__)
 INSTANTIATE_TEST_SUITE_P(
-    Cdef, CDEFBlockTest,
+    AVX2, CDEFBlockTest,
     ::testing::Combine(
         ::testing::Values(&svt_cdef_filter_block_avx2),
         ::testing::Values(&svt_cdef_filter_block_c),
@@ -382,7 +382,7 @@ INSTANTIATE_TEST_SUITE_P(
         ::testing::ValuesIn(svt_cdef_filter_block_8xn_16_func_table)));
 
 INSTANTIATE_TEST_SUITE_P(
-    Cdef_sse4_1, CDEFBlockTest,
+    SSE4_1, CDEFBlockTest,
     ::testing::Combine(
         ::testing::Values(&svt_cdef_filter_block_avx2),
         ::testing::Values(&svt_av1_cdef_filter_block_sse4_1),
@@ -395,7 +395,7 @@ INSTANTIATE_TEST_SUITE_P(
 
 #if defined(ARCH_AARCH64)
 INSTANTIATE_TEST_SUITE_P(
-    Cdef_neon, CDEFBlockTest,
+    NEON, CDEFBlockTest,
     ::testing::Combine(
         ::testing::Values(&svt_cdef_filter_block_neon),
         ::testing::Values(&svt_cdef_filter_block_c),
@@ -409,7 +409,7 @@ using FindDirFunc = uint8_t (*)(const uint16_t *img, int stride, int32_t *var,
 using TestFindDirParam = ::testing::tuple<FindDirFunc, FindDirFunc>;
 
 /**
- * @brief Unit test for svt_cdef_find_dir_avx2
+ * @brief Unit test for svt_cdef_find_dir
  *
  * Test strategy:
  * Feed src data generated randomly, and check the best mse and
@@ -496,10 +496,14 @@ TEST_P(CDEFFindDirTest, MatchTest) {
 // hard to support, so optimizations for this target are disabled.
 #if defined(_WIN64) || !defined(_MSC_VER) || defined(__clang__)
 INSTANTIATE_TEST_SUITE_P(
-    Cdef, CDEFFindDirTest,
-    ::testing::Values(
-        make_tuple(&svt_aom_cdef_find_dir_sse4_1, &svt_aom_cdef_find_dir_c),
-        make_tuple(&svt_aom_cdef_find_dir_avx2, &svt_aom_cdef_find_dir_c)));
+    SSE4_1, CDEFFindDirTest,
+    ::testing::Values(make_tuple(&svt_aom_cdef_find_dir_sse4_1,
+                                 &svt_aom_cdef_find_dir_c)));
+
+INSTANTIATE_TEST_SUITE_P(
+    AVX2, CDEFFindDirTest,
+    ::testing::Values(make_tuple(&svt_aom_cdef_find_dir_avx2,
+                                 &svt_aom_cdef_find_dir_c)));
 #endif  // defined(_WIN64) || !defined(_MSC_VER)
 
 #endif  // defined(ARCH_X86_64)
@@ -507,7 +511,7 @@ INSTANTIATE_TEST_SUITE_P(
 #if defined(ARCH_AARCH64)
 
 INSTANTIATE_TEST_SUITE_P(
-    Cdef, CDEFFindDirTest,
+    NEON, CDEFFindDirTest,
     ::testing::Values(make_tuple(&svt_aom_cdef_find_dir_neon,
                                  &svt_aom_cdef_find_dir_c)));
 
@@ -519,7 +523,7 @@ using FindDirDualFunc = void (*)(const uint16_t *img1, const uint16_t *img2,
                                  uint8_t *out2);
 using TestFindDirDualParam = ::testing::tuple<FindDirDualFunc, FindDirDualFunc>;
 /**
- * @brief Unit test for svt_cdef_find_dir_dual_avx2
+ * @brief Unit test for svt_cdef_find_dir_dual
  *
  * Test strategy:
  * Feed src data generated randomly, and check the best mse and
@@ -638,10 +642,13 @@ TEST_P(CDEFFindDirDualTest, MatchTest) {
 // hard to support, so optimizations for this target are disabled.
 #if defined(_WIN64) || !defined(_MSC_VER) || defined(__clang__)
 INSTANTIATE_TEST_SUITE_P(
-    Cdef, CDEFFindDirDualTest,
+    SSE4_1, CDEFFindDirDualTest,
     ::testing::Values(make_tuple(&svt_aom_cdef_find_dir_dual_sse4_1,
-                                 &svt_aom_cdef_find_dir_dual_c),
-                      make_tuple(&svt_aom_cdef_find_dir_dual_avx2,
+                                 &svt_aom_cdef_find_dir_dual_c)));
+
+INSTANTIATE_TEST_SUITE_P(
+    AVX2, CDEFFindDirDualTest,
+    ::testing::Values(make_tuple(&svt_aom_cdef_find_dir_dual_avx2,
                                  &svt_aom_cdef_find_dir_dual_c)));
 
 #endif  // defined(_WIN64) || !defined(_MSC_VER)
@@ -651,7 +658,7 @@ INSTANTIATE_TEST_SUITE_P(
 #if defined(ARCH_AARCH64)
 
 INSTANTIATE_TEST_SUITE_P(
-    Cdef, CDEFFindDirDualTest,
+    NEON, CDEFFindDirDualTest,
     ::testing::Values(make_tuple(&svt_aom_cdef_find_dir_dual_neon,
                                  &svt_aom_cdef_find_dir_dual_c)));
 
@@ -660,7 +667,7 @@ INSTANTIATE_TEST_SUITE_P(
 }  // namespace
 
 /**
- * @brief Unit test for svt_aom_copy_rect8_8bit_to_16bit_avx2
+ * @brief Unit test for svt_aom_copy_rect8_8bit_to_16bit
  *
  * Test strategy:
  * Feed src data generated randomly, and check the dst data
@@ -675,79 +682,83 @@ INSTANTIATE_TEST_SUITE_P(
  * vsize: [8, 64], step is 8
  *
  */
-TEST(CdefToolTest, CopyRectMatchTest) {
-    SVTRandom rnd_(8, false);
 
-    DECLARE_ALIGNED(16, uint8_t, src_data_[CDEF_INBUF_SIZE]);
-    DECLARE_ALIGNED(16, uint16_t, dst_data_tst_[CDEF_INBUF_SIZE]);
-    DECLARE_ALIGNED(16, uint16_t, dst_data_ref_[CDEF_INBUF_SIZE]);
+using CDEFCopyRectFunc = void (*)(uint16_t *dst, int32_t dstride,
+                                  const uint8_t *src, int32_t sstride,
+                                  int32_t v, int32_t h);
 
-    // prepare src data
-    for (int i = 0; i < CDEF_INBUF_SIZE; ++i)
-        src_data_[i] = rnd_.random();
+class CDEFCopyRectTest : public ::testing::TestWithParam<CDEFCopyRectFunc> {
+  public:
+    CDEFCopyRectTest() : test_func_(GetParam()) {
+    }
 
-    // assume the width or height are multiple of 8
-    for (int hsize = 8; hsize <= 64; hsize += 8)
-        for (int vsize = 8; vsize <= 64; vsize += 8) {
-            memset(dst_data_tst_, 0, sizeof(dst_data_tst_));
-            memset(dst_data_ref_, 0, sizeof(dst_data_ref_));
+    void test_match() {
+        SVTRandom rnd_(8, false);
 
-            uint8_t *src_ =
-                src_data_ + CDEF_VBORDER * CDEF_BSTRIDE + CDEF_HBORDER;
-            uint16_t *dst_tst_ =
-                dst_data_tst_ + CDEF_VBORDER * CDEF_BSTRIDE + CDEF_HBORDER;
-            uint16_t *dst_ref_ =
-                dst_data_ref_ + CDEF_VBORDER * CDEF_BSTRIDE + CDEF_HBORDER;
+        DECLARE_ALIGNED(16, uint8_t, src_data_[CDEF_INBUF_SIZE]);
+        DECLARE_ALIGNED(16, uint16_t, dst_data_tst_[CDEF_INBUF_SIZE]);
+        DECLARE_ALIGNED(16, uint16_t, dst_data_ref_[CDEF_INBUF_SIZE]);
 
-            svt_aom_copy_rect8_8bit_to_16bit_c(
-                dst_ref_, CDEF_BSTRIDE, src_, CDEF_BSTRIDE, vsize, hsize);
+        // prepare src data
+        for (int i = 0; i < CDEF_INBUF_SIZE; ++i)
+            src_data_[i] = rnd_.random();
 
-#if defined(ARCH_X86_64)
-            // Test the SSE4.1 copy function
-            memset(dst_data_tst_, 0, sizeof(dst_data_tst_));
-            svt_aom_copy_rect8_8bit_to_16bit_sse4_1(
-                dst_tst_, CDEF_BSTRIDE, src_, CDEF_BSTRIDE, vsize, hsize);
+        // assume the width or height are multiple of 8
+        for (int hsize = 8; hsize <= 64; hsize += 8) {
+            for (int vsize = 8; vsize <= 64; vsize += 8) {
+                memset(dst_data_tst_, 0, sizeof(dst_data_tst_));
+                memset(dst_data_ref_, 0, sizeof(dst_data_ref_));
 
-            for (int i = 0; i < vsize; ++i) {
-                for (int j = 0; j < hsize; ++j)
-                    ASSERT_EQ(dst_ref_[i * CDEF_BSTRIDE + j],
-                              dst_tst_[i * CDEF_BSTRIDE + j])
-                        << "copy_rect8_8bit_to_16bit_sse4_1 failed with pos("
-                        << i << " " << j << ")";
+                uint8_t *src_ =
+                    src_data_ + CDEF_VBORDER * CDEF_BSTRIDE + CDEF_HBORDER;
+                uint16_t *dst_tst_ =
+                    dst_data_tst_ + CDEF_VBORDER * CDEF_BSTRIDE + CDEF_HBORDER;
+                uint16_t *dst_ref_ =
+                    dst_data_ref_ + CDEF_VBORDER * CDEF_BSTRIDE + CDEF_HBORDER;
+
+                svt_aom_copy_rect8_8bit_to_16bit_c(
+                    dst_ref_, CDEF_BSTRIDE, src_, CDEF_BSTRIDE, vsize, hsize);
+
+                memset(dst_data_tst_, 0, sizeof(dst_data_tst_));
+                test_func_(
+                    dst_tst_, CDEF_BSTRIDE, src_, CDEF_BSTRIDE, vsize, hsize);
+                for (int i = 0; i < vsize; ++i) {
+                    for (int j = 0; j < hsize; ++j)
+                        ASSERT_EQ(dst_ref_[i * CDEF_BSTRIDE + j],
+                                  dst_tst_[i * CDEF_BSTRIDE + j])
+                            << "copy_rect8_8bit_to_16bit_opt failed with pos("
+                            << i << " " << j << ")";
+                }
             }
-
-            // Test the AVX2 copy function
-            memset(dst_data_tst_, 0, sizeof(dst_data_tst_));
-            svt_aom_copy_rect8_8bit_to_16bit_avx2(
-                dst_tst_, CDEF_BSTRIDE, src_, CDEF_BSTRIDE, vsize, hsize);
-            for (int i = 0; i < vsize; ++i) {
-                for (int j = 0; j < hsize; ++j)
-                    ASSERT_EQ(dst_ref_[i * CDEF_BSTRIDE + j],
-                              dst_tst_[i * CDEF_BSTRIDE + j])
-                        << "copy_rect8_8bit_to_16bit_avx2 failed with pos(" << i
-                        << " " << j << ")";
-            }
-#endif  // defined(ARCH_X86_64)
-
-#if defined(ARCH_AARCH64)
-            // Test the NEON copy function
-            memset(dst_data_tst_, 0, sizeof(dst_data_tst_));
-            svt_aom_copy_rect8_8bit_to_16bit_neon(
-                dst_tst_, CDEF_BSTRIDE, src_, CDEF_BSTRIDE, vsize, hsize);
-
-            for (int i = 0; i < vsize; ++i) {
-                for (int j = 0; j < hsize; ++j)
-                    ASSERT_EQ(dst_ref_[i * CDEF_BSTRIDE + j],
-                              dst_tst_[i * CDEF_BSTRIDE + j])
-                        << "copy_rect8_8bit_to_16bit_neon failed with pos(" << i
-                        << " " << j << ")";
-            }
-#endif  // defined(ARCH_AARCH64)
         }
+    }
+
+  private:
+    CDEFCopyRectFunc test_func_;
+};
+
+TEST_P(CDEFCopyRectTest, test_match) {
+    test_match();
 }
 
+#ifdef ARCH_X86_64
+INSTANTIATE_TEST_SUITE_P(
+    SSE4_1, CDEFCopyRectTest,
+    ::testing::Values(svt_aom_copy_rect8_8bit_to_16bit_sse4_1));
+
+INSTANTIATE_TEST_SUITE_P(
+    AVX2, CDEFCopyRectTest,
+    ::testing::Values(svt_aom_copy_rect8_8bit_to_16bit_avx2));
+#endif  // ARCH_X86_64
+
+#ifdef ARCH_AARCH64
+INSTANTIATE_TEST_SUITE_P(
+    NEON, CDEFCopyRectTest,
+    ::testing::Values(svt_aom_copy_rect8_8bit_to_16bit_neon));
+#endif  // ARCH_AARCH64
+
 /**
- * @brief Unit test for svt_aom_compute_cdef_dist_16bit_avx2
+ * @brief Unit test for svt_aom_compute_cdef_dist_16bit
  *
  * Test strategy:
  * Feed cdef list, src buffer, dst buffer generated randomly to targeted
@@ -764,62 +775,70 @@ TEST(CdefToolTest, CopyRectMatchTest) {
  * Pli: 0, 1, 2
  *
  */
-TEST(CdefToolTest, ComputeCdefDistMatchTest) {
-    const int stride = 1 << MAX_SB_SIZE_LOG2;
-    const int buf_size = 1 << (MAX_SB_SIZE_LOG2 * 2);
-    DECLARE_ALIGNED(32, uint16_t, src_data_[buf_size]);
-    DECLARE_ALIGNED(32, uint16_t, dst_data_[buf_size]);
 
-    // compute cdef list
-    for (int bd = 8; bd <= 12; ++bd) {
-        // prepare src data
-        SVTRandom rnd_(bd, false);
-        for (int i = 0; i < buf_size; ++i) {
-            src_data_[i] = rnd_.random();
-            dst_data_[i] = rnd_.random();
-        }
+using ComputeCdefDist16BitFunc =
+    uint64_t (*)(const uint16_t *dst, int32_t dstride, const uint16_t *src,
+                 const CdefList *dlist, int32_t cdef_count, BlockSize bsize,
+                 int32_t coeff_shift, int32_t pli, uint8_t subsampling_factor);
 
-        const int coeff_shift = bd - 8;
-        SVTRandom skip_rnd_(0, 1);
-        for (int k = 0; k < 100; ++k) {
-            CdefList dlist[MI_SIZE_128X128 * MI_SIZE_128X128];
-            int cdef_count = 0;
+class CDEFComputeCdefDist16Bit
+    : public testing::TestWithParam<ComputeCdefDist16BitFunc> {
+  public:
+    CDEFComputeCdefDist16Bit() : test_func_(GetParam()) {
+    }
 
-            // generate the cdef list randomly
-            for (int r = 0; r < MI_SIZE_128X128; r += 2) {
-                for (int c = 0; c < MI_SIZE_128X128; c += 2) {
-                    // append non-skip block into dlist
-                    if (!skip_rnd_.random()) {
-                        dlist[cdef_count].by = (uint8_t)(r >> 1);
-                        dlist[cdef_count].bx = (uint8_t)(c >> 1);
-                        ++cdef_count;
-                    }
-                }
+    void test_match() {
+        const int stride = 1 << MAX_SB_SIZE_LOG2;
+        const int buf_size = 1 << (MAX_SB_SIZE_LOG2 * 2);
+        DECLARE_ALIGNED(32, uint16_t, src_data_[buf_size]);
+        DECLARE_ALIGNED(32, uint16_t, dst_data_[buf_size]);
+
+        // compute cdef list
+        for (int bd = 8; bd <= 12; ++bd) {
+            // prepare src data
+            SVTRandom rnd_(bd, false);
+            for (int i = 0; i < buf_size; ++i) {
+                src_data_[i] = rnd_.random();
+                dst_data_[i] = rnd_.random();
             }
 
-            const BlockSize test_bs[] = {
-                BLOCK_4X4, BLOCK_4X8, BLOCK_8X4, BLOCK_8X8};
-            for (int i = 0; i < 4; ++i) {
-                for (int plane = 0; plane < 3; ++plane) {
-                    // Allowable subsampling values are: 1, 2
-                    for (uint8_t subsampling = 1; subsampling <= 2;
-                         subsampling <<= 1) {
-                        const uint64_t c_mse =
-                            svt_aom_compute_cdef_dist_c(dst_data_,
-                                                        stride,
-                                                        src_data_,
-                                                        dlist,
-                                                        cdef_count,
-                                                        test_bs[i],
-                                                        coeff_shift,
-                                                        plane,
-                                                        subsampling);
+            const int coeff_shift = bd - 8;
+            SVTRandom skip_rnd_(0, 1);
+            for (int k = 0; k < 100; ++k) {
+                CdefList dlist[MI_SIZE_128X128 * MI_SIZE_128X128];
+                int cdef_count = 0;
 
-#if defined(ARCH_AARCH64)
+                // generate the cdef list randomly
+                for (int r = 0; r < MI_SIZE_128X128; r += 2) {
+                    for (int c = 0; c < MI_SIZE_128X128; c += 2) {
+                        // append non-skip block into dlist
+                        if (!skip_rnd_.random()) {
+                            dlist[cdef_count].by = (uint8_t)(r >> 1);
+                            dlist[cdef_count].bx = (uint8_t)(c >> 1);
+                            ++cdef_count;
+                        }
+                    }
+                }
 
-                        // NEON
-                        const uint64_t neon_mse =
-                            svt_aom_compute_cdef_dist_16bit_neon(dst_data_,
+                const BlockSize test_bs[] = {
+                    BLOCK_4X4, BLOCK_4X8, BLOCK_8X4, BLOCK_8X8};
+                for (int i = 0; i < 4; ++i) {
+                    for (int plane = 0; plane < 3; ++plane) {
+                        // Allowable subsampling values are: 1, 2
+                        for (uint8_t subsampling = 1; subsampling <= 2;
+                             subsampling <<= 1) {
+                            const uint64_t ref_mse =
+                                svt_aom_compute_cdef_dist_c(dst_data_,
+                                                            stride,
+                                                            src_data_,
+                                                            dlist,
+                                                            cdef_count,
+                                                            test_bs[i],
+                                                            coeff_shift,
+                                                            plane,
+                                                            subsampling);
+
+                            const uint64_t test_mse = test_func_(dst_data_,
                                                                  stride,
                                                                  src_data_,
                                                                  dlist,
@@ -828,34 +847,95 @@ TEST(CdefToolTest, ComputeCdefDistMatchTest) {
                                                                  coeff_shift,
                                                                  plane,
                                                                  subsampling);
-                        ASSERT_EQ(c_mse, neon_mse)
-                            << "svt_aom_compute_cdef_dist_16bit_sse4_1 failed "
-                            << "bitdepth: " << bd << " plane: " << plane
-                            << " BlockSize " << test_bs[i] << " loop: " << k;
+                            ASSERT_EQ(ref_mse, test_mse)
+                                << "svt_aom_compute_cdef_dist_16bit_opt failed "
+                                << "bitdepth: " << bd << " plane: " << plane
+                                << " BlockSize " << test_bs[i]
+                                << " loop: " << k;
+                        }
+                    }
+                }
+            }
+        }
+    }
 
-#endif  // if defined(ARCH_AARCH64)
+  private:
+    ComputeCdefDist16BitFunc test_func_;
+};
 
-#if defined(ARCH_X86_64)
+TEST_P(CDEFComputeCdefDist16Bit, test_match) {
+    test_match();
+}
 
-                        // SSE4.1
-                        const uint64_t sse_mse =
-                            svt_aom_compute_cdef_dist_16bit_sse4_1(dst_data_,
-                                                                   stride,
-                                                                   src_data_,
-                                                                   dlist,
-                                                                   cdef_count,
-                                                                   test_bs[i],
-                                                                   coeff_shift,
-                                                                   plane,
-                                                                   subsampling);
-                        ASSERT_EQ(c_mse, sse_mse)
-                            << "svt_aom_compute_cdef_dist_16bit_sse4_1 failed "
-                            << "bitdepth: " << bd << " plane: " << plane
-                            << " BlockSize " << test_bs[i] << " loop: " << k;
+#ifdef ARCH_X86_64
+INSTANTIATE_TEST_SUITE_P(
+    SSE4_1, CDEFComputeCdefDist16Bit,
+    ::testing::Values(svt_aom_compute_cdef_dist_16bit_sse4_1));
 
-                        // AVX2
-                        const uint64_t avx_mse =
-                            svt_aom_compute_cdef_dist_16bit_avx2(dst_data_,
+INSTANTIATE_TEST_SUITE_P(
+    AVX2, CDEFComputeCdefDist16Bit,
+    ::testing::Values(svt_aom_compute_cdef_dist_16bit_avx2));
+#endif  // ARCH_X86_64
+
+#ifdef ARCH_AARCH64
+INSTANTIATE_TEST_SUITE_P(
+    NEON, CDEFComputeCdefDist16Bit,
+    ::testing::Values(svt_aom_compute_cdef_dist_16bit_neon));
+#endif  // ARCH_AARCH64
+
+using ComputeCdefDist8BitFunc =
+    uint64_t (*)(const uint8_t *dst8, int32_t dstride, const uint8_t *src8,
+                 const CdefList *dlist, int32_t cdef_count, BlockSize bsize,
+                 int32_t coeff_shift, int32_t pli, uint8_t subsampling_factor);
+
+class CDEFComputeCdefDist8BitTest
+    : public ::testing::TestWithParam<ComputeCdefDist8BitFunc> {
+  public:
+    CDEFComputeCdefDist8BitTest() : test_func_(GetParam()) {
+    }
+
+    void test_match() {
+        const int stride = 1 << MAX_SB_SIZE_LOG2;
+        const int buf_size = 1 << (MAX_SB_SIZE_LOG2 * 2);
+        DECLARE_ALIGNED(32, uint8_t, src_data_[buf_size]);
+        DECLARE_ALIGNED(32, uint8_t, dst_data_[buf_size]);
+
+        // compute cdef list
+        for (int bd = 8; bd <= 12; ++bd) {
+            // prepare src data
+            SVTRandom rnd_(bd, false);
+            for (int i = 0; i < buf_size; ++i) {
+                src_data_[i] = rnd_.random() % 255;
+                dst_data_[i] = rnd_.random() % 255;
+            }
+
+            const int coeff_shift = bd - 8;
+            SVTRandom skip_rnd_(0, 1);
+            for (int k = 0; k < 10; ++k) {
+                CdefList dlist[MI_SIZE_128X128 * MI_SIZE_128X128];
+                int cdef_count = 0;
+
+                // generate the cdef list randomly
+                for (int r = 0; r < MI_SIZE_128X128; r += 2) {
+                    for (int c = 0; c < MI_SIZE_128X128; c += 2) {
+                        // append non-skip block into dlist
+                        if (!skip_rnd_.random()) {
+                            dlist[cdef_count].by = (uint8_t)(r >> 1);
+                            dlist[cdef_count].bx = (uint8_t)(c >> 1);
+                            ++cdef_count;
+                        }
+                    }
+                }
+
+                const BlockSize test_bs[] = {
+                    BLOCK_4X4, BLOCK_4X8, BLOCK_8X4, BLOCK_8X8};
+                for (int i = 0; i < 4; ++i) {
+                    for (int plane = 0; plane < 3; ++plane) {
+                        // Allowable subsampling values are: 1, 2
+                        for (uint8_t subsampling = 1; subsampling <= 2;
+                             subsampling <<= 1) {
+                            const uint64_t ref_mse =
+                                svt_aom_compute_cdef_dist_8bit_c(dst_data_,
                                                                  stride,
                                                                  src_data_,
                                                                  dlist,
@@ -864,130 +944,54 @@ TEST(CdefToolTest, ComputeCdefDistMatchTest) {
                                                                  coeff_shift,
                                                                  plane,
                                                                  subsampling);
-                        ASSERT_EQ(c_mse, avx_mse)
-                            << "svt_aom_compute_cdef_dist_16bit_avx2 failed "
-                            << "bitdepth: " << bd << " plane: " << plane
-                            << " BlockSize " << test_bs[i] << " loop: " << k;
 
-#endif  // defined(ARCH_X86_64)
+                            const uint64_t test_mse = test_func_(dst_data_,
+                                                                 stride,
+                                                                 src_data_,
+                                                                 dlist,
+                                                                 cdef_count,
+                                                                 test_bs[i],
+                                                                 coeff_shift,
+                                                                 plane,
+                                                                 subsampling);
+                            ASSERT_EQ(ref_mse, test_mse)
+                                << "svt_aom_compute_cdef_dist_8bit_opt failed "
+                                << "bitdepth: " << bd << " plane: " << plane
+                                << " BlockSize " << test_bs[i]
+                                << " loop: " << k;
+                        }
                     }
                 }
             }
         }
     }
+
+  private:
+    ComputeCdefDist8BitFunc test_func_;
+};
+
+TEST_P(CDEFComputeCdefDist8BitTest, test_match) {
+    test_match();
 }
 
-TEST(CdefToolTest, ComputeCdefDist8bitMatchTest) {
-    const int stride = 1 << MAX_SB_SIZE_LOG2;
-    const int buf_size = 1 << (MAX_SB_SIZE_LOG2 * 2);
-    DECLARE_ALIGNED(32, uint8_t, src_data_[buf_size]);
-    DECLARE_ALIGNED(32, uint8_t, dst_data_[buf_size]);
+#ifdef ARCH_X86_64
+INSTANTIATE_TEST_SUITE_P(
+    SSE4_1, CDEFComputeCdefDist8BitTest,
+    ::testing::Values(svt_aom_compute_cdef_dist_8bit_sse4_1));
 
-    // compute cdef list
-    for (int bd = 8; bd <= 12; ++bd) {
-        // prepare src data
-        SVTRandom rnd_(bd, false);
-        for (int i = 0; i < buf_size; ++i) {
-            src_data_[i] = rnd_.random() % 255;
-            dst_data_[i] = rnd_.random() % 255;
-        }
+INSTANTIATE_TEST_SUITE_P(
+    AVX2, CDEFComputeCdefDist8BitTest,
+    ::testing::Values(svt_aom_compute_cdef_dist_8bit_avx2));
+#endif  // ARCH_X86_64
 
-        const int coeff_shift = bd - 8;
-        SVTRandom skip_rnd_(0, 1);
-        for (int k = 0; k < 10; ++k) {
-            CdefList dlist[MI_SIZE_128X128 * MI_SIZE_128X128];
-            int cdef_count = 0;
-
-            // generate the cdef list randomly
-            for (int r = 0; r < MI_SIZE_128X128; r += 2) {
-                for (int c = 0; c < MI_SIZE_128X128; c += 2) {
-                    // append non-skip block into dlist
-                    if (!skip_rnd_.random()) {
-                        dlist[cdef_count].by = (uint8_t)(r >> 1);
-                        dlist[cdef_count].bx = (uint8_t)(c >> 1);
-                        ++cdef_count;
-                    }
-                }
-            }
-
-            const BlockSize test_bs[] = {
-                BLOCK_4X4, BLOCK_4X8, BLOCK_8X4, BLOCK_8X8};
-            for (int i = 0; i < 4; ++i) {
-                for (int plane = 0; plane < 3; ++plane) {
-                    // Allowable subsampling values are: 1, 2
-                    for (uint8_t subsampling = 1; subsampling <= 2;
-                         subsampling <<= 1) {
-                        const uint64_t c_mse =
-                            svt_aom_compute_cdef_dist_8bit_c(dst_data_,
-                                                             stride,
-                                                             src_data_,
-                                                             dlist,
-                                                             cdef_count,
-                                                             test_bs[i],
-                                                             coeff_shift,
-                                                             plane,
-                                                             subsampling);
-
-#if defined(ARCH_X86_64)
-                        // SSE4.1
-                        const uint64_t sse_mse =
-                            svt_aom_compute_cdef_dist_8bit_sse4_1(dst_data_,
-                                                                  stride,
-                                                                  src_data_,
-                                                                  dlist,
-                                                                  cdef_count,
-                                                                  test_bs[i],
-                                                                  coeff_shift,
-                                                                  plane,
-                                                                  subsampling);
-                        ASSERT_EQ(c_mse, sse_mse)
-                            << "svt_aom_compute_cdef_dist_8bit_sse4_1 failed "
-                            << "bitdepth: " << bd << " plane: " << plane
-                            << " BlockSize " << test_bs[i] << " loop: " << k;
-
-                        // AVX2
-                        const uint64_t avx_mse =
-                            svt_aom_compute_cdef_dist_8bit_avx2(dst_data_,
-                                                                stride,
-                                                                src_data_,
-                                                                dlist,
-                                                                cdef_count,
-                                                                test_bs[i],
-                                                                coeff_shift,
-                                                                plane,
-                                                                subsampling);
-                        ASSERT_EQ(c_mse, avx_mse)
-                            << "svt_aom_compute_cdef_dist_8bit_avx2 failed "
-                            << "bitdepth: " << bd << " plane: " << plane
-                            << " BlockSize " << test_bs[i] << " loop: " << k;
-#endif  // defined(ARCH_X86_64)
-
-#if defined(ARCH_AARCH64)
-                        // NEON
-                        const uint64_t sse_mse =
-                            svt_aom_compute_cdef_dist_8bit_neon(dst_data_,
-                                                                stride,
-                                                                src_data_,
-                                                                dlist,
-                                                                cdef_count,
-                                                                test_bs[i],
-                                                                coeff_shift,
-                                                                plane,
-                                                                subsampling);
-                        ASSERT_EQ(c_mse, sse_mse)
-                            << "svt_aom_compute_cdef_dist_8bit_neon failed "
-                            << "bitdepth: " << bd << " plane: " << plane
-                            << " BlockSize " << test_bs[i] << " loop: " << k;
-#endif  // defined(ARCH_AARCH64)
-                    }
-                }
-            }
-        }
-    }
-}
+#ifdef ARCH_AARCH64
+INSTANTIATE_TEST_SUITE_P(
+    NEON, CDEFComputeCdefDist8BitTest,
+    ::testing::Values(svt_aom_compute_cdef_dist_8bit_neon));
+#endif  // ARCH_AARCH64
 
 /**
- * @brief Unit test for svt_search_one_dual_avx2
+ * @brief Unit test for svt_search_one_dual
  *
  * Test strategy:
  * Prepare the mse array filled randomly and check the best mse, best
@@ -1004,201 +1008,154 @@ TEST(CdefToolTest, ComputeCdefDist8bitMatchTest) {
  * end_gi: TOTAL_STRENGTHS
  *
  */
-typedef uint64_t (*svt_search_one_dual_func)(int *lev0, int *lev1,
-                                             int nb_strengths,
-                                             uint64_t **mse[2], int sb_count,
-                                             int start_gi, int end_gi);
 
-static const svt_search_one_dual_func search_one_dual_func_table[] = {
-#if defined(ARCH_X86_64)
-    svt_search_one_dual_avx2,
-#if EN_AVX512_SUPPORT
-    svt_search_one_dual_avx512
-#endif
-#endif
-};
+using SearchOneDualFunc = uint64_t (*)(int *lev0, int *lev1, int nb_strengths,
+                                       uint64_t **mse[2], int sb_count,
+                                       int start_gi, int end_gi);
 
-TEST(CdefToolTest, SearchOneDualMatchTest) {
-    // setup enviroment
-    const int sb_count = 100;
-    const int start_gi = 0;
-    const int end_gi = TOTAL_STRENGTHS;
-    int lvl_luma_ref[CDEF_MAX_STRENGTHS], lvl_chroma_ref[CDEF_MAX_STRENGTHS];
-    int lvl_luma_tst[CDEF_MAX_STRENGTHS], lvl_chroma_tst[CDEF_MAX_STRENGTHS];
-    uint64_t **mse[2];
-    mse[0] = (uint64_t **)svt_aom_memalign(32, sizeof(*mse[0]) * sb_count);
-    mse[1] = (uint64_t **)svt_aom_memalign(32, sizeof(*mse[1]) * sb_count);
-    for (int i = 0; i < sb_count; i++) {
-        mse[0][i] = (uint64_t *)svt_aom_memalign(32, sizeof(**mse[0]) * 64);
-        mse[1][i] = (uint64_t *)svt_aom_memalign(32, sizeof(**mse[1]) * 64);
+class CDEFSearchOneDualTest
+    : public ::testing::TestWithParam<SearchOneDualFunc> {
+  public:
+    CDEFSearchOneDualTest() : test_func_(GetParam()), sb_count_(100) {
     }
 
-    SVTRandom rnd_(10, false);
-    for (int k = 0; k < 100; ++k) {
-        // generate mse randomly
-        for (int i = 0; i < 2; ++i)
-            for (int n = 0; n < sb_count; ++n)
-                for (int j = 0; j < 64; ++j)
-                    mse[i][n][j] = rnd_.random();
-
-        // try different nb_strengths
-        for (int i = 0; i <= 3; ++i) {
-            memset(lvl_luma_ref, 0, sizeof(lvl_luma_ref));
-            memset(lvl_chroma_ref, 0, sizeof(lvl_chroma_ref));
-            memset(lvl_luma_tst, 0, sizeof(lvl_luma_tst));
-            memset(lvl_chroma_tst, 0, sizeof(lvl_chroma_tst));
-
-            int nb_strengths = 1 << i;
-            for (int j = 0; j < nb_strengths; ++j) {
-                uint64_t best_mse_ref = svt_search_one_dual_c(lvl_luma_ref,
-                                                              lvl_chroma_ref,
-                                                              j,
-                                                              mse,
-                                                              sb_count,
-                                                              start_gi,
-                                                              end_gi);
-                for (int l = 0; l < (int)(sizeof(search_one_dual_func_table) /
-                                          sizeof(*search_one_dual_func_table));
-                     ++l) {
-                    uint64_t best_mse_tst =
-                        search_one_dual_func_table[l](lvl_luma_tst,
-                                                      lvl_chroma_tst,
-                                                      j,
-                                                      mse,
-                                                      sb_count,
-                                                      start_gi,
-                                                      end_gi);
-
-                    ASSERT_EQ(best_mse_tst, best_mse_ref)
-                        << "svt_search_one_dual_avx2 return different best mse "
-                        << "loop: " << k << " nb_strength: " << nb_strengths;
-                    for (int h = 0; h < CDEF_MAX_STRENGTHS; ++h) {
-                        ASSERT_EQ(lvl_luma_ref[h], lvl_luma_tst[h])
-                            << "best strength for luma does not match "
-                            << "loop: " << k << " nb_strength: " << nb_strengths
-                            << " pos " << h;
-                        ASSERT_EQ(lvl_chroma_ref[h], lvl_chroma_tst[h])
-                            << "best strength for chroma does not match "
-                            << "loop: " << k << " nb_strength: " << nb_strengths
-                            << " pos " << h;
-                    }
-                }
-            }
+    void SetUp() override {
+        mse_[0] =
+            (uint64_t **)svt_aom_memalign(32, sizeof(*mse_[0]) * sb_count_);
+        mse_[1] =
+            (uint64_t **)svt_aom_memalign(32, sizeof(*mse_[1]) * sb_count_);
+        for (int i = 0; i < sb_count_; i++) {
+            mse_[0][i] =
+                (uint64_t *)svt_aom_memalign(32, sizeof(**mse_[0]) * 64);
+            mse_[1][i] =
+                (uint64_t *)svt_aom_memalign(32, sizeof(**mse_[1]) * 64);
         }
     }
-    for (int i = 0; i < sb_count; i++) {
-        svt_aom_free(mse[0][i]);
-        svt_aom_free(mse[1][i]);
+
+    void TearDown() override {
+        for (int i = 0; i < sb_count_; i++) {
+            svt_aom_free(mse_[0][i]);
+            svt_aom_free(mse_[1][i]);
+        }
+        svt_aom_free(mse_[0]);
+        svt_aom_free(mse_[1]);
     }
-    svt_aom_free(mse[0]);
-    svt_aom_free(mse[1]);
-}
 
-TEST(CdefToolTest, DISABLED_SearchOneDualSpeedTest) {
-    // setup enviroment
-    const int sb_count = 100;
-    const int start_gi = 0;
-    const int end_gi = TOTAL_STRENGTHS;
-    const int nb_strengths = 8;
-    int lvl_luma_ref[CDEF_MAX_STRENGTHS], lvl_chroma_ref[CDEF_MAX_STRENGTHS];
-    int lvl_luma_tst[CDEF_MAX_STRENGTHS], lvl_chroma_tst[CDEF_MAX_STRENGTHS];
-    uint64_t **mse[2];
-    mse[0] = (uint64_t **)svt_aom_memalign(32, sizeof(*mse[0]) * sb_count);
-    mse[1] = (uint64_t **)svt_aom_memalign(32, sizeof(*mse[1]) * sb_count);
-    for (int i = 0; i < sb_count; i++) {
-        mse[0][i] = (uint64_t *)svt_aom_memalign(32, sizeof(**mse[0]) * 64);
-        mse[1][i] = (uint64_t *)svt_aom_memalign(32, sizeof(**mse[1]) * 64);
-    }
-    SVTRandom rnd_(10, false);
+    void RunTest(int num_loop) {
+        // setup enviroment
+        const int start_gi = 0;
+        const int end_gi = TOTAL_STRENGTHS;
+        const int nb_strengths = 8;
+        int lvl_luma_ref[CDEF_MAX_STRENGTHS],
+            lvl_chroma_ref[CDEF_MAX_STRENGTHS];
+        int lvl_luma_tst[CDEF_MAX_STRENGTHS],
+            lvl_chroma_tst[CDEF_MAX_STRENGTHS];
+        SVTRandom rnd_(10, false);
 
-    // generate mse randomly
-    for (int i = 0; i < 2; ++i)
-        for (int n = 0; n < sb_count; ++n)
-            for (int j = 0; j < 64; ++j)
-                mse[i][n][j] = rnd_.random();
+        // generate mse randomly
+        for (int i = 0; i < 2; ++i)
+            for (int n = 0; n < sb_count_; ++n)
+                for (int j = 0; j < 64; ++j)
+                    mse_[i][n][j] = rnd_.random();
 
-    // try different nb_strengths
-    memset(lvl_luma_ref, 0, sizeof(lvl_luma_ref));
-    memset(lvl_chroma_ref, 0, sizeof(lvl_chroma_ref));
-    memset(lvl_luma_tst, 0, sizeof(lvl_luma_tst));
-    memset(lvl_chroma_tst, 0, sizeof(lvl_chroma_tst));
+        memset(lvl_luma_ref, 0, sizeof(lvl_luma_ref));
+        memset(lvl_chroma_ref, 0, sizeof(lvl_chroma_ref));
+        memset(lvl_luma_tst, 0, sizeof(lvl_luma_tst));
+        memset(lvl_chroma_tst, 0, sizeof(lvl_chroma_tst));
 
-    for (int i = 0; i < (int)(sizeof(search_one_dual_func_table) /
-                              sizeof(*search_one_dual_func_table));
-         ++i) {
         for (int j = 0; j < nb_strengths; ++j) {
             uint64_t best_mse_ref, best_mse_tst;
             double time_c, time_o;
             uint64_t start_time_seconds, start_time_useconds;
             uint64_t middle_time_seconds, middle_time_useconds;
             uint64_t finish_time_seconds, finish_time_useconds;
-            const uint64_t num_loop = 10000;
+
             svt_av1_get_time(&start_time_seconds, &start_time_useconds);
 
-            for (uint64_t k = 0; k < num_loop; k++) {
+            for (int k = 0; k < num_loop; k++) {
                 best_mse_ref = svt_search_one_dual_c(lvl_luma_ref,
                                                      lvl_chroma_ref,
                                                      j,
-                                                     mse,
-                                                     sb_count,
+                                                     mse_,
+                                                     sb_count_,
                                                      start_gi,
                                                      end_gi);
             }
 
             svt_av1_get_time(&middle_time_seconds, &middle_time_useconds);
 
-            for (uint64_t k = 0; k < num_loop; k++) {
-                best_mse_tst = search_one_dual_func_table[i](lvl_luma_tst,
-                                                             lvl_chroma_tst,
-                                                             j,
-                                                             mse,
-                                                             sb_count,
-                                                             start_gi,
-                                                             end_gi);
+            for (int k = 0; k < num_loop; k++) {
+                best_mse_tst = test_func_(lvl_luma_tst,
+                                          lvl_chroma_tst,
+                                          j,
+                                          mse_,
+                                          sb_count_,
+                                          start_gi,
+                                          end_gi);
             }
 
             svt_av1_get_time(&finish_time_seconds, &finish_time_useconds);
 
-            ASSERT_EQ(best_mse_tst, best_mse_ref)
-                << "svt_search_one_dual_avx2 return different best mse "
-                << " nb_strength: " << nb_strengths;
-            for (int h = 0; h < CDEF_MAX_STRENGTHS; ++h) {
-                ASSERT_EQ(lvl_luma_ref[h], lvl_luma_tst[h])
-                    << "best strength for luma does not match "
-                    << " nb_strength: " << nb_strengths << " pos " << h;
-                ASSERT_EQ(lvl_chroma_ref[h], lvl_chroma_tst[h])
-                    << "best strength for chroma does not match "
-                    << " nb_strength: " << nb_strengths << " pos " << h;
+            if (num_loop > 1) {
+                time_c = svt_av1_compute_overall_elapsed_time_ms(
+                    start_time_seconds,
+                    start_time_useconds,
+                    middle_time_seconds,
+                    middle_time_useconds);
+                time_o = svt_av1_compute_overall_elapsed_time_ms(
+                    middle_time_seconds,
+                    middle_time_useconds,
+                    finish_time_seconds,
+                    finish_time_useconds);
+
+                printf("Average Nanoseconds per Function Call\n");
+                printf("    svt_search_one_dual_c()       : %6.2f\n",
+                       1000000 * time_c / num_loop);
+                printf(
+                    "    svt_search_one_dual_opt(strength: %d) : %6.2f   "
+                    "(Comparison: "
+                    "%5.2fx)\n",
+                    j,
+                    1000000 * time_o / num_loop,
+                    time_c / time_o);
+            } else {
+                ASSERT_EQ(best_mse_tst, best_mse_ref)
+                    << "svt_search_one_dual_opt return different best mse "
+                    << " nb_strength: " << nb_strengths;
+                for (int h = 0; h < CDEF_MAX_STRENGTHS; ++h) {
+                    ASSERT_EQ(lvl_luma_ref[h], lvl_luma_tst[h])
+                        << "best strength for luma does not match "
+                        << " nb_strength: " << nb_strengths << " pos " << h;
+                    ASSERT_EQ(lvl_chroma_ref[h], lvl_chroma_tst[h])
+                        << "best strength for chroma does not match "
+                        << " nb_strength: " << nb_strengths << " pos " << h;
+                }
             }
-
-            time_c =
-                svt_av1_compute_overall_elapsed_time_ms(start_time_seconds,
-                                                        start_time_useconds,
-                                                        middle_time_seconds,
-                                                        middle_time_useconds);
-            time_o =
-                svt_av1_compute_overall_elapsed_time_ms(middle_time_seconds,
-                                                        middle_time_useconds,
-                                                        finish_time_seconds,
-                                                        finish_time_useconds);
-
-            printf("Average Nanoseconds per Function Call\n");
-            printf("    svt_search_one_dual_c()       : %6.2f\n",
-                   1000000 * time_c / num_loop);
-            printf(
-                "    svt_search_one_dual_opt(%d, %d) : %6.2f   (Comparison: "
-                "%5.2fx)\n",
-                i,
-                j,
-                1000000 * time_o / num_loop,
-                time_c / time_o);
         }
     }
 
-    for (int i = 0; i < sb_count; i++) {
-        svt_aom_free(mse[0][i]);
-        svt_aom_free(mse[1][i]);
-    }
-    svt_aom_free(mse[0]);
-    svt_aom_free(mse[1]);
+  private:
+    SearchOneDualFunc test_func_;
+    int sb_count_;
+    uint64_t **mse_[2];
+};
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(CDEFSearchOneDualTest);
+
+TEST_P(CDEFSearchOneDualTest, test_match) {
+    RunTest(1);
 }
+
+TEST_P(CDEFSearchOneDualTest, DISABLED_test_speed) {
+    RunTest(10000);
+}
+
+#ifdef ARCH_X86_64
+INSTANTIATE_TEST_SUITE_P(AVX2, CDEFSearchOneDualTest,
+                         ::testing::Values(svt_search_one_dual_avx2));
+
+#if EN_AVX512_SUPPORT
+INSTANTIATE_TEST_SUITE_P(AVX512, CDEFSearchOneDualTest,
+                         ::testing::Values(svt_search_one_dual_avx512));
+#endif
+
+#endif  // ARCH_X86_64
