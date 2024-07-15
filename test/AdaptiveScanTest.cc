@@ -142,16 +142,27 @@ TEST(AdaptiveScanTest, scan_tables_test) {
 }
 
 using svt_av1_test_tool::SVTRandom;
-TEST(CopyMiMapGrid, TestCopyGridMap) {
-    SVTRandom rnd(0, (1 << 10) - 1);
-    const int max_size = 100;
-    ModeInfo *mi_grid_ref[max_size * max_size];
-    ModeInfo *mi_grid_tst[max_size * max_size];
 
-    for (int tx_size = TX_4X4; tx_size < TX_SIZES_ALL; ++tx_size) {
-        const int txb_height = get_txb_high((TxSize)tx_size);
-        const int txb_width = get_txb_wide((TxSize)tx_size);
-        const uint32_t stride = txb_width + rnd.random() % 10;
+using CopyMiMapGridFunc = void (*)(ModeInfo **mi_grid_ptr, uint32_t mi_stride,
+                                   uint8_t num_rows, uint8_t num_cols);
+
+using CopyMiMapGridParam = std::tuple<int, CopyMiMapGridFunc>;
+
+class CopyMiMapGridTest : public ::testing::TestWithParam<CopyMiMapGridParam> {
+  public:
+    CopyMiMapGridTest()
+        : tx_size_(TEST_GET_PARAM(0)), test_func_(TEST_GET_PARAM(1)) {
+    }
+
+    void test_match() {
+        SVTRandom rnd(0, (1 << 10) - 1);
+        const int max_size = 100;
+        ModeInfo *mi_grid_ref[max_size * max_size];
+        ModeInfo *mi_grid_tst[max_size * max_size];
+
+        const int txb_height = get_txb_high((TxSize)tx_size_);
+        const int txb_width = get_txb_wide((TxSize)tx_size_);
+        uint32_t stride = txb_width + rnd.random() % 10;
 
         memset(mi_grid_ref, 0xcd, sizeof(mi_grid_ref));
         memset(mi_grid_tst, 0xcd, sizeof(mi_grid_ref));
@@ -160,36 +171,50 @@ TEST(CopyMiMapGrid, TestCopyGridMap) {
 
         svt_copy_mi_map_grid_c(mi_grid_ref, stride, txb_height, txb_width);
 
-#if defined(ARCH_X86_64)
-        svt_copy_mi_map_grid_avx2(mi_grid_tst, stride, txb_height, txb_width);
-#endif  // defined(ARCH_X86_64)
-
-#if defined(ARCH_AARCH64)
-        svt_copy_mi_map_grid_neon(mi_grid_tst, stride, txb_height, txb_width);
-#endif  // defined(ARCH_AARCH64)
+        test_func_(mi_grid_tst, stride, txb_height, txb_width);
 
         EXPECT_TRUE(memcmp(mi_grid_ref, mi_grid_tst, sizeof(mi_grid_ref)) == 0);
+
+        // special case non power of 2 cols
+        for (int cols = 0; cols < 15; ++cols) {
+            stride = cols + rnd.random() % 10;
+
+            memset(mi_grid_ref, 0xcd, sizeof(mi_grid_ref));
+            memset(mi_grid_tst, 0xcd, sizeof(mi_grid_ref));
+
+            mi_grid_ref[0] = mi_grid_tst[0] =
+                (ModeInfo *)((uint64_t)rnd.random());
+
+            svt_copy_mi_map_grid_c(mi_grid_ref, stride, cols, cols);
+
+            test_func_(mi_grid_tst, stride, cols, cols);
+
+            EXPECT_TRUE(memcmp(mi_grid_ref, mi_grid_tst, sizeof(mi_grid_ref)) ==
+                        0);
+        }
     }
 
-    // special case non power of 2 cols
-    for (int cols = 0; cols < 15; ++cols) {
-        const uint32_t stride = cols + rnd.random() % 10;
+  private:
+    int tx_size_;
+    CopyMiMapGridFunc test_func_;
+};
 
-        memset(mi_grid_ref, 0xcd, sizeof(mi_grid_ref));
-        memset(mi_grid_tst, 0xcd, sizeof(mi_grid_ref));
-
-        mi_grid_ref[0] = mi_grid_tst[0] = (ModeInfo *)((uint64_t)rnd.random());
-
-        svt_copy_mi_map_grid_c(mi_grid_ref, stride, cols, cols);
-
-#if defined(ARCH_X86_64)
-        svt_copy_mi_map_grid_avx2(mi_grid_tst, stride, cols, cols);
-#endif  // defined(ARCH_X86_64)
-
-#if defined(ARCH_AARCH64)
-        svt_copy_mi_map_grid_neon(mi_grid_tst, stride, cols, cols);
-#endif  // defined(ARCH_AARCH64)
-
-        EXPECT_TRUE(memcmp(mi_grid_ref, mi_grid_tst, sizeof(mi_grid_ref)) == 0);
-    }
+TEST_P(CopyMiMapGridTest, test_match) {
+    test_match();
 }
+
+#ifdef ARCH_X86_64
+INSTANTIATE_TEST_SUITE_P(
+    AVX2, CopyMiMapGridTest,
+    ::testing::Combine(::testing::Range(static_cast<int>(TX_4X4),
+                                        static_cast<int>(TX_SIZES_ALL)),
+                       ::testing::Values(svt_copy_mi_map_grid_avx2)));
+#endif  // ARCH_X86_64
+
+#ifdef ARCH_AARCH64
+INSTANTIATE_TEST_SUITE_P(
+    NEON, CopyMiMapGridTest,
+    ::testing::Combine(::testing::Range(static_cast<int>(TX_4X4),
+                                        static_cast<int>(TX_SIZES_ALL)),
+                       ::testing::Values(svt_copy_mi_map_grid_neon)));
+#endif  // ARCH_AARCH64
