@@ -1144,7 +1144,7 @@ INSTANTIATE_TEST_SUITE_P(
 
 #ifdef ARCH_AARCH64
 INSTANTIATE_TEST_SUITE_P(
-    SSETEST, AomSseTest,
+    NEON, AomSseTest,
     ::testing::Combine(::testing::Range(BLOCK_4X4, BlockSizeS_ALL),
                        ::testing::Values(svt_aom_sse_neon)));
 #endif  // ARCH_AARCH64
