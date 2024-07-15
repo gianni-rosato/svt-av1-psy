@@ -19,6 +19,8 @@
 #include "unit_test_utility.h"
 #include "utility.h"
 
+#define MAX_STRIDE 256
+
 using svt_av1_test_tool::SVTRandom;
 
 /** setup_test_env is implemented in test/TestEnv.c */
@@ -32,23 +34,6 @@ typedef void (*TemporalFilterFunc)(
     unsigned int block_height, int ss_x, int ss_y, uint32_t *y_accum,
     uint16_t *y_count, uint32_t *u_accum, uint16_t *u_count, uint32_t *v_accum,
     uint16_t *v_count);
-
-typedef void (*TemporalFilterFuncHbd)(
-    struct MeContext *me_ctx, const uint16_t *y_src, int y_src_stride,
-    const uint16_t *y_pre, int y_pre_stride, const uint16_t *u_src,
-    const uint16_t *v_src, int uv_src_stride, const uint16_t *u_pre,
-    const uint16_t *v_pre, int uv_pre_stride, unsigned int block_width,
-    unsigned int block_height, int ss_x, int ss_y, uint32_t *y_accum,
-    uint16_t *y_count, uint32_t *u_accum, uint16_t *u_count, uint32_t *v_accum,
-    uint16_t *v_count, uint32_t encoder_bit_depth);
-
-#define MAX_STRIDE 256
-
-typedef std::tuple<TemporalFilterFunc, TemporalFilterFunc>
-    TemporalFilterWithParam;
-
-typedef std::tuple<TemporalFilterFuncHbd, TemporalFilterFuncHbd>
-    TemporalFilterWithParamHbd;
 
 static void TemporalFilterFillMeContexts(MeContext *cnt1, MeContext *cnt2) {
     // Prepare two MeContext to cover all paths in code.
@@ -135,17 +120,16 @@ static void TemporalFilterFillMeContexts(MeContext *cnt1, MeContext *cnt2) {
     cnt2->tf_decay_factor[2] = 15000;
 }
 
-class TemporalFilterTestPlanewise
-    : public ::testing::TestWithParam<TemporalFilterWithParam> {
+class TemporalFilterTestPlanewiseMedium
+    : public ::testing::TestWithParam<TemporalFilterFunc> {
   public:
-    TemporalFilterTestPlanewise() : rnd_(0, 255){};
-    ~TemporalFilterTestPlanewise() {
+    TemporalFilterTestPlanewiseMedium() : rnd_(0, 255){};
+    ~TemporalFilterTestPlanewiseMedium() {
     }
 
     void SetUp() {
         setup_test_env();
-        ref_func = TEST_GET_PARAM(0);
-        tst_func = TEST_GET_PARAM(1);
+        tst_func_ = GetParam();
 
         for (int color_channel = 0; color_channel < COLOR_CHANNELS;
              color_channel++) {
@@ -241,8 +225,7 @@ class TemporalFilterTestPlanewise
     }
 
   private:
-    TemporalFilterFunc ref_func;
-    TemporalFilterFunc tst_func;
+    TemporalFilterFunc tst_func_;
     SVTRandom rnd_;
     uint8_t *src_ptr[COLOR_CHANNELS];
     uint8_t *pred_ptr[COLOR_CHANNELS];
@@ -257,8 +240,8 @@ class TemporalFilterTestPlanewise
     float tf_decay_factor[COLOR_CHANNELS];
 };
 
-void TemporalFilterTestPlanewise::RunTest(int width, int height,
-                                          int run_times) {
+void TemporalFilterTestPlanewiseMedium::RunTest(int width, int height,
+                                                int run_times) {
     struct MeContext context1, context2, *me_ctx;
     TemporalFilterFillMeContexts(&context1, &context2);
 
@@ -279,49 +262,50 @@ void TemporalFilterTestPlanewise::RunTest(int width, int height,
             me_ctx->tf_decay_factor[C_Y] = tf_decay_factor[C_Y];
             me_ctx->tf_decay_factor[C_U] = tf_decay_factor[C_U];
             me_ctx->tf_decay_factor[C_V] = tf_decay_factor[C_V];
-            ref_func(me_ctx,
-                     src_ptr[C_Y],
-                     stride[C_Y],
-                     pred_ptr[C_Y],
-                     stride_pred[C_Y],
-                     src_ptr[C_U],
-                     src_ptr[C_V],
-                     stride[C_U],
-                     pred_ptr[C_U],
-                     pred_ptr[C_V],
-                     stride_pred[C_U],
-                     width,
-                     height,
-                     1,  // subsampling
-                     1,  // subsampling
-                     accum_ref_ptr[C_Y],
-                     count_ref_ptr[C_Y],
-                     accum_ref_ptr[C_U],
-                     count_ref_ptr[C_U],
-                     accum_ref_ptr[C_V],
-                     count_ref_ptr[C_V]);
+            svt_av1_apply_temporal_filter_planewise_medium_c(
+                me_ctx,
+                src_ptr[C_Y],
+                stride[C_Y],
+                pred_ptr[C_Y],
+                stride_pred[C_Y],
+                src_ptr[C_U],
+                src_ptr[C_V],
+                stride[C_U],
+                pred_ptr[C_U],
+                pred_ptr[C_V],
+                stride_pred[C_U],
+                width,
+                height,
+                1,  // subsampling
+                1,  // subsampling
+                accum_ref_ptr[C_Y],
+                count_ref_ptr[C_Y],
+                accum_ref_ptr[C_U],
+                count_ref_ptr[C_U],
+                accum_ref_ptr[C_V],
+                count_ref_ptr[C_V]);
 
-            tst_func(me_ctx,
-                     src_ptr[C_Y],
-                     stride[C_Y],
-                     pred_ptr[C_Y],
-                     stride_pred[C_Y],
-                     src_ptr[C_U],
-                     src_ptr[C_V],
-                     stride[C_U],
-                     pred_ptr[C_U],
-                     pred_ptr[C_V],
-                     stride_pred[C_U],
-                     width,
-                     height,
-                     1,  // subsampling
-                     1,  // subsampling
-                     accum_tst_ptr[C_Y],
-                     count_tst_ptr[C_Y],
-                     accum_tst_ptr[C_U],
-                     count_tst_ptr[C_U],
-                     accum_tst_ptr[C_V],
-                     count_tst_ptr[C_V]);
+            tst_func_(me_ctx,
+                      src_ptr[C_Y],
+                      stride[C_Y],
+                      pred_ptr[C_Y],
+                      stride_pred[C_Y],
+                      src_ptr[C_U],
+                      src_ptr[C_V],
+                      stride[C_U],
+                      pred_ptr[C_U],
+                      pred_ptr[C_V],
+                      stride_pred[C_U],
+                      width,
+                      height,
+                      1,  // subsampling
+                      1,  // subsampling
+                      accum_tst_ptr[C_Y],
+                      count_tst_ptr[C_Y],
+                      accum_tst_ptr[C_U],
+                      count_tst_ptr[C_U],
+                      accum_tst_ptr[C_V],
+                      count_tst_ptr[C_V]);
 
             for (int color_channel = 0; color_channel < COLOR_CHANNELS;
                  color_channel++) {
@@ -358,27 +342,28 @@ void TemporalFilterTestPlanewise::RunTest(int width, int height,
             me_ctx->tf_decay_factor[C_Y] = tf_decay_factor[C_Y];
             me_ctx->tf_decay_factor[C_U] = tf_decay_factor[C_U];
             me_ctx->tf_decay_factor[C_V] = tf_decay_factor[C_V];
-            ref_func(me_ctx,
-                     src_ptr[C_Y],
-                     stride[C_Y],
-                     pred_ptr[C_Y],
-                     stride_pred[C_Y],
-                     src_ptr[C_U],
-                     src_ptr[C_V],
-                     stride[C_U],
-                     pred_ptr[C_U],
-                     pred_ptr[C_V],
-                     stride_pred[C_U],
-                     width,
-                     height,
-                     1,  // subsampling
-                     1,  // subsampling
-                     accum_ref_ptr[C_Y],
-                     count_ref_ptr[C_Y],
-                     accum_ref_ptr[C_U],
-                     count_ref_ptr[C_U],
-                     accum_ref_ptr[C_V],
-                     count_ref_ptr[C_V]);
+            svt_av1_apply_temporal_filter_planewise_medium_c(
+                me_ctx,
+                src_ptr[C_Y],
+                stride[C_Y],
+                pred_ptr[C_Y],
+                stride_pred[C_Y],
+                src_ptr[C_U],
+                src_ptr[C_V],
+                stride[C_U],
+                pred_ptr[C_U],
+                pred_ptr[C_V],
+                stride_pred[C_U],
+                width,
+                height,
+                1,  // subsampling
+                1,  // subsampling
+                accum_ref_ptr[C_Y],
+                count_ref_ptr[C_Y],
+                accum_ref_ptr[C_U],
+                count_ref_ptr[C_U],
+                accum_ref_ptr[C_V],
+                count_ref_ptr[C_V]);
         }
         svt_av1_get_time(&middle_timer_seconds, &middle_timer_useconds);
 
@@ -397,27 +382,27 @@ void TemporalFilterTestPlanewise::RunTest(int width, int height,
             me_ctx->tf_decay_factor[C_Y] = tf_decay_factor[C_Y];
             me_ctx->tf_decay_factor[C_U] = tf_decay_factor[C_U];
             me_ctx->tf_decay_factor[C_V] = tf_decay_factor[C_V];
-            tst_func(me_ctx,
-                     src_ptr[C_Y],
-                     stride[C_Y],
-                     pred_ptr[C_Y],
-                     stride_pred[C_Y],
-                     src_ptr[C_U],
-                     src_ptr[C_V],
-                     stride[C_U],
-                     pred_ptr[C_U],
-                     pred_ptr[C_V],
-                     stride_pred[C_U],
-                     width,
-                     height,
-                     1,  // subsampling
-                     1,  // subsampling
-                     accum_tst_ptr[C_Y],
-                     count_tst_ptr[C_Y],
-                     accum_tst_ptr[C_U],
-                     count_tst_ptr[C_U],
-                     accum_tst_ptr[C_V],
-                     count_tst_ptr[C_V]);
+            tst_func_(me_ctx,
+                      src_ptr[C_Y],
+                      stride[C_Y],
+                      pred_ptr[C_Y],
+                      stride_pred[C_Y],
+                      src_ptr[C_U],
+                      src_ptr[C_V],
+                      stride[C_U],
+                      pred_ptr[C_U],
+                      pred_ptr[C_V],
+                      stride_pred[C_U],
+                      width,
+                      height,
+                      1,  // subsampling
+                      1,  // subsampling
+                      accum_tst_ptr[C_Y],
+                      count_tst_ptr[C_Y],
+                      accum_tst_ptr[C_U],
+                      count_tst_ptr[C_U],
+                      accum_tst_ptr[C_V],
+                      count_tst_ptr[C_V]);
         }
         svt_av1_get_time(&test_timer_seconds, &test_timer_useconds);
 
@@ -444,13 +429,13 @@ void TemporalFilterTestPlanewise::RunTest(int width, int height,
     }
 }
 
-TEST_P(TemporalFilterTestPlanewise, OperationCheck) {
+TEST_P(TemporalFilterTestPlanewiseMedium, OperationCheck) {
     for (int height = 32; height <= 32; height = height * 2) {
         RunTest(height, height, 100);
     }
 }
 
-TEST_P(TemporalFilterTestPlanewise, DISABLED_Speed) {
+TEST_P(TemporalFilterTestPlanewiseMedium, DISABLED_Speed) {
     for (int height = 32; height <= 32; height = height * 2) {
         RunTest(height, height, 100000);
     }
@@ -459,36 +444,42 @@ TEST_P(TemporalFilterTestPlanewise, DISABLED_Speed) {
 #ifdef ARCH_X86_64
 
 INSTANTIATE_TEST_SUITE_P(
-    AVX2_medium, TemporalFilterTestPlanewise,
-    ::testing::Combine(
-        ::testing::Values(svt_av1_apply_temporal_filter_planewise_medium_c),
-        ::testing::Values(
-            svt_av1_apply_temporal_filter_planewise_medium_sse4_1,
-            svt_av1_apply_temporal_filter_planewise_medium_avx2)));
+    SSE4_1, TemporalFilterTestPlanewiseMedium,
+    ::testing::Values(svt_av1_apply_temporal_filter_planewise_medium_sse4_1));
 
-#endif
+INSTANTIATE_TEST_SUITE_P(
+    AVX2, TemporalFilterTestPlanewiseMedium,
+    ::testing::Values(svt_av1_apply_temporal_filter_planewise_medium_avx2));
+
+#endif  // ARCH_X86_64
 
 #ifdef ARCH_AARCH64
 
 INSTANTIATE_TEST_SUITE_P(
-    Neon_medium, TemporalFilterTestPlanewise,
-    ::testing::Combine(
-        ::testing::Values(svt_av1_apply_temporal_filter_planewise_medium_c),
-        ::testing::Values(
-            svt_av1_apply_temporal_filter_planewise_medium_neon)));
+    NEON, TemporalFilterTestPlanewiseMedium,
+    ::testing::Values(svt_av1_apply_temporal_filter_planewise_medium_neon));
 
-#endif
-class TemporalFilterTestPlanewiseHbd
-    : public ::testing::TestWithParam<TemporalFilterWithParamHbd> {
+#endif  // ARCH_AARCH64
+
+typedef void (*TemporalFilterFuncHbd)(
+    struct MeContext *me_ctx, const uint16_t *y_src, int y_src_stride,
+    const uint16_t *y_pre, int y_pre_stride, const uint16_t *u_src,
+    const uint16_t *v_src, int uv_src_stride, const uint16_t *u_pre,
+    const uint16_t *v_pre, int uv_pre_stride, unsigned int block_width,
+    unsigned int block_height, int ss_x, int ss_y, uint32_t *y_accum,
+    uint16_t *y_count, uint32_t *u_accum, uint16_t *u_count, uint32_t *v_accum,
+    uint16_t *v_count, uint32_t encoder_bit_depth);
+
+class TemporalFilterTestPlanewiseMediumHbd
+    : public ::testing::TestWithParam<TemporalFilterFuncHbd> {
   public:
-    TemporalFilterTestPlanewiseHbd() : rnd_(0, (1 << 10) - 1){};
-    ~TemporalFilterTestPlanewiseHbd() {
+    TemporalFilterTestPlanewiseMediumHbd() : rnd_(0, (1 << 10) - 1){};
+    ~TemporalFilterTestPlanewiseMediumHbd() {
     }
 
     void SetUp() {
         setup_test_env();
-        ref_func = TEST_GET_PARAM(0);
-        tst_func = TEST_GET_PARAM(1);
+        tst_func_ = GetParam();
 
         for (int color_channel = 0; color_channel < COLOR_CHANNELS;
              color_channel++) {
@@ -582,8 +573,7 @@ class TemporalFilterTestPlanewiseHbd
     }
 
   private:
-    TemporalFilterFuncHbd ref_func;
-    TemporalFilterFuncHbd tst_func;
+    TemporalFilterFuncHbd tst_func_;
     SVTRandom rnd_;
     uint16_t *src_ptr[COLOR_CHANNELS];
     uint16_t *pred_ptr[COLOR_CHANNELS];
@@ -600,8 +590,8 @@ class TemporalFilterTestPlanewiseHbd
     uint32_t encoder_bit_depth;
 };
 
-void TemporalFilterTestPlanewiseHbd::RunTest(int width, int height,
-                                             int run_times) {
+void TemporalFilterTestPlanewiseMediumHbd::RunTest(int width, int height,
+                                                   int run_times) {
     struct MeContext context1, context2, *me_ctx;
     TemporalFilterFillMeContexts(&context1, &context2);
 
@@ -623,51 +613,52 @@ void TemporalFilterTestPlanewiseHbd::RunTest(int width, int height,
             me_ctx->tf_decay_factor[C_Y] = tf_decay_factor[C_Y];
             me_ctx->tf_decay_factor[C_U] = tf_decay_factor[C_U];
             me_ctx->tf_decay_factor[C_V] = tf_decay_factor[C_V];
-            ref_func(me_ctx,
-                     src_ptr[C_Y],
-                     stride[C_Y],
-                     pred_ptr[C_Y],
-                     stride_pred[C_Y],
-                     src_ptr[C_U],
-                     src_ptr[C_V],
-                     stride[C_U],
-                     pred_ptr[C_U],
-                     pred_ptr[C_V],
-                     stride_pred[C_U],
-                     width,
-                     height,
-                     1,  // subsampling
-                     1,  // subsampling
-                     accum_ref_ptr[C_Y],
-                     count_ref_ptr[C_Y],
-                     accum_ref_ptr[C_U],
-                     count_ref_ptr[C_U],
-                     accum_ref_ptr[C_V],
-                     count_ref_ptr[C_V],
-                     encoder_bit_depth);
+            svt_av1_apply_temporal_filter_planewise_medium_hbd_c(
+                me_ctx,
+                src_ptr[C_Y],
+                stride[C_Y],
+                pred_ptr[C_Y],
+                stride_pred[C_Y],
+                src_ptr[C_U],
+                src_ptr[C_V],
+                stride[C_U],
+                pred_ptr[C_U],
+                pred_ptr[C_V],
+                stride_pred[C_U],
+                width,
+                height,
+                1,  // subsampling
+                1,  // subsampling
+                accum_ref_ptr[C_Y],
+                count_ref_ptr[C_Y],
+                accum_ref_ptr[C_U],
+                count_ref_ptr[C_U],
+                accum_ref_ptr[C_V],
+                count_ref_ptr[C_V],
+                encoder_bit_depth);
 
-            tst_func(me_ctx,
-                     src_ptr[C_Y],
-                     stride[C_Y],
-                     pred_ptr[C_Y],
-                     stride_pred[C_Y],
-                     src_ptr[C_U],
-                     src_ptr[C_V],
-                     stride[C_U],
-                     pred_ptr[C_U],
-                     pred_ptr[C_V],
-                     stride_pred[C_U],
-                     width,
-                     height,
-                     1,  // subsampling
-                     1,  // subsampling
-                     accum_tst_ptr[C_Y],
-                     count_tst_ptr[C_Y],
-                     accum_tst_ptr[C_U],
-                     count_tst_ptr[C_U],
-                     accum_tst_ptr[C_V],
-                     count_tst_ptr[C_V],
-                     encoder_bit_depth);
+            tst_func_(me_ctx,
+                      src_ptr[C_Y],
+                      stride[C_Y],
+                      pred_ptr[C_Y],
+                      stride_pred[C_Y],
+                      src_ptr[C_U],
+                      src_ptr[C_V],
+                      stride[C_U],
+                      pred_ptr[C_U],
+                      pred_ptr[C_V],
+                      stride_pred[C_U],
+                      width,
+                      height,
+                      1,  // subsampling
+                      1,  // subsampling
+                      accum_tst_ptr[C_Y],
+                      count_tst_ptr[C_Y],
+                      accum_tst_ptr[C_U],
+                      count_tst_ptr[C_U],
+                      accum_tst_ptr[C_V],
+                      count_tst_ptr[C_V],
+                      encoder_bit_depth);
 
             for (int color_channel = 0; color_channel < COLOR_CHANNELS;
                  color_channel++) {
@@ -691,51 +682,52 @@ void TemporalFilterTestPlanewiseHbd::RunTest(int width, int height,
             me_ctx->tf_decay_factor[C_Y] = tf_decay_factor[C_Y];
             me_ctx->tf_decay_factor[C_U] = tf_decay_factor[C_U];
             me_ctx->tf_decay_factor[C_V] = tf_decay_factor[C_V];
-            ref_func(me_ctx,
-                     src_ptr[C_Y],
-                     stride[C_Y],
-                     pred_ptr[C_Y],
-                     stride_pred[C_Y],
-                     src_ptr[C_U],
-                     src_ptr[C_V],
-                     stride[C_U],
-                     pred_ptr[C_U],
-                     pred_ptr[C_V],
-                     stride_pred[C_U],
-                     width,
-                     height,
-                     1,  // subsampling
-                     1,  // subsampling
-                     accum_ref_ptr[C_Y],
-                     count_ref_ptr[C_Y],
-                     accum_ref_ptr[C_U],
-                     count_ref_ptr[C_U],
-                     accum_ref_ptr[C_V],
-                     count_ref_ptr[C_V],
-                     encoder_bit_depth);
+            svt_av1_apply_temporal_filter_planewise_medium_hbd_c(
+                me_ctx,
+                src_ptr[C_Y],
+                stride[C_Y],
+                pred_ptr[C_Y],
+                stride_pred[C_Y],
+                src_ptr[C_U],
+                src_ptr[C_V],
+                stride[C_U],
+                pred_ptr[C_U],
+                pred_ptr[C_V],
+                stride_pred[C_U],
+                width,
+                height,
+                1,  // subsampling
+                1,  // subsampling
+                accum_ref_ptr[C_Y],
+                count_ref_ptr[C_Y],
+                accum_ref_ptr[C_U],
+                count_ref_ptr[C_U],
+                accum_ref_ptr[C_V],
+                count_ref_ptr[C_V],
+                encoder_bit_depth);
 
-            tst_func(me_ctx,
-                     src_ptr[C_Y],
-                     stride[C_Y],
-                     pred_ptr[C_Y],
-                     stride_pred[C_Y],
-                     src_ptr[C_U],
-                     src_ptr[C_V],
-                     stride[C_U],
-                     pred_ptr[C_U],
-                     pred_ptr[C_V],
-                     stride_pred[C_U],
-                     width,
-                     height,
-                     1,  // subsampling
-                     1,  // subsampling
-                     accum_tst_ptr[C_Y],
-                     count_tst_ptr[C_Y],
-                     accum_tst_ptr[C_U],
-                     count_tst_ptr[C_U],
-                     accum_tst_ptr[C_V],
-                     count_tst_ptr[C_V],
-                     encoder_bit_depth);
+            tst_func_(me_ctx,
+                      src_ptr[C_Y],
+                      stride[C_Y],
+                      pred_ptr[C_Y],
+                      stride_pred[C_Y],
+                      src_ptr[C_U],
+                      src_ptr[C_V],
+                      stride[C_U],
+                      pred_ptr[C_U],
+                      pred_ptr[C_V],
+                      stride_pred[C_U],
+                      width,
+                      height,
+                      1,  // subsampling
+                      1,  // subsampling
+                      accum_tst_ptr[C_Y],
+                      count_tst_ptr[C_Y],
+                      accum_tst_ptr[C_U],
+                      count_tst_ptr[C_U],
+                      accum_tst_ptr[C_V],
+                      count_tst_ptr[C_V],
+                      encoder_bit_depth);
 
             for (int color_channel = 0; color_channel < COLOR_CHANNELS;
                  color_channel++) {
@@ -773,54 +765,55 @@ void TemporalFilterTestPlanewiseHbd::RunTest(int width, int height,
             me_ctx->tf_decay_factor[C_Y] = tf_decay_factor[C_Y];
             me_ctx->tf_decay_factor[C_U] = tf_decay_factor[C_U];
             me_ctx->tf_decay_factor[C_V] = tf_decay_factor[C_V];
-            ref_func(me_ctx,
-                     src_ptr[C_Y],
-                     stride[C_Y],
-                     pred_ptr[C_Y],
-                     stride_pred[C_Y],
-                     src_ptr[C_U],
-                     src_ptr[C_V],
-                     stride[C_U],
-                     pred_ptr[C_U],
-                     pred_ptr[C_V],
-                     stride_pred[C_U],
-                     width,
-                     height,
-                     1,  // subsampling
-                     1,  // subsampling
-                     accum_ref_ptr[C_Y],
-                     count_ref_ptr[C_Y],
-                     accum_ref_ptr[C_U],
-                     count_ref_ptr[C_U],
-                     accum_ref_ptr[C_V],
-                     count_ref_ptr[C_V],
-                     encoder_bit_depth);
+            svt_av1_apply_temporal_filter_planewise_medium_hbd_c(
+                me_ctx,
+                src_ptr[C_Y],
+                stride[C_Y],
+                pred_ptr[C_Y],
+                stride_pred[C_Y],
+                src_ptr[C_U],
+                src_ptr[C_V],
+                stride[C_U],
+                pred_ptr[C_U],
+                pred_ptr[C_V],
+                stride_pred[C_U],
+                width,
+                height,
+                1,  // subsampling
+                1,  // subsampling
+                accum_ref_ptr[C_Y],
+                count_ref_ptr[C_Y],
+                accum_ref_ptr[C_U],
+                count_ref_ptr[C_U],
+                accum_ref_ptr[C_V],
+                count_ref_ptr[C_V],
+                encoder_bit_depth);
         }
         svt_av1_get_time(&middle_timer_seconds, &middle_timer_useconds);
 
         for (int j = 0; j < run_times; j++) {
-            tst_func(me_ctx,
-                     src_ptr[C_Y],
-                     stride[C_Y],
-                     pred_ptr[C_Y],
-                     stride_pred[C_Y],
-                     src_ptr[C_U],
-                     src_ptr[C_V],
-                     stride[C_U],
-                     pred_ptr[C_U],
-                     pred_ptr[C_V],
-                     stride_pred[C_U],
-                     width,
-                     height,
-                     1,  // subsampling
-                     1,  // subsampling
-                     accum_tst_ptr[C_Y],
-                     count_tst_ptr[C_Y],
-                     accum_tst_ptr[C_U],
-                     count_tst_ptr[C_U],
-                     accum_tst_ptr[C_V],
-                     count_tst_ptr[C_V],
-                     encoder_bit_depth);
+            tst_func_(me_ctx,
+                      src_ptr[C_Y],
+                      stride[C_Y],
+                      pred_ptr[C_Y],
+                      stride_pred[C_Y],
+                      src_ptr[C_U],
+                      src_ptr[C_V],
+                      stride[C_U],
+                      pred_ptr[C_U],
+                      pred_ptr[C_V],
+                      stride_pred[C_U],
+                      width,
+                      height,
+                      1,  // subsampling
+                      1,  // subsampling
+                      accum_tst_ptr[C_Y],
+                      count_tst_ptr[C_Y],
+                      accum_tst_ptr[C_U],
+                      count_tst_ptr[C_U],
+                      accum_tst_ptr[C_V],
+                      count_tst_ptr[C_V],
+                      encoder_bit_depth);
         }
         svt_av1_get_time(&test_timer_seconds, &test_timer_useconds);
 
@@ -863,54 +856,55 @@ void TemporalFilterTestPlanewiseHbd::RunTest(int width, int height,
             me_ctx->tf_decay_factor[C_Y] = tf_decay_factor[C_Y];
             me_ctx->tf_decay_factor[C_U] = tf_decay_factor[C_U];
             me_ctx->tf_decay_factor[C_V] = tf_decay_factor[C_V];
-            ref_func(me_ctx,
-                     src_ptr[C_Y],
-                     stride[C_Y],
-                     pred_ptr[C_Y],
-                     stride_pred[C_Y],
-                     src_ptr[C_U],
-                     src_ptr[C_V],
-                     stride[C_U],
-                     pred_ptr[C_U],
-                     pred_ptr[C_V],
-                     stride_pred[C_U],
-                     width,
-                     height,
-                     1,  // subsampling
-                     1,  // subsampling
-                     accum_ref_ptr[C_Y],
-                     count_ref_ptr[C_Y],
-                     accum_ref_ptr[C_U],
-                     count_ref_ptr[C_U],
-                     accum_ref_ptr[C_V],
-                     count_ref_ptr[C_V],
-                     encoder_bit_depth);
+            svt_av1_apply_temporal_filter_planewise_medium_hbd_c(
+                me_ctx,
+                src_ptr[C_Y],
+                stride[C_Y],
+                pred_ptr[C_Y],
+                stride_pred[C_Y],
+                src_ptr[C_U],
+                src_ptr[C_V],
+                stride[C_U],
+                pred_ptr[C_U],
+                pred_ptr[C_V],
+                stride_pred[C_U],
+                width,
+                height,
+                1,  // subsampling
+                1,  // subsampling
+                accum_ref_ptr[C_Y],
+                count_ref_ptr[C_Y],
+                accum_ref_ptr[C_U],
+                count_ref_ptr[C_U],
+                accum_ref_ptr[C_V],
+                count_ref_ptr[C_V],
+                encoder_bit_depth);
         }
         svt_av1_get_time(&middle_timer_seconds, &middle_timer_useconds);
 
         for (int j = 0; j < run_times; j++) {
-            tst_func(me_ctx,
-                     src_ptr[C_Y],
-                     stride[C_Y],
-                     pred_ptr[C_Y],
-                     stride_pred[C_Y],
-                     src_ptr[C_U],
-                     src_ptr[C_V],
-                     stride[C_U],
-                     pred_ptr[C_U],
-                     pred_ptr[C_V],
-                     stride_pred[C_U],
-                     width,
-                     height,
-                     1,  // subsampling
-                     1,  // subsampling
-                     accum_tst_ptr[C_Y],
-                     count_tst_ptr[C_Y],
-                     accum_tst_ptr[C_U],
-                     count_tst_ptr[C_U],
-                     accum_tst_ptr[C_V],
-                     count_tst_ptr[C_V],
-                     encoder_bit_depth);
+            tst_func_(me_ctx,
+                      src_ptr[C_Y],
+                      stride[C_Y],
+                      pred_ptr[C_Y],
+                      stride_pred[C_Y],
+                      src_ptr[C_U],
+                      src_ptr[C_V],
+                      stride[C_U],
+                      pred_ptr[C_U],
+                      pred_ptr[C_V],
+                      stride_pred[C_U],
+                      width,
+                      height,
+                      1,  // subsampling
+                      1,  // subsampling
+                      accum_tst_ptr[C_Y],
+                      count_tst_ptr[C_Y],
+                      accum_tst_ptr[C_U],
+                      count_tst_ptr[C_U],
+                      accum_tst_ptr[C_V],
+                      count_tst_ptr[C_V],
+                      encoder_bit_depth);
         }
         svt_av1_get_time(&test_timer_seconds, &test_timer_useconds);
 
@@ -937,15 +931,16 @@ void TemporalFilterTestPlanewiseHbd::RunTest(int width, int height,
             encoder_bit_depth);
     }
 }
-GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(TemporalFilterTestPlanewiseHbd);
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(
+    TemporalFilterTestPlanewiseMediumHbd);
 
-TEST_P(TemporalFilterTestPlanewiseHbd, OperationCheck) {
+TEST_P(TemporalFilterTestPlanewiseMediumHbd, OperationCheck) {
     for (int height = 32; height <= 32; height = height * 2) {
         RunTest(height, height, 100);
     }
 }
 
-TEST_P(TemporalFilterTestPlanewiseHbd, DISABLED_Speed) {
+TEST_P(TemporalFilterTestPlanewiseMediumHbd, DISABLED_Speed) {
     for (int height = 32; height <= 32; height = height * 2) {
         RunTest(height, height, 100000);
     }
@@ -954,25 +949,23 @@ TEST_P(TemporalFilterTestPlanewiseHbd, DISABLED_Speed) {
 #ifdef ARCH_X86_64
 
 INSTANTIATE_TEST_SUITE_P(
-    AVX2_medium, TemporalFilterTestPlanewiseHbd,
-    ::testing::Combine(
-        ::testing::Values(svt_av1_apply_temporal_filter_planewise_medium_hbd_c),
-        ::testing::Values(
-            svt_av1_apply_temporal_filter_planewise_medium_hbd_sse4_1,
-            svt_av1_apply_temporal_filter_planewise_medium_hbd_avx2)));
+    SSE4_1, TemporalFilterTestPlanewiseMediumHbd,
+    ::testing::Values(
+        svt_av1_apply_temporal_filter_planewise_medium_hbd_sse4_1));
 
-#endif
+INSTANTIATE_TEST_SUITE_P(
+    AVX2, TemporalFilterTestPlanewiseMediumHbd,
+    ::testing::Values(svt_av1_apply_temporal_filter_planewise_medium_hbd_avx2));
+
+#endif  // ARCH_X86_64
 
 #ifdef ARCH_AARCH64
 
 INSTANTIATE_TEST_SUITE_P(
-    NEON_medium, TemporalFilterTestPlanewiseHbd,
-    ::testing::Combine(
-        ::testing::Values(svt_av1_apply_temporal_filter_planewise_medium_hbd_c),
-        ::testing::Values(
-            svt_av1_apply_temporal_filter_planewise_medium_hbd_neon)));
+    NEON, TemporalFilterTestPlanewiseMediumHbd,
+    ::testing::Values(svt_av1_apply_temporal_filter_planewise_medium_hbd_neon));
 
-#endif
+#endif  // ARCH_AARCH64
 
 typedef void (*get_final_filtered_pixels_fn)(
     struct MeContext *me_ctx, EbByte *src_center_ptr_start,
@@ -980,8 +973,10 @@ typedef void (*get_final_filtered_pixels_fn)(
     const uint32_t *stride, int blk_y_src_offset, int blk_ch_src_offset,
     uint16_t blk_width_ch, uint16_t blk_height_ch, Bool is_highbd);
 
-class TemporalFilterTestGetFinalFilteredPixels : public ::testing::Test {
+class TemporalFilterTestGetFinalFilteredPixels
+    : public ::testing::TestWithParam<get_final_filtered_pixels_fn> {
   private:
+    get_final_filtered_pixels_fn test_func_;
     uint32_t width;
     uint32_t height;
     uint32_t width_stride[3];
@@ -997,7 +992,7 @@ class TemporalFilterTestGetFinalFilteredPixels : public ::testing::Test {
     MeContext *me_ctx;
 
   public:
-    TemporalFilterTestGetFinalFilteredPixels() {
+    TemporalFilterTestGetFinalFilteredPixels() : test_func_(GetParam()) {
         width = BW;
         height = BH;
         src_center_ptr_start_size = height * (width + 5);
@@ -1066,7 +1061,7 @@ class TemporalFilterTestGetFinalFilteredPixels : public ::testing::Test {
         me_ctx->tf_chroma = rand() % 2;
     }
 
-    void RunTest(Bool is_highbd, get_final_filtered_pixels_fn tst_fn) {
+    void RunTest(Bool is_highbd) {
         int blk_y_src_offset = 1;
         int blk_ch_src_offset = 2;
         uint16_t blk_width_ch = 48;
@@ -1086,17 +1081,17 @@ class TemporalFilterTestGetFinalFilteredPixels : public ::testing::Test {
                                             blk_height_ch,
                                             is_highbd);
 
-        tst_fn(me_ctx,
-               ref_src_center_ptr_start,
-               ref_altref_buffer_highbd_start,
-               accum,
-               count,
-               width_stride,
-               blk_y_src_offset,
-               blk_ch_src_offset,
-               blk_width_ch,
-               blk_height_ch,
-               is_highbd);
+        test_func_(me_ctx,
+                   ref_src_center_ptr_start,
+                   ref_altref_buffer_highbd_start,
+                   accum,
+                   count,
+                   width_stride,
+                   blk_y_src_offset,
+                   blk_ch_src_offset,
+                   blk_width_ch,
+                   blk_height_ch,
+                   is_highbd);
 
         for (int color_channel = 0; color_channel < 3; ++color_channel) {
             EXPECT_EQ(memcmp(org_src_center_ptr_start[color_channel],
@@ -1112,73 +1107,44 @@ class TemporalFilterTestGetFinalFilteredPixels : public ::testing::Test {
     }
 };
 
+TEST_P(TemporalFilterTestGetFinalFilteredPixels, RunTest) {
+    for (int i = 0; i < 100; ++i) {
+        RunTest(false);
+        RunTest(true);
+    }
+}
+
 #ifdef ARCH_X86_64
+INSTANTIATE_TEST_SUITE_P(
+    SSE4_1, TemporalFilterTestGetFinalFilteredPixels,
+    ::testing::Values(svt_aom_get_final_filtered_pixels_sse4_1));
 
-TEST_F(TemporalFilterTestGetFinalFilteredPixels, test_lbd_sse4_1) {
-    for (int i = 0; i < 100; ++i) {
-        RunTest(false, svt_aom_get_final_filtered_pixels_sse4_1);
-    }
-}
-
-TEST_F(TemporalFilterTestGetFinalFilteredPixels, test_lbd_avx2) {
-    for (int i = 0; i < 100; ++i) {
-        RunTest(false, svt_aom_get_final_filtered_pixels_avx2);
-    }
-}
-
-TEST_F(TemporalFilterTestGetFinalFilteredPixels, test_hbd_sse4_1) {
-    for (int i = 0; i < 100; ++i) {
-        RunTest(true, svt_aom_get_final_filtered_pixels_sse4_1);
-    }
-}
-
-TEST_F(TemporalFilterTestGetFinalFilteredPixels, test_hbd_avx2) {
-    for (int i = 0; i < 100; ++i) {
-        RunTest(true, svt_aom_get_final_filtered_pixels_avx2);
-    }
-}
-
-#endif
+INSTANTIATE_TEST_SUITE_P(
+    AVX2, TemporalFilterTestGetFinalFilteredPixels,
+    ::testing::Values(svt_aom_get_final_filtered_pixels_avx2));
+#endif  // ARCH_X86_64
 
 #ifdef ARCH_AARCH64
+INSTANTIATE_TEST_SUITE_P(
+    NEON, TemporalFilterTestGetFinalFilteredPixels,
+    ::testing::Values(svt_aom_get_final_filtered_pixels_neon));
+#endif  // ARCH_AARCH64
 
-TEST_F(TemporalFilterTestGetFinalFilteredPixels, test_lbd_neon) {
-    for (int i = 0; i < 100; ++i) {
-        RunTest(false, svt_aom_get_final_filtered_pixels_neon);
-    }
-}
-
-TEST_F(TemporalFilterTestGetFinalFilteredPixels, test_hbd_neon) {
-    for (int i = 0; i < 100; ++i) {
-        RunTest(true, svt_aom_get_final_filtered_pixels_neon);
-    }
-}
-
-#endif
-
-typedef void (*apply_filtering_central_fn)(
-    struct MeContext *me_ctx, EbPictureBufferDesc *input_picture_ptr_central,
-    EbByte *src, uint32_t **accum, uint16_t **count, uint16_t blk_width,
-    uint16_t blk_height, uint32_t ss_x, uint32_t ss_y);
-
-typedef void (*apply_filtering_central_highbd_fn)(
-    struct MeContext *me_ctx, EbPictureBufferDesc *input_picture_ptr_central,
-    uint16_t **src_16bit, uint32_t **accum, uint16_t **count,
-    uint16_t blk_width, uint16_t blk_height, uint32_t ss_x, uint32_t ss_y);
-
-class TemporalFilterTestApplyFilteringCentral : public ::testing::Test {
-  private:
+template <typename SrcType, typename FuncType>
+class TemporalFilterTestApplyFilteringCentral
+    : public ::testing::TestWithParam<FuncType> {
+  protected:
+    FuncType ref_func_;
+    FuncType test_func_;
     uint32_t width;
     uint32_t height;
-    EbByte src[3];
+    SrcType *src[3];
     int src_size;
-    uint16_t *src_highbd[3];
-    size_t src_highbd_size;
 
-    uint32_t *org_accum[3];
     uint32_t *ref_accum[3];
-    uint16_t *org_count[3];
+    uint32_t *test_accum[3];
     uint16_t *ref_count[3];
+    uint16_t *test_count[3];
     MeContext *me_ctx;
     EbPictureBufferDesc input_picture_central;
 
@@ -1187,25 +1153,22 @@ class TemporalFilterTestApplyFilteringCentral : public ::testing::Test {
         width = BW;
         height = BH;
         src_size = height * (width + 5);
-        src_highbd_size = height * (width + 5);
         me_ctx = (MeContext *)malloc(sizeof(*me_ctx));
 
         for (int color_channel = 0; color_channel < 3; ++color_channel) {
-            src[color_channel] = (EbByte)malloc(src_size * sizeof(uint8_t));
-            src_highbd[color_channel] =
-                (uint16_t *)malloc(src_highbd_size * sizeof(uint16_t));
-            org_accum[color_channel] =
-                (uint32_t *)malloc(BW * BH * sizeof(uint32_t));
+            src[color_channel] = (SrcType *)malloc(src_size * sizeof(SrcType));
             ref_accum[color_channel] =
                 (uint32_t *)malloc(BW * BH * sizeof(uint32_t));
-            org_count[color_channel] =
-                (uint16_t *)malloc(BW * BH * sizeof(uint16_t));
+            test_accum[color_channel] =
+                (uint32_t *)malloc(BW * BH * sizeof(uint32_t));
             ref_count[color_channel] =
                 (uint16_t *)malloc(BW * BH * sizeof(uint16_t));
-            memset(org_accum[color_channel], 1, BW * BH * sizeof(uint32_t));
+            test_count[color_channel] =
+                (uint16_t *)malloc(BW * BH * sizeof(uint16_t));
             memset(ref_accum[color_channel], 1, BW * BH * sizeof(uint32_t));
-            memset(org_count[color_channel], 1, BW * BH * sizeof(uint16_t));
+            memset(test_accum[color_channel], 1, BW * BH * sizeof(uint32_t));
             memset(ref_count[color_channel], 1, BW * BH * sizeof(uint16_t));
+            memset(test_count[color_channel], 1, BW * BH * sizeof(uint16_t));
         }
     }
 
@@ -1213,11 +1176,10 @@ class TemporalFilterTestApplyFilteringCentral : public ::testing::Test {
         free(me_ctx);
         for (int color_channel = 0; color_channel < 3; ++color_channel) {
             free(src[color_channel]);
-            free(src_highbd[color_channel]);
-            free(org_accum[color_channel]);
             free(ref_accum[color_channel]);
-            free(org_count[color_channel]);
+            free(test_accum[color_channel]);
             free(ref_count[color_channel]);
+            free(test_count[color_channel]);
         }
     }
 
@@ -1225,7 +1187,6 @@ class TemporalFilterTestApplyFilteringCentral : public ::testing::Test {
         for (int color_channel = 0; color_channel < 3; ++color_channel) {
             for (int i = 0; i < src_size; ++i) {
                 src[color_channel][i] = rand();
-                src_highbd[color_channel][i] = rand();
             }
             me_ctx->tf_decay_factor[color_channel] = 1;
         }
@@ -1237,95 +1198,121 @@ class TemporalFilterTestApplyFilteringCentral : public ::testing::Test {
         input_picture_central.stride_y = BW + 5;
     }
 
-    void RunTest(Bool is_highbd, apply_filtering_central_fn lbd_fn_ptr,
-                 apply_filtering_central_highbd_fn hbd_fn_ptr) {
+    void RunTest() {
         uint16_t blk_width_ch = 48;
         uint16_t blk_height_ch = 61;
         uint32_t ss_x = rand() % 2;
         uint32_t ss_y = rand() % 2;
         SetRandData();
 
-        if (!is_highbd) {
-            assert(lbd_fn_ptr);
-            svt_aom_apply_filtering_central_c(me_ctx,
-                                              &input_picture_central,
-                                              src,
-                                              org_accum,
-                                              org_count,
-                                              blk_width_ch,
-                                              blk_height_ch,
-                                              ss_x,
-                                              ss_y);
-            lbd_fn_ptr(me_ctx,
-                       &input_picture_central,
-                       src,
-                       ref_accum,
-                       ref_count,
-                       blk_width_ch,
-                       blk_height_ch,
-                       ss_x,
-                       ss_y);
-        } else {
-            assert(hbd_fn_ptr);
-            svt_aom_apply_filtering_central_highbd_c(me_ctx,
-                                                     &input_picture_central,
-                                                     src_highbd,
-                                                     org_accum,
-                                                     org_count,
-                                                     blk_width_ch,
-                                                     blk_height_ch,
-                                                     ss_x,
-                                                     ss_y);
-            hbd_fn_ptr(me_ctx,
-                       &input_picture_central,
-                       src_highbd,
-                       ref_accum,
-                       ref_count,
-                       blk_width_ch,
-                       blk_height_ch,
-                       ss_x,
-                       ss_y);
-        }
+        ref_func_(me_ctx,
+                  &input_picture_central,
+                  src,
+                  ref_accum,
+                  ref_count,
+                  blk_width_ch,
+                  blk_height_ch,
+                  ss_x,
+                  ss_y);
+        test_func_(me_ctx,
+                   &input_picture_central,
+                   src,
+                   test_accum,
+                   test_count,
+                   blk_width_ch,
+                   blk_height_ch,
+                   ss_x,
+                   ss_y);
 
         for (int color_channel = 0; color_channel < 3; ++color_channel) {
-            EXPECT_EQ(memcmp(org_accum[color_channel],
-                             ref_accum[color_channel],
+            EXPECT_EQ(memcmp(ref_accum[color_channel],
+                             test_accum[color_channel],
                              BW * BH * sizeof(uint32_t)),
                       0);
 
-            EXPECT_EQ(memcmp(org_count[color_channel],
-                             ref_count[color_channel],
+            EXPECT_EQ(memcmp(ref_count[color_channel],
+                             test_count[color_channel],
                              BW * BH * sizeof(uint16_t)),
                       0);
         }
     }
 };
 
+typedef void (*apply_filtering_central_fn)(
+    struct MeContext *me_ctx, EbPictureBufferDesc *input_picture_ptr_central,
+    EbByte *src, uint32_t **accum, uint16_t **count, uint16_t blk_width,
+    uint16_t blk_height, uint32_t ss_x, uint32_t ss_y);
+
+class TemporalFilterTestApplyFilteringCentralLbd
+    : public TemporalFilterTestApplyFilteringCentral<
+          uint8_t, apply_filtering_central_fn> {
+  public:
+    TemporalFilterTestApplyFilteringCentralLbd() {
+        ref_func_ = svt_aom_apply_filtering_central_c;
+        test_func_ = GetParam();
+    }
+};
+
+TEST_P(TemporalFilterTestApplyFilteringCentralLbd, RunTest) {
+    for (int i = 0; i < 100; ++i) {
+        RunTest();
+    }
+}
+
 #ifdef ARCH_X86_64
+INSTANTIATE_TEST_SUITE_P(
+    SSE4_1, TemporalFilterTestApplyFilteringCentralLbd,
+    ::testing::Values(svt_aom_apply_filtering_central_sse4_1));
 
-TEST_F(TemporalFilterTestApplyFilteringCentral, test_lbd_sse4_1) {
+INSTANTIATE_TEST_SUITE_P(
+    AVX2, TemporalFilterTestApplyFilteringCentralLbd,
+    ::testing::Values(svt_aom_apply_filtering_central_avx2));
+#endif  // ARCH_X86_64
+
+#ifdef ARCH_AARCH64
+INSTANTIATE_TEST_SUITE_P(
+    NEON, TemporalFilterTestApplyFilteringCentralLbd,
+    ::testing::Values(svt_aom_apply_filtering_central_neon));
+#endif  // ARCH_AARCH64
+
+typedef void (*apply_filtering_central_highbd_fn)(
+    struct MeContext *me_ctx, EbPictureBufferDesc *input_picture_ptr_central,
+    uint16_t **src_16bit, uint32_t **accum, uint16_t **count,
+    uint16_t blk_width, uint16_t blk_height, uint32_t ss_x, uint32_t ss_y);
+
+class TemporalFilterTestApplyFilteringCentralHbd
+    : public TemporalFilterTestApplyFilteringCentral<
+          uint16_t, apply_filtering_central_highbd_fn> {
+  public:
+    TemporalFilterTestApplyFilteringCentralHbd() {
+        ref_func_ = svt_aom_apply_filtering_central_highbd_c;
+        test_func_ = GetParam();
+    }
+};
+
+TEST_P(TemporalFilterTestApplyFilteringCentralHbd, RunTest) {
     for (int i = 0; i < 100; ++i) {
-        RunTest(false, svt_aom_apply_filtering_central_sse4_1, NULL);
+        RunTest();
     }
 }
 
-TEST_F(TemporalFilterTestApplyFilteringCentral, test_lbd_avx2) {
-    for (int i = 0; i < 100; ++i) {
-        RunTest(false, svt_aom_apply_filtering_central_avx2, NULL);
-    }
-}
+#ifdef ARCH_X86_64
+INSTANTIATE_TEST_SUITE_P(
+    SSE4_1, TemporalFilterTestApplyFilteringCentralHbd,
+    ::testing::Values(svt_aom_apply_filtering_central_highbd_sse4_1));
 
-TEST_F(TemporalFilterTestApplyFilteringCentral, test_hbd_sse4_1) {
-    for (int i = 0; i < 100; ++i) {
-        RunTest(true, NULL, svt_aom_apply_filtering_central_highbd_sse4_1);
-    }
-}
+INSTANTIATE_TEST_SUITE_P(
+    AVX2, TemporalFilterTestApplyFilteringCentralHbd,
+    ::testing::Values(svt_aom_apply_filtering_central_highbd_avx2));
+#endif  // ARCH_X86_64
 
-TEST_F(TemporalFilterTestApplyFilteringCentral, test_hbd_avx2) {
-    for (int i = 0; i < 100; ++i) {
-        RunTest(true, NULL, svt_aom_apply_filtering_central_highbd_avx2);
-    }
-}
+#ifdef ARCH_AARCH64
+INSTANTIATE_TEST_SUITE_P(
+    NEON, TemporalFilterTestApplyFilteringCentralHbd,
+    ::testing::Values(svt_aom_apply_filtering_central_highbd_neon));
+#endif  // ARCH_AARCH64
+
+#ifdef ARCH_X86_64
 
 int32_t estimate_noise_fp16_c_wrapper(const uint16_t *src, int width,
                                       int height, int stride, int bd) {
@@ -1340,21 +1327,9 @@ int32_t estimate_noise_fp16_avx2_wrapper(const uint16_t *src, int width,
         (const uint8_t *)src, width, height, stride);
 }
 
-#endif
+#endif  // ARCH_X86_64
 
 #ifdef ARCH_AARCH64
-
-TEST_F(TemporalFilterTestApplyFilteringCentral, test_lbd_neon) {
-    for (int i = 0; i < 100; ++i) {
-        RunTest(false, svt_aom_apply_filtering_central_neon, NULL);
-    }
-}
-
-TEST_F(TemporalFilterTestApplyFilteringCentral, test_hbd_neon) {
-    for (int i = 0; i < 100; ++i) {
-        RunTest(true, NULL, svt_aom_apply_filtering_central_highbd_neon);
-    }
-}
 
 int32_t estimate_noise_fp16_c_wrapper(const uint16_t *src, int width,
                                       int height, int stride, int bd) {
@@ -1435,10 +1410,17 @@ TEST_P(EstimateNoiseTestFP, fixed_point) {
     RunTest();
 }
 
+using EstimateNoiseTestFPHbd = EstimateNoiseTestFP;
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(EstimateNoiseTestFPHbd);
+
+TEST_P(EstimateNoiseTestFPHbd, fixed_point) {
+    RunTest();
+}
+
 #ifdef ARCH_X86_64
 
 INSTANTIATE_TEST_SUITE_P(
-    AVX2_lbd, EstimateNoiseTestFP,
+    AVX2, EstimateNoiseTestFP,
     ::testing::Combine(::testing::Values(estimate_noise_fp16_c_wrapper),
                        ::testing::Values(estimate_noise_fp16_avx2_wrapper),
                        ::testing::Values(3840, 1920, 1280, 800, 640, 360),
@@ -1446,7 +1428,7 @@ INSTANTIATE_TEST_SUITE_P(
                        ::testing::Values(8)));
 
 INSTANTIATE_TEST_SUITE_P(
-    AVX2_hbd, EstimateNoiseTestFP,
+    AVX2, EstimateNoiseTestFPHbd,
     ::testing::Combine(::testing::Values(svt_estimate_noise_highbd_fp16_c),
                        ::testing::Values(svt_estimate_noise_highbd_fp16_avx2),
                        ::testing::Values(3840, 1920, 1280, 800, 640, 360),
@@ -1458,7 +1440,7 @@ INSTANTIATE_TEST_SUITE_P(
 #ifdef ARCH_AARCH64
 
 INSTANTIATE_TEST_SUITE_P(
-    NEON_lbd, EstimateNoiseTestFP,
+    NEON, EstimateNoiseTestFP,
     ::testing::Combine(::testing::Values(estimate_noise_fp16_c_wrapper),
                        ::testing::Values(estimate_noise_fp16_neon_wrapper),
                        ::testing::Values(3840, 1920, 1280, 800, 640, 360),
