@@ -990,43 +990,62 @@ INSTANTIATE_TEST_SUITE_P(AVX2, QuantizeQmHbdTest,
 #endif  // HAS_AVX2
 #endif  // ARCH_X86_64
 
-TEST(ComputeCulLevel, ComputeCulLevelIntrinsic) {
-    SVTRandom rnd(0, (1 << 10) - 1);
-    const int max_size = 100 * 100;
-    // scan[] is a set of indexes for quant_coeff[]
-    int16_t scan[max_size];
-    int32_t quant_coeff[max_size];
-    uint16_t eob_ref, eob_mod;
+using ComputeCulLevelFunc = uint8_t (*)(const int16_t *const scan,
+                                        const int32_t *const quant_coeff,
+                                        uint16_t *eob);
 
-    scan[0] = 0;
+class ComputeCulLevelTest
+    : public ::testing::TestWithParam<ComputeCulLevelFunc> {
+  public:
+    ComputeCulLevelTest() : test_func_(GetParam()) {
+    }
 
-    for (int test = 0; test < 1000; test++) {
-        // Every 50 iteration randomize buffers
-        if (!(test % 50))
-            for (uint32_t i = 0; i < max_size; i++) {
-                quant_coeff[i] = rnd.random();
-                if (i != 0)
-                    scan[i] = rnd.random() % max_size;
-            }
+    void test_match() {
+        SVTRandom rnd(0, (1 << 10) - 1);
+        const int max_size = 100 * 100;
+        // scan[] is a set of indexes for quant_coeff[]
+        int16_t scan[max_size];
+        int32_t quant_coeff[max_size];
+        uint16_t eob_ref, eob_test;
 
-        eob_ref = eob_mod = rnd.random() % max_size;
+        scan[0] = 0;
 
-        int32_t ref = svt_av1_compute_cul_level_c(scan, quant_coeff, &eob_ref);
+        for (int test = 0; test < 1000; test++) {
+            // Every 50 iteration randomize buffers
+            if (!(test % 50))
+                for (uint32_t i = 0; i < max_size; i++) {
+                    quant_coeff[i] = rnd.random();
+                    if (i != 0)
+                        scan[i] = rnd.random() % max_size;
+                }
+
+            eob_ref = eob_test = rnd.random() % max_size;
+
+            int32_t ref_res =
+                svt_av1_compute_cul_level_c(scan, quant_coeff, &eob_ref);
+
+            int32_t test_res = test_func_(scan, quant_coeff, &eob_test);
+
+            EXPECT_EQ(ref_res, test_res);
+            EXPECT_EQ(eob_ref, eob_test);
+        }
+    }
+
+  private:
+    ComputeCulLevelFunc test_func_;
+};
+
+TEST_P(ComputeCulLevelTest, test_match) {
+    test_match();
+}
 
 #ifdef ARCH_X86_64
-#if HAS_AVX2
-        int32_t mod =
-            svt_av1_compute_cul_level_avx2(scan, quant_coeff, &eob_mod);
-#endif  // HAS_AVX2
+INSTANTIATE_TEST_SUITE_P(AVX2, ComputeCulLevelTest,
+                         ::testing::Values(svt_av1_compute_cul_level_avx2));
 #endif  // ARCH_X86_64
 
 #ifdef ARCH_AARCH64
-        int32_t mod =
-            svt_av1_compute_cul_level_neon(scan, quant_coeff, &eob_mod);
+INSTANTIATE_TEST_SUITE_P(NEON, ComputeCulLevelTest,
+                         ::testing::Values(svt_av1_compute_cul_level_neon));
 #endif  // ARCH_AARCH64
-
-        EXPECT_TRUE(ref == mod);
-        EXPECT_TRUE(eob_ref == eob_mod);
-    }
-}
 }  // namespace
