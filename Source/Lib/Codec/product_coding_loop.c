@@ -9994,10 +9994,8 @@ static void init_block_data(PictureControlSet *pcs, ModeDecisionContext *ctx, co
     blk_ptr->mds_idx                  = blk_idx_mds;
     blk_ptr->split_flag               = blk_split_flag; //mdc indicates smallest or non valid CUs with split flag=
     blk_ptr->qindex                   = ctx->qp_index;
-#if !FIX_PART_NEIGH_UPDATE
     blk_ptr->left_neighbor_partition  = INVALID_NEIGHBOR_DATA;
     blk_ptr->above_neighbor_partition = INVALID_NEIGHBOR_DATA;
-#endif
     //  MD palette info buffer
     if (svt_av1_allow_palette(pcs->ppcs->palette_level, blk_geom->bsize)) {
         if (blk_ptr->palette_mem == 0) {
@@ -10189,11 +10187,7 @@ static void process_block_light_pd0(SequenceControlSet *scs, PictureControlSet *
                                     uint32_t blk_idx_mds, uint32_t *next_non_skip_blk_idx_mds, Bool *md_early_exit_sq) {
     ctx->blk_geom      = get_blk_geom_mds(blk_idx_mds);
     BlkStruct *blk_ptr = ctx->blk_ptr = &ctx->md_blk_arr_nsq[blk_idx_mds];
-#if FIX_PART_NEIGH_UPDATE
-    // Neighbour partition array is not updated in PD0, so set neighbour info to invalid.
-    blk_ptr->left_neighbor_partition = INVALID_NEIGHBOR_DATA;
-    blk_ptr->above_neighbor_partition = INVALID_NEIGHBOR_DATA;
-#endif
+
     init_block_data(pcs, ctx, blk_split_flag, blk_idx_mds);
     // Check current depth cost; if larger than parent, exit early
     check_curr_to_parent_cost_light_pd0(scs, pcs, ctx, next_non_skip_blk_idx_mds, md_early_exit_sq);
@@ -10228,11 +10222,7 @@ static void process_block_light_pd1(PictureControlSet *pcs, ModeDecisionContext 
                                     uint32_t sb_addr, uint32_t blk_idx_mds) {
     ctx->blk_geom = get_blk_geom_mds(blk_idx_mds);
     ctx->blk_ptr  = &ctx->md_blk_arr_nsq[blk_idx_mds];
-#if FIX_PART_NEIGH_UPDATE
-    // LPD1 assumes a fixed partition structure, so partition neighbour arrays (blk_ptr->left_neighbor_partition and
-    // blk_ptr->above_neighbor_partition) are not updated, and the neighbour arrays will not be accessed, since the
-    // partition rate is not needed (i.e. no calls to svt_aom_partition_rate_cost).
-#endif
+
     init_block_data(pcs,
                     ctx,
                     FALSE, // blk_split_flag, - pred depth only; NSQ off
@@ -10581,15 +10571,15 @@ void svt_aom_mode_decision_sb_light_pd1(SequenceControlSet *scs, PictureControlS
             // have NSQ or multiple depths enabled
             struct PartitionContext partition;
             partition.above = partition_context_lookup[ctx->blk_geom->bsize].above;
-            partition.left = partition_context_lookup[ctx->blk_geom->bsize].left;
+            partition.left  = partition_context_lookup[ctx->blk_geom->bsize].left;
 
             svt_aom_neighbor_array_unit_mode_write(ctx->leaf_partition_na,
-                (uint8_t*)(&partition),
-                ctx->blk_org_x,
-                ctx->blk_org_y,
-                ctx->blk_geom->bwidth,
-                ctx->blk_geom->bheight,
-                NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
+                                                   (uint8_t *)(&partition),
+                                                   ctx->blk_org_x,
+                                                   ctx->blk_org_y,
+                                                   ctx->blk_geom->bwidth,
+                                                   ctx->blk_geom->bheight,
+                                                   NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
 #endif
             // If TXS enabled at picture level, there are necessary context updates
             if (pcs->ppcs->frm_hdr.tx_mode == TX_MODE_SELECT) {
@@ -10617,36 +10607,7 @@ void svt_aom_mode_decision_sb_light_pd1(SequenceControlSet *scs, PictureControlS
         }
     }
 }
-#if FIX_PART_NEIGH_UPDATE
-/*
-Update the above and left neighbour partition for the square block. This is used in deriving the partition rate
-in svt_aom_partition_rate_cost.  The partition is always signaled with respect to the top left corner of the square
-block, so only derive the neighbours for the square blocks (even if they will not be tested).  Only square blocks
-are passed to svt_aom_partition_rate_cost.
-*/
-static void update_part_neighs(ModeDecisionContext* ctx) {
 
-    assert(ctx->blk_geom->shape == PART_N);
-    uint32_t           blk_org_x = ctx->blk_org_x;
-    uint32_t           blk_org_y = ctx->blk_org_y;
-    NeighborArrayUnit* leaf_partition_na = ctx->leaf_partition_na;
-    uint32_t           partition_left_neighbor_index = get_neighbor_array_unit_left_index(leaf_partition_na, blk_org_y);
-    uint32_t           partition_above_neighbor_index = get_neighbor_array_unit_top_index(leaf_partition_na, blk_org_x);
-
-    // Generate Partition context
-    ctx->blk_ptr->above_neighbor_partition =
-        (((PartitionContext*)leaf_partition_na->top_array)[partition_above_neighbor_index].above ==
-            (char)INVALID_NEIGHBOR_DATA)
-        ? 0
-        : ((PartitionContext*)leaf_partition_na->top_array)[partition_above_neighbor_index].above;
-
-    ctx->blk_ptr->left_neighbor_partition =
-        (((PartitionContext*)leaf_partition_na->left_array)[partition_left_neighbor_index].left ==
-            (char)INVALID_NEIGHBOR_DATA)
-        ? 0
-        : ((PartitionContext*)leaf_partition_na->left_array)[partition_left_neighbor_index].left;
-}
-#endif
 /*
  * Loop over all passed blocks in an SB and perform mode decision for each block,
  * then output the optimal mode distribution/partitioning for the given SB.
@@ -10699,11 +10660,6 @@ void svt_aom_mode_decision_sb(SequenceControlSet *scs, PictureControlSet *pcs, M
         assert(base_blk_idx_mds == ctx->blk_geom->sqi_mds);
         init_block_data(pcs, ctx, blk_split_flag, base_blk_idx_mds);
 
-#if FIX_PART_NEIGH_UPDATE
-        // Update the left and above partition neighbours for the square block, which are used to derive
-        // the partition rate
-        update_part_neighs(ctx);
-#endif
         // Use more conservative NSQ settings in the presence of a high energy area
         if (!ctx->md_disallow_nsq_search && ctx->nsq_search_ctrls.high_energy_weight &&
             ctx->detect_high_freq_ctrls.enabled)

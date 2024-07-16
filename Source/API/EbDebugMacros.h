@@ -83,11 +83,11 @@ extern "C" {
 #define TUNE_LD                                   1 // TUNE LD
 #define OPT_DLF_THS                               1 // Adopt 1080p THs for 4k+ for disable_dlf_th
 #define FIX_PART_RATE_UPDATE                      1 // Fix how rate is derived for partition rate table
-#define FIX_PART_NEIGH_UPDATE                     0 // Fix partition neighbour updates
 #define FIX_PART_INCOMP_RATE                      1 // Do not get partition rate for blocks outside the picture and don't consider blocks outside the picture
 #define FIX_SB128_ME_INFO_DERIVATION              1 // Fix sb128 ME info derivation
 #define FIX_PART_CTX                              1 // Always update partition context neighbour array, including in LPD1
 #define FIX_INCOMP_PART_CDF                       1 // Fix uninitialized rate from partition cdf with all 0 entries
+#define FIX_AVX2_HADAMARD                         1 // Fix dynamic range of 32x32 hadamard tx for avx2
 
 //FOR DEBUGGING - Do not remove
 #define OPT_LD_LATENCY2         1 // Latency optimization for low delay - to keep the Macro for backwards testing until 3.0

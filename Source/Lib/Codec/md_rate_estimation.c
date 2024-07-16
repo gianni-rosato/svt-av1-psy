@@ -132,7 +132,7 @@ void svt_aom_estimate_syntax_rate(MdRateEstimationContext *md_rate_est_ctx, Bool
         // Vert alike rate (128x128 and all other blocks)
         partition_gather_vert_alike(cdf, fc->partition_cdf[i], BLOCK_8X8);
         // inverse map only needs 2 entries b/c cdf only has 2 active entries
-        static const int bot_inv_map[2] = { PARTITION_HORZ, PARTITION_SPLIT };
+        static const int bot_inv_map[2] = {PARTITION_HORZ, PARTITION_SPLIT};
         svt_aom_get_syntax_rate_from_cdf(md_rate_est_ctx->partition_vert_alike_fac_bits[i], cdf, bot_inv_map);
 
         partition_gather_vert_alike(cdf, fc->partition_cdf[i], BLOCK_128X128);

@@ -1670,13 +1670,11 @@ void svt_aom_full_cost(PictureControlSet *pcs, ModeDecisionContext *ctx, struct 
  ************************************************************/
 void svt_aom_coding_loop_context_generation(PictureControlSet *pcs, ModeDecisionContext *ctx) {
     BlkStruct         *blk_ptr                       = ctx->blk_ptr;
-#if !FIX_PART_NEIGH_UPDATE
     uint32_t           blk_org_x                     = ctx->blk_org_x;
     uint32_t           blk_org_y                     = ctx->blk_org_y;
     NeighborArrayUnit *leaf_partition_na             = ctx->leaf_partition_na;
     uint32_t           partition_left_neighbor_index = get_neighbor_array_unit_left_index(leaf_partition_na, blk_org_y);
     uint32_t           partition_above_neighbor_index = get_neighbor_array_unit_top_index(leaf_partition_na, blk_org_x);
-#endif
     MacroBlockD       *xd                             = blk_ptr->av1xd;
     if (!ctx->shut_fast_rate) {
         if (pcs->slice_type == I_SLICE) {
@@ -1685,7 +1683,6 @@ void svt_aom_coding_loop_context_generation(PictureControlSet *pcs, ModeDecision
         ctx->is_inter_ctx  = svt_av1_get_intra_inter_context(xd);
         ctx->skip_mode_ctx = av1_get_skip_mode_context(xd);
     }
-#if !FIX_PART_NEIGH_UPDATE
     // Generate Partition context
     blk_ptr->above_neighbor_partition =
         (((PartitionContext *)leaf_partition_na->top_array)[partition_above_neighbor_index].above ==
@@ -1698,7 +1695,6 @@ void svt_aom_coding_loop_context_generation(PictureControlSet *pcs, ModeDecision
          (char)INVALID_NEIGHBOR_DATA)
         ? 0
         : ((PartitionContext *)leaf_partition_na->left_array)[partition_left_neighbor_index].left;
-#endif
 
     // Collect Neighbor ref cout
     if (pcs->slice_type != I_SLICE || pcs->ppcs->frm_hdr.allow_intrabc)

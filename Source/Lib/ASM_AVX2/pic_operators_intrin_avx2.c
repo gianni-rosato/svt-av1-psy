@@ -2389,6 +2389,14 @@ void svt_unpack_and_2bcompress_avx2(uint16_t *in16b_buffer, uint32_t in16b_strid
     }
 }
 
+#if FIX_AVX2_HADAMARD
+static INLINE void sign_extend_16bit_to_32bit_avx2(__m256i in, __m256i zero, __m256i *out_lo, __m256i *out_hi) {
+    const __m256i sign_bits = _mm256_cmpgt_epi16(zero, in);
+    *out_lo                 = _mm256_unpacklo_epi16(in, sign_bits);
+    *out_hi                 = _mm256_unpackhi_epi16(in, sign_bits);
+}
+#endif
+
 static INLINE void store_tran_low(__m256i a, int32_t *b) {
     const __m256i one  = _mm256_set1_epi16(1);
     const __m256i a_hi = _mm256_mulhi_epi16(a, one);
@@ -2560,6 +2568,12 @@ void svt_aom_hadamard_32x32_avx2(const int16_t *src_diff, ptrdiff_t src_stride, 
     DECLARE_ALIGNED(32, int16_t, temp_coeff[32 * 32]);
     int16_t *t_coeff = temp_coeff;
     int      idx;
+#if FIX_AVX2_HADAMARD
+    __m256i       coeff0_lo, coeff1_lo, coeff2_lo, coeff3_lo, b0_lo, b1_lo, b2_lo, b3_lo;
+    __m256i       coeff0_hi, coeff1_hi, coeff2_hi, coeff3_hi, b0_hi, b1_hi, b2_hi, b3_hi;
+    __m256i       b0, b1, b2, b3;
+    const __m256i zero = _mm256_setzero_si256();
+#endif
     for (idx = 0; idx < 4; ++idx) {
         // src_diff: 9 bit, dynamic range [-255, 255]
         const int16_t *src_ptr = src_diff + (idx >> 1) * 16 * src_stride + (idx & 0x01) * 16;
@@ -2572,6 +2586,45 @@ void svt_aom_hadamard_32x32_avx2(const int16_t *src_diff, ptrdiff_t src_stride, 
         const __m256i coeff2 = _mm256_loadu_si256((const __m256i *)(t_coeff + 512));
         const __m256i coeff3 = _mm256_loadu_si256((const __m256i *)(t_coeff + 768));
 
+#if FIX_AVX2_HADAMARD
+        // Sign extend 16 bit to 32 bit.
+        sign_extend_16bit_to_32bit_avx2(coeff0, zero, &coeff0_lo, &coeff0_hi);
+        sign_extend_16bit_to_32bit_avx2(coeff1, zero, &coeff1_lo, &coeff1_hi);
+        sign_extend_16bit_to_32bit_avx2(coeff2, zero, &coeff2_lo, &coeff2_hi);
+        sign_extend_16bit_to_32bit_avx2(coeff3, zero, &coeff3_lo, &coeff3_hi);
+
+        b0_lo = _mm256_add_epi32(coeff0_lo, coeff1_lo);
+        b0_hi = _mm256_add_epi32(coeff0_hi, coeff1_hi);
+
+        b1_lo = _mm256_sub_epi32(coeff0_lo, coeff1_lo);
+        b1_hi = _mm256_sub_epi32(coeff0_hi, coeff1_hi);
+
+        b2_lo = _mm256_add_epi32(coeff2_lo, coeff3_lo);
+        b2_hi = _mm256_add_epi32(coeff2_hi, coeff3_hi);
+
+        b3_lo = _mm256_sub_epi32(coeff2_lo, coeff3_lo);
+        b3_hi = _mm256_sub_epi32(coeff2_hi, coeff3_hi);
+
+        b0_lo = _mm256_srai_epi32(b0_lo, 2);
+        b1_lo = _mm256_srai_epi32(b1_lo, 2);
+        b2_lo = _mm256_srai_epi32(b2_lo, 2);
+        b3_lo = _mm256_srai_epi32(b3_lo, 2);
+
+        b0_hi = _mm256_srai_epi32(b0_hi, 2);
+        b1_hi = _mm256_srai_epi32(b1_hi, 2);
+        b2_hi = _mm256_srai_epi32(b2_hi, 2);
+        b3_hi = _mm256_srai_epi32(b3_hi, 2);
+
+        b0 = _mm256_packs_epi32(b0_lo, b0_hi);
+        b1 = _mm256_packs_epi32(b1_lo, b1_hi);
+        b2 = _mm256_packs_epi32(b2_lo, b2_hi);
+        b3 = _mm256_packs_epi32(b3_lo, b3_hi);
+
+        store_tran_low(_mm256_add_epi16(b0, b2), coeff);
+        store_tran_low(_mm256_add_epi16(b1, b3), coeff + 256);
+        store_tran_low(_mm256_sub_epi16(b0, b2), coeff + 512);
+        store_tran_low(_mm256_sub_epi16(b1, b3), coeff + 768);
+#else
         __m256i b0 = _mm256_add_epi16(coeff0, coeff1);
         __m256i b1 = _mm256_sub_epi16(coeff0, coeff1);
         __m256i b2 = _mm256_add_epi16(coeff2, coeff3);
@@ -2586,6 +2639,7 @@ void svt_aom_hadamard_32x32_avx2(const int16_t *src_diff, ptrdiff_t src_stride, 
         store_tran_low(_mm256_add_epi16(b1, b3), coeff + 256);
         store_tran_low(_mm256_sub_epi16(b0, b2), coeff + 512);
         store_tran_low(_mm256_sub_epi16(b1, b3), coeff + 768);
+#endif
 
         coeff += 16;
         t_coeff += 16;

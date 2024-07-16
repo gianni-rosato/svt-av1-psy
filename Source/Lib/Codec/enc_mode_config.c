@@ -1653,8 +1653,8 @@ static void dlf_level_modulation(PictureControlSet *pcs, uint8_t *default_dlf_le
 #endif
 #if OPT_FAST_DECODE_LVLS
 #if OPT_DLF
-static uint8_t get_dlf_level(PictureControlSet* pcs, EncMode enc_mode, uint8_t is_not_last_layer, Bool fast_decode,
-    EbInputResolution resolution, bool rtc_tune, uint8_t sc_class1, int is_base) {
+static uint8_t get_dlf_level(PictureControlSet *pcs, EncMode enc_mode, uint8_t is_not_last_layer, int8_t fast_decode,
+                             EbInputResolution resolution, bool rtc_tune, uint8_t sc_class1, int is_base) {
 #else
 static uint8_t get_dlf_level(EncMode enc_mode, uint8_t is_not_last_layer, int8_t fast_decode,
                              EbInputResolution resolution, bool rtc_tune, uint8_t sc_class1, int qp, int is_base) {
@@ -1676,7 +1676,6 @@ static uint8_t get_dlf_level(EncMode enc_mode, uint8_t is_not_last_layer, Bool f
 #endif
     if (rtc_tune) {
         if (sc_class1) {
-
 #if TUNE_LD
             if (enc_mode <= ENC_M8)
                 dlf_level = resolution <= INPUT_SIZE_360p_RANGE ? 3 : (is_not_last_layer ? 3 : 5);
@@ -7409,7 +7408,7 @@ void svt_aom_sig_deriv_enc_dec_common(SequenceControlSet *scs, PictureControlSet
                 depth_level = pcs->slice_type == I_SLICE ? 4 : 0;
         } else
 #endif
-        if (enc_mode <= ENC_M5)
+            if (enc_mode <= ENC_M5)
             depth_level = pcs->slice_type == I_SLICE ? 2 : 3;
         else if (enc_mode <= ENC_M9)
             depth_level = 4;
@@ -7990,7 +7989,7 @@ void svt_aom_sig_deriv_enc_dec_light_pd1(PictureControlSet *pcs, ModeDecisionCon
     */
     if (rtc_tune) {
 #if TUNE_LD
-        if(pcs->enc_mode <= ENC_M10)
+        if (pcs->enc_mode <= ENC_M10)
 #else
         if ((!sc_class1 && pcs->enc_mode <= ENC_M11) || (sc_class1 && pcs->enc_mode <= ENC_M10))
 #endif
@@ -8674,27 +8673,21 @@ static void set_pic_lpd0_lvl(PictureControlSet *pcs, EncMode enc_mode) {
             if (enc_mode <= ENC_M11) {
                 if (coeff_lvl == LOW_LVL) {
                     pcs->pic_lpd0_lvl = 3;
-                }
-                else if (coeff_lvl == HIGH_LVL) {
+                } else if (coeff_lvl == HIGH_LVL) {
                     pcs->pic_lpd0_lvl = (is_base || transition_present) ? 6 : 7;
-                }
-                else { // Regular
+                } else { // Regular
                     pcs->pic_lpd0_lvl = (is_base || transition_present) ? 5 : 7;
                 }
-            }
-            else {
+            } else {
                 if (coeff_lvl == LOW_LVL) {
                     pcs->pic_lpd0_lvl = 4;
-                }
-                else if (coeff_lvl == HIGH_LVL) {
+                } else if (coeff_lvl == HIGH_LVL) {
                     pcs->pic_lpd0_lvl = is_islice ? 6 : 7;
-                }
-                else { // Regular
+                } else { // Regular
                     pcs->pic_lpd0_lvl = is_islice ? 5 : 7;
                 }
             }
-        }
-        else {
+        } else {
             if (enc_mode <= ENC_M8) {
                 if (input_resolution <= INPUT_SIZE_360p_RANGE)
                     pcs->pic_lpd0_lvl = 3;
@@ -8706,8 +8699,7 @@ static void set_pic_lpd0_lvl(PictureControlSet *pcs, EncMode enc_mode) {
                     else
                         pcs->pic_lpd0_lvl = (is_base || transition_present) ? 3 : 5;
                 }
-            }
-            else if (enc_mode <= ENC_M10) {
+            } else if (enc_mode <= ENC_M10) {
                 if (input_resolution <= INPUT_SIZE_360p_RANGE)
                     pcs->pic_lpd0_lvl = 3;
                 else if (input_resolution <= INPUT_SIZE_480p_RANGE)
@@ -8720,8 +8712,7 @@ static void set_pic_lpd0_lvl(PictureControlSet *pcs, EncMode enc_mode) {
                     else
                         pcs->pic_lpd0_lvl = (is_base || transition_present) ? 3 : 5;
                 }
-            }
-            else if (enc_mode <= ENC_M11) {
+            } else if (enc_mode <= ENC_M11) {
                 if (input_resolution <= INPUT_SIZE_360p_RANGE)
                     pcs->pic_lpd0_lvl = 3;
                 else if (input_resolution <= INPUT_SIZE_480p_RANGE)
@@ -8734,8 +8725,7 @@ static void set_pic_lpd0_lvl(PictureControlSet *pcs, EncMode enc_mode) {
                     else
                         pcs->pic_lpd0_lvl = (is_base || transition_present) ? 5 : 6;
                 }
-            }
-            else {
+            } else {
                 if (input_resolution <= INPUT_SIZE_360p_RANGE)
                     pcs->pic_lpd0_lvl = 5;
                 else if (input_resolution <= INPUT_SIZE_480p_RANGE)
@@ -8752,15 +8742,12 @@ static void set_pic_lpd0_lvl(PictureControlSet *pcs, EncMode enc_mode) {
         if (enc_mode <= ENC_M9) {
             if (input_resolution <= INPUT_SIZE_360p_RANGE) {
                 pcs->pic_lpd0_lvl = 2;
-            }
-            else {
+            } else {
                 if (coeff_lvl == LOW_LVL) {
                     pcs->pic_lpd0_lvl = 2;
-                }
-                else if (coeff_lvl == HIGH_LVL) {
+                } else if (coeff_lvl == HIGH_LVL) {
                     pcs->pic_lpd0_lvl = (is_base || transition_present) ? 3 : 5;
-                }
-                else { // Regular
+                } else { // Regular
                     pcs->pic_lpd0_lvl = 3;
                 }
             }
@@ -8795,7 +8782,6 @@ static void set_pic_lpd0_lvl(PictureControlSet *pcs, EncMode enc_mode) {
             pcs->pic_lpd0_lvl = is_islice ? 5 : 8;
 #endif
     } else {
-
         if (enc_mode <= ENC_M3)
             pcs->pic_lpd0_lvl = 0;
 #if TUNE_M7 // pic_lpd0_lvl
@@ -9209,10 +9195,9 @@ void svt_aom_sig_deriv_mode_decision_config(SequenceControlSet *scs, PictureCont
                 pcs->ppcs->use_accurate_part_ctx = TRUE;
             else
                 pcs->ppcs->use_accurate_part_ctx = FALSE;
-        }
-        else
+        } else
 #endif
-        if (pcs->enc_mode <= ENC_M8)
+            if (pcs->enc_mode <= ENC_M8)
 #else
         if (pcs->enc_mode <= ENC_M9)
 #endif

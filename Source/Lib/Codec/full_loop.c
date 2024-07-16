@@ -2406,7 +2406,7 @@ static void compute_depth_costs(ModeDecisionContext *ctx, PictureParentControlSe
                                 uint32_t above_depth_mds, uint32_t step, uint64_t *above_depth_cost,
                                 uint64_t *curr_depth_cost) {
 #if FIX_PART_INCOMP_RATE
-        /*
+    /*
     ___________
     |     |     |
     |blk0 |blk1 |
@@ -2472,7 +2472,6 @@ static void compute_depth_costs(ModeDecisionContext *ctx, PictureParentControlSe
                (ctx->cost_avail[curr_depth_blk1_mds] || !blk1_within_pic) &&
                (ctx->cost_avail[curr_depth_blk2_mds] || !blk2_within_pic) &&
                (ctx->cost_avail[curr_depth_blk3_mds] || !blk3_within_pic)) {
-
         // Get the cost of the available blocks
         uint64_t blk0_cost = ctx->cost_avail[curr_depth_blk0_mds] ? ctx->md_blk_arr_nsq[curr_depth_blk0_mds].cost : 0;
         uint64_t blk1_cost = ctx->cost_avail[curr_depth_blk1_mds] ? ctx->md_blk_arr_nsq[curr_depth_blk1_mds].cost : 0;
