@@ -155,8 +155,10 @@ static void mode_decision_update_neighbor_arrays(PictureControlSet *pcs, ModeDec
 
     uint16_t tile_idx = ctx->tile_index;
 
+#if !FIX_PART_CTX
     {
         if (!(ctx->pd_pass == PD_PASS_1 && ctx->pic_pred_depth_only)) {
+#endif
             struct PartitionContext partition;
             partition.above = partition_context_lookup[ctx->blk_geom->bsize].above;
             partition.left  = partition_context_lookup[ctx->blk_geom->bsize].left;
@@ -168,7 +170,9 @@ static void mode_decision_update_neighbor_arrays(PictureControlSet *pcs, ModeDec
                                                    bwdith,
                                                    bheight,
                                                    NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
+#if !FIX_PART_CTX
         }
+#endif
         if (ctx->rate_est_ctrls.update_skip_ctx_dc_sign_ctx) {
             uint16_t txb_count = ctx->blk_geom->txb_count[ctx->blk_ptr->tx_depth];
             for (uint8_t txb_itr = 0; txb_itr < txb_count; txb_itr++) {
@@ -225,7 +229,9 @@ static void mode_decision_update_neighbor_arrays(PictureControlSet *pcs, ModeDec
                 }
             }
         }
+#if !FIX_PART_CTX
     }
+#endif
     if (pcs->ppcs->frm_hdr.tx_mode == TX_MODE_SELECT) {
         uint8_t tx_size = tx_depth_to_tx_size[ctx->blk_ptr->tx_depth][ctx->blk_geom->bsize];
         uint8_t bw      = tx_size_wide[tx_size];
@@ -10570,6 +10576,21 @@ void svt_aom_mode_decision_sb_light_pd1(SequenceControlSet *scs, PictureControlS
         }
         // The current block is the last at a given d1 level; if so update d2 info
         if (ctx->avail_blk_flag[blk_idx_mds]) {
+#if FIX_PART_CTX
+            // Always update the partition context array because may be needed for other SBs which
+            // have NSQ or multiple depths enabled
+            struct PartitionContext partition;
+            partition.above = partition_context_lookup[ctx->blk_geom->bsize].above;
+            partition.left = partition_context_lookup[ctx->blk_geom->bsize].left;
+
+            svt_aom_neighbor_array_unit_mode_write(ctx->leaf_partition_na,
+                (uint8_t*)(&partition),
+                ctx->blk_org_x,
+                ctx->blk_org_y,
+                ctx->blk_geom->bwidth,
+                ctx->blk_geom->bheight,
+                NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
+#endif
             // If TXS enabled at picture level, there are necessary context updates
             if (pcs->ppcs->frm_hdr.tx_mode == TX_MODE_SELECT) {
                 uint8_t tx_size = tx_depth_to_tx_size[ctx->blk_ptr->tx_depth][ctx->blk_geom->bsize];

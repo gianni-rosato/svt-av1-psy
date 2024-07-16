@@ -84,18 +84,50 @@ void svt_aom_estimate_syntax_rate(MdRateEstimationContext *md_rate_est_ctx, Bool
 
 #if FIX_PART_RATE_UPDATE
         // Vert alike rate (128x128 and all other blocks)
-        partition_gather_vert_alike(cdf, fc->partition_cdf[i], BLOCK_8X8);
+        partition_gather_vert_alike(cdf, fc->partition_cdf[i], BLOCK_16X16);
         svt_aom_get_syntax_rate_from_cdf(md_rate_est_ctx->partition_vert_alike_fac_bits[i], cdf, NULL);
+#if FIX_INCOMP_PART_CDF
+        /* If the first entry of the cdf is 0, then svt_aom_get_syntax_rate_from_cdf will exit after deriving
+        the rate of the first entry.  In that case, the rate of the second entry would not be initialized, and
+        could cause a r2r. In this case, we set the second entry of the rate table to 6656 (cost of EC_MIN_PROB),
+        which is the value which would be set if svt_aom_get_syntax_rate_from_cdf did not exit after the first 0 entry. */
+        if (cdf[0] == 0)
+            md_rate_est_ctx->partition_vert_alike_fac_bits[i][1] = av1_cost_symbol(EC_MIN_PROB);
+#endif
 
         partition_gather_vert_alike(cdf, fc->partition_cdf[i], BLOCK_128X128);
         svt_aom_get_syntax_rate_from_cdf(md_rate_est_ctx->partition_vert_alike_128x128_fac_bits[i], cdf, NULL);
+#if FIX_INCOMP_PART_CDF
+        /* If the first entry of the cdf is 0, then svt_aom_get_syntax_rate_from_cdf will exit after deriving
+        the rate of the first entry.  In that case, the rate of the second entry would not be initialized, and
+        could cause a r2r. In this case, we set the second entry of the rate table to 6656 (cost of EC_MIN_PROB),
+        which is the value which would be set if svt_aom_get_syntax_rate_from_cdf did not exit after the first 0 entry. */
+        if (cdf[0] == 0)
+            md_rate_est_ctx->partition_vert_alike_128x128_fac_bits[i][1] = av1_cost_symbol(EC_MIN_PROB);
+#endif
 
         // Horz alike rate (128x128 and all other blocks)
-        partition_gather_horz_alike(cdf, fc->partition_cdf[i], BLOCK_8X8);
+        partition_gather_horz_alike(cdf, fc->partition_cdf[i], BLOCK_16X16);
         svt_aom_get_syntax_rate_from_cdf(md_rate_est_ctx->partition_horz_alike_fac_bits[i], cdf, NULL);
+#if FIX_INCOMP_PART_CDF
+        /* If the first entry of the cdf is 0, then svt_aom_get_syntax_rate_from_cdf will exit after deriving
+        the rate of the first entry.  In that case, the rate of the second entry would not be initialized, and
+        could cause a r2r. In this case, we set the second entry of the rate table to 6656 (cost of EC_MIN_PROB),
+        which is the value which would be set if svt_aom_get_syntax_rate_from_cdf did not exit after the first 0 entry. */
+        if (cdf[0] == 0)
+            md_rate_est_ctx->partition_horz_alike_fac_bits[i][1] = av1_cost_symbol(EC_MIN_PROB);
+#endif
 
         partition_gather_horz_alike(cdf, fc->partition_cdf[i], BLOCK_128X128);
         svt_aom_get_syntax_rate_from_cdf(md_rate_est_ctx->partition_horz_alike_128x128_fac_bits[i], cdf, NULL);
+#if FIX_INCOMP_PART_CDF
+        /* If the first entry of the cdf is 0, then svt_aom_get_syntax_rate_from_cdf will exit after deriving
+        the rate of the first entry.  In that case, the rate of the second entry would not be initialized, and
+        could cause a r2r. In this case, we set the second entry of the rate table to 6656 (cost of EC_MIN_PROB),
+        which is the value which would be set if svt_aom_get_syntax_rate_from_cdf did not exit after the first 0 entry. */
+        if (cdf[0] == 0)
+            md_rate_est_ctx->partition_horz_alike_128x128_fac_bits[i][1] = av1_cost_symbol(EC_MIN_PROB);
+#endif
 #else
         // Vert alike rate (128x128 and all other blocks)
         partition_gather_vert_alike(cdf, fc->partition_cdf[i], BLOCK_8X8);

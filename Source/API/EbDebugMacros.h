@@ -86,6 +86,8 @@ extern "C" {
 #define FIX_PART_NEIGH_UPDATE                     0 // Fix partition neighbour updates
 #define FIX_PART_INCOMP_RATE                      1 // Do not get partition rate for blocks outside the picture and don't consider blocks outside the picture
 #define FIX_SB128_ME_INFO_DERIVATION              1 // Fix sb128 ME info derivation
+#define FIX_PART_CTX                              1 // Always update partition context neighbour array, including in LPD1
+#define FIX_INCOMP_PART_CDF                       1 // Fix uninitialized rate from partition cdf with all 0 entries
 
 //FOR DEBUGGING - Do not remove
 #define OPT_LD_LATENCY2         1 // Latency optimization for low delay - to keep the Macro for backwards testing until 3.0
