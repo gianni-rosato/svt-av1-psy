@@ -81,6 +81,7 @@ set(arch_neutral_files
 
 set(multi_arch_files
     AdaptiveScanTest.cc
+    BlockErrorTest.cc
     CdefTest.cc
     CompoundUtilTest.cc
     DeblockTest.cc
