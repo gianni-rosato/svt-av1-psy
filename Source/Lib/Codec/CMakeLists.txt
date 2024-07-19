@@ -47,6 +47,7 @@ include_directories(${PROJECT_SOURCE_DIR}/Source/API/
     ${PROJECT_SOURCE_DIR}/Source/Lib/Codec/
     ${PROJECT_SOURCE_DIR}/Source/Lib/C_DEFAULT/
     ${PROJECT_SOURCE_DIR}/Source/Lib/ASM_NEON/
+    ${PROJECT_SOURCE_DIR}/Source/Lib/ASM_NEON_DOTPROD/
     ${PROJECT_SOURCE_DIR}/third_party/fastfeat/
     ${PROJECT_SOURCE_DIR}/third_party/cpuinfo/include/)
 else ()

@@ -61,6 +61,7 @@
 #define HAS_AVX512BW EB_CPU_FLAGS_AVX512BW
 #define HAS_AVX512VL EB_CPU_FLAGS_AVX512VL
 #define HAS_NEON EB_CPU_FLAGS_NEON
+#define HAS_NEON_DOTPROD EB_CPU_FLAGS_NEON_DOTPROD
 
 // coeff: 16 bits, dynamic range [-32640, 32640].
 // length: value range {16, 64, 256, 1024}.
@@ -287,20 +288,29 @@ EbCpuFlags svt_aom_get_cpu_flags_to_use() {
     if (((uintptr_t)NULL != (uintptr_t)avx2)   && (flags & HAS_AVX2))   ptr = avx2;               \
     SET_FUNCTIONS_AVX512(ptr, avx512)
 #elif defined ARCH_AARCH64
-#define SET_FUNCTIONS_AARCH64(ptr, c, neon) \
-    if (((uintptr_t)NULL != (uintptr_t)neon)   && (flags & HAS_NEON))   ptr = neon;
+
+#if HAVE_NEON_DOTPROD
+#define SET_FUNCTIONS_NEON_DOTPROD(ptr, neon_dotprod)                                             \
+    if (((uintptr_t)NULL != (uintptr_t)neon_dotprod) && (flags & HAS_NEON_DOTPROD)) ptr = neon_dotprod;
+#else  // HAVE_NEON_DOTPROD
+#define SET_FUNCTIONS_NEON_DOTPROD(ptr, neon_dotprod)
+#endif  // HAVE_NEON_DOTPROD
+
+#define SET_FUNCTIONS_AARCH64(ptr, c, neon, neon_dotprod)                                         \
+    if (((uintptr_t)NULL != (uintptr_t)neon)   && (flags & HAS_NEON))   ptr = neon;               \
+    SET_FUNCTIONS_NEON_DOTPROD(ptr, neon_dotprod)
 #endif
 
 #ifdef ARCH_X86_64
 #if EXCLUDE_HASH
 #define SET_FUNCTIONS(ptr, c, mmx, sse, sse2, sse3, ssse3, sse4_1, sse4_2, avx, avx2, avx512)     \
     do {                                                                                          \
-        if (check_pointer_was_set && ptr != 0) {                                                                           \
-            printf("Error: %s:%i: Pointer \"%s\" is set before!\n", __FILE__, 0, #ptr);    \
+        if (check_pointer_was_set && ptr != 0) {                                                  \
+            printf("Error: %s:%i: Pointer \"%s\" is set before!\n", __FILE__, 0, #ptr);           \
             assert(0);                                                                            \
         }                                                                                         \
         if ((uintptr_t)NULL == (uintptr_t)c) {                                                    \
-            printf("Error: %s:%i: Pointer \"%s\" on C is NULL!\n", __FILE__, 0, #ptr);     \
+            printf("Error: %s:%i: Pointer \"%s\" on C is NULL!\n", __FILE__, 0, #ptr);            \
             assert(0);                                                                            \
         }                                                                                         \
         ptr = c;                                                                                  \
@@ -309,7 +319,7 @@ EbCpuFlags svt_aom_get_cpu_flags_to_use() {
 #else
 #define SET_FUNCTIONS(ptr, c, mmx, sse, sse2, sse3, ssse3, sse4_1, sse4_2, avx, avx2, avx512)     \
     do {                                                                                          \
-        if (check_pointer_was_set && ptr != 0) {                                                                           \
+        if (check_pointer_was_set && ptr != 0) {                                                  \
             printf("Error: %s:%i: Pointer \"%s\" is set before!\n", __FILE__, __LINE__, #ptr);    \
             assert(0);                                                                            \
         }                                                                                         \
@@ -323,23 +333,23 @@ EbCpuFlags svt_aom_get_cpu_flags_to_use() {
 #endif
 #elif defined ARCH_AARCH64
 #if EXCLUDE_HASH
-#define SET_FUNCTIONS(ptr, c, neon)     \
+#define SET_FUNCTIONS(ptr, c, neon, neon_dotprod)                                                 \
     do {                                                                                          \
-        if (check_pointer_was_set && ptr != 0) {                                                                           \
-            printf("Error: %s:%i: Pointer \"%s\" is set before!\n", __FILE__, 0, #ptr);    \
+        if (check_pointer_was_set && ptr != 0) {                                                  \
+            printf("Error: %s:%i: Pointer \"%s\" is set before!\n", __FILE__, 0, #ptr);           \
             assert(0);                                                                            \
         }                                                                                         \
         if ((uintptr_t)NULL == (uintptr_t)c) {                                                    \
-            printf("Error: %s:%i: Pointer \"%s\" on C is NULL!\n", __FILE__, 0, #ptr);     \
+            printf("Error: %s:%i: Pointer \"%s\" on C is NULL!\n", __FILE__, 0, #ptr);            \
             assert(0);                                                                            \
         }                                                                                         \
         ptr = c;                                                                                  \
-        SET_FUNCTIONS_AARCH64(ptr, c, neon) \
+        SET_FUNCTIONS_AARCH64(ptr, c, neon, neon_dotprod)                                         \
     } while (0)
 #else
-#define SET_FUNCTIONS(ptr, c, neon)     \
+#define SET_FUNCTIONS(ptr, c, neon, neon_dotprod)                                                 \
     do {                                                                                          \
-        if (check_pointer_was_set && ptr != 0) {                                                                           \
+        if (check_pointer_was_set && ptr != 0) {                                                  \
             printf("Error: %s:%i: Pointer \"%s\" is set before!\n", __FILE__, __LINE__, #ptr);    \
             assert(0);                                                                            \
         }                                                                                         \
@@ -348,27 +358,27 @@ EbCpuFlags svt_aom_get_cpu_flags_to_use() {
             assert(0);                                                                            \
         }                                                                                         \
         ptr = c;                                                                                  \
-        SET_FUNCTIONS_AARCH64(ptr, c, neon) \
+        SET_FUNCTIONS_AARCH64(ptr, c, neon, neon_dotprod)                                         \
     } while (0)
 #endif
 #else
 #if EXCLUDE_HASH
-#define SET_FUNCTIONS(ptr, c)     \
+#define SET_FUNCTIONS(ptr, c)                                                                     \
     do {                                                                                          \
-        if (check_pointer_was_set && ptr != 0) {                                                                           \
-            printf("Error: %s:%i: Pointer \"%s\" is set before!\n", __FILE__, 0, #ptr);    \
+        if (check_pointer_was_set && ptr != 0) {                                                  \
+            printf("Error: %s:%i: Pointer \"%s\" is set before!\n", __FILE__, 0, #ptr);           \
             assert(0);                                                                            \
         }                                                                                         \
         if ((uintptr_t)NULL == (uintptr_t)c) {                                                    \
-            printf("Error: %s:%i: Pointer \"%s\" on C is NULL!\n", __FILE__, 0, #ptr);     \
+            printf("Error: %s:%i: Pointer \"%s\" on C is NULL!\n", __FILE__, 0, #ptr);            \
             assert(0);                                                                            \
         }                                                                                         \
         ptr = c;                                                                                  \
     } while (0)
 #else
-#define SET_FUNCTIONS(ptr, c)     \
+#define SET_FUNCTIONS(ptr, c)                                                                     \
     do {                                                                                          \
-        if (check_pointer_was_set && ptr != 0) {                                                                           \
+        if (check_pointer_was_set && ptr != 0) {                                                  \
             printf("Error: %s:%i: Pointer \"%s\" is set before!\n", __FILE__, __LINE__, #ptr);    \
             assert(0);                                                                            \
         }                                                                                         \
@@ -397,8 +407,9 @@ EbCpuFlags svt_aom_get_cpu_flags_to_use() {
     #define SET_SSE2_SSSE3_AVX2_AVX512(ptr, c, sse2, ssse3, avx2, avx512) SET_FUNCTIONS(ptr, c, 0, 0, sse2, 0, ssse3, 0, 0, 0, avx2, avx512)
     #define SET_SSSE3_AVX2(ptr, c, ssse3, avx2)                     SET_FUNCTIONS(ptr, c, 0, 0, 0, 0, ssse3, 0, 0, 0, avx2, 0)
 #elif defined ARCH_AARCH64
-    #define SET_ONLY_C(ptr, c)                                      SET_FUNCTIONS(ptr, c, 0)
-    #define SET_NEON(ptr, c, neon)                                  SET_FUNCTIONS(ptr, c, neon)
+    #define SET_ONLY_C(ptr, c)                                      SET_FUNCTIONS(ptr, c, 0, 0)
+    #define SET_NEON(ptr, c, neon)                                  SET_FUNCTIONS(ptr, c, neon, 0)
+    #define SET_NEON_NEON_DOTPROD(ptr, c, neon, neon_dotprod)       SET_FUNCTIONS(ptr, c, neon, neon_dotprod)
 #else
     #define SET_ONLY_C(ptr, c)                                      SET_FUNCTIONS(ptr, c)
 #endif
@@ -1027,7 +1038,7 @@ void svt_aom_setup_common_rtcd_internal(EbCpuFlags flags) {
     SET_NEON(svt_av1_highbd_convolve_x_sr, svt_av1_highbd_convolve_x_sr_c, svt_av1_highbd_convolve_x_sr_neon);
     SET_NEON(svt_av1_convolve_2d_sr, svt_av1_convolve_2d_sr_c, svt_av1_convolve_2d_sr_neon);
     SET_NEON(svt_av1_convolve_2d_copy_sr, svt_av1_convolve_2d_copy_sr_c, svt_av1_convolve_2d_copy_sr_neon);
-    SET_NEON(svt_av1_convolve_x_sr, svt_av1_convolve_x_sr_c, svt_av1_convolve_x_sr_neon);
+    SET_NEON_NEON_DOTPROD(svt_av1_convolve_x_sr, svt_av1_convolve_x_sr_c, svt_av1_convolve_x_sr_neon, svt_av1_convolve_x_sr_neon_dotprod);
     SET_NEON(svt_av1_convolve_y_sr, svt_av1_convolve_y_sr_c, svt_av1_convolve_y_sr_neon);
     SET_NEON(svt_av1_jnt_convolve_2d, svt_av1_jnt_convolve_2d_c, svt_av1_jnt_convolve_2d_neon);
     SET_NEON(svt_av1_jnt_convolve_2d_copy, svt_av1_jnt_convolve_2d_copy_c, svt_av1_jnt_convolve_2d_copy_neon);

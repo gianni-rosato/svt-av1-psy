@@ -75,8 +75,13 @@ if(NOT COMPILE_C_ONLY AND HAVE_X86_PLATFORM)
         add_subdirectory(ASM_AVX512)
     endif()
 elseif(NOT COMPILE_C_ONLY AND HAVE_ARM_PLATFORM)
-    target_include_directories(SvtAv1Enc PRIVATE ${PROJECT_SOURCE_DIR}/Source/Lib/ASM_NEON/)
+    target_include_directories(SvtAv1Enc PRIVATE
+        ${PROJECT_SOURCE_DIR}/Source/Lib/ASM_NEON/
+        ${PROJECT_SOURCE_DIR}/Source/Lib/ASM_NEON_DOTPROD/)
     add_subdirectory(ASM_NEON)
+    if(ENABLE_NEON_DOTPROD)
+        add_subdirectory(ASM_NEON_DOTPROD)
+    endif()
 endif()
 
 # Encoder Lib Source Files
@@ -96,8 +101,10 @@ if(NOT COMPILE_C_ONLY AND HAVE_X86_PLATFORM)
             $<TARGET_OBJECTS:ASM_AVX512>)
     endif()
 elseif(NOT COMPILE_C_ONLY AND HAVE_ARM_PLATFORM)
-    target_sources(SvtAv1Enc PRIVATE
-        $<TARGET_OBJECTS:ASM_NEON>)
+    target_sources(SvtAv1Enc PRIVATE $<TARGET_OBJECTS:ASM_NEON>)
+    if(ENABLE_NEON_DOTPROD)
+        target_sources(SvtAv1Enc PRIVATE $<TARGET_OBJECTS:ASM_NEON_DOTPROD>)
+    endif()
 endif()
 
 get_target_property(common_lib_source common_lib INTERFACE_SOURCES)
