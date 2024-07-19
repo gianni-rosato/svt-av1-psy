@@ -808,6 +808,9 @@ INSTANTIATE_TEST_SUITE_P(ConvolveTestCOPY_NEON, AV1LbdSrConvolveTest,
                                         svt_av1_convolve_2d_copy_sr_neon));
 
 #if HAVE_NEON_DOTPROD
+INSTANTIATE_TEST_SUITE_P(ConvolveTest2D_NEON_DOTPROD, AV1LbdSrConvolveTest,
+                         BuildParamsLbd(1, 1,
+                                        svt_av1_convolve_2d_sr_neon_dotprod));
 INSTANTIATE_TEST_SUITE_P(ConvolveTestX_NEON_DOTPROD, AV1LbdSrConvolveTest,
                          BuildParamsLbd(1, 0,
                                         svt_av1_convolve_x_sr_neon_dotprod));
