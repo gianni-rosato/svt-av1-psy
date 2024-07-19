@@ -75,6 +75,7 @@ set(arch_neutral_files
     ref/TxfmRef.cc
     ref/TxfmRef.h
     ssim_test.cc
+    svt_av1_test.cc
     ../third_party/aom_dsp/src/bitreader.c
     ../third_party/aom_dsp/src/entdec.c)
 
