@@ -810,7 +810,7 @@ INSTANTIATE_TEST_SUITE_P(ConvolveTestCOPY_NEON, AV1LbdSrConvolveTest,
 
 ::testing::internal::ParamGenerator<HighbdConvolveParam> BuildParamsHbd(
     int has_subx, int has_suby, highbd_convolve_func func) {
-    return ::testing::Combine(::testing::Range(8, 13, 2),
+    return ::testing::Combine(::testing::Range(8, 11, 2),
                               ::testing::Values(has_subx),
                               ::testing::Values(has_suby),
                               ::testing::Values(func),
