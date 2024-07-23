@@ -521,6 +521,16 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet *scs) {
         return_error = EB_ErrorBadParameter;
     }
 #if OPT_FAST_DECODE_LVLS
+#if CLEAN_UP_FD_SIG
+    if (config->fast_decode > 2) {
+        SVT_ERROR(
+            "Instance %u: Invalid fast decode flag [0 - 2, 0 for no decoder optimization], your "
+            "input: %d\n",
+            channel_number + 1,
+            config->fast_decode);
+        return_error = EB_ErrorBadParameter;
+    }
+#else
     if (config->fast_decode < -1 || config->fast_decode > 3) {
         SVT_ERROR(
             "Instance %u: Invalid fast decode flag [-1 - 3, 0 for no decoder optimization], your "
@@ -529,6 +539,7 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet *scs) {
             config->fast_decode);
         return_error = EB_ErrorBadParameter;
     }
+#endif
 #else
     if (config->fast_decode > 1) {
         SVT_ERROR(
@@ -827,10 +838,17 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet *scs) {
     }
     if ((config->tile_columns > 0 || config->tile_rows > 0)) {
 #if OPT_FAST_DECODE_LVLS
+#if CLEAN_UP_FD_SIG
+        SVT_WARN(
+            "If you are using tiles with the intent of increasing the decoder speed, please also "
+            "consider using --fast-decode 1 or 2, especially if the intended decoder is running with "
+            "limited multi-threading capabilities.\n");
+#else
         SVT_WARN(
             "If you are using tiles with the intent of increasing the decoder speed, please also "
             "consider using --fast-decode 1, 2,.. especially if the intended decoder is running with "
             "limited multi-threading capabilities.\n");
+#endif
 #else
         SVT_WARN(
             "If you are using tiles with the intent of increasing the decoder speed, please also "

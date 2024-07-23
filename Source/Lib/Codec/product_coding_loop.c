@@ -2507,7 +2507,6 @@ static int md_subpel_search(SUBPEL_STAGE       search_stage, //ME or PME
 
     const Av1Common *const cm = pcs->ppcs->av1_cm;
     MacroBlockD           *xd = ctx->blk_ptr->av1xd;
-
     // ref_mv is used to calculate the cost of the motion vector
     MV ref_mv;
     ref_mv.col = ctx->ref_mv.col;
@@ -2596,7 +2595,9 @@ static int md_subpel_search(SUBPEL_STAGE       search_stage, //ME or PME
     uint8_t early_exit = (ctx->is_intra_bordered && ctx->cand_reduction_ctrls.use_neighbouring_mode_ctrls.enabled) ||
         (md_subpel_ctrls.skip_zz_mv && best_mv.as_mv.col == 0 && best_mv.as_mv.row == 0) ||
         (ctx->blk_geom->sq_size <= md_subpel_ctrls.min_blk_sz);
-
+#if OPT_SUBPEL
+    ms_params->var_params.bias_fp = md_subpel_ctrls.bias_fp;
+#endif
     int besterr = subpel_search_method(ctx,
                                        xd,
                                        (const struct AV1Common *const)cm,

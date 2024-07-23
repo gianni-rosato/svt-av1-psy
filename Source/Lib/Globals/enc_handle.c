@@ -4154,11 +4154,12 @@ static void set_param_based_on_input(SequenceControlSet *scs)
         scs->enable_dg = 0;
     else
         scs->enable_dg = scs->static_config.enable_dg;
-
+#if !CLEAN_UP_FD_SIG
 #if OPT_FAST_DECODE_LVLS
     // Multi fast-decode levels only supported for M7
     if (scs->static_config.fast_decode != 0 && scs->static_config.enc_mode != ENC_M7)
         scs->static_config.fast_decode = 1;
+#endif
 #endif
     // Set hbd_md OFF for high encode modes or bitdepth < 10
     if (scs->static_config.encoder_bit_depth < 10)

@@ -412,6 +412,9 @@ typedef struct MdSubPelSearchCtrls {
     // Skip high precision (1/8-Pel) when the ME vs. MVP MV difference (x or y) is larger than the threshold.
     // MAX_SIGNED_VALUE is off; 0 is safest on TH, higher is more aggressive
     int hp_mv_th;
+#if OPT_SUBPEL
+    bool bias_fp; // Bias towards fpel at the MD subpel-search: apply a penalty to the cost of fractional positions during the subpel-search each time we check against a full-pel MV
+#endif
 } MdSubPelSearchCtrls;
 typedef struct ParentSqCmplxCtrls {
     Bool enabled;

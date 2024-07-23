@@ -177,7 +177,9 @@ static INLINE int svt_estimated_pref_error(const MV *this_mv, const SUBPEL_SEARC
     //        sse, second_pred);
     //}
 }
-
+#if OPT_SUBPEL
+#define BIAS_FP_WEIGHT 110
+#endif
 // Estimates whether this_mv is better than best_mv. This function incorporates
 // both prediction error and residue into account. It is suffixed "fast" because
 // it uses bilinear filter to estimate the prediction.
@@ -204,8 +206,15 @@ static INLINE unsigned int svt_check_better_fast(MacroBlockD *xd, const struct A
             thismse = svt_estimated_pref_error(this_mv, var_params, &sse);
         }
         cost += thismse;
+#if OPT_SUBPEL
+        int weight = 100;
+        if (var_params->bias_fp && (*best_mv).col % 8 == 0 && (*best_mv).row % 8 == 0)
+            weight = BIAS_FP_WEIGHT;
 
+        if (((cost * weight) / 100) < *besterr) {
+#else
         if (cost < *besterr) {
+#endif
             *besterr    = cost;
             *best_mv    = *this_mv;
             *distortion = thismse;
@@ -232,7 +241,15 @@ static AOM_FORCE_INLINE unsigned int svt_check_better(MacroBlockD *xd, const str
         thismse = svt_upsampled_pref_error(xd, cm, this_mv, var_params, &sse);
         cost    = svt_mv_err_cost_(this_mv, mv_cost_params);
         cost += thismse;
+#if OPT_SUBPEL
+        int weight = 100;
+        if (var_params->bias_fp && (*best_mv).col % 8 == 0 && (*best_mv).row % 8 == 0)
+            weight = BIAS_FP_WEIGHT;
+
+        if (((cost * weight) / 100) < *besterr) {
+#else
         if (cost < *besterr) {
+#endif
             *besterr    = cost;
             *best_mv    = *this_mv;
             *distortion = thismse;
@@ -623,6 +640,7 @@ int svt_av1_find_best_sub_pixel_tree_pruned(void *ictx, MacroBlockD *xd, const s
         ModeDecisionContext *ctx                                 = (ModeDecisionContext *)ictx;
         ctx->fp_me_dist[ms_params->list_idx][ms_params->ref_idx] = besterr;
     }
+
     if (early_neigh_check_exit)
         return besterr;
     uint64_t th_normalizer = (((var_params->w * var_params->h) >> 3) * ms_params->abs_th_mult * (qp >> 1));

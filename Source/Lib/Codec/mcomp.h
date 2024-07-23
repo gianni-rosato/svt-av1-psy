@@ -76,6 +76,10 @@ typedef struct {
     MSBuffers ms_buffers;
 
     int w, h;
+
+#if OPT_SUBPEL
+    bool bias_fp; // Bias towards fpel at the MD subpel-search: apply a penalty to the cost of fractional positions during the subpel-search each time we check against a full-pel MV
+#endif
 } SUBPEL_SEARCH_VAR_PARAMS;
 
 // This struct holds subpixel motion search parameters that should be constant
@@ -93,13 +97,11 @@ typedef struct {
     uint8_t           list_idx;
     uint8_t           ref_idx;
     SubpelMvLimits    mv_limits;
-
     // For calculating mv cost
     MV_COST_PARAMS mv_cost_params;
 
     // Distortion calculation params
     SUBPEL_SEARCH_VAR_PARAMS var_params;
-
 } SUBPEL_MOTION_SEARCH_PARAMS;
 typedef int(fractional_mv_step_fp)(void *ictx, MacroBlockD *xd, const struct AV1Common *const cm,
                                    SUBPEL_MOTION_SEARCH_PARAMS *ms_params, MV start_mv, MV *bestmv, int *distortion,

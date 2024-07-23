@@ -39,10 +39,12 @@ extern "C" {
 #define UNIFY_DLF_LVL                             1 // Unified the DLF-level derivation for fd_3 and fd_1; used coeff_level-based modulation and skip_selection-based modulation for fd_3
 #define FIX_PART_NEIGH_UPDATE                     1 // Fix partition neighbour updates
 #define FIX_USE_SB_LAMBDA_DR                      1 // Use the SB lambda at depth-removal, instead of non-updated block-based lambda
-
+#define OPT_FAST_DECODE_LVLS                      1 // Add the ability to use different lvls for fast-decode
+#define OPT_FD3_CDEF                              1 // Optimize cost bias for cdef for fd3
+#define OPT_SUBPEL                                1 // Bias towards fpel at the MD subpel-search: apply a penalty to the cost of fractional positions during the subpel-search each time we check against a full-pel MV 
+#define CLEAN_UP_FD_SIG                           1 // Clean-up fd signal(s); fd_2 to match fd_3, then remove fd_-1 and fd_3.
 //FOR DEBUGGING - Do not remove
 #define OPT_LD_LATENCY2         1 // Latency optimization for low delay - to keep the Macro for backwards testing until 3.0
-#define OPT_FAST_DECODE_LVLS    0 // Add the ability to use different lvls for fast-deocde
 #define LOG_ENC_DONE            0 // log encoder job one
 #define NO_ENCDEC               0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch
 #define DEBUG_TPL               0 // Prints to debug TPL
