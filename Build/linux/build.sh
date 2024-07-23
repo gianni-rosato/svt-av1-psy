@@ -204,14 +204,9 @@ install_build() (
     } || die "Unable to run install"
 )
 
-# With GCC 14.1.1 and Clang 18.1.8, using "-O3 -march=native" on a 5950X, Clang
-# compiles the code twice as fast as GCC, but the resulting encoder is 3.5%
-# slower without PGO and 2.6% slower with PGO. This is why we give higher
-# priority to GCC over Clang.
-
 if [ -z "$CC" ] && [ "$(uname -a | cut -c1-5)" != "MINGW" ]; then
-    if ! CC=$(check_executable -p icc /opt/intel/bin) && ! CC=$(check_executable -p gcc); then
-        ! CC=$(check_executable -p clang) &&
+    if ! CC=$(check_executable -p icc /opt/intel/bin) && ! CC=$(check_executable -p clang); then
+        ! CC=$(check_executable -p gcc) &&
             ! CC=$(check_executable -p cc) &&
             die "No suitable c compiler found in path" \
                 "Please either install one or set it via cc=*"
@@ -221,8 +216,8 @@ if [ -z "$CC" ] && [ "$(uname -a | cut -c1-5)" != "MINGW" ]; then
 fi
 
 if [ -z "$CXX" ] && [ "$(uname -a | cut -c1-5)" != "MINGW" ]; then
-    if ! CXX=$(check_executable -p icpc /opt/intel/bin) && ! CXX=$(check_executable -p g++); then
-        ! CXX=$(check_executable -p clang++) &&
+    if ! CXX=$(check_executable -p icpc /opt/intel/bin) && ! CXX=$(check_executable -p clang++); then
+        ! CXX=$(check_executable -p g++) &&
             ! CXX=$(check_executable -p c++) &&
             die "No suitable c++ compiler found in path" \
                 "Please either install one or set it via cxx=*"
