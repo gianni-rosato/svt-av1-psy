@@ -768,10 +768,6 @@ typedef struct DetectHighFreqCtrls {
     // me-SAD-to-SATD deviation of the 32x32 blocks threshold beyond which the SB is tagged (~2x is
     // the fundamental deviation)
     uint16_t satd_to_sad_dev_th;
-#if !OPT_DR
-    // depth-removal level left-shift for the detected SB(s)
-    uint8_t depth_removal_shift;
-#endif
     // maximum lpd0 level for the detected SB(s)
     uint8_t max_pic_lpd0_lvl;
     // maximum lpd1 level for the detected SB(s)
@@ -872,14 +868,12 @@ typedef struct SkipSubDepthCtrls {
     uint8_t coeff_perc;
 
 } SkipSubDepthCtrls;
-#if OPT_FILTER_INTRA
 typedef struct FilterIntraCtrls {
     bool enabled;
     // Set the max filter intra mode to test. The max filter intra level will also depend on ctx->intra_ctrls.intra_mode_end.
     // The max mode to be test will be min(max_filter_intra_mode, ctx->intra_ctrls.intra_mode_end).
     FilterIntraMode max_filter_intra_mode;
 } FilterIntraCtrls;
-#endif
 
 typedef struct CompoundPredictionStore {
     //avoid doing Unipred prediction for redundant MV
@@ -1088,13 +1082,9 @@ typedef struct ModeDecisionContext {
     // Control fast_coeff_est_level per mds
     uint8_t mds_fast_coeff_est_level;
     // Control subres_step per mds
-    uint8_t mds_subres_step;
-    uint8_t md_pic_obmc_level;
-#if OPT_FILTER_INTRA
-    FilterIntraCtrls filter_intra_ctrls;
-#else
-    uint8_t md_filter_intra_level;
-#endif
+    uint8_t           mds_subres_step;
+    uint8_t           md_pic_obmc_level;
+    FilterIntraCtrls  filter_intra_ctrls;
     uint8_t           md_allow_intrabc;
     uint8_t           md_palette_level;
     uint8_t           dist_based_ref_pruning;
@@ -1240,17 +1230,13 @@ typedef struct ModeDecisionContext {
     uint8_t lpd1_bypass_tx_th_div;
     // chroma components to compensate at MDS3 of LPD1
     COMPONENT_TYPE lpd1_chroma_comp;
-#if OPTIMIZE_LPD1_MDS0_DIST
-    uint8_t lpd1_shift_mds0_dist;
-#endif
-    uint8_t corrupted_mv_check;
-    uint8_t pred_mode_depth_refine;
+    uint8_t        lpd1_shift_mds0_dist;
+    uint8_t        corrupted_mv_check;
+    uint8_t        pred_mode_depth_refine;
     // when MD is done on 8bit, scale palette colors to 10bit (valid when bypass is 1)
-    uint8_t scale_palette;
-    uint8_t high_freq_present;
-#if OPT_DR
+    uint8_t  scale_palette;
+    uint8_t  high_freq_present;
     uint32_t high_freq_satd_to_me;
-#endif
     uint32_t b32_satd[4];
     uint64_t rec_dist_per_quadrant[4];
     // non-normative txs

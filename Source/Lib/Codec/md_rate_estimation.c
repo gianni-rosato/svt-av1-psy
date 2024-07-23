@@ -82,70 +82,43 @@ void svt_aom_estimate_syntax_rate(MdRateEstimationContext *md_rate_est_ctx, Bool
         // therefore, we must compute the syntax rate for two cases: 128x128 blocks and all other
         // blocks.
 
-#if FIX_PART_RATE_UPDATE
         // Vert alike rate (128x128 and all other blocks)
         partition_gather_vert_alike(cdf, fc->partition_cdf[i], BLOCK_16X16);
         svt_aom_get_syntax_rate_from_cdf(md_rate_est_ctx->partition_vert_alike_fac_bits[i], cdf, NULL);
-#if FIX_INCOMP_PART_CDF
         /* If the first entry of the cdf is 0, then svt_aom_get_syntax_rate_from_cdf will exit after deriving
         the rate of the first entry.  In that case, the rate of the second entry would not be initialized, and
         could cause a r2r. In this case, we set the second entry of the rate table to 6656 (cost of EC_MIN_PROB),
         which is the value which would be set if svt_aom_get_syntax_rate_from_cdf did not exit after the first 0 entry. */
         if (cdf[0] == 0)
             md_rate_est_ctx->partition_vert_alike_fac_bits[i][1] = av1_cost_symbol(EC_MIN_PROB);
-#endif
 
         partition_gather_vert_alike(cdf, fc->partition_cdf[i], BLOCK_128X128);
         svt_aom_get_syntax_rate_from_cdf(md_rate_est_ctx->partition_vert_alike_128x128_fac_bits[i], cdf, NULL);
-#if FIX_INCOMP_PART_CDF
         /* If the first entry of the cdf is 0, then svt_aom_get_syntax_rate_from_cdf will exit after deriving
         the rate of the first entry.  In that case, the rate of the second entry would not be initialized, and
         could cause a r2r. In this case, we set the second entry of the rate table to 6656 (cost of EC_MIN_PROB),
         which is the value which would be set if svt_aom_get_syntax_rate_from_cdf did not exit after the first 0 entry. */
         if (cdf[0] == 0)
             md_rate_est_ctx->partition_vert_alike_128x128_fac_bits[i][1] = av1_cost_symbol(EC_MIN_PROB);
-#endif
 
         // Horz alike rate (128x128 and all other blocks)
         partition_gather_horz_alike(cdf, fc->partition_cdf[i], BLOCK_16X16);
         svt_aom_get_syntax_rate_from_cdf(md_rate_est_ctx->partition_horz_alike_fac_bits[i], cdf, NULL);
-#if FIX_INCOMP_PART_CDF
         /* If the first entry of the cdf is 0, then svt_aom_get_syntax_rate_from_cdf will exit after deriving
         the rate of the first entry.  In that case, the rate of the second entry would not be initialized, and
         could cause a r2r. In this case, we set the second entry of the rate table to 6656 (cost of EC_MIN_PROB),
         which is the value which would be set if svt_aom_get_syntax_rate_from_cdf did not exit after the first 0 entry. */
         if (cdf[0] == 0)
             md_rate_est_ctx->partition_horz_alike_fac_bits[i][1] = av1_cost_symbol(EC_MIN_PROB);
-#endif
 
         partition_gather_horz_alike(cdf, fc->partition_cdf[i], BLOCK_128X128);
         svt_aom_get_syntax_rate_from_cdf(md_rate_est_ctx->partition_horz_alike_128x128_fac_bits[i], cdf, NULL);
-#if FIX_INCOMP_PART_CDF
         /* If the first entry of the cdf is 0, then svt_aom_get_syntax_rate_from_cdf will exit after deriving
         the rate of the first entry.  In that case, the rate of the second entry would not be initialized, and
         could cause a r2r. In this case, we set the second entry of the rate table to 6656 (cost of EC_MIN_PROB),
         which is the value which would be set if svt_aom_get_syntax_rate_from_cdf did not exit after the first 0 entry. */
         if (cdf[0] == 0)
             md_rate_est_ctx->partition_horz_alike_128x128_fac_bits[i][1] = av1_cost_symbol(EC_MIN_PROB);
-#endif
-#else
-        // Vert alike rate (128x128 and all other blocks)
-        partition_gather_vert_alike(cdf, fc->partition_cdf[i], BLOCK_8X8);
-        // inverse map only needs 2 entries b/c cdf only has 2 active entries
-        static const int bot_inv_map[2] = {PARTITION_HORZ, PARTITION_SPLIT};
-        svt_aom_get_syntax_rate_from_cdf(md_rate_est_ctx->partition_vert_alike_fac_bits[i], cdf, bot_inv_map);
-
-        partition_gather_vert_alike(cdf, fc->partition_cdf[i], BLOCK_128X128);
-        svt_aom_get_syntax_rate_from_cdf(md_rate_est_ctx->partition_vert_alike_128x128_fac_bits[i], cdf, bot_inv_map);
-
-        // Horz alike rate (128x128 and all other blocks)
-        partition_gather_horz_alike(cdf, fc->partition_cdf[i], BLOCK_8X8);
-        static const int rhs_inv_map[2] = {PARTITION_VERT, PARTITION_SPLIT};
-        svt_aom_get_syntax_rate_from_cdf(md_rate_est_ctx->partition_horz_alike_fac_bits[i], cdf, rhs_inv_map);
-
-        partition_gather_horz_alike(cdf, fc->partition_cdf[i], BLOCK_128X128);
-        svt_aom_get_syntax_rate_from_cdf(md_rate_est_ctx->partition_horz_alike_128x128_fac_bits[i], cdf, rhs_inv_map);
-#endif
     }
 
     for (i = 0; i < SKIP_CONTEXTS; ++i)
@@ -168,11 +141,7 @@ void svt_aom_estimate_syntax_rate(MdRateEstimationContext *md_rate_est_ctx, Bool
     if (pic_filter_intra_level) {
         svt_aom_get_syntax_rate_from_cdf(md_rate_est_ctx->filter_intra_mode_fac_bits, fc->filter_intra_mode_cdf, NULL);
         for (i = 0; i < BlockSizeS_ALL; ++i) {
-#if OPT_FILTER_INTRA
             if (svt_aom_filter_intra_allowed_bsize(i))
-#else
-            if (svt_aom_filter_intra_allowed_bsize(1, i))
-#endif
                 svt_aom_get_syntax_rate_from_cdf(
                     md_rate_est_ctx->filter_intra_fac_bits[i], fc->filter_intra_cdfs[i], NULL);
         }
@@ -722,11 +691,7 @@ static AOM_INLINE void sum_intra_stats(PictureControlSet *pcs, BlkStruct *blk_pt
             update_cdf(fc->filter_intra_mode_cdf, blk_ptr->filter_intra_mode, FILTER_INTRA_MODES);
         }
     }
-#if CLN_REMOVE_UNUSED_SCS
     if (av1_is_directional_mode(y_mode) && av1_use_angle_delta(bsize)) {
-#else
-    if (av1_is_directional_mode(y_mode) && av1_use_angle_delta(bsize, pcs->ppcs->scs->intra_angle_delta)) {
-#endif
         update_cdf(fc->angle_delta_cdf[y_mode - V_PRED],
                    blk_ptr->angle_delta[PLANE_TYPE_Y] + MAX_ANGLE_DELTA,
                    2 * MAX_ANGLE_DELTA + 1);
@@ -752,12 +717,7 @@ static AOM_INLINE void sum_intra_stats(PictureControlSet *pcs, BlkStruct *blk_pt
             update_cdf(cdf_v, CFL_IDX_V(idx), CFL_ALPHABET_SIZE);
         }
     }
-    if (av1_is_directional_mode(get_uv_mode(uv_mode)) &&
-#if CLN_REMOVE_UNUSED_SCS
-        av1_use_angle_delta(bsize)) {
-#else
-        av1_use_angle_delta(bsize, pcs->ppcs->scs->intra_angle_delta)) {
-#endif
+    if (av1_is_directional_mode(get_uv_mode(uv_mode)) && av1_use_angle_delta(bsize)) {
         assert((uv_mode - UV_V_PRED) < DIRECTIONAL_MODES);
         assert((uv_mode - UV_V_PRED) >= 0);
         update_cdf(fc->angle_delta_cdf[uv_mode - UV_V_PRED],

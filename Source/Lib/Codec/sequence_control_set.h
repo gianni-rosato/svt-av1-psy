@@ -40,13 +40,8 @@ typedef struct BitstreamLevel {
 typedef struct List0OnlyBase {
     // Specifies whether to use List1 for BASE frame(s) or not (0: OFF, 1: ON)
     uint8_t enabled;
-#if OPT_L0_ONLY_BASE
     // Specifies the pic-average of the difference of SB-var and pic-varaince under which List1 is not used
     uint16_t list0_only_base_th;
-#else
-    // Specifies the percentage of ahd-based active region under which List1 is not used (0 to 100)
-    uint8_t list0_only_base_th;
-#endif
 } List0OnlyBase;
 
 /************************************
@@ -250,16 +245,6 @@ typedef struct SequenceControlSet {
     uint8_t           passes;
     FirstPassControls first_pass_ctrls;
     uint8_t           final_pass_preset;
-#if !CLN_REMOVE_UNUSED_SCS
-    /* Palette Mode
-    *
-    * -1: Default, 0: OFF, 1: Fully ON, 2 ... 6: Faster levels */
-    int32_t palette_level;
-    /* enable angle intra
-    *
-    * Default is -1. */
-    int intra_angle_delta;
-#endif
     /* Specifies whether to use 16bit pipeline.
     *
     * 0: 8 bit pipeline.
@@ -272,90 +257,10 @@ typedef struct SequenceControlSet {
     *
     * Default is 128. */
     uint32_t super_block_size;
-#if !CLN_REMOVE_UNUSED_SCS
-
-    /* Warped motion
-    *
-    * Default is -1. */
-    int enable_warped_motion;
-
-    /* Global motion
-    *
-    * Default is 1. */
-    Bool enable_global_motion;
-    /* enable paeth
-    *
-    * Default is -1. */
-    int enable_paeth;
-
-    /* enable smooth
-    *
-    * Default is -1. */
-    int enable_smooth;
-
-    /* spatial sse in full loop
-    *
-    * -1: Default, 0: OFF, 1: ON. */
-    int spatial_sse_full_loop_level;
-    /* over boundry block
-    *
-    * Default is -1. */
-    int over_bndry_blk;
-    /* new nearest comb injection
-    *
-    * Default is -1. */
-    int new_nearest_comb_inject;
-    /* frame end cdf update
-    *
-    * Default is -1. */
-    int frame_end_cdf_update;
-
-    /* Predictive Me
-    *
-    * Default is -1. */
-    int pred_me;
-
-    /* Bipred 3x3 Injection
-    *
-    * Default is -1. */
-    int bipred_3x3_inject;
-
-    /* Compound Mode
-    *
-    * Default is -1. */
-    int compound_level;
-    /* RDOQ
-    *
-    * -1: Default, 0: OFF, 1: ON. */
-    int rdoq_level;
-
-    /* Filter intra prediction
-    *
-    * The table below specifies the meaning of filter_intra_level when specified in the CLI.
-    * filter_intra_level | Command Line Settings
-    *        -1          | Default settings (auto)
-    *         0          | OFF everywhere in encoder
-    *         1          | ON */
-    int8_t filter_intra_level;
-    /* Intra Edge Filter
-    *
-    * Default is -1. */
-    int enable_intra_edge_filter;
-#endif
     /* Picture based rate estimation
     *
     * Default is - 1. */
     int pic_based_rate_est;
-#if !CLN_REMOVE_UNUSED_SCS
-    /* Flag to control intraBC mode
-    *  0      OFF
-    *  1      slow
-    *  2      faster
-    *  3      fastest
-    *
-    * Default is -1 (DEFAULT behavior). */
-    int intrabc_mode;
-#endif
 
     // MD Parameters
     /* Enable the use of HBD (10-bit) for 10 bit content at the mode decision step

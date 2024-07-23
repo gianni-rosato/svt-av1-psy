@@ -2405,7 +2405,6 @@ uint64_t svt_aom_d1_non_square_block_decision(PictureControlSet *pcs, ModeDecisi
 static void compute_depth_costs(ModeDecisionContext *ctx, PictureParentControlSet *pcs, uint32_t curr_depth_mds,
                                 uint32_t above_depth_mds, uint32_t step, uint64_t *above_depth_cost,
                                 uint64_t *curr_depth_cost) {
-#if FIX_PART_INCOMP_RATE
     /*
     ___________
     |     |     |
@@ -2419,33 +2418,6 @@ static void compute_depth_costs(ModeDecisionContext *ctx, PictureParentControlSe
     const uint32_t curr_depth_blk1_mds = curr_depth_mds - 2 * step;
     const uint32_t curr_depth_blk2_mds = curr_depth_mds - 1 * step;
     const uint32_t curr_depth_blk3_mds = curr_depth_mds;
-#else
-    uint32_t full_lambda = ctx->hbd_md ? ctx->full_sb_lambda_md[EB_10_BIT_MD] : ctx->full_sb_lambda_md[EB_8_BIT_MD];
-
-    uint64_t above_split_rate = 0;
-
-    /*
-    ___________
-    |     |     |
-    |blk0 |blk1 |
-    |-----|-----|
-    |blk2 |blk3 |
-    |_____|_____|
-    */
-    // current depth blocks
-    uint32_t curr_depth_blk0_mds = curr_depth_mds - 3 * step;
-    uint32_t curr_depth_blk1_mds = curr_depth_mds - 2 * step;
-    uint32_t curr_depth_blk2_mds = curr_depth_mds - 1 * step;
-    uint32_t curr_depth_blk3_mds = curr_depth_mds;
-    ctx->md_blk_arr_nsq[above_depth_mds].left_neighbor_partition =
-        ctx->md_blk_arr_nsq[curr_depth_blk0_mds].left_neighbor_partition;
-    ctx->md_blk_arr_nsq[above_depth_mds].above_neighbor_partition =
-        ctx->md_blk_arr_nsq[curr_depth_blk0_mds].above_neighbor_partition;
-
-    // Get split rate for current depth
-    above_split_rate = svt_aom_partition_rate_cost(
-        pcs, ctx, above_depth_mds, PARTITION_SPLIT, full_lambda, pcs->use_accurate_part_ctx, ctx->md_rate_est_ctx);
-#endif
     // Compute current depth cost
     /* Blocks that have no area within the picture will never have a valid cost, but they will not contribute to the cost
     * anyway (as they are completely outside the picture).  If the block does have area inside the picture, it will have
@@ -2464,7 +2436,6 @@ static void compute_depth_costs(ModeDecisionContext *ctx, PictureParentControlSe
     const bool blk3_within_pic = (pcs->sb_geom[ctx->sb_index].org_x + curr_blk_geom->org_x < pcs->aligned_width) &&
         (pcs->sb_geom[ctx->sb_index].org_y + curr_blk_geom->org_y < pcs->aligned_height);
 
-#if FIX_PART_INCOMP_RATE
     if (!blk0_within_pic && !blk1_within_pic && !blk2_within_pic && !blk3_within_pic) {
         // No blocks of the current depth are within the picture boundaries, so set cost to max to not select this depth
         *curr_depth_cost = MAX_MODE_COST;
@@ -2488,17 +2459,6 @@ static void compute_depth_costs(ModeDecisionContext *ctx, PictureParentControlSe
             pcs, ctx, above_depth_mds, PARTITION_SPLIT, full_lambda, pcs->use_accurate_part_ctx, ctx->md_rate_est_ctx);
 
         *curr_depth_cost = blk0_cost + blk1_cost + blk2_cost + blk3_cost + above_split_rate;
-#else
-    if ((ctx->cost_avail[curr_depth_blk0_mds] || !blk0_within_pic) &&
-        (ctx->cost_avail[curr_depth_blk1_mds] || !blk1_within_pic) &&
-        (ctx->cost_avail[curr_depth_blk2_mds] || !blk2_within_pic) &&
-        (ctx->cost_avail[curr_depth_blk3_mds] || !blk3_within_pic)) {
-        uint64_t blk0_cost = ctx->cost_avail[curr_depth_blk0_mds] ? ctx->md_blk_arr_nsq[curr_depth_blk0_mds].cost : 0;
-        uint64_t blk1_cost = ctx->cost_avail[curr_depth_blk1_mds] ? ctx->md_blk_arr_nsq[curr_depth_blk1_mds].cost : 0;
-        uint64_t blk2_cost = ctx->cost_avail[curr_depth_blk2_mds] ? ctx->md_blk_arr_nsq[curr_depth_blk2_mds].cost : 0;
-        uint64_t blk3_cost = ctx->cost_avail[curr_depth_blk3_mds] ? ctx->md_blk_arr_nsq[curr_depth_blk3_mds].cost : 0;
-        *curr_depth_cost   = blk0_cost + blk1_cost + blk2_cost + blk3_cost + above_split_rate;
-#endif
     } else {
         // None of the blocks of the current depth are available, so set cost to max to not select this depth
         *curr_depth_cost = MAX_MODE_COST;

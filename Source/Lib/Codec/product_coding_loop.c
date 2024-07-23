@@ -155,83 +155,69 @@ static void mode_decision_update_neighbor_arrays(PictureControlSet *pcs, ModeDec
 
     uint16_t tile_idx = ctx->tile_index;
 
-#if !FIX_PART_CTX
-    {
-        if (!(ctx->pd_pass == PD_PASS_1 && ctx->pic_pred_depth_only)) {
-#endif
-            struct PartitionContext partition;
-            partition.above = partition_context_lookup[ctx->blk_geom->bsize].above;
-            partition.left  = partition_context_lookup[ctx->blk_geom->bsize].left;
+    struct PartitionContext partition;
+    partition.above = partition_context_lookup[ctx->blk_geom->bsize].above;
+    partition.left  = partition_context_lookup[ctx->blk_geom->bsize].left;
 
-            svt_aom_neighbor_array_unit_mode_write(ctx->leaf_partition_na,
-                                                   (uint8_t *)(&partition), // NaderM
-                                                   org_x,
-                                                   org_y,
-                                                   bwdith,
-                                                   bheight,
-                                                   NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
-#if !FIX_PART_CTX
-        }
-#endif
-        if (ctx->rate_est_ctrls.update_skip_ctx_dc_sign_ctx) {
-            uint16_t txb_count = ctx->blk_geom->txb_count[ctx->blk_ptr->tx_depth];
-            for (uint8_t txb_itr = 0; txb_itr < txb_count; txb_itr++) {
-                uint8_t dc_sign_level_coeff = (uint8_t)ctx->blk_ptr->quant_dc.y[txb_itr];
+    svt_aom_neighbor_array_unit_mode_write(ctx->leaf_partition_na,
+                                           (uint8_t *)(&partition), // NaderM
+                                           org_x,
+                                           org_y,
+                                           bwdith,
+                                           bheight,
+                                           NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
+    if (ctx->rate_est_ctrls.update_skip_ctx_dc_sign_ctx) {
+        uint16_t txb_count = ctx->blk_geom->txb_count[ctx->blk_ptr->tx_depth];
+        for (uint8_t txb_itr = 0; txb_itr < txb_count; txb_itr++) {
+            uint8_t dc_sign_level_coeff = (uint8_t)ctx->blk_ptr->quant_dc.y[txb_itr];
+            svt_aom_neighbor_array_unit_mode_write(
+                ctx->luma_dc_sign_level_coeff_na,
+                (uint8_t *)&dc_sign_level_coeff,
+                ctx->sb_origin_x + ctx->blk_geom->tx_org_x[is_inter][ctx->blk_ptr->tx_depth][txb_itr],
+                ctx->sb_origin_y + ctx->blk_geom->tx_org_y[is_inter][ctx->blk_ptr->tx_depth][txb_itr],
+                ctx->blk_geom->tx_width[ctx->blk_ptr->tx_depth],
+                ctx->blk_geom->tx_height[ctx->blk_ptr->tx_depth],
+                NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
+
+            svt_aom_neighbor_array_unit_mode_write(
+                pcs->md_tx_depth_1_luma_dc_sign_level_coeff_na[MD_NEIGHBOR_ARRAY_INDEX][tile_idx],
+                (uint8_t *)&dc_sign_level_coeff,
+                ctx->sb_origin_x + ctx->blk_geom->tx_org_x[is_inter][ctx->blk_ptr->tx_depth][txb_itr],
+                ctx->sb_origin_y + ctx->blk_geom->tx_org_y[is_inter][ctx->blk_ptr->tx_depth][txb_itr],
+                ctx->blk_geom->tx_width[ctx->blk_ptr->tx_depth],
+                ctx->blk_geom->tx_height[ctx->blk_ptr->tx_depth],
+                NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
+
+            if (ctx->blk_geom->has_uv && ctx->uv_ctrls.uv_mode <= CHROMA_MODE_1 &&
+                (ctx->blk_ptr->tx_depth == 0 || txb_itr == 0)) {
+                //  Update chroma CB cbf and Dc context
+                uint8_t dc_sign_level_coeff_cb = (uint8_t)ctx->blk_ptr->quant_dc.u[txb_itr];
                 svt_aom_neighbor_array_unit_mode_write(
-                    ctx->luma_dc_sign_level_coeff_na,
-                    (uint8_t *)&dc_sign_level_coeff,
-                    ctx->sb_origin_x + ctx->blk_geom->tx_org_x[is_inter][ctx->blk_ptr->tx_depth][txb_itr],
-                    ctx->sb_origin_y + ctx->blk_geom->tx_org_y[is_inter][ctx->blk_ptr->tx_depth][txb_itr],
-                    ctx->blk_geom->tx_width[ctx->blk_ptr->tx_depth],
-                    ctx->blk_geom->tx_height[ctx->blk_ptr->tx_depth],
+                    ctx->cb_dc_sign_level_coeff_na,
+                    (uint8_t *)&dc_sign_level_coeff_cb,
+                    ROUND_UV(ctx->sb_origin_x + ctx->blk_geom->tx_org_x[is_inter][ctx->blk_ptr->tx_depth][txb_itr]) >>
+                        1,
+                    ROUND_UV(ctx->sb_origin_y + ctx->blk_geom->tx_org_y[is_inter][ctx->blk_ptr->tx_depth][txb_itr]) >>
+                        1,
+                    ctx->blk_geom->tx_width_uv[ctx->blk_ptr->tx_depth],
+                    ctx->blk_geom->tx_height_uv[ctx->blk_ptr->tx_depth],
                     NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
 
+                //  Update chroma CR cbf and Dc context
+                uint8_t dc_sign_level_coeff_cr = (uint8_t)ctx->blk_ptr->quant_dc.v[txb_itr];
                 svt_aom_neighbor_array_unit_mode_write(
-                    pcs->md_tx_depth_1_luma_dc_sign_level_coeff_na[MD_NEIGHBOR_ARRAY_INDEX][tile_idx],
-                    (uint8_t *)&dc_sign_level_coeff,
-                    ctx->sb_origin_x + ctx->blk_geom->tx_org_x[is_inter][ctx->blk_ptr->tx_depth][txb_itr],
-                    ctx->sb_origin_y + ctx->blk_geom->tx_org_y[is_inter][ctx->blk_ptr->tx_depth][txb_itr],
-                    ctx->blk_geom->tx_width[ctx->blk_ptr->tx_depth],
-                    ctx->blk_geom->tx_height[ctx->blk_ptr->tx_depth],
+                    ctx->cr_dc_sign_level_coeff_na,
+                    (uint8_t *)&dc_sign_level_coeff_cr,
+                    ROUND_UV(ctx->sb_origin_x + ctx->blk_geom->tx_org_x[is_inter][ctx->blk_ptr->tx_depth][txb_itr]) >>
+                        1,
+                    ROUND_UV(ctx->sb_origin_y + ctx->blk_geom->tx_org_y[is_inter][ctx->blk_ptr->tx_depth][txb_itr]) >>
+                        1,
+                    ctx->blk_geom->tx_width_uv[ctx->blk_ptr->tx_depth],
+                    ctx->blk_geom->tx_height_uv[ctx->blk_ptr->tx_depth],
                     NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
-
-                if (ctx->blk_geom->has_uv && ctx->uv_ctrls.uv_mode <= CHROMA_MODE_1 &&
-                    (ctx->blk_ptr->tx_depth == 0 || txb_itr == 0)) {
-                    //  Update chroma CB cbf and Dc context
-                    uint8_t dc_sign_level_coeff_cb = (uint8_t)ctx->blk_ptr->quant_dc.u[txb_itr];
-                    svt_aom_neighbor_array_unit_mode_write(
-                        ctx->cb_dc_sign_level_coeff_na,
-                        (uint8_t *)&dc_sign_level_coeff_cb,
-                        ROUND_UV(ctx->sb_origin_x +
-                                 ctx->blk_geom->tx_org_x[is_inter][ctx->blk_ptr->tx_depth][txb_itr]) >>
-                            1,
-                        ROUND_UV(ctx->sb_origin_y +
-                                 ctx->blk_geom->tx_org_y[is_inter][ctx->blk_ptr->tx_depth][txb_itr]) >>
-                            1,
-                        ctx->blk_geom->tx_width_uv[ctx->blk_ptr->tx_depth],
-                        ctx->blk_geom->tx_height_uv[ctx->blk_ptr->tx_depth],
-                        NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
-
-                    //  Update chroma CR cbf and Dc context
-                    uint8_t dc_sign_level_coeff_cr = (uint8_t)ctx->blk_ptr->quant_dc.v[txb_itr];
-                    svt_aom_neighbor_array_unit_mode_write(
-                        ctx->cr_dc_sign_level_coeff_na,
-                        (uint8_t *)&dc_sign_level_coeff_cr,
-                        ROUND_UV(ctx->sb_origin_x +
-                                 ctx->blk_geom->tx_org_x[is_inter][ctx->blk_ptr->tx_depth][txb_itr]) >>
-                            1,
-                        ROUND_UV(ctx->sb_origin_y +
-                                 ctx->blk_geom->tx_org_y[is_inter][ctx->blk_ptr->tx_depth][txb_itr]) >>
-                            1,
-                        ctx->blk_geom->tx_width_uv[ctx->blk_ptr->tx_depth],
-                        ctx->blk_geom->tx_height_uv[ctx->blk_ptr->tx_depth],
-                        NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
-                }
             }
         }
-#if !FIX_PART_CTX
     }
-#endif
     if (pcs->ppcs->frm_hdr.tx_mode == TX_MODE_SELECT) {
         uint8_t tx_size = tx_depth_to_tx_size[ctx->blk_ptr->tx_depth][ctx->blk_geom->bsize];
         uint8_t bw      = tx_size_wide[tx_size];
@@ -1066,9 +1052,7 @@ static void fast_loop_core_light_pd1(ModeDecisionCandidateBuffer *cand_bf, Pictu
             cand_bf->luma_fast_dist = luma_fast_dist = fn_ptr->vf(
                                                            pred_y, pred->stride_y, src_y, input_pic->stride_y, &sse) /
                 3;
-        else
-#if OPTIMIZE_LPD1_MDS0_DIST
-            if (ctx->lpd1_shift_mds0_dist) {
+        else if (ctx->lpd1_shift_mds0_dist) {
             cand_bf->luma_fast_dist = luma_fast_dist = fn_ptr->vf(
                                                            pred_y, pred->stride_y, src_y, input_pic->stride_y, &sse) >>
                 3;
@@ -1077,11 +1061,6 @@ static void fast_loop_core_light_pd1(ModeDecisionCandidateBuffer *cand_bf, Pictu
                                                            pred_y, pred->stride_y, src_y, input_pic->stride_y, &sse) >>
                 2;
         }
-#else
-            cand_bf->luma_fast_dist = luma_fast_dist = fn_ptr->vf(
-                                                           pred_y, pred->stride_y, src_y, input_pic->stride_y, &sse) >>
-                3;
-#endif
     } else {
         assert(ctx->mds0_ctrls.mds0_dist_type == SAD);
         assert((ctx->blk_geom->bwidth >> 3) < 17);
@@ -1663,7 +1642,6 @@ static bool process_cand_itr(ModeDecisionCandidate *cand, uint8_t itr, Predictio
         // Eval regular only if itr=0 (i.e. skip angular and skip filter)
         if (cand->angle_delta[PLANE_TYPE_Y] != 0 || cand->filter_intra_mode != FILTER_INTRA_MODES)
             return false;
-#if OPT_FILTER_INTRA
     } else {
         // Eval angular and filter intra if itr=1 (i.e. skip regular)
         if (cand->angle_delta[PLANE_TYPE_Y] == 0 && cand->filter_intra_mode == FILTER_INTRA_MODES)
@@ -1688,44 +1666,6 @@ static bool process_cand_itr(ModeDecisionCandidate *cand, uint8_t itr, Predictio
                 return false;
         }
     }
-#else
-    } else if (itr == 1) {
-        // Eval angular only if itr=1 (i.e. skip regular and skip filter)
-        if (cand->angle_delta[PLANE_TYPE_Y] == 0 || cand->filter_intra_mode != FILTER_INTRA_MODES)
-            return false;
-        // Use regular info to reduce angular processing
-        // Eval the child-angular if the parent-angular is the best out of the regular modes (i.e. itr=0 eval)
-        else {
-            if (best_reg_intra_mode != cand->pred_mode) {
-                if ((((regular_intra_cost[cand->pred_mode] - MAX(best_reg_intra_cost, 1)) * 100) /
-                     MAX(best_reg_intra_cost, 1)) > MDS0_REDUCE_ANGULAR_INTRA_TH)
-                    return false;
-            }
-        }
-    } else {
-        // Eval filter only if itr=1 (i.e. skip regular and skip angular)
-        // Eval regular only if itr=0 (i.e. skip angular and skip filter)
-        if (cand->filter_intra_mode == FILTER_INTRA_MODES)
-            return false;
-
-        if (best_reg_intra_mode == PAETH_PRED) {
-            if (cand->filter_intra_mode != FILTER_PAETH_PRED)
-                return false;
-        } else if (best_reg_intra_mode == D157_PRED) {
-            if (cand->filter_intra_mode != FILTER_D157_PRED)
-                return false;
-        } else if (best_reg_intra_mode == H_PRED) {
-            if (cand->filter_intra_mode != FILTER_H_PRED)
-                return false;
-        } else if (best_reg_intra_mode == V_PRED) {
-            if (cand->filter_intra_mode != FILTER_V_PRED)
-                return false;
-        } else if (best_reg_intra_mode == DC_PRED) {
-            if (cand->filter_intra_mode != FILTER_DC_PRED)
-                return false;
-        }
-    }
-#endif
     return true;
 }
 
@@ -1750,7 +1690,6 @@ static void md_stage_0(PictureControlSet *pcs, ModeDecisionContext *ctx,
         ? (int)MAX_MB_PLANE
         : 1;
 
-#if OPT_FILTER_INTRA
     // Process CLASS_0 candidates through iterations at mds0;
     // 1st iteration : evaluate the regular mode(s).
     //
@@ -1759,21 +1698,6 @@ static void md_stage_0(PictureControlSet *pcs, ModeDecisionContext *ctx,
     //      and if the cost to the best is significant
     //    - skip filter-intra mode if regular winner does not match (e.g. test filter-paeth if Paeth is best at first pass). Always test filter-DC.
     uint8_t tot_itr = (ctx->target_class != CAND_CLASS_0 || !ctx->cand_reduction_ctrls.mds0_reduce_intra) ? 1 : 2;
-#else
-    // Process CLASS_0 candidates through iterations at mds0;
-    // 1st iteration : evaluate the regular mode(s).
-    //
-    // 2nd iteration : evaluate the angular (pAngle!=0) mode(s)
-    //     skip pAngle !=0 of a given mode, if pAngle==0 of the same mode is not the best after the 1st iteration
-    //     and if the cost to the best is significant
-    //
-    // 3rd iteration : evaluate the filter - intra mode(s)
-    //     if the winner is DC/H/V/D157/Paeth, then only test filter-DC/filter-H/filter-V/filter-D157/filter-Paeth (i.e.at most 1 out of the 5 possible filter-intra)
-    //     else test all filter - intra.
-    uint8_t tot_itr = (ctx->target_class != CAND_CLASS_0 || !ctx->cand_reduction_ctrls.mds0_reduce_intra) ? 1
-        : (ctx->md_filter_intra_level)                                                                    ? 3
-                                                                                                          : 2;
-#endif
 
     uint64_t       best_reg_intra_cost = MAX_CU_COST; // Derived at the 1st itr
     PredictionMode best_reg_intra_mode = INTRA_INVALID; // Derived at the 1st itr
@@ -2734,7 +2658,6 @@ static void read_refine_me_mvs_light_pd1(PictureControlSet *pcs, EbPictureBuffer
                     (skip_subpel_2 || (skip_zero_mv && me_mv_x == 0 && me_mv_y == 0));
 
                 if (subpel_enabled && !skip_subpel) {
-#if OPT_MV_DIFF_RATE
                     if (no_mv_stack) {
                         ctx->ref_mv.col = 0;
                         ctx->ref_mv.row = 0;
@@ -2756,12 +2679,6 @@ static void read_refine_me_mvs_light_pd1(PictureControlSet *pcs, EbPictureBuffer
                         ctx->ref_mv.col = best_pred_mv[0].as_mv.col;
                         ctx->ref_mv.row = best_pred_mv[0].as_mv.row;
                     }
-#else
-                    const MV as_mv = ctx->ref_mv_stack[rf[0]][0].this_mv.as_mv;
-                    // Could use ctx->mvp_array[list][ref][0], but that requires the single ref MVP array to be init'd, but it is not in light-PD1 path
-                    ctx->ref_mv.col = no_mv_stack ? 0 : (as_mv.col + 4) & ~0x07;
-                    ctx->ref_mv.row = no_mv_stack ? 0 : (as_mv.row + 4) & ~0x07;
-#endif
                     ctx->post_subpel_me_mv_cost[list][ref] = md_subpel_search(
                         SPEL_ME,
                         pcs,
@@ -2805,10 +2722,6 @@ static void read_refine_me_mvs(PictureControlSet *pcs, ModeDecisionContext *ctx)
     const MeSbResults *me_results       = pcs->ppcs->pa_me_data->me_results[ctx->me_sb_addr];
     const uint16_t     sqi_mds          = blk_geom->sqi_mds;
     const uint8_t      max_l0           = pcs->ppcs->pa_me_data->max_l0;
-
-#if !OPT_MV_DIFF_RATE
-    const uint8_t shut_fast_rate = ctx->shut_fast_rate;
-#endif
 
     const bool          blk_avail_sqi      = ctx->avail_blk_flag[sqi_mds];
     const bool          b_w_ne_h           = blk_geom->bwidth != blk_geom->bheight;
@@ -2857,7 +2770,6 @@ static void read_refine_me_mvs(PictureControlSet *pcs, ModeDecisionContext *ctx)
                 clip_mv_on_pic_boundary(
                     ctx->blk_org_x, ctx->blk_org_y, blk_geom->bwidth, blk_geom->bheight, ref_pic, &me_mv_x, &me_mv_y);
                 // Set ref MV
-#if OPT_MV_DIFF_RATE
                 IntMv   best_pred_mv[2] = {{0}, {0}};
                 uint8_t drl_index       = 0;
                 svt_aom_choose_best_av1_mv_pred(ctx,
@@ -2874,12 +2786,6 @@ static void read_refine_me_mvs(PictureControlSet *pcs, ModeDecisionContext *ctx)
                                                 best_pred_mv);
                 ctx->ref_mv.col = best_pred_mv[0].as_mv.col;
                 ctx->ref_mv.row = best_pred_mv[0].as_mv.row;
-#else
-                // Could use ctx->mvp_array[list][ref_idx][0], but that requires the single ref MVP array to be init'd, but it is not in light-PD1 path
-                const MV as_mv  = ctx->ref_mv_stack[rf[0]][0].this_mv.as_mv;
-                ctx->ref_mv.col = shut_fast_rate ? 0 : (as_mv.col + 4) & ~0x07;
-                ctx->ref_mv.row = shut_fast_rate ? 0 : (as_mv.row + 4) & ~0x07;
-#endif
                 if (b_w_ne_h) {
                     if (md_nsq_me_enabled) {
                         md_nsq_motion_search(
@@ -3185,12 +3091,6 @@ static void build_single_ref_mvp_array(PictureControlSet *pcs, ModeDecisionConte
                 (ctx->blk_org_x + input_pic->org_x);
 
             for (int8_t mvp_index = 0; mvp_index < ctx->mvp_count[list][ref]; mvp_index++) {
-#if !OPT_MV_DIFF_RATE
-                // Set a ref MV (MVP under eval) for the MVP under eval
-                ctx->ref_mv.col = ctx->mvp_array[list][ref][mvp_index].col;
-                ctx->ref_mv.row = ctx->mvp_array[list][ref][mvp_index].row;
-#endif
-
                 int32_t ref_origin_index = ref_pic->org_x +
                     (ctx->blk_org_x + (ctx->mvp_array[list][ref][mvp_index].col >> 3)) +
                     (ctx->blk_org_y + (ctx->mvp_array[list][ref][mvp_index].row >> 3) + ref_pic->org_y) *
@@ -3344,7 +3244,6 @@ static void pme_search(PictureControlSet *pcs, ModeDecisionContext *ctx, EbPictu
                 }
             }
             // Set ref MV
-#if OPT_MV_DIFF_RATE
             IntMv   best_pred_mv[2] = {{0}, {0}};
             uint8_t drl_index       = 0;
             svt_aom_choose_best_av1_mv_pred(ctx,
@@ -3359,12 +3258,8 @@ static void pme_search(PictureControlSet *pcs, ModeDecisionContext *ctx, EbPictu
                                             0,
                                             &drl_index,
                                             best_pred_mv);
-            ctx->ref_mv.col = best_pred_mv[0].as_mv.col;
-            ctx->ref_mv.row = best_pred_mv[0].as_mv.row;
-#else
-            ctx->ref_mv.col = best_mvp_x;
-            ctx->ref_mv.row = best_mvp_y;
-#endif
+            ctx->ref_mv.col  = best_pred_mv[0].as_mv.col;
+            ctx->ref_mv.row  = best_pred_mv[0].as_mv.row;
             ctx->enable_psad = ctx->md_pme_ctrls.enable_psad;
             md_full_pel_search(pcs,
                                ctx,
@@ -7394,11 +7289,7 @@ static void search_best_independent_uv_mode(PictureControlSet *pcs, EbPictureBuf
     unsigned int           uv_mode_total_count     = start_fast_buffer_index;
     UvPredictionMode       uv_mode_end             = (UvPredictionMode)ctx->intra_ctrls.intra_mode_end;
     uint8_t                uv_mode_start           = UV_DC_PRED;
-#if CLN_REMOVE_UNUSED_SCS
-    Bool use_angle_delta = ctx->intra_ctrls.angular_pred_level ? av1_use_angle_delta(ctx->blk_geom->bsize) : 0;
-#else
-    Bool use_angle_delta = av1_use_angle_delta(ctx->blk_geom->bsize, ctx->intra_ctrls.angular_pred_level);
-#endif
+    Bool      use_angle_delta = ctx->intra_ctrls.angular_pred_level ? av1_use_angle_delta(ctx->blk_geom->bsize) : 0;
     uint8_t   disable_angle_prediction                = (ctx->intra_ctrls.angular_pred_level == 0);
     const int uv_angle_delta_shift                    = 1;
     uint8_t   directional_mode_skip_mask[INTRA_MODES] = {0};
@@ -9562,28 +9453,16 @@ static Bool update_skip_nsq_based_on_sq_recon_dist(ModeDecisionContext *ctx) {
     const uint32_t full_lambda     = ctx->hbd_md ? ctx->full_lambda_md[EB_10_BIT_MD] : ctx->full_lambda_md[EB_8_BIT_MD];
     const uint64_t dist            = RDCOST(full_lambda, 0, sq_blk_ptr->full_dist);
     const uint64_t dist_cost_ratio = (dist * 100) / sq_blk_ptr->default_cost;
-#if OPT_NSQ_PART0_PART1
-    const uint64_t min_ratio    = 50;
-    const uint64_t max_ratio    = 100;
-    const uint64_t modulated_th = (100 * (dist_cost_ratio - min_ratio)) / (max_ratio - min_ratio);
-#else
-    const uint64_t min_ratio    = 0;
-    const uint64_t max_ratio    = 100;
-    const uint64_t modulated_th = (100 * (dist_cost_ratio - min_ratio)) / (max_ratio - min_ratio);
-#endif
+    const uint64_t min_ratio       = 50;
+    const uint64_t max_ratio       = 100;
+    const uint64_t modulated_th    = (100 * (dist_cost_ratio - min_ratio)) / (max_ratio - min_ratio);
 
     // Modulate TH based on parent SQ pred_mode
     switch (sq_blk_ptr->pred_mode) {
     case NEWMV:
-#if OPT_NSQ_PART0_PART1
     case NEW_NEWMV: max_part0_to_part1_dev = ((max_part0_to_part1_dev * 75) / 100); break;
     case NEAREST_NEARESTMV:
     case NEAR_NEARMV: max_part0_to_part1_dev *= 2; break;
-#else
-    case NEW_NEWMV: max_part0_to_part1_dev = max_part0_to_part1_dev - ((max_part0_to_part1_dev * 75) / 100); break;
-    case NEAREST_NEARESTMV:
-    case NEAR_NEARMV: max_part0_to_part1_dev *= 3; break;
-#endif
     case GLOBALMV:
     case GLOBAL_GLOBALMV: max_part0_to_part1_dev <<= 2; break;
     default: break;
@@ -10566,7 +10445,6 @@ void svt_aom_mode_decision_sb_light_pd1(SequenceControlSet *scs, PictureControlS
         }
         // The current block is the last at a given d1 level; if so update d2 info
         if (ctx->avail_blk_flag[blk_idx_mds]) {
-#if FIX_PART_CTX
             // Always update the partition context array because may be needed for other SBs which
             // have NSQ or multiple depths enabled
             struct PartitionContext partition;
@@ -10580,7 +10458,6 @@ void svt_aom_mode_decision_sb_light_pd1(SequenceControlSet *scs, PictureControlS
                                                    ctx->blk_geom->bwidth,
                                                    ctx->blk_geom->bheight,
                                                    NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
-#endif
             // If TXS enabled at picture level, there are necessary context updates
             if (pcs->ppcs->frm_hdr.tx_mode == TX_MODE_SELECT) {
                 uint8_t tx_size = tx_depth_to_tx_size[ctx->blk_ptr->tx_depth][ctx->blk_geom->bsize];

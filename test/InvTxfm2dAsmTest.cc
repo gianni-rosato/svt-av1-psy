@@ -719,8 +719,11 @@ class InvTxfm2dAsmTest : public ::testing::TestWithParam<InvTxfm2dParam> {
 
     void run_HandleTransform_match_test() {
         using HandleTxfmFunc = uint64_t (*)(int32_t *output);
+
         const int num_htf_sizes = 10;
+
         const HandleTxfmFunc htf_ref_funcs[num_htf_sizes] = {
+
             svt_handle_transform16x64_c,
             svt_handle_transform32x64_c,
             svt_handle_transform64x16_c,

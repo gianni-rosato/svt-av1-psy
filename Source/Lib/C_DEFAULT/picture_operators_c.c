@@ -210,7 +210,6 @@ void svt_aom_hadamard_32x32_c(const int16_t* src_diff, ptrdiff_t src_stride, int
         svt_aom_hadamard_16x16_c(src_ptr, src_stride, coeff + idx * 256);
     }
 
-#if FIX_AVX2_HADAMARD
     // coeff: 16 bit, dynamic range [-32768, 32767]
     for (idx = 0; idx < 256; ++idx) {
         int32_t a0 = coeff[0];
@@ -230,25 +229,4 @@ void svt_aom_hadamard_32x32_c(const int16_t* src_diff, ptrdiff_t src_stride, int
 
         ++coeff;
     }
-#else
-    // coeff: 15 bit, dynamic range [-16320, 16320]
-    for (idx = 0; idx < 256; ++idx) {
-        int32_t a0 = coeff[0];
-        int32_t a1 = coeff[256];
-        int32_t a2 = coeff[512];
-        int32_t a3 = coeff[768];
-
-        int32_t b0 = (a0 + a1) >> 2; // (a0 + a1): 16 bit, [-32640, 32640]
-        int32_t b1 = (a0 - a1) >> 2; // b0-b3: 15 bit, dynamic range
-        int32_t b2 = (a2 + a3) >> 2; // [-16320, 16320]
-        int32_t b3 = (a2 - a3) >> 2;
-
-        coeff[0]   = b0 + b2; // 16 bit, [-32640, 32640]
-        coeff[256] = b1 + b3;
-        coeff[512] = b0 - b2;
-        coeff[768] = b1 - b3;
-
-        ++coeff;
-    }
-#endif
 }

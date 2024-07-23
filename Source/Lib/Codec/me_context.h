@@ -354,7 +354,6 @@ typedef struct SearchResults {
     uint64_t hme_sad; // hme sad
     uint8_t  do_ref; // to process this ref in ME or not
 } SearchResults;
-#if OPT_ME_ON_MV
 typedef struct MvBasedSearchAdj {
     bool enabled;
     // if true, apply search area increase to nearest ref frame only (ref_idx == 0)
@@ -364,7 +363,6 @@ typedef struct MvBasedSearchAdj {
     uint16_t mv_size_th;
     uint16_t sa_multiplier;
 } MvBasedSearchAdj;
-#endif
 
 typedef struct MeContext {
     EbDctor dctor;
@@ -417,9 +415,7 @@ typedef struct MeContext {
     MeSrCtrls          me_sr_adjustment_ctrls;
     Me8x8VarCtrls      me_8x8_var_ctrls;
     uint8_t            max_hme_sr_area_multipler;
-#if OPT_ME_ON_MV
-    MvBasedSearchAdj mv_based_sa_adj;
-#endif
+    MvBasedSearchAdj   mv_based_sa_adj;
     // ME
     uint8_t          best_list_idx;
     uint8_t          best_ref_idx;

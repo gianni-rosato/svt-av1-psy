@@ -823,7 +823,6 @@ static void initialize_mini_gop_activity_array(SequenceControlSet* scs, PictureP
     }
     ctx->list0_only = 0;
     if (scs->list0_only_base_ctrls.enabled) {
-#if OPT_L0_ONLY_BASE
         if (scs->list0_only_base_ctrls.list0_only_base_th == ((uint16_t)~0)) {
             ctx->list0_only = 1;
         }
@@ -839,23 +838,6 @@ static void initialize_mini_gop_activity_array(SequenceControlSet* scs, PictureP
                     ctx->list0_only = 1;
             }
         }
-#else
-        if (scs->list0_only_base_ctrls.list0_only_base_th >= 100) {
-            ctx->list0_only = 1;
-        } else {
-            PictureParentControlSet* start_pcs = (PictureParentControlSet*)enc_ctx->pre_assignment_buffer[0]->object_ptr;
-            PictureParentControlSet* end_pcs = (PictureParentControlSet*)enc_ctx->pre_assignment_buffer[enc_ctx->pre_assignment_buffer_count - 1]->object_ptr;
-            uint8_t active_region_cnt = 0;
-            calc_ahd(
-                scs,
-                end_pcs,
-                start_pcs,
-                &active_region_cnt);
-            uint8_t perc_active_region = active_region_cnt * 100 / (scs->picture_analysis_number_of_regions_per_width * scs->picture_analysis_number_of_regions_per_height);
-            if (perc_active_region <= scs->list0_only_base_ctrls.list0_only_base_th)
-                ctx->list0_only = 1;
-        }
-#endif
     }
 }
 

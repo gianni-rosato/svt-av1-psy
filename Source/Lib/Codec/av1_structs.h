@@ -183,10 +183,6 @@ typedef struct SeqHeader {
     /*!< Specifies whether the intra edge filtering process should be enabled */
     uint8_t enable_intra_edge_filter;
 
-#if !CLN_REMOVE_UNUSED_SCS
-    /*!< Specifies whether the picture based rate estimation should be enabled */
-    uint8_t pic_based_rate_est;
-#endif
     /*!< Specifies whether the intra angle delta filtering process should be enabled */
     uint8_t enable_intra_angle_delta_filter;
 

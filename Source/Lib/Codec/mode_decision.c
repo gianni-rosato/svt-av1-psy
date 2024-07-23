@@ -66,21 +66,10 @@ int svt_is_interintra_allowed(uint8_t enable_inter_intra, BlockSize bsize, Predi
     return enable_inter_intra && svt_aom_is_interintra_allowed_bsize((const BlockSize)bsize) &&
         svt_aom_is_interintra_allowed_mode(mode) && svt_aom_is_interintra_allowed_ref(ref_frame);
 }
-#if OPT_FILTER_INTRA
 int svt_aom_filter_intra_allowed_bsize(BlockSize bs) { return block_size_wide[bs] <= 32 && block_size_high[bs] <= 32; }
 int svt_aom_filter_intra_allowed(uint8_t enable_filter_intra, BlockSize bsize, uint8_t palette_size, uint32_t mode) {
     return enable_filter_intra && mode == DC_PRED && palette_size == 0 && svt_aom_filter_intra_allowed_bsize(bsize);
 }
-#else
-int svt_aom_filter_intra_allowed_bsize(uint8_t enable_filter_intra, BlockSize bs) {
-    if (!enable_filter_intra)
-        return 0;
-    return block_size_wide[bs] <= 32 && block_size_high[bs] <= 32;
-}
-int svt_aom_filter_intra_allowed(uint8_t enable_filter_intra, BlockSize bsize, uint8_t palette_size, uint32_t mode) {
-    return mode == DC_PRED && palette_size == 0 && svt_aom_filter_intra_allowed_bsize(enable_filter_intra, bsize);
-}
-#endif
 // returns the max inter-inter compound type based on settings and block size
 static MD_COMP_TYPE get_tot_comp_types_bsize(MD_COMP_TYPE tot_comp_types, BlockSize bsize) {
     return (svt_aom_get_wedge_params_bits(bsize) == 0) ? MIN(tot_comp_types, MD_COMP_WEDGE) : tot_comp_types;
@@ -575,7 +564,6 @@ void svt_aom_choose_best_av1_mv_pred(ModeDecisionContext *ctx, struct MdRateEsti
                 }
             }
 
-#if OPT_MV_DIFF_RATE
             const int32_t new_mv = (mode == NEWMV || mode == NEW_NEWMV);
             if (new_mv) {
                 int32_t idx;
@@ -588,7 +576,6 @@ void svt_aom_choose_best_av1_mv_pred(ModeDecisionContext *ctx, struct MdRateEsti
                     }
                 }
             }
-#endif
 
             if (mv_rate < best_mv_cost) {
                 best_mv_cost    = mv_rate;
@@ -2055,11 +2042,9 @@ static void inject_new_nearest_new_comb_candidates(const SequenceControlSet *scs
                         ++ctx->injected_mv_count;
                     }
                 }
-#if OPT_NRST_NR_NEW
                 // For level 2, only inject NEAREST_NEW/NEW_NEAREST candidates
                 if (ctx->new_nearest_near_comb_injection >= 2)
                     continue;
-#endif
                 //NEW_NEARMV
                 {
                     uint8_t max_drl_index = svt_aom_get_max_drl_index(xd->ref_mv_count[ref_pair], NEW_NEARMV);
@@ -3890,11 +3875,7 @@ static void inject_intra_candidates(
     PredictionMode              intra_mode_end = dc_cand_only_flag ? DC_PRED : ctx->intra_ctrls.intra_mode_end;
     uint32_t                    cand_total_cnt = *candidate_total_cnt;
     ModeDecisionCandidate    *cand_array = ctx->fast_cand_array;
-#if CLN_REMOVE_UNUSED_SCS
     const Bool use_angle_delta = ctx->intra_ctrls.angular_pred_level ? av1_use_angle_delta(ctx->blk_geom->bsize) : 0;
-#else
-    const Bool use_angle_delta = av1_use_angle_delta(ctx->blk_geom->bsize, ctx->intra_ctrls.angular_pred_level);
-#endif
     const uint8_t disable_angle_prediction = (ctx->intra_ctrls.angular_pred_level == 0);
     uint8_t directional_mode_skip_mask[INTRA_MODES] = { 0 };
     if (ctx->intra_ctrls.angular_pred_level >= 4) {
@@ -3956,9 +3937,7 @@ static void inject_filter_intra_candidates(
                                      ctx->intra_ctrls.intra_mode_end >= H_PRED ? FILTER_H_PRED :
                                      ctx->intra_ctrls.intra_mode_end >= V_PRED ? FILTER_V_PRED :
                                      FILTER_DC_PRED;
-#if OPT_FILTER_INTRA
     intra_mode_end = MIN(intra_mode_end, ctx->filter_intra_ctrls.max_filter_intra_mode);
-#endif
 
     FilterIntraMode             filter_intra_mode;
     uint32_t                    cand_total_cnt = *candidate_total_cnt;
@@ -4233,11 +4212,7 @@ EbErrorType generate_md_stage_0_cand(
                  dc_cand_only_flag,
                  &cand_total_cnt);
          }
-#if OPT_FILTER_INTRA
          if (ctx->filter_intra_ctrls.enabled && svt_aom_filter_intra_allowed_bsize(ctx->blk_geom->bsize))
-#else
-         if (svt_aom_filter_intra_allowed_bsize(ctx->md_filter_intra_level, ctx->blk_geom->bsize))
-#endif
              inject_filter_intra_candidates(
                  pcs,
                  ctx,

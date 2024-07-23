@@ -2756,11 +2756,7 @@ static void exaustive_light_pd1_features(ModeDecisionContext *md_ctx, PicturePar
             md_ctx->md_pme_ctrls.enabled == 0 && md_ctx->txt_ctrls.enabled == 0 &&
             md_ctx->mds0_ctrls.mds0_dist_type != SSD && md_ctx->unipred3x3_injection == 0 &&
             md_ctx->bipred3x3_ctrls.enabled == 0 && md_ctx->inter_comp_ctrls.tot_comp_types == 1 &&
-#if OPT_FILTER_INTRA
             md_ctx->md_pic_obmc_level == 0 && md_ctx->filter_intra_ctrls.enabled == 0 &&
-#else
-            md_ctx->md_pic_obmc_level == 0 && md_ctx->md_filter_intra_level == 0 &&
-#endif
             md_ctx->new_nearest_near_comb_injection == 0 && md_ctx->md_palette_level == 0 &&
             ppcs->gm_ctrls.enabled == 0 &&
             // If TXS enabled at picture level, there are necessary context updates that must be added to LPD1
@@ -3318,11 +3314,7 @@ void *svt_aom_mode_decision_kernel(void *input_ptr) {
                         mdc_ptr                     = &(ed_ctx->md_ctx->mdc_sb_array);
                         ed_ctx->sb_index            = sb_index;
                         if (pcs->cdf_ctrl.enabled) {
-#if CLN_REMOVE_UNUSED_SCS
                             if (scs->pic_based_rate_est &&
-#else
-                            if (scs->seq_header.pic_based_rate_est &&
-#endif
                                 scs->enc_dec_segment_row_count_array[pcs->temporal_layer_index] == 1 &&
                                 scs->enc_dec_segment_col_count_array[pcs->temporal_layer_index] == 1) {
                                 if (sb_index == 0)
