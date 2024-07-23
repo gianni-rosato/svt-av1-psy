@@ -21,13 +21,13 @@ target_sources(
   PUBLIC av1_inv_txfm_neon.c
   PUBLIC av1_quantize_neon.c
   PUBLIC blend_a64_mask_neon.c
+  PUBLIC block_error_neon.c
   PUBLIC cdef_block_neon.c
   PUBLIC cdef_filter_block_neon.c
   PUBLIC cdef_neon.c
   PUBLIC cfl_neon.c
   PUBLIC compound_convolve_neon.c
   PUBLIC compute_sad_neon.c
-  PUBLIC convolve_2d_neon.c
   PUBLIC convolve_neon.c
   PUBLIC highbd_jnt_convolve_neon.c
   PUBLIC highbd_convolve_neon.c
@@ -49,9 +49,12 @@ target_sources(
   PUBLIC sad_neon.c
   PUBLIC selfguided_neon.c
   PUBLIC sse_neon.c
+  PUBLIC subtract_block_neon.c
   PUBLIC temporal_filtering_neon.c
+  PUBLIC upsampled_pred_neon.c
   PUBLIC variance_neon.c
   PUBLIC warp_plane_neon.c
+  PUBLIC wedge_utils_neon.c
   PUBLIC wiener_convolve_neon.c)
 
 target_include_directories(

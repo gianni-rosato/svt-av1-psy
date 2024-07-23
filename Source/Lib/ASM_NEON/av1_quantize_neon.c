@@ -12,10 +12,12 @@
 #include <arm_neon.h>
 #include <assert.h>
 #include <math.h>
+
 #include "aom_dsp_rtcd.h"
+#include "inv_transforms.h"
 #include "mem_neon.h"
 #include "sum_neon.h"
-#include "inv_transforms.h"
+#include "utility.h"
 
 static INLINE uint16_t get_max_eob(int16x8_t v_eobmax) { return (uint16_t)vmaxvq_s16(v_eobmax); }
 
@@ -661,4 +663,63 @@ void svt_aom_quantize_b_neon(const TranLow *coeff_ptr, intptr_t n_coeffs, const 
         break;
     }
     }
+}
+
+uint8_t svt_av1_compute_cul_level_neon(const int16_t *const scan, const int32_t *const quant_coeff, uint16_t *eob) {
+    if (*eob == 1) {
+        if (quant_coeff[0] > 0)
+            return (AOMMIN(COEFF_CONTEXT_MASK, quant_coeff[0]) + (2 << COEFF_CONTEXT_BITS));
+        if (quant_coeff[0] < 0) {
+            return (AOMMIN(COEFF_CONTEXT_MASK, ABS(quant_coeff[0])) | (1 << COEFF_CONTEXT_BITS));
+        }
+        return 0;
+    }
+
+    int32x4_t sum_256_0 = vdupq_n_s32(0);
+    int32x4_t sum_256_1 = vdupq_n_s32(0);
+
+    for (int32_t c = 0; c < *eob; c += 8) {
+        const int16x4_t scan_64_0 = vld1_s16(scan + c + 0);
+        const int16x4_t scan_64_1 = vld1_s16(scan + c + 4);
+
+        const int32x4_t scan_128_0 = vmovl_s16(scan_64_0);
+        const int32x4_t scan_128_1 = vmovl_s16(scan_64_1);
+
+        // no gather operation, unfortunately
+        const int32_t quant_coeff_0 = *(quant_coeff + vgetq_lane_s32(scan_128_0, 0) + 4 * 8);
+        const int32_t quant_coeff_1 = *(quant_coeff + vgetq_lane_s32(scan_128_0, 1) + 4 * 8);
+        const int32_t quant_coeff_2 = *(quant_coeff + vgetq_lane_s32(scan_128_0, 2) + 4 * 8);
+        const int32_t quant_coeff_3 = *(quant_coeff + vgetq_lane_s32(scan_128_0, 3) + 4 * 8);
+
+        const int32_t quant_coeff_4 = *(quant_coeff + vgetq_lane_s32(scan_128_1, 0) + 4 * 8);
+        const int32_t quant_coeff_5 = *(quant_coeff + vgetq_lane_s32(scan_128_1, 1) + 4 * 8);
+        const int32_t quant_coeff_6 = *(quant_coeff + vgetq_lane_s32(scan_128_1, 2) + 4 * 8);
+        const int32_t quant_coeff_7 = *(quant_coeff + vgetq_lane_s32(scan_128_1, 3) + 4 * 8);
+
+        int32x4_t quant_coeff_128_0 = vcombine_s32(
+            vcreate_s32((((uint64_t)quant_coeff_1) << 32) + (uint64_t)quant_coeff_0),
+            vcreate_s32((((uint64_t)quant_coeff_3) << 32) + (uint64_t)quant_coeff_2));
+        int32x4_t quant_coeff_128_1 = vcombine_s32(
+            vcreate_s32((((uint64_t)quant_coeff_5) << 32) + (uint64_t)quant_coeff_4),
+            vcreate_s32((((uint64_t)quant_coeff_7) << 32) + (uint64_t)quant_coeff_6));
+
+        quant_coeff_128_0 = vabsq_s32(quant_coeff_128_0);
+        quant_coeff_128_1 = vabsq_s32(quant_coeff_128_1);
+
+        sum_256_0 = vaddq_s32(sum_256_0, quant_coeff_128_0);
+        sum_256_1 = vaddq_s32(sum_256_1, quant_coeff_128_1);
+    }
+
+    int32x4_t partial_sums = vaddq_s32(sum_256_0, sum_256_1);
+    partial_sums           = vpaddq_s32(partial_sums, partial_sums);
+    partial_sums           = vpaddq_s32(partial_sums, partial_sums);
+
+    const int32_t cul_level = AOMMIN(COEFF_CONTEXT_MASK, vgetq_lane_s32(partial_sums, 0));
+
+    // DC value, calculation from set_dc_sign()
+    if (quant_coeff[0] < 0)
+        return (cul_level | (1 << COEFF_CONTEXT_BITS));
+    if (quant_coeff[0] > 0)
+        return (cul_level + (2 << COEFF_CONTEXT_BITS));
+    return (uint8_t)cul_level;
 }
