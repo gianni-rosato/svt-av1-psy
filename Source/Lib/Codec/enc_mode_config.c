@@ -1587,6 +1587,26 @@ static uint8_t get_dlf_level(PictureControlSet *pcs, EncMode enc_mode, uint8_t i
             modulation_mode = 2;
         } else {
 #if OPT_FAST_DECODE_LVLS // dlf
+#if UNIFY_DLF_LVL
+            if (fast_decode == 3) {
+                if (pcs->coeff_lvl == LOW_LVL)
+                    dlf_level = is_base ? 2 : is_not_last_layer ? 5 : 0;
+                else if (pcs->coeff_lvl == HIGH_LVL)
+                    dlf_level = is_base ? 4 : 0;
+                else
+                    dlf_level = is_base ? 2 : is_not_last_layer ? 5 : 0;
+                modulation_mode = 3;
+            }
+            else {
+                if (pcs->coeff_lvl == LOW_LVL)
+                    dlf_level = is_base ? 2 : is_not_last_layer ? 3 : 4;
+                else if (pcs->coeff_lvl == HIGH_LVL)
+                    dlf_level = is_base ? 4 : is_not_last_layer ? 5 : 0;
+                else
+                    dlf_level = is_base ? 2 : is_not_last_layer ? 4 : 5;
+                modulation_mode = 2;
+            }
+#else
             switch (fast_decode) {
             case -1:
             case 0:
@@ -1603,6 +1623,7 @@ static uint8_t get_dlf_level(PictureControlSet *pcs, EncMode enc_mode, uint8_t i
             case 3: dlf_level = is_base ? 3 : is_not_last_layer ? 5 : 0; break;
             default: dlf_level = is_base ? 3 : 4; break;
             }
+#endif
 #else
             if (pcs->coeff_lvl == LOW_LVL)
                 dlf_level = is_base ? 2 : is_not_last_layer ? 3 : 4;
@@ -9028,7 +9049,11 @@ void svt_aom_sig_deriv_mode_decision_config(SequenceControlSet *scs, PictureCont
         }
     }
     pcs->lambda_weight = 0;
+#if CLN_FD_USE_LOCAL
+    if (fast_decode) {
+#else
     if (pcs->scs->static_config.fast_decode) {
+#endif
         if (pcs->picture_qp >= 57) {
             pcs->lambda_weight = 200;
         } else {

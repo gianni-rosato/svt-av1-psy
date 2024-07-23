@@ -34,6 +34,12 @@
 extern "C" {
 #endif // __cplusplus
 
+#define OPT_ACC_PART_CTX_FEAT                     1 // Update the use_accurate_part_ctx feature to use the correct partition context
+#define CLN_FD_USE_LOCAL                          1 // Use local variable for fast-decode to follow convention in signal derivation
+#define UNIFY_DLF_LVL                             1 // Unified the DLF-level derivation for fd_3 and fd_1; used coeff_level-based modulation and skip_selection-based modulation for fd_3
+#define FIX_PART_NEIGH_UPDATE                     1 // Fix partition neighbour updates
+#define FIX_USE_SB_LAMBDA_DR                      1 // Use the SB lambda at depth-removal, instead of non-updated block-based lambda
+
 //FOR DEBUGGING - Do not remove
 #define OPT_LD_LATENCY2         1 // Latency optimization for low delay - to keep the Macro for backwards testing until 3.0
 #define OPT_FAST_DECODE_LVLS    0 // Add the ability to use different lvls for fast-deocde
