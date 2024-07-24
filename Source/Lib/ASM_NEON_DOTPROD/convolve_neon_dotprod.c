@@ -18,17 +18,6 @@
 #include "mem_neon.h"
 #include "utility.h"
 
-// clang-format off
-DECLARE_ALIGNED(16, static const uint8_t, kDotProdMergeBlockTbl[48]) = {
-  // Shift left and insert new last column in transposed 4x4 block.
-  1, 2, 3, 16, 5, 6, 7, 20, 9, 10, 11, 24, 13, 14, 15, 28,
-  // Shift left and insert two new columns in transposed 4x4 block.
-  2, 3, 16, 17, 6, 7, 20, 21, 10, 11, 24, 25, 14, 15, 28, 29,
-  // Shift left and insert three new columns in transposed 4x4 block.
-  3, 16, 17, 18, 7, 20, 21, 22, 11, 24, 25, 26, 15, 28, 29, 30
-};
-// clang-format on
-
 static INLINE int16x4_t convolve4_4_x(const uint8x16_t samples, const int8x8_t filters, const uint8x16_t permute_tbl) {
     // Transform sample range to [-128, 127] for 8-bit signed dot product.
     int8x16_t samples_128 = vreinterpretq_s8_u8(vsubq_u8(samples, vdupq_n_u8(128)));
