@@ -71,7 +71,7 @@ uint64_t svt_av1_wedge_sse_from_residuals_neon(const int16_t *r1, const int16_t 
         i += 16;
     } while (i < N);
 
-    uint64_t csse = horizontal_add_u64x2(vaddq_u64(v_csse[0], v_csse[1]));
+    uint64_t csse = vaddvq_u64(vaddq_u64(v_csse[0], v_csse[1]));
     return ROUND_POWER_OF_TWO(csse, 2 * WEDGE_WEIGHT_BITS);
 }
 
@@ -102,5 +102,5 @@ int8_t svt_av1_wedge_sign_from_residuals_neon(const int16_t *ds, const uint8_t *
     sum = vpadalq_s32(sum, acc[2]);
     sum = vpadalq_s32(sum, acc[3]);
 
-    return (horizontal_add_s64x2(sum) > limit);
+    return (vaddvq_s64(sum) > limit);
 }

@@ -60,7 +60,7 @@ static INLINE uint32_t sse_8xh_neon(const uint8_t *src, int src_stride, const ui
         i -= 2;
     } while (i != 0);
 
-    return horizontal_add_u32x4(vcombine_u32(sse[0], sse[1]));
+    return vaddvq_u32(vcombine_u32(sse[0], sse[1]));
 }
 
 static INLINE uint32_t sse_4xh_neon(const uint8_t *src, int src_stride, const uint8_t *ref, int ref_stride,
@@ -76,7 +76,7 @@ static INLINE uint32_t sse_4xh_neon(const uint8_t *src, int src_stride, const ui
         i -= 2;
     } while (i != 0);
 
-    return horizontal_add_u32x2(sse);
+    return vaddv_u32(sse);
 }
 
 static INLINE uint32_t sse_wxh_neon(const uint8_t *src, int src_stride, const uint8_t *ref, int ref_stride, int width,
@@ -113,7 +113,7 @@ static INLINE uint32_t sse_wxh_neon(const uint8_t *src, int src_stride, const ui
             i -= 2;
         } while (i != 0);
     }
-    return horizontal_add_u32x4(vcombine_u32(sse[0], sse[1]));
+    return vaddvq_u32(vcombine_u32(sse[0], sse[1]));
 }
 
 #else // !defined(__ARM_FEATURE_DOTPROD)
@@ -161,7 +161,7 @@ static INLINE uint32_t sse_8xh_neon(const uint8_t *src, int src_stride, const ui
         ref += ref_stride;
     } while (--i != 0);
 
-    return horizontal_add_u32x4(sse);
+    return vaddvq_u32(sse);
 }
 
 static INLINE uint32_t sse_4xh_neon(const uint8_t *src, int src_stride, const uint8_t *ref, int ref_stride,
@@ -177,7 +177,7 @@ static INLINE uint32_t sse_4xh_neon(const uint8_t *src, int src_stride, const ui
         i -= 2;
     } while (i != 0);
 
-    return horizontal_add_u32x4(sse);
+    return vaddvq_u32(sse);
 }
 
 static INLINE uint32_t sse_wxh_neon(const uint8_t *src, int src_stride, const uint8_t *ref, int ref_stride, int width,
@@ -212,7 +212,7 @@ static INLINE uint32_t sse_wxh_neon(const uint8_t *src, int src_stride, const ui
             ref += ref_stride;
         } while (--i != 0);
     }
-    return horizontal_add_u32x4(sse);
+    return vaddvq_u32(sse);
 }
 
 #endif // defined(__ARM_FEATURE_DOTPROD)
@@ -236,7 +236,7 @@ static INLINE uint32_t sse_128xh_neon(const uint8_t *src, int src_stride, const 
         ref += ref_stride;
     } while (--i != 0);
 
-    return horizontal_add_u32x4(vaddq_u32(sse[0], sse[1]));
+    return vaddvq_u32(vaddq_u32(sse[0], sse[1]));
 }
 
 static INLINE uint32_t sse_64xh_neon(const uint8_t *src, int src_stride, const uint8_t *ref, int ref_stride,
@@ -254,7 +254,7 @@ static INLINE uint32_t sse_64xh_neon(const uint8_t *src, int src_stride, const u
         ref += ref_stride;
     } while (--i != 0);
 
-    return horizontal_add_u32x4(vaddq_u32(sse[0], sse[1]));
+    return vaddvq_u32(vaddq_u32(sse[0], sse[1]));
 }
 
 static INLINE uint32_t sse_32xh_neon(const uint8_t *src, int src_stride, const uint8_t *ref, int ref_stride,
@@ -270,7 +270,7 @@ static INLINE uint32_t sse_32xh_neon(const uint8_t *src, int src_stride, const u
         ref += ref_stride;
     } while (--i != 0);
 
-    return horizontal_add_u32x4(vaddq_u32(sse[0], sse[1]));
+    return vaddvq_u32(vaddq_u32(sse[0], sse[1]));
 }
 
 static INLINE uint32_t sse_16xh_neon(const uint8_t *src, int src_stride, const uint8_t *ref, int ref_stride,
@@ -288,7 +288,7 @@ static INLINE uint32_t sse_16xh_neon(const uint8_t *src, int src_stride, const u
         i -= 2;
     } while (i != 0);
 
-    return horizontal_add_u32x4(vaddq_u32(sse[0], sse[1]));
+    return vaddvq_u32(vaddq_u32(sse[0], sse[1]));
 }
 
 int64_t svt_aom_sse_neon(const uint8_t *src, int src_stride, const uint8_t *ref, int ref_stride, int width,

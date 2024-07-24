@@ -32,7 +32,7 @@ int svt_aom_satd_neon(const TranLow *coeff, int length) {
     } while (length != 0);
 
     // satd: 26 bits, dynamic range [-32640 * 1024, 32640 * 1024]
-    return horizontal_add_s32x4(accum);
+    return vaddvq_s32(accum);
 }
 
 void svt_aom_compute8x4_sad_kernel_dual_neon(uint8_t *restrict src_ptr, uint32_t src_stride, uint8_t *restrict ref_ptr,

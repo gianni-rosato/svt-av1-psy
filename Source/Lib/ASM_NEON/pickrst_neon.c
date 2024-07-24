@@ -64,7 +64,7 @@ static INLINE uint8_t find_average_neon(const uint8_t *src, int src_stride, int 
             h_limit += h_overflow;
             h_limit = height > h_overflow ? h_overflow : height;
         } while (h < height);
-        return (uint8_t)((horizontal_long_add_u32x4(avg_u32) + sum) / (width * height));
+        return (uint8_t)((vaddlvq_u32(avg_u32) + sum) / (width * height));
     }
     if (width >= 8) {
         int h = 0;
@@ -96,7 +96,7 @@ static INLINE uint8_t find_average_neon(const uint8_t *src, int src_stride, int 
             h_limit += h_overflow;
             h_limit = height > h_overflow ? h_overflow : height;
         } while (h < height);
-        return (uint8_t)((horizontal_long_add_u32x2(avg_u32) + sum) / (width * height));
+        return (uint8_t)((vaddlv_u32(avg_u32) + sum) / (width * height));
     }
     int i = height;
     do {
@@ -264,7 +264,7 @@ static INLINE void compute_M_one_row_win7(int16x8_t src, int16x8_t dgd0, int16x8
     int32x4_t m1    = vmull_s16(vget_low_s16(src), vget_low_s16(dgd01));
     m1              = vmlal_s16(m1, vget_high_s16(src), vget_high_s16(dgd01));
 
-    m0   = horizontal_add_2d_s32(m0, m1);
+    m0   = vpaddq_s32(m0, m1);
     m_01 = vpadalq_s32(m_01, m0);
     vst1q_s64(M + row * wiener_win + 0, m_01);
 
@@ -276,7 +276,7 @@ static INLINE void compute_M_one_row_win7(int16x8_t src, int16x8_t dgd0, int16x8
     int32x4_t m3    = vmull_s16(vget_low_s16(src), vget_low_s16(dgd03));
     m3              = vmlal_s16(m3, vget_high_s16(src), vget_high_s16(dgd03));
 
-    m2   = horizontal_add_2d_s32(m2, m3);
+    m2   = vpaddq_s32(m2, m3);
     m_23 = vpadalq_s32(m_23, m2);
     vst1q_s64(M + row * wiener_win + 2, m_23);
 
@@ -288,14 +288,14 @@ static INLINE void compute_M_one_row_win7(int16x8_t src, int16x8_t dgd0, int16x8
     int32x4_t m5    = vmull_s16(vget_low_s16(src), vget_low_s16(dgd05));
     m5              = vmlal_s16(m5, vget_high_s16(src), vget_high_s16(dgd05));
 
-    m4   = horizontal_add_2d_s32(m4, m5);
+    m4   = vpaddq_s32(m4, m5);
     m_45 = vpadalq_s32(m_45, m4);
     vst1q_s64(M + row * wiener_win + 4, m_45);
 
     int16x8_t dgd06 = vextq_s16(dgd0, dgd1, 6);
     int32x4_t m6    = vmull_s16(vget_low_s16(src), vget_low_s16(dgd06));
     m6              = vmlal_s16(m6, vget_high_s16(src), vget_high_s16(dgd06));
-    M[row * wiener_win + 6] += horizontal_long_add_s32x4(m6);
+    M[row * wiener_win + 6] += vaddlvq_s32(m6);
 }
 
 static INLINE void compute_H_one_col(int16x8_t *dgd, int col, int64_t *H, const int wiener_win, const int wiener_win2,
@@ -308,7 +308,7 @@ static INLINE void compute_H_one_col(int16x8_t *dgd, int col, int64_t *H, const 
             auto_cov           = vmlal_s16(auto_cov, vget_high_s16(dgd[row0]), vget_high_s16(dgd[row1]));
             auto_cov           = vshlq_s32(auto_cov, df_s32);
 
-            H[auto_cov_idx] += horizontal_long_add_s32x4(auto_cov);
+            H[auto_cov_idx] += vaddlvq_s32(auto_cov);
         }
     }
 }
@@ -322,7 +322,7 @@ static INLINE void compute_H_two_cols(int16x8_t *dgd0, int16x8_t *dgd1, int col0
             int32x4_t auto_cov = vmull_s16(vget_low_s16(dgd0[row0]), vget_low_s16(dgd1[row1]));
             auto_cov           = vmlal_s16(auto_cov, vget_high_s16(dgd0[row0]), vget_high_s16(dgd1[row1]));
 
-            H[auto_cov_idx] += horizontal_long_add_s32x4(auto_cov);
+            H[auto_cov_idx] += vaddlvq_s32(auto_cov);
         }
     }
 }
@@ -337,7 +337,7 @@ static INLINE void compute_H_one_col_last_row(int16x8_t *dgd, int col, int64_t *
             auto_cov           = vmlal_s16(auto_cov, vget_high_s16(dgd[row0]), vget_high_s16(dgd[row1]));
             auto_cov           = vmulq_n_s32(auto_cov, last_row_df);
 
-            H[auto_cov_idx] += horizontal_long_add_s32x4(auto_cov);
+            H[auto_cov_idx] += vaddlvq_s32(auto_cov);
         }
     }
 }
@@ -753,7 +753,7 @@ static INLINE void compute_M_one_row_win5(int16x8_t src, int16x8_t dgd0, int16x8
     int32x4_t m1    = vmull_s16(vget_low_s16(src), vget_low_s16(dgd01));
     m1              = vmlal_s16(m1, vget_high_s16(src), vget_high_s16(dgd01));
 
-    m0   = horizontal_add_2d_s32(m0, m1);
+    m0   = vpaddq_s32(m0, m1);
     m_01 = vpadalq_s32(m_01, m0);
     vst1q_s64(M + row * wiener_win + 0, m_01);
 
@@ -765,14 +765,14 @@ static INLINE void compute_M_one_row_win5(int16x8_t src, int16x8_t dgd0, int16x8
     int32x4_t m3    = vmull_s16(vget_low_s16(src), vget_low_s16(dgd03));
     m3              = vmlal_s16(m3, vget_high_s16(src), vget_high_s16(dgd03));
 
-    m2   = horizontal_add_2d_s32(m2, m3);
+    m2   = vpaddq_s32(m2, m3);
     m_23 = vpadalq_s32(m_23, m2);
     vst1q_s64(M + row * wiener_win + 2, m_23);
 
     int16x8_t dgd04 = vextq_s16(dgd0, dgd1, 4);
     int32x4_t m4    = vmull_s16(vget_low_s16(src), vget_low_s16(dgd04));
     m4              = vmlal_s16(m4, vget_high_s16(src), vget_high_s16(dgd04));
-    M[row * wiener_win + 4] += horizontal_long_add_s32x4(m4);
+    M[row * wiener_win + 4] += vaddlvq_s32(m4);
 }
 
 // This function computes two matrices: the cross-correlation between the src

@@ -1922,7 +1922,7 @@ static INLINE int calculate_dc_from_sum(int bw, int bh, uint32_t sum, int shift1
 void svt_aom_dc_predictor_4x8_neon(uint8_t *dst, ptrdiff_t stride, const uint8_t *above, const uint8_t *left) {
     uint8x8_t a   = load_u8_4x1_lane0(above);
     uint8x8_t l   = vld1_u8(left);
-    uint32_t  sum = horizontal_add_u16x8(vaddl_u8(a, l));
+    uint32_t  sum = vaddlvq_u16(vaddl_u8(a, l));
     uint32_t  dc  = calculate_dc_from_sum(4, 8, sum, 2, DC_MULTIPLIER_1X2);
     dc_store_4xh(dst, stride, 8, vdup_n_u8(dc));
 }
@@ -1930,7 +1930,7 @@ void svt_aom_dc_predictor_4x8_neon(uint8_t *dst, ptrdiff_t stride, const uint8_t
 void svt_aom_dc_predictor_8x4_neon(uint8_t *dst, ptrdiff_t stride, const uint8_t *above, const uint8_t *left) {
     uint8x8_t a   = vld1_u8(above);
     uint8x8_t l   = load_u8_4x1_lane0(left);
-    uint32_t  sum = horizontal_add_u16x8(vaddl_u8(a, l));
+    uint32_t  sum = vaddlvq_u16(vaddl_u8(a, l));
     uint32_t  dc  = calculate_dc_from_sum(8, 4, sum, 2, DC_MULTIPLIER_1X2);
     dc_store_8xh(dst, stride, 4, vdup_n_u8(dc));
 }
@@ -1939,7 +1939,7 @@ void svt_aom_dc_predictor_4x16_neon(uint8_t *dst, ptrdiff_t stride, const uint8_
     uint8x8_t  a      = load_u8_4x1_lane0(above);
     uint8x16_t l      = vld1q_u8(left);
     uint16x8_t sum_al = vaddw_u8(vpaddlq_u8(l), a);
-    uint32_t   sum    = horizontal_add_u16x8(sum_al);
+    uint32_t   sum    = vaddlvq_u16(sum_al);
     uint32_t   dc     = calculate_dc_from_sum(4, 16, sum, 2, DC_MULTIPLIER_1X4);
     dc_store_4xh(dst, stride, 16, vdup_n_u8(dc));
 }
@@ -1948,7 +1948,7 @@ void svt_aom_dc_predictor_16x4_neon(uint8_t *dst, ptrdiff_t stride, const uint8_
     uint8x16_t a      = vld1q_u8(above);
     uint8x8_t  l      = load_u8_4x1_lane0(left);
     uint16x8_t sum_al = vaddw_u8(vpaddlq_u8(a), l);
-    uint32_t   sum    = horizontal_add_u16x8(sum_al);
+    uint32_t   sum    = vaddlvq_u16(sum_al);
     uint32_t   dc     = calculate_dc_from_sum(16, 4, sum, 2, DC_MULTIPLIER_1X4);
     dc_store_16xh(dst, stride, 4, vdupq_n_u8(dc));
 }
@@ -1957,7 +1957,7 @@ void svt_aom_dc_predictor_8x16_neon(uint8_t *dst, ptrdiff_t stride, const uint8_
     uint8x8_t  a      = vld1_u8(above);
     uint8x16_t l      = vld1q_u8(left);
     uint16x8_t sum_al = vaddw_u8(vpaddlq_u8(l), a);
-    uint32_t   sum    = horizontal_add_u16x8(sum_al);
+    uint32_t   sum    = vaddlvq_u16(sum_al);
     uint32_t   dc     = calculate_dc_from_sum(8, 16, sum, 3, DC_MULTIPLIER_1X2);
     dc_store_8xh(dst, stride, 16, vdup_n_u8(dc));
 }
@@ -1966,7 +1966,7 @@ void svt_aom_dc_predictor_16x8_neon(uint8_t *dst, ptrdiff_t stride, const uint8_
     uint8x16_t a      = vld1q_u8(above);
     uint8x8_t  l      = vld1_u8(left);
     uint16x8_t sum_al = vaddw_u8(vpaddlq_u8(a), l);
-    uint32_t   sum    = horizontal_add_u16x8(sum_al);
+    uint32_t   sum    = vaddlvq_u16(sum_al);
     uint32_t   dc     = calculate_dc_from_sum(16, 8, sum, 3, DC_MULTIPLIER_1X2);
     dc_store_16xh(dst, stride, 8, vdupq_n_u8(dc));
 }
@@ -1975,7 +1975,7 @@ void svt_aom_dc_predictor_8x32_neon(uint8_t *dst, ptrdiff_t stride, const uint8_
     uint8x8_t  a        = vld1_u8(above);
     uint16x8_t sum_left = dc_load_partial_sum_32(left);
     uint16x8_t sum_al   = vaddw_u8(sum_left, a);
-    uint32_t   sum      = horizontal_add_u16x8(sum_al);
+    uint32_t   sum      = vaddlvq_u16(sum_al);
     uint32_t   dc       = calculate_dc_from_sum(8, 32, sum, 3, DC_MULTIPLIER_1X4);
     dc_store_8xh(dst, stride, 32, vdup_n_u8(dc));
 }
@@ -1984,7 +1984,7 @@ void svt_aom_dc_predictor_32x8_neon(uint8_t *dst, ptrdiff_t stride, const uint8_
     uint16x8_t sum_top = dc_load_partial_sum_32(above);
     uint8x8_t  l       = vld1_u8(left);
     uint16x8_t sum_al  = vaddw_u8(sum_top, l);
-    uint32_t   sum     = horizontal_add_u16x8(sum_al);
+    uint32_t   sum     = vaddlvq_u16(sum_al);
     uint32_t   dc      = calculate_dc_from_sum(32, 8, sum, 3, DC_MULTIPLIER_1X4);
     dc_store_32xh(dst, stride, 8, vdupq_n_u8(dc));
 }
@@ -1993,7 +1993,7 @@ void svt_aom_dc_predictor_16x32_neon(uint8_t *dst, ptrdiff_t stride, const uint8
     uint16x8_t sum_above = dc_load_partial_sum_16(above);
     uint16x8_t sum_left  = dc_load_partial_sum_32(left);
     uint16x8_t sum_al    = vaddq_u16(sum_left, sum_above);
-    uint32_t   sum       = horizontal_add_u16x8(sum_al);
+    uint32_t   sum       = vaddlvq_u16(sum_al);
     uint32_t   dc        = calculate_dc_from_sum(16, 32, sum, 4, DC_MULTIPLIER_1X2);
     dc_store_16xh(dst, stride, 32, vdupq_n_u8(dc));
 }
@@ -2002,7 +2002,7 @@ void svt_aom_dc_predictor_32x16_neon(uint8_t *dst, ptrdiff_t stride, const uint8
     uint16x8_t sum_above = dc_load_partial_sum_32(above);
     uint16x8_t sum_left  = dc_load_partial_sum_16(left);
     uint16x8_t sum_al    = vaddq_u16(sum_left, sum_above);
-    uint32_t   sum       = horizontal_add_u16x8(sum_al);
+    uint32_t   sum       = vaddlvq_u16(sum_al);
     uint32_t   dc        = calculate_dc_from_sum(32, 16, sum, 4, DC_MULTIPLIER_1X2);
     dc_store_32xh(dst, stride, 16, vdupq_n_u8(dc));
 }
@@ -2011,7 +2011,7 @@ void svt_aom_dc_predictor_16x64_neon(uint8_t *dst, ptrdiff_t stride, const uint8
     uint16x8_t sum_above = dc_load_partial_sum_16(above);
     uint16x8_t sum_left  = dc_load_partial_sum_64(left);
     uint16x8_t sum_al    = vaddq_u16(sum_left, sum_above);
-    uint32_t   sum       = horizontal_add_u16x8(sum_al);
+    uint32_t   sum       = vaddlvq_u16(sum_al);
     uint32_t   dc        = calculate_dc_from_sum(16, 64, sum, 4, DC_MULTIPLIER_1X4);
     dc_store_16xh(dst, stride, 64, vdupq_n_u8(dc));
 }
@@ -2020,7 +2020,7 @@ void svt_aom_dc_predictor_64x16_neon(uint8_t *dst, ptrdiff_t stride, const uint8
     uint16x8_t sum_above = dc_load_partial_sum_64(above);
     uint16x8_t sum_left  = dc_load_partial_sum_16(left);
     uint16x8_t sum_al    = vaddq_u16(sum_above, sum_left);
-    uint32_t   sum       = horizontal_add_u16x8(sum_al);
+    uint32_t   sum       = vaddlvq_u16(sum_al);
     uint32_t   dc        = calculate_dc_from_sum(64, 16, sum, 4, DC_MULTIPLIER_1X4);
     dc_store_64xh(dst, stride, 16, vdupq_n_u8(dc));
 }
@@ -2029,7 +2029,7 @@ void svt_aom_dc_predictor_32x64_neon(uint8_t *dst, ptrdiff_t stride, const uint8
     uint16x8_t sum_above = dc_load_partial_sum_32(above);
     uint16x8_t sum_left  = dc_load_partial_sum_64(left);
     uint16x8_t sum_al    = vaddq_u16(sum_above, sum_left);
-    uint32_t   sum       = horizontal_add_u16x8(sum_al);
+    uint32_t   sum       = vaddlvq_u16(sum_al);
     uint32_t   dc        = calculate_dc_from_sum(32, 64, sum, 5, DC_MULTIPLIER_1X2);
     dc_store_32xh(dst, stride, 64, vdupq_n_u8(dc));
 }
@@ -2038,7 +2038,7 @@ void svt_aom_dc_predictor_64x32_neon(uint8_t *dst, ptrdiff_t stride, const uint8
     uint16x8_t sum_above = dc_load_partial_sum_64(above);
     uint16x8_t sum_left  = dc_load_partial_sum_32(left);
     uint16x8_t sum_al    = vaddq_u16(sum_above, sum_left);
-    uint32_t   sum       = horizontal_add_u16x8(sum_al);
+    uint32_t   sum       = vaddlvq_u16(sum_al);
     uint32_t   dc        = calculate_dc_from_sum(64, 32, sum, 5, DC_MULTIPLIER_1X2);
     dc_store_64xh(dst, stride, 32, vdupq_n_u8(dc));
 }

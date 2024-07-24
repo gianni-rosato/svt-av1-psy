@@ -40,8 +40,8 @@ static INLINE void variance_4xh_neon(const uint8_t *src, int src_stride, const u
         i -= 2;
     } while (i != 0);
 
-    *sum = horizontal_add_s16x8(sum_s16);
-    *sse = (uint32_t)horizontal_add_s32x4(sse_s32);
+    *sum = vaddlvq_s16(sum_s16);
+    *sse = (uint32_t)vaddvq_s32(sse_s32);
 }
 
 static INLINE void variance_8xh_neon(const uint8_t *src, int src_stride, const uint8_t *ref, int ref_stride, int h,
@@ -68,8 +68,8 @@ static INLINE void variance_8xh_neon(const uint8_t *src, int src_stride, const u
         ref += ref_stride;
     } while (--i != 0);
 
-    *sum = horizontal_add_s16x8(sum_s16);
-    *sse = (uint32_t)horizontal_add_s32x4(vaddq_s32(sse_s32[0], sse_s32[1]));
+    *sum = vaddlvq_s16(sum_s16);
+    *sse = (uint32_t)vaddvq_s32(vaddq_s32(sse_s32[0], sse_s32[1]));
 }
 
 static INLINE void variance_16xh_neon(const uint8_t *src, int src_stride, const uint8_t *ref, int ref_stride, int h,
@@ -101,8 +101,8 @@ static INLINE void variance_16xh_neon(const uint8_t *src, int src_stride, const 
         ref += ref_stride;
     } while (--i != 0);
 
-    *sum = horizontal_add_s16x8(vaddq_s16(sum_s16[0], sum_s16[1]));
-    *sse = (uint32_t)horizontal_add_s32x4(vaddq_s32(sse_s32[0], sse_s32[1]));
+    *sum = vaddlvq_s16(vaddq_s16(sum_s16[0], sum_s16[1]));
+    *sse = (uint32_t)vaddvq_s32(vaddq_s32(sse_s32[0], sse_s32[1]));
 }
 
 static INLINE void variance_large_neon(const uint8_t *src, int src_stride, const uint8_t *ref, int ref_stride, int w,
@@ -155,8 +155,8 @@ static INLINE void variance_large_neon(const uint8_t *src, int src_stride, const
         h_tmp += h_limit;
     } while (i < h);
 
-    *sum = horizontal_add_s32x4(sum_s32);
-    *sse = (uint32_t)horizontal_add_s32x4(vaddq_s32(vaddq_s32(sse_s32_0, sse_s32_1), vaddq_s32(sse_s32_2, sse_s32_3)));
+    *sum = vaddvq_s32(sum_s32);
+    *sse = (uint32_t)vaddvq_s32(vaddq_s32(vaddq_s32(sse_s32_0, sse_s32_1), vaddq_s32(sse_s32_2, sse_s32_3)));
 }
 
 static INLINE void variance_32xh_neon(const uint8_t *src, int src_stride, const uint8_t *ref, int ref_stride, int h,

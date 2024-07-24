@@ -14,20 +14,6 @@
 
 #include <arm_neon.h>
 
-static INLINE int horizontal_add_s16x8(const int16x8_t a) { return vaddlvq_s16(a); }
-
-static INLINE int horizontal_add_s32x4(const int32x4_t a) { return vaddvq_s32(a); }
-
-static INLINE int64_t horizontal_add_s64x2(const int64x2_t a) { return vaddvq_s64(a); }
-
-static INLINE uint64_t horizontal_add_u64x2(const uint64x2_t a) { return vaddvq_u64(a); }
-
-static INLINE uint64_t horizontal_long_add_u32x4(const uint32x4_t a) { return vaddlvq_u32(a); }
-
-static INLINE int64_t horizontal_long_add_s32x4(const int32x4_t a) { return vaddlvq_s32(a); }
-
-static INLINE unsigned int horizontal_add_u32x4(const uint32x4_t a) { return vaddvq_u32(a); }
-
 static INLINE uint32x4_t horizontal_add_4d_u32x4(const uint32x4_t sum[4]) {
     uint32x4_t res01 = vpaddq_u32(sum[0], sum[1]);
     uint32x4_t res23 = vpaddq_u32(sum[2], sum[3]);
@@ -58,23 +44,11 @@ static INLINE uint32x4_t horizontal_long_add_4d_u16x8(const uint16x8_t sum_lo[4]
     return vpaddq_u32(c0, c1);
 }
 
-static INLINE uint32_t horizontal_add_u16x8(const uint16x8_t a) { return vaddlvq_u16(a); }
-
 static INLINE uint32x4_t horizontal_add_4d_u16x8(const uint16x8_t sum[4]) {
     const uint16x8_t a0 = vpaddq_u16(sum[0], sum[1]);
     const uint16x8_t a1 = vpaddq_u16(sum[2], sum[3]);
     const uint16x8_t b0 = vpaddq_u16(a0, a1);
     return vpaddlq_u16(b0);
 }
-
-static INLINE uint32_t horizontal_add_u32x2(const uint32x2_t a) { return vaddv_u32(a); }
-
-static INLINE uint64_t horizontal_long_add_u32x2(const uint32x2_t a) { return vaddlv_u32(a); }
-
-static INLINE uint32_t horizontal_add_u16x4(const uint16x4_t a) { return vaddlv_u16(a); }
-
-static INLINE int32x4_t horizontal_add_2d_s32(int32x4_t a, int32x4_t b) { return vpaddq_s32(a, b); }
-
-static INLINE int32x2_t add_pairwise_s32x4(int32x4_t a) { return vget_low_s32(vpaddq_s32(a, a)); }
 
 #endif // AOM_AOM_DSP_ARM_SUM_NEON_H_

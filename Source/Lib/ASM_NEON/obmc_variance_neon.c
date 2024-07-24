@@ -120,8 +120,8 @@ static INLINE void obmc_variance_large_neon(const uint8_t *pre, int pre_stride, 
         pre += pre_stride - width;
     } while (--h != 0);
 
-    *sse = horizontal_add_s32x4(ssev);
-    *sum = horizontal_add_s32x4(sumv);
+    *sse = vaddvq_s32(ssev);
+    *sum = vaddvq_s32(sumv);
 }
 
 static INLINE void obmc_variance_neon_128xh(const uint8_t *pre, int pre_stride, const int32_t *wsrc,
@@ -160,8 +160,8 @@ static INLINE void obmc_variance_neon_8xh(const uint8_t *pre, int pre_stride, co
         mask += 8;
     } while (--h != 0);
 
-    *sse = horizontal_add_s32x4(ssev);
-    *sum = horizontal_add_s32x4(sumv);
+    *sse = vaddvq_s32(ssev);
+    *sum = vaddvq_s32(sumv);
 }
 
 static INLINE void obmc_variance_neon_4xh(const uint8_t *pre, int pre_stride, const int32_t *wsrc, const int32_t *mask,
@@ -183,8 +183,8 @@ static INLINE void obmc_variance_neon_4xh(const uint8_t *pre, int pre_stride, co
         h -= 2;
     } while (h != 0);
 
-    *sse = horizontal_add_s32x4(ssev);
-    *sum = horizontal_add_s32x4(sumv);
+    *sse = vaddvq_s32(ssev);
+    *sum = vaddvq_s32(sumv);
 }
 
 unsigned svt_aom_obmc_variance4x4_neon(const uint8_t *pre, int pre_stride, const int32_t *wsrc, const int32_t *mask,

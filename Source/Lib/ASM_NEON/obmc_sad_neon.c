@@ -86,7 +86,7 @@ static INLINE unsigned int obmc_sad_large_neon(const uint8_t *ref, int ref_strid
         ref += ref_stride;
     } while (--h != 0);
 
-    return horizontal_add_u32x4(vaddq_u32(sum[0], sum[1]));
+    return vaddvq_u32(vaddq_u32(sum[0], sum[1]));
 }
 
 static INLINE unsigned int obmc_sad_128xh_neon(const uint8_t *ref, int ref_stride, const int32_t *wsrc,
@@ -125,7 +125,7 @@ static INLINE unsigned int obmc_sad_8xh_neon(const uint8_t *ref, int ref_stride,
         mask += 8;
     } while (--h != 0);
 
-    return horizontal_add_u32x4(sum);
+    return vaddvq_u32(sum);
 }
 
 static INLINE unsigned int obmc_sad_4xh_neon(const uint8_t *ref, int ref_stride, const int32_t *wsrc,
@@ -144,7 +144,7 @@ static INLINE unsigned int obmc_sad_4xh_neon(const uint8_t *ref, int ref_stride,
         mask += 8;
     } while (--h != 0);
 
-    return horizontal_add_u32x4(sum);
+    return vaddvq_u32(sum);
 }
 
 unsigned int svt_aom_obmc_sad4x4_neon(const uint8_t *ref, int ref_stride, const int32_t *wsrc, const int32_t *mask) {
