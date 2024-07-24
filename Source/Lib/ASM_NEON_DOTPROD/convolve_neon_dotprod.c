@@ -18,10 +18,6 @@
 #include "mem_neon.h"
 #include "utility.h"
 
-DECLARE_ALIGNED(16, static const uint8_t, kDotProdPermuteTbl[48]) = {
-    0, 1, 2, 3, 1, 2, 3, 4,  2, 3, 4,  5,  3, 4,  5,  6,  4,  5,  6,  7,  5,  6,  7,  8,
-    6, 7, 8, 9, 7, 8, 9, 10, 8, 9, 10, 11, 9, 10, 11, 12, 10, 11, 12, 13, 11, 12, 13, 14};
-
 // clang-format off
 DECLARE_ALIGNED(16, static const uint8_t, kDotProdMergeBlockTbl[48]) = {
   // Shift left and insert new last column in transposed 4x4 block.

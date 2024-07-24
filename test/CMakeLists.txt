@@ -168,6 +168,9 @@ if(HAVE_ARM_PLATFORM)
   if(ENABLE_NEON_DOTPROD)
     list(APPEND arm_arch_lib_list $<TARGET_OBJECTS:ASM_NEON_DOTPROD>)
   endif()
+  if(ENABLE_NEON_I8MM)
+    list(APPEND arm_arch_lib_list $<TARGET_OBJECTS:ASM_NEON_I8MM>)
+  endif()
 endif()
 
 set(all_files ${arch_neutral_files} ${multi_arch_files} ${x86_arch_files}

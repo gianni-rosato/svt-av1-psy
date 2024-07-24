@@ -827,6 +827,11 @@ INSTANTIATE_TEST_SUITE_P(ConvolveTestY_NEON_DOTPROD, AV1LbdSrConvolveTest,
                          BuildParamsLbd(0, 1,
                                         svt_av1_convolve_y_sr_neon_dotprod));
 #endif  // HAVE_NEON_DOTPROD
+
+#if HAVE_NEON_I8MM
+INSTANTIATE_TEST_SUITE_P(ConvolveTestX_NEON_I8MM, AV1LbdSrConvolveTest,
+                         BuildParamsLbd(1, 0, svt_av1_convolve_x_sr_neon_i8mm));
+#endif  // HAVE_NEON_I8MM
 #endif  // ARCH_AARCH64
 
 ::testing::internal::ParamGenerator<HighbdConvolveParam> BuildParamsHbd(
