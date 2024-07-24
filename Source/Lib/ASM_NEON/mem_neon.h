@@ -107,6 +107,15 @@ static INLINE void load_u8_8x4(const uint8_t *s, const ptrdiff_t p, uint8x8_t *c
     *s3 = vld1_u8(s);
 }
 
+static INLINE void load_u8_8x3(const uint8_t *s, const ptrdiff_t p, uint8x8_t *const s0, uint8x8_t *const s1,
+                               uint8x8_t *const s2) {
+    *s0 = vld1_u8(s);
+    s += p;
+    *s1 = vld1_u8(s);
+    s += p;
+    *s2 = vld1_u8(s);
+}
+
 static INLINE void load_u16_4x4(const uint16_t *s, const ptrdiff_t p, uint16x4_t *const s0, uint16x4_t *const s1,
                                 uint16x4_t *const s2, uint16x4_t *const s3) {
     *s0 = vld1_u16(s);
