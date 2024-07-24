@@ -735,6 +735,12 @@ INSTANTIATE_TEST_SUITE_P(ConvolveTestY_NEON, AV1LbdJntConvolveTest,
 INSTANTIATE_TEST_SUITE_P(ConvolveTestCOPY_NEON, AV1LbdJntConvolveTest,
                          BuildParamsLbd(0, 0,
                                         svt_av1_jnt_convolve_2d_copy_neon));
+
+#if HAVE_NEON_DOTPROD
+INSTANTIATE_TEST_SUITE_P(ConvolveTestX_NEON_DOTPROD, AV1LbdJntConvolveTest,
+                         BuildParamsLbd(1, 0,
+                                        svt_av1_jnt_convolve_x_neon_dotprod));
+#endif  // HAVE_DOTPROD
 #endif  // ARCH_AARCH64
 
 class AV1LbdSrConvolveTest : public AV1LbdConvolveTest {
