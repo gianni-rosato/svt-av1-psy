@@ -1225,6 +1225,7 @@ typedef struct PictureControlSetInitData {
     uint8_t frame_luma_bias;
     Bool    max_32_tx_size;
     Bool    adaptive_film_grain;
+    uint8_t    tf_strength;
 } PictureControlSetInitData;
 
 typedef struct Av1Comp {
