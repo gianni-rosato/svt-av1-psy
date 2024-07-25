@@ -925,6 +925,11 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet *scs) {
         return_error = EB_ErrorBadParameter;
     }
 
+    if (config->tf_strength > 4) {
+        SVT_ERROR("Instance %u: Temporal filtering strength must be between 0 and 4\n", channel_number + 1);
+        return_error = EB_ErrorBadParameter;
+    }
+
     return return_error;
 }
 
@@ -1081,6 +1086,7 @@ EbErrorType svt_av1_set_default_params(EbSvtAv1EncConfiguration *config_ptr) {
     config_ptr->frame_luma_bias                   = 0;
     config_ptr->max_32_tx_size                    = FALSE;
     config_ptr->adaptive_film_grain               = TRUE;
+    config_ptr->tf_strength                       = 1;
     return return_error;
 }
 
@@ -1216,6 +1222,9 @@ void svt_av1_print_lib_params(SequenceControlSet *scs) {
                  config->sharpness,
                  config->qp_scale_compress_strength,
                  config->frame_luma_bias);
+
+        SVT_INFO("SVT [config]: Temporal Filtering Strength \t\t\t\t\t: %d\n",
+                 config->tf_strength);
     }
 #ifdef DEBUG_BUFFERS
     SVT_INFO("SVT [config]: INPUT / OUTPUT \t\t\t\t\t\t\t: %d / %d\n",
@@ -2157,6 +2166,7 @@ EB_API EbErrorType svt_av1_enc_parse_parameter(EbSvtAv1EncConfiguration *config_
     } int8_opts[] = {
         {"preset", &config_struct->enc_mode},
         {"sharpness", &config_struct->sharpness},
+        {"tf-strength", &config_struct->tf_strength},
 #if OPT_FAST_DECODE_LVLS
         {"fast-decode", &config_struct->fast_decode},
 #endif

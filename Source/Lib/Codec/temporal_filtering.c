@@ -2923,20 +2923,25 @@ static EbErrorType produce_temporally_filtered_pic(
         int32_t n_decay_fp10 = (decay_control[C_Y] * (const_0dot7_fp16 + noise_levels_log1p_fp16[C_Y])) /
             ((int32_t)1 << 6);
         //2 * n_decay * n_decay * q_decay * (s_decay always is 1);
-        //Instead of bit-shifting by 11, we'll do it by 13 to decrease filtering strength
-        //by 4x
+        // tf_shift_factor is manually adjusted by the user via --tf-strength
+        // 10 + (4 - 0) = 14 (8x weaker)
+        // 10 + (4 - 1) = 13 (4x weaker, PSY default)
+        // 10 + (4 - 2) = 12 (2x weaker)
+        // 10 + (4 - 3) = 11 (mainline default)
+        // 10 + (4 - 4) = 10 (2x stronger)
+        const uint8_t tf_shift_factor = 10 + (4 - scs->static_config.tf_strength);
         ctx->tf_decay_factor_fp16[C_Y] = (uint32_t)(
-            (((((int64_t)n_decay_fp10) * ((int64_t)n_decay_fp10))) * q_decay_fp8) >> 13);
+            (((((int64_t)n_decay_fp10) * ((int64_t)n_decay_fp10))) * q_decay_fp8) >> tf_shift_factor);
 
         if (ctx->tf_chroma) {
             n_decay_fp10 = (decay_control[C_U] * (const_0dot7_fp16 + noise_levels_log1p_fp16[C_U])) /
                 ((int32_t)1 << 6);
             ctx->tf_decay_factor_fp16[C_U] = (uint32_t)(
-                (((((int64_t)n_decay_fp10) * ((int64_t)n_decay_fp10))) * q_decay_fp8) >> 13);
+                (((((int64_t)n_decay_fp10) * ((int64_t)n_decay_fp10))) * q_decay_fp8) >> tf_shift_factor);
             n_decay_fp10 = (decay_control[C_V] * (const_0dot7_fp16 + noise_levels_log1p_fp16[C_V])) /
                 ((int32_t)1 << 6);
             ctx->tf_decay_factor_fp16[C_V] = (uint32_t)(
-                (((((int64_t)n_decay_fp10) * ((int64_t)n_decay_fp10))) * q_decay_fp8) >> 13);
+                (((((int64_t)n_decay_fp10) * ((int64_t)n_decay_fp10))) * q_decay_fp8) >> tf_shift_factor);
         }
     for (uint32_t blk_row = y_b64_start_idx; blk_row < y_b64_end_idx; blk_row++) {
         for (uint32_t blk_col = x_b64_start_idx; blk_col < x_b64_end_idx; blk_col++) {
@@ -3424,19 +3429,26 @@ static EbErrorType produce_temporally_filtered_pic_ld(
     int32_t n_decay_fp10 = (decay_control * (const_0dot7_fp16 + noise_levels_log1p_fp16[C_Y])) /
         ((int32_t)1 << 6);
     //2 * n_decay * n_decay * q_decay * (s_decay always is 1);
+    // tf_shift_factor is manually adjusted by the user via --tf-strength
+    // 10 + (4 - 0) = 14 (8x weaker)
+    // 10 + (4 - 1) = 13 (4x weaker, PSY default)
+    // 10 + (4 - 2) = 12 (2x weaker)
+    // 10 + (4 - 3) = 11 (mainline default)
+    // 10 + (4 - 4) = 10 (2x stronger)
+    const uint8_t tf_shift_factor = 10 + (4 - scs->static_config.tf_strength);
     ctx->tf_decay_factor_fp16[C_Y] = (uint32_t)(
-        (((((int64_t)n_decay_fp10) * ((int64_t)n_decay_fp10))) * q_decay_fp8) >> 13);
+        (((((int64_t)n_decay_fp10) * ((int64_t)n_decay_fp10))) * q_decay_fp8) >> tf_shift_factor);
 
     if (ctx->tf_chroma) {
         n_decay_fp10 = (decay_control * (const_0dot7_fp16 + noise_levels_log1p_fp16[C_U])) /
             ((int32_t)1 << 6);
         ctx->tf_decay_factor_fp16[C_U] = (uint32_t)(
-            (((((int64_t)n_decay_fp10) * ((int64_t)n_decay_fp10))) * q_decay_fp8) >> 13);
+            (((((int64_t)n_decay_fp10) * ((int64_t)n_decay_fp10))) * q_decay_fp8) >> tf_shift_factor);
 
         n_decay_fp10 = (decay_control * (const_0dot7_fp16 + noise_levels_log1p_fp16[C_V])) /
             ((int32_t)1 << 6);
         ctx->tf_decay_factor_fp16[C_V] = (uint32_t)(
-            (((((int64_t)n_decay_fp10) * ((int64_t)n_decay_fp10))) * q_decay_fp8) >> 13);
+            (((((int64_t)n_decay_fp10) * ((int64_t)n_decay_fp10))) * q_decay_fp8) >> tf_shift_factor);
     }
     for (uint32_t blk_row = y_b64_start_idx; blk_row < y_b64_end_idx; blk_row++) {
         for (uint32_t blk_col = x_b64_start_idx; blk_col < x_b64_end_idx; blk_col++) {
