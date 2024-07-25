@@ -215,6 +215,8 @@
 
 #define ADAPTIVE_FILM_GRAIN_TOKEN "--adaptive-film-grain"
 
+#define TF_STRENGTH_FILTER_TOKEN "--tf-strength"
+
 static EbErrorType validate_error(EbErrorType err, const char *token, const char *value) {
     switch (err) {
     case EB_ErrorNone: return EB_ErrorNone;
@@ -1288,6 +1290,10 @@ ConfigEntry config_entry_psy[] = {
      ADAPTIVE_FILM_GRAIN_TOKEN,
      "[PSY] Adapts film grain blocksize based on video resolution, default is 1 [0-1]",
      set_cfg_generic_token},
+    {SINGLE_INPUT,
+     TF_STRENGTH_FILTER_TOKEN,
+     "[PSY] Adjust temporal filtering strength, default is 1 [0-4]",
+     set_cfg_generic_token},
     // Termination
     {SINGLE_INPUT, NULL, NULL, NULL}};
 
@@ -1491,6 +1497,9 @@ ConfigEntry config_entry[] = {
 
     // Adaptive film grain
     {SINGLE_INPUT, ADAPTIVE_FILM_GRAIN_TOKEN, "AdaptiveFilmGrain", set_cfg_generic_token},
+
+    // Temporal filtering strength
+    {SINGLE_INPUT, TF_STRENGTH_FILTER_TOKEN, "TemporalFilteringStrength", set_cfg_generic_token},
 
     // Termination
     {SINGLE_INPUT, NULL, NULL, NULL}};

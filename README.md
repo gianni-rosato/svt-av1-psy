@@ -50,15 +50,15 @@ Increases video quality temporal consistency, especially with clips that contain
 
 - `--enable-dlf 2`
 
-Enables a more accurate loop filter that prevents blocking, for a modest increase in compute time (most noticeable at presets 7 to 9)
+Enables a more accurate loop filter that prevents blocking, for a modest increase in compute time (most noticeable at presets 7 to 9).
 
 - `Higher-quality presets for 8K`
 
-Lowers the minimum available preset from 8 to 2 for higher-quality 8K encoding (64 GB of RAM recommended per encoding instance)
+Lowers the minimum available preset from 8 to 2 for higher-quality 8K encoding (64 GB of RAM recommended per encoding instance).
 
 - `--frame-luma-bias` *0 to 100*
 
-Enables frame-level luma bias to improve quality in dark scenes by adjusting frame-level QP based on average luminance across each frame
+Enables frame-level luma bias to improve quality in dark scenes by adjusting frame-level QP based on average luminance across each frame.
 
 - `--max-32-tx-size` *0 and 1*
 
@@ -71,6 +71,10 @@ Adaptively varies the film grain blocksize based on the resolution of the input 
 - `--hdr10plus-json` *path to file*
 
 Set the path to an HDR10+ JSON file for encoding HDR10+ video. SVT-AV1-PSY needs to be built with the `enable-hdr10plus` flag enabled in build.sh (see `./Build/linux/build.sh --help` for more info) (Thank you @quietvoid !)
+
+- `--tf-strength` *0 to 3*
+
+Manually adjust temporal filtering strength to adjust the trade-off between fewer artifacts in motion and fine detail retention. Each increment is a 2x increase in temporal filtering strength; the default value of 1 is 4x weaker than mainline SVT-AV1's default temporal filter (which would be equivalent to 3 here).
 
 ### Modified Defaults
 

@@ -1035,18 +1035,22 @@ typedef struct EbSvtAv1EncConfiguration {
      *  - 32x32 for 8k+
      * Default is 1
      */
-     Bool adaptive_film_grain;
+    Bool adaptive_film_grain;
+
+    /* Manually adjust temporal filtering strength
+     * 10 + (4 - 0) = 14 (8x weaker)
+     * 10 + (4 - 1) = 13 (4x weaker, PSY default)
+     * 10 + (4 - 2) = 12 (2x weaker)
+     * 10 + (4 - 3) = 11 (mainline default)
+     * 10 + (4 - 4) = 10 (2x stronger) */
+    uint8_t tf_strength;
 
     /*Add 128 Byte Padding to Struct to avoid changing the size of the public configuration struct*/
-<<<<<<< HEAD
 #if CLN_LP_LVLS
     uint8_t padding[128 - sizeof(Bool) - 2 * sizeof(uint8_t) - sizeof(uint32_t)];
 #else
-    uint8_t padding[128 - 3 * sizeof(Bool) - 5 * sizeof(uint8_t) - sizeof(int8_t)];
+    uint8_t padding[128 - 4 * sizeof(Bool) - 6 * sizeof(uint8_t) - sizeof(int8_t)];
 #endif
-=======
-    uint8_t padding[128 - 4 * sizeof(Bool) - 5 * sizeof(uint8_t) - sizeof(int8_t)];
->>>>>>> a0870d6b (feat: adaptive film grain)
 
 } EbSvtAv1EncConfiguration;
 
