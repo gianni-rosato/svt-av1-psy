@@ -212,8 +212,7 @@ void svt_av1_highbd_jnt_convolve_x_neon(const uint16_t *src, int src_stride, uin
     const int      im_stride     = MAX_SB_SIZE;
     const int      horiz_offset  = filter_params_x->taps / 2 - 1;
     assert(FILTER_BITS == COMPOUND_ROUND1_BITS);
-    const int offset_convolve = (1 << (conv_params->round_0 - 1)) + (1 << (bd + FILTER_BITS)) +
-        (1 << (bd + FILTER_BITS - 1));
+    const int offset_convolve = (1 << (ROUND0_BITS - 1)) + (1 << (bd + FILTER_BITS)) + (1 << (bd + FILTER_BITS - 1));
 
     const int16_t *x_filter_ptr = av1_get_interp_filter_subpel_kernel(*filter_params_x, subpel_x_qn & SUBPEL_MASK);
 
@@ -546,8 +545,7 @@ void svt_av1_highbd_jnt_convolve_y_neon(const uint16_t *src, int src_stride, uin
     const int      im_stride     = MAX_SB_SIZE;
     const int      vert_offset   = filter_params_y->taps / 2 - 1;
     assert(FILTER_BITS == COMPOUND_ROUND1_BITS);
-    const int round_offset_conv = (1 << (conv_params->round_0 - 1)) + (1 << (bd + FILTER_BITS)) +
-        (1 << (bd + FILTER_BITS - 1));
+    const int round_offset_conv = (1 << (ROUND0_BITS - 1)) + (1 << (bd + FILTER_BITS)) + (1 << (bd + FILTER_BITS - 1));
 
     const int16_t *y_filter_ptr = av1_get_interp_filter_subpel_kernel(*filter_params_y, subpel_y_qn & SUBPEL_MASK);
 
@@ -1013,10 +1011,10 @@ void svt_av1_highbd_jnt_convolve_2d_neon(const uint16_t *src, int src_stride, ui
     const int im_stride    = MAX_SB_SIZE;
     const int vert_offset  = clamped_y_taps / 2 - 1;
     const int horiz_offset = clamped_x_taps / 2 - 1;
-    // The extra shim of (1 << (conv_params->round_0 - 1)) allows us to use a
+    // The extra shim of (1 << (ROUND0_BITS - 1)) allows us to use a
     // faster non-rounding non-saturating left shift.
-    const int round_offset_conv_x = (1 << (bd + FILTER_BITS - 1)) + (1 << (conv_params->round_0 - 1));
-    const int y_offset_bits       = bd + 2 * FILTER_BITS - conv_params->round_0;
+    const int round_offset_conv_x = (1 << (bd + FILTER_BITS - 1)) + (1 << (ROUND0_BITS - 1));
+    const int y_offset_bits       = bd + 2 * FILTER_BITS - ROUND0_BITS;
     const int round_offset_conv_y = (1 << y_offset_bits);
 
     const uint16_t *src_ptr = src - vert_offset * src_stride - horiz_offset;
