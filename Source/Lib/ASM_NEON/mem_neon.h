@@ -511,11 +511,11 @@ static INLINE void store_s16_4x4(int16_t *s, ptrdiff_t dst_stride, const int16x4
 
 /* These intrinsics require immediate values, so we must use #defines
    to enforce that. */
-#define store_s16_2x1(s, s0, lane) \
+#define store_s16_2x1_lane(s, s0, lane) \
     do { vst1_lane_s32((int32_t *)(s), vreinterpret_s32_s16(s0), lane); } while (0)
-#define store_u16_2x1(s, s0, lane) \
+#define store_u16_2x1_lane(s, s0, lane) \
     do { vst1_lane_u32((uint32_t *)(s), vreinterpret_u32_u16(s0), lane); } while (0)
-#define store_u16q_2x1(s, s0, lane) \
+#define store_u16q_2x1_lane(s, s0, lane) \
     do { vst1q_lane_u32((uint32_t *)(s), vreinterpretq_u32_u16(s0), lane); } while (0)
 
 static INLINE void store_s16_8x2(int16_t *s, ptrdiff_t dst_stride, const int16x8_t s0, const int16x8_t s1) {
@@ -523,6 +523,9 @@ static INLINE void store_s16_8x2(int16_t *s, ptrdiff_t dst_stride, const int16x8
     s += dst_stride;
     vst1q_s16(s, s1);
 }
+
+// Store the low 32-bits from a single vector.
+static INLINE void store_u16_2x1(uint16_t *dst, const uint16x4_t src) { store_u16_2x1_lane(dst, src, 0); }
 
 static INLINE void store_s16_8x4(int16_t *s, ptrdiff_t dst_stride, const int16x8_t s0, const int16x8_t s1,
                                  const int16x8_t s2, const int16x8_t s3) {

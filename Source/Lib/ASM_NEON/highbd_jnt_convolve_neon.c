@@ -1060,3 +1060,95 @@ void svt_av1_highbd_jnt_convolve_2d_neon(const uint16_t *src, int src_stride, ui
         }
     }
 }
+
+static INLINE void highbd_2d_copy_neon(const uint16_t *src_ptr, int src_stride, uint16_t *dst_ptr, int dst_stride,
+                                       int w, int h, const int round_bits, const int offset) {
+    if (w <= 4) {
+        const int16x4_t  round_shift_s16 = vdup_n_s16(round_bits);
+        const uint16x4_t offset_u16      = vdup_n_u16(offset);
+
+        do {
+            const uint16x4_t s = vld1_u16(src_ptr);
+            uint16x4_t       d = vshl_u16(s, round_shift_s16);
+            d                  = vadd_u16(d, offset_u16);
+
+            if (w == 2) {
+                store_u16_2x1(dst_ptr, d);
+            } else {
+                vst1_u16(dst_ptr, d);
+            }
+
+            src_ptr += src_stride;
+            dst_ptr += dst_stride;
+        } while (--h != 0);
+    } else {
+        const int16x8_t  round_shift_s16 = vdupq_n_s16(round_bits);
+        const uint16x8_t offset_u16      = vdupq_n_u16(offset);
+
+        do {
+            const uint16_t *src   = src_ptr;
+            uint16_t       *dst   = dst_ptr;
+            int             width = w;
+
+            do {
+                const uint16x8_t s = vld1q_u16(src);
+                uint16x8_t       d = vshlq_u16(s, round_shift_s16);
+                d                  = vaddq_u16(d, offset_u16);
+                vst1q_u16(dst, d);
+
+                src += 8;
+                dst += 8;
+                width -= 8;
+            } while (width != 0);
+
+            src_ptr += src_stride;
+            dst_ptr += dst_stride;
+        } while (--h != 0);
+    }
+}
+
+void svt_av1_highbd_jnt_convolve_2d_copy_neon(const uint16_t *src, int src_stride, uint16_t *dst, int dst_stride, int w,
+                                              int h, const InterpFilterParams *filter_params_x,
+                                              const InterpFilterParams *filter_params_y, const int32_t subpel_x_q4,
+                                              const int32_t subpel_y_q4, ConvolveParams *conv_params, int bd) {
+    if (h == 2 || w == 2) {
+        svt_av1_highbd_jnt_convolve_2d_copy_c(src,
+                                              src_stride,
+                                              dst,
+                                              dst_stride,
+                                              w,
+                                              h,
+                                              filter_params_x,
+                                              filter_params_y,
+                                              subpel_x_q4,
+                                              subpel_y_q4,
+                                              conv_params,
+                                              bd);
+        return;
+    }
+
+    DECLARE_ALIGNED(16, uint16_t, im_block[(MAX_SB_SIZE + MAX_FILTER_TAP) * MAX_SB_SIZE]);
+
+    const int      im_stride    = MAX_SB_SIZE;
+    CONV_BUF_TYPE *dst16        = conv_params->dst;
+    int            dst16_stride = conv_params->dst_stride;
+    const int      offset_bits  = bd + 2 * FILTER_BITS - ROUND0_BITS;
+    const int      round_offset = (1 << (offset_bits - COMPOUND_ROUND1_BITS)) +
+        (1 << (offset_bits - COMPOUND_ROUND1_BITS - 1));
+    const int round_bits = 2 * FILTER_BITS - ROUND0_BITS - COMPOUND_ROUND1_BITS;
+    assert(round_bits >= 0);
+
+    if (conv_params->do_average) {
+        highbd_2d_copy_neon(src, src_stride, im_block, im_stride, w, h, round_bits, round_offset);
+    } else {
+        highbd_2d_copy_neon(src, src_stride, dst16, dst16_stride, w, h, round_bits, round_offset);
+    }
+
+    if (conv_params->do_average) {
+        if (conv_params->use_jnt_comp_avg) {
+            highbd_jnt_comp_avg_neon(im_block, im_stride, dst, dst_stride, w, h, conv_params, bd);
+        } else {
+            highbd_comp_avg_neon(im_block, im_stride, dst, dst_stride, w, h, conv_params, bd);
+        }
+    }
+}
