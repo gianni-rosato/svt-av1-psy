@@ -1025,3 +1025,66 @@ void svt_av1_highbd_convolve_2d_sr_neon(const uint16_t *src, int src_stride, uin
         highbd_convolve_2d_sr_vert_8tap_neon(im_block, im_stride, dst, dst_stride, w, h, y_filter_ptr, bd, y_offset);
     }
 }
+
+void svt_av1_highbd_convolve_2d_copy_sr_neon(const uint16_t *src, int32_t src_stride, uint16_t *dst, int32_t dst_stride,
+                                             int32_t w, int32_t h, const InterpFilterParams *filter_params_x,
+                                             const InterpFilterParams *filter_params_y, const int32_t subpel_x_q4,
+                                             const int32_t subpel_y_q4, ConvolveParams *conv_params, int32_t bd) {
+    (void)filter_params_x;
+    (void)filter_params_y;
+    (void)subpel_x_q4;
+    (void)subpel_y_q4;
+    (void)conv_params;
+    (void)bd;
+
+    if (w == 2 || h == 2) {
+        svt_av1_highbd_convolve_2d_copy_sr_c(src,
+                                             src_stride,
+                                             dst,
+                                             dst_stride,
+                                             w,
+                                             h,
+                                             filter_params_x,
+                                             filter_params_y,
+                                             subpel_x_q4,
+                                             subpel_y_q4,
+                                             conv_params,
+                                             bd);
+        return;
+    }
+
+    if (w <= 4) {
+        do {
+            vst1_u16(dst, vld1_u16(src));
+
+            src += src_stride;
+            dst += dst_stride;
+        } while (--h != 0);
+    } else if (w == 8) {
+        do {
+            vst1q_u16(dst, vld1q_u16(src));
+
+            src += src_stride;
+            dst += dst_stride;
+        } while (--h != 0);
+    } else {
+        assert(w % 16 == 0);
+        do {
+            int             width   = w;
+            const uint16_t *src_ptr = src;
+            uint16_t       *dst_ptr = dst;
+
+            do {
+                uint16x8_t s0, s1;
+                load_u16_8x2(src_ptr, 8, &s0, &s1);
+                store_u16_8x2(dst_ptr, 8, s0, s1);
+
+                src_ptr += 16;
+                dst_ptr += 16;
+                width -= 16;
+            } while (width != 0);
+            src += src_stride;
+            dst += dst_stride;
+        } while (--h != 0);
+    }
+}
