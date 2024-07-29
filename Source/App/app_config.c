@@ -1069,7 +1069,7 @@ ConfigEntry config_entry_specific[] = {
 
     {SINGLE_INPUT,
      FILM_GRAIN_DENOISE_APPLY_TOKEN,
-     "Apply denoising when film grain is ON, default is 1 [0: no denoising, film grain data is "
+     "Apply denoising when film grain is ON, default is 0 [0: no denoising, film grain data is "
      "still in frame header, "
      "1: level of denoising is set by the film-grain parameter]",
      set_cfg_generic_token},
