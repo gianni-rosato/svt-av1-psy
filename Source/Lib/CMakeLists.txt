@@ -77,13 +77,18 @@ if(NOT COMPILE_C_ONLY AND HAVE_X86_PLATFORM)
 elseif(NOT COMPILE_C_ONLY AND HAVE_ARM_PLATFORM)
     target_include_directories(SvtAv1Enc PRIVATE
         ${PROJECT_SOURCE_DIR}/Source/Lib/ASM_NEON/
-        ${PROJECT_SOURCE_DIR}/Source/Lib/ASM_NEON_DOTPROD/)
+        ${PROJECT_SOURCE_DIR}/Source/Lib/ASM_NEON_DOTPROD/
+        ${PROJECT_SOURCE_DIR}/Source/Lib/ASM_NEON_I8MM/
+        ${PROJECT_SOURCE_DIR}/Source/Lib/ASM_SVE/)
     add_subdirectory(ASM_NEON)
     if(ENABLE_NEON_DOTPROD)
         add_subdirectory(ASM_NEON_DOTPROD)
     endif()
     if(ENABLE_NEON_I8MM)
         add_subdirectory(ASM_NEON_I8MM)
+    endif()
+    if(ENABLE_SVE)
+      add_subdirectory(ASM_SVE)
     endif()
 endif()
 
@@ -110,6 +115,9 @@ elseif(NOT COMPILE_C_ONLY AND HAVE_ARM_PLATFORM)
     endif()
     if(ENABLE_NEON_I8MM)
         target_sources(SvtAv1Enc PRIVATE $<TARGET_OBJECTS:ASM_NEON_I8MM>)
+    endif()
+    if(ENABLE_SVE)
+        target_sources(SvtAv1Enc PRIVATE $<TARGET_OBJECTS:ASM_SVE>)
     endif()
 endif()
 

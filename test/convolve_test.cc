@@ -1100,6 +1100,12 @@ INSTANTIATE_TEST_SUITE_P(
     ConvolveTestCOPY_NEON, AV1HbdSrConvolveTest,
     BuildParamsHbd(0, 0, svt_av1_highbd_convolve_2d_copy_sr_neon));
 
+#if HAVE_SVE
+INSTANTIATE_TEST_SUITE_P(ConvolveTestX_SVE, AV1HbdSrConvolveTest,
+                         BuildParamsHbd(1, 0,
+                                        svt_av1_highbd_convolve_x_sr_sve));
+#endif  // HAVE_SVE
+
 #endif  // ARCH_AARCH64
 
 }  // namespace

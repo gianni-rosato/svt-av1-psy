@@ -63,6 +63,7 @@
 #define HAS_NEON EB_CPU_FLAGS_NEON
 #define HAS_NEON_DOTPROD EB_CPU_FLAGS_NEON_DOTPROD
 #define HAS_NEON_I8MM EB_CPU_FLAGS_NEON_I8MM
+#define HAS_SVE EB_CPU_FLAGS_SVE
 
 // coeff: 16 bits, dynamic range [-32640, 32640].
 // length: value range {16, 64, 256, 1024}.
@@ -304,10 +305,18 @@ EbCpuFlags svt_aom_get_cpu_flags_to_use() {
 #define SET_FUNCTIONS_NEON_I8MM(ptr, neon_i8mm)
 #endif  // HAVE_NEON_I8MM
 
-#define SET_FUNCTIONS_AARCH64(ptr, c, neon, neon_dotprod, neon_i8mm)                              \
+#if HAVE_SVE
+#define SET_FUNCTIONS_SVE(ptr, sve)                                                               \
+    if (((uintptr_t)NULL != (uintptr_t)sve)   && (flags & HAS_SVE))   ptr = sve;
+#else
+#define SET_FUNCTIONS_SVE(ptr, sve)
+#endif // HAVE_SVE
+
+#define SET_FUNCTIONS_AARCH64(ptr, c, neon, neon_dotprod, neon_i8mm, sve)                         \
     if (((uintptr_t)NULL != (uintptr_t)neon)   && (flags & HAS_NEON))   ptr = neon;               \
     SET_FUNCTIONS_NEON_DOTPROD(ptr, neon_dotprod)                                                 \
-    SET_FUNCTIONS_NEON_I8MM(ptr, neon_i8mm)
+    SET_FUNCTIONS_NEON_I8MM(ptr, neon_i8mm)                                                       \
+    SET_FUNCTIONS_SVE(ptr, sve)
 #endif
 
 #ifdef ARCH_X86_64
@@ -342,7 +351,7 @@ EbCpuFlags svt_aom_get_cpu_flags_to_use() {
 #endif
 #elif defined ARCH_AARCH64
 #if EXCLUDE_HASH
-#define SET_FUNCTIONS(ptr, c, neon, neon_dotprod, neon_i8mm)                                      \
+#define SET_FUNCTIONS(ptr, c, neon, neon_dotprod, neon_i8mm, sve)                                 \
     do {                                                                                          \
         if (check_pointer_was_set && ptr != 0) {                                                  \
             printf("Error: %s:%i: Pointer \"%s\" is set before!\n", __FILE__, 0, #ptr);           \
@@ -353,10 +362,10 @@ EbCpuFlags svt_aom_get_cpu_flags_to_use() {
             assert(0);                                                                            \
         }                                                                                         \
         ptr = c;                                                                                  \
-        SET_FUNCTIONS_AARCH64(ptr, c, neon, neon_dotprod, neon_i8mm)                              \
+        SET_FUNCTIONS_AARCH64(ptr, c, neon, neon_dotprod, neon_i8mm, sve)                         \
     } while (0)
 #else
-#define SET_FUNCTIONS(ptr, c, neon, neon_dotprod, neon_i8mm)                                      \
+#define SET_FUNCTIONS(ptr, c, neon, neon_dotprod, neon_i8mm, sve)                                      \
     do {                                                                                          \
         if (check_pointer_was_set && ptr != 0) {                                                  \
             printf("Error: %s:%i: Pointer \"%s\" is set before!\n", __FILE__, __LINE__, #ptr);    \
@@ -367,7 +376,7 @@ EbCpuFlags svt_aom_get_cpu_flags_to_use() {
             assert(0);                                                                            \
         }                                                                                         \
         ptr = c;                                                                                  \
-        SET_FUNCTIONS_AARCH64(ptr, c, neon, neon_dotprod, neon_i8mm)                              \
+        SET_FUNCTIONS_AARCH64(ptr, c, neon, neon_dotprod, neon_i8mm, sve)                              \
     } while (0)
 #endif
 #else
@@ -416,10 +425,11 @@ EbCpuFlags svt_aom_get_cpu_flags_to_use() {
     #define SET_SSE2_SSSE3_AVX2_AVX512(ptr, c, sse2, ssse3, avx2, avx512) SET_FUNCTIONS(ptr, c, 0, 0, sse2, 0, ssse3, 0, 0, 0, avx2, avx512)
     #define SET_SSSE3_AVX2(ptr, c, ssse3, avx2)                     SET_FUNCTIONS(ptr, c, 0, 0, 0, 0, ssse3, 0, 0, 0, avx2, 0)
 #elif defined ARCH_AARCH64
-    #define SET_ONLY_C(ptr, c)                                      SET_FUNCTIONS(ptr, c, 0, 0, 0)
-    #define SET_NEON(ptr, c, neon)                                  SET_FUNCTIONS(ptr, c, neon, 0, 0)
-    #define SET_NEON_NEON_DOTPROD(ptr, c, neon, neon_dotprod)       SET_FUNCTIONS(ptr, c, neon, neon_dotprod, 0)
-    #define SET_NEON_NEON_DOTPROD_NEON_I8MM(ptr, c, neon, neon_dotprod, neon_i8mm) SET_FUNCTIONS(ptr, c, neon, neon_dotprod, neon_i8mm)
+    #define SET_ONLY_C(ptr, c)                                      SET_FUNCTIONS(ptr, c, 0, 0, 0, 0)
+    #define SET_NEON(ptr, c, neon)                                  SET_FUNCTIONS(ptr, c, neon, 0, 0, 0)
+    #define SET_NEON_NEON_DOTPROD(ptr, c, neon, neon_dotprod)       SET_FUNCTIONS(ptr, c, neon, neon_dotprod, 0, 0)
+    #define SET_NEON_NEON_DOTPROD_NEON_I8MM(ptr, c, neon, neon_dotprod, neon_i8mm) SET_FUNCTIONS(ptr, c, neon, neon_dotprod, neon_i8mm, 0)
+    #define SET_NEON_SVE(ptr, c, neon, sve)                         SET_FUNCTIONS(ptr, c, neon, 0, 0, sve)
 #else
     #define SET_ONLY_C(ptr, c)                                      SET_FUNCTIONS(ptr, c)
 #endif
@@ -1045,7 +1055,7 @@ void svt_aom_setup_common_rtcd_internal(EbCpuFlags flags) {
     SET_NEON(svt_av1_highbd_jnt_convolve_2d_copy, svt_av1_highbd_jnt_convolve_2d_copy_c, svt_av1_highbd_jnt_convolve_2d_copy_neon);
     SET_NEON(svt_av1_highbd_jnt_convolve_y, svt_av1_highbd_jnt_convolve_y_c, svt_av1_highbd_jnt_convolve_y_neon);
     SET_NEON(svt_av1_highbd_jnt_convolve_x, svt_av1_highbd_jnt_convolve_x_c, svt_av1_highbd_jnt_convolve_x_neon);
-    SET_NEON(svt_av1_highbd_convolve_x_sr, svt_av1_highbd_convolve_x_sr_c, svt_av1_highbd_convolve_x_sr_neon);
+    SET_NEON_SVE(svt_av1_highbd_convolve_x_sr, svt_av1_highbd_convolve_x_sr_c, svt_av1_highbd_convolve_x_sr_neon, svt_av1_highbd_convolve_x_sr_sve);
     SET_NEON_NEON_DOTPROD_NEON_I8MM(svt_av1_convolve_2d_sr, svt_av1_convolve_2d_sr_c, svt_av1_convolve_2d_sr_neon, svt_av1_convolve_2d_sr_neon_dotprod, svt_av1_convolve_2d_sr_neon_i8mm);
     SET_NEON(svt_av1_convolve_2d_copy_sr, svt_av1_convolve_2d_copy_sr_c, svt_av1_convolve_2d_copy_sr_neon);
     SET_NEON_NEON_DOTPROD_NEON_I8MM(svt_av1_convolve_x_sr, svt_av1_convolve_x_sr_c, svt_av1_convolve_x_sr_neon, svt_av1_convolve_x_sr_neon_dotprod, svt_av1_convolve_x_sr_neon_i8mm);

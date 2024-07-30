@@ -26,6 +26,7 @@ include_directories(
   ${PROJECT_SOURCE_DIR}/Source/Lib/ASM_AVX2/
   ${PROJECT_SOURCE_DIR}/Source/Lib/ASM_AVX512/
   ${PROJECT_SOURCE_DIR}/Source/Lib/ASM_NEON/
+  ${PROJECT_SOURCE_DIR}/Source/Lib/ASM_SVE/
   ${PROJECT_SOURCE_DIR}/Source/Lib/Codec
   ${PROJECT_SOURCE_DIR}/Source/Lib/Globals
   ${PROJECT_SOURCE_DIR}/Source/App
@@ -170,6 +171,9 @@ if(HAVE_ARM_PLATFORM)
   endif()
   if(ENABLE_NEON_I8MM)
     list(APPEND arm_arch_lib_list $<TARGET_OBJECTS:ASM_NEON_I8MM>)
+  endif()
+  if(ENABLE_SVE)
+    list(APPEND arm_arch_lib_list $<TARGET_OBJECTS:ASM_SVE>)
   endif()
 endif()
 
