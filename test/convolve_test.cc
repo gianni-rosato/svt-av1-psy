@@ -1037,6 +1037,9 @@ INSTANTIATE_TEST_SUITE_P(ConvolveTestX_SVE, AV1HbdJntConvolveTest,
 #endif  // HAVE_SVE
 
 #if HAVE_SVE2
+INSTANTIATE_TEST_SUITE_P(ConvolveTest2D_SVE2, AV1HbdJntConvolveTest,
+                         BuildParamsHbd(1, 1,
+                                        svt_av1_highbd_jnt_convolve_2d_sve2));
 INSTANTIATE_TEST_SUITE_P(ConvolveTestY_SVE2, AV1HbdJntConvolveTest,
                          BuildParamsHbd(0, 1,
                                         svt_av1_highbd_jnt_convolve_y_sve2));
