@@ -1030,6 +1030,11 @@ INSTANTIATE_TEST_SUITE_P(
     ConvolveTestCOPY_NEON, AV1HbdJntConvolveTest,
     BuildParamsHbd(0, 0, svt_av1_highbd_jnt_convolve_2d_copy_neon));
 
+#if HAVE_SVE
+INSTANTIATE_TEST_SUITE_P(ConvolveTestX_SVE, AV1HbdJntConvolveTest,
+                         BuildParamsHbd(1, 0,
+                                        svt_av1_highbd_jnt_convolve_x_sve));
+#endif  // HAVE_SVE
 #endif  // ARCH_AARCH64
 
 class AV1HbdSrConvolveTest : public AV1HbdConvolveTest {
