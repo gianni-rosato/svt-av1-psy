@@ -175,6 +175,9 @@ if(HAVE_ARM_PLATFORM)
   if(ENABLE_SVE)
     list(APPEND arm_arch_lib_list $<TARGET_OBJECTS:ASM_SVE>)
   endif()
+  if(ENABLE_SVE2)
+    list(APPEND arm_arch_lib_list $<TARGET_OBJECTS:ASM_SVE2>)
+  endif()
 endif()
 
 set(all_files ${arch_neutral_files} ${multi_arch_files} ${x86_arch_files}
