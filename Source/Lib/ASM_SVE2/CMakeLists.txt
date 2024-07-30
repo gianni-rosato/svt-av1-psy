@@ -19,7 +19,8 @@ check_both_flags_add(-march=armv9-a+i8mm+sve2)
 
 target_sources(
   ASM_SVE2
-  PUBLIC highbd_convolve_sve2.c)
+  PUBLIC highbd_convolve_sve2.c
+  PUBLIC highbd_jnt_convolve_sve2.c)
 
 target_include_directories(
   ASM_SVE2

@@ -1035,6 +1035,12 @@ INSTANTIATE_TEST_SUITE_P(ConvolveTestX_SVE, AV1HbdJntConvolveTest,
                          BuildParamsHbd(1, 0,
                                         svt_av1_highbd_jnt_convolve_x_sve));
 #endif  // HAVE_SVE
+
+#if HAVE_SVE2
+INSTANTIATE_TEST_SUITE_P(ConvolveTestY_SVE2, AV1HbdJntConvolveTest,
+                         BuildParamsHbd(0, 1,
+                                        svt_av1_highbd_jnt_convolve_y_sve2));
+#endif  // HAVE_SVE2
 #endif  // ARCH_AARCH64
 
 class AV1HbdSrConvolveTest : public AV1HbdConvolveTest {
