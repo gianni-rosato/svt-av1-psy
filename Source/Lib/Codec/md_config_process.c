@@ -508,6 +508,45 @@ static void set_frame_coeff_lvl(PictureControlSet *pcs) {
     }
     uint64_t me_8x8_dist_per_sb  = tot_me_8x8_dist / pcs->b64_total_count;
     uint64_t cmplx               = me_8x8_dist_per_sb / MAX(1, pcs->scs->static_config.qp);
+
+
+#if OPT_FD2_MFMV
+    uint64_t coeff_vlow_level_th = COEFF_LVL_TH_0;
+    uint64_t coeff_low_level_th  = COEFF_LVL_TH_1;
+    uint64_t coeff_high_level_th = COEFF_LVL_TH_2;
+    if (pcs->ppcs->input_resolution <= INPUT_SIZE_240p_RANGE) {
+        coeff_vlow_level_th = (uint64_t)((double)coeff_vlow_level_th * 1.7);
+        coeff_low_level_th  = (uint64_t)((double)coeff_low_level_th * 1.7);
+        coeff_high_level_th = (uint64_t)((double)coeff_high_level_th * 1.7);
+    } else if (pcs->ppcs->input_resolution <= INPUT_SIZE_480p_RANGE) {
+        coeff_vlow_level_th = (uint64_t)((double)coeff_vlow_level_th * 1.3);
+        coeff_low_level_th  = (uint64_t)((double)coeff_low_level_th * 1.3);
+        coeff_high_level_th = (uint64_t)((double)coeff_high_level_th * 1.3);
+    } else if (pcs->ppcs->input_resolution <= INPUT_SIZE_720p_RANGE) {
+        coeff_vlow_level_th = (uint64_t)((double)coeff_vlow_level_th * 1.2);
+        coeff_low_level_th  = (uint64_t)((double)coeff_low_level_th * 1.2);
+        coeff_high_level_th = (uint64_t)((double)coeff_high_level_th * 1.2);
+    }
+
+    if (noise_level_fp16 < 26572 /*FLOAT2FP(log1p(0.5), 16, int32_t)*/) {
+        coeff_vlow_level_th = (uint64_t)((double)coeff_vlow_level_th * 0.7);
+        coeff_low_level_th  = (uint64_t)((double)coeff_low_level_th * 0.7);
+        coeff_high_level_th = (uint64_t)((double)coeff_high_level_th * 0.7);
+    } else if (noise_level_fp16 > 45426 /*FLOAT2FP(log1p(1.0), 16, int32_t)*/) {
+        coeff_vlow_level_th = (uint64_t)((double)coeff_vlow_level_th * 1.05);
+        coeff_low_level_th  = (uint64_t)((double)coeff_low_level_th * 1.05);
+        coeff_high_level_th = (uint64_t)((double)coeff_high_level_th * 1.05);
+    }
+
+    pcs->coeff_lvl = NORMAL_LVL;
+    if (cmplx < coeff_vlow_level_th) {
+        pcs->coeff_lvl = VLOW_LVL;
+    } else if (cmplx < coeff_low_level_th) {
+        pcs->coeff_lvl = LOW_LVL;
+    } else if (cmplx > coeff_high_level_th) {
+        pcs->coeff_lvl = HIGH_LVL;
+    }
+#else
     uint64_t coeff_low_level_th  = COEFF_LVL_TH_0;
     uint64_t coeff_high_level_th = COEFF_LVL_TH_1;
     if (pcs->ppcs->input_resolution <= INPUT_SIZE_240p_RANGE) {
@@ -528,12 +567,14 @@ static void set_frame_coeff_lvl(PictureControlSet *pcs) {
         coeff_low_level_th  = (uint64_t)((double)coeff_low_level_th * 1.05);
         coeff_high_level_th = (uint64_t)((double)coeff_high_level_th * 1.05);
     }
+
     pcs->coeff_lvl = NORMAL_LVL;
     if (cmplx < coeff_low_level_th) {
         pcs->coeff_lvl = LOW_LVL;
     } else if (cmplx > coeff_high_level_th) {
         pcs->coeff_lvl = HIGH_LVL;
     }
+#endif
 }
 
 /* Mode Decision Configuration Kernel */

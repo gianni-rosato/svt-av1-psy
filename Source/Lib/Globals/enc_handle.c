@@ -337,7 +337,11 @@ void svt_aom_asm_set_convolve_hbd_asm_table(void);
 void svt_aom_init_intra_dc_predictors_c_internal(void);
 void svt_aom_init_intra_predictors_internal(void);
 void svt_av1_init_me_luts(void);
+#if TUNE_FD2
+uint8_t svt_aom_get_tpl_group_level(uint8_t tpl, int8_t enc_mode, SvtAv1RcMode rc_mode, const uint8_t fast_decode);
+#else
 uint8_t svt_aom_get_tpl_group_level(uint8_t tpl, int8_t enc_mode, SvtAv1RcMode rc_mode);
+#endif
 uint8_t svt_aom_set_tpl_group(PictureParentControlSet* pcs, uint8_t tpl_group_level, uint32_t source_width, uint32_t source_height);
 static void enc_switch_to_real_time(){
 #if !defined(_WIN32)
@@ -1545,10 +1549,18 @@ EB_API EbErrorType svt_av1_enc_init(EbComponentType *svt_enc_component)
                 MAX(mrp_ctrl->base_ref_list1_count,
                     MAX(mrp_ctrl->sc_non_base_ref_list1_count, mrp_ctrl->non_base_ref_list1_count)));
         input_data.tpl_synth_size = svt_aom_set_tpl_group(NULL,
+#if TUNE_FD2
+            svt_aom_get_tpl_group_level(
+                1,
+                enc_handle_ptr->scs_instance_array[instance_index]->scs->static_config.enc_mode,
+                enc_handle_ptr->scs_instance_array[instance_index]->scs->static_config.rate_control_mode,
+                enc_handle_ptr->scs_instance_array[instance_index]->scs->static_config.fast_decode),
+#else
             svt_aom_get_tpl_group_level(
                 1,
                 enc_handle_ptr->scs_instance_array[instance_index]->scs->static_config.enc_mode,
                 enc_handle_ptr->scs_instance_array[instance_index]->scs->static_config.rate_control_mode),
+#endif
             input_data.picture_width, input_data.picture_height);
         input_data.enable_adaptive_quantization = enc_handle_ptr->scs_instance_array[instance_index]->scs->static_config.enable_adaptive_quantization;
         input_data.calculate_variance = enc_handle_ptr->scs_instance_array[instance_index]->scs->calculate_variance;

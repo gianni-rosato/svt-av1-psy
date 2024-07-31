@@ -53,7 +53,11 @@ bool svt_aom_get_disallow_4x4(EncMode enc_mode, uint8_t is_base);
 uint8_t svt_aom_get_nsq_geom_level(EncMode enc_mode, uint8_t is_base, InputCoeffLvl coeff_lvl);
 uint8_t svt_aom_get_nsq_search_level(PictureControlSet *pcs, EncMode enc_mode, InputCoeffLvl coeff_lvl, uint32_t qp);
 uint8_t get_inter_compound_level(EncMode enc_mode);
+#if TUNE_FD2
+uint8_t get_filter_intra_level(EncMode enc_mode, const uint8_t fast_decode);
+#else
 uint8_t get_filter_intra_level(EncMode enc_mode);
+#endif
 uint8_t svt_aom_get_inter_intra_level(EncMode enc_mode, uint8_t is_base, uint8_t transition_present);
 uint8_t svt_aom_get_obmc_level(EncMode enc_mode, uint32_t qp, uint8_t is_base);
 

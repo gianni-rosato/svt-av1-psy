@@ -1601,7 +1601,11 @@ static uint8_t get_dlf_level(PictureControlSet *pcs, EncMode enc_mode, uint8_t i
 #if UNIFY_DLF_LVL
             if (fast_decode <= 1) {
 #endif
+#if OPT_FD2_MFMV
+                if (pcs->coeff_lvl == VLOW_LVL || pcs->coeff_lvl == LOW_LVL)
+#else
                 if (pcs->coeff_lvl == LOW_LVL)
+#endif
                     dlf_level = is_base ? 2 : 3;
                 else if (pcs->coeff_lvl == HIGH_LVL)
                     dlf_level = 4;
@@ -1621,7 +1625,11 @@ static uint8_t get_dlf_level(PictureControlSet *pcs, EncMode enc_mode, uint8_t i
 #if OPT_FAST_DECODE_LVLS // dlf
 #if UNIFY_DLF_LVL
             if (fast_decode <= 1) {
+#if OPT_FD2_MFMV
+                if (pcs->coeff_lvl == VLOW_LVL || pcs->coeff_lvl == LOW_LVL)
+#else
                 if (pcs->coeff_lvl == LOW_LVL)
+#endif
                     dlf_level = is_base ? 2 : is_not_last_layer ? 3 : 4;
                 else if (pcs->coeff_lvl == HIGH_LVL)
                     dlf_level = is_base ? 4 : is_not_last_layer ? 5 : 0;
@@ -2378,6 +2386,9 @@ Output  : Pre-Analysis signal(s)
 ******************************************************/
 void svt_aom_sig_deriv_pre_analysis_scs(SequenceControlSet *scs) {
     const int8_t enc_mode = scs->static_config.enc_mode;
+#if TUNE_FD2
+    const uint8_t fast_decode = scs->static_config.fast_decode;
+#endif
     // Set the SCD Mode
     scs->scd_mode = scs->static_config.scene_change_detection == 0 ? SCD_MODE_0 : SCD_MODE_1;
 
@@ -2392,8 +2403,11 @@ void svt_aom_sig_deriv_pre_analysis_scs(SequenceControlSet *scs) {
         }
     }
     scs->seq_header.enable_interintra_compound = ii_allowed ? 1 : 0;
-
+#if TUNE_FD2
+    if (get_filter_intra_level(enc_mode, fast_decode))
+#else
     if (get_filter_intra_level(enc_mode))
+#endif
         scs->seq_header.filter_intra_level = 1;
     else
         scs->seq_header.filter_intra_level = 0;
@@ -7153,7 +7167,11 @@ void svt_aom_sig_deriv_enc_dec_common(SequenceControlSet *scs, PictureControlSet
             depth_level = 2;
         }
     } else if (enc_mode <= ENC_M1) {
+#if OPT_FD2_MFMV
+        if (pcs->coeff_lvl == VLOW_LVL || pcs->coeff_lvl == LOW_LVL || is_islice) {
+#else
         if (pcs->coeff_lvl == LOW_LVL || is_islice) {
+#endif
             depth_level = 2;
         } else if (pcs->coeff_lvl == HIGH_LVL) {
             depth_level = 4;
@@ -7161,7 +7179,11 @@ void svt_aom_sig_deriv_enc_dec_common(SequenceControlSet *scs, PictureControlSet
             depth_level = 3;
         }
     } else if (enc_mode <= ENC_M4) {
+#if OPT_FD2_MFMV
+        if (pcs->coeff_lvl == VLOW_LVL || pcs->coeff_lvl == LOW_LVL) {
+#else
         if (pcs->coeff_lvl == LOW_LVL) {
+#endif
             depth_level = 2;
         } else if (pcs->coeff_lvl == HIGH_LVL) {
             depth_level = 5;
@@ -7169,7 +7191,11 @@ void svt_aom_sig_deriv_enc_dec_common(SequenceControlSet *scs, PictureControlSet
             depth_level = 4;
         }
     } else if (enc_mode <= ENC_M5) {
+#if OPT_FD2_MFMV
+        if (pcs->coeff_lvl == VLOW_LVL || pcs->coeff_lvl == LOW_LVL) {
+#else
         if (pcs->coeff_lvl == LOW_LVL) {
+#endif
             depth_level = 2;
         } else if (pcs->coeff_lvl == HIGH_LVL) {
             depth_level = 6;
@@ -7177,7 +7203,11 @@ void svt_aom_sig_deriv_enc_dec_common(SequenceControlSet *scs, PictureControlSet
             depth_level = 5;
         }
     } else if (enc_mode <= ENC_M8) {
+#if OPT_FD2_MFMV
+        if (pcs->coeff_lvl == VLOW_LVL || pcs->coeff_lvl == LOW_LVL) {
+#else
         if (pcs->coeff_lvl == LOW_LVL) {
+#endif
             depth_level = 5;
         } else if (pcs->coeff_lvl == HIGH_LVL) {
             depth_level = 8;
@@ -7185,7 +7215,11 @@ void svt_aom_sig_deriv_enc_dec_common(SequenceControlSet *scs, PictureControlSet
             depth_level = 6;
         }
     } else if (enc_mode <= ENC_M9) {
+#if OPT_FD2_MFMV
+        if (pcs->coeff_lvl == VLOW_LVL || pcs->coeff_lvl == LOW_LVL) {
+#else
         if (pcs->coeff_lvl == LOW_LVL) {
+#endif
             depth_level = 6;
         } else if (pcs->coeff_lvl == HIGH_LVL) {
             depth_level = 8;
@@ -7963,7 +7997,11 @@ uint8_t svt_aom_get_nsq_geom_level(EncMode enc_mode, uint8_t is_base, InputCoeff
         else // regular
             nsq_geom_level = is_base ? 2 : 3;
     } else if (enc_mode <= ENC_M11) {
+#if OPT_FD2_MFMV
+        if (coeff_lvl == VLOW_LVL || coeff_lvl == LOW_LVL)
+#else
         if (coeff_lvl == LOW_LVL)
+#endif
             nsq_geom_level = 3;
         else if (coeff_lvl == HIGH_LVL)
             nsq_geom_level = is_base ? 4 : 0;
@@ -8018,7 +8056,11 @@ uint8_t svt_aom_get_nsq_search_level(PictureControlSet *pcs, EncMode enc_mode, I
     // offset level based on coeff_lvl
     if (coeff_lvl == HIGH_LVL)
         nsq_search_level = nsq_search_level + 2 > 18 ? 0 : nsq_search_level + 2;
+#if OPT_FD2_MFMV
+    else if (coeff_lvl == VLOW_LVL || coeff_lvl == LOW_LVL)
+#else
     else if (coeff_lvl == LOW_LVL)
+#endif
         nsq_search_level = MAX(nsq_search_level - 3, 1);
 
     // If NSQ search is off, don't apply QP offsets
@@ -8173,7 +8215,11 @@ static void set_pic_lpd0_lvl(PictureControlSet *pcs, EncMode enc_mode) {
     if (rtc_tune) {
         if (sc_class1) {
             if (enc_mode <= ENC_M11) {
+#if OPT_FD2_MFMV
+                if (coeff_lvl == VLOW_LVL || coeff_lvl == LOW_LVL) {
+#else
                 if (coeff_lvl == LOW_LVL) {
+#endif
                     pcs->pic_lpd0_lvl = 3;
                 } else if (coeff_lvl == HIGH_LVL) {
                     pcs->pic_lpd0_lvl = (is_base || transition_present) ? 6 : 7;
@@ -8181,7 +8227,11 @@ static void set_pic_lpd0_lvl(PictureControlSet *pcs, EncMode enc_mode) {
                     pcs->pic_lpd0_lvl = (is_base || transition_present) ? 5 : 7;
                 }
             } else {
+#if OPT_FD2_MFMV
+                if (coeff_lvl == VLOW_LVL || coeff_lvl == LOW_LVL) {
+#else
                 if (coeff_lvl == LOW_LVL) {
+#endif
                     pcs->pic_lpd0_lvl = 4;
                 } else if (coeff_lvl == HIGH_LVL) {
                     pcs->pic_lpd0_lvl = is_islice ? 6 : 7;
@@ -8298,7 +8348,11 @@ static void set_pic_lpd0_lvl(PictureControlSet *pcs, EncMode enc_mode) {
 
         } else if (enc_mode <= ENC_M11) {
             if (input_resolution <= INPUT_SIZE_480p_RANGE) {
+#if OPT_FD2_MFMV
+                if (coeff_lvl == VLOW_LVL || coeff_lvl == LOW_LVL) {
+#else
                 if (coeff_lvl == LOW_LVL) {
+#endif
                     pcs->pic_lpd0_lvl = (is_base || transition_present)
                         ? MIN(MAX_LDP0_LVL, 3 + ldp0_lvl_offset[qp_band_idx])
                         : MIN(MAX_LDP0_LVL, 5 + ldp0_lvl_offset[qp_band_idx]);
@@ -8327,7 +8381,11 @@ static void set_pic_lpd0_lvl(PictureControlSet *pcs, EncMode enc_mode) {
             }
         } else {
             if (input_resolution <= INPUT_SIZE_360p_RANGE) {
+#if OPT_FD2_MFMV
+                if (coeff_lvl == VLOW_LVL || coeff_lvl == LOW_LVL) {
+#else
                 if (coeff_lvl == LOW_LVL) {
+#endif
                     pcs->pic_lpd0_lvl = (is_base || transition_present)
                         ? MIN(MAX_LDP0_LVL, 3 + ldp0_lvl_offset[qp_band_idx])
                         : MIN(MAX_LDP0_LVL, 5 + ldp0_lvl_offset[qp_band_idx]);
@@ -8371,13 +8429,23 @@ uint8_t get_inter_compound_level(EncMode enc_mode) {
 
     return comp_level;
 }
-
+#if TUNE_FD2
+uint8_t get_filter_intra_level(EncMode enc_mode, const uint8_t fast_decode) {
+#else
 uint8_t get_filter_intra_level(EncMode enc_mode) {
+#endif
     uint8_t filter_intra_level;
     if (enc_mode <= ENC_M3)
         filter_intra_level = 1;
     else if (enc_mode <= ENC_M5)
         filter_intra_level = 2;
+#if TUNE_FD2
+    else if (enc_mode <= ENC_M7)
+        if (fast_decode <= 1)
+            filter_intra_level = 0;
+        else
+            filter_intra_level = 2;
+#endif
     else
         filter_intra_level = 0;
 
@@ -8477,12 +8545,20 @@ void svt_aom_sig_deriv_mode_decision_config(SequenceControlSet *scs, PictureCont
 #if OPT_FAST_DECODE_LVLS
 #if CLEAN_UP_FD_SIG
                 if (fast_decode <= 1) {
+#if OPT_FD2_MFMV
+                    ppcs->frm_hdr.use_ref_frame_mvs = pcs->coeff_lvl == VLOW_LVL || pcs->coeff_lvl == LOW_LVL || input_resolution <= INPUT_SIZE_360p_RANGE
+#else
                     ppcs->frm_hdr.use_ref_frame_mvs = pcs->coeff_lvl == LOW_LVL || input_resolution <= INPUT_SIZE_360p_RANGE
+#endif
                         ? 1
                         : 0;
                 }
                 else {
+#if OPT_FD2_MFMV
+                    ppcs->frm_hdr.use_ref_frame_mvs = pcs->coeff_lvl == VLOW_LVL || input_resolution <= INPUT_SIZE_360p_RANGE
+#else
                     ppcs->frm_hdr.use_ref_frame_mvs = input_resolution <= INPUT_SIZE_360p_RANGE
+#endif
                         ? 1
                         : 0;
                 }
@@ -8525,7 +8601,11 @@ void svt_aom_sig_deriv_mode_decision_config(SequenceControlSet *scs, PictureCont
     //Filter Intra Mode : 0: OFF  1: ON
     // pic_filter_intra_level specifies whether filter intra would be active
     // for a given picture.
+#if TUNE_FD2
+    pcs->pic_filter_intra_level = get_filter_intra_level(enc_mode, fast_decode);
+#else
     pcs->pic_filter_intra_level = get_filter_intra_level(enc_mode);
+#endif
     if (fast_decode == 0 || input_resolution <= INPUT_SIZE_360p_RANGE) {
         if (rtc_tune) {
             if (pcs->enc_mode <= ENC_M9)
@@ -8653,12 +8733,20 @@ void svt_aom_sig_deriv_mode_decision_config(SequenceControlSet *scs, PictureCont
     else if (enc_mode <= ENC_M4) {
         pcs->cand_reduction_level = 1;
     } else if (enc_mode <= ENC_M8) {
+#if OPT_FD2_MFMV
+        if (pcs->coeff_lvl == VLOW_LVL || pcs->coeff_lvl == LOW_LVL)
+#else
         if (pcs->coeff_lvl == LOW_LVL)
+#endif
             pcs->cand_reduction_level = 1;
         else
             pcs->cand_reduction_level = is_not_last_layer ? 1 : 2;
     } else if (enc_mode <= ENC_M10) {
+#if OPT_FD2_MFMV
+        if (pcs->coeff_lvl == VLOW_LVL || pcs->coeff_lvl == LOW_LVL)
+#else
         if (pcs->coeff_lvl == LOW_LVL)
+#endif
             pcs->cand_reduction_level = 1;
         else
             pcs->cand_reduction_level = 2;
@@ -8772,7 +8860,11 @@ void svt_aom_sig_deriv_mode_decision_config(SequenceControlSet *scs, PictureCont
     // Set the level for the distance-based red pruning
     if (pcs->ppcs->ref_list0_count_try > 1 || pcs->ppcs->ref_list1_count_try > 1) {
         if (rtc_tune) {
+#if OPT_FD2_MFMV
+            if (pcs->coeff_lvl == VLOW_LVL || pcs->coeff_lvl == LOW_LVL) {
+#else
             if (pcs->coeff_lvl == LOW_LVL) {
+#endif
                 pcs->dist_based_ref_pruning = is_base ? 2 : 6;
             } else {
                 pcs->dist_based_ref_pruning = is_base ? 3 : 6;
@@ -8812,6 +8904,13 @@ void svt_aom_sig_deriv_mode_decision_config(SequenceControlSet *scs, PictureCont
         pcs->txs_level = 3;
     } else if (enc_mode <= ENC_M5) {
         pcs->txs_level = is_base ? 3 : 0;
+#if TUNE_FD2
+    } else if (enc_mode <= ENC_M7) {
+        if (fast_decode <= 1)
+            pcs->txs_level = is_base ? 4 : 0;
+        else
+            pcs->txs_level = is_base ? 3 : 0;
+#endif
     } else if (enc_mode <= ENC_M11) {
         pcs->txs_level = is_base ? 4 : 0;
     } else {
@@ -8909,14 +9008,22 @@ void svt_aom_sig_deriv_mode_decision_config(SequenceControlSet *scs, PictureCont
                     pcs->pic_depth_removal_level = is_base ? 1 : 2;
             } else if (enc_mode <= ENC_M7) {
                 if (input_resolution <= INPUT_SIZE_360p_RANGE) {
+#if OPT_FD2_MFMV
+                    if (pcs->coeff_lvl == VLOW_LVL || pcs->coeff_lvl == LOW_LVL)
+#else
                     if (pcs->coeff_lvl == LOW_LVL)
+#endif
                         pcs->pic_depth_removal_level = is_base ? 1 : 2;
                     else if (pcs->coeff_lvl == HIGH_LVL)
                         pcs->pic_depth_removal_level = is_base ? 4 : 6;
                     else
                         pcs->pic_depth_removal_level = is_base ? 4 : 5;
                 } else {
+#if OPT_FD2_MFMV
+                    if (pcs->coeff_lvl == VLOW_LVL || pcs->coeff_lvl == LOW_LVL)
+#else
                     if (pcs->coeff_lvl == LOW_LVL)
+#endif
                         pcs->pic_depth_removal_level = is_base ? 1 : 2;
                     else if (pcs->coeff_lvl == HIGH_LVL)
                         pcs->pic_depth_removal_level = is_base ? 4 : 7;
@@ -8926,14 +9033,22 @@ void svt_aom_sig_deriv_mode_decision_config(SequenceControlSet *scs, PictureCont
 
             } else if (enc_mode <= ENC_M8) {
                 if (input_resolution <= INPUT_SIZE_360p_RANGE) {
+#if OPT_FD2_MFMV
+                    if (pcs->coeff_lvl == VLOW_LVL || pcs->coeff_lvl == LOW_LVL)
+#else
                     if (pcs->coeff_lvl == LOW_LVL)
+#endif
                         pcs->pic_depth_removal_level = is_base ? 3 : 4;
                     else if (pcs->coeff_lvl == HIGH_LVL)
                         pcs->pic_depth_removal_level = is_base ? 4 : 6;
                     else
                         pcs->pic_depth_removal_level = is_base ? 4 : 5;
                 } else {
+#if OPT_FD2_MFMV
+                    if (pcs->coeff_lvl == VLOW_LVL || pcs->coeff_lvl == LOW_LVL)
+#else
                     if (pcs->coeff_lvl == LOW_LVL)
+#endif
                         pcs->pic_depth_removal_level = is_base ? 3 : 5;
                     else if (pcs->coeff_lvl == HIGH_LVL)
                         pcs->pic_depth_removal_level = is_base ? 4 : 7;
@@ -8996,25 +9111,41 @@ void svt_aom_sig_deriv_mode_decision_config(SequenceControlSet *scs, PictureCont
     } else if (enc_mode <= ENC_M9) {
         if (pcs->coeff_lvl == HIGH_LVL)
             pcs->pic_block_based_depth_refinement_level = 7;
+#if OPT_FD2_MFMV
+        else if (pcs->coeff_lvl == VLOW_LVL || pcs->coeff_lvl == LOW_LVL)
+#else
         else if (pcs->coeff_lvl == LOW_LVL)
+#endif
             pcs->pic_block_based_depth_refinement_level = 3;
         else
             pcs->pic_block_based_depth_refinement_level = 5;
     } else if (enc_mode <= ENC_M11) {
         if (rtc_tune) {
+#if OPT_FD2_MFMV
+            if (pcs->coeff_lvl == VLOW_LVL || pcs->coeff_lvl == LOW_LVL) {
+#else
             if (pcs->coeff_lvl == LOW_LVL) {
+#endif
                 pcs->pic_block_based_depth_refinement_level = is_base ? 3 : 6;
             } else { // regular
                 pcs->pic_block_based_depth_refinement_level = is_base ? 7 : 10;
             }
         } else {
+#if OPT_FD2_MFMV
+            if (pcs->coeff_lvl == VLOW_LVL || pcs->coeff_lvl == LOW_LVL)
+#else
             if (pcs->coeff_lvl == LOW_LVL)
+#endif
                 pcs->pic_block_based_depth_refinement_level = 3;
             else
                 pcs->pic_block_based_depth_refinement_level = is_base ? 7 : 10;
         }
     } else {
+#if OPT_FD2_MFMV
+        if (pcs->coeff_lvl == VLOW_LVL || pcs->coeff_lvl == LOW_LVL) {
+#else
         if (pcs->coeff_lvl == LOW_LVL) {
+#endif
             pcs->pic_block_based_depth_refinement_level = is_base ? 3 : 6;
         } else { // regular
             pcs->pic_block_based_depth_refinement_level = is_base ? 7 : 10;
@@ -9046,18 +9177,30 @@ void svt_aom_sig_deriv_mode_decision_config(SequenceControlSet *scs, PictureCont
             if (input_resolution <= INPUT_SIZE_360p_RANGE) {
                 if (pcs->coeff_lvl == HIGH_LVL)
                     pcs->pic_lpd1_lvl = is_not_last_layer ? 0 : 2;
+#if OPT_FD2_MFMV
+                else if (pcs->coeff_lvl == VLOW_LVL || pcs->coeff_lvl == LOW_LVL)
+#else
                 else if (pcs->coeff_lvl == LOW_LVL)
+#endif
                     pcs->pic_lpd1_lvl = 0;
                 else
                     pcs->pic_lpd1_lvl = is_not_last_layer ? 0 : 1;
             } else {
+#if OPT_FD2_MFMV
+                if (pcs->coeff_lvl == VLOW_LVL || pcs->coeff_lvl == LOW_LVL)
+#else
                 if (pcs->coeff_lvl == LOW_LVL)
+#endif
                     pcs->pic_lpd1_lvl = is_base ? 0 : 1;
                 else
                     pcs->pic_lpd1_lvl = is_base ? 0 : 2;
             }
         } else if (enc_mode <= ENC_M10) {
+#if OPT_FD2_MFMV
+            if (pcs->coeff_lvl == VLOW_LVL || pcs->coeff_lvl == LOW_LVL) {
+#else
             if (pcs->coeff_lvl == LOW_LVL) {
+#endif
                 pcs->pic_lpd1_lvl = is_not_last_layer ? 0 : 2;
             } else if (pcs->coeff_lvl == HIGH_LVL) {
                 pcs->pic_lpd1_lvl = is_base ? 0 : 4;
@@ -9071,7 +9214,11 @@ void svt_aom_sig_deriv_mode_decision_config(SequenceControlSet *scs, PictureCont
                 else
                     pcs->pic_lpd1_lvl = is_not_last_layer ? 0 : 3;
             } else {
+#if OPT_FD2_MFMV
+                if (pcs->coeff_lvl == VLOW_LVL || pcs->coeff_lvl == LOW_LVL)
+#else
                 if (pcs->coeff_lvl == LOW_LVL)
+#endif
                     pcs->pic_lpd1_lvl = is_base ? 0 : 4;
                 else
                     pcs->pic_lpd1_lvl = is_base ? 0 : 5;
@@ -9110,7 +9257,11 @@ void svt_aom_sig_deriv_mode_decision_config(SequenceControlSet *scs, PictureCont
             }
         } else if (enc_mode <= ENC_M11) {
             if (input_resolution <= INPUT_SIZE_480p_RANGE) {
+#if OPT_FD2_MFMV
+                if (pcs->coeff_lvl == VLOW_LVL || pcs->coeff_lvl == LOW_LVL) {
+#else
                 if (pcs->coeff_lvl == LOW_LVL) {
+#endif
                     pcs->pic_lpd1_lvl = is_base ? 0 : 2;
                 } else {
                     pcs->pic_lpd1_lvl = is_base ? 0 : 3;
@@ -9123,7 +9274,11 @@ void svt_aom_sig_deriv_mode_decision_config(SequenceControlSet *scs, PictureCont
             }
         } else {
             if (input_resolution <= INPUT_SIZE_480p_RANGE) {
+#if OPT_FD2_MFMV
+                if (pcs->coeff_lvl == VLOW_LVL || pcs->coeff_lvl == LOW_LVL) {
+#else
                 if (pcs->coeff_lvl == LOW_LVL) {
+#endif
                     pcs->pic_lpd1_lvl = is_base ? 0 : 3;
                 } else if (pcs->coeff_lvl == HIGH_LVL) {
                     pcs->pic_lpd1_lvl = is_base ? 0 : 5;
