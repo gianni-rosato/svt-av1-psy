@@ -106,7 +106,11 @@ EbErrorType svt_aom_me_sb_results_ctor(MeSbResults *obj_ptr, PictureControlSetIn
     EbInputResolution resolution;
     svt_aom_derive_input_resolution(&resolution, init_data_ptr->picture_width * init_data_ptr->picture_height);
     uint8_t number_of_pus = svt_aom_get_enable_me_16x16(init_data_ptr->enc_mode)
+#if TUNE_M4_M5_FD2 && !TUNE_M5_M7
+        ? svt_aom_get_enable_me_8x8(init_data_ptr->enc_mode, init_data_ptr->rtc_tune, resolution, init_data_ptr->static_config.fast_decode)
+#else
         ? svt_aom_get_enable_me_8x8(init_data_ptr->enc_mode, init_data_ptr->rtc_tune, resolution)
+#endif
             ? SQUARE_PU_COUNT
             : MAX_SB64_PU_COUNT_NO_8X8
         : MAX_SB64_PU_COUNT_WO_16X16;
@@ -400,8 +404,13 @@ EbErrorType pcs_update_param(PictureControlSet *pcs) {
     if ((is_16bit) || (scs->is_16bit_pipeline)) {
         svt_picture_buffer_desc_update(pcs->input_frame16bit, (EbPtr)&coeff_buffer_desc_init_data);
     }
+#if TUNE_M3_FD2
+    if (svt_aom_get_enable_restoration(
+        scs->static_config.enc_mode, scs->static_config.enable_restoration_filtering, scs->input_resolution, scs->static_config.fast_decode)) {
+#else
     if (svt_aom_get_enable_restoration(
             scs->static_config.enc_mode, scs->static_config.enable_restoration_filtering, scs->input_resolution)) {
+#endif
         set_restoration_unit_size(scs->max_input_luma_width, scs->max_input_luma_height, 1, 1, pcs->rst_info);
     }
     pcs->frame_width  = scs->max_input_luma_width;
@@ -493,9 +502,16 @@ static EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr
     object_ptr->temp_lf_recon_pic_16bit           = (EbPictureBufferDesc *)NULL;
     object_ptr->temp_lf_recon_pic                 = (EbPictureBufferDesc *)NULL;
     object_ptr->scaled_input_pic                  = (EbPictureBufferDesc *)NULL;
+#if TUNE_M3_FD2
+    if (svt_aom_get_enable_restoration(init_data_ptr->enc_mode,
+                                       init_data_ptr->static_config.enable_restoration_filtering,
+                                       init_data_ptr->input_resolution,
+                                       init_data_ptr->static_config.fast_decode)) {
+#else
     if (svt_aom_get_enable_restoration(init_data_ptr->enc_mode,
                                        init_data_ptr->static_config.enable_restoration_filtering,
                                        init_data_ptr->input_resolution)) {
+#endif
         set_restoration_unit_size(
             init_data_ptr->picture_width, init_data_ptr->picture_height, 1, 1, object_ptr->rst_info);
 
@@ -1417,7 +1433,11 @@ static EbErrorType picture_parent_control_set_ctor(PictureParentControlSet *obje
 
     // 8x8 can only be used if 16x16 is enabled
     object_ptr->enable_me_8x8 = object_ptr->enable_me_16x16
+#if TUNE_M4_M5_FD2 && !TUNE_M5_M7
+        ? svt_aom_get_enable_me_8x8(init_data_ptr->enc_mode, init_data_ptr->rtc_tune, resolution, init_data_ptr->static_config.fast_decode)
+#else
         ? svt_aom_get_enable_me_8x8(init_data_ptr->enc_mode, init_data_ptr->rtc_tune, resolution)
+#endif
         : 0;
     EB_NEW(object_ptr->dg_detector, svt_aom_dg_detector_seg_ctor);
 

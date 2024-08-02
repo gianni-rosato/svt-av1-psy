@@ -97,8 +97,13 @@ EbErrorType svt_aom_rest_context_ctor(EbThreadContext *thread_ctx, const EbEncHa
         enc_handle_ptr->picture_demux_results_resource_ptr, demux_index);
 
     Bool is_16bit = scs->is_16bit_pipeline;
+#if TUNE_M3_FD2
+    if (svt_aom_get_enable_restoration(
+        init_data_ptr->enc_mode, config->enable_restoration_filtering, scs->input_resolution, config->fast_decode)) {
+#else
     if (svt_aom_get_enable_restoration(
             init_data_ptr->enc_mode, config->enable_restoration_filtering, scs->input_resolution)) {
+#endif
         EbPictureBufferDescInitData init_data;
 
         init_data.buffer_enable_mask = PICTURE_BUFFER_DESC_FULL_MASK;
@@ -124,7 +129,11 @@ EbErrorType svt_aom_rest_context_ctor(EbThreadContext *thread_ctx, const EbEncHa
                 context_ptr->org_rec_frame->bit_depth = EB_EIGHT_BIT;
         }
         context_ptr->rst_tmpbuf = NULL;
+#if TUNE_M3_FD2
+        if (svt_aom_get_enable_sg(init_data_ptr->enc_mode, scs->input_resolution, config->fast_decode))
+#else
         if (svt_aom_get_enable_sg(init_data_ptr->enc_mode, scs->input_resolution))
+#endif
             EB_MALLOC_ALIGNED(context_ptr->rst_tmpbuf, RESTORATION_TMPBUF_SIZE);
     }
 

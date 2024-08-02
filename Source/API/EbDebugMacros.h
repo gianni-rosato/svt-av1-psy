@@ -45,6 +45,20 @@ extern "C" {
 #define CLEAN_UP_FD_SIG                           1 // Clean-up fd signal(s); fd_2 to match fd_3, then remove fd_-1 and fd_3.
 #define OPT_FD2_MFMV                              1 // Create a very-low coeff-level band (VLOW_LVL) and apply mfmv only to that band in fd2
 #define TUNE_FD2                                  1 // Preset tuning for only fd2
+#define TUNE_M4_M5_FD2                            1 // Tune fd2 for M4 and M5
+#define TUNE_M5_M7                                1 // Tune M5 and M7 for fd0, fd1, and fd2
+#define FIX_SKIP_INTRA_CHECK                      1 // Ensure intra is not skipped for islice
+#define TUNE_M3_FD2                               1 // Tune M3 for fd2
+#define TUNE_M2_FD2                               1 // Tune M2 for fd2
+#define TUNE_M1_FD2                               1 // Tune M1 for fd2
+#define ENABLE_FD_M0_MR                           1 // Enable fast decode modes for M0 and MR
+#define TUNE_M0_MR_FD2                            1 // Tune M0 and MR for fd2
+#define TUNE_M2_FD1                               1 // Tune M3 and below fd1
+#define TUNE_M7_CDEF_FD1                          1 // Enable CDEF cost bias for FD1 in M7-M9
+#define LIMIT_FD2_MR_M7                           1 // Limit fast-decode 2 to M7 and below presets
+#define TUNE_LIMIT_FD                             1 // Enable fast-decode 2 up to M9; disable fast-decode in M10
+#define CLN_UNUSED_CHECKS                         1 // Cleanup unused checks in the code
+
 //FOR DEBUGGING - Do not remove
 #define OPT_LD_LATENCY2         1 // Latency optimization for low delay - to keep the Macro for backwards testing until 3.0
 #define LOG_ENC_DONE            0 // log encoder job one

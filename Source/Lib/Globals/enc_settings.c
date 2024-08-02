@@ -2004,6 +2004,11 @@ EB_API EbErrorType svt_av1_enc_parse_parameter(EbSvtAv1EncConfiguration *config_
         {"startup-mg-size", &config_struct->startup_mg_size},
         {"variance-boost-strength", &config_struct->variance_boost_strength},
         {"variance-octile", &config_struct->variance_octile},
+#if CLEAN_UP_FD_SIG
+#if OPT_FAST_DECODE_LVLS
+        {"fast-decode", &config_struct->fast_decode},
+#endif
+#endif
     };
     const size_t uint8_opts_size = sizeof(uint8_opts) / sizeof(uint8_opts[0]);
 
@@ -2074,8 +2079,10 @@ EB_API EbErrorType svt_av1_enc_parse_parameter(EbSvtAv1EncConfiguration *config_
         int8_t     *out;
     } int8_opts[] = {
         {"preset", &config_struct->enc_mode},
+#if !CLEAN_UP_FD_SIG
 #if OPT_FAST_DECODE_LVLS
         {"fast-decode", &config_struct->fast_decode},
+#endif
 #endif
     };
     const size_t int8_opts_size = sizeof(int8_opts) / sizeof(int8_opts[0]);
