@@ -507,17 +507,19 @@ void set_segments_numbers(SequenceControlSet    *scs) {
     scs->tpl_segment_col_count_array = tpl_seg_w;
 
     scs->cdef_segment_row_count = (core_count == SINGLE_CORE_COUNT) ? 1 :
-        (((scs->max_input_luma_height + 32) / BLOCK_SIZE_64) < 6) ? 1 : 2;
+        (((scs->max_input_luma_height + 32) / BLOCK_SIZE_64) < 6) ? 1 :
+        (scs->input_resolution <= INPUT_SIZE_1080p_RANGE) ? 2 : 4;
     scs->cdef_segment_column_count = (core_count == SINGLE_CORE_COUNT) ? 1 :
-        (((scs->max_input_luma_width + 32) / BLOCK_SIZE_64) < 10) ? 1 : 3;
+        (((scs->max_input_luma_width + 32) / BLOCK_SIZE_64) < 10) ? 1 :
+        (scs->input_resolution <= INPUT_SIZE_1080p_RANGE) ? 3 : 6;
 
     //since restoration unit size is same for Luma and Chroma, Luma segments and chroma segments do not correspond to the same area!
     //to keep proper processing, segments have to be configured based on chroma resolution.
     uint32_t unit_size = 256;
     uint32_t rest_seg_w = MAX((scs->max_input_luma_width / 2 + (unit_size >> 1)) / unit_size, 1);
     uint32_t rest_seg_h = MAX((scs->max_input_luma_height / 2 + (unit_size >> 1)) / unit_size, 1);
-    scs->rest_segment_column_count = MIN(rest_seg_w, 6);
-    scs->rest_segment_row_count = MIN(rest_seg_h, 4);
+    scs->rest_segment_column_count = scs->input_resolution <= INPUT_SIZE_1080p_RANGE ? MIN(rest_seg_w, 6) : MIN(rest_seg_w, 9);
+    scs->rest_segment_row_count = scs->input_resolution <= INPUT_SIZE_1080p_RANGE ? MIN(rest_seg_h, 4) : MIN(rest_seg_h, 6);
 
     scs->tf_segment_column_count = me_seg_w;
     scs->tf_segment_row_count = me_seg_h;
@@ -653,7 +655,7 @@ static EbErrorType load_default_buffer_configuration_settings(
             n_extra_mg = 2;
         }
         else {
-            n_extra_mg = scs->input_resolution <= INPUT_SIZE_1080p_RANGE ? 7 : scs->input_resolution <= INPUT_SIZE_8K_RANGE ? 5 : 0;
+            n_extra_mg = scs->input_resolution <= INPUT_SIZE_4K_RANGE ? 7 : scs->input_resolution <= INPUT_SIZE_8K_RANGE ? 5 : 0;
         }
 
         max_input  = min_input + (1 + mg_size) * n_extra_mg;
@@ -779,7 +781,7 @@ static EbErrorType load_default_buffer_configuration_settings(
         scs->total_process_init_count += (scs->cdef_process_init_count                        = clamp(6, 1, max_cdef_proc));
         scs->total_process_init_count += (scs->rest_process_init_count                        = clamp(2, 1, max_rest_proc));
     }
-    else {
+    else if (core_count <= PARALLEL_LEVEL_5_RANGE || scs->input_resolution <= INPUT_SIZE_1080p_RANGE) {
         scs->total_process_init_count += (scs->source_based_operations_process_init_count     = 1);
         scs->total_process_init_count += (scs->picture_analysis_process_init_count            = clamp(4, 1, max_pa_proc));
         scs->total_process_init_count += (scs->motion_estimation_process_init_count           = clamp(25, 1, max_me_proc));
@@ -790,6 +792,18 @@ static EbErrorType load_default_buffer_configuration_settings(
         scs->total_process_init_count += (scs->dlf_process_init_count                         = clamp(2, 1, max_dlf_proc));
         scs->total_process_init_count += (scs->cdef_process_init_count                        = clamp(6, 1, max_cdef_proc));
         scs->total_process_init_count += (scs->rest_process_init_count                        = clamp(4, 1, max_rest_proc));
+    }
+    else {
+        scs->total_process_init_count += (scs->source_based_operations_process_init_count     = 1);
+        scs->total_process_init_count += (scs->picture_analysis_process_init_count            = clamp(16, 1, max_pa_proc));
+        scs->total_process_init_count += (scs->motion_estimation_process_init_count           = clamp(25, 1, max_me_proc));
+        scs->total_process_init_count += (scs->tpl_disp_process_init_count                    = clamp(12, 1, max_tpl_proc));
+        scs->total_process_init_count += (scs->mode_decision_configuration_process_init_count = clamp(8, 1, max_mdc_proc));
+        scs->total_process_init_count += (scs->enc_dec_process_init_count                     = clamp(8, scs->picture_control_set_pool_init_count_child, max_md_proc));
+        scs->total_process_init_count += (scs->entropy_coding_process_init_count              = clamp(10, 1, max_ec_proc));
+        scs->total_process_init_count += (scs->dlf_process_init_count                         = clamp(8, 1, max_dlf_proc));
+        scs->total_process_init_count += (scs->cdef_process_init_count                        = clamp(8, 1, max_cdef_proc));
+        scs->total_process_init_count += (scs->rest_process_init_count                        = clamp(10, 1, max_rest_proc));
     }
 
     scs->total_process_init_count += 6; // single processes count
