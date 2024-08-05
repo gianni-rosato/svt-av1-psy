@@ -991,6 +991,20 @@ static INLINE uint16x8_t load_unaligned_u16_4x2(const uint16_t *buf, uint32_t st
     return vreinterpretq_u16_u64(a_u64);
 }
 
+static INLINE int16x8_t load_unaligned_s16_4x2(const int16_t *buf, uint32_t stride) {
+    int64_t   a;
+    int64x2_t a_s64;
+
+    memcpy(&a, buf, 8);
+    buf += stride;
+    a_s64 = vdupq_n_s64(0);
+    a_s64 = vsetq_lane_s64(a, a_s64, 0);
+    memcpy(&a, buf, 8);
+    buf += stride;
+    a_s64 = vsetq_lane_s64(a, a_s64, 1);
+    return vreinterpretq_s16_s64(a_s64);
+}
+
 static INLINE void load_unaligned_u16_4x4(const uint16_t *buf, uint32_t stride, uint16x8_t *tu0, uint16x8_t *tu1) {
     *tu0 = load_unaligned_u16_4x2(buf, stride);
     buf += 2 * stride;

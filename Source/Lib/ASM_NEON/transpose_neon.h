@@ -1032,4 +1032,52 @@ static AOM_FORCE_INLINE void transpose_s16_64x64(const int16x4_t *in, int16x4_t 
     transpose_arrays_s16_4nx4n(in, out, 64, 16);
 }
 
+static INLINE void transpose_32bit_8x8_neon(const int32x4_t *in, int32x4_t *out) {
+    const int32x4_t a00 = vzip1q_s32(in[0], in[2]);
+    const int32x4_t a01 = vzip1q_s32(in[1], in[3]);
+    const int32x4_t a10 = vzip1q_s32(in[4], in[6]);
+    const int32x4_t a11 = vzip1q_s32(in[5], in[7]);
+    const int32x4_t a20 = vzip1q_s32(in[8], in[10]);
+    const int32x4_t a21 = vzip1q_s32(in[9], in[11]);
+    const int32x4_t a30 = vzip1q_s32(in[12], in[14]);
+    const int32x4_t a31 = vzip1q_s32(in[13], in[15]);
+
+    const int32x4_t a40 = vzip2q_s32(in[0], in[2]);
+    const int32x4_t a41 = vzip2q_s32(in[1], in[3]);
+    const int32x4_t a50 = vzip2q_s32(in[4], in[6]);
+    const int32x4_t a51 = vzip2q_s32(in[5], in[7]);
+    const int32x4_t a60 = vzip2q_s32(in[8], in[10]);
+    const int32x4_t a61 = vzip2q_s32(in[9], in[11]);
+    const int32x4_t a70 = vzip2q_s32(in[12], in[14]);
+    const int32x4_t a71 = vzip2q_s32(in[13], in[15]);
+
+    out[0]  = vcombine_s32(vget_low_s32(a00), vget_low_s32(a10));
+    out[8]  = vcombine_s32(vget_low_s32(a01), vget_low_s32(a11));
+    out[1]  = vcombine_s32(vget_low_s32(a20), vget_low_s32(a30));
+    out[9]  = vcombine_s32(vget_low_s32(a21), vget_low_s32(a31));
+    out[2]  = vcombine_s32(vget_high_s32(a00), vget_high_s32(a10));
+    out[10] = vcombine_s32(vget_high_s32(a01), vget_high_s32(a11));
+    out[3]  = vcombine_s32(vget_high_s32(a20), vget_high_s32(a30));
+    out[11] = vcombine_s32(vget_high_s32(a21), vget_high_s32(a31));
+    out[4]  = vcombine_s32(vget_low_s32(a40), vget_low_s32(a50));
+    out[12] = vcombine_s32(vget_low_s32(a41), vget_low_s32(a51));
+    out[5]  = vcombine_s32(vget_low_s32(a60), vget_low_s32(a70));
+    out[13] = vcombine_s32(vget_low_s32(a61), vget_low_s32(a71));
+    out[6]  = vcombine_s32(vget_high_s32(a40), vget_high_s32(a50));
+    out[14] = vcombine_s32(vget_high_s32(a41), vget_high_s32(a51));
+    out[7]  = vcombine_s32(vget_high_s32(a60), vget_high_s32(a70));
+    out[15] = vcombine_s32(vget_high_s32(a61), vget_high_s32(a71));
+}
+
+static INLINE void transpose_s64_4x4_neon(const int64x2_t *in, int64x2_t *out) {
+    out[0] = vtrn1q_s64(in[0], in[2]);
+    out[4] = vtrn1q_s64(in[1], in[3]);
+    out[1] = vtrn1q_s64(in[4], in[6]);
+    out[5] = vtrn1q_s64(in[5], in[7]);
+    out[2] = vtrn2q_s64(in[0], in[2]);
+    out[6] = vtrn2q_s64(in[1], in[3]);
+    out[3] = vtrn2q_s64(in[4], in[6]);
+    out[7] = vtrn2q_s64(in[5], in[7]);
+}
+
 #endif // AOM_AOM_DSP_ARM_TRANSPOSE_NEON_H_
