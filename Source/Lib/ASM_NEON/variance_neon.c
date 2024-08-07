@@ -10,9 +10,10 @@
 */
 
 #include <arm_neon.h>
+
+#include "aom_dsp_rtcd.h"
 #include "mem_neon.h"
 #include "sum_neon.h"
-#include "aom_dsp_rtcd.h"
 #include "var_filter_neon.h"
 
 static INLINE void variance_4xh_neon(const uint8_t *src, int src_stride, const uint8_t *ref, int ref_stride, int h,
@@ -1012,4 +1013,30 @@ unsigned int svt_aom_sub_pixel_variance128x128_neon(const uint8_t *src, int src_
             return svt_aom_variance128x128(tmp1, 128, ref, ref_stride, sse);
         }
     }
+}
+
+unsigned int svt_aom_mse16x16_neon(const uint8_t *src, int src_stride, const uint8_t *ref, int ref_stride,
+                                   unsigned int *sse) {
+    int32x4_t sse_s32[4] = {vdupq_n_s32(0), vdupq_n_s32(0), vdupq_n_s32(0), vdupq_n_s32(0)};
+
+    int i = 16;
+    do {
+        uint8x16_t s0 = vld1q_u8(src);
+        uint8x16_t r0 = vld1q_u8(ref);
+
+        int16x8_t diff0 = vreinterpretq_s16_u16(vsubl_u8(vget_low_u8(s0), vget_low_u8(r0)));
+        int16x8_t diff1 = vreinterpretq_s16_u16(vsubl_u8(vget_high_u8(s0), vget_high_u8(r0)));
+
+        sse_s32[0] = vmlal_s16(sse_s32[0], vget_low_s16(diff1), vget_low_s16(diff1));
+        sse_s32[1] = vmlal_s16(sse_s32[1], vget_low_s16(diff0), vget_low_s16(diff0));
+
+        sse_s32[2] = vmlal_s16(sse_s32[2], vget_high_s16(diff0), vget_high_s16(diff0));
+        sse_s32[3] = vmlal_s16(sse_s32[3], vget_high_s16(diff1), vget_high_s16(diff1));
+
+        src += src_stride;
+        ref += ref_stride;
+    } while (--i != 0);
+
+    *sse = vaddvq_u32(vreinterpretq_u32_s32(horizontal_add_4d_s32x4(sse_s32)));
+    return *sse;
 }

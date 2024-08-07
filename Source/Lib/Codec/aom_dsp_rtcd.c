@@ -564,7 +564,7 @@ void svt_aom_setup_rtcd_internal(EbCpuFlags flags) {
     SET_ONLY_C(svt_aom_highbd_8_mse16x16, svt_aom_highbd_8_mse16x16_c);
 
     //SAD
-    SET_ONLY_C(svt_aom_mse16x16, svt_aom_mse16x16_c);
+    SET_NEON(svt_aom_mse16x16, svt_aom_mse16x16_c, svt_aom_mse16x16_neon);
     SET_ONLY_C(svt_aom_sad4x4, svt_aom_sad4x4_c);
     SET_ONLY_C(svt_aom_sad4x4x4d, svt_aom_sad4x4x4d_c);
     SET_ONLY_C(svt_aom_sad4x16, svt_aom_sad4x16_c);

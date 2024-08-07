@@ -148,6 +148,14 @@ INSTANTIATE_TEST_SUITE_P(AVX2, MseTest,
 
 #endif  // ARCH_X86_64
 
+#ifdef ARCH_AARCH64
+INSTANTIATE_TEST_SUITE_P(NEON, MseTest,
+                         ::testing::Values(TestMseParam(16, 16,
+                                                        &svt_aom_mse16x16_neon,
+                                                        &svt_aom_mse16x16_c)));
+
+#endif  // ARCH_AARCH64
+
 class MseTestHighbd : public ::testing::TestWithParam<TestMseParamHighbd> {
   public:
     MseTestHighbd()
