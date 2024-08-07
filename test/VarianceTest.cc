@@ -96,9 +96,12 @@ class MseTest : public ::testing::TestWithParam<TestMseParam> {
             }
 
             uint32_t sse_tst, sse_ref;
-            mse_tst_(src_data_, width_, ref_data_, height_, &sse_tst);
-            mse_ref_(src_data_, width_, ref_data_, height_, &sse_ref);
+            unsigned int res_tst =
+                mse_tst_(src_data_, width_, ref_data_, height_, &sse_tst);
+            unsigned int res_ref =
+                mse_ref_(src_data_, width_, ref_data_, height_, &sse_ref);
             ASSERT_EQ(sse_tst, sse_ref) << "SSE Error at index: " << i;
+            ASSERT_EQ(res_tst, res_ref) << "Return value error at index: " << i;
         }
     }
 
@@ -106,9 +109,12 @@ class MseTest : public ::testing::TestWithParam<TestMseParam> {
         memset(src_data_, 255, MAX_BLOCK_SIZE);
         memset(ref_data_, 0, MAX_BLOCK_SIZE);
         uint32_t sse_tst;
-        mse_tst_(src_data_, width_, ref_data_, width_, &sse_tst);
+        unsigned int res_tst =
+            mse_tst_(src_data_, width_, ref_data_, width_, &sse_tst);
         const uint32_t expected = width_ * height_ * 255 * 255;
         ASSERT_EQ(sse_tst, expected) << "Error at MSE maximum test ";
+        ASSERT_EQ(res_tst, expected)
+            << "Return value error at MSE maximum test";
     }
 
   private:
