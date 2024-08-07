@@ -248,6 +248,14 @@ INSTANTIATE_TEST_SUITE_P(SSE2, MseTestHighbd,
 
 #endif  // ARCH_X86_64
 
+#ifdef ARCH_AARCH64
+INSTANTIATE_TEST_SUITE_P(NEON, MseTestHighbd,
+                         ::testing::Values(TestMseParamHighbd(
+                             16, 16, &svt_aom_highbd_8_mse16x16_neon,
+                             &svt_aom_highbd_8_mse16x16_c)));
+
+#endif  // ARCH_AARCH64
+
 // sum of squares test
 static uint32_t mb_ss_ref(const int16_t *src) {
     uint32_t res = 0;

@@ -40,6 +40,7 @@ target_sources(
   PUBLIC highbd_fwd_txfm_neon.c
   PUBLIC highbd_inv_txfm_neon.c
   PUBLIC highbd_pickrst_neon.c
+  PUBLIC highbd_variance_neon.c
   PUBLIC intra_prediction_neon.c
   PUBLIC itx.S
   PUBLIC obmc_sad_neon.c
