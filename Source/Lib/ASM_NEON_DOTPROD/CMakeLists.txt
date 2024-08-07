@@ -21,7 +21,8 @@ target_sources(
   ASM_NEON_DOTPROD
   PUBLIC aom_convolve8_neon_dotprod.c
   PUBLIC convolve_neon_dotprod.c
-  PUBLIC jnt_convolve_neon_dotprod.c)
+  PUBLIC jnt_convolve_neon_dotprod.c
+  PUBLIC variance_neon_dotprod.c)
 
 target_include_directories(
   ASM_NEON_DOTPROD
