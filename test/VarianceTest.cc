@@ -261,6 +261,13 @@ INSTANTIATE_TEST_SUITE_P(NEON, MseTestHighbd,
                              16, 16, &svt_aom_highbd_8_mse16x16_neon,
                              &svt_aom_highbd_8_mse16x16_c)));
 
+#if HAVE_NEON_DOTPROD
+INSTANTIATE_TEST_SUITE_P(NEON_DOTPROD, MseTestHighbd,
+                         ::testing::Values(TestMseParamHighbd(
+                             16, 16, &svt_aom_highbd_8_mse16x16_neon_dotprod,
+                             &svt_aom_highbd_8_mse16x16_c)));
+#endif  // HAVE_NEON_DOTPROD
+
 #endif  // ARCH_AARCH64
 
 // sum of squares test
