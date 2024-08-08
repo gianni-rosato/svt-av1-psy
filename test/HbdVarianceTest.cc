@@ -285,6 +285,38 @@ INSTANTIATE_TEST_SUITE_P(AVX2, HbdVarianceTest,
 
 #endif  // ARCH_X86_64
 
+#ifdef ARCH_AARCH64
+
+static const HbdVarianceParam HbdTestVector_neon[] = {
+    HbdVarianceParam(4, 4, 10, svt_aom_highbd_10_variance4x4_neon),
+    HbdVarianceParam(4, 8, 10, svt_aom_highbd_10_variance4x8_neon),
+    HbdVarianceParam(4, 16, 10, svt_aom_highbd_10_variance4x16_neon),
+    HbdVarianceParam(8, 4, 10, svt_aom_highbd_10_variance8x4_neon),
+    HbdVarianceParam(8, 8, 10, svt_aom_highbd_10_variance8x8_neon),
+    HbdVarianceParam(8, 16, 10, svt_aom_highbd_10_variance8x16_neon),
+    HbdVarianceParam(8, 32, 10, svt_aom_highbd_10_variance8x32_neon),
+    HbdVarianceParam(16, 4, 10, svt_aom_highbd_10_variance16x4_neon),
+    HbdVarianceParam(16, 8, 10, svt_aom_highbd_10_variance16x8_neon),
+    HbdVarianceParam(16, 16, 10, svt_aom_highbd_10_variance16x16_neon),
+    HbdVarianceParam(16, 32, 10, svt_aom_highbd_10_variance16x32_neon),
+    HbdVarianceParam(16, 64, 10, svt_aom_highbd_10_variance16x64_neon),
+    HbdVarianceParam(32, 8, 10, svt_aom_highbd_10_variance32x8_neon),
+    HbdVarianceParam(32, 16, 10, svt_aom_highbd_10_variance32x16_neon),
+    HbdVarianceParam(32, 32, 10, svt_aom_highbd_10_variance32x32_neon),
+    HbdVarianceParam(32, 64, 10, svt_aom_highbd_10_variance32x64_neon),
+    HbdVarianceParam(64, 16, 10, svt_aom_highbd_10_variance64x16_neon),
+    HbdVarianceParam(64, 32, 10, svt_aom_highbd_10_variance64x32_neon),
+    HbdVarianceParam(64, 64, 10, svt_aom_highbd_10_variance64x64_neon),
+    HbdVarianceParam(64, 128, 10, svt_aom_highbd_10_variance64x128_neon),
+    HbdVarianceParam(128, 64, 10, svt_aom_highbd_10_variance128x64_neon),
+    HbdVarianceParam(128, 128, 10, svt_aom_highbd_10_variance128x128_neon),
+};
+
+INSTANTIATE_TEST_SUITE_P(NEON, HbdVarianceTest,
+                         ::testing::ValuesIn(HbdTestVector_neon));
+
+#endif  // ARCH_AARCH64
+
 /**
  * @brief Unit test for different implementation of HBD variance with size 16x16
  * and 32x32 functions:

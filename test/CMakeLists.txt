@@ -90,6 +90,7 @@ set(multi_arch_files
     EncodeTxbAsmTest.cc
     FilterIntraPredTest.cc
     FwdTxfm2dAsmTest.cc
+    HbdVarianceTest.cc
     InvTxfm2dAsmTest.cc
     OBMCSadTest.cc
     OBMCVarianceTest.cc
@@ -127,7 +128,6 @@ if(HAVE_X86_PLATFORM)
       FwdTxfm1dTest.cc
       InvTxfm1dTest.cc
       FwdTxfm2dTest.cc
-      HbdVarianceTest.cc
       MotionEstimationTest.cc
       PaletteModeUtilTest.cc
       PsnrTest.cc
