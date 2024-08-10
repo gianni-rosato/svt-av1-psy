@@ -550,7 +550,7 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet *scs) {
 
     if (config->tune > 3) {
         SVT_ERROR(
-            "Instance %u: Invalid tune flag [0 - 2, 0 for VQ, 1 for PSNR, 2 for SSIM, and 3 for Subjective SSIM], your "
+            "Instance %u: Invalid tune flag [0 - 3, 0 for VQ, 1 for PSNR, 2 for SSIM, and 3 for Subjective SSIM], your "
             "input: %d\n",
             channel_number + 1,
             config->tune);
@@ -1035,7 +1035,7 @@ EbErrorType svt_av1_set_default_params(EbSvtAv1EncConfiguration *config_ptr) {
     // Alt-Ref default values
     config_ptr->enable_tf       = TRUE;
     config_ptr->enable_overlays = FALSE;
-    config_ptr->tune            = 3;
+    config_ptr->tune            = 2;
     // Super-resolution default values
     config_ptr->superres_mode      = SUPERRES_NONE;
     config_ptr->superres_denom     = SCALE_NUMERATOR;
