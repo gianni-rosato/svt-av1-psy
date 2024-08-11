@@ -2094,7 +2094,8 @@ EB_API EbErrorType svt_av1_enc_parse_parameter(EbSvtAv1EncConfiguration *config_
         {"variance-boost-strength", &config_struct->variance_boost_strength},
         {"variance-octile", &config_struct->variance_octile},
         {"qp-scale-compress-strength", &config_struct->qp_scale_compress_strength},
-        {"frame-luma-bias", &config_struct->frame_luma_bias}
+        {"frame-luma-bias", &config_struct->frame_luma_bias},
+        {"tf-strength", &config_struct->tf_strength}
     };
     const size_t uint8_opts_size = sizeof(uint8_opts) / sizeof(uint8_opts[0]);
 
@@ -2166,7 +2167,6 @@ EB_API EbErrorType svt_av1_enc_parse_parameter(EbSvtAv1EncConfiguration *config_
     } int8_opts[] = {
         {"preset", &config_struct->enc_mode},
         {"sharpness", &config_struct->sharpness},
-        {"tf-strength", &config_struct->tf_strength},
 #if OPT_FAST_DECODE_LVLS
         {"fast-decode", &config_struct->fast_decode},
 #endif
