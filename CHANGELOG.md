@@ -1,5 +1,23 @@
 # Changelog
 
+## [2.2.0-rc1] - 2024-07-29
+
+API updates
+- No API changes on this release
+
+Encoder
+- Improve the tradeoffs for the random access mode across presets:
+-   Speedup of ~15% across presets M0 - M8 while maintaining similar quality levels (!2253)
+- Improve the tradeoffs for the low-delay mode across presets (!2260)
+- Increased temporal resolution setting to 6L for 4k resolutions by default
+- Added ARM optimizations for functions with c_only equivalent yielding an average speedup of ~13% for 4k10bit
+
+Cleanup Build and bug fixes and documentation
+- Profile-guided-optimized helper build overhaul
+- Major cleanup and fixing of Neon unit test suite
+- Address stylecheck dependence on public repositories
+
+
 ## [2.1.2] - 2024-06-27
 
 Cleanup, bug fixes:
