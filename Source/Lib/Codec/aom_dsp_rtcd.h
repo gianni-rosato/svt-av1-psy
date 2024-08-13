@@ -999,6 +999,34 @@ extern "C" {
     uint32_t svt_aom_highbd_10_variance128x64_neon(const uint8_t *src_ptr, int src_stride, const uint8_t *ref_ptr, int ref_stride, uint32_t *sse);
     uint32_t svt_aom_highbd_10_variance128x128_neon(const uint8_t *src_ptr, int src_stride, const uint8_t *ref_ptr, int ref_stride, uint32_t *sse);
 
+    uint32_t svt_aom_highbd_10_variance4x4_sve(const uint8_t *src_ptr, int src_stride, const uint8_t *ref_ptr, int ref_stride, uint32_t *sse);
+    uint32_t svt_aom_highbd_10_variance4x8_sve(const uint8_t *src_ptr, int src_stride, const uint8_t *ref_ptr, int ref_stride, uint32_t *sse);
+    uint32_t svt_aom_highbd_10_variance4x16_sve(const uint8_t *src_ptr, int src_stride, const uint8_t *ref_ptr, int ref_stride, uint32_t *sse);
+
+    uint32_t svt_aom_highbd_10_variance8x4_sve(const uint8_t *src_ptr, int src_stride, const uint8_t *ref_ptr, int ref_stride, uint32_t *sse);
+    uint32_t svt_aom_highbd_10_variance8x8_sve(const uint8_t *src_ptr, int src_stride, const uint8_t *ref_ptr, int ref_stride, uint32_t *sse);
+    uint32_t svt_aom_highbd_10_variance8x16_sve(const uint8_t *src_ptr, int src_stride, const uint8_t *ref_ptr, int ref_stride, uint32_t *sse);
+    uint32_t svt_aom_highbd_10_variance8x32_sve(const uint8_t *src_ptr, int src_stride, const uint8_t *ref_ptr, int ref_stride, uint32_t *sse);
+
+    uint32_t svt_aom_highbd_10_variance16x4_sve(const uint8_t *src_ptr, int src_stride, const uint8_t *ref_ptr, int ref_stride, uint32_t *sse);
+    uint32_t svt_aom_highbd_10_variance16x8_sve(const uint8_t *src_ptr, int src_stride, const uint8_t *ref_ptr, int ref_stride, uint32_t *sse);
+    uint32_t svt_aom_highbd_10_variance16x16_sve(const uint8_t *src_ptr, int src_stride, const uint8_t *ref_ptr, int ref_stride, uint32_t *sse);
+    uint32_t svt_aom_highbd_10_variance16x32_sve(const uint8_t *src_ptr, int src_stride, const uint8_t *ref_ptr, int ref_stride, uint32_t *sse);
+    uint32_t svt_aom_highbd_10_variance16x64_sve(const uint8_t *src_ptr, int src_stride, const uint8_t *ref_ptr, int ref_stride, uint32_t *sse);
+
+    uint32_t svt_aom_highbd_10_variance32x8_sve(const uint8_t *src_ptr, int src_stride, const uint8_t *ref_ptr, int ref_stride, uint32_t *sse);
+    uint32_t svt_aom_highbd_10_variance32x16_sve(const uint8_t *src_ptr, int src_stride, const uint8_t *ref_ptr, int ref_stride, uint32_t *sse);
+    uint32_t svt_aom_highbd_10_variance32x32_sve(const uint8_t *src_ptr, int src_stride, const uint8_t *ref_ptr, int ref_stride, uint32_t *sse);
+    uint32_t svt_aom_highbd_10_variance32x64_sve(const uint8_t *src_ptr, int src_stride, const uint8_t *ref_ptr, int ref_stride, uint32_t *sse);
+
+    uint32_t svt_aom_highbd_10_variance64x16_sve(const uint8_t *src_ptr, int src_stride, const uint8_t *ref_ptr, int ref_stride, uint32_t *sse);
+    uint32_t svt_aom_highbd_10_variance64x32_sve(const uint8_t *src_ptr, int src_stride, const uint8_t *ref_ptr, int ref_stride, uint32_t *sse);
+    uint32_t svt_aom_highbd_10_variance64x64_sve(const uint8_t *src_ptr, int src_stride, const uint8_t *ref_ptr, int ref_stride, uint32_t *sse);
+    uint32_t svt_aom_highbd_10_variance64x128_sve(const uint8_t *src_ptr, int src_stride, const uint8_t *ref_ptr, int ref_stride, uint32_t *sse);
+
+    uint32_t svt_aom_highbd_10_variance128x64_sve(const uint8_t *src_ptr, int src_stride, const uint8_t *ref_ptr, int ref_stride, uint32_t *sse);
+    uint32_t svt_aom_highbd_10_variance128x128_sve(const uint8_t *src_ptr, int src_stride, const uint8_t *ref_ptr, int ref_stride, uint32_t *sse);
+
     unsigned int svt_aom_sub_pixel_variance4x4_neon(const uint8_t *src,int src_stride,int xoffset, int yoffset,const uint8_t *ref, int ref_stride, unsigned int  *sse);
     unsigned int svt_aom_sub_pixel_variance4x8_neon(const uint8_t *src,int src_stride,int xoffset, int yoffset,const uint8_t *ref, int ref_stride, unsigned int  *sse);
     unsigned int svt_aom_sub_pixel_variance4x16_neon(const uint8_t *src,int src_stride,int xoffset, int yoffset,const uint8_t *ref, int ref_stride, unsigned int  *sse);

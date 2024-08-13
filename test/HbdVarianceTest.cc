@@ -315,6 +315,37 @@ static const HbdVarianceParam HbdTestVector_neon[] = {
 INSTANTIATE_TEST_SUITE_P(NEON, HbdVarianceTest,
                          ::testing::ValuesIn(HbdTestVector_neon));
 
+#if HAVE_SVE
+
+static const HbdVarianceParam HbdTestVector_sve[] = {
+    HbdVarianceParam(4, 4, 10, svt_aom_highbd_10_variance4x4_sve),
+    HbdVarianceParam(4, 8, 10, svt_aom_highbd_10_variance4x8_sve),
+    HbdVarianceParam(4, 16, 10, svt_aom_highbd_10_variance4x16_sve),
+    HbdVarianceParam(8, 4, 10, svt_aom_highbd_10_variance8x4_sve),
+    HbdVarianceParam(8, 8, 10, svt_aom_highbd_10_variance8x8_sve),
+    HbdVarianceParam(8, 16, 10, svt_aom_highbd_10_variance8x16_sve),
+    HbdVarianceParam(8, 32, 10, svt_aom_highbd_10_variance8x32_sve),
+    HbdVarianceParam(16, 4, 10, svt_aom_highbd_10_variance16x4_sve),
+    HbdVarianceParam(16, 8, 10, svt_aom_highbd_10_variance16x8_sve),
+    HbdVarianceParam(16, 16, 10, svt_aom_highbd_10_variance16x16_sve),
+    HbdVarianceParam(16, 32, 10, svt_aom_highbd_10_variance16x32_sve),
+    HbdVarianceParam(16, 64, 10, svt_aom_highbd_10_variance16x64_sve),
+    HbdVarianceParam(32, 8, 10, svt_aom_highbd_10_variance32x8_sve),
+    HbdVarianceParam(32, 16, 10, svt_aom_highbd_10_variance32x16_sve),
+    HbdVarianceParam(32, 32, 10, svt_aom_highbd_10_variance32x32_sve),
+    HbdVarianceParam(32, 64, 10, svt_aom_highbd_10_variance32x64_sve),
+    HbdVarianceParam(64, 16, 10, svt_aom_highbd_10_variance64x16_sve),
+    HbdVarianceParam(64, 32, 10, svt_aom_highbd_10_variance64x32_sve),
+    HbdVarianceParam(64, 64, 10, svt_aom_highbd_10_variance64x64_sve),
+    HbdVarianceParam(64, 128, 10, svt_aom_highbd_10_variance64x128_sve),
+    HbdVarianceParam(128, 64, 10, svt_aom_highbd_10_variance128x64_sve),
+    HbdVarianceParam(128, 128, 10, svt_aom_highbd_10_variance128x128_sve),
+};
+
+INSTANTIATE_TEST_SUITE_P(SVE, HbdVarianceTest,
+                         ::testing::ValuesIn(HbdTestVector_sve));
+#endif  // HAVE_SVE
+
 #endif  // ARCH_AARCH64
 
 /**
