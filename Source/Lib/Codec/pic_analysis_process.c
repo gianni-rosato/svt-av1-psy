@@ -1923,23 +1923,23 @@ unsigned int svt_av1_get_sby_perpixel_variance(const AomVarianceFnPtr *fn_ptr, c
 
 // Check if the number of color of a block is superior to 1 and inferior
 // to a given threshold.
-static Bool is_valid_palette_nb_colors(const uint8_t *src, int stride, int rows, int cols, int nb_colors_threshold) {
+static Bool is_valid_palette_nb_colors(const uint8_t *src, int stride, int rows, int cols, int nb_colors_threshold, uint16_t* nb_colors) {
     Bool has_color[1 << 8]; // Maximum (1 << 8) color levels.
     memset(has_color, 0, (1 << 8) * sizeof(*has_color));
-    int nb_colors = 0;
+    *nb_colors = 0;
 
     for (int r = 0; r < rows; ++r) {
         for (int c = 0; c < cols; ++c) {
             const int this_val = src[r * stride + c];
             if (has_color[this_val] == 0) {
                 has_color[this_val] = 1;
-                nb_colors++;
-                if (nb_colors > nb_colors_threshold)
+                (*nb_colors)++;
+                if (*nb_colors > nb_colors_threshold)
                     return FALSE;
             }
         }
     }
-    if (nb_colors <= 1)
+    if (*nb_colors <= 1)
         return FALSE;
 
     return TRUE;
@@ -2029,14 +2029,17 @@ void svt_aom_is_screen_content_psy(PictureParentControlSet *pcs) {
     const int blk_w = 16;
     const int blk_h = 16;
     // These threshold values are selected experimentally.
-    const int initial_color_thresh = 32;
-    const int final_color_thresh   = 6;
-    const int var_thresh           = 5;
+    const int simple_color_thresh          = 4;  // Detects text and glyphs without anti-aliasing, and graphics with a 4-color palette
+    const int complex_initial_color_thresh = 40; // Detects potential text and glyphs with anti-aliasing, and graphics with a more extended color palette
+    const int complex_final_color_thresh   = 6;  // Detects text and glyphs with anti-aliasing, and graphics with a more extended color palette
+    const int var_thresh                   = 5;
     // Counts of blocks with no more than final_color_thresh colors.
     int counts_1 = 0;
     // Counts of blocks with no more than final_color_thresh colors and variance larger
     // than var_thresh.
     int counts_2 = 0;
+    // Counts of "photo-like" blocks
+    int counts_photo = 0;
 
     const AomVarianceFnPtr *fn_ptr    = &svt_aom_mefn_ptr[BLOCK_16X16];
     EbPictureBufferDesc    *input_pic = pcs->enhanced_pic;
@@ -2046,53 +2049,81 @@ void svt_aom_is_screen_content_psy(PictureParentControlSet *pcs) {
         for (int c = 0; c + blk_w <= input_pic->width; c += blk_w) {
             uint8_t *src = input_pic->buffer_y + (input_pic->org_y + r) * input_pic->stride_y + input_pic->org_x +
                 c;
+            uint16_t number_of_colors;
 
-            if (is_valid_palette_nb_colors(src, input_pic->stride_y, blk_w, blk_h, initial_color_thresh)) {
-                // Dilate block with dominant color, to exclude anti-aliased pixels from final palette count
-                dilate_block(src, input_pic->stride_y, dilated_blk, blk_w, blk_w, blk_h);
-
-                if (is_valid_palette_nb_colors(dilated_blk, blk_w, blk_w, blk_h, final_color_thresh)) {
+            // First, find if the block could be palletized
+            if (is_valid_palette_nb_colors(src, input_pic->stride_y, blk_w, blk_h, complex_initial_color_thresh, &number_of_colors)) {
+                if (number_of_colors <= simple_color_thresh) {
+                    // Simple block detected, add to block count with no further processing required
                     ++counts_1;
-
                     int var = svt_av1_get_sby_perpixel_variance(fn_ptr, src, input_pic->stride_y, BLOCK_16X16);
 
                     if (var > var_thresh) {
                         ++counts_2;
 #if DEBUG_PSY_SCM
-                        printf("2");
+                        printf("S");
                     } else {
-                        printf("1");
+                        printf("-");
+#endif
                     }
                 } else {
-                    printf("0");
+                    // Complex block detected, try to find if it's palettizable
+                    // Dilate block with dominant color, to exclude anti-aliased pixels from final palette count
+                    dilate_block(src, input_pic->stride_y, dilated_blk, blk_w, blk_w, blk_h);
+
+                    if (is_valid_palette_nb_colors(dilated_blk, blk_w, blk_w, blk_h, complex_final_color_thresh, &number_of_colors)) {
+                        ++counts_1;
+
+                        int var = svt_av1_get_sby_perpixel_variance(fn_ptr, src, input_pic->stride_y, BLOCK_16X16);
+
+                        if (var > var_thresh) {
+                            ++counts_2;
+#if DEBUG_PSY_SCM
+                            printf("C");
+                        } else {
+                            printf("=");
+                        }
+                    } else {
+                        printf(".");
+                    }
                 }
+#else
+                        }
+                    }
+                }
+#endif
             } else {
-                printf("*");
+                if (number_of_colors > complex_initial_color_thresh) {
+                    ++counts_photo;
+#if DEBUG_PSY_SCM
+                    printf("x");
+                } else {
+                    printf(" "); // Solid block (1 color)
+                }
             }
         }
         printf("\n");
     }
 #else
-                    }
                 }
             }
         }
     }
 #endif
 
-
-
     // The threshold values are selected experimentally.
-    pcs->sc_class0 = (counts_1 * blk_h * blk_w * 10 > input_pic->width * input_pic->height);
+    // Penalize presence of photo-like blocks (1/24th the weight of a palettizable block)
+    pcs->sc_class0 = ((counts_1 - counts_photo / 24) * blk_h * blk_w * 10 > input_pic->width * input_pic->height);
 
     // IntraBC would force loop filters off, so we use more strict rules that also
     // requires that the block has high variance.
-    pcs->sc_class1 = pcs->sc_class0 && (counts_2 * blk_h * blk_w * 12 > input_pic->width * input_pic->height);
+    // Penalize presence of photo-like blocks (1/24th the weight of a palettizable block)
+    pcs->sc_class1 = pcs->sc_class0 && ((counts_2 - counts_photo / 24) * blk_h * blk_w * 12 > input_pic->width * input_pic->height);
 
 #if DEBUG_PSY_SCM
-    printf("block count 1: %i, count 2: %i, total: %i\n", counts_1, counts_2, (int)(ceil(input_pic->width / blk_w) * ceil(input_pic->height / blk_h)));
-    printf("sc_class0 pixels left: %i, right %i\n", counts_1 * blk_h * blk_w * 10, input_pic->width * input_pic->height);
-    printf("sc_class1 pixels left: %i, right %i\n", counts_2 * blk_h * blk_w * 12, input_pic->width * input_pic->height);
+    printf("block count 1: %i, count 2: %i, count photo: %i, total: %i\n", counts_1, counts_2, counts_photo, (int)(ceil(input_pic->width / blk_w) * ceil(input_pic->height / blk_h)));
+    printf("sc_class0 value: %i, threshold %i\n", (counts_1 - counts_photo / 24) * blk_h * blk_w * 10, input_pic->width * input_pic->height);
+    printf("sc_class1 value: %i, threshold %i\n", (counts_2 - counts_photo / 24) * blk_h * blk_w * 12, input_pic->width * input_pic->height);
     printf("is sc_class1: %i\n", pcs->sc_class1);
 #endif
 
@@ -2121,6 +2152,7 @@ void svt_aom_is_screen_content(PictureParentControlSet *pcs) {
 
     const AomVarianceFnPtr *fn_ptr    = &svt_aom_mefn_ptr[BLOCK_16X16];
     EbPictureBufferDesc    *input_pic = pcs->enhanced_pic;
+    uint16_t number_of_colors         = 0;
 
     for (int r = 0; r + blk_h <= input_pic->height; r += blk_h) {
         for (int c = 0; c + blk_w <= input_pic->width; c += blk_w) {
@@ -2128,7 +2160,7 @@ void svt_aom_is_screen_content(PictureParentControlSet *pcs) {
                 uint8_t *src = input_pic->buffer_y + (input_pic->org_y + r) * input_pic->stride_y + input_pic->org_x +
                     c;
 
-                if (is_valid_palette_nb_colors(src, input_pic->stride_y, blk_w, blk_h, color_thresh)) {
+                if (is_valid_palette_nb_colors(src, input_pic->stride_y, blk_w, blk_h, color_thresh, &number_of_colors)) {
                     ++counts_1;
                     int var = svt_av1_get_sby_perpixel_variance(fn_ptr, src, input_pic->stride_y, BLOCK_16X16);
                     if (var > var_thresh)
