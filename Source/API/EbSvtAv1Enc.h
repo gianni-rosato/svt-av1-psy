@@ -1045,11 +1045,26 @@ typedef struct EbSvtAv1EncConfiguration {
      * 10 + (4 - 4) = 10 (2x stronger) */
     uint8_t tf_strength;
 
+    /**
+     * @brief Min quant matrix flatness. Applicable when enable_qm is true.
+     * Min value is 0.
+     * Max value is 15.
+     * Default is 0 in SVT-AV1-PSY, mainline default is 8.
+     */
+    uint8_t min_chroma_qm_level;
+    /**
+     * @brief Max quant matrix flatness. Applicable when enable_qm is true.
+     * Min value is 0.
+     * Max value is 15.
+     * Default is 15.
+     */
+    uint8_t max_chroma_qm_level;
+
     /*Add 128 Byte Padding to Struct to avoid changing the size of the public configuration struct*/
 #if CLN_LP_LVLS
     uint8_t padding[128 - sizeof(Bool) - 2 * sizeof(uint8_t) - sizeof(uint32_t)];
 #else
-    uint8_t padding[128 - 4 * sizeof(Bool) - 6 * sizeof(uint8_t) - sizeof(int8_t)];
+    uint8_t padding[128 - 4 * sizeof(Bool) - 8 * sizeof(uint8_t) - sizeof(int8_t)];
 #endif
 
 } EbSvtAv1EncConfiguration;
