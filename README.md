@@ -80,6 +80,10 @@ Set the path to an HDR10+ JSON file for encoding HDR10+ video. SVT-AV1-PSY needs
 
 Manually adjust temporal filtering strength to adjust the trade-off between fewer artifacts in motion and fine detail retention. Each increment is a 2x increase in temporal filtering strength; the default value of 1 is 4x weaker than mainline SVT-AV1's default temporal filter (which would be equivalent to 3 here).
 
+- `--chroma-qm-min` & `--chroma-qm-max` *0 to 15*
+
+Set the minimum & maximum quantization matrices for chroma planes. The defaults are 0 and 15, respectively. These options decouple chroma quantization matrix control from the luma quantization matrix options currently available, allowing for more control over chroma quality.
+
 ### Modified Defaults
 
 SVT-AV1-PSY has different defaults than mainline SVT-AV1 in order to provide better visual fidelity out of the box. They include:
