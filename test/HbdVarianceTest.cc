@@ -15,8 +15,7 @@
  *
  * @brief Unit test for HBD variance
  * functions:
- * - svt_aom_highbd_BD{8,10,12}_varianceW{8,16,32,64}xH{4,8,16,32,64}_sse2
- * - svt_aom_highbd_BD{8,10,12}_getS{8,16}xS{8,16}var_sse2
+ * - svt_aom_highbd_BD{8,10,12}_varianceW{8,16,32,64}xH{4,8,16,32,64}
  *
  * @author  Cidana-Wenyao, Cidana-Edmond
  *
@@ -101,173 +100,10 @@ using HbdVarianceParam = std::tuple<uint32_t,            /**< width */
                                     uint32_t,            /**< bit-depth */
                                     HighBdVarianceFunc>; /**< test function */
 
-extern "C" {
-unsigned int svt_aom_highbd_10_variance8x8_sse2(const uint8_t *src_ptr,
-                                                int source_stride,
-                                                const uint8_t *ref_ptr,
-                                                int ref_stride,
-                                                unsigned int *sse);
-unsigned int svt_aom_highbd_10_variance8x16_sse2(const uint8_t *src_ptr,
-                                                 int source_stride,
-                                                 const uint8_t *ref_ptr,
-                                                 int ref_stride,
-                                                 unsigned int *sse);
-unsigned int svt_aom_highbd_10_variance8x32_sse2(const uint8_t *src_ptr,
-                                                 int source_stride,
-                                                 const uint8_t *ref_ptr,
-                                                 int ref_stride,
-                                                 unsigned int *sse);
-unsigned int svt_aom_highbd_10_variance16x4_sse2(const uint8_t *src_ptr,
-                                                 int source_stride,
-                                                 const uint8_t *ref_ptr,
-                                                 int ref_stride,
-                                                 unsigned int *sse);
-unsigned int svt_aom_highbd_10_variance16x8_sse2(const uint8_t *src_ptr,
-                                                 int source_stride,
-                                                 const uint8_t *ref_ptr,
-                                                 int ref_stride,
-                                                 unsigned int *sse);
-unsigned int svt_aom_highbd_10_variance16x16_sse2(const uint8_t *src_ptr,
-                                                  int source_stride,
-                                                  const uint8_t *ref_ptr,
-                                                  int ref_stride,
-                                                  unsigned int *sse);
-unsigned int svt_aom_highbd_10_variance16x32_sse2(const uint8_t *src_ptr,
-                                                  int source_stride,
-                                                  const uint8_t *ref_ptr,
-                                                  int ref_stride,
-                                                  unsigned int *sse);
-unsigned int svt_aom_highbd_10_variance16x64_sse2(const uint8_t *src_ptr,
-                                                  int source_stride,
-                                                  const uint8_t *ref_ptr,
-                                                  int ref_stride,
-                                                  unsigned int *sse);
-unsigned int svt_aom_highbd_10_variance32x8_sse2(const uint8_t *src_ptr,
-                                                 int source_stride,
-                                                 const uint8_t *ref_ptr,
-                                                 int ref_stride,
-                                                 unsigned int *sse);
-unsigned int svt_aom_highbd_10_variance32x16_sse2(const uint8_t *src_ptr,
-                                                  int source_stride,
-                                                  const uint8_t *ref_ptr,
-                                                  int ref_stride,
-                                                  unsigned int *sse);
-unsigned int svt_aom_highbd_10_variance32x32_sse2(const uint8_t *src_ptr,
-                                                  int source_stride,
-                                                  const uint8_t *ref_ptr,
-                                                  int ref_stride,
-                                                  unsigned int *sse);
-unsigned int svt_aom_highbd_10_variance32x64_sse2(const uint8_t *src_ptr,
-                                                  int source_stride,
-                                                  const uint8_t *ref_ptr,
-                                                  int ref_stride,
-                                                  unsigned int *sse);
-unsigned int svt_aom_highbd_10_variance64x16_sse2(const uint8_t *src_ptr,
-                                                  int source_stride,
-                                                  const uint8_t *ref_ptr,
-                                                  int ref_stride,
-                                                  unsigned int *sse);
-unsigned int svt_aom_highbd_10_variance64x32_sse2(const uint8_t *src_ptr,
-                                                  int source_stride,
-                                                  const uint8_t *ref_ptr,
-                                                  int ref_stride,
-                                                  unsigned int *sse);
-unsigned int svt_aom_highbd_10_variance64x64_sse2(const uint8_t *src_ptr,
-                                                  int source_stride,
-                                                  const uint8_t *ref_ptr,
-                                                  int ref_stride,
-                                                  unsigned int *sse);
-unsigned int svt_aom_highbd_10_variance8x8_avx2(const uint8_t *src_ptr,
-                                                int source_stride,
-                                                const uint8_t *ref_ptr,
-                                                int ref_stride,
-                                                unsigned int *sse);
-unsigned int svt_aom_highbd_10_variance8x16_avx2(const uint8_t *src_ptr,
-                                                 int source_stride,
-                                                 const uint8_t *ref_ptr,
-                                                 int ref_stride,
-                                                 unsigned int *sse);
-unsigned int svt_aom_highbd_10_variance8x32_avx2(const uint8_t *src_ptr,
-                                                 int source_stride,
-                                                 const uint8_t *ref_ptr,
-                                                 int ref_stride,
-                                                 unsigned int *sse);
-unsigned int svt_aom_highbd_10_variance16x8_avx2(const uint8_t *src_ptr,
-                                                 int source_stride,
-                                                 const uint8_t *ref_ptr,
-                                                 int ref_stride,
-                                                 unsigned int *sse);
-unsigned int svt_aom_highbd_10_variance16x16_avx2(const uint8_t *src_ptr,
-                                                  int source_stride,
-                                                  const uint8_t *ref_ptr,
-                                                  int ref_stride,
-                                                  unsigned int *sse);
-unsigned int svt_aom_highbd_10_variance16x32_avx2(const uint8_t *src_ptr,
-                                                  int source_stride,
-                                                  const uint8_t *ref_ptr,
-                                                  int ref_stride,
-                                                  unsigned int *sse);
-unsigned int svt_aom_highbd_10_variance16x64_avx2(const uint8_t *src_ptr,
-                                                  int source_stride,
-                                                  const uint8_t *ref_ptr,
-                                                  int ref_stride,
-                                                  unsigned int *sse);
-unsigned int svt_aom_highbd_10_variance32x8_avx2(const uint8_t *src_ptr,
-                                                 int source_stride,
-                                                 const uint8_t *ref_ptr,
-                                                 int ref_stride,
-                                                 unsigned int *sse);
-unsigned int svt_aom_highbd_10_variance32x16_avx2(const uint8_t *src_ptr,
-                                                  int source_stride,
-                                                  const uint8_t *ref_ptr,
-                                                  int ref_stride,
-                                                  unsigned int *sse);
-unsigned int svt_aom_highbd_10_variance32x32_avx2(const uint8_t *src_ptr,
-                                                  int source_stride,
-                                                  const uint8_t *ref_ptr,
-                                                  int ref_stride,
-                                                  unsigned int *sse);
-unsigned int svt_aom_highbd_10_variance32x64_avx2(const uint8_t *src_ptr,
-                                                  int source_stride,
-                                                  const uint8_t *ref_ptr,
-                                                  int ref_stride,
-                                                  unsigned int *sse);
-unsigned int svt_aom_highbd_10_variance64x16_avx2(const uint8_t *src_ptr,
-                                                  int source_stride,
-                                                  const uint8_t *ref_ptr,
-                                                  int ref_stride,
-                                                  unsigned int *sse);
-unsigned int svt_aom_highbd_10_variance64x32_avx2(const uint8_t *src_ptr,
-                                                  int source_stride,
-                                                  const uint8_t *ref_ptr,
-                                                  int ref_stride,
-                                                  unsigned int *sse);
-unsigned int svt_aom_highbd_10_variance64x64_avx2(const uint8_t *src_ptr,
-                                                  int source_stride,
-                                                  const uint8_t *ref_ptr,
-                                                  int ref_stride,
-                                                  unsigned int *sse);
-unsigned int svt_aom_highbd_10_variance64x128_avx2(const uint8_t *src_ptr,
-                                                   int source_stride,
-                                                   const uint8_t *ref_ptr,
-                                                   int ref_stride,
-                                                   unsigned int *sse);
-unsigned int svt_aom_highbd_10_variance128x64_avx2(const uint8_t *src_ptr,
-                                                   int source_stride,
-                                                   const uint8_t *ref_ptr,
-                                                   int ref_stride,
-                                                   unsigned int *sse);
-unsigned int svt_aom_highbd_10_variance128x128_avx2(const uint8_t *src_ptr,
-                                                    int source_stride,
-                                                    const uint8_t *ref_ptr,
-                                                    int ref_stride,
-                                                    unsigned int *sse);
-};
-
 /**
  * @brief Unit test for HBD variance
  * functions:
- * - svt_aom_highbd_BD{8,10,12}_varianceW{8,16,32,64}xH{4,8,16,32,64}_sse2
+ * - svt_aom_highbd_BD{8,10,12}_varianceW{8,16,32,64}xH{4,8,16,32,64}
  *
  * Test strategy:
  *  This test case use random source, max source, zero source as test
@@ -373,7 +209,6 @@ class HbdVarianceTest : public ::testing::TestWithParam<HbdVarianceParam> {
             ASSERT_EQ(sse_tst, sse_ref)
                 << "Error at sse test index: " << i << " size: " << width_
                 << "x" << height_;
-            ASSERT_EQ(sse_tst, sse_ref) << "Error at sse test index: " << i;
         }
     }
 
@@ -399,7 +234,9 @@ TEST_P(HbdVarianceTest, MatchTest) {
     run_match_test(10);
 };
 
-static const HbdVarianceParam HbdTestVector[] = {
+#ifdef ARCH_X86_64
+
+static const HbdVarianceParam HbdTestVector_sse2[] = {
     HbdVarianceParam(8, 8, 10, svt_aom_highbd_10_variance8x8_sse2),
     HbdVarianceParam(8, 16, 10, svt_aom_highbd_10_variance8x16_sse2),
     HbdVarianceParam(8, 32, 10, svt_aom_highbd_10_variance8x32_sse2),
@@ -418,6 +255,12 @@ static const HbdVarianceParam HbdTestVector[] = {
     HbdVarianceParam(64, 128, 10, svt_aom_highbd_10_variance64x128_sse2),
     HbdVarianceParam(128, 64, 10, svt_aom_highbd_10_variance128x64_sse2),
     HbdVarianceParam(128, 128, 10, svt_aom_highbd_10_variance128x128_sse2),
+};
+
+INSTANTIATE_TEST_SUITE_P(SSE2, HbdVarianceTest,
+                         ::testing::ValuesIn(HbdTestVector_sse2));
+
+static const HbdVarianceParam HbdTestVector_avx2[] = {
     HbdVarianceParam(8, 8, 10, svt_aom_highbd_10_variance8x8_avx2),
     HbdVarianceParam(8, 16, 10, svt_aom_highbd_10_variance8x16_avx2),
     HbdVarianceParam(8, 32, 10, svt_aom_highbd_10_variance8x32_avx2),
@@ -437,13 +280,16 @@ static const HbdVarianceParam HbdTestVector[] = {
     HbdVarianceParam(128, 128, 10, svt_aom_highbd_10_variance128x128_avx2),
 };
 
-INSTANTIATE_TEST_SUITE_P(Variance, HbdVarianceTest,
-                         ::testing::ValuesIn(HbdTestVector));
+INSTANTIATE_TEST_SUITE_P(AVX2, HbdVarianceTest,
+                         ::testing::ValuesIn(HbdTestVector_avx2));
+
+#endif  // ARCH_X86_64
 
 /**
  * @brief Unit test for different implementation of HBD variance with size 16x16
  * and 32x32 functions:
  * - svt_aom_variance_highbd_c
+ * - svt_aom_variance_highbd_sse4_1
  * - svt_aom_variance_highbd_avx2
  *
  * Test strategy:
@@ -462,15 +308,15 @@ INSTANTIATE_TEST_SUITE_P(Variance, HbdVarianceTest,
  * @author  intel tszumski
  *
  */
-using HighBdVarianceNoRoundFunc = uint32_t (*)(const uint16_t *src,
-                                               int32_t src_stride,
-                                               const uint16_t *ref,
-                                               int32_t ref_stride, int w, int h,
-                                               uint32_t *sse);
+using HbdSquareVarianceNoRoundFunc = uint32_t (*)(const uint16_t *src,
+                                                  int32_t src_stride,
+                                                  const uint16_t *ref,
+                                                  int32_t ref_stride, int w,
+                                                  int h, uint32_t *sse);
 
 using HbdSquareVarianceNoRoundParam =
-    std::tuple<uint32_t,                   /**< square length */
-               HighBdVarianceNoRoundFunc>; /**< test function */
+    std::tuple<uint32_t,                      /**< square length */
+               HbdSquareVarianceNoRoundFunc>; /**< test function */
 
 class HbdSquareVarianceNoRoundTest
     : public ::testing::TestWithParam<HbdSquareVarianceNoRoundParam> {
@@ -568,10 +414,11 @@ class HbdSquareVarianceNoRoundTest
     SVTRandom rnd_;
     uint32_t bd_;
     uint32_t length_;
-    HighBdVarianceNoRoundFunc tst_func_;
+    HbdSquareVarianceNoRoundFunc tst_func_;
     uint16_t *src_data_;
     uint16_t *ref_data_;
 };
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(HbdSquareVarianceNoRoundTest);
 
 TEST_P(HbdSquareVarianceNoRoundTest, ZeroTest) {
     run_zero_test(10);
@@ -585,10 +432,17 @@ TEST_P(HbdSquareVarianceNoRoundTest, MatchTest) {
     run_match_test(10);
 };
 
+#ifdef ARCH_X86_64
+
 INSTANTIATE_TEST_SUITE_P(
-    Variance, HbdSquareVarianceNoRoundTest,
+    SSE4_1, HbdSquareVarianceNoRoundTest,
     ::testing::Combine(::testing::Values(16, 32),
-                       ::testing::Values(svt_aom_variance_highbd_sse4_1,
-                                         svt_aom_variance_highbd_avx2)));
+                       ::testing::Values(svt_aom_variance_highbd_sse4_1)));
+
+INSTANTIATE_TEST_SUITE_P(
+    AVX2, HbdSquareVarianceNoRoundTest,
+    ::testing::Combine(::testing::Values(16, 32),
+                       ::testing::Values(svt_aom_variance_highbd_avx2)));
+#endif
 
 }  // namespace
