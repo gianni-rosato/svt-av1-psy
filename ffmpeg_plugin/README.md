@@ -13,6 +13,8 @@ Notes:
 - The patches for n5.0 have been tested to apply cleanly to n5.0.1.
 - The patches for n5.1 have been tested to apply cleanly to n5.1, n5.1.1, n5.1.2, and n5.1.3.
   - n5.1 already contains certain patches from the set of n5.0, thus is a subset of n5.0's patches.
+- The patches for n5.1.6 have been tested to apply cleanly to n5.1.4, n5.1.5, and n5.1.6.
+  - This is simply a subset of patches from n5.1, but without the patches that are already in n5.1.6.
 
 ### n6.1 - [svt-av1/n6.1](https://gitlab.com/1480c1/FFmpeg/-/tree/svt-av1/n6.1)
 
@@ -36,6 +38,10 @@ Notes:
 - [69dd1ce610](https://gitlab.com/1480c1/FFmpeg/-/commit/69dd1ce610): Backport patch for SVT-AV1 2.0.0 API changes surounding low delay operations
 
 ---
+
+### n5.1.6 - [svt-av1/n5.1.6](https://gitlab.com/1480c1/FFmpeg/-/tree/svt-av1/n5.1.6)
+
+Please refer to the n5.1 section for information about these patches.
 
 ### n5.0 - [svt-av1/n5.0](https://gitlab.com/1480c1/FFmpeg/-/tree/svt-av1/n5.0)
 
