@@ -11,7 +11,7 @@
   stage: compile
   tags:
     - gitlab-org
-  image: registry.gitlab.com/ittiam-projects/svt-av1/ubuntu2004:android-ndk
+  image: registry.gitlab.com/aomediacodec/aom-testing/ubuntu2004
   script: !reference [.compiler-script]
 
 .linux-test-base:
@@ -97,8 +97,6 @@ Linux (GCC 4):
 
 Linux (GCC):
   extends: .linux-compiler-base
-  variables:
-    TARGET_OS: "Linux"
   parallel:
     matrix:
       - CC: gcc-7
@@ -112,12 +110,12 @@ Linux (GCC):
         EXTRA_CMAKE_FLAGS: -DENABLE_AVX512=ON
       - CC: aarch64-linux-gnu-gcc
         CXX: aarch64-linux-gnu-g++
-        EXTRA_CMAKE_FLAGS: -DCMAKE_TOOLCHAIN_FILE=$CI_PROJECT_DIR/cmake/toolchains/aarch64_toolchain.cmake
+        EXTRA_CMAKE_FLAGS: --toolchain $CI_PROJECT_DIR/cmake/toolchains/aarch64_toolchain.cmake
       - CC: powerpc64le-linux-gnu-gcc
         CXX: powerpc64le-linux-gnu-g++
-        EXTRA_CMAKE_FLAGS: -DCMAKE_TOOLCHAIN_FILE=$CI_PROJECT_DIR/powerpc64le-linux-gnu.cmake -DCROSS=powerpc64le-linux-gnu-
-      - TARGET_OS: "Android"
-        EXTRA_CMAKE_FLAGS: -DCMAKE_TOOLCHAIN_FILE=${CI_PROJECT_DIR}/cmake/toolchains/android_aarch64_toolchain.cmake -DCMAKE_ANDROID_NDK=/android-ndk-r26b
+        EXTRA_CMAKE_FLAGS: --toolchain $CI_PROJECT_DIR/powerpc64le-linux-gnu.cmake -DCROSS=powerpc64le-linux-gnu-
+      - CMAKE_SYSTEM_NAME: Android
+        EXTRA_CMAKE_FLAGS: --toolchain $CI_PROJECT_DIR/cmake/toolchains/android_aarch64_toolchain.cmake
   before_script:
     - |
       case $CC in
@@ -126,9 +124,6 @@ Linux (GCC):
           base64 -d > powerpc64le-linux-gnu.cmake
         ;;
       esac
-      if [[ ${TARGET_OS} == "Android" ]]; then
-        export PATH=/android-ndk-r26b/toolchains/llvm/prebuilt/linux-x86_64/bin:${PATH}
-      fi
 
 Linux (GCC 11, Static):
   extends: .linux-compiler-base
