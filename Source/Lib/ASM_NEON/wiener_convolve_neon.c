@@ -269,7 +269,6 @@ void svt_av1_wiener_convolve_add_src_neon(const uint8_t *src, ptrdiff_t src_stri
 
     assert(w % 8 == 0);
     assert(w <= MAX_SB_SIZE && h <= MAX_SB_SIZE);
-    assert(x_step_q4 == 16 && y_step_q4 == 16);
     assert(x_filter[7] == 0 && y_filter[7] == 0);
     // For bd == 8, assert horizontal filtering output will not exceed 15-bit:
     assert(8 + 1 + FILTER_BITS - conv_params->round_0 <= 15);
