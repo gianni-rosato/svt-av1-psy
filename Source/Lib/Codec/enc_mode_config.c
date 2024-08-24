@@ -369,7 +369,6 @@ static void svt_aom_set_me_hme_ref_prune_ctrls(MeContext *me_ctx, uint8_t prune_
         me_hme_prune_ctrls->enable_me_hme_ref_pruning               = 1;
         me_hme_prune_ctrls->prune_ref_if_hme_sad_dev_bigger_than_th = 80;
         me_hme_prune_ctrls->prune_ref_if_me_sad_dev_bigger_than_th  = (uint16_t)~0;
-        me_hme_prune_ctrls->protect_closest_refs                    = 1;
 
         me_hme_prune_ctrls->zz_sad_th    = 0;
         me_hme_prune_ctrls->zz_sad_pct   = 0;
@@ -381,7 +380,6 @@ static void svt_aom_set_me_hme_ref_prune_ctrls(MeContext *me_ctx, uint8_t prune_
         me_hme_prune_ctrls->enable_me_hme_ref_pruning               = 1;
         me_hme_prune_ctrls->prune_ref_if_hme_sad_dev_bigger_than_th = 50;
         me_hme_prune_ctrls->prune_ref_if_me_sad_dev_bigger_than_th  = (uint16_t)~0;
-        me_hme_prune_ctrls->protect_closest_refs                    = 1;
 
         me_hme_prune_ctrls->zz_sad_th    = 0;
         me_hme_prune_ctrls->zz_sad_pct   = 0;
@@ -393,7 +391,6 @@ static void svt_aom_set_me_hme_ref_prune_ctrls(MeContext *me_ctx, uint8_t prune_
         me_hme_prune_ctrls->enable_me_hme_ref_pruning               = 1;
         me_hme_prune_ctrls->prune_ref_if_hme_sad_dev_bigger_than_th = 30;
         me_hme_prune_ctrls->prune_ref_if_me_sad_dev_bigger_than_th  = (uint16_t)~0;
-        me_hme_prune_ctrls->protect_closest_refs                    = 1;
 
         me_hme_prune_ctrls->zz_sad_th    = 0;
         me_hme_prune_ctrls->zz_sad_pct   = 0;
@@ -404,7 +401,6 @@ static void svt_aom_set_me_hme_ref_prune_ctrls(MeContext *me_ctx, uint8_t prune_
         me_hme_prune_ctrls->enable_me_hme_ref_pruning               = 1;
         me_hme_prune_ctrls->prune_ref_if_hme_sad_dev_bigger_than_th = 15;
         me_hme_prune_ctrls->prune_ref_if_me_sad_dev_bigger_than_th  = 60;
-        me_hme_prune_ctrls->protect_closest_refs                    = 1;
 
         me_hme_prune_ctrls->zz_sad_th    = 0;
         me_hme_prune_ctrls->zz_sad_pct   = 0;
@@ -416,7 +412,6 @@ static void svt_aom_set_me_hme_ref_prune_ctrls(MeContext *me_ctx, uint8_t prune_
         me_hme_prune_ctrls->enable_me_hme_ref_pruning               = 1;
         me_hme_prune_ctrls->prune_ref_if_hme_sad_dev_bigger_than_th = 5;
         me_hme_prune_ctrls->prune_ref_if_me_sad_dev_bigger_than_th  = 60;
-        me_hme_prune_ctrls->protect_closest_refs                    = 1;
 
         me_hme_prune_ctrls->zz_sad_th    = 0;
         me_hme_prune_ctrls->zz_sad_pct   = 0;
@@ -427,7 +422,6 @@ static void svt_aom_set_me_hme_ref_prune_ctrls(MeContext *me_ctx, uint8_t prune_
         me_hme_prune_ctrls->enable_me_hme_ref_pruning               = 1;
         me_hme_prune_ctrls->prune_ref_if_hme_sad_dev_bigger_than_th = 5;
         me_hme_prune_ctrls->prune_ref_if_me_sad_dev_bigger_than_th  = 60;
-        me_hme_prune_ctrls->protect_closest_refs                    = 1;
 
         me_hme_prune_ctrls->zz_sad_th    = 20 * 64 * 64;
         me_hme_prune_ctrls->zz_sad_pct   = 5;

@@ -1611,23 +1611,25 @@ static void me_prune_ref(MeContext *me_ctx) {
             }
         }
     }
-    uint64_t best = (uint64_t)~0;
-    for (int i = 0; i < MAX_NUM_OF_REF_PIC_LIST; ++i) {
-        for (int j = 0; j < REF_LIST_MAX_DEPTH; ++j) {
-            if (me_ctx->search_results[i][j].hme_sad < best) {
-                best = me_ctx->search_results[i][j].hme_sad;
+
+    uint16_t prune_ref_th = me_ctx->me_hme_prune_ctrls.prune_ref_if_me_sad_dev_bigger_than_th;
+    if (me_ctx->me_hme_prune_ctrls.enable_me_hme_ref_pruning && prune_ref_th != (uint16_t)~0)
+    {
+        uint64_t best = (uint64_t)~0;
+        for (int i = 0; i < MAX_NUM_OF_REF_PIC_LIST; ++i) {
+            for (int j = 0; j < REF_LIST_MAX_DEPTH; ++j) {
+                if (me_ctx->search_results[i][j].hme_sad < best) {
+                    best = me_ctx->search_results[i][j].hme_sad;
+                }
             }
         }
-    }
-    for (uint32_t li = 0; li < MAX_NUM_OF_REF_PIC_LIST; li++) {
-        for (uint32_t ri = 0; ri < REF_LIST_MAX_DEPTH; ri++) {
-            // Prune references based on ME sad
-            uint16_t prune_ref_th =
-                me_ctx->me_hme_prune_ctrls.prune_ref_if_me_sad_dev_bigger_than_th;
-            if (me_ctx->me_hme_prune_ctrls.enable_me_hme_ref_pruning &&
-                (!me_ctx->me_hme_prune_ctrls.protect_closest_refs || ri > 0) &&
-                (prune_ref_th != (uint16_t)~0) && (me_ctx->search_results[li][ri].hme_sad - best) * 100 > (prune_ref_th * best)) {
-                me_ctx->search_results[li][ri].do_ref = 0;
+		
+        for (uint32_t li = 0; li < MAX_NUM_OF_REF_PIC_LIST; li++) {
+            for (uint32_t ri = 1; ri < REF_LIST_MAX_DEPTH; ri++) {
+                // Prune references based on ME sad
+                if ((me_ctx->search_results[li][ri].hme_sad - best) * 100 > (prune_ref_th * best)) {
+                    me_ctx->search_results[li][ri].do_ref = 0;
+                }
             }
         }
     }
@@ -2544,31 +2546,35 @@ static void hme_b64(PictureParentControlSet *pcs, uint32_t org_x, uint32_t org_y
 }
 
 static void hme_prune_ref_and_adjust_sr(MeContext *me_ctx) {
-    uint64_t best = (uint64_t)~0;
-    for (int i = 0; i < MAX_NUM_OF_REF_PIC_LIST; ++i) {
-        for (int j = 0; j < REF_LIST_MAX_DEPTH; ++j) {
-            if (me_ctx->search_results[i][j].hme_sad < best) {
-                best = me_ctx->search_results[i][j].hme_sad;
+    uint16_t prune_ref_th = me_ctx->me_hme_prune_ctrls.prune_ref_if_hme_sad_dev_bigger_than_th;
+    if (me_ctx->me_hme_prune_ctrls.enable_me_hme_ref_pruning && (prune_ref_th != (uint16_t)~0))
+    {
+        uint64_t best = (uint64_t)~0;
+        for (int i = 0; i < MAX_NUM_OF_REF_PIC_LIST; ++i) {
+            for (int j = 0; j < REF_LIST_MAX_DEPTH; ++j) {
+                if (me_ctx->search_results[i][j].hme_sad < best) {
+                    best = me_ctx->search_results[i][j].hme_sad;
+                }
             }
         }
-    }
-    uint16_t prune_ref_th = me_ctx->me_hme_prune_ctrls.prune_ref_if_hme_sad_dev_bigger_than_th;
-    uint16_t mv_length_th = me_ctx->me_sr_adjustment_ctrls.reduce_me_sr_based_on_mv_length_th;
-    uint16_t stationary_hme_sad_abs_th =
-        me_ctx->me_sr_adjustment_ctrls.stationary_hme_sad_abs_th;
-    uint16_t reduce_me_sr_based_on_hme_sad_abs_th =
-        me_ctx->me_sr_adjustment_ctrls.reduce_me_sr_based_on_hme_sad_abs_th;
-    for (uint32_t li = 0; li < MAX_NUM_OF_REF_PIC_LIST; li++) {
-        for (uint32_t ri = 0; ri < REF_LIST_MAX_DEPTH; ri++) {
-            // Prune references based on HME sad
-            if (me_ctx->me_hme_prune_ctrls.enable_me_hme_ref_pruning &&
-                (!me_ctx->me_hme_prune_ctrls.protect_closest_refs || ri > 0) &&
-                (prune_ref_th != (uint16_t)~0) && ((me_ctx->search_results[li][ri].hme_sad - best) * 100 > (prune_ref_th * best))) {
-                me_ctx->search_results[li][ri].do_ref = 0;
+        // Prune references based on HME sad
+        for (uint32_t li = 0; li < MAX_NUM_OF_REF_PIC_LIST; li++) {
+            for (uint32_t ri = 1; ri < REF_LIST_MAX_DEPTH; ri++) {
+                if ((me_ctx->search_results[li][ri].hme_sad - best) * 100 > (prune_ref_th * best)) {
+                    me_ctx->search_results[li][ri].do_ref = 0;
+                }					
             }
-
-            // Reduce the ME search region if the hme sad is low
-            if (me_ctx->me_sr_adjustment_ctrls.enable_me_sr_adjustment) {
+        }	
+    }
+    if (me_ctx->me_sr_adjustment_ctrls.enable_me_sr_adjustment) {
+        uint16_t mv_length_th = me_ctx->me_sr_adjustment_ctrls.reduce_me_sr_based_on_mv_length_th;
+        uint16_t stationary_hme_sad_abs_th =
+            me_ctx->me_sr_adjustment_ctrls.stationary_hme_sad_abs_th;
+        uint16_t reduce_me_sr_based_on_hme_sad_abs_th =
+            me_ctx->me_sr_adjustment_ctrls.reduce_me_sr_based_on_hme_sad_abs_th;
+        // Reduce the ME search region if the hme sad is low
+        for (uint32_t li = 0; li < MAX_NUM_OF_REF_PIC_LIST; li++) {
+            for (uint32_t ri = 0; ri < REF_LIST_MAX_DEPTH; ri++) {
                 if (ABS(me_ctx->search_results[li][ri].hme_sc_x) <= mv_length_th &&
                     ABS(me_ctx->search_results[li][ri].hme_sc_y) <= mv_length_th &&
                     me_ctx->search_results[li][ri].hme_sad < stationary_hme_sad_abs_th) {
@@ -3177,9 +3183,7 @@ EbErrorType svt_aom_motion_estimation_b64(
         return return_error;
     }
     // prune the refrence frames based on the HME outputs.
-    if (prune_ref &&
-        (me_ctx->me_sr_adjustment_ctrls.enable_me_sr_adjustment ||
-         me_ctx->me_hme_prune_ctrls.enable_me_hme_ref_pruning)) {
+    if (prune_ref) {
         hme_prune_ref_and_adjust_sr(me_ctx);
     }
     // Full pel: Perform the Integer Motion Estimation on the allowed refrence frames.
