@@ -1623,7 +1623,6 @@ static void me_prune_ref(MeContext *me_ctx) {
                 }
             }
         }
-		
         for (uint32_t li = 0; li < MAX_NUM_OF_REF_PIC_LIST; li++) {
             for (uint32_t ri = 1; ri < REF_LIST_MAX_DEPTH; ri++) {
                 // Prune references based on ME sad
@@ -2562,9 +2561,9 @@ static void hme_prune_ref_and_adjust_sr(MeContext *me_ctx) {
             for (uint32_t ri = 1; ri < REF_LIST_MAX_DEPTH; ri++) {
                 if ((me_ctx->search_results[li][ri].hme_sad - best) * 100 > (prune_ref_th * best)) {
                     me_ctx->search_results[li][ri].do_ref = 0;
-                }					
+                }
             }
-        }	
+        }
     }
     if (me_ctx->me_sr_adjustment_ctrls.enable_me_sr_adjustment) {
         uint16_t mv_length_th = me_ctx->me_sr_adjustment_ctrls.reduce_me_sr_based_on_mv_length_th;
