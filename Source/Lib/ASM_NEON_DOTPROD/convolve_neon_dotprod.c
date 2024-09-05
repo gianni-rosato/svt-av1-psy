@@ -185,6 +185,11 @@ void svt_av1_convolve_x_sr_neon_dotprod(const uint8_t *src, int32_t src_stride, 
 
     int filter_taps = get_filter_tap(filter_params_x, subpel_x_qn & SUBPEL_MASK);
 
+    if (filter_taps == 2 && w > 4) {
+        convolve_x_sr_2tap_neon(src + 3, src_stride, dst, dst_stride, w, h, x_filter_ptr);
+        return;
+    }
+
     if (filter_taps <= 4) {
         convolve_x_sr_4tap_neon_dotprod(src + 2, src_stride, dst, dst_stride, w, h, x_filter_ptr);
         return;
