@@ -15,12 +15,13 @@ cmake_minimum_required(VERSION 3.5...3.28)
 
 # Include Subdirectories
 include_directories(${PROJECT_SOURCE_DIR}/Source/API/)
+find_package(PkgConfig REQUIRED)
 
 # libdovi detection & preprocessor macro
 option(LIBDOVI_FOUND "Use the libdovi library" OFF)
 if(LIBDOVI_FOUND)
   if(PKG_CONFIG_FOUND)
-  pkg_check_modules(PC_LIBDOVI libdovi QUIET)
+  pkg_check_modules(PC_LIBDOVI dovi QUIET)
   endif()
 
   find_library(LIBDOVI_LIBRARY NAMES dovi libdovi
@@ -44,7 +45,7 @@ endif()
 option(LIBHDR10PLUS_RS_FOUND "Use the libhdr10plus-rs library" OFF)
 if(LIBHDR10PLUS_RS_FOUND)
   if(PKG_CONFIG_FOUND)
-  pkg_check_modules(PC_LIBHDR10PLUS_RS libhdr10plus-rs QUIET)
+  pkg_check_modules(PC_LIBHDR10PLUS_RS hdr10plus-rs QUIET)
   endif()
 
   find_library(LIBHDR10PLUS_RS_LIBRARY NAMES hdr10plus-rs libhdr10plus-rs
