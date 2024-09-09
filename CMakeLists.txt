@@ -451,7 +451,7 @@ include(CheckSymbolExists)
 
 check_symbol_exists("_mm512_extracti64x4_epi64" "immintrin.h" HAS_AVX512)
 if(HAS_AVX512)
-    option(ENABLE_AVX512 "Enable building avx512 code" OFF)
+    option(ENABLE_AVX512 "Enable building avx512 code" ON)
 else()
     set(ENABLE_AVX512 OFF CACHE INTERNAL "Enable building avx512 code")
 endif()

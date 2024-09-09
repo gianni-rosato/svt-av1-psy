@@ -108,9 +108,6 @@ Linux (GCC):
         CXX: g++-8
       - CC: gcc-9
         CXX: g++-9
-      - CC: gcc-11
-        CXX: g++-11
-        EXTRA_CMAKE_FLAGS: -DENABLE_AVX512=ON
       - CC: aarch64-linux-gnu-gcc
         CXX: aarch64-linux-gnu-g++
         EXTRA_CMAKE_FLAGS: --toolchain $CI_PROJECT_DIR/cmake/toolchains/aarch64_toolchain.cmake

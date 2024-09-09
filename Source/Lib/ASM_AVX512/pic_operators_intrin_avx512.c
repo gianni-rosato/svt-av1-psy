@@ -175,7 +175,6 @@ uint64_t svt_spatial_full_distortion_kernel_avx512(uint8_t *input, uint32_t inpu
     int32_t        h;
     __m256i        sum = _mm256_setzero_si256();
     __m128i        sum_l, sum_h, s;
-    uint64_t       spatial_distortion = 0;
     input += input_offset;
     recon += recon_offset;
 
@@ -199,11 +198,11 @@ uint64_t svt_spatial_full_distortion_kernel_avx512(uint8_t *input, uint32_t inpu
             } while (h);
 
             if (area_width == 4) {
-                sum_l              = _mm256_castsi256_si128(sum);
-                sum_h              = _mm256_extracti128_si256(sum, 1);
-                s                  = _mm_add_epi32(sum_l, sum_h);
-                s                  = _mm_add_epi32(s, _mm_srli_si128(s, 4));
-                spatial_distortion = _mm_cvtsi128_si32(s);
+                sum_l                       = _mm256_castsi256_si128(sum);
+                sum_h                       = _mm256_extracti128_si256(sum, 1);
+                s                           = _mm_add_epi32(sum_l, sum_h);
+                s                           = _mm_add_epi32(s, _mm_srli_si128(s, 4));
+                uint64_t spatial_distortion = _mm_cvtsi128_si32(s);
                 return spatial_distortion;
             }
         } else if (leftover == 8) {
