@@ -405,7 +405,7 @@ Linux Gstreamer (Static):
     PKG_CONFIG_PATH: /usr/local/lib/pkgconfig
     GIT_DEPTH: 0
   script:
-    - cmake -B Build -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF -DCMAKE_INSTALL_PREFIX=/usr -DBUILD_APPS=OFF -DBUILD_DEC=OFF -DREPRODUCIBLE_BUILDS=ON
+    - cmake -B Build -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF -DCMAKE_INSTALL_PREFIX=/usr -DBUILD_APPS=OFF -DREPRODUCIBLE_BUILDS=ON
     - cmake --build Build --config Release --target install
     - meson setup -Dprefix=/usr --buildtype release gstreamer-plugin/build gstreamer-plugin
     - meson install -C gstreamer-plugin/build

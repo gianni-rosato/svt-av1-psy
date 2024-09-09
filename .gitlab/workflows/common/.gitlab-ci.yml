@@ -140,7 +140,6 @@
     -DBUILD_SHARED_LIBS="$BUILD_SHARED_LIBS"
     -DCMAKE_INSTALL_PREFIX="$PREFIX_DIR"
     -DBUILD_APPS=OFF
-    -DBUILD_DEC=OFF
     -DREPRODUCIBLE_BUILDS=ON
   - time cmake --build svtav1-build --config Release --target install
   - FFMPEG_CONFIG_FLAGS="${FFMPEG_CONFIG_FLAGS:+$FFMPEG_CONFIG_FLAGS }--enable-libsvtav1"

@@ -120,7 +120,6 @@ Win64 FFmpeg (Static):
         -DBUILD_SHARED_LIBS=OFF `
         -DCMAKE_INSTALL_PREFIX="$env:PREFIX_DIR" `
         -DBUILD_APPS=OFF `
-        -DBUILD_DEC=OFF `
         -DREPRODUCIBLE_BUILDS=ON || $(
           Get-Content svtav1-build/CMakeFiles/CMakeConfigureLog.yaml
           exit 1
