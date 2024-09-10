@@ -367,6 +367,40 @@ static INLINE void convolve_y_sr_4tap_neon(const uint8_t *src, const int src_str
     }
 }
 
+static INLINE void convolve_y_sr_2tap_neon(const uint8_t *src_ptr, int src_stride, uint8_t *dst_ptr,
+                                           const int dst_stride, int w, int h, const int16_t *y_filter_ptr) {
+    const uint8x8_t f0 = vdup_n_u8(y_filter_ptr[3]);
+    const uint8x8_t f1 = vdup_n_u8(y_filter_ptr[4]);
+
+    do {
+        const uint8_t *src    = src_ptr;
+        uint8_t       *dst    = dst_ptr;
+        int            height = h;
+
+        do {
+            uint8x8_t s0 = vld1_u8(src);
+            uint8x8_t s1 = vld1_u8(src + 1 * src_stride);
+            uint8x8_t s2 = vld1_u8(src + 2 * src_stride);
+
+            uint16x8_t t0 = vmull_u8(s0, f0);
+            t0            = vmlal_u8(t0, s1, f1);
+            uint16x8_t t1 = vmull_u8(s1, f0);
+            t1            = vmlal_u8(t1, s2, f1);
+
+            vst1_u8(dst + 0 * dst_stride, vrshrn_n_u16(t0, FILTER_BITS));
+            vst1_u8(dst + 1 * dst_stride, vrshrn_n_u16(t1, FILTER_BITS));
+
+            src += 2 * src_stride;
+            dst += 2 * dst_stride;
+            height -= 2;
+        } while (height != 0);
+
+        src_ptr += 8;
+        dst_ptr += 8;
+        w -= 8;
+    } while (w != 0);
+}
+
 static INLINE int16x4_t convolve6_4_y(const int16x4_t s0, const int16x4_t s1, const int16x4_t s2, const int16x4_t s3,
                                       const int16x4_t s4, const int16x4_t s5, const int16x8_t y_filter_0_7) {
     const int16x4_t y_filter_0_3 = vget_low_s16(y_filter_0_7);
@@ -673,16 +707,25 @@ void svt_av1_convolve_y_sr_neon(const uint8_t *src, int32_t src_stride, uint8_t 
 
     const int16_t *y_filter_ptr = av1_get_interp_filter_subpel_kernel(*filter_params_y, subpel_y_qn & SUBPEL_MASK);
 
-    // Filter values are even so halve to reduce precision requirements.
-    const int16x8_t y_filter = vshrq_n_s16(vld1q_s16(y_filter_ptr), 1);
+    if (y_filter_taps == 2 && w > 4) {
+        convolve_y_sr_2tap_neon(src + src_stride, src_stride, dst, dst_stride, w, h, y_filter_ptr);
+        return;
+    }
 
     if (y_filter_taps <= 4) {
         convolve_y_sr_4tap_neon(src, src_stride, dst, dst_stride, w, h, y_filter_ptr);
-    } else if (y_filter_taps == 6) {
-        convolve_y_sr_6tap_neon(src, src_stride, dst, dst_stride, w, h, y_filter);
-    } else {
-        convolve_y_sr_8tap_neon(src, src_stride, dst, dst_stride, w, h, y_filter);
+        return;
     }
+
+    // Filter values are even so halve to reduce precision requirements.
+    const int16x8_t y_filter = vshrq_n_s16(vld1q_s16(y_filter_ptr), 1);
+
+    if (y_filter_taps < 8) {
+        convolve_y_sr_6tap_neon(src, src_stride, dst, dst_stride, w, h, y_filter);
+        return;
+    }
+
+    convolve_y_sr_8tap_neon(src, src_stride, dst, dst_stride, w, h, y_filter);
 }
 
 static INLINE int16x8_t convolve4_8_2d_h(const int16x8_t s0, const int16x8_t s1, const int16x8_t s2, const int16x8_t s3,
