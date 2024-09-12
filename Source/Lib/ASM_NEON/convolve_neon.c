@@ -988,8 +988,8 @@ void svt_av1_convolve_2d_sr_neon(const uint8_t *src, int32_t src_stride, uint8_t
         return;
     }
 
-    const int      y_filter_taps  = get_filter_tap(filter_params_y, subpel_y_qn);
     const int      x_filter_taps  = get_filter_tap(filter_params_x, subpel_x_qn);
+    const int      y_filter_taps  = get_filter_tap(filter_params_y, subpel_y_qn);
     const int      clamped_y_taps = y_filter_taps < 4 ? 4 : y_filter_taps;
     const int      im_h           = h + clamped_y_taps - 1;
     const int      im_stride      = MAX_SB_SIZE;
@@ -999,6 +999,11 @@ void svt_av1_convolve_2d_sr_neon(const uint8_t *src, int32_t src_stride, uint8_t
 
     const int16_t *x_filter_ptr = av1_get_interp_filter_subpel_kernel(*filter_params_x, subpel_x_qn & SUBPEL_MASK);
     const int16_t *y_filter_ptr = av1_get_interp_filter_subpel_kernel(*filter_params_y, subpel_y_qn & SUBPEL_MASK);
+
+    if (x_filter_taps == 2 && y_filter_taps == 2 && w > 4) {
+        convolve_2d_sr_2tap_neon(src, src_stride, dst, dst_stride, w, h, x_filter_ptr, y_filter_ptr);
+        return;
+    }
 
     DECLARE_ALIGNED(16, int16_t, im_block[(MAX_SB_SIZE + SUBPEL_TAPS - 1) * MAX_SB_SIZE]);
 

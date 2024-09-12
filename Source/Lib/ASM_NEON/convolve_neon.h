@@ -442,5 +442,57 @@ static INLINE void convolve_x_sr_2tap_neon(const uint8_t *src_ptr, int src_strid
         h -= 4;
     } while (h != 0);
 }
+static INLINE void convolve_2d_sr_2tap_neon(const uint8_t *src_ptr, int32_t src_stride, uint8_t *dst_ptr,
+                                            int dst_stride, int w, int h, const int16_t *x_filter,
+                                            const int16_t *y_filter) {
+    // All bilinear filter values are multiples of 8, so divide them to reduce
+    // intermediate precision requirements and avoid needing to do rounding at
+    // the end of horizontal convolution.
+    const uint8x8_t  x_f0 = vdup_n_u8(x_filter[3] >> 3);
+    const uint8x8_t  x_f1 = vdup_n_u8(x_filter[4] >> 3);
+    const uint16x8_t y_f0 = vdupq_n_u16(y_filter[3] >> 3);
+    const uint16x8_t y_f1 = vdupq_n_u16(y_filter[4] >> 3);
+
+    do {
+        const uint8_t *src    = src_ptr;
+        uint8_t       *dst    = dst_ptr;
+        int            height = h;
+
+        uint8x8_t s0[3], s1[3];
+        s0[0]           = vld1_u8(src);
+        s1[0]           = vld1_u8(src + 1);
+        uint16x8_t h_t0 = vmull_u8(s0[0], x_f0);
+        h_t0            = vmlal_u8(h_t0, s1[0], x_f1);
+        do {
+            s0[1] = vld1_u8(src + 1 * src_stride);
+            s1[1] = vld1_u8(src + 1 * src_stride + 1);
+            s0[2] = vld1_u8(src + 2 * src_stride);
+            s1[2] = vld1_u8(src + 2 * src_stride + 1);
+
+            uint16x8_t h_t1 = vmull_u8(s0[1], x_f0);
+            h_t1            = vmlal_u8(h_t1, s1[1], x_f1);
+            uint16x8_t h_t2 = vmull_u8(s0[2], x_f0);
+            h_t2            = vmlal_u8(h_t2, s1[2], x_f1);
+
+            uint16x8_t v_t0 = vmulq_u16(h_t0, y_f0);
+            v_t0            = vmlaq_u16(v_t0, h_t1, y_f1);
+            uint16x8_t v_t1 = vmulq_u16(h_t1, y_f0);
+            v_t1            = vmlaq_u16(v_t1, h_t2, y_f1);
+
+            uint8x8_t d0 = vrshrn_n_u16(v_t0, 8);
+            uint8x8_t d1 = vrshrn_n_u16(v_t1, 8);
+
+            store_u8_8x2(dst, dst_stride, d0, d1);
+
+            h_t0 = h_t2;
+            src += 2 * src_stride;
+            dst += 2 * dst_stride;
+            height -= 2;
+        } while (height != 0);
+        src_ptr += 8;
+        dst_ptr += 8;
+        w -= 8;
+    } while (w != 0);
+}
 
 #endif // AOM_AV1_COMMON_ARM_CONVOLVE_NEON_H_
