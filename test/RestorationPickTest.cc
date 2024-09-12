@@ -286,11 +286,10 @@ INSTANTIATE_TEST_SUITE_P(
 #if ARCH_AARCH64
 INSTANTIATE_TEST_SUITE_P(
     NEON, av1_compute_stats_test,
-    ::testing::Combine(::testing::Range(BLOCK_4X4,
-                                        (BlockSize)(BlockSizeS_ALL + 2)),
-                       ::testing::Values(svt_av1_compute_stats_neon),
-                       ::testing::Range(0, 6),
-                       ::testing::Values(WIENER_WIN_CHROMA, WIENER_WIN)));
+    ::testing::Combine(
+        ::testing::Range(BLOCK_4X4, (BlockSize)(BlockSizeS_ALL + 2)),
+        ::testing::Values(svt_av1_compute_stats_neon), ::testing::Range(0, 6),
+        ::testing::Values(WIENER_WIN_CHROMA, WIENER_WIN, WIENER_WIN_3TAP)));
 #endif  // ARCH_AARCH64
 
 typedef ::testing::tuple<BlockSize, av1_compute_stats_highbd_func, int, int,
