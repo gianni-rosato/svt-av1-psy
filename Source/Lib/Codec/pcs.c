@@ -107,7 +107,8 @@ EbErrorType svt_aom_me_sb_results_ctor(MeSbResults *obj_ptr, PictureControlSetIn
     svt_aom_derive_input_resolution(&resolution, init_data_ptr->picture_width * init_data_ptr->picture_height);
     uint8_t number_of_pus = svt_aom_get_enable_me_16x16(init_data_ptr->enc_mode)
 #if TUNE_M4_M5_FD2 && !TUNE_M5_M7
-        ? svt_aom_get_enable_me_8x8(init_data_ptr->enc_mode, init_data_ptr->rtc_tune, resolution, init_data_ptr->static_config.fast_decode)
+        ? svt_aom_get_enable_me_8x8(
+              init_data_ptr->enc_mode, init_data_ptr->rtc_tune, resolution, init_data_ptr->static_config.fast_decode)
 #else
         ? svt_aom_get_enable_me_8x8(init_data_ptr->enc_mode, init_data_ptr->rtc_tune, resolution)
 #endif
@@ -405,8 +406,10 @@ EbErrorType pcs_update_param(PictureControlSet *pcs) {
         svt_picture_buffer_desc_update(pcs->input_frame16bit, (EbPtr)&coeff_buffer_desc_init_data);
     }
 #if TUNE_M3_FD2
-    if (svt_aom_get_enable_restoration(
-        scs->static_config.enc_mode, scs->static_config.enable_restoration_filtering, scs->input_resolution, scs->static_config.fast_decode)) {
+    if (svt_aom_get_enable_restoration(scs->static_config.enc_mode,
+                                       scs->static_config.enable_restoration_filtering,
+                                       scs->input_resolution,
+                                       scs->static_config.fast_decode)) {
 #else
     if (svt_aom_get_enable_restoration(
             scs->static_config.enc_mode, scs->static_config.enable_restoration_filtering, scs->input_resolution)) {
@@ -1434,7 +1437,8 @@ static EbErrorType picture_parent_control_set_ctor(PictureParentControlSet *obje
     // 8x8 can only be used if 16x16 is enabled
     object_ptr->enable_me_8x8 = object_ptr->enable_me_16x16
 #if TUNE_M4_M5_FD2 && !TUNE_M5_M7
-        ? svt_aom_get_enable_me_8x8(init_data_ptr->enc_mode, init_data_ptr->rtc_tune, resolution, init_data_ptr->static_config.fast_decode)
+        ? svt_aom_get_enable_me_8x8(
+              init_data_ptr->enc_mode, init_data_ptr->rtc_tune, resolution, init_data_ptr->static_config.fast_decode)
 #else
         ? svt_aom_get_enable_me_8x8(init_data_ptr->enc_mode, init_data_ptr->rtc_tune, resolution)
 #endif

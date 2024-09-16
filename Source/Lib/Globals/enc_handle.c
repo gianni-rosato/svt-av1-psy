@@ -4204,7 +4204,14 @@ static void set_param_based_on_input(SequenceControlSet *scs)
     }
     else {
         if (scs->static_config.enc_mode <= ENC_MR) {
+#if CLN_MRP_LVL
+            if (!(scs->input_resolution <= INPUT_SIZE_360p_RANGE) && !(scs->static_config.fast_decode <= 1))
+                mrp_level = 9;
+            else
+                mrp_level = 1;
+#else
             mrp_level = 1;
+#endif
         }
 #if TUNE_M1_FD2 && !TUNE_M0_MR_FD2
         else if (scs->static_config.enc_mode <= ENC_M0) {
@@ -4218,7 +4225,14 @@ static void set_param_based_on_input(SequenceControlSet *scs)
         }
 #else
         else if (scs->static_config.enc_mode <= ENC_M1) {
+#if CLN_MRP_LVL
+            if (!(scs->input_resolution <= INPUT_SIZE_360p_RANGE) && !(scs->static_config.fast_decode <= 1))
+                mrp_level = 9;
+            else
+                mrp_level = 2;
+#else
             mrp_level = 2;
+#endif
         }
 #endif
 #if TUNE_M4_M5_FD2 && !TUNE_M0_MR_FD2
@@ -4239,7 +4253,14 @@ static void set_param_based_on_input(SequenceControlSet *scs)
         }
 #else
         else if (scs->static_config.enc_mode <= ENC_M4) {
+#if CLN_MRP_LVL
+            if (!(scs->input_resolution <= INPUT_SIZE_360p_RANGE) && !(scs->static_config.fast_decode <= 1))
+                mrp_level = 9;
+            else
+                mrp_level = 5;
+#else
             mrp_level = 5;
+#endif
         }
 #endif
         // any changes for preset ENC_M8 and higher should be separated for VBR and CRF in the control structure below
@@ -4255,7 +4276,7 @@ static void set_param_based_on_input(SequenceControlSet *scs)
             mrp_level = 12;
         }
     }
-#if TUNE_M0_MR_FD2
+#if TUNE_M0_MR_FD2 && !CLN_MRP_LVL
     // For fast-decode 2, the MRP level should be at least 9
     if (mrp_level && !(scs->input_resolution <= INPUT_SIZE_360p_RANGE) && !(scs->static_config.fast_decode <= 1)) {
         mrp_level = MAX(9, mrp_level);

@@ -230,8 +230,6 @@ typedef enum SqWeightOffsets {
     AGGRESSIVE_OFFSET_1   = -10
 } SqWeightOffsets;
 
-
-
 #if OPT_FD2_MFMV
 #define COEFF_LVL_TH_0 (5833 / 96)
 #define COEFF_LVL_TH_1 (5833 / 48)

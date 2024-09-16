@@ -742,9 +742,9 @@ typedef struct EbSvtAv1EncConfiguration {
 #if OPT_FAST_DECODE_LVLS
 #if CLEAN_UP_FD_SIG
     /* Decoder-speed-targeted encoder optimization level (produce bitstreams that can be decoded faster).
-    * 0: No decoder speed optimization
-    * 1: Decoder speed optimization enabled
-    * 2: Decoder speed optimization enabled (fastest)
+    * 0: No decoder-targeted speed optimization
+    * 1: Level 1 of decoder-targeted speed optimizations (faster decoder-speed than level 0)
+    * 2: Level 2 of decoder-targeted speed optimizations (faster decoder-speed than level 1)
     */
     uint8_t fast_decode;
 #else

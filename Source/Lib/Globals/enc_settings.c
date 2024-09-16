@@ -524,7 +524,7 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet *scs) {
 #if CLEAN_UP_FD_SIG
     if (config->fast_decode > 2) {
         SVT_ERROR(
-            "Instance %u: Invalid fast decode flag [0 - 2, 0 for no decoder optimization], your "
+            "Instance %u: Invalid fast decode flag [0 - 2, 0 for no decoder-targeted optimization], your "
             "input: %d\n",
             channel_number + 1,
             config->fast_decode);

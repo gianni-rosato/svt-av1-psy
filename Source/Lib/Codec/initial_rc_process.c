@@ -179,7 +179,6 @@ void validate_pic_for_tpl(PictureParentControlSet *pcs, uint32_t pic_index) {
     }
 }
 
-
 #if TUNE_FD2 && !TUNE_M5_M7
 uint8_t svt_aom_get_tpl_group_level(uint8_t tpl, int8_t enc_mode, SvtAv1RcMode rc_mode, const uint8_t fast_decode) {
 #else
@@ -723,11 +722,13 @@ void *svt_aom_initial_rate_control_kernel(void *input_ptr) {
             pcs->tpl_params_ready = 0;
             svt_aom_set_tpl_group(pcs,
 #if TUNE_FD2 && !TUNE_M5_M7
-                                svt_aom_get_tpl_group_level(
-                                    scs->tpl, scs->static_config.enc_mode, scs->static_config.rate_control_mode, scs->static_config.fast_decode),
+                                  svt_aom_get_tpl_group_level(scs->tpl,
+                                                              scs->static_config.enc_mode,
+                                                              scs->static_config.rate_control_mode,
+                                                              scs->static_config.fast_decode),
 #else
-                                svt_aom_get_tpl_group_level(
-                                    scs->tpl, scs->static_config.enc_mode, scs->static_config.rate_control_mode),
+                                  svt_aom_get_tpl_group_level(
+                                      scs->tpl, scs->static_config.enc_mode, scs->static_config.rate_control_mode),
 #endif
                                   scs->max_input_luma_width,
                                   scs->max_input_luma_height);

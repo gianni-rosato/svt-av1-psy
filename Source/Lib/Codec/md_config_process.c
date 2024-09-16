@@ -506,9 +506,8 @@ static void set_frame_coeff_lvl(PictureControlSet *pcs) {
     for (uint32_t b64_idx = 0; b64_idx < pcs->b64_total_count; b64_idx++) {
         tot_me_8x8_dist += pcs->ppcs->me_8x8_distortion[b64_idx];
     }
-    uint64_t me_8x8_dist_per_sb  = tot_me_8x8_dist / pcs->b64_total_count;
-    uint64_t cmplx               = me_8x8_dist_per_sb / MAX(1, pcs->scs->static_config.qp);
-
+    uint64_t me_8x8_dist_per_sb = tot_me_8x8_dist / pcs->b64_total_count;
+    uint64_t cmplx              = me_8x8_dist_per_sb / MAX(1, pcs->scs->static_config.qp);
 
 #if OPT_FD2_MFMV
     uint64_t coeff_vlow_level_th = COEFF_LVL_TH_0;

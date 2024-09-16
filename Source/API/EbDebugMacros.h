@@ -41,7 +41,7 @@ extern "C" {
 #define FIX_USE_SB_LAMBDA_DR                      1 // Use the SB lambda at depth-removal, instead of non-updated block-based lambda
 #define OPT_FAST_DECODE_LVLS                      1 // Add the ability to use different lvls for fast-decode
 #define OPT_FD3_CDEF                              1 // Optimize cost bias for cdef for fd3
-#define OPT_SUBPEL                                1 // Bias towards fpel at the MD subpel-search: apply a penalty to the cost of fractional positions during the subpel-search each time we check against a full-pel MV 
+#define OPT_SUBPEL                                1 // Bias towards fpel at the MD subpel-search: apply a penalty to the cost of fractional positions during the subpel-search each time we check against a full-pel MV
 #define CLEAN_UP_FD_SIG                           1 // Clean-up fd signal(s); fd_2 to match fd_3, then remove fd_-1 and fd_3.
 #define OPT_FD2_MFMV                              1 // Create a very-low coeff-level band (VLOW_LVL) and apply mfmv only to that band in fd2
 #define TUNE_FD2                                  1 // Preset tuning for only fd2
@@ -58,6 +58,7 @@ extern "C" {
 #define LIMIT_FD2_MR_M7                           1 // Limit fast-decode 2 to M7 and below presets
 #define TUNE_LIMIT_FD                             1 // Enable fast-decode 2 up to M9; disable fast-decode in M10
 #define CLN_UNUSED_CHECKS                         1 // Cleanup unused checks in the code
+#define CLN_MRP_LVL                               1 // Cleanup how MRP level is set
 
 //FOR DEBUGGING - Do not remove
 #define OPT_LD_LATENCY2         1 // Latency optimization for low delay - to keep the Macro for backwards testing until 3.0

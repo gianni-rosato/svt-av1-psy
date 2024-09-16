@@ -1646,7 +1646,7 @@ void svt_aom_full_cost(PictureControlSet *pcs, ModeDecisionContext *ctx, struct 
  * Coding Loop Context Generation
  ************************************************************/
 void svt_aom_coding_loop_context_generation(PictureControlSet *pcs, ModeDecisionContext *ctx) {
-    BlkStruct         *blk_ptr                       = ctx->blk_ptr;
+    BlkStruct *blk_ptr = ctx->blk_ptr;
 #if !FIX_PART_NEIGH_UPDATE
     uint32_t           blk_org_x                     = ctx->blk_org_x;
     uint32_t           blk_org_y                     = ctx->blk_org_y;
@@ -1654,7 +1654,7 @@ void svt_aom_coding_loop_context_generation(PictureControlSet *pcs, ModeDecision
     uint32_t           partition_left_neighbor_index = get_neighbor_array_unit_left_index(leaf_partition_na, blk_org_y);
     uint32_t           partition_above_neighbor_index = get_neighbor_array_unit_top_index(leaf_partition_na, blk_org_x);
 #endif
-    MacroBlockD       *xd                             = blk_ptr->av1xd;
+    MacroBlockD *xd = blk_ptr->av1xd;
     if (!ctx->shut_fast_rate) {
         if (pcs->slice_type == I_SLICE) {
             svt_aom_get_kf_y_mode_ctx(xd, &ctx->intra_luma_top_ctx, &ctx->intra_luma_left_ctx);
@@ -2008,7 +2008,7 @@ uint64_t svt_aom_partition_rate_cost(PictureParentControlSet *pcs, ModeDecisionC
     const int                  bsl       = mi_size_wide_log2[bsize] - mi_size_wide_log2[BLOCK_8X8];
     assert(bsl >= 0);
 
-    const int      above = (above_ctx >> bsl) & 1, left = (left_ctx >> bsl) & 1;
+    const int above = (above_ctx >> bsl) & 1, left = (left_ctx >> bsl) & 1;
 #if OPT_ACC_PART_CTX_FEAT
     const uint32_t context_index = (left * 2 + above) + bsl * PARTITION_PLOFFSET;
 #else
