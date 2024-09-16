@@ -100,8 +100,8 @@ static INLINE void update_2_stats_neon(const int64_t *const src, const int64x2_t
     vst1q_s64(dst, d);
 }
 
-static void step3_win3_neon(const int16_t **const d, const int32_t d_stride, const int32_t width, const int32_t h4,
-                            int32x4_t dd[2], int32x4_t *deltas) {
+static INLINE void step3_win3_neon(const int16_t **const d, const int32_t d_stride, const int32_t width,
+                                   const int32_t h4, int32x4_t dd[2], int32x4_t *deltas) {
     // 16-bit idx: 0, 2, 4, 6, 1, 3, 5, 7, 0, 2, 4, 6, 1, 3, 5, 7
     uint8_t          shf_values[] = {0, 1, 4, 5, 8, 9, 12, 13, 2, 3, 6, 7, 10, 11, 14, 15};
     const uint8x16_t shf          = vld1q_u8(shf_values);
@@ -216,8 +216,8 @@ static INLINE void load_square_win3_neon(const int16_t *const d_i, const int16_t
     load_s16_8x2(d_j + height * d_stride + 8, d_stride, &d_je[1], &d_je[3]);
 }
 
-static void load_triangle_win3_neon(const int16_t *const di, const int32_t d_stride, const int32_t height,
-                                    int16x8_t *d_is, int16x8_t *d_ie) {
+static INLINE void load_triangle_win3_neon(const int16_t *const di, const int32_t d_stride, const int32_t height,
+                                           int16x8_t *d_is, int16x8_t *d_ie) {
     d_is[0] = vld1q_s16(di + 0 * d_stride + 0);
     d_is[1] = vld1q_s16(di + 0 * d_stride + 8);
     d_is[2] = vld1q_s16(di + 1 * d_stride + 0);
@@ -229,7 +229,7 @@ static void load_triangle_win3_neon(const int16_t *const di, const int32_t d_str
     d_ie[3] = vld1q_s16(di + (1 + height) * d_stride + 8);
 }
 
-static void derive_triangle_win3_neon(const int16x8_t *d_is, const int16x8_t *d_ie, int32x4_t *deltas) {
+static INLINE void derive_triangle_win3_neon(const int16x8_t *d_is, const int16x8_t *d_ie, int32x4_t *deltas) {
     msub_neon(&deltas[0], d_is[0], d_is[0]);
     msub_neon(&deltas[1], d_is[1], d_is[1]);
     msub_neon(&deltas[2], d_is[0], d_is[2]);
@@ -972,6 +972,74 @@ static INLINE void diagonal_copy_stats_neon(const int32_t wiener_win2, int64_t *
             in[6] = vld1q_s64(H + (i + 3) * wiener_win2 + j + 0);
             in[7] = vld1q_s64(H + (i + 3) * wiener_win2 + j + 2);
 
+            transpose_s64_4x4_neon(in, out);
+
+            vst1q_s64(H + (j + 0) * wiener_win2 + i + 0, out[0]);
+            vst1q_s64(H + (j + 0) * wiener_win2 + i + 2, out[1]);
+            vst1q_s64(H + (j + 1) * wiener_win2 + i + 0, out[2]);
+            vst1q_s64(H + (j + 1) * wiener_win2 + i + 2, out[3]);
+            vst1q_s64(H + (j + 2) * wiener_win2 + i + 0, out[4]);
+            vst1q_s64(H + (j + 2) * wiener_win2 + i + 2, out[5]);
+            vst1q_s64(H + (j + 3) * wiener_win2 + i + 0, out[6]);
+            vst1q_s64(H + (j + 3) * wiener_win2 + i + 2, out[7]);
+        }
+    }
+}
+
+static INLINE int64x2_t div4_neon(const int64x2_t src) {
+    uint64x2_t sign = vcltzq_s64(src);
+    int64x2_t  dst  = vabsq_s64(src);
+    // divide by 4
+    dst = vshrq_n_s64(dst, 2);
+    // re-apply sign
+    return vbslq_s64(sign, vnegq_s64(dst), dst);
+}
+
+static INLINE void div4_4x4_neon(const int32_t wiener_win2, int64_t *const H, int64x2_t out[8]) {
+    out[0] = vld1q_s64(H + 0 * wiener_win2 + 0);
+    out[1] = vld1q_s64(H + 0 * wiener_win2 + 2);
+    out[2] = vld1q_s64(H + 1 * wiener_win2 + 0);
+    out[3] = vld1q_s64(H + 1 * wiener_win2 + 2);
+    out[4] = vld1q_s64(H + 2 * wiener_win2 + 0);
+    out[5] = vld1q_s64(H + 2 * wiener_win2 + 2);
+    out[6] = vld1q_s64(H + 3 * wiener_win2 + 0);
+    out[7] = vld1q_s64(H + 3 * wiener_win2 + 2);
+
+    out[0] = div4_neon(out[0]);
+    out[1] = div4_neon(out[1]);
+    out[2] = div4_neon(out[2]);
+    out[3] = div4_neon(out[3]);
+    out[4] = div4_neon(out[4]);
+    out[5] = div4_neon(out[5]);
+    out[6] = div4_neon(out[6]);
+    out[7] = div4_neon(out[7]);
+
+    vst1q_s64(H + 0 * wiener_win2 + 0, out[0]);
+    vst1q_s64(H + 0 * wiener_win2 + 2, out[1]);
+    vst1q_s64(H + 1 * wiener_win2 + 0, out[2]);
+    vst1q_s64(H + 1 * wiener_win2 + 2, out[3]);
+    vst1q_s64(H + 2 * wiener_win2 + 0, out[4]);
+    vst1q_s64(H + 2 * wiener_win2 + 2, out[5]);
+    vst1q_s64(H + 3 * wiener_win2 + 0, out[6]);
+    vst1q_s64(H + 3 * wiener_win2 + 2, out[7]);
+}
+
+static INLINE void div4_diagonal_copy_stats_neon(const int32_t wiener_win2, int64_t *const H) {
+    for (int32_t i = 0; i < wiener_win2 - 1; i += 4) {
+        int64x2_t in[8], out[8];
+
+        div4_4x4_neon(wiener_win2, H + i * wiener_win2 + i + 1, in);
+        transpose_s64_4x4_neon(in, out);
+
+        vst1_s64(H + (i + 1) * wiener_win2 + i + 0, vget_low_s64(out[0]));
+        vst1q_s64(H + (i + 2) * wiener_win2 + i + 0, out[2]);
+        vst1q_s64(H + (i + 3) * wiener_win2 + i + 0, out[4]);
+        vst1q_s64(H + (i + 3) * wiener_win2 + i + 2, out[5]);
+        vst1q_s64(H + (i + 4) * wiener_win2 + i + 0, out[6]);
+        vst1q_s64(H + (i + 4) * wiener_win2 + i + 2, out[7]);
+
+        for (int32_t j = i + 5; j < wiener_win2; j += 4) {
+            div4_4x4_neon(wiener_win2, H + i * wiener_win2 + j, in);
             transpose_s64_4x4_neon(in, out);
 
             vst1q_s64(H + (j + 0) * wiener_win2 + i + 0, out[0]);

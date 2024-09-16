@@ -38,6 +38,7 @@
 #define HAS_AVX512BW EB_CPU_FLAGS_AVX512BW
 #define HAS_AVX512VL EB_CPU_FLAGS_AVX512VL
 #define HAS_NEON EB_CPU_FLAGS_NEON
+#define HAS_SVE EB_CPU_FLAGS_SVE
 
 #ifdef RTCD_C
 #define RTCD_EXTERN                //CHKN RTCD call in effect. declare the function pointers in  encHandle.
