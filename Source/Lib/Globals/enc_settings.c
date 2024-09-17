@@ -1070,6 +1070,7 @@ EbErrorType svt_av1_set_default_params(EbSvtAv1EncConfiguration *config_ptr) {
     config_ptr->max_qm_level = 15;
     config_ptr->min_chroma_qm_level = 0;
     config_ptr->max_chroma_qm_level = 15;
+    config_ptr->chroma_qm_v_level = 15;
 
     config_ptr->startup_mg_size                   = 0;
     config_ptr->frame_scale_evts.evt_num          = 0;
@@ -2094,6 +2095,7 @@ EB_API EbErrorType svt_av1_enc_parse_parameter(EbSvtAv1EncConfiguration *config_
         {"qm-max", &config_struct->max_qm_level},
         {"chroma-qm-min", &config_struct->min_chroma_qm_level},
         {"chroma-qm-max", &config_struct->max_chroma_qm_level},
+        {"chroma-qm-v", &config_struct->chroma_qm_v_level},
         {"use-fixed-qindex-offsets", &config_struct->use_fixed_qindex_offsets},
         {"startup-mg-size", &config_struct->startup_mg_size},
         {"variance-boost-strength", &config_struct->variance_boost_strength},

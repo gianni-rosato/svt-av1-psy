@@ -1041,8 +1041,16 @@ typedef struct EbSvtAv1EncConfiguration {
      */
     uint8_t max_chroma_qm_level;
 
+    /**
+     * @brief Quant matrix flatness for the V channel. Applicable when enable_qm is true.
+     * Min value is 0.
+     * Max value is 15.
+     * Default is 0 in SVT-AV1-PSY, mainline default is 8.
+     */
+    uint8_t chroma_qm_v_level;
+
     /*Add 128 Byte Padding to Struct to avoid changing the size of the public configuration struct*/
-    uint8_t padding[128 - 4 * sizeof(Bool) - 8 * sizeof(uint8_t) - sizeof(int8_t)];
+    uint8_t padding[128 - 4 * sizeof(Bool) - 9 * sizeof(uint8_t) - sizeof(int8_t)];
 
 } EbSvtAv1EncConfiguration;
 

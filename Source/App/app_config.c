@@ -219,6 +219,7 @@
 
 #define MIN_CHROMA_QM_LEVEL_TOKEN "--chroma-qm-min"
 #define MAX_CHROMA_QM_LEVEL_TOKEN "--chroma-qm-max"
+#define CHROMA_QM_V_LEVEL_TOKEN "--chroma-qm-v"
 
 static EbErrorType validate_error(EbErrorType err, const char *token, const char *value) {
     switch (err) {
@@ -1307,6 +1308,10 @@ ConfigEntry config_entry_psy[] = {
      MAX_CHROMA_QM_LEVEL_TOKEN,
      "[PSY] Max chroma quant matrix flatness, default is 15 [0-15]",
      set_cfg_generic_token},
+    {SINGLE_INPUT,
+     CHROMA_QM_V_LEVEL_TOKEN,
+     "[PSY] Chroma quant V matrix flatness, default is 15 [0-15]",
+     set_cfg_generic_token},
     // Termination
     {SINGLE_INPUT, NULL, NULL, NULL}};
 
@@ -1517,6 +1522,9 @@ ConfigEntry config_entry[] = {
     // Chroma QM
     {SINGLE_INPUT, MIN_CHROMA_QM_LEVEL_TOKEN, "MinChromaQmLevel", set_cfg_generic_token},
     {SINGLE_INPUT, MAX_CHROMA_QM_LEVEL_TOKEN, "MaxChromaQmLevel", set_cfg_generic_token},
+
+    // Chroma QM - V channel
+    {SINGLE_INPUT, CHROMA_QM_V_LEVEL_TOKEN, "ChromaQmVLevel", set_cfg_generic_token},
 
     // Termination
     {SINGLE_INPUT, NULL, NULL, NULL}};

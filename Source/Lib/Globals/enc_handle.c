@@ -4599,11 +4599,13 @@ static void copy_api_from_app(
     scs->static_config.max_qm_level = config_struct->max_qm_level;
     scs->static_config.min_chroma_qm_level = config_struct->min_chroma_qm_level;
     scs->static_config.max_chroma_qm_level = config_struct->max_chroma_qm_level;
+    scs->static_config.chroma_qm_v_level = config_struct->chroma_qm_v_level;
     if (scs->static_config.enable_qm &&
         scs->static_config.min_qm_level == 15 &&
         scs->static_config.max_qm_level == 15 &&
         scs->static_config.min_chroma_qm_level == 15 &&
-        scs->static_config.max_chroma_qm_level == 15)
+        scs->static_config.max_chroma_qm_level == 15 &&
+        scs->static_config.chroma_qm_v_level == 15)
     {
         SVT_WARN("Quantization matrices will be forced off since both min and max quant matrix levels are set to 15\n");
         scs->static_config.enable_qm = 0;
@@ -4635,12 +4637,8 @@ static void copy_api_from_app(
     // Override settings for Still Picture tune
     if (scs->static_config.tune == 4) {
         SVT_WARN("Tune 4: Still Picture is experimental, expect frequent changes that may modify present behavior.\n");
-        SVT_WARN("Tune 4: Still Picture overrides: enable-qm, sharpness, variance octile, variance boost strength, alt curve, and min/max QM level.\n");
+        SVT_WARN("Tune 4: Still Picture overrides: enable-qm, sharpness, variance octile, variance boost strength and alt curve\n");
         scs->static_config.enable_qm = 1;
-        scs->static_config.min_qm_level = 4;
-        scs->static_config.max_qm_level = 10;
-        scs->static_config.min_chroma_qm_level = 4;
-        scs->static_config.max_chroma_qm_level = 10;
         scs->static_config.sharpness = 6;
         scs->static_config.variance_boost_strength = 3;
         scs->static_config.variance_octile = 5;

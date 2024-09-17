@@ -2360,9 +2360,9 @@ static void encode_quantization(const PictureParentControlSet *const pcs, struct
     const FrameHeader *frm_hdr = &pcs->frm_hdr;
     svt_aom_wb_write_literal(wb, frm_hdr->quantization_params.base_q_idx, QINDEX_BITS);
     write_delta_q(wb, frm_hdr->quantization_params.delta_q_dc[AOM_PLANE_Y]);
-    int32_t diff_uv_delta = (frm_hdr->quantization_params.delta_q_dc[AOM_PLANE_U] !=
-                             frm_hdr->quantization_params.delta_q_dc[AOM_PLANE_V]) ||
-        (frm_hdr->quantization_params.delta_q_ac[AOM_PLANE_U] != frm_hdr->quantization_params.delta_q_ac[AOM_PLANE_V]);
+    int32_t diff_uv_delta = (frm_hdr->quantization_params.delta_q_dc[AOM_PLANE_U] != frm_hdr->quantization_params.delta_q_dc[AOM_PLANE_V]) ||
+                            (frm_hdr->quantization_params.delta_q_ac[AOM_PLANE_U] != frm_hdr->quantization_params.delta_q_ac[AOM_PLANE_V]) ||
+                            true;
 
     if (diff_uv_delta)
         svt_aom_wb_write_bit(wb, diff_uv_delta);
@@ -2716,10 +2716,9 @@ static AOM_INLINE void write_color_config(const SequenceControlSet *const scs, s
             svt_aom_wb_write_literal(wb, scs->static_config.chroma_sample_position, 2);
         }
     }
-    Bool separate_uv_delta_q = (scs->static_config.chroma_u_ac_qindex_offset !=
-                                    scs->static_config.chroma_v_ac_qindex_offset ||
-                                scs->static_config.chroma_u_dc_qindex_offset !=
-                                    scs->static_config.chroma_v_dc_qindex_offset);
+    Bool separate_uv_delta_q = (scs->static_config.chroma_u_ac_qindex_offset != scs->static_config.chroma_v_ac_qindex_offset ||
+                                scs->static_config.chroma_u_dc_qindex_offset != scs->static_config.chroma_v_dc_qindex_offset ||
+                                true);
     svt_aom_wb_write_bit(wb, separate_uv_delta_q);
 }
 
