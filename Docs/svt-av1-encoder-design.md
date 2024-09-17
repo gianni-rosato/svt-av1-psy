@@ -76,7 +76,7 @@ example shown in Figure 1, Pictures 0 and 16 are said to belong to temporal
 layer 0 or base layer, whereas pictures 1, 3, 5, 7, 9, 11, 13 and 15 are said
 to belong to the non-reference layer or temporal layer 4.
 
-![image1](./img/image1.png)
+![image1](./img/image1.svg)
 <a name = "figure-1"></a>
 ##### Figure 1: Five-layer prediction structure used in the SVT-AV1 encoder with one reference picture in each direction.
 
@@ -85,7 +85,7 @@ to belong to the non-reference layer or temporal layer 4.
 Figure 2 shows the relationship between Pictures, Tiles, SBs, blocks and
 transform blocks.
 
-![image2](./img/image2.png)
+![image2](./img/image2.svg)
 <a name = "figure-2"></a>
 ##### Figure 2: Picture partitioning diagram.
 
@@ -145,15 +145,15 @@ A high-level diagram of the encoder pipeline is shown in Figure 3, with
 more details provided in Figure 4. An illustration of the segment level
 processing is shown in Figure 5.
 
-![image3](./img/image3.png)
+![image3](./img/image3.svg)
 <a name = "figure-3"></a>
 ##### Figure 3. High-level encoder process dataflow (*Filtering processes refer to the filtering processes related to the deblocking filter, CDEF and restoration filter).
 
-![image4](./img/image4.png)
+![image4](./img/image4.svg)
 <a name = "figure-4"></a>
 ##### Figure 4. Detailed encoder process dataflow.
 
-![image5](./img/image5.png)
+![image5](./img/image5.svg)
 <a name = "figure-5"></a>
 ##### Figure 5. Illustration of segment-based processing. The squares in the picture represent segments. Light yellow segments have already been processed. Dark yellow segments are being processed in a parallel manner.
 
@@ -188,7 +188,7 @@ require differing amounts of computational resources. In this case, a system
 resource manager may have N producers and M consumers where N is not equal to
 M.
 
-![image6](./img/image6.png)
+![image6](./img/image6.svg)
 <a name = "figure-6"></a>
 ##### Figure 6: System resource manager dataflow.
 
@@ -511,7 +511,7 @@ hold input pictures until they can be started into the Motion Estimation
 process while following the proper prediction structure. The data flow
 in the picture decision process is show in Figure 7.
 
-![image7](./img/image7.png)
+![image7](./img/image7.svg)
 <a name = "figure-7"></a>
 ##### Figure 7: Picture decision process dataflow.
 
@@ -521,7 +521,7 @@ four-layer prediction structure is shown in Figure 8. The prediction
 structure is implemented using the Show\_frame and Show\_existing\_frame
 flags, as shown in the table below.
 
-![image8](./img/image8.png)
+![image8](./img/image8.svg)
 <a name = "figure-8"></a>
 ##### Figure 8. An example of a four-layer prediction structure.
 
@@ -564,7 +564,7 @@ allowed. Note that through this process, until the subsequent Picture
 Manager process, no reference picture data has been used. The data flow
 in the Initial Rate Control process is illustrated in Figure 9.
 
-![image9](./img/image9.png)
+![image9](./img/image9.svg)
 <a name = "figure-9"></a>
 ##### Figure 9: Initial Rate Control Process Dataflow.
 
@@ -586,7 +586,7 @@ and Reference Picture buffers to implement Pyramidal B GoP structures.
 Figure 10 shows the interaction of the Picture Management algorithm with
 the Enhanced Input Picture and Reference Picture buffers.
 
-![image10](./img/image10.png)
+![image10](./img/image10.svg)
 <a name = "figure-10"></a>
 ##### Figure 10: Picture Management Dataflow.
 

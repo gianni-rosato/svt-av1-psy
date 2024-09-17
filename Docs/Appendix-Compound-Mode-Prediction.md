@@ -16,7 +16,7 @@ $`p(i,j) = m(i,j)p1(i,j) + (1-m(i,j))p2(i,j)`$
 Figure 1 illustrates the process of generating compound mode
 predictions.
 
-![comp_mode_pred_fig1](./img/comp_mode_pred_fig1.png)
+![comp_mode_pred_fig1](./img/comp_mode_pred_fig1.svg)
 
 ##### Figure 1. Compound mode prediction generation.
 
@@ -135,7 +135,7 @@ Table 1 below provides the weights as a function of d1/d0.
 
 ##### Table 1. fwd\_offset and back\_offset as a function of the ration d1/d0 for the case where d0\>0 and d1\>0.
 
-![comp_mode_pred_table1](./img/comp_mode_pred_table1.png)
+![comp_mode_pred_table1](./img/comp_mode_pred_table1.svg)
 
 ## 2. Implementation of the algorithm
 
@@ -161,7 +161,7 @@ The control tokens and flags for the feature are listed in Tables 2 and 3.
 
 The main function calls associated with compound mode prediction in mode decision are indicated in Figure 3.
 
-![comp_mode_pred_fig5](./img/comp_mode_pred_fig5.png)
+![comp_mode_pred_fig5](./img/comp_mode_pred_fig5.svg)
 
 ##### Figure 3. Function calls associated with compound mode prediction in mode decision.
 
@@ -255,7 +255,7 @@ residuals and the intra prediction residuals.
 
 The main function calls starting at ```determine_compound_mode``` are outlined in Figure 4.
 
-![comp_mode_pred_fig6](./img/comp_mode_pred_fig6.png)
+![comp_mode_pred_fig6](./img/comp_mode_pred_fig6.svg)
 
 ##### Figure 4. Continuation of Figure 3 showing the main function calls starting with determine\_compound\_mode.
 
@@ -347,7 +347,7 @@ The two main functions involved in generating compound mode candidates
 in MD stages 0, 1 and 2 are warped\_motion\_prediction and
 av1\_inter\_prediction.
 
-![comp_mode_pred_fig7](./img/comp_mode_pred_fig7.png)
+![comp_mode_pred_fig7](./img/comp_mode_pred_fig7.svg)
 
 ##### Figure 5. Continuation of Figure 3 showing the main function calls associated with compound modes in the case of warped motion prediction.
 
@@ -395,7 +395,7 @@ av1\_inter\_prediction.
 
 - Step 2.1: **av1\_inter\_prediction**
 
-![comp_mode_pred_fig8](./img/comp_mode_pred_fig8.png)
+![comp_mode_pred_fig8](./img/comp_mode_pred_fig8.svg)
 
 ##### Figure 6. Continuation of Figure 3 showing the main function calls in av1_inter_prediction associated with the compound mode.
 

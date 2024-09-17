@@ -13,7 +13,7 @@ the key steps involved in estimating global motion comprise identifying
 features in both images, matching the identified features, and
 estimating global motion parameters based on the matched features.
 
-![gm_fig1](./img/gm_fig1.png)
+![gm_fig1](./img/gm_fig1.svg)
 
 ##### Figure 1. Example of global motion between two frames involving translation and rotation motion.
 
@@ -130,7 +130,7 @@ description of each function.
 
 The global motion data flow is summarized in the Figure 2 below.
 
-![gm_fig2](./img/gm_fig2.png)
+![gm_fig2](./img/gm_fig2.svg)
 
 ##### Figure 2. Global motion data flow in the encoder pipeline.
 

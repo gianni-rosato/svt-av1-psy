@@ -35,7 +35,7 @@ When a frame is first processed in the resource coordination kernel, an open loo
 In the closed loop, frames may be processed in non-decode order.  Therefore, it is necessary to introduce a consecutive decode order: the maximum consecutive
  picture that has been started by the picture manager process (measured in decode order).
 
-<img src="./img/four_layer_minigop.png" width=100%>
+<img src="./img/four_layer_minigop.svg" width=100%>
 
 ##### **Figure 2:** Two 4L mini-GOP structures, with each picture labeled with its decode order.  The green pictures represent the pictures that have been started by the picture manager.  In the example, the consecutive decode order is 4.  Since picture 9 and 10 rely only on picture 1 (previous base) they can be started (i.e. start encoding them in the closed loop) but they will not impact the consecutive decode order until picture 8 starts.
 

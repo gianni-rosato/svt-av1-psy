@@ -30,7 +30,7 @@ mirror position before $`8/16^{th}`$ position.
 
 ##### Table 1. Sub-pel interpolation filters.
 
-![csifsa_fig1](./img/csifsa_fig1.png)
+![csifsa_fig1](./img/csifsa_fig1.svg)
 
 To illustrate the process by which subpel samples are generated,
 consider the diagram shown in Figure 1 below where All sub-pel positions
@@ -59,7 +59,7 @@ either in one step or in two steps.
     from the $`1/16^{th}`$ offset of the sub-pel position from the
     full-pel position.
 
-![csifsa_fig2](./img/csifsa_fig2.png)
+![csifsa_fig2](./img/csifsa_fig2.svg)
 
 ##### Figure 1. Sub-pel positions.
 
@@ -95,7 +95,7 @@ The steps involved in the process are outlined in the following:
       - Vertical filtering is then performed on the intermediate
         results from horizontal filtering.
 
-![csifsa_fig3](./img/csifsa_fig3.png)
+![csifsa_fig3](./img/csifsa_fig3.svg)
 
 ##### Figure 2. Example of sub-pel calculations.
 
@@ -124,7 +124,7 @@ filters becomes necessary (e.g., at MD_Stage_0 towards an accurate prediction,
 and at MD_Stage_3 towards compliant streams for the cases where the Encode-Pass
 is bypassed).
 
-![csifs_figure3](./img/csifs_figure3.png)
+![csifs_figure3](./img/csifs_figure3.svg)
 
 Figure 3. Sub-pel calculations in the Mode Decision process.
 
@@ -174,7 +174,7 @@ As depicted in the Figure 4 below, the interpolation filter search consists of t
 - Step2: Fix the horizontal filter to be Regular and search for the best vertical filter.
 - Step3: Fix the vertical filter to be the best filter from step 2 and search for the best horizontal filter.
 
-![csifsa_fig4](./img/csifsa_fig4.png)
+![csifsa_fig4](./img/csifsa_fig4.svg)
 Figure 4. Diagram illustrating the interpolation filter search process.
 
 In the current implementation, the dual option is not active in any of the

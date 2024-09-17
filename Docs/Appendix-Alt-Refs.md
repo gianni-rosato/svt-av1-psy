@@ -29,7 +29,7 @@ future or past pictures generating multiple motion-compensated predictions.
 These are then combined using adaptive weighting (filtering) to produce the
 final noise-reduced picture.
 
-![altref_fig1](./img/altref_fig1.png)
+![altref_fig1](./img/altref_fig1.svg)
 
 ##### Fig. 1. Example of motion estimation for temporal filtering in a temporal window consisting of 5 adjacent pictures
 
@@ -80,8 +80,9 @@ function of the encoder preset (enc_mode).
 ### Temporal filtering data flow
 
 The block diagram in Figure 2 outlines the flow of the temporal filtering operations.
-
-[altref_block_diagram](./img/altref_newfig2.pdf)
+<details><summary>altref_block_diagram</summary>
+![altref_block_diagram](./img/altref_newfig2.svg)
+</details>
 
 ##### Fig. 2. Block diagram of the temporal filtering operations. (image is too large to display in md, please click the link to see)
 
@@ -155,7 +156,7 @@ Figure 3. In this example, only 3 pictures are used for the temporal filtering
 filter weights are used for illustration purposes only and are in the range
 {0,32}.
 
-![altref_fig2](./img/altref_fig2.png)
+![altref_fig2](./img/altref_fig2.svg)
 
 ##### Fig. 2. Example of the process of generating the filtered block from the predicted blocks of adjacent picture and their corresponding pixel weights.
 
@@ -286,7 +287,7 @@ picture will be displayed instead.
 Consider the example of a five-layer prediction structure shown in Figure 4 below.
 The ALTREF and Overlay picture settings are shown in Table 3.
 
-![image1](./img/image1.png)
+![image1](./img/image1.svg)
 
 #### Figure 4. Example of a five-layer prediction structure.
 

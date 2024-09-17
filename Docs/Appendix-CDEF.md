@@ -33,7 +33,7 @@ The two steps are outlined in more detail in the following section.
 could be considered. The directions are indexed with d=0,…,7 as
 indicated in Figure 1 below.
 
-![image24](./img/image24.png)
+![image24](./img/image24.svg)
 
 ##### Figure 1. Block directions.
 
@@ -57,7 +57,7 @@ The example in Figure 2 below illustrates this step for an 8x8 input block. In t
 example, direction 0 has the smallest error variance and is selected as the block
 direction.
 
-![image25](./img/image25.png)
+![image25](./img/image25.svg)
 
 ##### Figure 2. Example of block direction identification.
 
@@ -72,7 +72,7 @@ During secondary filtering of the red sample the eight blue samples
 located at a $`45^o`$ angle from the block direction
 are considered.
 
-![image26](./img/image26.png)
+![image26](./img/image26.svg)
 
 ##### Figure 3. Example of primary and secondary filtering directions.
 
@@ -101,7 +101,7 @@ damping values. The filter weights for primary filtering are shown in
 Figure 4 below. The sample to be filtered is shown in blue. For even
 strengths, a = 2 and b = 4, whereas for odd strengths a = 3 and b = 3.
 
-![image27](./img/image27.png)
+![image27](./img/image27.svg)
 
 ##### Figure 4. Filter weights for primary filtering.
 
@@ -112,7 +112,7 @@ The filter weights for secondary filtering are indicated in Figure 5
 below as a function of the block direction. The sample to be filtered is
 shown in blue.
 
-![image28](./img/image28.png)
+![image28](./img/image28.svg)
 
 ##### Figure 5. Filter weights for secondary filtering.
 

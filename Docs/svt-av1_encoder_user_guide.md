@@ -25,10 +25,10 @@ input parameters and the resulting outputs.
 The SVT-AV1 Encoder supports the following input formats:
 
 _8-bit yuv420p_\
-![8-bit yuv420p](img/8bit_yuv420p.png "8-bit yuv420p")
+![8-bit yuv420p](img/8bit_yuv420p.svg "8-bit yuv420p")
 
 _10-bit yuv420p10le_\
-![10-bit yuv420p10le](img/10bit_yuv420p.png "10-bit yuv420p10le")
+![10-bit yuv420p10le](img/10bit_yuv420p.svg "10-bit yuv420p10le")
 
 ### Compressed 10-bit format
 
@@ -46,7 +46,7 @@ as shown in the figure below. As a result of the operation, the 2 least
 significant bits of the 10 bits will be written into a full byte.
 
 _10-bit yuv420p10le unpacked_\
-![10-bit yuv420p10le unpacked](img/10bit_unpacked.png "10-bit yuv420p10le unpacked")
+![10-bit yuv420p10le unpacked](img/10bit_unpacked.svg "10-bit yuv420p10le unpacked")
 
 #### Compress the 2 bit Plane
 
@@ -57,7 +57,7 @@ compressed into one byte. As a result, each 10bit picture will be represented
 as two separate pictures as shown in the figure below.
 
 _10-bit yuv420p10le compressed_\
-![10-bit yuv420p10le compressed](img/10bit_packed.png "10-bit yuv420p10le compressed")
+![10-bit yuv420p10le compressed](img/10bit_packed.svg "10-bit yuv420p10le compressed")
 
 ### Running the encoder
 

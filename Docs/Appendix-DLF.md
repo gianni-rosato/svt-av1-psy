@@ -34,7 +34,7 @@ edges. The main idea behind the filter can be summarized as follows:
 A block diagram illustrating the flow of the different steps involved in
 filtering is given in Figure 1 below.
 
-![dlf_fig1](./img/dlf_fig1.png)
+![dlf_fig1](./img/dlf_fig1.svg)
 
 ##### Figure 1. Steps in the loop filter decisions making process.
 
@@ -224,7 +224,7 @@ The steps involved in the filtering operation are as follows:
 
 The filtering decisions are outlined in the diagram shown in Figure 2 below.
 
-![dlf_fig2](./img/dlf_fig2.png)
+![dlf_fig2](./img/dlf_fig2.svg)
 
 ##### Figure 2. Flow of the loop filter decision making process.
 
@@ -233,7 +233,7 @@ operation are outlined below. Figure 3 below indicates the positions
 of the samples across the horizontal edge to be filtered, with similar
 arrangement of the samples for the case of a vertical edge.
 
-![dlf_fig3](./img/dlf_fig3.png)
+![dlf_fig3](./img/dlf_fig3.svg)
 
 ##### Figure 3. Sample positions across the horizontal edge to be filtered.
 
@@ -308,7 +308,7 @@ filter14)
 | DlfCtrls                | Picture       | Describes the Dlf control signal.                                                                                                                                                                                                                                                                       |
 | combine\_vert\_horz\_lf | Picture       | When set, it implies performing filtering of vertical edges in the current SB followed by filtering of horizontal edges in the preceding SB in the same SB row. When OFF, it implies performing filtering of vertical edges in the current SB followed by filtering of horizontal edges in the same SB. |
 
-![dlf_new_fig4](./img/dlf_new_fig4.png)
+![dlf_new_fig4](./img/dlf_new_fig4.svg)
 
 ##### Figure 4. High-level encoder process dataflow with DLF feature.
 
@@ -413,7 +413,7 @@ The function calls that start at ```svt_av1_loop_filter_frame``` are
 indicated in Figure 5 below according to the depth of the function
 call.
 
-![dlf_fig4](./img/dlf_fig4.png)
+![dlf_fig4](./img/dlf_fig4.svg)
 
 ##### Figure 5. Function calls starting at eb\_av1\_loop\_filter\_frame.
 
