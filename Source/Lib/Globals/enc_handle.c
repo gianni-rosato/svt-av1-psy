@@ -5488,6 +5488,7 @@ EB_API EbErrorType svt_av1_enc_get_packet(
     EbEncHandle          *enc_handle = (EbEncHandle*)svt_enc_component->p_component_private;
     EbObjectWrapper      *eb_wrapper_ptr = NULL;
     EbBufferHeaderType    *packet;
+    const EbSvtAv1EncConfiguration* cfg = &enc_handle->scs_instance_array[0]->scs->static_config;
 
     // check if the user is claiming that the last picture has been sent
     // without actually signalling it through svt_av1_enc_send_picture()
@@ -5500,7 +5501,7 @@ EB_API EbErrorType svt_av1_enc_get_packet(
         return EB_NoErrorEmptyQueue;
     }
 
-    if (pic_send_done)
+    if (pic_send_done || cfg->pred_structure == SVT_AV1_PRED_LOW_DELAY_B)
         svt_get_full_object(
             enc_handle->output_stream_buffer_consumer_fifo_ptr,
             &eb_wrapper_ptr);
