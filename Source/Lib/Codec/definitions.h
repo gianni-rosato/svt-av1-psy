@@ -230,7 +230,6 @@ typedef enum SqWeightOffsets {
     AGGRESSIVE_OFFSET_1   = -10
 } SqWeightOffsets;
 
-#if OPT_FD2_MFMV
 #define COEFF_LVL_TH_0 (5833 / 96)
 #define COEFF_LVL_TH_1 (5833 / 48)
 #define COEFF_LVL_TH_2 (16666 / 48)
@@ -241,16 +240,6 @@ typedef enum InputCoeffLvl {
     HIGH_LVL    = 3,
     INVALID_LVL = ~0,
 } InputCoeffLvl;
-#else
-#define COEFF_LVL_TH_0 (5833 / 48)
-#define COEFF_LVL_TH_1 (16666 / 48)
-typedef enum InputCoeffLvl {
-    LOW_LVL     = 0,
-    NORMAL_LVL  = 1,
-    HIGH_LVL    = 2,
-    INVALID_LVL = ~0,
-} InputCoeffLvl;
-#endif
 typedef struct Buf2D {
     uint8_t *buf;
     uint8_t *buf0;

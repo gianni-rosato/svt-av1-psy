@@ -1646,15 +1646,8 @@ void svt_aom_full_cost(PictureControlSet *pcs, ModeDecisionContext *ctx, struct 
  * Coding Loop Context Generation
  ************************************************************/
 void svt_aom_coding_loop_context_generation(PictureControlSet *pcs, ModeDecisionContext *ctx) {
-    BlkStruct *blk_ptr = ctx->blk_ptr;
-#if !FIX_PART_NEIGH_UPDATE
-    uint32_t           blk_org_x                     = ctx->blk_org_x;
-    uint32_t           blk_org_y                     = ctx->blk_org_y;
-    NeighborArrayUnit *leaf_partition_na             = ctx->leaf_partition_na;
-    uint32_t           partition_left_neighbor_index = get_neighbor_array_unit_left_index(leaf_partition_na, blk_org_y);
-    uint32_t           partition_above_neighbor_index = get_neighbor_array_unit_top_index(leaf_partition_na, blk_org_x);
-#endif
-    MacroBlockD *xd = blk_ptr->av1xd;
+    BlkStruct   *blk_ptr = ctx->blk_ptr;
+    MacroBlockD *xd      = blk_ptr->av1xd;
     if (!ctx->shut_fast_rate) {
         if (pcs->slice_type == I_SLICE) {
             svt_aom_get_kf_y_mode_ctx(xd, &ctx->intra_luma_top_ctx, &ctx->intra_luma_left_ctx);
@@ -1662,20 +1655,6 @@ void svt_aom_coding_loop_context_generation(PictureControlSet *pcs, ModeDecision
         ctx->is_inter_ctx  = svt_av1_get_intra_inter_context(xd);
         ctx->skip_mode_ctx = av1_get_skip_mode_context(xd);
     }
-#if !FIX_PART_NEIGH_UPDATE
-    // Generate Partition context
-    blk_ptr->above_neighbor_partition =
-        (((PartitionContext *)leaf_partition_na->top_array)[partition_above_neighbor_index].above ==
-         (char)INVALID_NEIGHBOR_DATA)
-        ? 0
-        : ((PartitionContext *)leaf_partition_na->top_array)[partition_above_neighbor_index].above;
-
-    blk_ptr->left_neighbor_partition =
-        (((PartitionContext *)leaf_partition_na->left_array)[partition_left_neighbor_index].left ==
-         (char)INVALID_NEIGHBOR_DATA)
-        ? 0
-        : ((PartitionContext *)leaf_partition_na->left_array)[partition_left_neighbor_index].left;
-#endif
     // Collect Neighbor ref cout
     if (pcs->slice_type != I_SLICE || pcs->ppcs->frm_hdr.allow_intrabc)
         svt_aom_collect_neighbors_ref_counts_new(blk_ptr->av1xd);
@@ -2008,46 +1987,35 @@ uint64_t svt_aom_partition_rate_cost(PictureParentControlSet *pcs, ModeDecisionC
     const int                  bsl       = mi_size_wide_log2[bsize] - mi_size_wide_log2[BLOCK_8X8];
     assert(bsl >= 0);
 
-    const int above = (above_ctx >> bsl) & 1, left = (left_ctx >> bsl) & 1;
-#if OPT_ACC_PART_CTX_FEAT
+    const int      above = (above_ctx >> bsl) & 1, left = (left_ctx >> bsl) & 1;
     const uint32_t context_index = (left * 2 + above) + bsl * PARTITION_PLOFFSET;
-#else
-    const int      partitio_ploffset = use_accurate_part_ctx ? PARTITION_PLOFFSET : 0;
-    const uint32_t context_index     = (left * 2 + above) + bsl * partitio_ploffset;
-#endif
 
     uint64_t split_rate = 0;
 
     if (has_rows && has_cols) {
         split_rate = (uint64_t)md_rate_est_ctx->partition_fac_bits[context_index][p];
     } else if (!has_rows && has_cols) {
-#if OPT_ACC_PART_CTX_FEAT
         // 8x8 blocks will not use the split_or_horz or the split_or_vert paritition CDFs, per
         // section 8.3.2 of the AV1 spec (Cdf selection process).  Therefore, only update partition ctx 4+,
         // which corresponds to the paritition CDFs for 16x16 and larger blocks
         assert(bsize != BLOCK_8X8);
-#endif
         split_rate = bsize == BLOCK_128X128
             ? (uint64_t)md_rate_est_ctx->partition_vert_alike_128x128_fac_bits[context_index][p == PARTITION_SPLIT]
             : (uint64_t)md_rate_est_ctx->partition_vert_alike_fac_bits[context_index][p == PARTITION_SPLIT];
     } else {
-#if OPT_ACC_PART_CTX_FEAT
         // 8x8 blocks will not use the split_or_horz or the split_or_vert paritition CDFs, per
         // section 8.3.2 of the AV1 spec (Cdf selection process).  Therefore, only update partition ctx 4+,
         // which corresponds to the paritition CDFs for 16x16 and larger blocks
         assert(bsize != BLOCK_8X8);
-#endif
         split_rate = bsize == BLOCK_128X128
             ? (uint64_t)md_rate_est_ctx->partition_horz_alike_128x128_fac_bits[context_index][p == PARTITION_SPLIT]
             : (uint64_t)md_rate_est_ctx->partition_horz_alike_fac_bits[context_index][p == PARTITION_SPLIT];
     }
 
-#if OPT_ACC_PART_CTX_FEAT
     // If not using accurate partition rate, bias against splitting by increasing the rate of SPLIT partition
     if (!use_accurate_part_ctx && p == PARTITION_SPLIT) {
         split_rate *= 2;
     }
-#endif
 
     return (RDCOST(lambda, split_rate, 0));
 }

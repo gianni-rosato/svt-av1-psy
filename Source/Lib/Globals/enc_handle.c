@@ -337,11 +337,7 @@ void svt_aom_asm_set_convolve_hbd_asm_table(void);
 void svt_aom_init_intra_dc_predictors_c_internal(void);
 void svt_aom_init_intra_predictors_internal(void);
 void svt_av1_init_me_luts(void);
-#if TUNE_FD2 && !TUNE_M5_M7
-uint8_t svt_aom_get_tpl_group_level(uint8_t tpl, int8_t enc_mode, SvtAv1RcMode rc_mode, const uint8_t fast_decode);
-#else
 uint8_t svt_aom_get_tpl_group_level(uint8_t tpl, int8_t enc_mode, SvtAv1RcMode rc_mode);
-#endif
 uint8_t svt_aom_set_tpl_group(PictureParentControlSet* pcs, uint8_t tpl_group_level, uint32_t source_width, uint32_t source_height);
 static void enc_switch_to_real_time(){
 #if !defined(_WIN32)
@@ -1549,18 +1545,10 @@ EB_API EbErrorType svt_av1_enc_init(EbComponentType *svt_enc_component)
                 MAX(mrp_ctrl->base_ref_list1_count,
                     MAX(mrp_ctrl->sc_non_base_ref_list1_count, mrp_ctrl->non_base_ref_list1_count)));
         input_data.tpl_synth_size = svt_aom_set_tpl_group(NULL,
-#if TUNE_FD2 && !TUNE_M5_M7
-            svt_aom_get_tpl_group_level(
-                1,
-                enc_handle_ptr->scs_instance_array[instance_index]->scs->static_config.enc_mode,
-                enc_handle_ptr->scs_instance_array[instance_index]->scs->static_config.rate_control_mode,
-                enc_handle_ptr->scs_instance_array[instance_index]->scs->static_config.fast_decode),
-#else
             svt_aom_get_tpl_group_level(
                 1,
                 enc_handle_ptr->scs_instance_array[instance_index]->scs->static_config.enc_mode,
                 enc_handle_ptr->scs_instance_array[instance_index]->scs->static_config.rate_control_mode),
-#endif
             input_data.picture_width, input_data.picture_height);
         input_data.enable_adaptive_quantization = enc_handle_ptr->scs_instance_array[instance_index]->scs->static_config.enable_adaptive_quantization;
         input_data.calculate_variance = enc_handle_ptr->scs_instance_array[instance_index]->scs->calculate_variance;
@@ -3945,17 +3933,8 @@ static void set_param_based_on_input(SequenceControlSet *scs)
     // when resize mode is used, use sb 64 because of a r2r when 128 is used
     // In low delay mode, sb size is set to 64
     // in 240P resolution, sb size is set to 64
-#if TUNE_M2_FD1
     if ((scs->static_config.fast_decode && scs->static_config.qp <= 56 && !(scs->input_resolution <= INPUT_SIZE_360p_RANGE)) ||
         scs->static_config.resize_mode > RESIZE_NONE ||
-#else
-#if TUNE_M2_FD2
-    if ((!(scs->static_config.fast_decode <= 1) && scs->static_config.qp <= 56 && !(scs->input_resolution <= INPUT_SIZE_360p_RANGE)) ||
-        scs->static_config.resize_mode > RESIZE_NONE ||
-#else
-    if (scs->static_config.resize_mode > RESIZE_NONE ||
-#endif
-#endif
         scs->static_config.pred_structure == SVT_AV1_PRED_LOW_DELAY_B ||
         (scs->input_resolution == INPUT_SIZE_240p_RANGE) ||
         scs->static_config.enable_variance_boost)
@@ -4167,22 +4146,11 @@ static void set_param_based_on_input(SequenceControlSet *scs)
 
     if (scs->static_config.rate_control_mode == SVT_AV1_RC_MODE_VBR || scs->static_config.rate_control_mode == SVT_AV1_RC_MODE_CBR ||
         scs->input_resolution >= INPUT_SIZE_4K_RANGE ||
-#if OPT_FAST_DECODE_LVLS
         scs->static_config.fast_decode !=0 ||
-#else
-        scs->static_config.fast_decode == 1 ||
-#endif
         scs->static_config.pred_structure == SVT_AV1_PRED_LOW_DELAY_B || scs->static_config.pass != ENC_SINGLE_PASS || scs->static_config.enc_mode >= ENC_M10)
         scs->enable_dg = 0;
     else
         scs->enable_dg = scs->static_config.enable_dg;
-#if !CLEAN_UP_FD_SIG
-#if OPT_FAST_DECODE_LVLS
-    // Multi fast-decode levels only supported for M7
-    if (scs->static_config.fast_decode != 0 && scs->static_config.enc_mode != ENC_M7)
-        scs->static_config.fast_decode = 1;
-#endif
-#endif
     // Set hbd_md OFF for high encode modes or bitdepth < 10
     if (scs->static_config.encoder_bit_depth < 10)
         scs->enable_hbd_mode_decision = 0;
@@ -4204,65 +4172,23 @@ static void set_param_based_on_input(SequenceControlSet *scs)
     }
     else {
         if (scs->static_config.enc_mode <= ENC_MR) {
-#if CLN_MRP_LVL
             if (!(scs->input_resolution <= INPUT_SIZE_360p_RANGE) && !(scs->static_config.fast_decode <= 1))
                 mrp_level = 9;
             else
                 mrp_level = 1;
-#else
-            mrp_level = 1;
-#endif
-        }
-#if TUNE_M1_FD2 && !TUNE_M0_MR_FD2
-        else if (scs->static_config.enc_mode <= ENC_M0) {
-            mrp_level = 2;
         }
         else if (scs->static_config.enc_mode <= ENC_M1) {
-            if (scs->input_resolution <= INPUT_SIZE_360p_RANGE || scs->static_config.fast_decode <= 1)
-                mrp_level = 2;
-            else
-                mrp_level = 9;
-        }
-#else
-        else if (scs->static_config.enc_mode <= ENC_M1) {
-#if CLN_MRP_LVL
             if (!(scs->input_resolution <= INPUT_SIZE_360p_RANGE) && !(scs->static_config.fast_decode <= 1))
                 mrp_level = 9;
             else
                 mrp_level = 2;
-#else
-            mrp_level = 2;
-#endif
         }
-#endif
-#if TUNE_M4_M5_FD2 && !TUNE_M0_MR_FD2
-#if !TUNE_M2_FD2
-#if TUNE_M3_FD2
-        else if (scs->static_config.enc_mode <= ENC_M2) {
-#else
-        else if (scs->static_config.enc_mode <= ENC_M3) {
-#endif
-            mrp_level = 5;
-        }
-#endif
         else if (scs->static_config.enc_mode <= ENC_M4) {
-            if (scs->input_resolution <= INPUT_SIZE_360p_RANGE || scs->static_config.fast_decode <= 1)
-                mrp_level = 5;
-            else
-                mrp_level = 9;
-        }
-#else
-        else if (scs->static_config.enc_mode <= ENC_M4) {
-#if CLN_MRP_LVL
             if (!(scs->input_resolution <= INPUT_SIZE_360p_RANGE) && !(scs->static_config.fast_decode <= 1))
                 mrp_level = 9;
             else
                 mrp_level = 5;
-#else
-            mrp_level = 5;
-#endif
         }
-#endif
         // any changes for preset ENC_M8 and higher should be separated for VBR and CRF in the control structure below
         else if (scs->static_config.rate_control_mode != SVT_AV1_RC_MODE_VBR) {
             if (scs->static_config.enc_mode <= ENC_M9)
@@ -4276,12 +4202,6 @@ static void set_param_based_on_input(SequenceControlSet *scs)
             mrp_level = 12;
         }
     }
-#if TUNE_M0_MR_FD2 && !CLN_MRP_LVL
-    // For fast-decode 2, the MRP level should be at least 9
-    if (mrp_level && !(scs->input_resolution <= INPUT_SIZE_360p_RANGE) && !(scs->static_config.fast_decode <= 1)) {
-        mrp_level = MAX(9, mrp_level);
-    }
-#endif
     set_mrp_ctrl(scs, mrp_level);
     scs->is_short_clip = scs->static_config.gop_constraint_rc ? 1 : 0; // set to 1 if multipass and less than 200 frames in resourcecordination
 
@@ -4409,7 +4329,6 @@ static void copy_api_from_app(
 
     // If the set fast_decode value is in the allowable range, check that the value is supported for the current preset.
     // If the value is valid, but not supported in the current preset, change the value to one that is supported.
-#if TUNE_LIMIT_FD
     if (scs->static_config.fast_decode != 0) {
         if (scs->static_config.enc_mode >= ENC_M10) {
             SVT_WARN("The fast decode option is not supported in M%d.\n", scs->static_config.enc_mode);
@@ -4418,36 +4337,6 @@ static void copy_api_from_app(
             scs->static_config.fast_decode = 0;
         }
     }
-#else
-#if OPT_FAST_DECODE_LVLS
-    if (scs->static_config.fast_decode != 0) {
-#else
-    if (scs->static_config.fast_decode == 1) {
-#endif
-#if ENABLE_FD_M0_MR
-        if (scs->static_config.enc_mode >= ENC_M11) {
-#else
-        if (scs->static_config.enc_mode <= ENC_M0 || scs->static_config.enc_mode >= ENC_M11) {
-#endif
-            SVT_WARN("The fast decode option is not supported in M%d.\n", scs->static_config.enc_mode);
-#if ENABLE_FD_M0_MR
-            SVT_WARN("Decoder speedup is only supported in presets MR-M10.\n");
-#else
-            SVT_WARN("Decoder speedup is only supported in presets M1-M10.\n");
-#endif
-            SVT_WARN("Switching off decoder speedup optimizations.\n");
-            scs->static_config.fast_decode = 0;
-        }
-#if LIMIT_FD2_MR_M7
-        else if (scs->static_config.enc_mode >= ENC_M8 && scs->static_config.fast_decode > 1) {
-            SVT_WARN("Fast decode level %d is not supported in M%d.\n", scs->static_config.fast_decode, scs->static_config.enc_mode);
-            SVT_WARN("Fast decode level 2 is only supported in presets MR-M7.\n");
-            SVT_WARN("Switching to fast decode level 1.\n");
-            scs->static_config.fast_decode = 1;
-        }
-#endif
-    }
-#endif
 
     //Film Grain
     scs->static_config.film_grain_denoise_strength = ((EbSvtAv1EncConfiguration*)config_struct)->film_grain_denoise_strength;
@@ -4502,11 +4391,7 @@ static void copy_api_from_app(
     if (scs->static_config.hierarchical_levels == 0) {
         scs->static_config.hierarchical_levels = scs->static_config.pred_structure == SVT_AV1_PRED_LOW_DELAY_B ?
             2 :
-#if OPT_FAST_DECODE_LVLS
             scs->static_config.fast_decode != 0 ||
-#else
-            scs->static_config.fast_decode == 1 ||
-#endif
             scs->static_config.rate_control_mode == SVT_AV1_RC_MODE_VBR || scs->static_config.rate_control_mode == SVT_AV1_RC_MODE_CBR ||
             (input_resolution >= INPUT_SIZE_1080p_RANGE && scs->static_config.enc_mode >= ENC_M10) ||
             !(scs->static_config.enc_mode <= ENC_M10) || input_resolution >= INPUT_SIZE_8K_RANGE

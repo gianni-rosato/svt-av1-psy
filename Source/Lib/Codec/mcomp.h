@@ -77,10 +77,8 @@ typedef struct {
 
     int w, h;
 
-#if OPT_SUBPEL
     bool
         bias_fp; // Bias towards fpel at the MD subpel-search: apply a penalty to the cost of fractional positions during the subpel-search each time we check against a full-pel MV
-#endif
 } SUBPEL_SEARCH_VAR_PARAMS;
 
 // This struct holds subpixel motion search parameters that should be constant

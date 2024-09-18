@@ -34,32 +34,6 @@
 extern "C" {
 #endif // __cplusplus
 
-#define OPT_ACC_PART_CTX_FEAT                     1 // Update the use_accurate_part_ctx feature to use the correct partition context
-#define CLN_FD_USE_LOCAL                          1 // Use local variable for fast-decode to follow convention in signal derivation
-#define UNIFY_DLF_LVL                             1 // Unified the DLF-level derivation for fd_3 and fd_1; used coeff_level-based modulation and skip_selection-based modulation for fd_3
-#define FIX_PART_NEIGH_UPDATE                     1 // Fix partition neighbour updates
-#define FIX_USE_SB_LAMBDA_DR                      1 // Use the SB lambda at depth-removal, instead of non-updated block-based lambda
-#define OPT_FAST_DECODE_LVLS                      1 // Add the ability to use different lvls for fast-decode
-#define OPT_FD3_CDEF                              1 // Optimize cost bias for cdef for fd3
-#define OPT_SUBPEL                                1 // Bias towards fpel at the MD subpel-search: apply a penalty to the cost of fractional positions during the subpel-search each time we check against a full-pel MV
-#define CLEAN_UP_FD_SIG                           1 // Clean-up fd signal(s); fd_2 to match fd_3, then remove fd_-1 and fd_3.
-#define OPT_FD2_MFMV                              1 // Create a very-low coeff-level band (VLOW_LVL) and apply mfmv only to that band in fd2
-#define TUNE_FD2                                  1 // Preset tuning for only fd2
-#define TUNE_M4_M5_FD2                            1 // Tune fd2 for M4 and M5
-#define TUNE_M5_M7                                1 // Tune M5 and M7 for fd0, fd1, and fd2
-#define FIX_SKIP_INTRA_CHECK                      1 // Ensure intra is not skipped for islice
-#define TUNE_M3_FD2                               1 // Tune M3 for fd2
-#define TUNE_M2_FD2                               1 // Tune M2 for fd2
-#define TUNE_M1_FD2                               1 // Tune M1 for fd2
-#define ENABLE_FD_M0_MR                           1 // Enable fast decode modes for M0 and MR
-#define TUNE_M0_MR_FD2                            1 // Tune M0 and MR for fd2
-#define TUNE_M2_FD1                               1 // Tune M3 and below fd1
-#define TUNE_M7_CDEF_FD1                          1 // Enable CDEF cost bias for FD1 in M7-M9
-#define LIMIT_FD2_MR_M7                           1 // Limit fast-decode 2 to M7 and below presets
-#define TUNE_LIMIT_FD                             1 // Enable fast-decode 2 up to M9; disable fast-decode in M10
-#define CLN_UNUSED_CHECKS                         1 // Cleanup unused checks in the code
-#define CLN_MRP_LVL                               1 // Cleanup how MRP level is set
-
 //FOR DEBUGGING - Do not remove
 #define OPT_LD_LATENCY2         1 // Latency optimization for low delay - to keep the Macro for backwards testing until 3.0
 #define LOG_ENC_DONE            0 // log encoder job one

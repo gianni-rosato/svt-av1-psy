@@ -520,8 +520,6 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet *scs) {
             config->enable_dg);
         return_error = EB_ErrorBadParameter;
     }
-#if OPT_FAST_DECODE_LVLS
-#if CLEAN_UP_FD_SIG
     if (config->fast_decode > 2) {
         SVT_ERROR(
             "Instance %u: Invalid fast decode flag [0 - 2, 0 for no decoder-targeted optimization], your "
@@ -530,26 +528,6 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet *scs) {
             config->fast_decode);
         return_error = EB_ErrorBadParameter;
     }
-#else
-    if (config->fast_decode < -1 || config->fast_decode > 3) {
-        SVT_ERROR(
-            "Instance %u: Invalid fast decode flag [-1 - 3, 0 for no decoder optimization], your "
-            "input: %d\n",
-            channel_number + 1,
-            config->fast_decode);
-        return_error = EB_ErrorBadParameter;
-    }
-#endif
-#else
-    if (config->fast_decode > 1) {
-        SVT_ERROR(
-            "Instance %u: Invalid fast decode flag [0 - 1, 0 for no decoder optimization], your "
-            "input: %d\n",
-            channel_number + 1,
-            config->fast_decode);
-        return_error = EB_ErrorBadParameter;
-    }
-#endif
     if (config->tune > 2) {
         SVT_ERROR(
             "Instance %u: Invalid tune flag [0 - 2, 0 for VQ, 1 for PSNR and 2 for SSIM], your "
@@ -837,24 +815,10 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet *scs) {
             "not insert a key frame at scene changes\n");
     }
     if ((config->tile_columns > 0 || config->tile_rows > 0)) {
-#if OPT_FAST_DECODE_LVLS
-#if CLEAN_UP_FD_SIG
         SVT_WARN(
             "If you are using tiles with the intent of increasing the decoder speed, please also "
             "consider using --fast-decode 1 or 2, especially if the intended decoder is running with "
             "limited multi-threading capabilities.\n");
-#else
-        SVT_WARN(
-            "If you are using tiles with the intent of increasing the decoder speed, please also "
-            "consider using --fast-decode 1, 2,.. especially if the intended decoder is running with "
-            "limited multi-threading capabilities.\n");
-#endif
-#else
-        SVT_WARN(
-            "If you are using tiles with the intent of increasing the decoder speed, please also "
-            "consider using --fast-decode 1, especially if the intended decoder is running with "
-            "limited multi-threading capabilities.\n");
-#endif
     }
     if (config->tune == 0 && config->fast_decode > 0) {
         SVT_WARN(
@@ -2004,11 +1968,7 @@ EB_API EbErrorType svt_av1_enc_parse_parameter(EbSvtAv1EncConfiguration *config_
         {"startup-mg-size", &config_struct->startup_mg_size},
         {"variance-boost-strength", &config_struct->variance_boost_strength},
         {"variance-octile", &config_struct->variance_octile},
-#if CLEAN_UP_FD_SIG
-#if OPT_FAST_DECODE_LVLS
         {"fast-decode", &config_struct->fast_decode},
-#endif
-#endif
     };
     const size_t uint8_opts_size = sizeof(uint8_opts) / sizeof(uint8_opts[0]);
 
@@ -2079,11 +2039,6 @@ EB_API EbErrorType svt_av1_enc_parse_parameter(EbSvtAv1EncConfiguration *config_
         int8_t     *out;
     } int8_opts[] = {
         {"preset", &config_struct->enc_mode},
-#if !CLEAN_UP_FD_SIG
-#if OPT_FAST_DECODE_LVLS
-        {"fast-decode", &config_struct->fast_decode},
-#endif
-#endif
     };
     const size_t int8_opts_size = sizeof(int8_opts) / sizeof(int8_opts[0]);
 
@@ -2111,9 +2066,6 @@ EB_API EbErrorType svt_av1_enc_parse_parameter(EbSvtAv1EncConfiguration *config_
         {"rmv", &config_struct->restricted_motion_vector},
         {"enable-tf", &config_struct->enable_tf},
         {"enable-overlays", &config_struct->enable_overlays},
-#if !OPT_FAST_DECODE_LVLS
-        {"fast-decode", &config_struct->fast_decode},
-#endif
         {"enable-force-key-frames", &config_struct->force_key_frames},
         {"enable-qm", &config_struct->enable_qm},
         {"enable-dg", &config_struct->enable_dg},

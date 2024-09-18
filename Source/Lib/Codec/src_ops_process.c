@@ -497,10 +497,8 @@ static void tpl_subpel_search(SequenceControlSet *scs, PictureParentControlSet *
     ms_params->abs_th_mult                      = 0;
     ms_params->round_dev_th                     = MAX_SIGNED_VALUE;
     ms_params->skip_diag_refinement             = pcs->tpl_ctrls.subpel_diag_refinement;
-#if OPT_SUBPEL
-    ms_params->var_params.bias_fp = 0;
-#endif
-    uint8_t early_exit = 0;
+    ms_params->var_params.bias_fp               = 0;
+    uint8_t early_exit                          = 0;
     subpel_search_method(NULL,
                          xd,
                          (const struct AV1Common *const)cm,

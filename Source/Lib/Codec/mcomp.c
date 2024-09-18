@@ -177,9 +177,7 @@ static INLINE int svt_estimated_pref_error(const MV *this_mv, const SUBPEL_SEARC
     //        sse, second_pred);
     //}
 }
-#if OPT_SUBPEL
 #define BIAS_FP_WEIGHT 110
-#endif
 // Estimates whether this_mv is better than best_mv. This function incorporates
 // both prediction error and residue into account. It is suffixed "fast" because
 // it uses bilinear filter to estimate the prediction.
@@ -206,15 +204,11 @@ static INLINE unsigned int svt_check_better_fast(MacroBlockD *xd, const struct A
             thismse = svt_estimated_pref_error(this_mv, var_params, &sse);
         }
         cost += thismse;
-#if OPT_SUBPEL
         int weight = 100;
         if (var_params->bias_fp && (*best_mv).col % 8 == 0 && (*best_mv).row % 8 == 0)
             weight = BIAS_FP_WEIGHT;
 
         if (((cost * weight) / 100) < *besterr) {
-#else
-        if (cost < *besterr) {
-#endif
             *besterr    = cost;
             *best_mv    = *this_mv;
             *distortion = thismse;
@@ -241,15 +235,11 @@ static AOM_FORCE_INLINE unsigned int svt_check_better(MacroBlockD *xd, const str
         thismse = svt_upsampled_pref_error(xd, cm, this_mv, var_params, &sse);
         cost    = svt_mv_err_cost_(this_mv, mv_cost_params);
         cost += thismse;
-#if OPT_SUBPEL
         int weight = 100;
         if (var_params->bias_fp && (*best_mv).col % 8 == 0 && (*best_mv).row % 8 == 0)
             weight = BIAS_FP_WEIGHT;
 
         if (((cost * weight) / 100) < *besterr) {
-#else
-        if (cost < *besterr) {
-#endif
             *besterr    = cost;
             *best_mv    = *this_mv;
             *distortion = thismse;

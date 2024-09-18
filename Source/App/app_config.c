@@ -1031,11 +1031,7 @@ ConfigEntry config_entry_specific[] = {
      "Motion Field Motion Vector control, default is -1 [-1: auto, 0-1]",
      set_cfg_generic_token},
     {SINGLE_INPUT, DG_ENABLE_NEW_TOKEN, "Dynamic GoP control, default is 1 [0-1]", set_cfg_generic_token},
-#if TUNE_LIMIT_FD
     {SINGLE_INPUT, FAST_DECODE_TOKEN, "Fast Decoder levels, default is 0 [0-2]", set_cfg_generic_token},
-#else
-    {SINGLE_INPUT, FAST_DECODE_TOKEN, "Fast Decoder levels, default is 0 [0-1]", set_cfg_generic_token},
-#endif
     // --- start: ALTREF_FILTERING_SUPPORT
     {SINGLE_INPUT,
      ENABLE_TF_TOKEN,
