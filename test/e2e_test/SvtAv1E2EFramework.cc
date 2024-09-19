@@ -505,7 +505,7 @@ void SvtAv1E2ETestFramework::run_encode_process() {
             // try to get one encoded frame, flush the encoder
             // if src_file_eos is true
             do {
-                // non-blocking call
+                // non-blocking call if not using low-delay
                 EbBufferHeaderType *enc_out = nullptr;
                 {
                     TimeAutoCount counter(ENCODING, collect_);

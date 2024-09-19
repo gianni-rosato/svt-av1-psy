@@ -1029,12 +1029,16 @@ EB_API EbErrorType svt_av1_enc_stream_header_release(EbBufferHeaderType *stream_
      * @ *p_buffer           Header pointer, picture buffer. */
 EB_API EbErrorType svt_av1_enc_send_picture(EbComponentType *svt_enc_component, EbBufferHeaderType *p_buffer);
 
-/* STEP 5: Receive packet.
-     * Parameter:
-    * @ *svt_enc_component  Encoder handler.
-     * @ **p_buffer          Header pointer to return packet with.
-     * @ pic_send_done       Flag to signal that all input pictures have been sent, this call becomes locking one this signal is 1.
-     * Non-locking call, returns EB_ErrorMax for an encode error, EB_NoErrorEmptyQueue when the library does not have any available packets.*/
+/**
+ * @brief Step 5: Receive packet.
+ * This function will become blocking if either pic_send_done is set to 1 or if we are in low-delay (pred-struct=1).
+ * Otherwise, this function is non-blocking and will return EB_NoErrorEmptyQueue if there are no packets available.
+ *
+ * @param svt_enc_component The encoder handler
+ * @param p_buffer Header pointer to return packet with
+ * @param pic_send_done Flag to signal that all input pictures have been sent. Should be either 0 or 1.
+ * @return EB_API Either EB_ErrorMax for an encode error or EB_NoErrorEmptyQueue if there are no available packets.
+ */
 EB_API EbErrorType svt_av1_enc_get_packet(EbComponentType *svt_enc_component, EbBufferHeaderType **p_buffer,
                                           uint8_t pic_send_done);
 
