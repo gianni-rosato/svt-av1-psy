@@ -1598,6 +1598,9 @@ static void prepare_input_picture(SequenceControlSet *scs, PictureControlSet *pc
                                         sb_height,
                                         scs->sb_size - sb_width,
                                         scs->sb_size - sb_height);
+
+        // Safe to divide by 2 (scs->sb_size - sb_width) >> 1), with no risk of off-of-one issues
+        // from chroma subsampling as picture is already 8px aligned
         svt_aom_pad_input_picture_16bit((uint16_t *)ctx->input_sample16bit_buffer->buffer_cb,
                                         ctx->input_sample16bit_buffer->stride_cb,
                                         sb_width >> 1,

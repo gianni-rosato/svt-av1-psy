@@ -419,6 +419,9 @@ static void svt_av1_add_film_grain(EbPictureBufferDesc *src, EbPictureBufferDesc
                           dst->height,
                           use_high_bit_depth);
 
+    const uint64_t chroma_width = (dst->width + chroma_subsamp_x) >> chroma_subsamp_x;
+    const uint64_t chroma_height = (dst->width + chroma_subsamp_y) >> chroma_subsamp_y;
+
     svt_aom_fgn_copy_rect(src->buffer_cb +
                               ((src->stride_cb * (src->org_y >> chroma_subsamp_y) + (src->org_x >> chroma_subsamp_x))
                                << use_high_bit_depth),
@@ -427,8 +430,8 @@ static void svt_av1_add_film_grain(EbPictureBufferDesc *src, EbPictureBufferDesc
                               ((dst->stride_cb * (dst->org_y >> chroma_subsamp_y) + (dst->org_x >> chroma_subsamp_x))
                                << use_high_bit_depth),
                           dst->stride_cb,
-                          dst->width >> chroma_subsamp_x,
-                          dst->height >> chroma_subsamp_y,
+                          chroma_width,
+                          chroma_height,
                           use_high_bit_depth);
 
     svt_aom_fgn_copy_rect(src->buffer_cr +
@@ -439,8 +442,8 @@ static void svt_av1_add_film_grain(EbPictureBufferDesc *src, EbPictureBufferDesc
                               ((dst->stride_cr * (dst->org_y >> chroma_subsamp_y) + (dst->org_x >> chroma_subsamp_x))
                                << use_high_bit_depth),
                           dst->stride_cr,
-                          dst->width >> chroma_subsamp_x,
-                          dst->height >> chroma_subsamp_y,
+                          chroma_width,
+                          chroma_height,
                           use_high_bit_depth);
 
     luma = dst->buffer_y + ((dst->org_y * dst->stride_y + dst->org_x) << use_high_bit_depth);

@@ -52,14 +52,6 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet *scs) {
         SVT_ERROR("Instance %u: Source Height must be at least 64\n", channel_number + 1);
         return_error = EB_ErrorBadParameter;
     }
-    if (scs->max_input_luma_width % 2) {
-        SVT_ERROR("Error Instance %u: Source Width must be even for YUV_420 colorspace\n", channel_number + 1);
-        return_error = EB_ErrorBadParameter;
-    }
-    if (scs->max_input_luma_height % 2) {
-        SVT_ERROR("Error Instance %u: Source Height must be even for YUV_420 colorspace\n", channel_number + 1);
-        return_error = EB_ErrorBadParameter;
-    }
     if (config->pred_structure > 2 || config->pred_structure < 1) {
         SVT_ERROR("Instance %u: Pred Structure must be [1 or 2]\n", channel_number + 1);
         return_error = EB_ErrorBadParameter;

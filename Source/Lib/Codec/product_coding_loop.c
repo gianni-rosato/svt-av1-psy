@@ -9796,19 +9796,22 @@ static EbPictureBufferDesc *pad_hbd_pictures(SequenceControlSet *scs, PictureCon
                                         scs->sb_size - sb_width,
                                         scs->sb_size - sb_height);
 
+        uint32_t chroma_pad_width = (scs->sb_size - sb_width) >> 1;
+        uint32_t chroma_pad_height = (scs->sb_size - sb_height) >> 1;
+
         svt_aom_pad_input_picture_16bit((uint16_t *)ctx->input_sample16bit_buffer->buffer_cb,
                                         ctx->input_sample16bit_buffer->stride_cb,
                                         sb_width >> 1,
                                         sb_height >> 1,
-                                        (scs->sb_size - sb_width) >> 1,
-                                        (scs->sb_size - sb_height) >> 1);
+                                        chroma_pad_width,
+                                        chroma_pad_height);
 
         svt_aom_pad_input_picture_16bit((uint16_t *)ctx->input_sample16bit_buffer->buffer_cr,
                                         ctx->input_sample16bit_buffer->stride_cr,
                                         sb_width >> 1,
                                         sb_height >> 1,
-                                        (scs->sb_size - sb_width) >> 1,
-                                        (scs->sb_size - sb_height) >> 1);
+                                        chroma_pad_width,
+                                        chroma_pad_height);
         svt_aom_store16bit_input_src(
             ctx->input_sample16bit_buffer, pcs, sb_org_x, sb_org_y, scs->sb_size, scs->sb_size);
 

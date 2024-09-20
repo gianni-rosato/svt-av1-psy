@@ -1615,35 +1615,49 @@ static void pad_2b_compressed_input_picture(uint8_t *src_pic, uint32_t src_strid
         uint32_t w_m4 = (original_src_width / 4) * 4;
 
         uint32_t last_col = w_m4 / 4;
-        //Luma 6 , 4 , 2
-        if (pad_right == 6) {
+
+        if (pad_right == 7) {
+            for (uint32_t row = 0; row < original_src_height; row++) {
+                last_byte = src_pic[last_col + row * src_stride];
+                last_byte &= 0xc0;
+                last_pixel = (last_byte >> 6) & 0x03;
+
+                new_byte = last_byte | (last_pixel << 4) | (last_pixel << 2) | last_pixel;
+                src_pic[last_col + row * src_stride] = new_byte;
+
+                new_byte = (last_pixel << 6) | (last_pixel << 4) | (last_pixel << 2) | last_pixel;
+                src_pic[last_col + 1 + row * src_stride] = new_byte;
+            }
+        } else if (pad_right == 6) {
             for (uint32_t row = 0; row < original_src_height; row++) {
                 last_byte = src_pic[last_col + row * src_stride];
                 last_byte &= 0xf0;
                 last_pixel = (last_byte >> 4) & 0x03;
 
-                new_byte                             = last_byte | (last_pixel << 2) | last_pixel;
+                new_byte = last_byte | (last_pixel << 2) | last_pixel;
                 src_pic[last_col + row * src_stride] = new_byte;
 
-                new_byte = (last_pixel << 6) | (last_pixel << 4) | (last_pixel << 2) | (last_pixel << 0);
+                new_byte = (last_pixel << 6) | (last_pixel << 4) | (last_pixel << 2) | last_pixel;
                 src_pic[last_col + 1 + row * src_stride] = new_byte;
             }
+        } else if (pad_right == 5) {
+            for (uint32_t row = 0; row < original_src_height; row++) {
+                last_byte = src_pic[last_col + row * src_stride];
+                last_byte &= 0xfc;
+                last_pixel = (last_byte >> 2) & 0x03;
 
+                new_byte = last_byte | last_pixel;
+                src_pic[last_col + row * src_stride] = new_byte;
+
+                new_byte = (last_pixel << 6) | (last_pixel << 4) | (last_pixel << 2) | last_pixel;
+                src_pic[last_col + 1 + row * src_stride] = new_byte;
+            }
         } else if (pad_right == 4) {
             for (uint32_t row = 0; row < original_src_height; row++) {
                 last_byte  = src_pic[last_col - 1 + row * src_stride];
                 last_pixel = last_byte & 0x03;
 
-                new_byte = (last_pixel << 6) | (last_pixel << 4) | (last_pixel << 2) | (last_pixel << 0);
-                src_pic[last_col + row * src_stride] = new_byte;
-            }
-        } else if (pad_right == 2) {
-            for (uint32_t row = 0; row < original_src_height; row++) {
-                last_byte = src_pic[last_col + row * src_stride];
-                last_byte &= 0xf0;
-                last_pixel = (last_byte >> 4) & 0x03;
-
-                new_byte                             = last_byte | (last_pixel << 2) | last_pixel;
+                new_byte = (last_pixel << 6) | (last_pixel << 4) | (last_pixel << 2) | last_pixel;
                 src_pic[last_col + row * src_stride] = new_byte;
             }
         } else if (pad_right == 3) {
@@ -1652,7 +1666,16 @@ static void pad_2b_compressed_input_picture(uint8_t *src_pic, uint32_t src_strid
                 last_byte &= 0xc0;
                 last_pixel = (last_byte >> 6) & 0x03;
 
-                new_byte                             = last_byte | (last_pixel << 4) | (last_pixel << 2) | last_pixel;
+                new_byte = last_byte | (last_pixel << 4) | (last_pixel << 2) | last_pixel;
+                src_pic[last_col + row * src_stride] = new_byte;
+            }
+        } else if (pad_right == 2) {
+            for (uint32_t row = 0; row < original_src_height; row++) {
+                last_byte = src_pic[last_col + row * src_stride];
+                last_byte &= 0xf0;
+                last_pixel = (last_byte >> 4) & 0x03;
+
+                new_byte = last_byte | (last_pixel << 2) | last_pixel;
                 src_pic[last_col + row * src_stride] = new_byte;
             }
         } else if (pad_right == 1) {
@@ -1661,7 +1684,7 @@ static void pad_2b_compressed_input_picture(uint8_t *src_pic, uint32_t src_strid
                 last_byte &= 0xfc;
                 last_pixel = (last_byte >> 2) & 0x03;
 
-                new_byte                             = last_byte | last_pixel;
+                new_byte = last_byte | last_pixel;
                 src_pic[last_col + row * src_stride] = new_byte;
             }
         } else {
@@ -1760,9 +1783,9 @@ void svt_aom_pad_picture_to_multiple_of_min_blk_size_dimensions_16bit(SequenceCo
                                                                       EbPictureBufferDesc *input_pic) {
     assert(scs->static_config.encoder_bit_depth > EB_EIGHT_BIT);
 
-    uint32_t       color_format  = input_pic->color_format;
-    const uint16_t subsampling_x = (color_format == EB_YUV444 ? 1 : 2) - 1;
-    const uint16_t subsampling_y = (color_format >= EB_YUV422 ? 1 : 2) - 1;
+    uint32_t      color_format  = input_pic->color_format;
+    const uint8_t subsampling_x = (color_format == EB_YUV444 ? 1 : 2) - 1;
+    const uint8_t subsampling_y = ((color_format == EB_YUV444 || color_format == EB_YUV422) ? 1 : 2) - 1;
 
     // Input Picture Padding
     uint16_t *buffer_y = (uint16_t *)(input_pic->buffer_y) + input_pic->org_x + input_pic->org_y * input_pic->stride_y;
@@ -1773,21 +1796,22 @@ void svt_aom_pad_picture_to_multiple_of_min_blk_size_dimensions_16bit(SequenceCo
                                     scs->pad_right,
                                     scs->pad_bottom);
 
-    uint16_t *buffer_cb = (uint16_t *)(input_pic->buffer_cb) + (input_pic->org_x >> subsampling_x) +
-        (input_pic->org_y >> subsampling_y) * input_pic->stride_cb;
+    uint16_t *buffer_cb = (uint16_t *)(input_pic->buffer_cb) + ((input_pic->org_x + subsampling_x) >> subsampling_x) +
+        ((input_pic->org_y + subsampling_y) >> subsampling_y) * input_pic->stride_cb;
+
     svt_aom_pad_input_picture_16bit(buffer_cb,
                                     input_pic->stride_cb,
-                                    (input_pic->width - scs->pad_right) >> subsampling_x,
-                                    (input_pic->height - scs->pad_bottom) >> subsampling_y,
+                                    (input_pic->width + subsampling_x - scs->pad_right) >> subsampling_x,
+                                    (input_pic->height + subsampling_y - scs->pad_bottom) >> subsampling_y,
                                     scs->pad_right >> subsampling_x,
                                     scs->pad_bottom >> subsampling_y);
 
-    uint16_t *buffer_cr = (uint16_t *)(input_pic->buffer_cr) + (input_pic->org_x >> subsampling_x) +
-        (input_pic->org_y >> subsampling_y) * input_pic->stride_cr;
+    uint16_t *buffer_cr = (uint16_t *)(input_pic->buffer_cr) + ((input_pic->org_x + subsampling_x) >> subsampling_x) +
+        ((input_pic->org_y + subsampling_y) >> subsampling_y) * input_pic->stride_cr;
     svt_aom_pad_input_picture_16bit(buffer_cr,
                                     input_pic->stride_cr,
-                                    (input_pic->width - scs->pad_right) >> subsampling_x,
-                                    (input_pic->height - scs->pad_bottom) >> subsampling_y,
+                                    (input_pic->width + subsampling_x - scs->pad_right) >> subsampling_x,
+                                    (input_pic->height + subsampling_y - scs->pad_bottom) >> subsampling_y,
                                     scs->pad_right >> subsampling_x,
                                     scs->pad_bottom >> subsampling_y);
 
@@ -2272,6 +2296,8 @@ void svt_aom_pad_input_pictures(SequenceControlSet *scs, EbPictureBufferDesc *in
                                                       input_pic->org_x,
                                                       input_pic->org_y);
 
+    // Safe to divide by 2 (input_pic->width >> scs->subsampling_x), with no risk of off-of-one issues
+    // from chroma subsampling as picture is already 8px aligned
     if (input_pic->buffer_cb)
         svt_aom_generate_padding(input_pic->buffer_cb,
                                  input_pic->stride_cb,
