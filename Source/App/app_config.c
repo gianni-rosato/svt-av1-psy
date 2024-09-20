@@ -1301,7 +1301,7 @@ ConfigEntry config_entry_psy[] = {
     // Min/max chroma qm
     {SINGLE_INPUT,
      MIN_CHROMA_QM_LEVEL_TOKEN,
-     "[PSY] Min chroma quant matrix flatness, default is 0 [0-15]",
+     "[PSY] Min chroma quant matrix flatness, default is 8 [0-15]",
      set_cfg_generic_token},
     {SINGLE_INPUT,
      MAX_CHROMA_QM_LEVEL_TOKEN,
