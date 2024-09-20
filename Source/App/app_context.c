@@ -38,17 +38,19 @@ static EbErrorType allocate_frame_buffer(EbConfig *app_cfg, EbSvtIOFormat *input
     // Chroma subsampling
     const EbColorFormat color_format  = (EbColorFormat)cfg->encoder_color_format;
     const uint8_t       subsampling_x = (color_format == EB_YUV444 ? 1 : 2) - 1;
+    const uint8_t       subsampling_y = ((color_format == EB_YUV444 || color_format == EB_YUV422) ? 1 : 2) - 1;
 
     // Determine size of each plane
     const size_t luma_8bit_size = app_cfg->input_padded_width * app_cfg->input_padded_height *
         (1 << ten_bit_packed_mode);
-
-    const size_t chroma_8bit_size = luma_8bit_size >> (3 - color_format);
+    const size_t chroma_width = (app_cfg->input_padded_width + subsampling_x) >> subsampling_x;
+    const size_t chroma_height = (app_cfg->input_padded_height + subsampling_y) >> subsampling_y;
+    const size_t chroma_8bit_size = chroma_width * chroma_height * (1 << ten_bit_packed_mode);
 
     // Determine
     input_ptr->y_stride  = app_cfg->input_padded_width;
-    input_ptr->cr_stride = app_cfg->input_padded_width >> subsampling_x;
-    input_ptr->cb_stride = app_cfg->input_padded_width >> subsampling_x;
+    input_ptr->cr_stride = chroma_width;
+    input_ptr->cb_stride = chroma_width;
 
     input_ptr->luma = 0;
     input_ptr->cb   = 0;
@@ -107,12 +109,17 @@ static EbErrorType allocate_input_buffers(EbConfig *app_cfg) {
 }
 
 static EbErrorType allocate_output_recon_buffers(EbConfig *app_cfg) {
+    const uint8_t subsampling_x = (app_cfg->config.encoder_color_format == EB_YUV444 ? 1 : 2) - 1;
+    const uint8_t subsampling_y = ((app_cfg->config.encoder_color_format == EB_YUV444 || app_cfg->config.encoder_color_format == EB_YUV422) ? 1 : 2) - 1;
+
+    const size_t ten_bit = (app_cfg->config.encoder_bit_depth > 8);
     const size_t luma_size = app_cfg->input_padded_width * app_cfg->input_padded_height;
+    const size_t chroma_width = (app_cfg->input_padded_width + subsampling_x) >> subsampling_x;
+    const size_t chroma_height = (app_cfg->input_padded_height + subsampling_y) >> subsampling_y;
+    const size_t chroma_size = chroma_width * chroma_height;
 
     // both u and v
-    const size_t chroma_size = luma_size >> (3 - app_cfg->config.encoder_color_format);
-    const size_t ten_bit     = (app_cfg->config.encoder_bit_depth > 8);
-    const size_t frame_size  = (luma_size + 2 * chroma_size) << ten_bit;
+    const size_t frame_size = (luma_size + 2 * chroma_size) << ten_bit;
 
     // Recon Port
     app_cfg->recon_buffer = malloc(sizeof(*app_cfg->recon_buffer));
@@ -144,10 +151,13 @@ static EbErrorType preload_frames_info_ram(EbConfig *app_cfg) {
     int32_t             input_padded_width  = app_cfg->input_padded_width;
     int32_t             input_padded_height = app_cfg->input_padded_height;
     size_t              read_size;
-    const EbColorFormat color_format = (EbColorFormat)app_cfg->config.encoder_color_format; // Chroma subsampling
+    const uint8_t subsampling_x = (app_cfg->config.encoder_color_format == EB_YUV444 ? 1 : 2) - 1;
+    const uint8_t subsampling_y = ((app_cfg->config.encoder_color_format == EB_YUV444 || app_cfg->config.encoder_color_format == EB_YUV422) ? 1 : 2) - 1;
+    const size_t chroma_width = (app_cfg->input_padded_width + subsampling_x) >> subsampling_x;
+    const size_t chroma_height = (app_cfg->input_padded_height + subsampling_y) >> subsampling_y;
 
     read_size = input_padded_width * input_padded_height; //Luma
-    read_size += 2 * (read_size >> (3 - color_format)); // Add Chroma
+    read_size += 2 * chroma_width * chroma_height; // Add Chroma
     if (app_cfg->config.encoder_bit_depth > 8)
         read_size *= 2; //10 bit
     app_cfg->sequence_buffer = calloc(app_cfg->buffered_input, sizeof(uint8_t *));
