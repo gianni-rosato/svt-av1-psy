@@ -84,6 +84,10 @@ Manually adjust temporal filtering strength to adjust the trade-off between fewe
 
 Set the minimum & maximum quantization matrices for chroma planes. The defaults are 8 and 15, respectively. These options decouple chroma quantization matrix control from the luma quantization matrix options currently available, allowing for more control over chroma quality.
 
+- `Odd dimension encoding support`
+
+Allows the encoder to accept content with odd width and/or height (e.g. 1920x817px). Gone are the "Source Width/Height must be even for YUV_420 colorspace" messages.
+
 ### Modified Defaults
 
 SVT-AV1-PSY has different defaults than mainline SVT-AV1 in order to provide better visual fidelity out of the box. They include:
