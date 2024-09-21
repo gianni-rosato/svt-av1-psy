@@ -369,6 +369,7 @@ class DenoiseModelRunTest : public ::testing::Test {
         pbd_init_data.bot_padding = 0;
         pbd_init_data.color_format = EB_YUV420;
         pbd_init_data.split_mode = FALSE;
+        pbd_init_data.is_16bit_pipeline = FALSE;
 
         subsampling_x_ = (pbd_init_data.color_format == EB_YUV444 ? 1 : 2) - 1;
         subsampling_y_ = (pbd_init_data.color_format >= EB_YUV422 ? 1 : 2) - 1;
@@ -382,6 +383,7 @@ class DenoiseModelRunTest : public ::testing::Test {
         fg_init_data.encoder_bit_depth = EB_EIGHT_BIT;
         fg_init_data.encoder_color_format = EB_YUV420;
         fg_init_data.noise_level = 4;  // TODO: check the range;
+        fg_init_data.denoise_apply = FALSE;
         fg_init_data.width = width_;
         fg_init_data.height = height_;
         fg_init_data.stride_y = width_;

@@ -457,6 +457,15 @@ void SequenceHeaderParser::input_obu_data(const uint8_t *obu_data,
                                           const uint32_t size,
                                           RefDecoder::StreamInfo *stream_info) {
     SeqHeader seg_header;
+    seg_header.seq_force_integer_mv = SELECT_INTEGER_MV;
+    seg_header.order_hint_info.enable_ref_frame_mvs = 0;
+    seg_header.order_hint_info.enable_jnt_comp = 0;
+    seg_header.enable_dual_filter = 0;
+    seg_header.enable_warped_motion = 0;
+    seg_header.enable_masked_compound = 0;
+    seg_header.enable_intra_edge_filter = 0;
+    seg_header.filter_intra_level = 0;
+
     if (svt_get_sequence_info(obu_data, size, &seg_header) == EB_ErrorNone) {
         profile_ = seg_header.seq_profile;
         switch (seg_header.sb_size) {

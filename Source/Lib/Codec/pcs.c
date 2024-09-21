@@ -353,6 +353,7 @@ static EbErrorType recon_coef_ctor(EncDecSet *object_ptr, EbPtr object_init_data
     coeff_init_data.top_padding        = 0;
     coeff_init_data.bot_padding        = 0;
     coeff_init_data.split_mode         = FALSE;
+    coeff_init_data.is_16bit_pipeline  = init_data_ptr->is_16bit_pipeline;
     for (sb_index = 0; sb_index < object_ptr->init_b64_total_count; ++sb_index) {
         EB_NEW(object_ptr->quantized_coeff[sb_index], //OMK2
                svt_picture_buffer_desc_ctor,

@@ -9400,7 +9400,7 @@ void svt_av1_fwd_txfm2d_4x8_N2_avx2(int16_t *input, int32_t *output, uint32_t st
 }
 
 void svt_av1_fwd_txfm2d_8x4_N2_avx2(int16_t *input, int32_t *output, uint32_t stride, TxType tx_type, uint8_t bd) {
-    __m256i       in[4];
+    __m256i       in[4]       = {_mm256_setzero_si256()};
     __m256i      *outcoeff256 = (__m256i *)output;
     const int8_t *shift       = fwd_txfm_shift_ls[TX_8X4];
     const int32_t txw_idx     = get_txw_idx(TX_8X4);
@@ -12656,7 +12656,7 @@ void svt_av1_fwd_txfm2d_8x8_N4_avx2(int16_t *input, int32_t *coeff, uint32_t str
 }
 
 void svt_av1_fwd_txfm2d_16x16_N4_avx2(int16_t *input, int32_t *coeff, uint32_t stride, TxType tx_type, uint8_t bd) {
-    __m256i       in[32], out[32];
+    __m256i       in[32] = {_mm256_setzero_si256()}, out[32] = {_mm256_setzero_si256()};
     const int8_t *shift   = fwd_txfm_shift_ls[TX_16X16];
     const int32_t txw_idx = get_txw_idx(TX_16X16);
     const int32_t txh_idx = get_txh_idx(TX_16X16);

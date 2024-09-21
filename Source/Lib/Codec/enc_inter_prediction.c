@@ -4100,7 +4100,7 @@ EbErrorType svt_aom_inter_prediction(SequenceControlSet *scs, PictureControlSet 
     uint8_t *src_ptr;
     uint8_t *src_ptr_2b = NULL;
 
-    int32_t fwd_offset, bck_offset, use_dist_wtd_comp_avg;
+    int32_t fwd_offset = 0, bck_offset = 0, use_dist_wtd_comp_avg = 0;
 
     InterpFilterParams filter_params_x, filter_params_y;
 

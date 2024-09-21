@@ -1444,6 +1444,7 @@ static EbErrorType allocate_downscaled_source_reference_pics(EbPictureBufferDesc
     initData.bit_depth          = picture_ptr_for_reference->bit_depth;
     initData.color_format       = picture_ptr_for_reference->color_format;
     initData.split_mode         = (picture_ptr_for_reference->bit_depth > EB_EIGHT_BIT) ? TRUE : FALSE;
+    initData.is_16bit_pipeline  = (picture_ptr_for_reference->bit_depth > EB_EIGHT_BIT) ? TRUE : FALSE;
     initData.left_padding       = picture_ptr_for_reference->org_x;
     initData.right_padding      = picture_ptr_for_reference->org_x;
 
@@ -1458,6 +1459,7 @@ static EbErrorType allocate_downscaled_source_reference_pics(EbPictureBufferDesc
     initData.bit_depth          = picture_ptr_for_reference->bit_depth;
     initData.color_format       = picture_ptr_for_reference->color_format;
     initData.split_mode         = (picture_ptr_for_reference->bit_depth > EB_EIGHT_BIT) ? TRUE : FALSE;
+    initData.is_16bit_pipeline  = (picture_ptr_for_reference->bit_depth > EB_EIGHT_BIT) ? TRUE : FALSE;
     initData.left_padding       = picture_ptr_for_reference->org_x >> 1;
     initData.right_padding      = picture_ptr_for_reference->org_x >> 1;
     initData.top_padding        = picture_ptr_for_reference->org_y >> 1;
@@ -1471,6 +1473,7 @@ static EbErrorType allocate_downscaled_source_reference_pics(EbPictureBufferDesc
     initData.bit_depth          = picture_ptr_for_reference->bit_depth;
     initData.color_format       = picture_ptr_for_reference->color_format;
     initData.split_mode         = (picture_ptr_for_reference->bit_depth > EB_EIGHT_BIT) ? TRUE : FALSE;
+    initData.is_16bit_pipeline  = (picture_ptr_for_reference->bit_depth > EB_EIGHT_BIT) ? TRUE : FALSE;
     initData.left_padding       = picture_ptr_for_reference->org_x >> 2;
     initData.right_padding      = picture_ptr_for_reference->org_x >> 2;
     initData.top_padding        = picture_ptr_for_reference->org_y >> 2;
