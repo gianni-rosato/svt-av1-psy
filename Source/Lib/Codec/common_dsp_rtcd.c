@@ -30,7 +30,7 @@
 
 #if defined ARCH_AARCH64
 
-#if defined(__linux__)
+#if defined(__linux__) || HAVE_ELF_AUX_INFO
 // For reading the HWCAP flags
 #include <sys/auxv.h>
 #elif defined(__APPLE__)
@@ -130,7 +130,7 @@ EbCpuFlags svt_aom_get_cpu_flags_to_use() {
 #else
 #if defined ARCH_AARCH64
 
-#if defined(__linux__)
+#if defined(__linux__) || HAVE_ELF_AUX_INFO
 
 // Define hwcap values ourselves: building with an old auxv header where these
 // hwcap values are not defined should not prevent features from being enabled.
@@ -142,10 +142,20 @@ EbCpuFlags svt_aom_get_cpu_flags_to_use() {
 
 EbCpuFlags svt_aom_get_cpu_flags(void) {
 #if HAVE_ARM_CRC32 || HAVE_NEON_DOTPROD || HAVE_SVE
+#if HAVE_ELF_AUX_INFO
+  unsigned long hwcap = 0;
+  elf_aux_info(AT_HWCAP, &hwcap, sizeof(hwcap));
+#else
   unsigned long hwcap = getauxval(AT_HWCAP);
 #endif
+#endif
 #if HAVE_NEON_I8MM || HAVE_SVE2
+#if HAVE_ELF_AUX_INFO
+  unsigned long hwcap2 = 0;
+  elf_aux_info(AT_HWCAP2, &hwcap2, sizeof(hwcap2));
+#else
   unsigned long hwcap2 = getauxval(AT_HWCAP2);
+#endif
 #endif
 
   EbCpuFlags flags = EB_CPU_FLAGS_NEON;  // Neon is mandatory in Armv8.0-A.

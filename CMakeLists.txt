@@ -578,6 +578,19 @@ include_directories(.)
 set(CMAKE_THREAD_PREFER_PTHREADS ON)
 find_package(Threads)
 
+check_symbol_exists(elf_aux_info "sys/auxv.h" HAVE_ELF_AUX_INFO)
+if(HAVE_ELF_AUX_INFO)
+    set_property(DIRECTORY .
+        APPEND
+        PROPERTY COMPILE_DEFINITIONS
+            HAVE_ELF_AUX_INFO=1)
+else()
+    set_property(DIRECTORY .
+        APPEND
+        PROPERTY COMPILE_DEFINITIONS
+            HAVE_ELF_AUX_INFO=0)
+endif()
+
 string(TOLOWER "${SANITIZER}" SANITIZER)
 
 # Address Memory Thread Undefined
