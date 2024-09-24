@@ -21,7 +21,8 @@ target_sources(
   ASM_SVE
   PUBLIC highbd_convolve_sve.c
   PUBLIC highbd_jnt_convolve_sve.c
-  PUBLIC highbd_pickrst_sve.c)
+  PUBLIC highbd_pickrst_sve.c
+  PUBLIC pickrst_sve.c)
 
 target_include_directories(
   ASM_SVE
