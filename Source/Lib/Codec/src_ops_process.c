@@ -2115,6 +2115,11 @@ unsigned int svt_aom_get_perpixel_variance(const uint8_t *buf, uint32_t stride, 
     return ROUND_POWER_OF_TWO(var, num_pels_log2_lookup[block_size]);
 }
 static void aom_av1_set_mb_ssim_rdmult_scaling(PictureParentControlSet *pcs) {
+    if (!pcs->scs->static_config.enable_tpl_la) {
+        // Tuning rdmult with SSIM requires TPL Motion Estimation data
+        return;
+    }
+
     Av1Common *cm       = pcs->av1_cm;
     const int  y_stride = pcs->enhanced_pic->stride_y;
     uint8_t   *y_buffer = pcs->enhanced_pic->buffer_y + pcs->enhanced_pic->org_x + pcs->enhanced_pic->org_y * y_stride;

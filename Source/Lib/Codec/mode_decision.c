@@ -4797,6 +4797,11 @@ static int get_superblock_tpl_column_end(PictureParentControlSet* ppcs, int mi_c
 
 void aom_av1_set_ssim_rdmult(struct ModeDecisionContext *ctx, PictureControlSet *pcs,
                          const int mi_row, const int mi_col) {
+  if (!pcs->ppcs->scs->static_config.enable_tpl_la) {
+      // Tuning rdmult with SSIM requires TPL Motion Estimation data
+      return;
+  }
+
   const AV1_COMMON *const cm = pcs->ppcs->av1_cm;
   BlockSize bsize = ctx->blk_geom->bsize;
 

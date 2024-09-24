@@ -760,6 +760,11 @@ static double aom_ssim2(const uint8_t *img1, int stride_img1, const uint8_t *img
     int    samples    = 0;
     double ssim_total = 0;
 
+    if (width <= 8 || height <= 8) {
+        // Region is too small to compute a meaningful SSIM score, return early
+        return NAN;
+    }
+
     // sample point start with each 4x4 location
     for (i = 0; i <= height - 8; i += 4, img1 += stride_img1 * 4, img2 += stride_img2 * 4) {
         for (j = 0; j <= width - 8; j += 4) {
@@ -779,6 +784,11 @@ static double aom_highbd_ssim2(const uint8_t *img1, int stride_img1, const uint8
     int    i, j;
     int    samples    = 0;
     double ssim_total = 0;
+
+    if (width <= 8 || height <= 8) {
+        // Region is too small to compute a meaningful SSIM score, return early
+        return NAN;
+    }
 
     // sample point start with each 4x4 location
     for (i = 0; i <= height - 8;
