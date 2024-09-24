@@ -88,6 +88,10 @@ Set the minimum & maximum quantization matrices for chroma planes. The defaults 
 
 Allows the encoder to accept content with odd width and/or height (e.g. 1920x817px). Gone are the "Source Width/Height must be even for YUV_420 colorspace" messages.
 
+- `Reduced minimum width/height requirements`
+
+Allows the encoder to accept content with width and/or height as small as 4 pixels (e.g. 32x18px).
+
 ### Modified Defaults
 
 SVT-AV1-PSY has different defaults than mainline SVT-AV1 in order to provide better visual fidelity out of the box. They include:
