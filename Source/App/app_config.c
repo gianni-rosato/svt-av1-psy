@@ -2182,8 +2182,8 @@ uint32_t get_passes(int32_t argc, char *const argv[], EncPass enc_pass[MAX_ENC_P
         if (passes == 1)
             multi_pass_mode = SINGLE_PASS;
         else if (passes > 1) {
-            // M12 is mapped to M13, so treat M12 the same as M13
-            if (enc_mode > ENC_M11) {
+            // M12 and M13 are mapped to M11, so treat M12 and M13 the same as M11
+            if (enc_mode > ENC_M10) {
                 fprintf(stderr, "[SVT-Error]:  Multipass VBR is not supported for preset %d.\n\n", enc_mode);
                 return 0;
             } else {

@@ -187,7 +187,7 @@ uint8_t svt_aom_get_tpl_group_level(uint8_t tpl, int8_t enc_mode, SvtAv1RcMode r
         tpl_group_level = 1;
     else if (enc_mode <= ENC_M6)
         tpl_group_level = 2;
-    else if (enc_mode <= ENC_M9 || (rc_mode == SVT_AV1_RC_MODE_VBR && enc_mode <= ENC_M11))
+    else if (enc_mode <= ENC_M9 || (rc_mode == SVT_AV1_RC_MODE_VBR && enc_mode <= ENC_M10))
         tpl_group_level = 3;
     else
         tpl_group_level = 4;
@@ -288,7 +288,7 @@ static uint8_t get_tpl_params_level(int8_t enc_mode, SvtAv1RcMode rc_mode) {
         tpl_params_level = 1;
     } else if (enc_mode <= ENC_M6) {
         tpl_params_level = 3;
-    } else if (enc_mode <= ENC_M9 || (rc_mode == SVT_AV1_RC_MODE_VBR && enc_mode <= ENC_M11)) {
+    } else if (enc_mode <= ENC_M9 || (rc_mode == SVT_AV1_RC_MODE_VBR && enc_mode <= ENC_M10)) {
         tpl_params_level = 4;
     } else {
         tpl_params_level = 5;

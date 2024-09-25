@@ -3704,7 +3704,7 @@ void set_multi_pass_params(SequenceControlSet *scs)
                 set_first_pass_ctrls(scs, 1);
             scs->final_pass_preset = config->enc_mode;
             if (scs->final_pass_preset <= ENC_M7)
-                scs->static_config.enc_mode = ENC_M11;
+                scs->static_config.enc_mode = ENC_M10;
             else
                 scs->static_config.enc_mode = MAX_ENC_PRESET;
             scs->static_config.rate_control_mode = SVT_AV1_RC_MODE_CQP_OR_CRF;
@@ -4158,7 +4158,7 @@ static void set_param_based_on_input(SequenceControlSet *scs)
     uint8_t mrp_level;
 
     if (scs->static_config.pred_structure == SVT_AV1_PRED_LOW_DELAY_B) {
-        if (scs->static_config.enc_mode <= ENC_M11) {
+        if (scs->static_config.enc_mode <= ENC_M10) {
             mrp_level = 10;
         }
         else {
@@ -4188,7 +4188,7 @@ static void set_param_based_on_input(SequenceControlSet *scs)
         else if (scs->static_config.rate_control_mode != SVT_AV1_RC_MODE_VBR) {
             if (scs->static_config.enc_mode <= ENC_M8)
                 mrp_level = 9;
-            else if (scs->static_config.enc_mode <= ENC_M11)
+            else if (scs->static_config.enc_mode <= ENC_M10)
                 mrp_level = 10;
             else
                 mrp_level = 0;
@@ -4256,14 +4256,18 @@ static void copy_api_from_app(
     scs->static_config.multiply_keyint = config_struct->multiply_keyint;
     scs->static_config.intra_refresh_type = ((EbSvtAv1EncConfiguration*)config_struct)->intra_refresh_type;
     scs->static_config.enc_mode = ((EbSvtAv1EncConfiguration*)config_struct)->enc_mode;
+    if (scs->static_config.enc_mode > ENC_M11) {
+        SVT_WARN("Preset M%d is mapped to M11.\n", scs->static_config.enc_mode);
+        scs->static_config.enc_mode = ENC_M11;
+    }
 
     EbInputResolution input_resolution;
     svt_aom_derive_input_resolution(
         &input_resolution,
         scs->max_input_luma_width * scs->max_input_luma_height);
-    if (scs->static_config.pred_structure == SVT_AV1_PRED_RANDOM_ACCESS && scs->static_config.enc_mode > ENC_M11 && input_resolution >= INPUT_SIZE_4K_RANGE) {
-        scs->static_config.enc_mode = ENC_M11;
-        SVT_WARN("Setting preset to M11 as it is the highest supported preset for 4k and higher resolutions in Random Access mode\n");
+    if (scs->static_config.pred_structure == SVT_AV1_PRED_RANDOM_ACCESS && scs->static_config.enc_mode > ENC_M10 && input_resolution >= INPUT_SIZE_4K_RANGE) {
+        scs->static_config.enc_mode = ENC_M10;
+        SVT_WARN("Setting preset to M10 as it is the highest supported preset for 4k and higher resolutions in Random Access mode\n");
     }
 
     scs->static_config.use_qp_file = ((EbSvtAv1EncConfiguration*)config_struct)->use_qp_file;
