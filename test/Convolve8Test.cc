@@ -567,7 +567,7 @@ INSTANTIATE_TEST_SUITE_P(NEON, Convolve8Test,
 
 #if HAVE_NEON_DOTPROD
 const ConvolveFunctions convolve8_neon_dotprod(
-    svt_aom_convolve8_horiz_neon_dotprod, svt_aom_convolve8_vert_neon);
+    svt_aom_convolve8_horiz_neon_dotprod, svt_aom_convolve8_vert_neon_dotprod);
 const ConvolveParam kArrayConvolve_neon_dotprod[] = {
     ALL_SIZES(convolve8_neon_dotprod)};
 
