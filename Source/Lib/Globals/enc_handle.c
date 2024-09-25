@@ -3326,7 +3326,7 @@ static void derive_tf_params(SequenceControlSet *scs) {
     else if (enc_mode <= ENC_M8) {
         tf_level = resolution <= INPUT_SIZE_720p_RANGE && hierarchical_levels <= 4 ? 5 : 6;
     }
-    else if (enc_mode <= ENC_M10) {
+    else if (enc_mode <= ENC_M9) {
         tf_level = 8;
     } else {
         tf_level = 9;
@@ -3698,7 +3698,7 @@ void set_multi_pass_params(SequenceControlSet *scs)
             break;
         }
         case ENC_FIRST_PASS: {
-            if (config->enc_mode <= ENC_M10)
+            if (config->enc_mode <= ENC_M9)
                 set_first_pass_ctrls(scs, 0);
             else
                 set_first_pass_ctrls(scs, 1);
@@ -4219,7 +4219,7 @@ static void set_param_based_on_input(SequenceControlSet *scs)
         : 0;
     scs->low_latency_kf = ((scs->static_config.pred_structure == SVT_AV1_PRED_LOW_DELAY_P
         || scs->static_config.pred_structure == SVT_AV1_PRED_LOW_DELAY_B) &&
-        scs->static_config.enc_mode <= ENC_M10)
+        scs->static_config.enc_mode <= ENC_M9)
         ? 1
         : 0;
 
@@ -4381,7 +4381,7 @@ static void copy_api_from_app(
             scs->static_config.fast_decode != 0 ||
             scs->static_config.rate_control_mode == SVT_AV1_RC_MODE_VBR || scs->static_config.rate_control_mode == SVT_AV1_RC_MODE_CBR ||
             (input_resolution >= INPUT_SIZE_1080p_RANGE && scs->static_config.enc_mode >= ENC_M9) ||
-            !(scs->static_config.enc_mode <= ENC_M10) || input_resolution >= INPUT_SIZE_8K_RANGE
+            !(scs->static_config.enc_mode <= ENC_M9) || input_resolution >= INPUT_SIZE_8K_RANGE
                 ? 4
                 : 5;
     }
