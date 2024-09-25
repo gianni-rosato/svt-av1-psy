@@ -19,6 +19,7 @@ check_both_flags_add(-march=armv8.2-a+dotprod)
 add_library(ASM_NEON_DOTPROD OBJECT)
 target_sources(
   ASM_NEON_DOTPROD
+  PUBLIC aom_convolve8_neon_dotprod.c
   PUBLIC convolve_neon_dotprod.c
   PUBLIC jnt_convolve_neon_dotprod.c)
 

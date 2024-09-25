@@ -564,6 +564,16 @@ const ConvolveParam kArrayConvolve_neon[] = {ALL_SIZES(convolve8_neon)};
 
 INSTANTIATE_TEST_SUITE_P(NEON, Convolve8Test,
                          ::testing::ValuesIn(kArrayConvolve_neon));
+
+#if HAVE_NEON_DOTPROD
+const ConvolveFunctions convolve8_neon_dotprod(
+    svt_aom_convolve8_horiz_neon_dotprod, svt_aom_convolve8_vert_neon);
+const ConvolveParam kArrayConvolve_neon_dotprod[] = {
+    ALL_SIZES(convolve8_neon_dotprod)};
+
+INSTANTIATE_TEST_SUITE_P(NEON_DOTPROD, Convolve8Test,
+                         ::testing::ValuesIn(kArrayConvolve_neon_dotprod));
+#endif  // HAVE_NEON_DOTPROD
 #endif  // ARCH_AARCH64
 
 }  // namespace
