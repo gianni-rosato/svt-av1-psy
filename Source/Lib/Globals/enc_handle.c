@@ -3320,7 +3320,7 @@ static void derive_tf_params(SequenceControlSet *scs) {
     else if (enc_mode <= ENC_M4) {
         tf_level = 3;
     }
-    else if (enc_mode <= ENC_M7) {
+    else if (enc_mode <= ENC_M6) {
         tf_level = 4;
     }
     else if (enc_mode <= ENC_M9) {
@@ -3957,7 +3957,7 @@ static void set_param_based_on_input(SequenceControlSet *scs)
                     scs->super_block_size = 128;
             }
         }
-        else if (scs->static_config.enc_mode <= ENC_M7) {
+        else if (scs->static_config.enc_mode <= ENC_M6) {
             if (scs->static_config.qp <= 56)
                 scs->super_block_size = 64;
             else
@@ -4129,7 +4129,7 @@ static void set_param_based_on_input(SequenceControlSet *scs)
         list0_only_base_lvl = 0;
     else if (scs->static_config.enc_mode <= ENC_M5)
         list0_only_base_lvl = 3;
-    else if (scs->static_config.enc_mode <= ENC_M7)
+    else if (scs->static_config.enc_mode <= ENC_M6)
         list0_only_base_lvl = 4;
     else
         list0_only_base_lvl = 6;
@@ -4206,7 +4206,7 @@ static void set_param_based_on_input(SequenceControlSet *scs)
         scs->vq_ctrls.sharpness_ctrls.tf == 1                ||
         scs->static_config.enable_variance_boost)
         scs->calculate_variance = 1;
-    else if (scs->static_config.enc_mode <= ENC_M7)
+    else if (scs->static_config.enc_mode <= ENC_M6)
         scs->calculate_variance = 1;
     else
         scs->calculate_variance = 0;
@@ -4256,14 +4256,6 @@ static void copy_api_from_app(
     scs->static_config.multiply_keyint = config_struct->multiply_keyint;
     scs->static_config.intra_refresh_type = ((EbSvtAv1EncConfiguration*)config_struct)->intra_refresh_type;
     scs->static_config.enc_mode = ((EbSvtAv1EncConfiguration*)config_struct)->enc_mode;
-    if (scs->static_config.enc_mode == ENC_M6) {
-        scs->static_config.enc_mode = ENC_M7;
-        SVT_WARN("Preset M6 is mapped to M7.\n");
-    }
-    else if (scs->static_config.enc_mode == ENC_M12) {
-        scs->static_config.enc_mode = ENC_M13;
-        SVT_WARN("Preset M12 is mapped to M13.\n");
-    }
 
     EbInputResolution input_resolution;
     svt_aom_derive_input_resolution(
