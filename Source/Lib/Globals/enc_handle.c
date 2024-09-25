@@ -3304,7 +3304,7 @@ static void derive_tf_params(SequenceControlSet *scs) {
             tf_level = 0;
         else
             tf_level = scs->static_config.screen_content_mode == 1 ? 0 :
-            enc_mode <= ENC_M9 ? scs->input_resolution >= INPUT_SIZE_720p_RANGE ? 1 : 0 : scs->input_resolution >= INPUT_SIZE_720p_RANGE ? 2 : 0;
+            enc_mode <= ENC_M8 ? scs->input_resolution >= INPUT_SIZE_720p_RANGE ? 1 : 0 : scs->input_resolution >= INPUT_SIZE_720p_RANGE ? 2 : 0;
         tf_ld_controls(scs, tf_level);
         return;
     }
@@ -3323,7 +3323,7 @@ static void derive_tf_params(SequenceControlSet *scs) {
     else if (enc_mode <= ENC_M6) {
         tf_level = 4;
     }
-    else if (enc_mode <= ENC_M9) {
+    else if (enc_mode <= ENC_M8) {
         tf_level = resolution <= INPUT_SIZE_720p_RANGE && hierarchical_levels <= 4 ? 5 : 6;
     }
     else if (enc_mode <= ENC_M10) {
@@ -4142,7 +4142,7 @@ static void set_param_based_on_input(SequenceControlSet *scs)
     if (scs->static_config.rate_control_mode == SVT_AV1_RC_MODE_VBR || scs->static_config.rate_control_mode == SVT_AV1_RC_MODE_CBR ||
         scs->input_resolution >= INPUT_SIZE_4K_RANGE ||
         scs->static_config.fast_decode !=0 ||
-        scs->static_config.pred_structure == SVT_AV1_PRED_LOW_DELAY_B || scs->static_config.pass != ENC_SINGLE_PASS || scs->static_config.enc_mode >= ENC_M10)
+        scs->static_config.pred_structure == SVT_AV1_PRED_LOW_DELAY_B || scs->static_config.pass != ENC_SINGLE_PASS || scs->static_config.enc_mode >= ENC_M9)
         scs->enable_dg = 0;
     else
         scs->enable_dg = scs->static_config.enable_dg;
@@ -4186,7 +4186,7 @@ static void set_param_based_on_input(SequenceControlSet *scs)
         }
         // any changes for preset ENC_M7 and higher should be separated for VBR and CRF in the control structure below
         else if (scs->static_config.rate_control_mode != SVT_AV1_RC_MODE_VBR) {
-            if (scs->static_config.enc_mode <= ENC_M9)
+            if (scs->static_config.enc_mode <= ENC_M8)
                 mrp_level = 9;
             else if (scs->static_config.enc_mode <= ENC_M11)
                 mrp_level = 10;
@@ -4317,7 +4317,7 @@ static void copy_api_from_app(
     // If the set fast_decode value is in the allowable range, check that the value is supported for the current preset.
     // If the value is valid, but not supported in the current preset, change the value to one that is supported.
     if (scs->static_config.fast_decode != 0) {
-        if (scs->static_config.enc_mode >= ENC_M10) {
+        if (scs->static_config.enc_mode >= ENC_M9) {
             SVT_WARN("The fast decode option is not supported in M%d.\n", scs->static_config.enc_mode);
             SVT_WARN("Decoder speedup is only supported in presets MR-M9.\n");
             SVT_WARN("Switching off decoder speedup optimizations.\n");
@@ -4380,7 +4380,7 @@ static void copy_api_from_app(
             2 :
             scs->static_config.fast_decode != 0 ||
             scs->static_config.rate_control_mode == SVT_AV1_RC_MODE_VBR || scs->static_config.rate_control_mode == SVT_AV1_RC_MODE_CBR ||
-            (input_resolution >= INPUT_SIZE_1080p_RANGE && scs->static_config.enc_mode >= ENC_M10) ||
+            (input_resolution >= INPUT_SIZE_1080p_RANGE && scs->static_config.enc_mode >= ENC_M9) ||
             !(scs->static_config.enc_mode <= ENC_M10) || input_resolution >= INPUT_SIZE_8K_RANGE
                 ? 4
                 : 5;
