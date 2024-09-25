@@ -124,36 +124,9 @@ void svt_aom_down_sample_chroma(EbPictureBufferDesc *input_pic, EbPictureBufferD
  * Picture Analysis Context Destructor
  ************************************************/
 /********************************************
-    * svt_aom_decimation_2d
-    *      decimates the input
-    ********************************************/
-void svt_aom_decimation_2d(uint8_t *input_samples, // input parameter, input samples Ptr
-                           uint32_t input_stride, // input parameter, input stride
-                           uint32_t input_area_width, // input parameter, input area width
-                           uint32_t input_area_height, // input parameter, input area height
-                           uint8_t *decim_samples, // output parameter, decimated samples Ptr
-                           uint32_t decim_stride, // input parameter, output stride
-                           uint32_t decim_step) // input parameter, decimation amount in pixels
-{
-    uint32_t horizontal_index;
-    uint32_t vertical_index;
-    uint32_t input_stripe_stride = input_stride * decim_step;
-
-    for (vertical_index = 0; vertical_index < input_area_height; vertical_index += decim_step) {
-        for (horizontal_index = 0; horizontal_index < input_area_width; horizontal_index += decim_step)
-            decim_samples[(horizontal_index >> (decim_step >> 1))] = input_samples[horizontal_index];
-
-        input_samples += input_stripe_stride;
-        decim_samples += decim_stride;
-    }
-
-    return;
-}
-
-/********************************************
  * downsample_2d
  *      downsamples the input
- * Alternative implementation to svt_aom_decimation_2d that performs filtering (2x2, 0-phase)
+ * Performs filtering (2x2, 0-phase)
  ********************************************/
 void svt_aom_downsample_2d_c(uint8_t *input_samples, // input parameter, input samples Ptr
                              uint32_t input_stride, // input parameter, input stride
@@ -1809,56 +1782,6 @@ void svt_aom_pad_picture_to_multiple_of_sb_dimensions(EbPictureBufferDesc *input
     return;
 }
 
-/************************************************
-* 1/4 & 1/16 input picture decimation
-************************************************/
-void svt_aom_downsample_decimation_input_picture(PictureParentControlSet *pcs, EbPictureBufferDesc *input_padded_pic,
-                                                 EbPictureBufferDesc *quarter_decimated_picture_ptr,
-                                                 EbPictureBufferDesc *sixteenth_decimated_picture_ptr) {
-    // Decimate input picture for HME L0 and L1
-    if (pcs->enable_hme_flag || pcs->tf_enable_hme_flag) {
-        if (pcs->enable_hme_level1_flag || pcs->tf_enable_hme_level1_flag) {
-            svt_aom_decimation_2d(
-                &input_padded_pic
-                     ->buffer_y[input_padded_pic->org_x + input_padded_pic->org_y * input_padded_pic->stride_y],
-                input_padded_pic->stride_y,
-                input_padded_pic->width,
-                input_padded_pic->height,
-                &quarter_decimated_picture_ptr
-                     ->buffer_y[quarter_decimated_picture_ptr->org_x +
-                                quarter_decimated_picture_ptr->org_x * quarter_decimated_picture_ptr->stride_y],
-                quarter_decimated_picture_ptr->stride_y,
-                2);
-            svt_aom_generate_padding(&quarter_decimated_picture_ptr->buffer_y[0],
-                                     quarter_decimated_picture_ptr->stride_y,
-                                     quarter_decimated_picture_ptr->width,
-                                     quarter_decimated_picture_ptr->height,
-                                     quarter_decimated_picture_ptr->org_x,
-                                     quarter_decimated_picture_ptr->org_y);
-        }
-    }
-
-    // Always perform 1/16th decimation as
-    // Sixteenth Input Picture Decimation
-    svt_aom_decimation_2d(
-        &input_padded_pic->buffer_y[input_padded_pic->org_x + input_padded_pic->org_y * input_padded_pic->stride_y],
-        input_padded_pic->stride_y,
-        input_padded_pic->width,
-        input_padded_pic->height,
-        &sixteenth_decimated_picture_ptr
-             ->buffer_y[sixteenth_decimated_picture_ptr->org_x +
-                        sixteenth_decimated_picture_ptr->org_x * sixteenth_decimated_picture_ptr->stride_y],
-        sixteenth_decimated_picture_ptr->stride_y,
-        4);
-
-    svt_aom_generate_padding(&sixteenth_decimated_picture_ptr->buffer_y[0],
-                             sixteenth_decimated_picture_ptr->stride_y,
-                             sixteenth_decimated_picture_ptr->width,
-                             sixteenth_decimated_picture_ptr->height,
-                             sixteenth_decimated_picture_ptr->org_x,
-                             sixteenth_decimated_picture_ptr->org_y);
-}
-
 int svt_av1_count_colors_highbd(uint16_t *src, int stride, int rows, int cols, int bit_depth, int *val_count) {
     assert(bit_depth <= 12);
     const int max_pix_val = 1 << bit_depth;
@@ -2200,19 +2123,11 @@ void *svt_aom_picture_analysis_kernel(void *input_ptr) {
                 input_padded_pic            = (EbPictureBufferDesc *)pa_ref_obj_->input_padded_pic;
 
                 // 1/4 & 1/16 input picture downsampling through filtering
-                if (scs->down_sampling_method_me_search == ME_FILTERED_DOWNSAMPLED) {
-                    svt_aom_downsample_filtering_input_picture(
-                        pcs,
-                        input_padded_pic,
-                        (EbPictureBufferDesc *)pa_ref_obj_->quarter_downsampled_picture_ptr,
-                        (EbPictureBufferDesc *)pa_ref_obj_->sixteenth_downsampled_picture_ptr);
-                } else {
-                    svt_aom_downsample_decimation_input_picture(
-                        pcs,
-                        input_padded_pic,
-                        (EbPictureBufferDesc *)pa_ref_obj_->quarter_downsampled_picture_ptr,
-                        (EbPictureBufferDesc *)pa_ref_obj_->sixteenth_downsampled_picture_ptr);
-                }
+                svt_aom_downsample_filtering_input_picture(
+                    pcs,
+                    input_padded_pic,
+                    (EbPictureBufferDesc *)pa_ref_obj_->quarter_downsampled_picture_ptr,
+                    (EbPictureBufferDesc *)pa_ref_obj_->sixteenth_downsampled_picture_ptr);
 
                 pcs->ds_pics.quarter_picture_ptr   = pa_ref_obj_->quarter_downsampled_picture_ptr;
                 pcs->ds_pics.sixteenth_picture_ptr = pa_ref_obj_->sixteenth_downsampled_picture_ptr;

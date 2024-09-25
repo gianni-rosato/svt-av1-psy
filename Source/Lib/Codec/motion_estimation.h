@@ -36,15 +36,6 @@ extern "C" {
         MeContext                 *me_ctx,
         EbPictureBufferDesc       *input_ptr);
 
-    extern void svt_aom_decimation_2d(
-        uint8_t                   *input_samples,
-        uint32_t                   input_stride,
-        uint32_t                   input_area_width,
-        uint32_t                   input_area_height,
-        uint8_t                   *decim_samples,
-        uint32_t                   decim_stride,
-        uint32_t                   decim_step);
-
     extern void svt_aom_downsample_2d_c(
         uint8_t                   *input_samples,
         uint32_t                   input_stride,

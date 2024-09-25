@@ -2724,20 +2724,12 @@ static void  av1_generate_rps_info(
         svt_aom_pad_picture_to_multiple_of_sb_dimensions(
             input_padded_pic);
         // 1/4 & 1/16 input picture downsampling through filtering
-        if (scs->down_sampling_method_me_search == ME_FILTERED_DOWNSAMPLED) {
-            svt_aom_downsample_filtering_input_picture(
-                pcs,
-                input_padded_pic,
-                (EbPictureBufferDesc*)pa_ref_obj_->quarter_downsampled_picture_ptr,
-                (EbPictureBufferDesc*)pa_ref_obj_->sixteenth_downsampled_picture_ptr);
-        }
-        else {
-            svt_aom_downsample_decimation_input_picture(
-                pcs,
-                input_padded_pic,
-                (EbPictureBufferDesc*)pa_ref_obj_->quarter_downsampled_picture_ptr,
-                (EbPictureBufferDesc*)pa_ref_obj_->sixteenth_downsampled_picture_ptr);
-        }
+        svt_aom_downsample_filtering_input_picture(
+            pcs,
+            input_padded_pic,
+            (EbPictureBufferDesc*)pa_ref_obj_->quarter_downsampled_picture_ptr,
+            (EbPictureBufferDesc*)pa_ref_obj_->sixteenth_downsampled_picture_ptr);
+
         // Gathering statistics of input picture, including Variance Calculation, Histogram Bins
         svt_aom_gathering_picture_statistics(
             scs,

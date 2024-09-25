@@ -3770,17 +3770,10 @@ void pad_and_decimate_filtered_pic(PictureParentControlSet *centre_pcs) {
     }
 
     // 1/4 & 1/16 input picture downsampling
-    if (scs->down_sampling_method_me_search == ME_FILTERED_DOWNSAMPLED) {
-        svt_aom_downsample_filtering_input_picture(centre_pcs,
-                                           input_pic,
-                                           src_object->quarter_downsampled_picture_ptr,
-                                           src_object->sixteenth_downsampled_picture_ptr);
-    } else {
-        svt_aom_downsample_decimation_input_picture(centre_pcs,
-                                            input_pic,
-                                            src_object->quarter_downsampled_picture_ptr,
-                                            src_object->sixteenth_downsampled_picture_ptr);
-    }
+    svt_aom_downsample_filtering_input_picture(centre_pcs,
+                                       input_pic,
+                                       src_object->quarter_downsampled_picture_ptr,
+                                       src_object->sixteenth_downsampled_picture_ptr);
 }
 
 // save original enchanced_picture_ptr buffer in a separate buffer (to be replaced by the temporally filtered pic)

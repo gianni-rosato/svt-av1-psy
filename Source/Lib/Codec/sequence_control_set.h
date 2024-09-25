@@ -80,10 +80,7 @@ typedef struct SequenceControlSet {
     /*!<  */
     EbBlockMeanPrec block_mean_calc_prec;
     /*!< CDF (The signal changes per preset; 0: CDF update, 1: no CDF update) Default is 0.*/
-    uint8_t cdf_mode;
-    /*!< Down-sampling method @ ME and alt-ref temporal filtering
-        (The signal changes per preset; 0: filtering, 1: decimation) Default is 0. */
-    uint8_t  down_sampling_method_me_search;
+    uint8_t  cdf_mode;
     uint32_t svt_aom_geom_idx; //geometry type
 
     /*  1..15    | 17..31  | 33..47  |

@@ -120,9 +120,8 @@ EbErrorType svt_reference_param_update(EbReferenceObject *ref_object, SequenceCo
     picture_buffer_desc_init_data_ptr.mfmv              = scs->mfmv_enabled;
     picture_buffer_desc_init_data_ptr.is_16bit_pipeline = scs->is_16bit_pipeline;
 
-    picture_buffer_desc_init_data_ptr.split_mode            = FALSE;
-    picture_buffer_desc_init_data_ptr.down_sampled_filtered = FALSE;
-    picture_buffer_desc_init_data_ptr.enc_mode              = scs->static_config.enc_mode;
+    picture_buffer_desc_init_data_ptr.split_mode = FALSE;
+    picture_buffer_desc_init_data_ptr.enc_mode   = scs->static_config.enc_mode;
     if (is_16bit)
         picture_buffer_desc_init_data_ptr.bit_depth = EB_TEN_BIT;
 
@@ -351,10 +350,6 @@ EbErrorType svt_pa_reference_param_update(EbPaReferenceObject *pa_ref_obj, Seque
     quart_pic_buf_desc_init_data.top_padding           = scs->b64_size >> 1;
     quart_pic_buf_desc_init_data.bot_padding           = scs->b64_size >> 1;
     quart_pic_buf_desc_init_data.split_mode            = FALSE;
-    quart_pic_buf_desc_init_data.down_sampled_filtered = (scs->down_sampling_method_me_search ==
-                                                          ME_FILTERED_DOWNSAMPLED)
-        ? TRUE
-        : FALSE;
     quart_pic_buf_desc_init_data.rest_units_per_tile   = scs->rest_units_per_tile;
     quart_pic_buf_desc_init_data.mfmv                  = 0;
     quart_pic_buf_desc_init_data.is_16bit_pipeline     = FALSE;
@@ -370,10 +365,6 @@ EbErrorType svt_pa_reference_param_update(EbPaReferenceObject *pa_ref_obj, Seque
     sixteenth_pic_buf_desc_init_data.top_padding           = scs->b64_size >> 2;
     sixteenth_pic_buf_desc_init_data.bot_padding           = scs->b64_size >> 2;
     sixteenth_pic_buf_desc_init_data.split_mode            = FALSE;
-    sixteenth_pic_buf_desc_init_data.down_sampled_filtered = (scs->down_sampling_method_me_search ==
-                                                              ME_FILTERED_DOWNSAMPLED)
-        ? TRUE
-        : FALSE;
     sixteenth_pic_buf_desc_init_data.rest_units_per_tile   = scs->rest_units_per_tile;
     sixteenth_pic_buf_desc_init_data.mfmv                  = 0;
     sixteenth_pic_buf_desc_init_data.is_16bit_pipeline     = FALSE;
@@ -454,11 +445,8 @@ EbErrorType svt_tpl_reference_param_update(EbTplReferenceObject *tpl_ref_obj, Se
     ref_pic_buf_desc_init_data.is_16bit_pipeline = FALSE;
     ref_pic_buf_desc_init_data.enc_mode          = scs->static_config.enc_mode;
 
-    ref_pic_buf_desc_init_data.rest_units_per_tile   = 0;
-    ref_pic_buf_desc_init_data.down_sampled_filtered = (scs->down_sampling_method_me_search == ME_FILTERED_DOWNSAMPLED)
-        ? TRUE
-        : FALSE;
-    ref_pic_buf_desc_init_data.sb_total_count        = scs->sb_total_count;
+    ref_pic_buf_desc_init_data.rest_units_per_tile = 0;
+    ref_pic_buf_desc_init_data.sb_total_count      = scs->sb_total_count;
 
     // Reference picture constructor
     svt_picture_buffer_desc_update(tpl_ref_obj->ref_picture_ptr, (EbPtr)&ref_pic_buf_desc_init_data);

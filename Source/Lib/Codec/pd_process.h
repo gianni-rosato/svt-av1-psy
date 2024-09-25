@@ -24,11 +24,6 @@ EbErrorType  svt_aom_picture_decision_context_ctor(EbThreadContext *thread_ctx, 
                                                    uint8_t calc_hist);
 extern void *svt_aom_picture_decision_kernel(void *input_ptr);
 
-void svt_aom_downsample_decimation_input_picture(PictureParentControlSet *pcs,
-                                                 EbPictureBufferDesc     *inputPaddedPicturePtr,
-                                                 EbPictureBufferDesc     *quarterDecimatedPicturePtr,
-                                                 EbPictureBufferDesc     *sixteenthDecimatedPicturePtr);
-
 void svt_aom_pad_picture_to_multiple_of_min_blk_size_dimensions(SequenceControlSet  *scs,
                                                                 EbPictureBufferDesc *input_pic);
 void svt_aom_pad_picture_to_multiple_of_min_blk_size_dimensions_16bit(SequenceControlSet  *scs,

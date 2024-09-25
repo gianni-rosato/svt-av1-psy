@@ -1277,6 +1277,7 @@ static int create_pa_ref_buf_descs(EbEncHandle *enc_handle_ptr, uint32_t instanc
         ref_pic_buf_desc_init_data.mfmv                = 0;
         ref_pic_buf_desc_init_data.is_16bit_pipeline   = FALSE;
         ref_pic_buf_desc_init_data.enc_mode            = scs->static_config.enc_mode;
+        ref_pic_buf_desc_init_data.sb_total_count      = scs->sb_total_count;
 
         quart_pic_buf_desc_init_data.max_width = scs->max_input_luma_width >> 1;
         quart_pic_buf_desc_init_data.max_height = scs->max_input_luma_height >> 1;
@@ -1288,11 +1289,11 @@ static int create_pa_ref_buf_descs(EbEncHandle *enc_handle_ptr, uint32_t instanc
         quart_pic_buf_desc_init_data.top_padding = scs->b64_size >> 1;
         quart_pic_buf_desc_init_data.bot_padding = scs->b64_size >> 1;
         quart_pic_buf_desc_init_data.split_mode = FALSE;
-        quart_pic_buf_desc_init_data.down_sampled_filtered = (scs->down_sampling_method_me_search == ME_FILTERED_DOWNSAMPLED) ? TRUE : FALSE;
         quart_pic_buf_desc_init_data.rest_units_per_tile = scs->rest_units_per_tile;
         quart_pic_buf_desc_init_data.mfmv                = 0;
         quart_pic_buf_desc_init_data.is_16bit_pipeline   = FALSE;
         quart_pic_buf_desc_init_data.enc_mode            = scs->static_config.enc_mode;
+        quart_pic_buf_desc_init_data.sb_total_count      = scs->sb_total_count;
 
         sixteenth_pic_buf_desc_init_data.max_width = scs->max_input_luma_width >> 2;
         sixteenth_pic_buf_desc_init_data.max_height = scs->max_input_luma_height >> 2;
@@ -1304,11 +1305,11 @@ static int create_pa_ref_buf_descs(EbEncHandle *enc_handle_ptr, uint32_t instanc
         sixteenth_pic_buf_desc_init_data.top_padding = scs->b64_size >> 2;
         sixteenth_pic_buf_desc_init_data.bot_padding = scs->b64_size >> 2;
         sixteenth_pic_buf_desc_init_data.split_mode = FALSE;
-        sixteenth_pic_buf_desc_init_data.down_sampled_filtered = (scs->down_sampling_method_me_search == ME_FILTERED_DOWNSAMPLED) ? TRUE : FALSE;
         sixteenth_pic_buf_desc_init_data.rest_units_per_tile = scs->rest_units_per_tile;
         sixteenth_pic_buf_desc_init_data.mfmv                = 0;
         sixteenth_pic_buf_desc_init_data.is_16bit_pipeline   = FALSE;
         sixteenth_pic_buf_desc_init_data.enc_mode            = scs->static_config.enc_mode;
+        sixteenth_pic_buf_desc_init_data.sb_total_count      = scs->sb_total_count;
 
         eb_pa_ref_obj_ect_desc_init_data_structure.reference_picture_desc_init_data = ref_pic_buf_desc_init_data;
         eb_pa_ref_obj_ect_desc_init_data_structure.quarter_picture_desc_init_data = quart_pic_buf_desc_init_data;
@@ -1356,7 +1357,6 @@ static int create_tpl_ref_buf_descs(EbEncHandle *enc_handle_ptr, uint32_t instan
     ref_pic_buf_desc_init_data.enc_mode = scs->static_config.enc_mode;
 
     ref_pic_buf_desc_init_data.rest_units_per_tile = 0;// rest not needed in tpl scs->rest_units_per_tile;
-    ref_pic_buf_desc_init_data.down_sampled_filtered = (scs->down_sampling_method_me_search == ME_FILTERED_DOWNSAMPLED) ? TRUE : FALSE;
     ref_pic_buf_desc_init_data.sb_total_count = scs->sb_total_count;
 
     eb_tpl_ref_obj_ect_desc_init_data_structure.reference_picture_desc_init_data = ref_pic_buf_desc_init_data;
@@ -1406,7 +1406,6 @@ static int create_ref_buf_descs(EbEncHandle *enc_handle_ptr, uint32_t instance_i
     // Hsan: split_mode is set @ eb_reference_object_ctor() as both unpacked reference and packed reference are needed for a 10BIT input; unpacked reference @ MD, and packed reference @ EP
 
     ref_pic_buf_desc_init_data.split_mode = FALSE;
-    ref_pic_buf_desc_init_data.down_sampled_filtered = FALSE;
     ref_pic_buf_desc_init_data.enc_mode = scs->static_config.enc_mode;
     if (is_16bit)
         ref_pic_buf_desc_init_data.bit_depth = EB_TEN_BIT;
@@ -4095,11 +4094,6 @@ static void set_param_based_on_input(SequenceControlSet *scs)
     //1: OFF
     // Memory Footprint reduction tool ONLY if no CDF (should be controlled using an API signal and not f(enc_mode))
     scs->cdf_mode = 0;
-    // Set down-sampling method     Settings
-    // 0                            0: filtering
-    // 1                            1: decimation
-
-    scs->down_sampling_method_me_search = ME_FILTERED_DOWNSAMPLED;
 
     // Enforce starting frame in decode order (at PicMgr)
     // Does not wait for feedback from PKT

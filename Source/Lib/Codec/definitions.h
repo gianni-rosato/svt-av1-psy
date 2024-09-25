@@ -2364,12 +2364,6 @@ void(*error_handler)(
 #define MAX_REF_IDX                                 4
 #define MAX_ELAPSED_IDR_COUNT                       1024
 
-typedef enum DownSamplingMethod
-{
-    ME_FILTERED_DOWNSAMPLED  = 0,
-    ME_DECIMATED_DOWNSAMPLED = 1
-} DownSamplingMethod;
-
 //***Segments***
 #define CU_MAX_COUNT                                85
 
