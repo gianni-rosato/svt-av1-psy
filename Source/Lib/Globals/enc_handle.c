@@ -3703,7 +3703,7 @@ void set_multi_pass_params(SequenceControlSet *scs)
             else
                 set_first_pass_ctrls(scs, 1);
             scs->final_pass_preset = config->enc_mode;
-            if (scs->final_pass_preset <= ENC_M8)
+            if (scs->final_pass_preset <= ENC_M7)
                 scs->static_config.enc_mode = ENC_M11;
             else
                 scs->static_config.enc_mode = MAX_ENC_PRESET;
@@ -3738,7 +3738,7 @@ void set_multi_pass_params(SequenceControlSet *scs)
     if (scs->lap_rc) {
         scs->static_config.intra_refresh_type = SVT_AV1_KF_REFRESH;
     }
-    if (scs->static_config.pass == ENC_FIRST_PASS && scs->final_pass_preset > ENC_M8)
+    if (scs->static_config.pass == ENC_FIRST_PASS && scs->final_pass_preset > ENC_M7)
         scs->rc_stat_gen_pass_mode = 1;
     else
         scs->rc_stat_gen_pass_mode = 0;
@@ -4184,7 +4184,7 @@ static void set_param_based_on_input(SequenceControlSet *scs)
             else
                 mrp_level = 5;
         }
-        // any changes for preset ENC_M8 and higher should be separated for VBR and CRF in the control structure below
+        // any changes for preset ENC_M7 and higher should be separated for VBR and CRF in the control structure below
         else if (scs->static_config.rate_control_mode != SVT_AV1_RC_MODE_VBR) {
             if (scs->static_config.enc_mode <= ENC_M9)
                 mrp_level = 9;
@@ -4366,9 +4366,9 @@ static void copy_api_from_app(
     scs->static_config.rate_control_mode = ((EbSvtAv1EncConfiguration*)config_struct)->rate_control_mode;
     if (scs->static_config.pass == ENC_SINGLE_PASS && scs->static_config.pred_structure == SVT_AV1_PRED_LOW_DELAY_B) {
 
-        if (scs->static_config.enc_mode < ENC_M8) {
-            scs->static_config.enc_mode = ENC_M8;
-            SVT_WARN("Low delay mode only support encodermode [8-%d]. Forcing encoder mode to 8\n", ENC_M13);
+        if (scs->static_config.enc_mode < ENC_M7) {
+            scs->static_config.enc_mode = ENC_M7;
+            SVT_WARN("Low delay mode only support encodermode [7-%d]. Forcing encoder mode to 7\n", ENC_M13);
         }
     }
     scs->static_config.tune = config_struct->tune;
