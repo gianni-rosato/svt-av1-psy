@@ -574,6 +574,18 @@ const ConvolveParam kArrayConvolve_neon_dotprod[] = {
 INSTANTIATE_TEST_SUITE_P(NEON_DOTPROD, Convolve8Test,
                          ::testing::ValuesIn(kArrayConvolve_neon_dotprod));
 #endif  // HAVE_NEON_DOTPROD
+
+#if HAVE_NEON_I8MM
+// Using the dotprod function for the vertical convolution until the i8mm
+// version is added.
+const ConvolveFunctions convolve8_neon_i8mm(
+    svt_aom_convolve8_horiz_neon_i8mm, svt_aom_convolve8_vert_neon_dotprod);
+const ConvolveParam kArrayConvolve_neon_i8mm[] = {
+    ALL_SIZES(convolve8_neon_i8mm)};
+
+INSTANTIATE_TEST_SUITE_P(NEON_I8MM, Convolve8Test,
+                         ::testing::ValuesIn(kArrayConvolve_neon_i8mm));
+#endif  // HAVE_NEON_I8MM
 #endif  // ARCH_AARCH64
 
 }  // namespace
