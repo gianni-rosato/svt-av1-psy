@@ -13215,7 +13215,7 @@ void svt_av1_fwd_txfm2d_8x8_N4_sse4_1(int16_t *input, int32_t *coeff, uint32_t s
 }
 
 void svt_av1_fwd_txfm2d_16x16_N4_sse4_1(int16_t *input, int32_t *coeff, uint32_t stride, TxType tx_type, uint8_t bd) {
-    __m128i       in[64]  = {_mm_setzero_si128()}, out[64] = {_mm_setzero_si128()};
+    __m128i       in[64] = {_mm_setzero_si128()}, out[64] = {_mm_setzero_si128()};
     const int8_t *shift   = fwd_txfm_shift_ls[TX_16X16];
     const int32_t txw_idx = get_txw_idx(TX_16X16);
     const int32_t txh_idx = get_txh_idx(TX_16X16);
