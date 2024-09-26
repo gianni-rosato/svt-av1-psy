@@ -590,6 +590,58 @@ VarianceParam variance_func_neon[] = {
 
 INSTANTIATE_TEST_SUITE_P(NEON, VarianceTest,
                          ::testing::ValuesIn(variance_func_neon));
+
+#if HAVE_NEON_DOTPROD
+VarianceParam variance_func_neon_dotprod[] = {
+    VarianceParam(4, 4, &svt_aom_variance4x4_c,
+                  &svt_aom_variance4x4_neon_dotprod),
+    VarianceParam(4, 8, &svt_aom_variance4x8_c,
+                  &svt_aom_variance4x8_neon_dotprod),
+    VarianceParam(4, 16, &svt_aom_variance4x16_c,
+                  &svt_aom_variance4x16_neon_dotprod),
+    VarianceParam(8, 4, &svt_aom_variance8x4_c,
+                  &svt_aom_variance8x4_neon_dotprod),
+    VarianceParam(8, 8, &svt_aom_variance8x8_c,
+                  &svt_aom_variance8x8_neon_dotprod),
+    VarianceParam(8, 16, &svt_aom_variance8x16_c,
+                  &svt_aom_variance8x16_neon_dotprod),
+    VarianceParam(8, 32, &svt_aom_variance8x32_c,
+                  &svt_aom_variance8x32_neon_dotprod),
+    VarianceParam(16, 4, &svt_aom_variance16x4_c,
+                  &svt_aom_variance16x4_neon_dotprod),
+    VarianceParam(16, 8, &svt_aom_variance16x8_c,
+                  &svt_aom_variance16x8_neon_dotprod),
+    VarianceParam(16, 16, &svt_aom_variance16x16_c,
+                  &svt_aom_variance16x16_neon_dotprod),
+    VarianceParam(16, 32, &svt_aom_variance16x32_c,
+                  &svt_aom_variance16x32_neon_dotprod),
+    VarianceParam(16, 64, &svt_aom_variance16x64_c,
+                  &svt_aom_variance16x64_neon_dotprod),
+    VarianceParam(32, 8, &svt_aom_variance32x8_c,
+                  &svt_aom_variance32x8_neon_dotprod),
+    VarianceParam(32, 16, &svt_aom_variance32x16_c,
+                  &svt_aom_variance32x16_neon_dotprod),
+    VarianceParam(32, 32, &svt_aom_variance32x32_c,
+                  &svt_aom_variance32x32_neon_dotprod),
+    VarianceParam(32, 64, &svt_aom_variance32x64_c,
+                  &svt_aom_variance32x64_neon_dotprod),
+    VarianceParam(64, 16, &svt_aom_variance64x16_c,
+                  &svt_aom_variance64x16_neon_dotprod),
+    VarianceParam(64, 32, &svt_aom_variance64x32_c,
+                  &svt_aom_variance64x32_neon_dotprod),
+    VarianceParam(64, 64, &svt_aom_variance64x64_c,
+                  &svt_aom_variance64x64_neon_dotprod),
+    VarianceParam(64, 128, &svt_aom_variance64x128_c,
+                  &svt_aom_variance64x128_neon_dotprod),
+    VarianceParam(128, 64, &svt_aom_variance128x64_c,
+                  &svt_aom_variance128x64_neon_dotprod),
+    VarianceParam(128, 128, &svt_aom_variance128x128_c,
+                  &svt_aom_variance128x128_neon_dotprod)};
+
+INSTANTIATE_TEST_SUITE_P(NEON_DOTPROD, VarianceTest,
+                         ::testing::ValuesIn(variance_func_neon_dotprod));
+#endif  // HAVE_NEON_DOTPROD
+
 #endif  // ARCH_AARCH64
 
 typedef unsigned int (*SubpixVarMxNFunc)(const uint8_t *a, int a_stride,
