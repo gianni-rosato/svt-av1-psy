@@ -191,6 +191,11 @@ static void set_bitstream_level_tier(SequenceControlSet *scs) {
                                 2)) {
         bl.major = 5;
         bl.minor = 2;
+    } else if (scs->seq_header.still_picture) {
+        // At this point, we're coding a "large resolution still image" (AV1 spec Annex A.3, note on page 644)
+        // Set the level to "maximum parameter" with value 31 (9 * 4 + 3 = 31) to match avifenc (with aomenc) behavior
+        bl.major = 9;
+        bl.minor = 3;
     } else if (does_level_match(scs->seq_header.max_frame_width,
                                 scs->seq_header.max_frame_height,
                                 (scs->frame_rate >> 16),
