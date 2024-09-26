@@ -396,7 +396,7 @@ macro(add_clike_and_ld_flags)
     set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} ${add_clike_and_ld_flags}")
 endmacro()
 
-if(CMAKE_C_COMPILER_ID STREQUAL "GNU" AND CMAKE_C_COMPILER_VERSION VERSION_GREATER_EQUAL "4.7")
+if(CMAKE_C_COMPILER_ID STREQUAL "GNU" AND CMAKE_C_COMPILER_VERSION VERSION_GREATER_EQUAL "9.0")
     option(SVT_AV1_LTO "Attempt to enable Link Time Optimization if available" ON)
 else()
     option(SVT_AV1_LTO "Attempt to enable Link Time Optimization if available" OFF)
