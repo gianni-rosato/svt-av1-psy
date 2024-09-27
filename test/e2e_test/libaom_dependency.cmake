@@ -1,8 +1,9 @@
 include(ExternalProject)
 #/property:Configuration=${CMAKE_BUILD_TYPE} ${CMAKE_BINARY_DIR}/libaom/src/DepLibAom-build/
 ExternalProject_Add(DepLibAom
+    UPDATE_DISCONNECTED True
     PREFIX "${CMAKE_BINARY_DIR}/libaom"
-    GIT_REPOSITORY "https://github.com/Cidana-Developers/aom.git"
+    GIT_REPOSITORY "https://aomedia.googlesource.com/aom"
     GIT_TAG av1-normative
     GIT_SHALLOW 1
     CMAKE_ARGS
