@@ -18,14 +18,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
 static const int EB_UNIT_TEST_NUM = 10;
-static const int EB_UNIT_TEST_MAX_BD = 12;
-
-extern void *eb_unit_test_buf_alligned;    // 256-byte aligned buffer
-extern void *eb_unit_test_buf_unalligned;  // unaligned buffer
-extern const char eb_unit_test_result_str[2][25];
-
 #ifdef __cplusplus
 }
 #endif
@@ -37,11 +30,14 @@ extern const char eb_unit_test_result_str[2][25];
 #define TEST_ALLIGN_FREE(pointer) _aligned_free(pointer);
 
 #else
-#define TEST_ALLIGN_MALLOC(type, pointer, n_elements) \
-    posix_memalign((void **)(&(pointer)), ALVALUE, n_elements);
+/* clang-format off */
+#define TEST_ALLIGN_MALLOC(type, pointer, n_elements)                 \
+    if (posix_memalign((void **)(&(pointer)), ALVALUE, n_elements)) { \
+        assert(0 && "malloc failed");                                 \
+    }
 
 #define TEST_ALLIGN_FREE(pointer) free(pointer);
-
+/* clang-format on */
 #endif
 
 #endif  // EbUnitTest_h

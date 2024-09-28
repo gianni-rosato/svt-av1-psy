@@ -627,9 +627,6 @@ static INLINE void h_pred_32(uint16_t **const dst, const ptrdiff_t stride, const
 
 // Process 8 rows.
 static INLINE void h_pred_32x8(uint16_t **dst, const ptrdiff_t stride, const uint16_t *const left) {
-    // dst and it's stride must be 32-byte aligned.
-    assert(!((intptr_t)*dst % 32));
-
     const __m128i left_u16 = _mm_loadu_si128((const __m128i *)left);
 
     h_pred_32(dst, stride, _mm_srli_si128(left_u16, 0));
@@ -737,9 +734,6 @@ static INLINE void h_pred_64(uint16_t **const dst, const ptrdiff_t stride, const
 
 // Process 8 rows.
 static INLINE void h_pred_64x8(uint16_t **dst, const ptrdiff_t stride, const uint16_t *const left) {
-    // dst and it's stride must be 32-byte aligned.
-    assert(!((intptr_t)*dst % 32));
-
     __m128i left_u16 = _mm_loadu_si128((const __m128i *)left);
 
     for (int16_t j = 0; j < 8; j++) {
@@ -793,10 +787,6 @@ static INLINE void v_pred_32(uint16_t **const dst, const ptrdiff_t stride, const
 
 // Process 8 rows.
 static INLINE void v_pred_32x8(uint16_t **const dst, const ptrdiff_t stride, const __m512i above01) {
-    // dst and it's stride must be 32-byte aligned.
-    assert(!((intptr_t)*dst % 32));
-    assert(!(stride % 32));
-
     v_pred_32(dst, stride, above01);
     v_pred_32(dst, stride, above01);
     v_pred_32(dst, stride, above01);
@@ -872,10 +862,6 @@ static INLINE void v_pred_64(uint16_t **const dst, const ptrdiff_t stride, const
 // Process 8 rows.
 static INLINE void v_pred_64x8(uint16_t **const dst, const ptrdiff_t stride, const __m512i above0,
                                const __m512i above1) {
-    // dst and it's stride must be 32-byte aligned.
-    assert(!((intptr_t)*dst % 32));
-    assert(!(stride % 32));
-
     v_pred_64(dst, stride, above0, above1);
     v_pred_64(dst, stride, above0, above1);
     v_pred_64(dst, stride, above0, above1);

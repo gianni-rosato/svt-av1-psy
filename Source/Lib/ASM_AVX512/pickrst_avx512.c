@@ -1329,7 +1329,7 @@ static INLINE void compute_stats_win3_avx512(const int16_t *const d, const int32
     {
         const int16_t *d_t                             = d;
         __m256i        deltas[2 * WIENER_WIN_3TAP - 1] = {0};
-        __m256i        dd[WIENER_WIN_3TAP], ds[WIENER_WIN_3TAP];
+        __m256i        dd[WIENER_WIN_3TAP] = {0}, ds[WIENER_WIN_3TAP] = {0}; // Initialized to avoid warning.
         __m256i        se0, se1, xx, yy;
         __m256i        delta;
         se0 = _mm256_setzero_si256(); // Initialize to avoid warning.
@@ -2662,10 +2662,8 @@ static INLINE void compute_stats_win7_avx512(const int16_t *const d, const int32
             const int16_t *di                         = d + i - 1;
             const int16_t *d_j                        = d + j - 1;
             __m256i        deltas[2 * WIENER_WIN - 1] = {0};
-            __m256i        deltas_t[8], deltas_tt[4];
-            __m256i        dd[WIENER_WIN], ds[WIENER_WIN];
-            dd[0] = _mm256_setzero_si256(); // Initialize to avoid warning.
-            ds[0] = _mm256_setzero_si256(); // Initialize to avoid warning.
+            __m256i        deltas_t[8] = {0}, deltas_tt[4] = {0}; // Initialized to avoid warning.
+            __m256i        dd[WIENER_WIN] = {0}, ds[WIENER_WIN] = {0}; // Initialized to avoid warning.
 
             dd[0] = _mm256_insert_epi16(dd[0], di[0 * d_stride], 0);
             dd[0] = _mm256_insert_epi16(dd[0], di[0 * d_stride + width], 8);

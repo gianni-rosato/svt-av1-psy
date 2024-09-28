@@ -222,7 +222,7 @@ static INLINE void load_16bit_32x7_avx512(const int16_t *const src, __m512i dst[
     dst[6] = loadu_s16_16x2_avx512(src + 12 * 16, 32);
 }
 
-SIMD_INLINE void load_16bit_4rows_avx512(const int16_t *const src, const ptrdiff_t stride, __m512i dst[8]) {
+SIMD_INLINE void load_16bit_4rows_avx512(const int16_t *const src, const ptrdiff_t stride, __m512i dst[4]) {
     dst[0] = zz_load_512(src + 0 * stride);
     dst[1] = zz_load_512(src + 1 * stride);
     dst[2] = zz_load_512(src + 2 * stride);
