@@ -109,7 +109,7 @@ Win64 FFmpeg (Static):
     GIT_DEPTH: 0
     PREFIX_DIR: C:/msys64/mingw64
   before_script:
-    - !reference [.ffmpeg-before-script-clone]
+    - !reference [.ffmpeg-before-script-clone-windows]
   script:
     # SVT-AV1
     - |

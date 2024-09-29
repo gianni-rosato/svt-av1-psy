@@ -120,6 +120,15 @@
 
 .ffmpeg-before-script-clone:
   - time git clone $PWD svtav1-src
+  - git clone https://aomedia.googlesource.com/aom aom-src &
+  - git clone https://chromium.googlesource.com/webm/libvpx libvpx-src &
+  - git clone https://code.videolan.org/videolan/dav1d.git dav1d-src &
+  - git clone https://github.com/Netflix/vmaf.git vmaf-src &
+  - git clone https://github.com/FFmpeg/FFmpeg.git ffmpeg-src &
+  - time wait
+
+.ffmpeg-before-script-clone-windows:
+  - time git clone $PWD svtav1-src
   - time git clone https://aomedia.googlesource.com/aom aom-src
   - time git clone https://chromium.googlesource.com/webm/libvpx libvpx-src
   - time git clone https://code.videolan.org/videolan/dav1d.git dav1d-src
@@ -143,6 +152,7 @@
     -DREPRODUCIBLE_BUILDS=ON
   - time cmake --build svtav1-build --config Release --target install
   - FFMPEG_CONFIG_FLAGS="${FFMPEG_CONFIG_FLAGS:+$FFMPEG_CONFIG_FLAGS }--enable-libsvtav1"
+
 # aom
 .ffmpeg-aom-script:
   - time cmake
@@ -220,6 +230,7 @@
     --cxx="${CXX:-ccache g++}"
     --ld="${CXX:-ccache g++}"
     --enable-gpl --enable-static
+    --disable-doc
     --prefix="${PREFIX_DIR}"
     ${FFMPEG_CONFIG_FLAGS}
     --disable-shared || { less ffbuild/config.log; exit 1; }
