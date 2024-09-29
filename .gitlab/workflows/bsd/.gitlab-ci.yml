@@ -8,7 +8,7 @@
 
 .bsd-compiler-base:
   extends: .common-ci-base
-  stage: compile
+  stage: standalone
   tags:
     - gitlab-org
   image: registry.gitlab.com/aomediacodec/aom-testing/ubuntu2004-bsd

@@ -99,7 +99,7 @@ Win64 Enc Test:
 
 Win64 FFmpeg (Static):
   extends: .windows-test-base
-  stage: compile
+  stage: ffmpeg
   variables:
     CC: ccache gcc
     CXX: ccache g++

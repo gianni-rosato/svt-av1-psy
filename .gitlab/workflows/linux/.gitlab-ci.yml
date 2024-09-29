@@ -84,6 +84,7 @@ Linux (Alpine, musl):
 
 Linux (Clang):
   extends: .linux-compiler-base
+  stage: standalone
   parallel:
     matrix:
       - CC: clang-6.0
@@ -93,10 +94,12 @@ Linux (Clang):
 
 Linux (GCC 4):
   extends: .linux-compiler-base
+  stage: standalone
   image: registry.gitlab.com/aomediacodec/aom-testing/centos7
 
 Linux (GCC):
   extends: .linux-compiler-base
+  stage: standalone
   parallel:
     matrix:
       - CC: gcc-7
@@ -394,7 +397,7 @@ Enc Intra Diff Test:
 
 Linux Gstreamer (Static):
   extends: .linux-test-base
-  stage: compile
+  stage: standalone
   variables:
     CC: gcc-11
     CXX: g++-11
@@ -418,7 +421,7 @@ Linux Gstreamer (Static):
 
 Linux libavif (Static):
   extends: .linux-test-base
-  stage: compile
+  stage: standalone
   variables:
     CC: gcc-11
     CXX: g++-11
@@ -454,7 +457,7 @@ Linux libavif (Static):
 
 Linux FFmpeg (n7.0.2, Static):
   extends: .linux-test-base
-  stage: compile
+  stage: ffmpeg
   variables:
     CC: gcc-11
     CXX: g++-11
@@ -496,7 +499,7 @@ Linux FFmpeg (n7.0.2, Static):
 
 Linux FFmpeg (n5.0, Static):
   extends: .linux-test-base
-  stage: compile
+  stage: ffmpeg
   variables:
     CC: gcc-11
     CXX: g++-11

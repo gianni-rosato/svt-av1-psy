@@ -49,6 +49,7 @@
 # Xcode compilation test
 macOS (Xcode):
   extends: .macos-compiler-base
+  stage: standalone
   tags:
     - macos
     - shell
@@ -172,7 +173,7 @@ macOS Enc Test(m1):
 
 macOS FFmpeg (Static):
   extends: .macos-test-base
-  stage: compile
+  stage: ffmpeg
   variables:
     CFLAGS: -pipe
     CXXFLAGS: -pipe
