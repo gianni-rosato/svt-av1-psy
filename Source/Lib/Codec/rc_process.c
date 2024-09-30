@@ -1468,7 +1468,7 @@ static int av1_get_deltaq_sb_variance_boost(uint8_t base_q_idx, uint16_t *varian
     int32_t boost = 0;
 
     if (still_picture) {
-        boost = (int32_t)((base_q_idx + 192) * -svt_av1_compute_qdelta_fp(base_q, target_q, bit_depth) / (255 + 512));
+        boost = (int32_t)((base_q_idx + 496) * -svt_av1_compute_qdelta_fp(base_q, target_q, bit_depth) / (255 + 1024));
     } else {
         boost = (int32_t)((base_q_idx + 40) * -svt_av1_compute_qdelta_fp(base_q, target_q, bit_depth) / (255 + 40));
     }
