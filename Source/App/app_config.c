@@ -937,8 +937,8 @@ ConfigEntry config_entry_2p[] = {
     // 2 pass
     {SINGLE_INPUT,
      PASS_TOKEN,
-     "Multi-pass selection, pass 3 is only available for VBR, default is 0 [0: single pass encode, "
-     "1: first pass, 2: second pass, 3: third pass]",
+     "Multi-pass selection, pass 2 is only available for VBR, default is 0 [0: single pass encode, "
+     "1: first pass, 2: second pass]",
      set_cfg_generic_token},
     {SINGLE_INPUT,
      TWO_PASS_STATS_TOKEN,

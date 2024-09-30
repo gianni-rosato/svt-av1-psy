@@ -195,21 +195,13 @@ void update_firstpass_stats(PictureParentControlSet *pcs, const int frame_number
     *this_frame_stats = fps;
     output_stats(scs, &fps, pcs->picture_number);
     if (twopass->stats_buf_ctx->total_stats != NULL &&
-#if OPT_MPASS_VBR3 & !OPT_MPASS_VBR7
-        scs->static_config.pass == ENC_MIDDLE_PASS) {
-#else
         scs->static_config.pass == ENC_FIRST_PASS) {
-#endif
         svt_av1_accumulate_stats(twopass->stats_buf_ctx->total_stats, &fps);
     }
     /*In the case of two pass, first pass uses it as a circular buffer,
    * when LAP is enabled it is used as a linear buffer*/
     twopass->stats_buf_ctx->stats_in_end_write++;
-#if OPT_MPASS_VBR3 & !OPT_MPASS_VBR7
-    if (scs->static_config.pass == ENC_MIDDLE_PASS &&
-#else
     if (scs->static_config.pass == ENC_FIRST_PASS &&
-#endif
         (twopass->stats_buf_ctx->stats_in_end_write >= twopass->stats_buf_ctx->stats_in_buf_end)) {
         twopass->stats_buf_ctx->stats_in_end_write = twopass->stats_buf_ctx->stats_in_start;
     }

@@ -30,14 +30,14 @@ static const int EB_UNIT_TEST_NUM = 10;
 #define TEST_ALLIGN_FREE(pointer) _aligned_free(pointer);
 
 #else
-/* clang-format off */
-#define TEST_ALLIGN_MALLOC(type, pointer, n_elements)                 \
-    if (posix_memalign((void **)(&(pointer)), ALVALUE, n_elements)) { \
-        assert(0 && "malloc failed");                                 \
-    }
+#define TEST_ALLIGN_MALLOC(type, pointer, n_elements)                     \
+    do {                                                                  \
+        if (posix_memalign((void **)(&(pointer)), ALVALUE, n_elements)) { \
+            assert(0 && "malloc failed");                                 \
+        }                                                                 \
+    } while (0)
 
 #define TEST_ALLIGN_FREE(pointer) free(pointer);
-/* clang-format on */
 #endif
 
 #endif  // EbUnitTest_h

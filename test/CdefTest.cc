@@ -39,29 +39,13 @@
 using svt_av1_test_tool::SVTRandom;
 using ::testing::make_tuple;
 namespace {
-typedef void (*svt_cdef_filter_block_8xn_16_func)(
-    const uint16_t *const in, const int32_t pri_strength,
-    const int32_t sec_strength, const int32_t dir, int32_t pri_damping,
-    int32_t sec_damping, const int32_t coeff_shift, uint16_t *const dst,
-    const int32_t dstride, uint8_t height, uint8_t subsampling_factor);
-
-static const svt_cdef_filter_block_8xn_16_func
-    svt_cdef_filter_block_8xn_16_func_table[] = {
-#if defined(ARCH_X86_64)
-        svt_cdef_filter_block_8xn_16_avx2,
-#if EN_AVX512_SUPPORT
-        svt_cdef_filter_block_8xn_16_avx512
-#endif
-#endif
-
-#if defined(ARCH_AARCH64)
-            NULL,  // No C version, only applicable for avx2 and avx512
-#endif
-
-};
+// The last argument for cdef_dir_param_t refers to the simd level to set
+// svt_cdef_filter_block_8xn_16 to. The function is used for AVX2 and AVX512
+// only, but should point to different functions for each. 0: AVX2/AVX512 not
+// used (don't need to set function) 1: set func to AVX2 2: set func to AVX512
 using cdef_dir_param_t =
     ::testing::tuple<CdefFilterBlockFunc, CdefFilterBlockFunc, BlockSize, int,
-                     int, svt_cdef_filter_block_8xn_16_func>;
+                     int, int>;
 /**
  * @brief Unit test for svt_cdef_filter_block
  *
@@ -98,9 +82,18 @@ class CDEFBlockTest : public ::testing::TestWithParam<cdef_dir_param_t> {
         bsize_ = TEST_GET_PARAM(2);
         boundary_ = TEST_GET_PARAM(3);
         bd_ = TEST_GET_PARAM(4);
-        if (TEST_GET_PARAM(5) != NULL) {
-            svt_cdef_filter_block_8xn_16 = TEST_GET_PARAM(5);
+#if defined(ARCH_X86_64)
+        if (TEST_GET_PARAM(5)) {
+            if (TEST_GET_PARAM(5) == 1)
+                svt_cdef_filter_block_8xn_16 =
+                    svt_cdef_filter_block_8xn_16_avx2;
+#if EN_AVX512_SUPPORT
+            else
+                svt_cdef_filter_block_8xn_16 =
+                    svt_cdef_filter_block_8xn_16_avx512;
+#endif
         }
+#endif
 
         memset(dst_ref_, 0, sizeof(dst_ref_));
         memset(dst_tst_, 0, sizeof(dst_tst_));
@@ -372,23 +365,36 @@ TEST_P(CDEFBlockTest, DISABLED_SpeedTest) {
 // structs as arguments, which makes the v256 type of the intrinsics
 // hard to support, so optimizations for this target are disabled.
 #if defined(_WIN64) || !defined(_MSC_VER) || defined(__clang__)
+#if EN_AVX512_SUPPORT
 INSTANTIATE_TEST_SUITE_P(
-    AVX2, CDEFBlockTest,
-    ::testing::Combine(
-        ::testing::Values(&svt_cdef_filter_block_avx2),
-        ::testing::Values(&svt_cdef_filter_block_c),
-        ::testing::Values(BLOCK_4X4, BLOCK_4X8, BLOCK_8X4, BLOCK_8X8),
-        ::testing::Range(0, 16), ::testing::Range(8, 13, 2),
-        ::testing::ValuesIn(svt_cdef_filter_block_8xn_16_func_table)));
+    AVX512, CDEFBlockTest,
+    ::testing::Combine(::testing::Values(&svt_cdef_filter_block_avx2),
+                       ::testing::Values(&svt_cdef_filter_block_c),
+                       ::testing::Values(BLOCK_4X4, BLOCK_4X8, BLOCK_8X4,
+                                         BLOCK_8X8),
+                       ::testing::Range(0, 16), ::testing::Range(8, 13, 2),
+                       ::testing::Values(2)));
+#endif
 
 INSTANTIATE_TEST_SUITE_P(
+    AVX2, CDEFBlockTest,
+    ::testing::Combine(::testing::Values(&svt_cdef_filter_block_avx2),
+                       ::testing::Values(&svt_cdef_filter_block_c),
+                       ::testing::Values(BLOCK_4X4, BLOCK_4X8, BLOCK_8X4,
+                                         BLOCK_8X8),
+                       ::testing::Range(0, 16), ::testing::Range(8, 13, 2),
+                       ::testing::Values(1)));
+
+// SSE4_1 test invokes avx2 as reference; therefore svt_cdef_filter_block_8xn_16
+// must be set to the avx2 version.
+INSTANTIATE_TEST_SUITE_P(
     SSE4_1, CDEFBlockTest,
-    ::testing::Combine(
-        ::testing::Values(&svt_cdef_filter_block_avx2),
-        ::testing::Values(&svt_av1_cdef_filter_block_sse4_1),
-        ::testing::Values(BLOCK_4X4, BLOCK_4X8, BLOCK_8X4, BLOCK_8X8),
-        ::testing::Range(0, 16), ::testing::Range(8, 13, 2),
-        ::testing::ValuesIn(svt_cdef_filter_block_8xn_16_func_table)));
+    ::testing::Combine(::testing::Values(&svt_cdef_filter_block_avx2),
+                       ::testing::Values(&svt_av1_cdef_filter_block_sse4_1),
+                       ::testing::Values(BLOCK_4X4, BLOCK_4X8, BLOCK_8X4,
+                                         BLOCK_8X8),
+                       ::testing::Range(0, 16), ::testing::Range(8, 13, 2),
+                       ::testing::Values(1)));
 
 #endif  // defined(_WIN64) || !defined(_MSC_VER)
 #endif  // defined(ARCH_X86_64)
@@ -396,12 +402,12 @@ INSTANTIATE_TEST_SUITE_P(
 #if defined(ARCH_AARCH64)
 INSTANTIATE_TEST_SUITE_P(
     NEON, CDEFBlockTest,
-    ::testing::Combine(
-        ::testing::Values(&svt_cdef_filter_block_neon),
-        ::testing::Values(&svt_cdef_filter_block_c),
-        ::testing::Values(BLOCK_4X4, BLOCK_4X8, BLOCK_8X4, BLOCK_8X8),
-        ::testing::Range(0, 16), ::testing::Range(8, 13, 2),
-        ::testing::ValuesIn(svt_cdef_filter_block_8xn_16_func_table)));
+    ::testing::Combine(::testing::Values(&svt_cdef_filter_block_neon),
+                       ::testing::Values(&svt_cdef_filter_block_c),
+                       ::testing::Values(BLOCK_4X4, BLOCK_4X8, BLOCK_8X4,
+                                         BLOCK_8X8),
+                       ::testing::Range(0, 16), ::testing::Range(8, 13, 2),
+                       ::testing::Values(0)));
 #endif  // defined(ARCH_AARCH64)
 
 using FindDirFunc = uint8_t (*)(const uint16_t *img, int stride, int32_t *var,

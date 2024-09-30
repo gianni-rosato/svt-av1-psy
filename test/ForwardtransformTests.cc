@@ -89,7 +89,7 @@ void compare_s32(int32_t *output_base, int32_t *output_opt, uint32_t stride,
     }
 }
 
-TEST(ForwardTransformTest, av1_frwd_txfm_kernels) {
+TEST(AVX512_ForwardTransformTest, av1_frwd_txfm_kernels) {
     int16_t *input, *input_opt;
     int32_t *coeff, *coeff_opt;
     uint32_t stride;

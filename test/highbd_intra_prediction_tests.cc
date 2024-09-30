@@ -66,7 +66,7 @@ void dc_compare_u16(uint16_t *output_base, uint16_t *output_opt,
     }
 }
 
-TEST(HighbdIntraPredictionTest, aom_dc_top_predictor_kernels) {
+TEST(AVX512_HighbdIntraPredictionTest, aom_dc_top_predictor_kernels) {
     uint16_t *input = NULL, *above = NULL, *left = NULL;
     uint16_t *dc_coeff = NULL, *dc_coeff_opt = NULL;
     ptrdiff_t stride = 0;
@@ -198,7 +198,7 @@ TEST(HighbdIntraPredictionTest, aom_dc_top_predictor_kernels) {
     }
 }
 
-TEST(HighbdIntraPredictionTest, aom_dc_left_predictor_kernels) {
+TEST(AVX512_HighbdIntraPredictionTest, aom_dc_left_predictor_kernels) {
     uint16_t *input = NULL, *above = NULL, *left = NULL;
     uint16_t *dc_coeff = NULL, *dc_coeff_opt = NULL;
     ptrdiff_t stride = 0;
@@ -329,7 +329,7 @@ TEST(HighbdIntraPredictionTest, aom_dc_left_predictor_kernels) {
     }
 }
 
-TEST(HighbdIntraPredictionTest, aom_dc_predictor_kernels) {
+TEST(AVX512_HighbdIntraPredictionTest, aom_dc_predictor_kernels) {
     uint16_t *input = NULL, *above = NULL, *left = NULL;
     uint16_t *dc_coeff = NULL, *dc_coeff_opt = NULL;
     ptrdiff_t stride = 0;
@@ -460,7 +460,7 @@ TEST(HighbdIntraPredictionTest, aom_dc_predictor_kernels) {
     }
 }
 
-TEST(HighbdIntraPredictionTest, aom_h_predictor_kernels) {
+TEST(AVX512_HighbdIntraPredictionTest, aom_h_predictor_kernels) {
     uint16_t *input = NULL, *above = NULL, *left = NULL;
     uint16_t *dc_coeff = NULL, *dc_coeff_opt = NULL;
     ptrdiff_t stride = 0;
@@ -593,7 +593,7 @@ TEST(HighbdIntraPredictionTest, aom_h_predictor_kernels) {
     }
 }
 
-TEST(HighbdIntraPredictionTest, aom_v_predictor_kernels) {
+TEST(AVX512_HighbdIntraPredictionTest, aom_v_predictor_kernels) {
     uint16_t *input = NULL, *above = NULL, *left = NULL;
     uint16_t *dc_coeff = NULL, *dc_coeff_opt = NULL;
     ptrdiff_t stride = 0;
@@ -726,7 +726,7 @@ TEST(HighbdIntraPredictionTest, aom_v_predictor_kernels) {
     }
 }
 
-TEST(HighbdIntraPredictionTest, aom_highbd_smooth_predictor_kernels) {
+TEST(AVX512_HighbdIntraPredictionTest, aom_highbd_smooth_predictor_kernels) {
     uint16_t *input = NULL, *above = NULL, *left = NULL;
     uint16_t *dc_coeff = NULL, *dc_coeff_opt = NULL;
     ptrdiff_t stride = 0;
@@ -858,7 +858,7 @@ TEST(HighbdIntraPredictionTest, aom_highbd_smooth_predictor_kernels) {
     }
 }
 
-TEST(HighbdIntraPredictionTest, aom_highbd_smooth_v_predictor_kernels) {
+TEST(AVX512_HighbdIntraPredictionTest, aom_highbd_smooth_v_predictor_kernels) {
     uint16_t *input = NULL, *above = NULL, *left = NULL;
     uint16_t *dc_coeff = NULL, *dc_coeff_opt = NULL;
     ptrdiff_t stride = 0;
@@ -991,7 +991,7 @@ TEST(HighbdIntraPredictionTest, aom_highbd_smooth_v_predictor_kernels) {
     }
 }
 
-TEST(HighbdIntraPredictionTest, aom_highbd_smooth_h_predictor_kernels) {
+TEST(AVX512_HighbdIntraPredictionTest, aom_highbd_smooth_h_predictor_kernels) {
     uint16_t *input = NULL, *above = NULL, *left = NULL;
     uint16_t *dc_coeff = NULL, *dc_coeff_opt = NULL;
     ptrdiff_t stride = 0;

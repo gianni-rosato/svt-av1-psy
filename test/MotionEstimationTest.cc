@@ -345,19 +345,19 @@ AomSadMultiDFn aom_sad_4d_avx512_func_ptr_array[num_sad] = {
     svt_aom_sad128x64x4d_avx512,
     svt_aom_sad128x128x4d_avx512};
 
-TEST(MotionEstimation_avx512, sadMxN_match) {
+TEST(AVX512_MotionEstimation_avx512, sadMxN_match) {
     sadMxN_match_test(aom_sad_avx512_func_ptr_array);
 }
 
-TEST(MotionEstimation_avx512, sadMxNx4d_match) {
+TEST(AVX512_MotionEstimation_avx512, sadMxNx4d_match) {
     sadMxNx4d_match_test(aom_sad_4d_avx512_func_ptr_array);
 }
 
-TEST(MotionEstimation_avx512, DISABLED_sadMxN_speed) {
+TEST(AVX512_MotionEstimation_avx512, DISABLED_sadMxN_speed) {
     sadMxN_speed_test(aom_sad_avx512_func_ptr_array);
 }
 
-TEST(MotionEstimation_avx512, DISABLED_sadMxNx4d_speed) {
+TEST(AVX512_MotionEstimation_avx512, DISABLED_sadMxNx4d_speed) {
     sadMxNx4d_speed_test(aom_sad_4d_avx512_func_ptr_array);
 }
 
