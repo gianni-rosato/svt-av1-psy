@@ -1539,10 +1539,7 @@ static uint8_t get_dlf_level(PictureControlSet *pcs, EncMode enc_mode, uint8_t i
             if (resolution <= INPUT_SIZE_360p_RANGE)
                 dlf_level = 3;
             else {
-                if (is_base)
-                    dlf_level = 3;
-                else
-                    dlf_level = is_not_last_layer ? 4 : 0;
+                dlf_level = is_base ? 3 : is_not_last_layer ? 4 : 0;
             }
             modulation_mode = 2;
         } else if (enc_mode <= ENC_M10) {
@@ -1572,7 +1569,7 @@ static uint8_t get_dlf_level(PictureControlSet *pcs, EncMode enc_mode, uint8_t i
                     dlf_level = is_base ? 2 : is_not_last_layer ? 5 : 0;
                 modulation_mode = 3;
             }
-        } else {
+        } else if (enc_mode <= ENC_M8) {
             if (fast_decode <= 1) {
                 if (pcs->coeff_lvl == VLOW_LVL || pcs->coeff_lvl == LOW_LVL)
                     dlf_level = is_base ? 2 : is_not_last_layer ? 3 : 4;
@@ -1588,6 +1585,23 @@ static uint8_t get_dlf_level(PictureControlSet *pcs, EncMode enc_mode, uint8_t i
                     dlf_level = is_base ? 2 : is_not_last_layer ? 5 : 0;
                 modulation_mode = 3;
             }
+        } else if (enc_mode <= ENC_M9) {
+            if (fast_decode <= 1) {
+                if (pcs->coeff_lvl == HIGH_LVL)
+                    dlf_level = is_base ? 4 : is_not_last_layer ? 5 : 0;
+                else
+                    dlf_level = is_base ? 3 : is_not_last_layer ? 4 : 0;
+                modulation_mode = 2;
+            } else {
+                if (pcs->coeff_lvl == HIGH_LVL)
+                    dlf_level = is_base ? 4 : 0;
+                else
+                    dlf_level = is_base ? 3 : is_not_last_layer ? 5 : 0;
+                modulation_mode = 3;
+            }
+        } else {
+            dlf_level       = is_base ? 3 : is_not_last_layer ? 5 : 0;
+            modulation_mode = 3;
         }
     }
     if (!is_base)

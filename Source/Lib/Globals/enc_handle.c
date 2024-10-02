@@ -4318,17 +4318,6 @@ static void copy_api_from_app(
     // Decoder Optimization Flag
     scs->static_config.fast_decode = ((EbSvtAv1EncConfiguration*)config_struct)->fast_decode;
 
-    // If the set fast_decode value is in the allowable range, check that the value is supported for the current preset.
-    // If the value is valid, but not supported in the current preset, change the value to one that is supported.
-    if (scs->static_config.fast_decode != 0) {
-        if (scs->static_config.enc_mode >= ENC_M9) {
-            SVT_WARN("The fast decode option is not supported in M%d.\n", scs->static_config.enc_mode);
-            SVT_WARN("Decoder speedup is only supported in presets MR-M9.\n");
-            SVT_WARN("Switching off decoder speedup optimizations.\n");
-            scs->static_config.fast_decode = 0;
-        }
-    }
-
     //Film Grain
     scs->static_config.film_grain_denoise_strength = ((EbSvtAv1EncConfiguration*)config_struct)->film_grain_denoise_strength;
     scs->static_config.film_grain_denoise_apply = ((EbSvtAv1EncConfiguration*)config_struct)->film_grain_denoise_apply;
