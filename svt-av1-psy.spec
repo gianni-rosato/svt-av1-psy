@@ -12,7 +12,7 @@ BuildRequires:  yasm-devel
 BuildRequires:  clang
 BuildRequires:  clang++
 BuildRequires: libdovi-devel
-BuildRequires: Ninja
+BuildRequires: ninja-build
 
 %description
 SVT-AV1-PSY is the Scalable Video Technology for AV1
