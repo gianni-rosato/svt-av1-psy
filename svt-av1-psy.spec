@@ -11,7 +11,6 @@ BuildRequires:  cmake
 BuildRequires:  yasm-devel
 BuildRequires:  clang
 BuildRequires:  clang++
-BuildRequires:  libhdr10plus-3_6
 BuildRequires: libdovi-devel
 
 %description
@@ -19,7 +18,7 @@ SVT-AV1-PSY is the Scalable Video Technology for AV1 (SVT-AV1 Encoder and Decode
 
 
 %build
-%cmake -DLIBDOVI_FOUND=1 -DLIBHDR10PLUS_RS_FOUND=1
+%cmake -DLIBDOVI_FOUND=1 
 %cmake_build
 
 %install
