@@ -18,6 +18,7 @@
       -DREPRODUCIBLE_BUILDS=ON `
       -DBUILD_SHARED_LIBS=ON `
       -DBUILD_TESTING=ON `
+      -DSVT_AV1_LTO=ON `
       $env:EXTRA_CMAKE_FLAGS
     - cmake --build Build --config $(if ($env:CMAKE_BUILD_TYPE) {$env:CMAKE_BUILD_TYPE} else {"Release"})
 
