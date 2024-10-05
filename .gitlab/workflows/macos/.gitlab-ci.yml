@@ -66,7 +66,7 @@ macOS (Static, Tests):
     - x86
   variables:
     CMAKE_GENERATOR: Ninja
-    EXTRA_CMAKE_FLAGS: -DBUILD_TESTING=ON # -DCMAKE_OSX_ARCHITECTURES="arm64;x86_64" # universal binaries are currently broken
+    EXTRA_CMAKE_FLAGS: -DBUILD_TESTING=ON -DSVT_AV1_LTO=ON # -DCMAKE_OSX_ARCHITECTURES="arm64;x86_64" # universal binaries are currently broken
     EXTRA_CFLAGS: -Wno-error -g
     EXTRA_CXXFLAGS: -Wno-error -g
     PREFIX_DIR: ${CI_PROJECT_DIR}/SVT-Install/
