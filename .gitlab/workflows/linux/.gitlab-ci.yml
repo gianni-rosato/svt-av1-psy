@@ -251,10 +251,10 @@ Linux Unit Tests:
   extends: .linux-unit-test-base
   variables:
     SVT_AV1_TEST_VECTOR_PATH: $CI_PROJECT_DIR/test/vectors
-    TOTAL_SHARDS: 20
+    TOTAL_SHARDS: 16
   parallel:
     matrix:
-      - SHARD_INDEX: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19]
+      - SHARD_INDEX: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
   cache:
     key: testvectors
     paths:
