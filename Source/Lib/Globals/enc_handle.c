@@ -560,6 +560,8 @@ static EbErrorType load_default_buffer_configuration_settings(
     me_seg_h = scs->me_segment_row_count_array[0];
     me_seg_w = scs->me_segment_column_count_array[0];
 
+    const bool is_low_delay = (scs->static_config.pred_structure == SVT_AV1_PRED_LOW_DELAY_P ||
+        scs->static_config.pred_structure == SVT_AV1_PRED_LOW_DELAY_B);
     // adjust buffer count for superres
     uint32_t superres_count = (scs->static_config.superres_mode == SUPERRES_AUTO &&
         (scs->static_config.superres_auto_search_type == SUPERRES_AUTO_DUAL ||
@@ -627,9 +629,7 @@ static EbErrorType load_default_buffer_configuration_settings(
         min_overlay = scs->static_config.enable_overlays ? return_ppcs : 0;
         min_recon = min_ref;
 
-        if (scs->static_config.pred_structure == SVT_AV1_PRED_LOW_DELAY_P ||
-            scs->static_config.pred_structure == SVT_AV1_PRED_LOW_DELAY_B)
-        {
+        if (is_low_delay) {
             min_input = min_parent = 1 + scs->scd_delay + eos_delay;
             min_child = 1;
             min_ref = dpb_frames + num_ref_from_cur_mg;
@@ -644,8 +644,9 @@ static EbErrorType load_default_buffer_configuration_settings(
 
         }
         //Configure max needed buffers to process 1+n_extra_mg Mini-Gops in the pipeline. n extra MGs to feed to picMgr on top of current one.
+        // Low delay mode has no extra minigops to process.
         uint32_t n_extra_mg;
-        if (core_count <= PARALLEL_LEVEL_3_RANGE) {
+        if (core_count <= PARALLEL_LEVEL_3_RANGE || is_low_delay) {
             n_extra_mg = 0;
         }
         else if (core_count <= PARALLEL_LEVEL_4_RANGE) {
@@ -662,6 +663,10 @@ static EbErrorType load_default_buffer_configuration_settings(
         max_parent = max_input;
         max_child = (mg_size / 2) * (n_extra_mg + 1);
         max_child = MAX(max_child, 1);//have at least one child for mg_size<2
+        // In low delay mode, will only have one picture at a time to process
+        if (is_low_delay) {
+            max_child = 1;
+        }
 
         // max_ref defines here to avoid cppcheck warning
         uint32_t max_ref = min_ref   + num_ref_from_cur_mg * n_extra_mg;
@@ -4460,14 +4465,6 @@ static void copy_api_from_app(
     scs->static_config.channel_id = ((EbSvtAv1EncConfiguration*)config_struct)->channel_id;
     scs->static_config.active_channel_count = ((EbSvtAv1EncConfiguration*)config_struct)->active_channel_count;
     scs->static_config.logical_processors = ((EbSvtAv1EncConfiguration*)config_struct)->logical_processors;
-    if (scs->static_config.pred_structure == SVT_AV1_PRED_LOW_DELAY_B) {
-        if (scs->static_config.logical_processors == 0){
-            scs->static_config.logical_processors = 3;
-        }else if (scs->static_config.logical_processors > 3){
-            scs->static_config.logical_processors = 3;
-            SVT_WARN("lp is capped at 3 for low delay\n");
-        }
-    }
     scs->static_config.pin_threads = ((EbSvtAv1EncConfiguration*)config_struct)->pin_threads;
     scs->static_config.target_socket = ((EbSvtAv1EncConfiguration*)config_struct)->target_socket;
     if ((scs->static_config.pin_threads == 0) && (scs->static_config.target_socket != -1)){
