@@ -650,8 +650,8 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet *scs) {
     }
     // Limit 8K & 16K configurations ( due to  memory constraints)
     if ((uint64_t)(scs->max_input_luma_width * scs->max_input_luma_height) > INPUT_SIZE_4K_TH &&
-        config->enc_mode <= ENC_M6) {
-        SVT_ERROR("Instance %u: 8k+ resolution support is limited to M8 and faster presets.\n", channel_number + 1);
+        config->enc_mode <= ENC_M4) {
+        SVT_ERROR("Instance %u: 8k+ resolution support is limited to M5 and faster presets.\n", channel_number + 1);
         return_error = EB_ErrorBadParameter;
     }
 
