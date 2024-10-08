@@ -937,6 +937,11 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet *scs) {
         return_error = EB_ErrorBadParameter;
     }
 
+    if (config->noise_norm_strength > 4) {
+        SVT_ERROR("Instance %u: Noise normalization strength must be between 0 and 4\n", channel_number + 1);
+        return_error = EB_ErrorBadParameter;
+    }
+
     return return_error;
 }
 
@@ -1233,8 +1238,14 @@ void svt_av1_print_lib_params(SequenceControlSet *scs) {
                  config->qp_scale_compress_strength,
                  config->frame_luma_bias);
 
-        SVT_INFO("SVT [config]: Temporal Filtering Strength \t\t\t\t\t: %d\n",
-                 config->tf_strength);
+        if (config->noise_norm_strength < 1) {
+            SVT_INFO("SVT [config]: Temporal Filtering Strength \t\t\t\t\t: %d\n",
+                    config->tf_strength);
+        } else {
+            SVT_INFO("SVT [config]: Temporal Filtering Strength / Noise Normalization Strength \t: %d / %d\n",
+                     config->tf_strength,
+                     config->noise_norm_strength);
+        }
     }
 #ifdef DEBUG_BUFFERS
     SVT_INFO("SVT [config]: INPUT / OUTPUT \t\t\t\t\t\t\t: %d / %d\n",
@@ -2107,7 +2118,8 @@ EB_API EbErrorType svt_av1_enc_parse_parameter(EbSvtAv1EncConfiguration *config_
         {"variance-octile", &config_struct->variance_octile},
         {"qp-scale-compress-strength", &config_struct->qp_scale_compress_strength},
         {"frame-luma-bias", &config_struct->frame_luma_bias},
-        {"tf-strength", &config_struct->tf_strength}
+        {"tf-strength", &config_struct->tf_strength},
+        {"noise-norm-strength", &config_struct->noise_norm_strength}
     };
     const size_t uint8_opts_size = sizeof(uint8_opts) / sizeof(uint8_opts[0]);
 
