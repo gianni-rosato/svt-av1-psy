@@ -1947,6 +1947,7 @@ EB_API EbErrorType svt_av1_enc_init(EbComponentType *svt_enc_component)
         input_data.max_32_tx_size = enc_handle_ptr->scs_instance_array[instance_index]->scs->static_config.max_32_tx_size;
         input_data.adaptive_film_grain = enc_handle_ptr->scs_instance_array[instance_index]->scs->static_config.adaptive_film_grain;
         input_data.tf_strength = enc_handle_ptr->scs_instance_array[instance_index]->scs->static_config.tf_strength;
+        input_data.noise_norm_strength = enc_handle_ptr->scs_instance_array[instance_index]->scs->static_config.noise_norm_strength;
         input_data.static_config = enc_handle_ptr->scs_instance_array[instance_index]->scs->static_config;
 
         EB_NEW(
@@ -5035,6 +5036,9 @@ static void copy_api_from_app(
 
     // Temporal filtering strength
     scs->static_config.tf_strength = config_struct->tf_strength;
+
+    // Noise normalization strength
+    scs->static_config.noise_norm_strength = config_struct->noise_norm_strength;
 
     return;
 }

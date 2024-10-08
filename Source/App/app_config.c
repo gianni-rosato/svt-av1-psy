@@ -220,6 +220,8 @@
 #define MIN_CHROMA_QM_LEVEL_TOKEN "--chroma-qm-min"
 #define MAX_CHROMA_QM_LEVEL_TOKEN "--chroma-qm-max"
 
+#define NOISE_NORM_STRENGTH_TOKEN "--noise-norm-strength"
+
 static EbErrorType validate_error(EbErrorType err, const char *token, const char *value) {
     switch (err) {
     case EB_ErrorNone: return EB_ErrorNone;
@@ -1307,6 +1309,10 @@ ConfigEntry config_entry_psy[] = {
      MAX_CHROMA_QM_LEVEL_TOKEN,
      "[PSY] Max chroma quant matrix flatness, default is 15 [0-15]",
      set_cfg_generic_token},
+    {SINGLE_INPUT,
+     NOISE_NORM_STRENGTH_TOKEN,
+     "[PSY] Noise normalization strength, default is 3 [0-4]",
+     set_cfg_generic_token},
     // Termination
     {SINGLE_INPUT, NULL, NULL, NULL}};
 
@@ -1517,6 +1523,9 @@ ConfigEntry config_entry[] = {
     // Chroma QM
     {SINGLE_INPUT, MIN_CHROMA_QM_LEVEL_TOKEN, "MinChromaQmLevel", set_cfg_generic_token},
     {SINGLE_INPUT, MAX_CHROMA_QM_LEVEL_TOKEN, "MaxChromaQmLevel", set_cfg_generic_token},
+
+    // Noise normalization strength
+    {SINGLE_INPUT, NOISE_NORM_STRENGTH_TOKEN, "NoiseNormStrength", set_cfg_generic_token},
 
     // Termination
     {SINGLE_INPUT, NULL, NULL, NULL}};

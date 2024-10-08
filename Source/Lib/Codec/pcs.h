@@ -1229,6 +1229,7 @@ typedef struct PictureControlSetInitData {
     Bool    max_32_tx_size;
     Bool    adaptive_film_grain;
     uint8_t    tf_strength;
+    uint8_t    noise_norm_strength;
 } PictureControlSetInitData;
 
 typedef struct Av1Comp {
