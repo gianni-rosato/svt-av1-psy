@@ -4653,10 +4653,11 @@ static void copy_api_from_app(
     scs->enable_qp_scaling_flag = 1;
 
     // Set Picture Parameters for statistics gathering
+    // Use one region for content less than a superblock wide or long
     scs->picture_analysis_number_of_regions_per_width =
-        HIGHER_THAN_CLASS_1_REGION_SPLIT_PER_WIDTH;
+        scs->max_input_luma_width >= 64 ? HIGHER_THAN_CLASS_1_REGION_SPLIT_PER_WIDTH : 1;
     scs->picture_analysis_number_of_regions_per_height =
-        HIGHER_THAN_CLASS_1_REGION_SPLIT_PER_HEIGHT;
+        scs->max_input_luma_height >= 64 ? HIGHER_THAN_CLASS_1_REGION_SPLIT_PER_HEIGHT : 1;
 
     scs->pic_based_rate_est = FALSE;
     scs->block_mean_calc_prec        = BLOCK_MEAN_PREC_SUB;
