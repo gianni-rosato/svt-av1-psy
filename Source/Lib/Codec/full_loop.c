@@ -12,7 +12,6 @@
 
 #include "definitions.h"
 #include "full_loop.h"
-#include <cstdint>
 #include "rd_cost.h"
 #include "aom_dsp_rtcd.h"
 
