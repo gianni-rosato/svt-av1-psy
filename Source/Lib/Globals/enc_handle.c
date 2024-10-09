@@ -5008,22 +5008,6 @@ static void copy_api_from_app(
     // Extended CRF
     scs->static_config.extended_crf_qindex_offset = config_struct->extended_crf_qindex_offset;
 
-    // Override settings for Still Picture tune
-    if (scs->static_config.tune == 4) {
-        SVT_WARN("Tune 4: Still Picture is experimental, expect frequent changes that may modify present behavior.\n");
-        SVT_WARN("Tune 4: Still Picture overrides: enable-qm, sharpness, variance octile, variance boost strength, alt curve, min/max QM level, and max 32 TX size\n");
-        scs->static_config.enable_qm = 1;
-        scs->static_config.min_qm_level = 4;
-        scs->static_config.max_qm_level = 10;
-        scs->static_config.min_chroma_qm_level = 4;
-        scs->static_config.max_chroma_qm_level = 10;
-        scs->static_config.sharpness = 7;
-        scs->static_config.variance_boost_strength = 3;
-        scs->static_config.variance_octile = 5;
-        scs->static_config.enable_alt_curve = 1;
-        scs->static_config.max_32_tx_size = 1;
-    }
-
     // QP scaling compression
     scs->static_config.qp_scale_compress_strength = config_struct->qp_scale_compress_strength;
 
@@ -5041,6 +5025,22 @@ static void copy_api_from_app(
 
     // Noise normalization strength
     scs->static_config.noise_norm_strength = config_struct->noise_norm_strength;
+
+    // Override settings for Still Picture tune
+    if (scs->static_config.tune == 4) {
+        SVT_WARN("Tune 4: Still Picture is experimental, expect frequent changes that may modify present behavior.\n");
+        SVT_WARN("Tune 4: Still Picture overrides: enable-qm, sharpness, variance octile, variance boost strength, alt curve, min/max QM level, and max 32 TX size\n");
+        scs->static_config.enable_qm = 1;
+        scs->static_config.min_qm_level = 4;
+        scs->static_config.max_qm_level = 10;
+        scs->static_config.min_chroma_qm_level = 4;
+        scs->static_config.max_chroma_qm_level = 10;
+        scs->static_config.sharpness = 7;
+        scs->static_config.variance_boost_strength = 3;
+        scs->static_config.variance_octile = 5;
+        scs->static_config.enable_alt_curve = 1;
+        scs->static_config.max_32_tx_size = 1;
+    }
 
     return;
 }
