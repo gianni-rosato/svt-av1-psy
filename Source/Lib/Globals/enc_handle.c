@@ -4012,7 +4012,7 @@ static void set_param_based_on_input(SequenceControlSet *scs)
     if (scs->static_config.variance_boost_strength >= 4) {
         SVT_WARN("Aggressive variance boost strength used. This is a curve that's only useful under specific situations. Use with caution!\n");
     }
-    if (scs->static_config.max_32_tx_size && scs->static_config.qp >= 20) {
+    if (scs->static_config.max_32_tx_size && scs->static_config.qp >= 20 && scs->static_config.tune != 4) {
         SVT_WARN("Restricting transform sizes to a max of 32x32 might reduce coding efficiency at low to medium fidelity settings. Use with caution!\n");
     }
     // scs->static_config.hierarchical_levels = (scs->static_config.rate_control_mode > 1) ? 3 : scs->static_config.hierarchical_levels;
@@ -4639,7 +4639,7 @@ static void copy_api_from_app(
     // Override settings for Still Picture tune
     if (scs->static_config.tune == 4) {
         SVT_WARN("Tune 4: Still Picture is experimental, expect frequent changes that may modify present behavior.\n");
-        SVT_WARN("Tune 4: Still Picture overrides: enable-qm, sharpness, variance octile, variance boost strength, alt curve, and min/max QM level.\n");
+        SVT_WARN("Tune 4: Still Picture overrides: enable-qm, sharpness, variance octile, variance boost strength, alt curve, min/max QM level, and max 32 TX size\n");
         scs->static_config.enable_qm = 1;
         scs->static_config.min_qm_level = 4;
         scs->static_config.max_qm_level = 10;
@@ -4649,6 +4649,7 @@ static void copy_api_from_app(
         scs->static_config.variance_boost_strength = 3;
         scs->static_config.variance_octile = 5;
         scs->static_config.enable_alt_curve = 1;
+        scs->static_config.max_32_tx_size = 1;
     }
 
     // QP scaling compression
