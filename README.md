@@ -92,6 +92,10 @@ Allows the encoder to accept content with odd width and/or height (e.g. 1920x817
 
 Allows the encoder to accept content with width and/or height as small as 4 pixels (e.g. 32x18px).
 
+- `--noise-norm-strength` *0 to 4*
+
+In a scenario where a video frame contains areas with fine textures or flat regions, noise normalization helps maintain visual quality by boosting certain AC coefficients. The default value is 0, but it is enabled at strength 3 when using Tune 3.
+
 ### Modified Defaults
 
 SVT-AV1-PSY has different defaults than mainline SVT-AV1 in order to provide better visual fidelity out of the box. They include:

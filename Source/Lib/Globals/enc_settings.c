@@ -1101,6 +1101,7 @@ EbErrorType svt_av1_set_default_params(EbSvtAv1EncConfiguration *config_ptr) {
     config_ptr->max_32_tx_size                    = FALSE;
     config_ptr->adaptive_film_grain               = TRUE;
     config_ptr->tf_strength                       = 1;
+    config_ptr->noise_norm_strength               = 0;
     return return_error;
 }
 
