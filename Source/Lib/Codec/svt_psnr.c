@@ -22,11 +22,7 @@ static int32_t encoder_variance(const uint8_t *a, int32_t a_stride, const uint8_
     int32_t sse = 0;
 
     for (i = 0; i < h; i++) {
-        for (j = 0; j < w; j++) {
-            const int32_t diff = a[j] - b[j];
-            sse += diff * diff;
-        }
-
+        for (j = 0; j < w; j++) { sse += SQR(a[j] - b[j]); }
         a += a_stride;
         b += b_stride;
     }
@@ -39,10 +35,7 @@ static int64_t encoder_highbd_variance64(const uint8_t *a8, int32_t a_stride, co
     const uint16_t *b   = CONVERT_TO_SHORTPTR(b8);
     int64_t         sse = 0;
     for (int32_t i = 0; i < h; ++i) {
-        for (int32_t j = 0; j < w; ++j) {
-            const int32_t diff = a[j] - b[j];
-            sse += (uint32_t)(diff * diff);
-        }
+        for (int32_t j = 0; j < w; ++j) { sse += (uint32_t)(SQR(a[j] - b[j])); }
         a += a_stride;
         b += b_stride;
     }
@@ -54,19 +47,13 @@ static void encoder_highbd_8_variance(const uint8_t *a8, int32_t a_stride, const
     *sse = (uint32_t)encoder_highbd_variance64(a8, a_stride, b8, b_stride, w, h);
 }
 
-static void variance(const uint8_t *a, int32_t a_stride, const uint8_t *b, int b_stride, int w, int h, uint32_t *sse,
-                     int32_t *sum) {
+static void variance(const uint8_t *a, int32_t a_stride, const uint8_t *b, int b_stride, int w, int h, uint32_t *sse) {
     int i, j;
 
-    *sum = 0;
     *sse = 0;
 
     for (i = 0; i < h; ++i) {
-        for (j = 0; j < w; ++j) {
-            const int32_t diff = a[j] - b[j];
-            *sum += diff;
-            *sse += diff * diff;
-        }
+        for (j = 0; j < w; ++j) { *sse += SQR(a[j] - b[j]); }
 
         a += a_stride;
         b += b_stride;
@@ -75,9 +62,8 @@ static void variance(const uint8_t *a, int32_t a_stride, const uint8_t *b, int b
 
 uint32_t svt_aom_mse16x16_c(const uint8_t *src_ptr, int32_t source_stride, const uint8_t *ref_ptr, int32_t recon_stride,
                             uint32_t *sse) {
-    int32_t sum;
-    variance(src_ptr, source_stride, ref_ptr, recon_stride, 16, 16, sse, &sum);
-    return *sse - (uint32_t)(((int64_t)sum * sum) / (16 * 16));
+    variance(src_ptr, source_stride, ref_ptr, recon_stride, 16, 16, sse);
+    return *sse;
 }
 
 static int64_t get_sse(const uint8_t *a, int32_t a_stride, const uint8_t *b, int32_t b_stride, int32_t width,
