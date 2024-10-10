@@ -3875,6 +3875,9 @@ static void set_param_based_on_input(SequenceControlSet *scs)
     svt_aom_derive_input_resolution(
         &scs->input_resolution,
         scs->max_input_luma_width *scs->max_input_luma_height);
+
+    scs->seq_qp_mod = 2;
+
     // Set tune params
     derive_vq_params(scs);
 
@@ -4139,7 +4142,7 @@ static void set_param_based_on_input(SequenceControlSet *scs)
     else
         list0_only_base_lvl = 6;
 
-    if (scs->static_config.qp > 51)
+    if ((scs->seq_qp_mod == 1 || scs->seq_qp_mod == 2) && scs->static_config.qp > 51)
         list0_only_base_lvl = MAX(0, (int)((int)list0_only_base_lvl - 1));
 
     set_list0_only_base(scs, list0_only_base_lvl);

@@ -298,6 +298,12 @@ typedef struct SequenceControlSet {
     // Enable low latency KF coding for RTC
     bool          low_latency_kf;
     List0OnlyBase list0_only_base_ctrls;
+    // Control if feature levels are directly modulated using the sequence QP.
+    // 0: No seq QP modulation
+    // 1: Enable only high-QP modulation (apply conservative offsets to high QP)
+    // 2: (Default) Enable all QP modulation (apply conservative offsets to high QP, aggressive offsets to low QP)
+    // 3: Enable only low-QP modulaiton (apply aggressive offsets to low QP)
+    uint8_t seq_qp_mod;
 } SequenceControlSet;
 typedef struct EbSequenceControlSetInstance {
     EbDctor             dctor;
