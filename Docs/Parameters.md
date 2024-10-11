@@ -73,9 +73,9 @@ For more information on valid values for specific keys, refer to the [EbEncSetti
 | **InjectorFrameRate**            | --inj-frm-rt                | [0-240]                        | 60          | Set injector frame rate, only applicable with `--inj 1`                                                       |
 | **StatReport**                   | --enable-stat-report        | [0-1]                          | 0           | Calculates and outputs PSNR SSIM metrics at the end of encoding                                               |
 | **Asm**                          | --asm                       | [0-11, c-max]                  | max         | Limit assembly instruction set [c, mmx, sse, sse2, sse3, ssse3, sse4_1, sse4_2, avx, avx2, avx512, max]       |
-| **LogicalProcessors**            | --lp                        | [0, core count of the machine] | 0           | Target (best effort) number of logical cores to be used. 0 means all. Refer to Appendix A.1                   |
-| **PinnedExecution**              | --pin                       | [0-1]                          | 0           | Pin the execution to the first --lp cores. Overwritten to 1 when `--ss` is set. Refer to Appendix A.1         |
-| **TargetSocket**                 | --ss                        | [-1,1]                         | -1          | Specifies which socket to run on, assumes a max of two sockets. Refer to Appendix A.1                         |
+| **LevelOfParallelism**           | --lp                        | [0, 6]                         | 0           | Controls the number of threads to create and the number of picture buffers to allocate (higher level means more parallelism). 0 means choose level based on machine core count. Refer to Appendix A.1                   |
+| **PinnedExecution**              | --pin                       | [0-core count of the machine]  | 0           | Pin the execution to the first N cores. [0: no pinning, N: number of cores to pin to]. Refer to Appendix A.1  |
+| **TargetSocket**                 | --ss                        | [-1,1]                         | -1          | Specifies which socket to run on, assumes a max of two equally-sized sockets. Refer to Appendix A.1           |
 | **FastDecode**                   | --fast-decode               | [0,2]                          | 0           | Tune settings to output bitstreams that can be decoded faster, [0 = OFF, 1,2 = levels for decode-targeted optimization (2 yields faster decoder speed)]. Defaults to 5 temporal layers structure but may override with --hierarchical-levels|
 | **Tune**                         | --tune                      | [0-2]                          | 1           | Specifies whether to use PSNR or VQ as the tuning metric [0 = VQ, 1 = PSNR, 2 = SSIM]                         |
 
@@ -220,7 +220,7 @@ SvtAv1EncApp -i in.y4m -b out.ivf --roi-map-file roi_map.txt
 
 | **Configuration file parameter** | **Command line** | **Range**      | **Default**        | **Description**                                                                                   |
 |----------------------------------|------------------|----------------|--------------------|---------------------------------------------------------------------------------------------------|
-| **Pass**                         | --pass           | [0-3]          | 0                  | Multi-pass selection [0: single pass encode, 1: first pass, 2: second pass, 3: third pass]        |
+| **Pass**                         | --pass           | [0-2]          | 0                  | Multi-pass selection [0: single pass encode, 1: first pass, 2: second pass]                       |
 | **Stats**                        | --stats          | any string     | "svtav1_2pass.log" | Filename for multi-pass encoding                                                                  |
 | **Passes**                       | --passes         | [1-2]          | 1                  | Number of encoding passes, default is preset dependent [1: one pass encode, 2: multi-pass encode] |
 
@@ -230,10 +230,9 @@ SvtAv1EncApp -i in.y4m -b out.ivf --roi-map-file roi_map.txt
 |----------|-------------------------|
 | 0        | ""                      |
 | 1        | "w"                     |
-| 2        | "rw" if 3-pass else "r" |
-| 3        | "r"                     |
+| 2        | "r"                     |
 
-`--pass 3` is only available for non-crf modes and all passes except single-pass requires the `--stats` parameter to point to a valid path
+`--pass 2` is only available for non-crf modes and all passes except single-pass requires the `--stats` parameter to point to a valid path
 
 ### GOP size and type Options
 
@@ -352,77 +351,72 @@ Other options such as updating the Bitrate and resolution during the encoding se
 
 ### 1. Thread management parameters
 
-`LogicalProcessors` (`--lp`) and `TargetSocket` (`--ss`) parameters are used to
-management thread affinity on Windows and Ubuntu OS. These are some examples
-how you use them together.
+`PinnedExecution` (`--pin`) and `TargetSocket` (`--ss`) parameters are used to
+manage thread affinity on Windows and Ubuntu OS. `LevelOfParallelism` is used
+to specify how much parallelism is desired; higher levels will create more threads
+and process more pictures in parallel, leading to greater fps but larger memory use.
+These are some examples how you use them together.
 
-If `LogicalProcessors` and `TargetSocket` are not set, threads are managed by
-OS thread scheduler.
+If `PinnedExecution` and `TargetSocket` are not set, threads are managed by
+OS thread scheduler. If `LevelOfParallelism` is not set, the amount of parallelism
+(threads/memory) will be decided by the encoder based on the machine's core count.
 
-`SvtAv1EncApp.exe -i in.yuv -w 3840 -h 2160 --lp 40`
+`SvtAv1EncApp.exe -i in.yuv -w 3840 -h 2160 --lp 4`
 
-If only `LogicalProcessors` is set, threads run on 40 logical processors.
-Threads may run on dual sockets if 40 is larger than logical processor number
-of a socket.
+If only `LevelOfParallelism` is set, the OS will determine which processors the job
+will run on. Threads may run on dual sockets. The --lp level does not indicate the
+number of threads targeted, nor does it constrain the encoder to run on a certain number of
+logical processors. The number of threads created and memory used is determined
+by settings in the code (see `load_default_buffer_configuration_settings`).
 
-NOTE: On Windows, thread affinity can be set only by group on system with more
-than 64 logical processors. So, if 40 is larger than logical processor number
-of a single socket, threads run on all logical processors of both sockets.
+Parallelism is achieved in two ways:
+1. By creating new threads to process pictures and sub-picture blocks (e.g. superblocks)
+in parallel.
+2. By increasing the number of pictures in the pipeline, which can then be processed concurrently.
+
+Higher `LevelOfParallelism` will increase both the threads and pictures in a way that optimizes speed
+and memory at each level. In CRF mode, levels 4 and higher will process extra mini-gops in parallel
+as well, leading to higher speed, but much higher memory.  In low-delay mode, only one picture can be
+processed at once, so no extra pictures will be allocated.
 
 `SvtAv1EncApp.exe -i in.yuv -w 3840 -h 2160 --ss 1`
 
 If only `TargetSocket` is set, threads run on all the logical processors of
-socket 1.
+socket 1. If '--lp' is not specified with '--ss' the number of threads would
+be decided by the encoder based on the number of available cores on the socket.
 
-`SvtAv1EncApp.exe -i in.yuv -w 3840 -h 2160 --lp 20 --ss 0`
+`SvtAv1EncApp.exe -i in.yuv -w 3840 -h 2160 --lp 4 --ss 0`
 
-If both `LogicalProcessors` and `TargetSocket` are set, threads run on 20
-logical processors of socket 0. Threads guaranteed to run only on socket 0 if
-20 is larger than logical processor number of socket 0.
+If both `LevelOfParallelism` and `TargetSocket` are set, threads run on socket 0. The number
+of threads created is set in the library, based on the desired level of parallelism.
 
-The (`--pin`) option allows the user to pin/unpin the execution to/from a
-specific number of cores.
+The `--pin` option allows the user to pin the execution to a specific number of cores, specifically,
+the first N cores, where N is the value passed with `--pin`. If '--lp' is not specified, the default
+parallelism will be based on the N cores available for the process to run, rather than all the cores
+on the machine. If '--lp' is specified, that level of parallelism will be used, regardless of N.
 
-The combinational use of (`--pin`) with (`--lp`) results in memory reduction
-while allowing the execution to work on any of the cores and not restrict it to
-specific cores.
+This is an example on how to use `--lp` and `--pin` together.
 
-This is an example on how to use them together.
+Setting `--lp 4` with `--pin 4` would restrict the encoder to work on cpu 0-3 and set
+the resource allocation to the amount of threads/memory associated with `--lp 4`. Using
+`--pin 0` with `--lp 4` would result in the same allocation of threads/memory but not
+restrict the encoder to run on cpu 0-3; in this case the encoder may use more than 4 cores
+due to the multi-threading nature of the encoder, but would at least allow for more multiple
+`--lp 4` encodes to run on the same machine without them being all restricted to run on
+cpu 0-3 or overflow the memory usage.
 
-so -lp 4 with --pin 1 would restrict the encoder to work on cpu0-3 and reduce
-the resource allocation to only what's needed to using 4 cores. --lp 4 with
---pin 0, would reduce the allocation to what's needed for 4 cores but not
-restrict the encoder to run on cpu 0-3, in this case the encoder might end up
-using more than 4 cores due to the multi-threading nature of the encoder, but
-would at least allow for more multiple -lp4 encodes to run on the same machine
-without them being all restricted to run on cpu 0-3 or overflow the memory
-usage.
-
-When we have --pin 0, --lp behaves similarly to a parallelization level, which higher
-values having higher level of parallelism, not necessarily constrained to a number of
-logical processors. To set cpu affinity beyond the first --lp cores, a cpu affinity
-utility such as taskset or numactl to control could be used to pin execution to
+To set cpu affinity beyond the first `--pin` cores, a cpu affinity
+utility such as `taskset` or `numactl` to control could be used to pin execution to
 desired threads.
 
 Example:
 
-taskset --cpu-list 0-3  ./SvtAv1EncApp --preset 4 -q 32  --keyint  200  -i input1.y4m -b svt_1.bin  --lp 4
-taskset --cpu-list 4-7  ./SvtAv1EncApp --preset 4 -q 32  --keyint  200  -i input2.y4m -b svt_2.bin  --lp 4
+`taskset --cpu-list 0-3  ./SvtAv1EncApp --preset 4 -q 32  --keyint  200  -i input1.y4m -b svt_1.bin  --lp 3`
+`taskset --cpu-list 4-7  ./SvtAv1EncApp --preset 4 -q 32  --keyint  200  -i input2.y4m -b svt_2.bin  --lp 3`
 
 This example will ensure that the first encode will run on the first 4 cores and the second encode will run on the second 4 cores.
-In this example, If CPU utilization is not saturated for --lp 4 for these cores, higher levels of --lp could be employed for a memory
-usage increase
-
-
-Example: 72 core machine:
-
-72 jobs x --lp 1 --pin 0 (In order to maximize the CPU utilization 72 jobs are run simultaneously with each job utilitizing 1 core without being pined to a specific core)
-
-36 jobs x --lp 2 --pin 1
-
-18 jobs x --lp 4 --pin 1
-
-(`--ss`) and (`--pin 0`) is not a valid combination.(`--pin`) is overwritten to 1 when (`-ss`) is used.
+In this example, if CPU utilization is not saturated for `--lp 3` for these cores, higher levels of `--lp` could be employed for more
+parallelism with a memory usage increase.
 
 ### 2. AV1 metadata
 

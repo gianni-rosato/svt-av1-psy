@@ -3934,7 +3934,11 @@ static void perform_sc_detection(SequenceControlSet* scs, PictureParentControlSe
 
     if (pcs->slice_type == I_SLICE) {
         // If running multi-threaded mode, perform SC detection in svt_aom_picture_analysis_kernel, else in svt_aom_picture_decision_kernel
+#if CLN_LP_LVLS
+        if (scs->static_config.level_of_parallelism == 1) {
+#else
         if (scs->static_config.logical_processors == 1) {
+#endif
                 if (scs->static_config.screen_content_mode == 2) // auto detect
             {
                 // SC Detection is OFF for 4K and higher

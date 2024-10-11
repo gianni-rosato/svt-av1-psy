@@ -781,6 +781,21 @@ typedef struct EbSvtAv1EncConfiguration {
 
     // Threads management
 
+#if CLN_LP_LVLS
+    /* The level of parallelism refers to how much parallelization the encoder will perform
+     * by setting the number of threads and pictures that can be handled simultaneously. If
+     * the value is 0, a deafult level will be chosen based on the number of cores on the
+     * machine. Levels 1-6 are supported. Beyond that, higher inputs
+     * will map to the highest level.
+     */
+    uint32_t level_of_parallelism;
+
+    /* Pin the execution of threads to the first N logical processors.
+     * 0: unpinned
+     * N: Pin threads to socket's first N processors
+     * default 0 */
+    uint32_t pin_threads;
+#else
     /* The number of logical processor which encoder threads run on. If
      * LogicalProcessors and TargetSocket are not set, threads are managed by
      * OS thread scheduler. */
@@ -793,6 +808,7 @@ typedef struct EbSvtAv1EncConfiguration {
     * 0: unpinned
     * default 0 */
     uint32_t pin_threads;
+#endif
 
     /* Target socket to run on. For dual socket systems, this can specify which
      * socket the encoder runs on.

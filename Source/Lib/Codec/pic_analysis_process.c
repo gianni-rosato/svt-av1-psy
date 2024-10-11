@@ -2140,7 +2140,11 @@ void *svt_aom_picture_analysis_kernel(void *input_ptr) {
                 pa_ref_obj_->avg_luma = pcs->avg_luma;
             }
             // If running multi-threaded mode, perform SC detection in svt_aom_picture_analysis_kernel, else in svt_aom_picture_decision_kernel
+#if CLN_LP_LVLS
+            if (scs->static_config.level_of_parallelism != 1) {
+#else
             if (scs->static_config.logical_processors != 1) {
+#endif
                 if (scs->static_config.screen_content_mode == 2) { // auto detect
                     // SC Detection is OFF for 4K and higher
                     if (scs->input_resolution <= INPUT_SIZE_1080p_RANGE)

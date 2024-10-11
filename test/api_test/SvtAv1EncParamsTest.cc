@@ -306,9 +306,15 @@ PARAM_TEST(EncParamChIdTest);
 DEFINE_PARAM_TEST_CLASS(EncParamActiveChCountTest, active_channel_count);
 PARAM_TEST(EncParamActiveChCountTest);
 
+#if CLN_LP_LVLS
+/** Test case for logical_processors*/
+DEFINE_PARAM_TEST_CLASS(EncParamLevelOfParallelismTest, level_of_parallelism);
+PARAM_TEST(EncParamLevelOfParallelismTest);
+#else
 /** Test case for logical_processors*/
 DEFINE_PARAM_TEST_CLASS(EncParamLogicalProcessorsTest, logical_processors);
 PARAM_TEST(EncParamLogicalProcessorsTest);
+#endif
 
 /** Test case for target_socket*/
 DEFINE_PARAM_TEST_CLASS(EncParamTargetSocketTest, target_socket);
