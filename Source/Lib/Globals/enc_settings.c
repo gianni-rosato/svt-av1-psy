@@ -1239,7 +1239,10 @@ void svt_av1_print_lib_params(SequenceControlSet *scs) {
                  config->qp_scale_compress_strength,
                  config->frame_luma_bias);
 
-        if (config->noise_norm_strength < 1) {
+        if (config->noise_norm_strength < 1 && config->tune == 3) {
+            SVT_INFO("SVT [config]: Temporal Filtering Strength / Noise Normalization Strength \t: %d / 3\n",
+                     config->tf_strength);
+        } else if (config->noise_norm_strength < 1) {
             SVT_INFO("SVT [config]: Temporal Filtering Strength \t\t\t\t\t: %d\n",
                     config->tf_strength);
         } else {
