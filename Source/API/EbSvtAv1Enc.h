@@ -782,6 +782,16 @@ typedef struct EbSvtAv1EncConfiguration {
     // Threads management
 
 #if CLN_LP_LVLS
+#if !SVT_AV1_CHECK_VERSION(3, 0, 0)
+    /* logical_processors refers to how much parallelization the encoder will perform
+     * by setting the number of threads and pictures that can be handled simultaneously. If
+     * the value is 0, a deafult level will be chosen based on the number of cores on the
+     * machine. Levels 1-6 are supported. Beyond that, higher inputs
+     * will map to the highest level.
+     */
+    uint32_t logical_processors;
+#endif
+
     /* The level of parallelism refers to how much parallelization the encoder will perform
      * by setting the number of threads and pictures that can be handled simultaneously. If
      * the value is 0, a deafult level will be chosen based on the number of cores on the
@@ -971,7 +981,11 @@ typedef struct EbSvtAv1EncConfiguration {
     uint8_t variance_octile;
 
     /*Add 128 Byte Padding to Struct to avoid changing the size of the public configuration struct*/
+#if CLN_LP_LVLS
+    uint8_t padding[128 - sizeof(Bool) - 2 * sizeof(uint8_t) - sizeof(uint32_t)];
+#else
     uint8_t padding[128 - sizeof(Bool) - 2 * sizeof(uint8_t)];
+#endif
 
 } EbSvtAv1EncConfiguration;
 

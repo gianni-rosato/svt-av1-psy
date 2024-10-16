@@ -538,21 +538,20 @@ static Bool is_pic_width_single_sb(uint32_t sb_size, uint16_t pic_width) {
 #if CLN_LP_LVLS
 void set_segments_numbers(SequenceControlSet* scs) {
 
-    uint32_t me_seg_h, me_seg_w;
     const uint32_t lp = scs->lp;
 
-    uint32_t enc_dec_seg_h = (lp == PARALLEL_LEVEL_1 || is_pic_width_single_sb(scs->super_block_size, scs->max_input_luma_width)) ? 1 :
+    const uint32_t enc_dec_seg_h = (lp == PARALLEL_LEVEL_1 || is_pic_width_single_sb(scs->super_block_size, scs->max_input_luma_width)) ? 1 :
         (scs->super_block_size == 128) ?
         ((scs->max_input_luma_height + 64) / 128) :
         ((scs->max_input_luma_height + 32) / 64);
-    uint32_t enc_dec_seg_w = (lp == PARALLEL_LEVEL_1) ? 1 :
+    const uint32_t enc_dec_seg_w = (lp == PARALLEL_LEVEL_1) ? 1 :
         (scs->super_block_size == 128) ?
         ((scs->max_input_luma_width + 64) / 128) :
         ((scs->max_input_luma_width + 32) / 64);
 
-    me_seg_h = (lp == PARALLEL_LEVEL_1) ? 1 :
+    const uint32_t me_seg_h = (lp == PARALLEL_LEVEL_1) ? 1 :
         (((scs->max_input_luma_height + 32) / BLOCK_SIZE_64) < 6) ? 1 : 8;
-    me_seg_w = (lp == PARALLEL_LEVEL_1) ? 1 :
+    const uint32_t me_seg_w = (lp == PARALLEL_LEVEL_1) ? 1 :
         (((scs->max_input_luma_width + 32) / BLOCK_SIZE_64) < 10) ? 1 : 6;
     // ME segments
     scs->me_segment_row_count_array[0] = me_seg_h;
@@ -575,8 +574,8 @@ void set_segments_numbers(SequenceControlSet* scs) {
     // We can use tile group to control the threads/parallelism in ED stage
     // NOTE:1 col will have better perf for segments for large resolutions
     //by default, do not use tile prallel. to enable, one can set one tile-group per tile.
-    uint8_t tile_group_col_count = 1;
-    uint8_t tile_group_row_count = 1;
+    const uint8_t tile_group_col_count = 1;
+    const uint8_t tile_group_row_count = 1;
     scs->tile_group_col_count_array[0] = tile_group_col_count;
     scs->tile_group_col_count_array[1] = tile_group_col_count;
     scs->tile_group_col_count_array[2] = tile_group_col_count;
@@ -606,10 +605,10 @@ void set_segments_numbers(SequenceControlSet* scs) {
     scs->enc_dec_segment_col_count_array[5] = enc_dec_seg_w;
 
     // TPL processed in 64x64 blocks, so check width against 64x64 block size (even if SB is 128x128)
-    uint32_t tpl_seg_h = (lp == PARALLEL_LEVEL_1 || is_pic_width_single_sb(64, scs->max_input_luma_width)) ? 1 :
+    const uint32_t tpl_seg_h = (lp == PARALLEL_LEVEL_1 || is_pic_width_single_sb(64, scs->max_input_luma_width)) ? 1 :
         ((scs->max_input_luma_height + 32) / 64);
 
-    uint32_t tpl_seg_w = (lp == PARALLEL_LEVEL_1) ? 1 :
+    const uint32_t tpl_seg_w = (lp == PARALLEL_LEVEL_1) ? 1 :
         ((scs->max_input_luma_width + 32) / 64);
 
     scs->tpl_segment_row_count_array = tpl_seg_h;
@@ -624,9 +623,9 @@ void set_segments_numbers(SequenceControlSet* scs) {
 
     //since restoration unit size is same for Luma and Chroma, Luma segments and chroma segments do not correspond to the same area!
     //to keep proper processing, segments have to be configured based on chroma resolution.
-    uint32_t unit_size = 256;
-    uint32_t rest_seg_w = MAX((scs->max_input_luma_width / 2 + (unit_size >> 1)) / unit_size, 1);
-    uint32_t rest_seg_h = MAX((scs->max_input_luma_height / 2 + (unit_size >> 1)) / unit_size, 1);
+    const uint32_t unit_size = RESTORATION_UNITSIZE_MAX;
+    const uint32_t rest_seg_w = MAX((scs->max_input_luma_width / 2 + (unit_size >> 1)) / unit_size, 1);
+    const uint32_t rest_seg_h = MAX((scs->max_input_luma_height / 2 + (unit_size >> 1)) / unit_size, 1);
     scs->rest_segment_column_count = scs->input_resolution <= INPUT_SIZE_1080p_RANGE ? MIN(rest_seg_w, 6) : MIN(rest_seg_w, 9);
     scs->rest_segment_row_count = scs->input_resolution <= INPUT_SIZE_1080p_RANGE ? MIN(rest_seg_h, 4) : MIN(rest_seg_h, 6);
 
@@ -817,6 +816,14 @@ static EbErrorType load_default_buffer_configuration_settings(
     /*Look-Ahead. Picture-Decision outputs pictures by group of mini-gops so
         the needed pictures for a certain look-ahead distance (LAD) should be rounded up to the next multiple of MiniGopSize.*/
     uint32_t mg_size = 1 << scs->static_config.hierarchical_levels;
+#if CLN_LP_LVLS
+    const uint8_t overlay = scs->static_config.enable_overlays ? 1 : 0;
+
+    /*To accomodate FFMPEG EOS, 1 frame delay is needed in Resource coordination.
+        note that we have the option to not add 1 frame delay of Resource Coordination. In this case we have wait for first I frame
+        to be released back to be able to start first base(16). Anyway poc16 needs to wait for poc0 to finish.*/
+    const uint8_t eos_delay = 1;
+#else
     // uint32_t needed_lad_pictures = ((mg_size - 1) / mg_size) * mg_size; // remove because always 0
     uint32_t overlay = scs->static_config.enable_overlays ? 1 : 0;
 
@@ -824,6 +831,7 @@ static EbErrorType load_default_buffer_configuration_settings(
         note that we have the option to not add 1 frame delay of Resource Coordination. In this case we have wait for first I frame
         to be released back to be able to start first base(16). Anyway poc16 needs to wait for poc0 to finish.*/
     uint32_t eos_delay = 1;
+#endif
 
     //Minimum input pictures needed in the pipeline
     uint16_t lad_mg_pictures = (1 + mg_size + overlay) * scs->lad_mg; //Unit= 1(provision for a potential delayI) + prediction struct + potential overlay        return_ppcs = (1 + mg_size) * (scs->lad_mg + 1)  + scs->scd_delay + eos_delay;
@@ -4837,7 +4845,13 @@ static void copy_api_from_app(
     scs->static_config.channel_id = ((EbSvtAv1EncConfiguration*)config_struct)->channel_id;
     scs->static_config.active_channel_count = ((EbSvtAv1EncConfiguration*)config_struct)->active_channel_count;
 #if CLN_LP_LVLS
+#if SVT_AV1_CHECK_VERSION(3, 0, 0)
     scs->static_config.level_of_parallelism = ((EbSvtAv1EncConfiguration*)config_struct)->level_of_parallelism;
+#else
+    scs->static_config.logical_processors = ((EbSvtAv1EncConfiguration*)config_struct)->logical_processors;
+    scs->static_config.level_of_parallelism = ((EbSvtAv1EncConfiguration*)config_struct)->logical_processors;
+    SVT_WARN("logical_processors will be deprecated in v3.0. Use level_of_parallelism instead.\n");
+#endif
     if (scs->static_config.level_of_parallelism >= PARALLEL_LEVEL_COUNT) {
         SVT_WARN("Level of parallelism supports levels [0-%d]. Setting maximum parallelism level.\n", PARALLEL_LEVEL_COUNT - 1);
         SVT_WARN("Level of parallelism does not correspond to a target number of processors to use. See Docs/Parameters.md for info.\n");

@@ -948,6 +948,9 @@ EbErrorType svt_av1_set_default_params(EbSvtAv1EncConfiguration *config_ptr) {
 
     // Channel info
 #if CLN_LP_LVLS
+#if !SVT_AV1_CHECK_VERSION(3, 0, 0)
+    config_ptr->logical_processors = 0;
+#endif
     config_ptr->level_of_parallelism = 0;
 #else
     config_ptr->logical_processors = 0;
@@ -1910,7 +1913,11 @@ EB_API EbErrorType svt_av1_enc_parse_parameter(EbSvtAv1EncConfiguration *config_
         {"tier", &config_struct->tier},
         {"level", &config_struct->level},
 #if CLN_LP_LVLS
+#if SVT_AV1_CHECK_VERSION(3, 0, 0)
         {"lp", &config_struct->level_of_parallelism},
+#else
+        {"lp", &config_struct->logical_processors},
+#endif
 #else
         {"lp", &config_struct->logical_processors},
 #endif
