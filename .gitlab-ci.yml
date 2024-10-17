@@ -11,8 +11,8 @@ stages:
   - standalone
   - ffmpeg
   - test
-  - test-2
-  - test-3
+  - test-2 # Needed for weekend testing on aom-testing repo
+  - test-3 # Needed for weekend testing on aom-testing repo
 
 variables:
   CMAKE_GENERATOR: Ninja
