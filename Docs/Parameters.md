@@ -73,7 +73,8 @@ For more information on valid values for specific keys, refer to the [EbEncSetti
 | **InjectorFrameRate**            | --inj-frm-rt                | [0-240]                        | 60          | Set injector frame rate, only applicable with `--inj 1`                                                       |
 | **StatReport**                   | --enable-stat-report        | [0-1]                          | 0           | Calculates and outputs PSNR SSIM metrics at the end of encoding                                               |
 | **Asm**                          | --asm                       | [0-11, c-max]                  | max         | Limit assembly instruction set [c, mmx, sse, sse2, sse3, ssse3, sse4_1, sse4_2, avx, avx2, avx512, max]       |
-| **LevelOfParallelism**           | --lp                        | [0, 6]                         | 0           | Controls the number of threads to create and the number of picture buffers to allocate (higher level means more parallelism). 0 means choose level based on machine core count. Refer to Appendix A.1                   |
+| **LogicalProcessors**            | --lp                        | [0, 6]                         | 0           | Controls the number of threads to create and the number of picture buffers to allocate (higher level means more parallelism). 0 means choose level based on machine core count. Refer to Appendix A.1. To be deprecated in v3.0. |
+| **LevelOfParallelism**           | --lp                        | [0, 6]                         | 0           | Controls the number of threads to create and the number of picture buffers to allocate (higher level means more parallelism). 0 means choose level based on machine core count. Refer to Appendix A.1 |
 | **PinnedExecution**              | --pin                       | [0-core count of the machine]  | 0           | Pin the execution to the first N cores. [0: no pinning, N: number of cores to pin to]. Refer to Appendix A.1  |
 | **TargetSocket**                 | --ss                        | [-1,1]                         | -1          | Specifies which socket to run on, assumes a max of two equally-sized sockets. Refer to Appendix A.1           |
 | **FastDecode**                   | --fast-decode               | [0,2]                          | 0           | Tune settings to output bitstreams that can be decoded faster, [0 = OFF, 1,2 = levels for decode-targeted optimization (2 yields faster decoder speed)]. Defaults to 5 temporal layers structure but may override with --hierarchical-levels|
@@ -352,7 +353,9 @@ Other options such as updating the Bitrate and resolution during the encoding se
 ### 1. Thread management parameters
 
 `PinnedExecution` (`--pin`) and `TargetSocket` (`--ss`) parameters are used to
-manage thread affinity on Windows and Ubuntu OS. `LevelOfParallelism` is used
+manage thread affinity on Windows and Ubuntu OS. `LogicalProcessors` (`LogicalProcessors`
+will be deprecated in v3.0 and replaced with `LevelOfParallelism`; henceforth, the
+documentation will refer to 'LevelOfParallelsim` instead) is used
 to specify how much parallelism is desired; higher levels will create more threads
 and process more pictures in parallel, leading to greater fps but larger memory use.
 These are some examples how you use them together.

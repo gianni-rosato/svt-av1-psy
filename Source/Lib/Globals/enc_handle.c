@@ -4850,7 +4850,8 @@ static void copy_api_from_app(
 #else
     scs->static_config.logical_processors = ((EbSvtAv1EncConfiguration*)config_struct)->logical_processors;
     scs->static_config.level_of_parallelism = ((EbSvtAv1EncConfiguration*)config_struct)->logical_processors;
-    SVT_WARN("logical_processors will be deprecated in v3.0. Use level_of_parallelism instead.\n");
+    if (scs->static_config.level_of_parallelism)
+        SVT_WARN("logical_processors will be deprecated in v3.0. Use level_of_parallelism instead. Input mapped to level_of_parallelism.\n");
 #endif
     if (scs->static_config.level_of_parallelism >= PARALLEL_LEVEL_COUNT) {
         SVT_WARN("Level of parallelism supports levels [0-%d]. Setting maximum parallelism level.\n", PARALLEL_LEVEL_COUNT - 1);
