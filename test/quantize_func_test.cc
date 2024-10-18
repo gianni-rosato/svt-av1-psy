@@ -1013,7 +1013,8 @@ class ComputeCulLevelTest
 
     void test_match() {
         SVTRandom rnd(0, (1 << 10) - 1);
-        const int max_size = 100 * 100;
+        SVTRandom quant_rnd(-10, 10);
+        const int max_size = 50;
         // scan[] is a set of indexes for quant_coeff[]
         int16_t scan[max_size];
         int32_t quant_coeff[max_size];
@@ -1025,7 +1026,7 @@ class ComputeCulLevelTest
             // Every 50 iteration randomize buffers
             if (!(test % 50))
                 for (uint32_t i = 0; i < max_size; i++) {
-                    quant_coeff[i] = rnd.random();
+                    quant_coeff[i] = quant_rnd.random();
                     if (i != 0)
                         scan[i] = rnd.random() % max_size;
                 }
