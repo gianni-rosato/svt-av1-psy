@@ -1,32 +1,7 @@
-/*------------------------------------------------------------------
- * safe_str_lib.h -- Safe C Library String APIs
- *
- * October 2008, Bo Berry
- *
- * Copyright (c) 2008-2011, 2013 by Cisco Systems, Inc.
- * All rights reserved.
- *
- * Permission is hereby granted, free of charge, to any person
- * obtaining a copy of this software and associated documentation
- * files (the "Software"), to deal in the Software without
- * restriction, including without limitation the rights to use,
- * copy, modify, merge, publish, distribute, sublicense, and/or
- * sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following
- * conditions:
- *
- * The above copyright notice and this permission notice shall be
- * included in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
- * OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
- * NONINFRINGEMENT.  IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
- * HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
- * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
- * OTHER DEALINGS IN THE SOFTWARE.
- *------------------------------------------------------------------
+/*  SPDX-License-Identifier: MIT */
+/*
+ *  Copyright (c) 2008 Bo Berry
+ *  Copyright (c) 2008-2011, 2013 by Cisco Systems, Inc
  */
 
 #ifndef __SAFE_STR_LIB_H__
@@ -41,7 +16,7 @@
 #define RSIZE_MIN_STR (1)
 
 /* maximum sring length */
-#define RSIZE_MAX_STR (4UL << 10) /* 4KB */
+#define RSIZE_MAX_STR (RSIZE_MAX)
 
 /* The makeup of a password */
 #define SAFE_STR_MIN_LOWERCASE (2)
@@ -61,8 +36,7 @@ extern constraint_handler_t set_str_constraint_handler_s(constraint_handler_t ha
 extern errno_t strcasecmp_s(const char *dest, rsize_t dmax, const char *src, int *indicator);
 
 /* find a substring _ case insensitive */
-extern errno_t strcasestr_s(char *dest, rsize_t dmax, const char *src, rsize_t slen,
-                            char **substring);
+extern errno_t strcasestr_s(char *dest, rsize_t dmax, const char *src, rsize_t slen, char **substring);
 
 /* string concatenate */
 extern errno_t strcat_s(char *dest, rsize_t dmax, const char *src);
@@ -98,8 +72,7 @@ extern errno_t strcpyfldin_s(char *dest, rsize_t dmax, const char *src, rsize_t 
 extern errno_t strcpyfldout_s(char *dest, rsize_t dmax, const char *src, rsize_t slen);
 
 /* computes excluded prefix length */
-extern errno_t strcspn_s(const char *dest, rsize_t dmax, const char *src, rsize_t slen,
-                         rsize_t *count);
+extern errno_t strcspn_s(const char *dest, rsize_t dmax, const char *src, rsize_t slen, rsize_t *count);
 
 /* returns a pointer to the first occurrence of c in dest */
 extern errno_t strfirstchar_s(char *dest, rsize_t dmax, char c, char **first);
@@ -174,8 +147,7 @@ extern errno_t strprefix_s(const char *dest, rsize_t dmax, const char *src);
 extern errno_t strremovews_s(char *dest, rsize_t dmax);
 
 /* computes inclusive prefix length */
-extern errno_t strspn_s(const char *dest, rsize_t dmax, const char *src, rsize_t slen,
-                        rsize_t *count);
+extern errno_t strspn_s(const char *dest, rsize_t dmax, const char *src, rsize_t slen, rsize_t *count);
 
 /* find a substring */
 extern errno_t strstr_s(char *dest, rsize_t dmax, const char *src, rsize_t slen, char **substring);
