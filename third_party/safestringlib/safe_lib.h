@@ -36,8 +36,10 @@ typedef size_t rsize_t;
  */
 /* #define RSIZE_MAX (~(rsize_t)0)  - leave here for completeness */
 
+#ifndef RSIZE_MAX
 /* Bring back the standard */
 #define RSIZE_MAX (256UL << 20) /* 256MB */
+#endif
 
 typedef void (*constraint_handler_t)(const char * /* msg */, void * /* ptr */, errno_t /* error */);
 
