@@ -1981,7 +1981,7 @@ uint8_t svt_av1_compute_cul_level_avx2(const int16_t *const scan, const int32_t 
     __m256i quant_coeff_256;
     __m256i sum_256 = _mm256_setzero_si256();
 
-    for (int32_t c = 0; c < *eob; c += 8) {
+    for (int32_t c = 0; c <= *eob - 8; c += 8) {
         scan_128        = _mm_loadu_si128((const __m128i *)(scan + c));
         scan_256        = _mm256_cvtepi16_epi32(scan_128);
         quant_coeff_256 = _mm256_i32gather_epi32(quant_coeff, scan_256, 4);
@@ -1989,7 +1989,13 @@ uint8_t svt_av1_compute_cul_level_avx2(const int16_t *const scan, const int32_t 
         sum_256         = _mm256_add_epi32(sum_256, quant_coeff_256);
     }
 
-    int32_t cul_level = sum_to_int32(sum_256);
+    int sum = 0;
+    if (*eob % 8) {
+        int eob_round = *eob & ~7;
+        for (int32_t c = 0; c < *eob % 8; c++) { sum += abs(quant_coeff[scan[eob_round + c]]); }
+    }
+
+    int32_t cul_level = sum_to_int32(sum_256) + sum;
     cul_level         = AOMMIN(COEFF_CONTEXT_MASK, cul_level);
     // DC value, calculation from set_dc_sign()
     if (quant_coeff[0] < 0)
