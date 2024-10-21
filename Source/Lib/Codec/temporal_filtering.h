@@ -132,6 +132,7 @@ void svt_av1_apply_temporal_filter_planewise_medium_hbd_c(
 
 int32_t svt_aom_noise_log1p_fp16(int32_t noise_level_fp16);
 
+// Calculate decay factor for temporal filtering
 void svt_av1_calculate_decay_factor(uint32_t *tf_decay_factor_fp16, int32_t *n_decay_fp10, uint32_t q_decay_fp8,
                                     int decay_control_cu, int decay_control_cv, const int32_t const_0dot7_fp16,
                                     const int32_t *noise_levels_log1p_fp16, const uint8_t shift_factor,
