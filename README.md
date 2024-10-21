@@ -86,7 +86,7 @@ Set the minimum & maximum quantization matrices for chroma planes. The defaults 
 
 - `Odd dimension encoding support`
 
-Allows the encoder to accept content with odd width and/or height (e.g. 1920x817px). Gone are the "Source Width/Height must be even for YUV_420 colorspace" messages.
+Allows the encoder to accept content with odd width and/or height (e.g. 1920x817px). Messages like "Source Width/Height must be even for YUV_420 colorspace" are no more.
 
 - `Reduced minimum width/height requirements`
 
@@ -95,6 +95,10 @@ Allows the encoder to accept content with width and/or height as small as 4 pixe
 - `--noise-norm-strength` *0 to 4*
 
 In a scenario where a video frame contains areas with fine textures or flat regions, noise normalization helps maintain visual quality by boosting certain AC coefficients. The default value is 0, but it is enabled at strength 3 when using Tune 3.
+
+- `--kf-tf-strength` *0 to 4*
+
+Manually adjust temporal filtering strength specifically on keyframes. Each increment is a 2x increase in temporal filtering strength; a value of 1 is 4x weaker than mainline SVT-AV1's default temporal filter (which would be equivalent to 3 here). The default value is 0, which disables temporal filtering on keyframes entirely.
 
 ### Modified Defaults
 
