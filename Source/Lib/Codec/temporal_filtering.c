@@ -3484,7 +3484,7 @@ static EbErrorType produce_temporally_filtered_pic_ld(
         ctx->tf_decay_factor_fp16[C_V] = 0;
     } else if (frame_update_type == SVT_AV1_KF_UPDATE) {
         svt_av1_calculate_decay_factor(ctx->tf_decay_factor_fp16, &n_decay_fp10, q_decay_fp8, decay_control,
-            decay_control, const_0dot7_fp16, noise_levels_log1p_fp16, tf_shift_factor, ctx->tf_chroma);
+            decay_control, const_0dot7_fp16, noise_levels_log1p_fp16, kf_tf_shift_factor, ctx->tf_chroma);
     } else {
         svt_av1_calculate_decay_factor(ctx->tf_decay_factor_fp16, &n_decay_fp10, q_decay_fp8, decay_control,
             decay_control, const_0dot7_fp16, noise_levels_log1p_fp16, tf_shift_factor, ctx->tf_chroma);
