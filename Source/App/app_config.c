@@ -216,6 +216,7 @@
 #define ADAPTIVE_FILM_GRAIN_TOKEN "--adaptive-film-grain"
 
 #define TF_STRENGTH_FILTER_TOKEN "--tf-strength"
+#define KF_TF_STRENGTH_FILTER_TOKEN "--kf-tf-strength"
 
 #define MIN_CHROMA_QM_LEVEL_TOKEN "--chroma-qm-min"
 #define MAX_CHROMA_QM_LEVEL_TOKEN "--chroma-qm-max"
@@ -1300,6 +1301,11 @@ ConfigEntry config_entry_psy[] = {
      TF_STRENGTH_FILTER_TOKEN,
      "[PSY] Adjust temporal filtering strength, default is 1 [0-4]",
      set_cfg_generic_token},
+    // Keyframe temporal filtering strength
+    {SINGLE_INPUT,
+     KF_TF_STRENGTH_FILTER_TOKEN,
+     "[PSY] Adjust TF strength on keyframes, default is 0 (off) [0-4]",
+     set_cfg_generic_token},
     // Min/max chroma qm
     {SINGLE_INPUT,
      MIN_CHROMA_QM_LEVEL_TOKEN,
@@ -1519,6 +1525,9 @@ ConfigEntry config_entry[] = {
 
     // Temporal filtering strength
     {SINGLE_INPUT, TF_STRENGTH_FILTER_TOKEN, "TemporalFilteringStrength", set_cfg_generic_token},
+
+    // Keyframe temporal filtering strength
+    {SINGLE_INPUT, KF_TF_STRENGTH_FILTER_TOKEN, "KeyframeTemporalFilteringStrength", set_cfg_generic_token},
 
     // Chroma QM
     {SINGLE_INPUT, MIN_CHROMA_QM_LEVEL_TOKEN, "MinChromaQmLevel", set_cfg_generic_token},

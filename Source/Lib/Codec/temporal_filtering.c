@@ -670,6 +670,28 @@ int32_t svt_aom_noise_log1p_fp16(int32_t noise_level_fp16) {
     }
 }
 
+// Calculate decay factor for temporal filtering
+// Currently unused
+void svt_av1_calculate_decay_factor(uint32_t *tf_decay_factor_fp16, int32_t *n_decay_fp10, uint32_t q_decay_fp8,
+                                    int decay_control_cu, int decay_control_cv, const int32_t const_0dot7_fp16,
+                                    const int32_t *noise_levels_log1p_fp16, const uint8_t shift_factor,
+                                    uint8_t tf_chroma)
+{
+    *(tf_decay_factor_fp16 + C_Y) = (uint32_t)(
+        (((((int64_t)*n_decay_fp10) * ((int64_t)*n_decay_fp10))) * q_decay_fp8) >> shift_factor);
+
+    if (tf_chroma) {
+        *n_decay_fp10 = (decay_control_cu * (const_0dot7_fp16 + noise_levels_log1p_fp16[C_U])) /
+            ((int32_t)1 << 6);
+        *(tf_decay_factor_fp16 + C_U) = (uint32_t)(
+            (((((int64_t)*n_decay_fp10) * ((int64_t)*n_decay_fp10))) * q_decay_fp8) >> shift_factor);
+        *n_decay_fp10 = (decay_control_cv * (const_0dot7_fp16 + noise_levels_log1p_fp16[C_V])) /
+            ((int32_t)1 << 6);
+        *(tf_decay_factor_fp16 + C_V) = (uint32_t)(
+            (((((int64_t)*n_decay_fp10) * ((int64_t)*n_decay_fp10))) * q_decay_fp8) >> shift_factor);
+    }
+}
+
 // T[X] =  exp(-(X)/16)  for x in [0..7], step 1/16 values in Fixed Points shift 16
 static const int32_t expf_tab_fp16[] = {
     65536, 61565, 57835, 54331, 51039, 47947, 45042, 42313, 39749, 37341, 35078, 32953, 30957,
@@ -2930,28 +2952,27 @@ static EbErrorType produce_temporally_filtered_pic(
         // 10 + (4 - 3) = 11 (mainline default)
         // 10 + (4 - 4) = 10 (2x stronger)
         const uint8_t tf_shift_factor = 10 + (4 - scs->static_config.tf_strength);
+        // kf_tf_shift_factor is manually adjusted by the user via --kf-tf-strength
+        // 10 + (4 - 0) = 14 (disabled, handled by conditional, PSY default)
+        // 10 + (4 - 1) = 13 (4x weaker)
+        // 10 + (4 - 2) = 12 (2x weaker)
+        // 10 + (4 - 3) = 11 (mainline default)
+        // 10 + (4 - 4) = 10 (2x stronger)
+        const uint8_t kf_tf_shift_factor = 10 + (4 - scs->static_config.kf_tf_strength);
         // Get frame update type for the current frame
         const uint32_t frame_update_type = svt_aom_get_frame_update_type(centre_pcs->scs, centre_pcs);
         // If we encounter a keyframe while we're using Tune 3, set the decay factor to 0
         // This is to prevent temporal filtering on keyframes
-        if (frame_update_type == SVT_AV1_KF_UPDATE && scs->static_config.tune == 3) {
+        if (frame_update_type == SVT_AV1_KF_UPDATE && kf_tf_shift_factor == 14) {
             ctx->tf_decay_factor_fp16[C_Y] = 0;
             ctx->tf_decay_factor_fp16[C_U] = 0;
             ctx->tf_decay_factor_fp16[C_V] = 0;
+        } else if (frame_update_type == SVT_AV1_KF_UPDATE) {
+            svt_av1_calculate_decay_factor(ctx->tf_decay_factor_fp16, &n_decay_fp10, q_decay_fp8, decay_control[C_U],
+                decay_control[C_V], const_0dot7_fp16, noise_levels_log1p_fp16, kf_tf_shift_factor, ctx->tf_chroma);
         } else {
-            ctx->tf_decay_factor_fp16[C_Y] = (uint32_t)(
-                (((((int64_t)n_decay_fp10) * ((int64_t)n_decay_fp10))) * q_decay_fp8) >> tf_shift_factor);
-
-            if (ctx->tf_chroma) {
-                n_decay_fp10 = (decay_control[C_U] * (const_0dot7_fp16 + noise_levels_log1p_fp16[C_U])) /
-                    ((int32_t)1 << 6);
-                ctx->tf_decay_factor_fp16[C_U] = (uint32_t)(
-                    (((((int64_t)n_decay_fp10) * ((int64_t)n_decay_fp10))) * q_decay_fp8) >> tf_shift_factor);
-                n_decay_fp10 = (decay_control[C_V] * (const_0dot7_fp16 + noise_levels_log1p_fp16[C_V])) /
-                    ((int32_t)1 << 6);
-                ctx->tf_decay_factor_fp16[C_V] = (uint32_t)(
-                    (((((int64_t)n_decay_fp10) * ((int64_t)n_decay_fp10))) * q_decay_fp8) >> tf_shift_factor);
-            }
+            svt_av1_calculate_decay_factor(ctx->tf_decay_factor_fp16, &n_decay_fp10, q_decay_fp8, decay_control[C_U],
+                decay_control[C_V], const_0dot7_fp16, noise_levels_log1p_fp16, tf_shift_factor, ctx->tf_chroma);
         }
     for (uint32_t blk_row = y_b64_start_idx; blk_row < y_b64_end_idx; blk_row++) {
         for (uint32_t blk_col = x_b64_start_idx; blk_col < x_b64_end_idx; blk_col++) {
@@ -3446,29 +3467,27 @@ static EbErrorType produce_temporally_filtered_pic_ld(
     // 10 + (4 - 3) = 11 (mainline default)
     // 10 + (4 - 4) = 10 (2x stronger)
     const uint8_t tf_shift_factor = 10 + (4 - scs->static_config.tf_strength);
+    // kf_tf_shift_factor is manually adjusted by the user via --kf-tf-strength
+    // 10 + (4 - 0) = 14 (disabled, handled by conditional, PSY default)
+    // 10 + (4 - 1) = 13 (4x weaker)
+    // 10 + (4 - 2) = 12 (2x weaker)
+    // 10 + (4 - 3) = 11 (mainline default)
+    // 10 + (4 - 4) = 10 (2x stronger)
+    const uint8_t kf_tf_shift_factor = 10 + (4 - scs->static_config.kf_tf_strength);
     // Get frame update type for the current frame
     const uint32_t frame_update_type = svt_aom_get_frame_update_type(centre_pcs->scs, centre_pcs);
     // If we encounter a keyframe while we're using Tune 3, set the decay factor to 0
     // This is to prevent temporal filtering on keyframes
-    if (frame_update_type == SVT_AV1_KF_UPDATE && scs->static_config.tune == 3) {
+    if (frame_update_type == SVT_AV1_KF_UPDATE && kf_tf_shift_factor == 14) {
         ctx->tf_decay_factor_fp16[C_Y] = 0;
         ctx->tf_decay_factor_fp16[C_U] = 0;
         ctx->tf_decay_factor_fp16[C_V] = 0;
+    } else if (frame_update_type == SVT_AV1_KF_UPDATE) {
+        svt_av1_calculate_decay_factor(ctx->tf_decay_factor_fp16, &n_decay_fp10, q_decay_fp8, decay_control,
+            decay_control, const_0dot7_fp16, noise_levels_log1p_fp16, tf_shift_factor, ctx->tf_chroma);
     } else {
-        ctx->tf_decay_factor_fp16[C_Y] = (uint32_t)(
-            (((((int64_t)n_decay_fp10) * ((int64_t)n_decay_fp10))) * q_decay_fp8) >> tf_shift_factor);
-
-        if (ctx->tf_chroma) {
-            n_decay_fp10 = (decay_control * (const_0dot7_fp16 + noise_levels_log1p_fp16[C_U])) /
-                ((int32_t)1 << 6);
-            ctx->tf_decay_factor_fp16[C_U] = (uint32_t)(
-                (((((int64_t)n_decay_fp10) * ((int64_t)n_decay_fp10))) * q_decay_fp8) >> tf_shift_factor);
-
-            n_decay_fp10 = (decay_control * (const_0dot7_fp16 + noise_levels_log1p_fp16[C_V])) /
-                ((int32_t)1 << 6);
-            ctx->tf_decay_factor_fp16[C_V] = (uint32_t)(
-                (((((int64_t)n_decay_fp10) * ((int64_t)n_decay_fp10))) * q_decay_fp8) >> tf_shift_factor);
-        }
+        svt_av1_calculate_decay_factor(ctx->tf_decay_factor_fp16, &n_decay_fp10, q_decay_fp8, decay_control,
+            decay_control, const_0dot7_fp16, noise_levels_log1p_fp16, tf_shift_factor, ctx->tf_chroma);
     }
     for (uint32_t blk_row = y_b64_start_idx; blk_row < y_b64_end_idx; blk_row++) {
         for (uint32_t blk_col = x_b64_start_idx; blk_col < x_b64_end_idx; blk_col++) {
