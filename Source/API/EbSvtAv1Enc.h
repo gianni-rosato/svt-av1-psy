@@ -1039,9 +1039,9 @@ typedef struct EbSvtAv1EncConfiguration {
 
     /* Manually adjust temporal filtering strength
      * 0: 10 + (4 - 0) = 14 (8x weaker)
-     * 1: 10 + (4 - 1) = 13 (4x weaker, PSY default)
+     * 1: 10 + (4 - 1) = 13 (4x weaker, PSY default for tune 3)
      * 2: 10 + (4 - 2) = 12 (2x weaker)
-     * 3: 10 + (4 - 3) = 11 (mainline default)
+     * 3: 10 + (4 - 3) = 11 (mainline default, PSY default for other tunes)
      * 4: 10 + (4 - 4) = 10 (2x stronger) */
     uint8_t tf_strength;
 

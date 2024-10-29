@@ -2952,8 +2952,8 @@ static EbErrorType produce_temporally_filtered_pic(
         // 10 + (4 - 4) = 10 (2x stronger)
         const uint8_t tf_shift_factor = 10 + (4 - scs->static_config.tf_strength);
         // kf_tf_shift_factor is manually adjusted by the user via --kf-tf-strength
-        // 10 + (4 - 0) = 14 (disabled, handled by conditional, PSY default)
-        // 10 + (4 - 1) = 13 (4x weaker)
+        // 10 + (4 - 0) = 14 (disabled, handled by conditional)
+        // 10 + (4 - 1) = 13 (4x weaker, PSY default)
         // 10 + (4 - 2) = 12 (2x weaker)
         // 10 + (4 - 3) = 11 (mainline default)
         // 10 + (4 - 4) = 10 (2x stronger)
@@ -3467,8 +3467,8 @@ static EbErrorType produce_temporally_filtered_pic_ld(
     // 10 + (4 - 4) = 10 (2x stronger)
     const uint8_t tf_shift_factor = 10 + (4 - scs->static_config.tf_strength);
     // kf_tf_shift_factor is manually adjusted by the user via --kf-tf-strength
-    // 10 + (4 - 0) = 14 (disabled, handled by conditional, PSY default)
-    // 10 + (4 - 1) = 13 (4x weaker)
+    // 10 + (4 - 0) = 14 (disabled, handled by conditional)
+    // 10 + (4 - 1) = 13 (4x weaker, PSY default)
     // 10 + (4 - 2) = 12 (2x weaker)
     // 10 + (4 - 3) = 11 (mainline default)
     // 10 + (4 - 4) = 10 (2x stronger)

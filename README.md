@@ -98,7 +98,7 @@ In a scenario where a video frame contains areas with fine textures or flat regi
 
 - `--kf-tf-strength` *0 to 4*
 
-Manually adjust temporal filtering strength specifically on keyframes. Each increment is a 2x increase in temporal filtering strength; a value of 1 is 4x weaker than mainline SVT-AV1's default temporal filter (which would be equivalent to 3 here). The default value is 0, which disables temporal filtering on keyframes entirely.
+Manually adjust temporal filtering strength specifically on keyframes. Each increment is a 2x increase in temporal filtering strength; a value of 1 is 4x weaker than mainline SVT-AV1's default temporal filter (which would be equivalent to 3 here). The default value is 1, which reduces alt-ref temporal filtering strength by 4x on keyframes.
 
 ### Modified Defaults
 
