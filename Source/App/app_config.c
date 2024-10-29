@@ -1304,7 +1304,7 @@ ConfigEntry config_entry_psy[] = {
     // Keyframe temporal filtering strength
     {SINGLE_INPUT,
      KF_TF_STRENGTH_FILTER_TOKEN,
-     "[PSY] Adjust TF strength on keyframes, default is 1 (4x weaker than mainline) [0-4]",
+     "[PSY] Adjust TF strength on keyframes, default is 1 [0-4]",
      set_cfg_generic_token},
     // Min/max chroma qm
     {SINGLE_INPUT,
