@@ -2962,7 +2962,7 @@ static EbErrorType produce_temporally_filtered_pic(
         const uint32_t frame_update_type = svt_aom_get_frame_update_type(centre_pcs->scs, centre_pcs);
         // If we encounter a keyframe while we're using Tune 3, set the decay factor to 0
         // This is to prevent temporal filtering on keyframes
-        if (frame_update_type == SVT_AV1_KF_UPDATE && kf_tf_shift_factor == 14) {
+        if ((frame_update_type == SVT_AV1_KF_UPDATE && kf_tf_shift_factor == 14) || scs->static_config.enable_tf == 0) {
             ctx->tf_decay_factor_fp16[C_Y] = 0;
             ctx->tf_decay_factor_fp16[C_U] = 0;
             ctx->tf_decay_factor_fp16[C_V] = 0;
@@ -3477,7 +3477,7 @@ static EbErrorType produce_temporally_filtered_pic_ld(
     const uint32_t frame_update_type = svt_aom_get_frame_update_type(centre_pcs->scs, centre_pcs);
     // If we encounter a keyframe while we're using Tune 3, set the decay factor to 0
     // This is to prevent temporal filtering on keyframes
-    if (frame_update_type == SVT_AV1_KF_UPDATE && kf_tf_shift_factor == 14) {
+    if ((frame_update_type == SVT_AV1_KF_UPDATE && kf_tf_shift_factor == 14) || scs->static_config.enable_tf == 0) {
         ctx->tf_decay_factor_fp16[C_Y] = 0;
         ctx->tf_decay_factor_fp16[C_U] = 0;
         ctx->tf_decay_factor_fp16[C_V] = 0;
