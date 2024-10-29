@@ -14,7 +14,7 @@ Encoder
 -  New fast-decode (2) to allow for an average AV1 software cycle reduction of 25-50% vs fast-decode 0 with a 1-3% BD-Rate loss across the presets
 -  Improved fast-decode (1) option to increase its AV1 software cycle reduction by ~10% while maintaining the same quality levels
 - Improved --lp settings for high resolutions, with CRF gaining a ~4% improvement in speed and VBR gaining ~15% (!2323)
-- Further ARM-based optimizations improving the efficiency of previously written ARM-neon implementations by an average of 30%
+- Further ARM-based optimizations improving the efficiency of previously written ARM-neon implementations by an average of 30%. See below for more information on specific presets
 - Address speed regressions for high resolutions first pass encode by tuning the threading parameters, with 1080p showing the biggest gains
 - Enabled AVX512 by default in cmake allowing for ~2-4% speedup
 - Enabled LTO by default if using a new enough compiler (!2288, !2305)
@@ -26,6 +26,44 @@ Cleanup Build and bug fixes and documentation
 - Improved the unit test coverage for ARM-neon code
 - Updated documentation
 
+Arm Improvements
+
+- Speed comparison was done against v2.2 on AWS Graviton4 instances with Clang 19.1.1
+- `--lp 1` was used for all tests
+
+Standard bitdepth (Bosphorus 1080p):
+
+| Preset                        | Uplift |
+|-------------------------------|--------|
+| 0                             | 1.15x  |
+| 1                             | 1.24x  |
+| 2                             | 1.29x  |
+| 3                             | 1.17x  |
+| 4                             | 1.22x  |
+| 5                             | 1.31x  |
+| 6                             | 1.40x  |
+| 7 (against 2.2 preset 8)      | 1.50x  |
+| 8 (against 2.2 preset 9)      | 1.61x  |
+| 9 (against 2.2 preset 10      | 1.31x  |
+| 10 (against 2.2 preset 11 )   | 1.29x  |
+| 11 (against 2.2 preset 12/13) | 1.24x  |
+
+High bitdepth (Bosphorus 2160p):
+
+| Preset                        | Uplift |
+|-------------------------------|--------|
+| 0                             | 1.18x  |
+| 1                             | 1.19x  |
+| 2                             | 1.16x  |
+| 3                             | 1.27x  |
+| 4                             | 1.33x  |
+| 5                             | 1.27x  |
+| 6                             | 1.33x  |
+| 7 (against 2.2 preset 8)      | 1.35x  |
+| 8 (against 2.2 preset 9)      | 1.82x  |
+| 9 (against 2.2 preset 10)     | 1.95x  |
+| 10 (against 2.2 preset 11)    | 1.40x  |
+| 11 (against 2.2 preset 12/13) | 1.35x  |
 
 ## [2.2.0] - 2024-08-19
 
