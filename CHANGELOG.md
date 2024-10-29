@@ -17,6 +17,9 @@ Encoder
 - Further ARM-based optimizations improving the efficiency of previously written ARM-neon implementations by an average of 30%
 - Address speed regressions for high resolutions first pass encode by tuning the threading parameters, with 1080p showing the biggest gains
 - Enabled AVX512 by default in cmake allowing for ~2-4% speedup
+- Enabled LTO by default if using a new enough compiler (!2288, !2305)
+  - If LTO is a problem or causes one, it can be disabled by adding -DSVT_AV1_LTO=OFF to cmake to force it off.
+  - Please report any issues that occur when using it.
 
 Cleanup Build and bug fixes and documentation
 - third_party: update safestringlib with applicable upstream changes
