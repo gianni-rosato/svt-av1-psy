@@ -540,11 +540,11 @@ void set_segments_numbers(SequenceControlSet* scs) {
 
     const uint32_t lp = scs->lp;
 
-    const uint32_t enc_dec_seg_h = (lp == PARALLEL_LEVEL_1 || is_pic_width_single_sb(scs->super_block_size, scs->max_input_luma_width)) ? 1 :
+    const uint32_t enc_dec_seg_h = (lp == PARALLEL_LEVEL_1 || is_pic_dimension_single_sb(scs->super_block_size, scs->max_input_luma_width)) ? 1 :
         (scs->super_block_size == 128) ?
         ((scs->max_input_luma_height + 64) / 128) :
         ((scs->max_input_luma_height + 32) / 64);
-    const uint32_t enc_dec_seg_w = (lp == PARALLEL_LEVEL_1) ? 1 :
+    const uint32_t enc_dec_seg_w = (lp == PARALLEL_LEVEL_1) || is_pic_dimension_single_sb(scs->super_block_size, scs->max_input_luma_height) ? 1 :
         (scs->super_block_size == 128) ?
         ((scs->max_input_luma_width + 64) / 128) :
         ((scs->max_input_luma_width + 32) / 64);
@@ -605,7 +605,7 @@ void set_segments_numbers(SequenceControlSet* scs) {
     scs->enc_dec_segment_col_count_array[5] = enc_dec_seg_w;
 
     // TPL processed in 64x64 blocks, so check width against 64x64 block size (even if SB is 128x128)
-    const uint32_t tpl_seg_h = (lp == PARALLEL_LEVEL_1 || is_pic_width_single_sb(64, scs->max_input_luma_width)) ? 1 :
+    const uint32_t tpl_seg_h = (lp == PARALLEL_LEVEL_1 || is_pic_dimension_single_sb(64, scs->max_input_luma_width)) ? 1 :
         ((scs->max_input_luma_height + 32) / 64);
 
     const uint32_t tpl_seg_w = (lp == PARALLEL_LEVEL_1) ? 1 :

@@ -546,7 +546,6 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet *scs) {
             config->fast_decode);
         return_error = EB_ErrorBadParameter;
     }
-#else
     if (config->fast_decode > 1) {
         SVT_ERROR(
             "Instance %u: Invalid fast decode flag [0 - 1, 0 for no decoder optimization], your "
@@ -555,8 +554,6 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet *scs) {
             config->fast_decode);
         return_error = EB_ErrorBadParameter;
     }
-#endif
-
     if (config->tune > 4) {
         SVT_ERROR(
             "Instance %u: Invalid tune flag [0 - 4, 0: VQ, 1: PSNR, 2: SSIM, 3: Subjective SSIM, 4: Still Picture], your "
@@ -2218,9 +2215,6 @@ EB_API EbErrorType svt_av1_enc_parse_parameter(EbSvtAv1EncConfiguration *config_
     } int8_opts[] = {
         {"preset", &config_struct->enc_mode},
         {"sharpness", &config_struct->sharpness},
-#if OPT_FAST_DECODE_LVLS
-        {"fast-decode", &config_struct->fast_decode},
-#endif
     };
     const size_t int8_opts_size = sizeof(int8_opts) / sizeof(int8_opts[0]);
 
