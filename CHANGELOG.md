@@ -13,9 +13,9 @@ Encoder
 - NEW FAST DECODE MODE - (!2280)
 -  New fast-decode (2) to allow for an average AV1 software cycle reduction of 25-50% vs fast-decode 0 with a 1-3% BD-Rate loss across the presets
 -  Improved fast-decode (1) option to increase its AV1 software cycle reduction by ~10% while maintaining the same quality levels
-- Improved --lp settings for high resolutions CRF/VBR for a ~15% improvement in speed (!2323)
+- Improved --lp settings for high resolutions, with CRF gaining a ~4% improvement in speed and VBR gaining ~15% (!2323)
 - Further ARM-based optimizations improving the efficiency of previously written ARM-neon implementations by an average of 30%
-- Address speed regressions for 4k first pass encode by tuning the threading parameters
+- Address speed regressions for high resolutions first pass encode by tuning the threading parameters, with 1080p showing the biggest gains
 - Enabled AVX512 by default in cmake allowing for ~2-4% speedup
 
 Cleanup Build and bug fixes and documentation
