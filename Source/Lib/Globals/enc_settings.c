@@ -546,14 +546,6 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet *scs) {
             config->fast_decode);
         return_error = EB_ErrorBadParameter;
     }
-    if (config->fast_decode > 1) {
-        SVT_ERROR(
-            "Instance %u: Invalid fast decode flag [0 - 1, 0 for no decoder optimization], your "
-            "input: %d\n",
-            channel_number + 1,
-            config->fast_decode);
-        return_error = EB_ErrorBadParameter;
-    }
     if (config->tune > 4) {
         SVT_ERROR(
             "Instance %u: Invalid tune flag [0 - 4, 0: VQ, 1: PSNR, 2: SSIM, 3: Subjective SSIM, 4: Still Picture], your "
