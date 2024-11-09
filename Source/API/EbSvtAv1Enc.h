@@ -713,9 +713,9 @@ typedef struct EbSvtAv1EncConfiguration {
     /**
      * @brief Enable use of ALT-REF (temporally filtered) frames.
      *
-     * Default is true.
+     * Default is 1. 0 = off, 1 = on, 2 = adaptive.
      */
-    Bool enable_tf;
+    uint8_t enable_tf;
 
     Bool enable_overlays;
     /**
@@ -1081,7 +1081,7 @@ typedef struct EbSvtAv1EncConfiguration {
 #if CLN_LP_LVLS
     uint8_t padding[128 - sizeof(Bool) - 2 * sizeof(uint8_t) - sizeof(uint32_t)];
 #else
-    uint8_t padding[128 - 4 * sizeof(Bool) - 10 * sizeof(uint8_t) - sizeof(int8_t)];
+    uint8_t padding[128 - 3 * sizeof(Bool) - 11 * sizeof(uint8_t) - sizeof(int8_t)];
 #endif
 
 } EbSvtAv1EncConfiguration;

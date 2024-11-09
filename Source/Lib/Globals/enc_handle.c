@@ -3697,7 +3697,7 @@ static void derive_vq_params(SequenceControlSet* scs) {
 static void derive_tf_params(SequenceControlSet *scs) {
     const EbInputResolution resolution = scs->input_resolution;
     // Do not perform TF if LD or 1 Layer or 1st pass
-    Bool do_tf = scs->static_config.enable_tf && scs->static_config.hierarchical_levels >= 1;
+    Bool do_tf = (scs->static_config.enable_tf > 0) && scs->static_config.hierarchical_levels >= 1;
     const EncMode enc_mode = scs->static_config.enc_mode;
     const uint32_t hierarchical_levels = scs->static_config.hierarchical_levels;
     uint8_t tf_level = 0;
@@ -4497,7 +4497,7 @@ static void set_param_based_on_input(SequenceControlSet *scs)
     }
 
 
-    scs->static_config.enable_overlays = !scs->static_config.enable_tf ||
+    scs->static_config.enable_overlays = (scs->static_config.enable_tf == 0) ||
         (scs->static_config.rate_control_mode != SVT_AV1_RC_MODE_CQP_OR_CRF) ?
         0 : scs->static_config.enable_overlays;
     //0: ON

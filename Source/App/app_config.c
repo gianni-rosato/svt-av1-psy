@@ -1093,7 +1093,7 @@ ConfigEntry config_entry_specific[] = {
     // --- start: ALTREF_FILTERING_SUPPORT
     {SINGLE_INPUT,
      ENABLE_TF_TOKEN,
-     "Enable ALT-REF (temporally filtered) frames, default is 1 [0-1]",
+     "Enable ALT-REF (temporally filtered) frames, default is 1 [0-2]",
      set_cfg_generic_token},
 
     {SINGLE_INPUT,

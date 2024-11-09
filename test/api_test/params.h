@@ -963,9 +963,9 @@ static const vector<uint32_t> invalid_screen_content_mode = {3};
 
 /* Variables to control the use of ALT-REF (temporally filtered frames)
  */
-static const vector<Bool> default_enable_tf = {TRUE};
-static const vector<Bool> valid_enable_tf = {FALSE, TRUE};
-static const vector<Bool> invalid_enable_tf = {/*none*/};
+static const vector<uint8_t> default_enable_tf = {1};
+static const vector<uint8_t> valid_enable_tf = {0, 1, 2};
+static const vector<uint8_t> invalid_enable_tf = {3};
 
 static const vector<uint8_t> default_altref_strength = {5};
 static const vector<uint8_t> valid_altref_strength = {0, 1, 2, 3, 4, 5, 6};
