@@ -3483,34 +3483,58 @@ static EbErrorType produce_temporally_filtered_pic_ld(
     int32_t n_decay_fp10 = (decay_control * (const_0dot7_fp16 + noise_levels_log1p_fp16[C_Y])) /
         ((int32_t)1 << 6);
     //2 * n_decay * n_decay * q_decay * (s_decay always is 1);
-    // tf_shift_factor is manually adjusted by the user via --tf-strength
-    // 10 + (4 - 0) = 14 (8x weaker)
-    // 10 + (4 - 1) = 13 (4x weaker, PSY default)
-    // 10 + (4 - 2) = 12 (2x weaker)
-    // 10 + (4 - 3) = 11 (mainline default)
-    // 10 + (4 - 4) = 10 (2x stronger)
-    const uint8_t tf_shift_factor = 10 + (4 - scs->static_config.tf_strength);
-    // kf_tf_shift_factor is manually adjusted by the user via --kf-tf-strength
-    // 10 + (4 - 0) = 14 (disabled, handled by conditional)
-    // 10 + (4 - 1) = 13 (4x weaker, PSY default)
-    // 10 + (4 - 2) = 12 (2x weaker)
-    // 10 + (4 - 3) = 11 (mainline default)
-    // 10 + (4 - 4) = 10 (2x stronger)
-    const uint8_t kf_tf_shift_factor = 10 + (4 - scs->static_config.kf_tf_strength);
-    // Get frame update type for the current frame
-    const uint32_t frame_update_type = svt_aom_get_frame_update_type(centre_pcs->scs, centre_pcs);
-    // If we encounter a keyframe while we're using Tune 3, set the decay factor to 0
-    // This is to prevent temporal filtering on keyframes
-    if ((frame_update_type == SVT_AV1_KF_UPDATE && kf_tf_shift_factor == 14) || scs->static_config.enable_tf == 0) {
-        ctx->tf_decay_factor_fp16[C_Y] = 0;
-        ctx->tf_decay_factor_fp16[C_U] = 0;
-        ctx->tf_decay_factor_fp16[C_V] = 0;
-    } else if (frame_update_type == SVT_AV1_KF_UPDATE) {
-        svt_av1_calculate_decay_factor(ctx->tf_decay_factor_fp16, &n_decay_fp10, q_decay_fp8, decay_control,
-            decay_control, const_0dot7_fp16, noise_levels_log1p_fp16, kf_tf_shift_factor, ctx->tf_chroma);
+    /*
+     * TF STRENGTH CALCULATION
+     */
+    // Adaptively adjust TF strength based on 64x64 block error
+    const uint64_t block_err = ctx->tf_64x64_block_error >> 12;
+    // printf("Current block error: %lu\n", block_err);
+    uint8_t adaptive_tf_shift_factor;
+    // This conditional is experimental, & may be refined in the future
+    if (block_err < 200) {
+        adaptive_tf_shift_factor = 14;
+    } else if (block_err < 600) {
+        adaptive_tf_shift_factor = 13;
+    } else if (block_err < 1000) {
+        adaptive_tf_shift_factor = 12;
+    } else if (block_err < 2000) {
+        adaptive_tf_shift_factor = 11;
     } else {
+        adaptive_tf_shift_factor = 10;
+    }
+    if (true) {
         svt_av1_calculate_decay_factor(ctx->tf_decay_factor_fp16, &n_decay_fp10, q_decay_fp8, decay_control,
-            decay_control, const_0dot7_fp16, noise_levels_log1p_fp16, tf_shift_factor, ctx->tf_chroma);
+            decay_control, const_0dot7_fp16, noise_levels_log1p_fp16, adaptive_tf_shift_factor, ctx->tf_chroma);
+    } else {
+        // tf_shift_factor is manually adjusted by the user via --tf-strength
+        // 10 + (4 - 0) = 14 (8x weaker)
+        // 10 + (4 - 1) = 13 (4x weaker, PSY default)
+        // 10 + (4 - 2) = 12 (2x weaker)
+        // 10 + (4 - 3) = 11 (mainline default)
+        // 10 + (4 - 4) = 10 (2x stronger)
+        const uint8_t tf_shift_factor = 10 + (4 - scs->static_config.tf_strength);
+        // kf_tf_shift_factor is manually adjusted by the user via --kf-tf-strength
+        // 10 + (4 - 0) = 14 (disabled, handled by conditional)
+        // 10 + (4 - 1) = 13 (4x weaker, PSY default)
+        // 10 + (4 - 2) = 12 (2x weaker)
+        // 10 + (4 - 3) = 11 (mainline default)
+        // 10 + (4 - 4) = 10 (2x stronger)
+        const uint8_t kf_tf_shift_factor = 10 + (4 - scs->static_config.kf_tf_strength);
+        // Get frame update type for the current frame
+        const uint32_t frame_update_type = svt_aom_get_frame_update_type(centre_pcs->scs, centre_pcs);
+        // If we encounter a keyframe while we're using Tune 3, set the decay factor to 0
+        // This is to prevent temporal filtering on keyframes
+        if ((frame_update_type == SVT_AV1_KF_UPDATE && kf_tf_shift_factor == 14) || scs->static_config.enable_tf == 0) {
+            ctx->tf_decay_factor_fp16[C_Y] = 0;
+            ctx->tf_decay_factor_fp16[C_U] = 0;
+            ctx->tf_decay_factor_fp16[C_V] = 0;
+        } else if (frame_update_type == SVT_AV1_KF_UPDATE) {
+            svt_av1_calculate_decay_factor(ctx->tf_decay_factor_fp16, &n_decay_fp10, q_decay_fp8, decay_control,
+                decay_control, const_0dot7_fp16, noise_levels_log1p_fp16, kf_tf_shift_factor, ctx->tf_chroma);
+        } else {
+            svt_av1_calculate_decay_factor(ctx->tf_decay_factor_fp16, &n_decay_fp10, q_decay_fp8, decay_control,
+                decay_control, const_0dot7_fp16, noise_levels_log1p_fp16, tf_shift_factor, ctx->tf_chroma);
+        }
     }
     for (uint32_t blk_row = y_b64_start_idx; blk_row < y_b64_end_idx; blk_row++) {
         for (uint32_t blk_col = x_b64_start_idx; blk_col < x_b64_end_idx; blk_col++) {
