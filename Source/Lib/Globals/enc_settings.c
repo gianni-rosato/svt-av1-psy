@@ -1088,7 +1088,7 @@ EbErrorType svt_av1_set_default_params(EbSvtAv1EncConfiguration *config_ptr) {
     config_ptr->variance_boost_strength           = 2;
     config_ptr->variance_octile                   = 6;
     config_ptr->enable_alt_curve                  = FALSE;
-    config_ptr->sharpness                         = 0;
+    config_ptr->sharpness                         = 1;
     config_ptr->extended_crf_qindex_offset        = 0;
     config_ptr->qp_scale_compress_strength        = 1;
     config_ptr->frame_luma_bias                   = 0;

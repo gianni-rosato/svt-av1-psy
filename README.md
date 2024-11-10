@@ -30,7 +30,7 @@ Another new tune based on Tune 2 (SSIM) called Still Picture. Optimized for stil
 
 - `--sharpness` *-7 to 7*
 
-A parameter for modifying loopfilter deblock sharpness and rate distortion to improve visual fidelity. The default is 0 (no sharpness).
+A parameter for modifying loopfilter deblock sharpness and rate distortion to improve visual fidelity. The default is 1.
 
 - `--dolby-vision-rpu` *path to file*
 
