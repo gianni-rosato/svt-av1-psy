@@ -2156,6 +2156,7 @@ EB_API EbErrorType svt_av1_enc_parse_parameter(EbSvtAv1EncConfiguration *config_
         {"kf-tf-strength", &config_struct->kf_tf_strength},
         {"noise-norm-strength", &config_struct->noise_norm_strength},
         {"fast-decode", &config_struct->fast_decode},
+        {"enable-tf", &config_struct->enable_tf},
     };
     const size_t uint8_opts_size = sizeof(uint8_opts) / sizeof(uint8_opts[0]);
 
@@ -2251,7 +2252,6 @@ EB_API EbErrorType svt_av1_enc_parse_parameter(EbSvtAv1EncConfiguration *config_
     } bool_opts[] = {
         {"use-q-file", &config_struct->use_qp_file},
         {"rmv", &config_struct->restricted_motion_vector},
-        {"enable-tf", &config_struct->enable_tf},
         {"enable-overlays", &config_struct->enable_overlays},
         {"enable-force-key-frames", &config_struct->force_key_frames},
         {"enable-qm", &config_struct->enable_qm},
