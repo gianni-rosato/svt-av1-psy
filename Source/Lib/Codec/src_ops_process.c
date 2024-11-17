@@ -9,6 +9,8 @@
 * PATENTS file, you can obtain it at https://www.aomedia.org/license/patent-license.
 */
 
+#include "definitions.h"
+#include "md_process.h"
 #include "pcs.h"
 #include "sequence_control_set.h"
 
@@ -34,6 +36,7 @@
 #include "av1me.h"
 #include "enc_inter_prediction.h"
 #include "resize.h"
+#define IS_2D_TRANSFORM(tx_type) (tx_type < IDTX)
 /**************************************
  * Context
  **************************************/
@@ -242,6 +245,35 @@ static AOM_INLINE void get_quantize_error(MacroblockPlane *p, const TranLow *coe
                         scan_order->iscan);
 
     *recon_error = svt_av1_block_error(coeff, dqcoeff, pix_num, sse) >> shift;
+    *recon_error = AOMMAX(*recon_error, 1);
+
+    *sse = (*sse) >> shift;
+    *sse = AOMMAX(*sse, 1);
+}
+
+static AOM_INLINE void get_quantize_error_qm(MacroblockPlane *p, const TranLow *coeff, TranLow *qcoeff, TranLow *dqcoeff,
+                                          TxSize tx_size, uint16_t *eob, int64_t *recon_error, int64_t *sse,
+                                          const QmVal *q_matrix, EbBitDepth bit_depth) {
+    const ScanOrder *const scan_order = &av1_scan_orders[tx_size][DCT_DCT]; //&av1_default_scan_orders[tx_size]
+    int                    pix_num    = 1 << num_pels_log2_lookup[txsize_to_bsize[tx_size]];
+    const int              shift      = tx_size == TX_32X32 ? 0 : 2;
+
+    const int16_t *scan = scan_order->scan;
+
+    svt_av1_quantize_fp(coeff,
+                        pix_num,
+                        p->zbin_qtx,
+                        p->round_fp_qtx,
+                        p->quant_fp_qtx,
+                        p->quant_shift_qtx,
+                        qcoeff,
+                        dqcoeff,
+                        p->dequant_qtx,
+                        eob,
+                        scan_order->scan,
+                        scan_order->iscan);
+
+    *recon_error = svt_av1_block_error_qm_c(coeff, dqcoeff, pix_num, sse, q_matrix, scan, bit_depth) >> shift;
     *recon_error = AOMMAX(*recon_error, 1);
 
     *sse = (*sse) >> shift;
@@ -517,11 +549,52 @@ static void tpl_subpel_search(SequenceControlSet *scs, PictureParentControlSet *
 }
 
 static void tpl_mc_flow_dispenser_sb_generic(EncodeContext *enc_ctx, SequenceControlSet *scs,
-                                             PictureParentControlSet *pcs, int32_t frame_idx, uint32_t sb_index,
-                                             int32_t qIndex, uint8_t dispenser_search_level) {
-    uint32_t size      = size_array[dispenser_search_level];
-    uint32_t blk_start = blk_start_array[dispenser_search_level];
-    uint32_t blk_end   = blk_end_array[dispenser_search_level];
+                                             ModeDecisionContext *md_ctx, PictureParentControlSet *pcs,
+                                             int32_t frame_idx, uint32_t sb_index, int32_t qIndex,
+                                             uint8_t dispenser_search_level) {
+
+
+    uint32_t size       = size_array[dispenser_search_level];
+    uint32_t blk_start  = blk_start_array[dispenser_search_level];
+    uint32_t blk_end    = blk_end_array[dispenser_search_level];
+    int bit_depth       = scs->static_config.encoder_bit_depth;
+    bool is_qm_available = false;
+    const QmVal *q_matrix;
+
+    if (md_ctx != NULL) {
+        is_qm_available = true;
+        ModeDecisionCandidateBuffer **cand_bf_ptr_array_base = md_ctx->cand_bf_ptr_array;
+        ModeDecisionCandidateBuffer **cand_bf_ptr_array      = &(cand_bf_ptr_array_base[0]);
+        uint32_t cand_index                                  = *md_ctx->cand_buff_indices[md_ctx->target_class];
+        ModeDecisionCandidateBuffer *cand_bf                 = cand_bf_ptr_array[cand_index];
+
+        TxSize tx_size_a    = md_ctx->blk_geom->txsize[0];
+        TxType tx_type      = cand_bf->cand->transform_type_uv;
+
+        int32_t qmatrix_level = (IS_2D_TRANSFORM(tx_type) && pcs->frm_hdr.quantization_params.using_qmatrix)
+            ? pcs->frm_hdr.quantization_params.qm[AOM_PLANE_Y]
+            : NUM_QM_LEVELS - 1;
+
+        TxSize adjusted_tx_size;
+
+        switch (tx_size_a) {
+            case TX_64X64:
+            case TX_64X32:
+            case TX_32X64:
+                adjusted_tx_size = TX_32X32;
+                break;
+            case TX_64X16:
+                adjusted_tx_size = TX_32X16;
+                break;
+            case TX_16X64:
+                adjusted_tx_size = TX_16X32;
+                break;
+            default:
+                adjusted_tx_size = tx_size_a;
+        }
+
+        q_matrix = pcs->gqmatrix[qmatrix_level][AOM_PLANE_Y][adjusted_tx_size];
+    }
 
     int16_t      x_curr_mv    = 0;
     int16_t      y_curr_mv    = 0;
@@ -950,7 +1023,11 @@ static void tpl_mc_flow_dispenser_sb_generic(EncodeContext *enc_ctx, SequenceCon
                         src_diff, size << tpl_ctrls->subsample_tx, best_coeff, tx_size, pf_shape, 8, 0);
                 }
 
-                get_quantize_error(&mb_plane, best_coeff, qcoeff, dqcoeff, tx_size, &eob, &recon_error, &sse);
+                if (is_qm_available) {
+                    get_quantize_error_qm(&mb_plane, best_coeff, qcoeff, dqcoeff, tx_size, &eob, &recon_error, &sse, q_matrix, bit_depth);
+                } else {
+                    get_quantize_error(&mb_plane, best_coeff, qcoeff, dqcoeff, tx_size, &eob, &recon_error, &sse);
+                }
 
                 int rate_cost        = pcs->tpl_ctrls.compute_rate ? rate_estimator(qcoeff, eob, tx_size) : 0;
                 tpl_stats.srcrf_rate = (rate_cost << (pcs->scs->static_config.tune == 3 ? 1 : TPL_DEP_COST_SCALE_LOG2)) << tpl_ctrls->subsample_tx; // Experimental tune 3 change, likely to be modified in the future.
@@ -1142,7 +1219,11 @@ static void tpl_mc_flow_dispenser_sb_generic(EncodeContext *enc_ctx, SequenceCon
 
         uint16_t eob = 0;
 
-        get_quantize_error(&mb_plane, coeff, qcoeff, dqcoeff, tx_size, &eob, &recon_error, &sse);
+        if (is_qm_available) {
+            get_quantize_error_qm(&mb_plane, best_coeff, qcoeff, dqcoeff, tx_size, &eob, &recon_error, &sse, q_matrix, bit_depth);
+        } else {
+            get_quantize_error(&mb_plane, best_coeff, qcoeff, dqcoeff, tx_size, &eob, &recon_error, &sse);
+        }
         int rate_cost = pcs->tpl_ctrls.compute_rate ? rate_estimator(qcoeff, eob, tx_size) : 0;
 
         if (!disable_intra_pred || (pcs->tpl_data.is_ref)) {
@@ -1963,6 +2044,8 @@ static EbErrorType tpl_mc_flow(EncodeContext *enc_ctx, SequenceControlSet *scs, 
 
 void *svt_aom_tpl_disp_kernel(void *input_ptr) {
     EbThreadContext     *thread_ctx  = (EbThreadContext *)input_ptr;
+    EncDecContext       *ed_ctx      = (EncDecContext *)thread_ctx->priv;
+    ModeDecisionContext *md_ctx      = ed_ctx->md_ctx;
     TplDispenserContext *context_ptr = (TplDispenserContext *)thread_ctx->priv;
     EbObjectWrapper     *in_results_wrapper_ptr;
     TplDispResults      *in_results_ptr;
@@ -2042,6 +2125,7 @@ void *svt_aom_tpl_disp_kernel(void *input_ptr) {
                         B64Geom *b64_geom = &scs->b64_geom[context_ptr->sb_index];
                         tpl_mc_flow_dispenser_sb_generic(pcs->scs->enc_ctx,
                                                          scs,
+                                                         md_ctx,
                                                          pcs,
                                                          frame_idx,
                                                          context_ptr->sb_index,
@@ -2070,6 +2154,7 @@ void *svt_aom_tpl_disp_kernel(void *input_ptr) {
                 tpl_mc_flow_dispenser_sb_generic(
                     pcs->scs->enc_ctx,
                     scs,
+                    md_ctx,
                     pcs,
                     frame_idx,
                     sb_index,
