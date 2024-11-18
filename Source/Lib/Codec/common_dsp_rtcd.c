@@ -11,6 +11,8 @@
 * PATENTS file, you can obtain it at https://www.aomedia.org/license/patent-license.
 */
 
+#include <math.h>
+
 #if HAVE_VALGRIND_H
 #include <valgrind/valgrind.h>
 #else
@@ -90,6 +92,269 @@ int64_t svt_av1_block_error_c(const TranLow *coeff, const TranLow *dqcoeff,
 
   *ssz = sqcoeff;
   return error;
+}
+
+// int64_t psy_block_error_c(const TranLow *coeff, const TranLow *dqcoeff,
+//                           intptr_t block_size, int64_t *ssz) {
+//     /* HMSE: Harmonic Mean Squared Error */
+//     int i;
+//     int64_t error = 0, sqcoeff = 0;
+//     const double epsilon = 1e-10;  // Small constant to prevent division by zero
+
+//     for (i = 0; i < block_size; i++) {
+//         const int diff = coeff[i] - dqcoeff[i];
+//         const double sq_diff = diff * diff;
+//         const double weight = 1.0 / (1.0 + coeff[i] * coeff[i] + epsilon);
+//         error += (int64_t)(sq_diff * weight);
+//         sqcoeff += coeff[i] * coeff[i];
+//     }
+
+//     *ssz = sqcoeff;
+//     return error;
+// }
+
+// int64_t psy_block_error_c(const TranLow *coeff, const TranLow *dqcoeff,
+//                           intptr_t block_size, int64_t *ssz) {
+//     /* Daala Distortion Metric */
+//     int width = 0, height = 0;
+//     for (int i = 1; i <= 32; i++) {
+//         if (i * i == block_size) {
+//             width = height = i;
+//             break;
+//         }
+//         // Check for rectangular blocks
+//         for (int j = 1; j <= 32; j++) {
+//             if (i * j == block_size) {
+//                 width = i;
+//                 height = j;
+//                 break;
+//             }
+//         }
+//         if (width != 0) break;
+//     }
+
+//     // Calculate PSNR error (will be returned for small or non-square blocks)
+//     int64_t error_psnr = 0, sqcoeff_psnr = 0;
+//     for (int i = 0; i < block_size; i++) {
+//         const int diff = coeff[i] - dqcoeff[i];
+//         error_psnr += diff * diff;
+//         sqcoeff_psnr += coeff[i] * coeff[i];
+//     }
+
+//     // Fallback conditions:
+//     // 1. Block size < 64 (8x8)
+//     // 2. Non-square block
+//     // 3. Width or height not divisible by 8 (needed for 8x8 processing)
+//     *ssz = sqcoeff_psnr;
+//     // if (block_size < 64 || width != height || width % 8 != 0 || height % 8 != 0) {
+//     if (block_size < 64) {
+//         return error_psnr;
+//     }
+
+
+//     // Constants from the paper
+//     const float K = 5.0f;  // CSF filter constant
+//     const float csf_filter[3] = {1.0f/(K+2.0f), K/(K+2.0f), 1.0f/(K+2.0f)};
+//     const float CHARM = 1.0f;     // Noise floor for harmonic mean
+//     const float CACT = 1.95f;     // Activity calibration constant
+//     const float ACTIVITY_EXP = -1.0f/3.0f;  // Activity masking exponent
+
+//     float total_distortion = 0;
+
+//     // Allocate buffers on stack for error signal and filtering
+//     float error_signal[8*8];      // For current 8x8 block errors
+//     float filtered_temp[8*8];     // Temporary buffer for filtering
+
+//     // Process 8x8 blocks
+//     for (int block_y = 0; block_y < width; block_y += 8) {
+//         for (int block_x = 0; block_x < width; block_x += 8) {
+
+//             // Calculate initial error signal for this 8x8 block
+//             for (int i = 0; i < 8; i++) {
+//                 for (int j = 0; j < 8; j++) {
+//                     error_signal[i*8 + j] =
+//                         coeff[(block_y+i)*width + block_x+j] -
+//                         dqcoeff[(block_y+i)*width + block_x+j];
+//                 }
+//             }
+
+//             // Apply horizontal CSF filter
+//             for (int i = 0; i < 8; i++) {
+//                 for (int j = 0; j < 8; j++) {
+//                     float sum = error_signal[i*8 + j] * csf_filter[1];  // Center
+//                     // Left with mirroring
+//                     sum += (j > 0 ? error_signal[i*8 + (j-1)] : error_signal[i*8 + j]) * csf_filter[0];
+//                     // Right with mirroring
+//                     sum += (j < 7 ? error_signal[i*8 + (j+1)] : error_signal[i*8 + j]) * csf_filter[2];
+//                     filtered_temp[i*8 + j] = sum;
+//                 }
+//             }
+
+//             // Apply vertical CSF filter
+//             for (int j = 0; j < 8; j++) {
+//                 for (int i = 0; i < 8; i++) {
+//                     float sum = filtered_temp[i*8 + j] * csf_filter[1];  // Center
+//                     // Top with mirroring
+//                     sum += (i > 0 ? filtered_temp[(i-1)*8 + j] : filtered_temp[i*8 + j]) * csf_filter[0];
+//                     // Bottom with mirroring
+//                     sum += (i < 7 ? filtered_temp[(i+1)*8 + j] : filtered_temp[i*8 + j]) * csf_filter[2];
+//                     error_signal[i*8 + j] = sum;  // Store back in error_signal
+//                 }
+//             }
+
+//             // Calculate variances of 4x4 blocks and their harmonic mean
+//             float harmonic_sum = 0;
+//             float variances[9];  // Store for energy preservation term
+
+//             for (int i = 0; i < 8; i += 2) {
+//                 for (int j = 0; j < 8; j += 2) {
+//                     // Calculate 4x4 variance
+//                     float mean = 0;
+//                     float variance = 0;
+
+//                     // Calculate mean
+//                     for (int di = 0; di < 4; di++) {
+//                         for (int dj = 0; dj < 4; dj++) {
+//                             mean += coeff[(block_y+i+di)*width + block_x+j+dj];
+//                         }
+//                     }
+//                     mean /= 16;
+
+//                     // Calculate variance
+//                     for (int di = 0; di < 4; di++) {
+//                         for (int dj = 0; dj < 4; dj++) {
+//                             float diff = coeff[(block_y+i+di)*width + block_x+j+dj] - mean;
+//                             variance += diff * diff;
+//                         }
+//                     }
+//                     variance /= 16;
+
+//                     variances[(i/2)*3 + (j/2)] = variance;
+//                     harmonic_sum += 1.0f / (CHARM + variance);
+//                 }
+//             }
+
+//             float sigma_avg = 9.0f / harmonic_sum;
+
+//             // Calculate activity
+//             float activity = powf(CACT * CACT * (0.25f + sigma_avg), ACTIVITY_EXP);
+
+//             // Calculate filtered error term
+//             float error_term = 0;
+//             for (int i = 0; i < 8; i++) {
+//                 for (int j = 0; j < 8; j++) {
+//                     error_term += error_signal[i*8 + j] * error_signal[i*8 + j];
+//                 }
+//             }
+
+//             // Calculate energy preservation term
+//             float energy_term = 0;
+//             for (int i = 0; i < 8; i += 2) {
+//                 for (int j = 0; j < 8; j += 2) {
+//                     // Calculate reconstructed 4x4 variance
+//                     float rec_mean = 0;
+//                     float rec_var = 0;
+
+//                     for (int di = 0; di < 4; di++) {
+//                         for (int dj = 0; dj < 4; dj++) {
+//                             rec_mean += dqcoeff[(block_y+i+di)*width + block_x+j+dj];
+//                         }
+//                     }
+//                     rec_mean /= 16;
+
+//                     for (int di = 0; di < 4; di++) {
+//                         for (int dj = 0; dj < 4; dj++) {
+//                             float diff = dqcoeff[(block_y+i+di)*width + block_x+j+dj] - rec_mean;
+//                             rec_var += diff * diff;
+//                         }
+//                     }
+//                     rec_var /= 16;
+
+//                     float var_diff = variances[(i/2)*3 + (j/2)] - rec_var;
+//                     energy_term += var_diff * var_diff;
+//                 }
+//             }
+
+//             // Combine terms
+//             total_distortion += activity * (error_term + energy_term);
+//         }
+//     }
+
+//     int64_t final_distortion = (int64_t)(total_distortion + 0.5f);
+
+//     return final_distortion;
+// }
+
+int64_t psy_block_error_c(const TranLow *coeff, const TranLow *dqcoeff,
+                          intptr_t block_size, int64_t *ssz) {
+                              // Calculate block dimensions
+    int block_width = 0, block_height = 0;
+    for (int i = 1; i <= 32; i++) {
+        if (i * i == block_size) {
+            block_width = block_height = i;
+            break;
+        }
+        // Check for rectangular blocks
+        for (int j = 1; j <= 32; j++) {
+            if (i * j == block_size) {
+                block_width = i;
+                block_height = j;
+                break;
+            }
+        }
+        if (block_width != 0) break;
+    }
+
+    // Calculate PSNR error (will be returned for small or non-square blocks)
+    int64_t error_psnr = 0, sqcoeff_psnr = 0;
+    for (int i = 0; i < block_size; i++) {
+        const int diff = coeff[i] - dqcoeff[i];
+        error_psnr += diff * diff;
+        sqcoeff_psnr += coeff[i] * coeff[i];
+    }
+
+    // Fallback conditions:
+    // 1. Block size < 64 (8x8)
+    // 2. Non-square block
+    *ssz = sqcoeff_psnr;
+    if (block_size < 64 || block_width != block_height) {
+        return error_psnr;
+    }
+
+    int64_t error = 0, sqcoeff = 0;
+
+    // CSF model parameters (tuned for typical viewing conditions)
+    const float f = 1.5f;        // Masking effect strength
+
+    // Process each coefficient
+    for (int y = 0; y < block_height; y++) {
+        for (int x = 0; x < block_width; x++) {
+            const int idx = y * block_width + x;
+
+            // Masking effect (texture masking)
+            float local_variance = 0.0f;
+            if (x > 0 && x < block_width - 1 && y > 0 && y < block_height - 1) {
+                for (int dy = -1; dy <= 1; dy++) {
+                    for (int dx = -1; dx <= 1; dx++) {
+                        int neighbor_idx = (y + dy) * block_width + (x + dx);
+                        local_variance += coeff[neighbor_idx] * coeff[neighbor_idx];
+                    }
+                }
+                local_variance /= 9.0f;
+            }
+            float masking_weight = pow(1.0f + local_variance / 1024.0f, -f);
+
+            // Calculate weighted error
+            const int diff = coeff[idx] - dqcoeff[idx];
+            error += (int64_t)(masking_weight * diff * diff);
+
+            // Update sum of squared coefficients
+            sqcoeff += coeff[idx] * coeff[idx];
+        }
+    }
+
+    *ssz = sqcoeff;
+    return error;
 }
 
 /**************************************

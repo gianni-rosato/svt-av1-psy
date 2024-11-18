@@ -241,7 +241,8 @@ static AOM_INLINE void get_quantize_error(MacroblockPlane *p, const TranLow *coe
                         scan_order->scan,
                         scan_order->iscan);
 
-    *recon_error = svt_av1_block_error(coeff, dqcoeff, pix_num, sse) >> shift;
+    // *recon_error = svt_av1_block_error(coeff, dqcoeff, pix_num, sse) >> shift;
+    *recon_error = psy_block_error_c(coeff, dqcoeff, pix_num, sse);
     *recon_error = AOMMAX(*recon_error, 1);
 
     *sse = (*sse) >> shift;
