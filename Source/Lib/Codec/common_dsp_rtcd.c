@@ -19,7 +19,6 @@
 #endif
 
 #define RTCD_C
-#include "definitions.h"
 #include "common_dsp_rtcd.h"
 #include "pic_operators.h"
 #include "pack_unpack_c.h"
@@ -88,39 +87,6 @@ int64_t svt_av1_block_error_c(const TranLow *coeff, const TranLow *dqcoeff,
     error += diff * diff;
     sqcoeff += coeff[i] * coeff[i];
   }
-
-  *ssz = sqcoeff;
-  return error;
-}
-
-int64_t svt_av1_block_error_qm_c(const TranLow *coeff, const TranLow *dqcoeff,
-                              intptr_t block_size, int64_t *ssz,
-                              const QmVal *qmatrix, const int16_t *scan,
-                              int bd) {
-  const uint8_t qm_bits = 5;
-  int i;
-  int64_t error = 0, sqcoeff = 0;
-  int shift = 2 * (bd - 8);
-  int rounding = (1 << shift) >> 1;
-
-  for (i = 0; i < block_size; i++) {
-    int64_t weight = qmatrix[scan[i]];
-    int64_t dd = coeff[i] - dqcoeff[i];
-    dd *= weight;
-    int64_t cc = coeff[i];
-    cc *= weight;
-    // The ranges of coeff and dqcoeff are
-    //  bd8 : 18 bits (including sign)
-    //  bd10: 20 bits (including sign)
-    //  bd12: 22 bits (including sign)
-    // As AOM_QM_BITS is 5, the intermediate quantities in the calculation
-    // below should fit in 54 bits, thus no overflow should happen.
-    error += (dd * dd + (1 << (2 * qm_bits - 1))) >> (2 * qm_bits);
-    sqcoeff += (cc * cc + (1 << (2 * qm_bits - 1))) >> (2 * qm_bits);
-  }
-
-  error = (error + rounding) >> shift;
-  sqcoeff = (sqcoeff + rounding) >> shift;
 
   *ssz = sqcoeff;
   return error;

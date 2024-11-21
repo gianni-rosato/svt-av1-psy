@@ -206,7 +206,6 @@ extern "C" {
     int svt_aom_satd_c(const TranLow *coeff, int length);
     RTCD_EXTERN int(*svt_aom_satd)(const TranLow *coeff, int length);
     int64_t svt_av1_block_error_c(const TranLow *coeff, const TranLow *dqcoeff, intptr_t block_size, int64_t *ssz);
-    int64_t svt_av1_block_error_qm_c(const TranLow *coeff, const TranLow *dqcoeff, intptr_t block_size, int64_t *ssz, const QmVal *qmatrix, const int16_t *scan, int bd);
     RTCD_EXTERN int64_t(*svt_av1_block_error)(const TranLow *coeff, const TranLow *dqcoeff, intptr_t block_size, int64_t *ssz);
     RTCD_EXTERN void(*svt_smooth_v_predictor)(uint8_t *dst, ptrdiff_t stride, int32_t bw, int32_t bh, const uint8_t *above, const uint8_t *left);
     void svt_get_proj_subspace_c(const uint8_t *src8, int width, int height, int src_stride, const uint8_t *dat8, int dat_stride, int use_highbitdepth, int32_t *flt0, int flt0_stride, int32_t *flt1, int flt1_stride, int *xq, const SgrParamsType *params);
