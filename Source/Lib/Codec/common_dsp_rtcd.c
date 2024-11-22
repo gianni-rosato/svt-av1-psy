@@ -285,76 +285,168 @@ int64_t svt_av1_block_error_c(const TranLow *coeff, const TranLow *dqcoeff,
 //     return final_distortion;
 // }
 
+// int64_t psy_block_error_c(const TranLow *coeff, const TranLow *dqcoeff,
+//                           intptr_t block_size, int64_t *ssz) {
+//     /* Texture Masking PSNR */
+//     // Calculate block dimensions
+//     int block_width = 0, block_height = 0;
+//     for (int i = 1; i <= 32; i++) {
+//         if (i * i == block_size) {
+//             block_width = block_height = i;
+//             break;
+//         }
+//         // Check for rectangular blocks
+//         for (int j = 1; j <= 32; j++) {
+//             if (i * j == block_size) {
+//                 block_width = i;
+//                 block_height = j;
+//                 break;
+//             }
+//         }
+//         if (block_width != 0) break;
+//     }
+
+//     // Calculate PSNR error (will be returned for small or non-square blocks)
+//     int64_t error_psnr = 0, sqcoeff_psnr = 0;
+//     for (int i = 0; i < block_size; i++) {
+//         const int diff = coeff[i] - dqcoeff[i];
+//         error_psnr += diff * diff;
+//         sqcoeff_psnr += coeff[i] * coeff[i];
+//     }
+
+//     // Fallback conditions:
+//     // 1. Block size < 64 (8x8)
+//     // 2. Non-square block
+//     *ssz = sqcoeff_psnr;
+//     if (block_size < 64 || block_width != block_height) {
+//         return error_psnr;
+//     }
+
+//     int64_t error = 0, sqcoeff = 0;
+
+//     // CSF model parameters (tuned for typical viewing conditions)
+//     const float f = 1.5f;        // Masking effect strength
+
+//     // Process each coefficient
+//     for (int y = 0; y < block_height; y++) {
+//         for (int x = 0; x < block_width; x++) {
+//             const int idx = y * block_width + x;
+
+//             // Masking effect (texture masking)
+//             float local_variance = 0.0f;
+//             if (x > 0 && x < block_width - 1 && y > 0 && y < block_height - 1) {
+//                 for (int dy = -1; dy <= 1; dy++) {
+//                     for (int dx = -1; dx <= 1; dx++) {
+//                         int neighbor_idx = (y + dy) * block_width + (x + dx);
+//                         local_variance += coeff[neighbor_idx] * coeff[neighbor_idx];
+//                     }
+//                 }
+//                 local_variance /= 9.0f;
+//             }
+//             float masking_weight = pow(1.0f + local_variance / 1024.0f, -f);
+
+//             // Calculate weighted error
+//             const int diff = coeff[idx] - dqcoeff[idx];
+//             error += (int64_t)(masking_weight * diff * diff);
+
+//             // Update sum of squared coefficients
+//             sqcoeff += coeff[idx] * coeff[idx];
+//         }
+//     }
+
+//     *ssz = sqcoeff;
+//     return error;
+// }
+
 int64_t psy_block_error_c(const TranLow *coeff, const TranLow *dqcoeff,
                           intptr_t block_size, int64_t *ssz) {
-                              // Calculate block dimensions
-    int block_width = 0, block_height = 0;
+
+    int width = 0, height = 0;
     for (int i = 1; i <= 32; i++) {
         if (i * i == block_size) {
-            block_width = block_height = i;
+            width = height = i;
             break;
         }
         // Check for rectangular blocks
         for (int j = 1; j <= 32; j++) {
             if (i * j == block_size) {
-                block_width = i;
-                block_height = j;
+                width = i;
+                height = j;
                 break;
             }
         }
-        if (block_width != 0) break;
     }
 
-    // Calculate PSNR error (will be returned for small or non-square blocks)
-    int64_t error_psnr = 0, sqcoeff_psnr = 0;
-    for (int i = 0; i < block_size; i++) {
-        const int diff = coeff[i] - dqcoeff[i];
-        error_psnr += diff * diff;
-        sqcoeff_psnr += coeff[i] * coeff[i];
+    int64_t error = 0;
+    const double C1 = 6.5025;  // (0.01 * 255)^2
+    const double C2 = 58.5225; // (0.03 * 255)^2
+
+    // Early exit for invalid dimensions
+    if (width <= 0 || height <= 0 || block_size <= 1) {
+        if (ssz) *ssz = 0;
+        return 0;
     }
 
-    // Fallback conditions:
-    // 1. Block size < 64 (8x8)
-    // 2. Non-square block
-    *ssz = sqcoeff_psnr;
-    if (block_size < 64 || block_width != block_height) {
-        return error_psnr;
+    // Initialize SSIM components
+    double mean_x = 0;
+    double mean_y = 0;
+    double variance_x = 0;
+    double variance_y = 0;
+    double covariance = 0;
+
+    // First pass: calculate means
+    for (intptr_t y = 0; y < height; y++) {
+        for (intptr_t x = 0; x < width; x++) {
+            intptr_t idx = y * width + x;
+            mean_x += coeff[idx];
+            mean_y += dqcoeff[idx];
+        }
     }
+    mean_x /= block_size;
+    mean_y /= block_size;
 
-    int64_t error = 0, sqcoeff = 0;
+    // Second pass: calculate variances and covariance
+    for (intptr_t y = 0; y < height; y++) {
+        for (intptr_t x = 0; x < width; x++) {
+            intptr_t idx = y * width + x;
+            double diff_x = coeff[idx] - mean_x;
+            double diff_y = dqcoeff[idx] - mean_y;
 
-    // CSF model parameters (tuned for typical viewing conditions)
-    const float f = 1.5f;        // Masking effect strength
+            variance_x += diff_x * diff_x;
+            variance_y += diff_y * diff_y;
+            covariance += diff_x * diff_y;
 
-    // Process each coefficient
-    for (int y = 0; y < block_height; y++) {
-        for (int x = 0; x < block_width; x++) {
-            const int idx = y * block_width + x;
+            // Calculate traditional error metric
+            int64_t diff = coeff[idx] - dqcoeff[idx];
+            error += diff * diff;
 
-            // Masking effect (texture masking)
-            float local_variance = 0.0f;
-            if (x > 0 && x < block_width - 1 && y > 0 && y < block_height - 1) {
-                for (int dy = -1; dy <= 1; dy++) {
-                    for (int dx = -1; dx <= 1; dx++) {
-                        int neighbor_idx = (y + dy) * block_width + (x + dx);
-                        local_variance += coeff[neighbor_idx] * coeff[neighbor_idx];
-                    }
-                }
-                local_variance /= 9.0f;
-            }
-            float masking_weight = pow(1.0f + local_variance / 1024.0f, -f);
-
-            // Calculate weighted error
-            const int diff = coeff[idx] - dqcoeff[idx];
-            error += (int64_t)(masking_weight * diff * diff);
-
-            // Update sum of squared coefficients
-            sqcoeff += coeff[idx] * coeff[idx];
+            *ssz += coeff[idx] * coeff[idx];
         }
     }
 
-    *ssz = sqcoeff;
-    return error;
+    // Avoid division by zero for variance calculations
+    if (block_size > 1) {
+        variance_x /= (block_size - 1);
+        variance_y /= (block_size - 1);
+        covariance /= (block_size - 1);
+    }
+
+    // Calculate SSIM
+    double numerator = (2 * mean_x * mean_y + C1) * (2 * covariance + C2);
+    double denominator = (mean_x * mean_x + mean_y * mean_y + C1) *
+                        (variance_x + variance_y + C2);
+
+    double ssim = (denominator != 0.0) ? numerator / denominator : 1.0;
+
+    int64_t ssim_fixed = (int64_t)(ssim * 4096); // 12-bit fixed point
+    ssim_fixed = (4096 - ssim_fixed) << 2;
+
+    // Blend traditional error with SSIM-based error
+    // const double alpha = 0.84; // Weighting factor
+    // int64_t final_error = (int64_t)(alpha * error + (1.0 - alpha) * (ssim_fixed));
+
+    fprintf(stderr, "ssim_fixed: %ld\npsnr: %ld\n", ssim_fixed, error);
+    return ssim_fixed;
 }
 
 /**************************************
