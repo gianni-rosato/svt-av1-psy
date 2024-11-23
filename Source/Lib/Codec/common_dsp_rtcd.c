@@ -12,6 +12,7 @@
 */
 
 #include <math.h>
+#include "common_psyrd.h"
 
 #if HAVE_VALGRIND_H
 #include <valgrind/valgrind.h>
@@ -358,8 +359,135 @@ int64_t svt_av1_block_error_c(const TranLow *coeff, const TranLow *dqcoeff,
 //     return error;
 // }
 
+// int64_t psy_block_error_c(const TranLow *coeff, const TranLow *dqcoeff,
+//                           intptr_t block_size, int64_t *ssz) {
+
+//     int width = 0, height = 0;
+//     for (int i = 1; i <= 32; i++) {
+//         if (i * i == block_size) {
+//             width = height = i;
+//             break;
+//         }
+//         // Check for rectangular blocks
+//         for (int j = 1; j <= 32; j++) {
+//             if (i * j == block_size) {
+//                 width = i;
+//                 height = j;
+//                 break;
+//             }
+//         }
+//     }
+
+//     int64_t error = 0;
+//     const double C1 = 6.5025;  // (0.01 * 255)^2
+//     const double C2 = 58.5225; // (0.03 * 255)^2
+
+//     // Early exit for invalid dimensions
+//     if (width <= 0 || height <= 0 || block_size <= 1) {
+//         if (ssz) *ssz = 0;
+//         return 0;
+//     }
+
+//     // Initialize SSIM components
+//     double mean_x = 0;
+//     double mean_y = 0;
+//     double variance_x = 0;
+//     double variance_y = 0;
+//     double covariance = 0;
+
+//     // First pass: calculate means
+//     for (intptr_t y = 0; y < height; y++) {
+//         for (intptr_t x = 0; x < width; x++) {
+//             intptr_t idx = y * width + x;
+//             mean_x += coeff[idx];
+//             mean_y += dqcoeff[idx];
+//         }
+//     }
+//     mean_x /= block_size;
+//     mean_y /= block_size;
+
+//     // Second pass: calculate variances and covariance
+//     for (intptr_t y = 0; y < height; y++) {
+//         for (intptr_t x = 0; x < width; x++) {
+//             intptr_t idx = y * width + x;
+//             double diff_x = coeff[idx] - mean_x;
+//             double diff_y = dqcoeff[idx] - mean_y;
+
+//             variance_x += diff_x * diff_x;
+//             variance_y += diff_y * diff_y;
+//             covariance += diff_x * diff_y;
+
+//             // Calculate traditional error metric
+//             int64_t diff = coeff[idx] - dqcoeff[idx];
+//             error += diff * diff;
+
+//             *ssz += coeff[idx] * coeff[idx];
+//         }
+//     }
+
+//     // Avoid division by zero for variance calculations
+//     if (block_size > 1) {
+//         variance_x /= (block_size - 1);
+//         variance_y /= (block_size - 1);
+//         covariance /= (block_size - 1);
+//     }
+
+//     // Calculate SSIM
+//     double numerator = (2 * mean_x * mean_y + C1) * (2 * covariance + C2);
+//     double denominator = (mean_x * mean_x + mean_y * mean_y + C1) *
+//                         (variance_x + variance_y + C2);
+
+//     double ssim = (denominator != 0.0) ? numerator / denominator : 1.0;
+
+//     int64_t ssim_fixed = (int64_t)(ssim * 4096); // 12-bit fixed point
+//     ssim_fixed = (4096 - ssim_fixed) << 2;
+
+//     // Blend traditional error with SSIM-based error
+//     // const double alpha = 0.84; // Weighting factor
+//     // int64_t final_error = (int64_t)(alpha * error + (1.0 - alpha) * (ssim_fixed));
+
+//     fprintf(stderr, "ssim_fixed: %ld\npsnr: %ld\n", ssim_fixed, error);
+//     return ssim_fixed;
+// }
+
+// int64_t psy_block_error_c(const TranLow *coeff, const TranLow *dqcoeff,
+//                                    intptr_t block_size, int64_t *ssz) {
+//     const double psy_rd_strength = 1.0;
+//     int i;
+//     int64_t error = 0, sqcoeff = 0;
+
+//     // Regular MSE calculation
+//     for (i = 0; i < block_size; i++) {
+//         const int diff = coeff[i] - dqcoeff[i];
+//         error += diff * diff;
+//         sqcoeff += coeff[i] * coeff[i];
+//     }
+
+//     // Calculate AC energy for original and reconstructed
+//     int64_t ac_energy_orig = 0;
+//     int64_t ac_energy_recon = 0;
+
+//     // Skip DC coefficient (i=0) to only measure AC energy
+//     for (i = 1; i < block_size; i++) {
+//         ac_energy_orig += coeff[i] * coeff[i];
+//         ac_energy_recon += dqcoeff[i] * dqcoeff[i];
+//     }
+
+//     // Calculate psycho-visual cost
+//     int64_t psy_cost = labs(ac_energy_orig - ac_energy_recon);
+
+//     // Combine regular error with psy cost
+//     error = error + (int64_t)(psy_rd_strength * psy_cost);
+
+//     *ssz = sqcoeff;
+//     return error;
+// }
+// PSY RD
 int64_t psy_block_error_c(const TranLow *coeff, const TranLow *dqcoeff,
-                          intptr_t block_size, int64_t *ssz) {
+                                   intptr_t block_size, int64_t *ssz) {
+    const double psyrd_strength = 2.0;
+    int i;
+    int64_t error = 0, sqcoeff = 0;
 
     int width = 0, height = 0;
     for (int i = 1; i <= 32; i++) {
@@ -376,77 +504,23 @@ int64_t psy_block_error_c(const TranLow *coeff, const TranLow *dqcoeff,
             }
         }
     }
-
-    int64_t error = 0;
-    const double C1 = 6.5025;  // (0.01 * 255)^2
-    const double C2 = 58.5225; // (0.03 * 255)^2
-
-    // Early exit for invalid dimensions
-    if (width <= 0 || height <= 0 || block_size <= 1) {
-        if (ssz) *ssz = 0;
-        return 0;
+    // fprintf(stderr, "width: %d\theight: %d\tblocksize: %ld\n", width, height, block_size);
+    // Regular MSE calculation
+    for (i = 0; i < block_size; i++) {
+        const int diff = coeff[i] - dqcoeff[i];
+        error += diff * diff;
+        sqcoeff += coeff[i] * coeff[i];
     }
 
-    // Initialize SSIM components
-    double mean_x = 0;
-    double mean_y = 0;
-    double variance_x = 0;
-    double variance_y = 0;
-    double covariance = 0;
+    // Get PSY error value
+    const int64_t psy_cost = calculate_psy_cost_c(coeff, dqcoeff, width, height);
+    // fprintf(stderr, "psy_cost: %ld\tpsnr: %ld\t", psy_cost, error);
 
-    // First pass: calculate means
-    for (intptr_t y = 0; y < height; y++) {
-        for (intptr_t x = 0; x < width; x++) {
-            intptr_t idx = y * width + x;
-            mean_x += coeff[idx];
-            mean_y += dqcoeff[idx];
-        }
-    }
-    mean_x /= block_size;
-    mean_y /= block_size;
+    error = error + (int64_t)(psyrd_strength * psy_cost);
+    // fprintf(stderr, "final error: %ld\n", error);
 
-    // Second pass: calculate variances and covariance
-    for (intptr_t y = 0; y < height; y++) {
-        for (intptr_t x = 0; x < width; x++) {
-            intptr_t idx = y * width + x;
-            double diff_x = coeff[idx] - mean_x;
-            double diff_y = dqcoeff[idx] - mean_y;
-
-            variance_x += diff_x * diff_x;
-            variance_y += diff_y * diff_y;
-            covariance += diff_x * diff_y;
-
-            // Calculate traditional error metric
-            int64_t diff = coeff[idx] - dqcoeff[idx];
-            error += diff * diff;
-
-            *ssz += coeff[idx] * coeff[idx];
-        }
-    }
-
-    // Avoid division by zero for variance calculations
-    if (block_size > 1) {
-        variance_x /= (block_size - 1);
-        variance_y /= (block_size - 1);
-        covariance /= (block_size - 1);
-    }
-
-    // Calculate SSIM
-    double numerator = (2 * mean_x * mean_y + C1) * (2 * covariance + C2);
-    double denominator = (mean_x * mean_x + mean_y * mean_y + C1) *
-                        (variance_x + variance_y + C2);
-
-    double ssim = (denominator != 0.0) ? numerator / denominator : 1.0;
-
-    int64_t ssim_fixed = (int64_t)(ssim * 4096); // 12-bit fixed point
-    ssim_fixed = (4096 - ssim_fixed) << 2;
-
-    // Blend traditional error with SSIM-based error
-    // const double alpha = 0.84; // Weighting factor
-    // int64_t final_error = (int64_t)(alpha * error + (1.0 - alpha) * (ssim_fixed));
-
-    fprintf(stderr, "ssim_fixed: %ld\npsnr: %ld\n", ssim_fixed, error);
-    return ssim_fixed;
+    *ssz = sqcoeff;
+    return error;
 }
 
 /**************************************

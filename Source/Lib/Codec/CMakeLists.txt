@@ -89,6 +89,8 @@ set(all_files
         coding_unit.h
         coefficients.h
         common_dsp_rtcd.c
+        common_psyrd.h
+        common_psyrd.c
         common_dsp_rtcd.h
         common_utils.h
         compute_mean.h
