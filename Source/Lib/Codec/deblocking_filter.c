@@ -742,7 +742,7 @@ static uint64_t picture_sse_calculations(PictureControlSet *pcs, EbPictureBuffer
             input_buffer = (uint8_t *)&(
                 (input_pic->buffer_y)[input_pic->org_x + input_pic->org_y * input_pic->stride_y]);
 
-            return svt_spatial_full_distortion_kernel(input_buffer,
+            return svt_spatial_psy_distortion_kernel_c(input_buffer,
                                                       0,
                                                       input_pic->stride_y,
                                                       recon_coeff_buffer,
@@ -756,7 +756,7 @@ static uint64_t picture_sse_calculations(PictureControlSet *pcs, EbPictureBuffer
             input_buffer = (uint8_t *)&(
                 (input_pic->buffer_cb)[input_pic->org_x / 2 + input_pic->org_y / 2 * input_pic->stride_cb]);
 
-            return svt_spatial_full_distortion_kernel(input_buffer,
+            return svt_spatial_psy_distortion_kernel_c(input_buffer,
                                                       0,
                                                       input_pic->stride_cb,
                                                       recon_coeff_buffer,
@@ -770,7 +770,7 @@ static uint64_t picture_sse_calculations(PictureControlSet *pcs, EbPictureBuffer
             input_buffer = (uint8_t *)&(
                 (input_pic->buffer_cr)[input_pic->org_x / 2 + input_pic->org_y / 2 * input_pic->stride_cr]);
 
-            return svt_spatial_full_distortion_kernel(input_buffer,
+            return svt_spatial_psy_distortion_kernel_c(input_buffer,
                                                       0,
                                                       input_pic->stride_cr,
                                                       recon_coeff_buffer,
