@@ -223,6 +223,8 @@
 
 #define NOISE_NORM_STRENGTH_TOKEN "--noise-norm-strength"
 
+#define PSY_RD_TOKEN "--psy-rd"
+
 static EbErrorType validate_error(EbErrorType err, const char *token, const char *value) {
     switch (err) {
     case EB_ErrorNone: return EB_ErrorNone;
@@ -1319,6 +1321,10 @@ ConfigEntry config_entry_psy[] = {
      NOISE_NORM_STRENGTH_TOKEN,
      "[PSY] Noise normalization strength, default is 0 [0-4]",
      set_cfg_generic_token},
+    {SINGLE_INPUT,
+     PSY_RD_TOKEN,
+     "[PSY] Psychovisual rate distortion strength, default is 0 [0.0-4.0]",
+     set_cfg_generic_token},
     // Termination
     {SINGLE_INPUT, NULL, NULL, NULL}};
 
@@ -1535,6 +1541,9 @@ ConfigEntry config_entry[] = {
 
     // Noise normalization strength
     {SINGLE_INPUT, NOISE_NORM_STRENGTH_TOKEN, "NoiseNormStrength", set_cfg_generic_token},
+
+    // Psy rd strength
+    {SINGLE_INPUT, PSY_RD_TOKEN, "PsyRd", set_cfg_generic_token},
 
     // Termination
     {SINGLE_INPUT, NULL, NULL, NULL}};

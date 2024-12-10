@@ -1077,11 +1077,19 @@ typedef struct EbSvtAv1EncConfiguration {
      */
     uint8_t noise_norm_strength;
 
+    /**
+     * @brief Enable psychovisual rate distortion
+     * 0.00: disable PSY-RD
+     * 4.00: enable PSY-RD with a strength of 4.00
+     * Default is 0.00.
+     */
+    double psy_rd;
+
     /*Add 128 Byte Padding to Struct to avoid changing the size of the public configuration struct*/
 #if CLN_LP_LVLS
     uint8_t padding[128 - sizeof(Bool) - 2 * sizeof(uint8_t) - sizeof(uint32_t)];
 #else
-    uint8_t padding[128 - 3 * sizeof(Bool) - 11 * sizeof(uint8_t) - sizeof(int8_t)];
+    uint8_t padding[128 - 3 * sizeof(Bool) - 11 * sizeof(uint8_t) - sizeof(int8_t) - sizeof(double)];
 #endif
 
 } EbSvtAv1EncConfiguration;
