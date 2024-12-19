@@ -1197,7 +1197,7 @@ EbErrorType svt_av1_pick_filter_level(EbPictureBufferDesc *srcBuffer, // source 
     int32_t sharpness_val = pcs->scs->static_config.sharpness;
     uint8_t tune = pcs->scs->static_config.tune;
     if (frm_hdr->frame_type == KEY_FRAME && tune == 3) {
-        lf->sharpness_level = 7;
+        lf->sharpness_level = sharpness_val + 2;
     } else {
         lf->sharpness_level = sharpness_val > 0 ? sharpness_val : 0;
     }
