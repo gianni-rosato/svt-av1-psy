@@ -908,7 +908,7 @@ static AOM_FORCE_INLINE void update_coeff_eob(int *accu_rate, int64_t *accu_dist
             }
         }
 
-        if (rd_low < rd) {
+        if (sharpness == 0 || abs_qc > 1 || rd_low < rd) {
             lower_level = 1;
             rd          = rd_low;
             rate        = rate_low;
@@ -1169,9 +1169,9 @@ static void svt_av1_optimize_b(ModeDecisionContext *ctx, int16_t txb_skip_contex
     }
     int       rweight = 100;
     const int rshift  = (pcs->scs->static_config.sharpness > 0 ? pcs->scs->static_config.sharpness : 1) + 1;
-    if (use_sharpness && delta_q_present && plane == 0) {
-        int diff = ctx->sb_ptr->qindex - quantizer_to_qindex[picture_qp];
-        if (diff < 0) {
+    if ((use_sharpness && delta_q_present && plane == 0) || (pcs->scs->static_config.tune == 3 && delta_q_present && plane == 0)) { // This change seems to help (Always use sharpness with tune 3)
+        int diff = ctx->sb_ptr->qindex - quantizer_to_qindex[picture_qp]; //                                                           However, the other changes may hurt, according to SSIMU2.
+        if (diff < 0 || pcs->scs->static_config.tune == 3) {
             sharpness = 1;
             rweight   = 0;
         }
@@ -1263,7 +1263,7 @@ static void svt_av1_optimize_b(ModeDecisionContext *ctx, int16_t txb_skip_contex
     default: assert(false);
     }
 
-    if (si == -1 && nz_num <= max_nz_num) {
+    if (si == -1 && nz_num <= max_nz_num && sharpness == 0) {
         update_skip(&accu_rate,
                     accu_dist,
                     eob,
