@@ -1174,8 +1174,8 @@ void svt_av1_print_lib_params(SequenceControlSet *scs) {
         case SVT_AV1_RC_MODE_CQP_OR_CRF:
             if (config->max_bit_rate)
                 SVT_INFO(
-                    "SVT [config]: BRC mode / %s / max bitrate (kbps)\t\t\t: %s / %d / "
-                    "%.2f\n",
+                    "SVT [config]: BRC mode / %s / max bitrate (kbps)\t\t\t: %s / %.2f / "
+                    "%d\n",
                     scs->tpl || scs->static_config.enable_variance_boost ? "rate factor" : "CQP Assignment",
                     scs->tpl || scs->static_config.enable_variance_boost ? "capped CRF" : "CQP",
                     get_extended_crf(config),
