@@ -1130,6 +1130,7 @@ static void svt_av1_optimize_b(ModeDecisionContext *ctx, int16_t txb_skip_contex
                                uint8_t picture_qp, uint32_t lambda, int plane, PictureControlSet *pcs)
 
 {
+    FrameHeader        *frm_hdr = &pcs->ppcs->frm_hdr;
     int                    sharpness  = 0; // No Sharpness
     int                    fast_mode  = (ctx->rdoq_ctrls.eob_fast_y_inter && is_inter && !plane) ||
             (ctx->rdoq_ctrls.eob_fast_y_intra && !is_inter && !plane) ||
@@ -1168,7 +1169,10 @@ static void svt_av1_optimize_b(ModeDecisionContext *ctx, int16_t txb_skip_contex
             return;
     }
     int       rweight = 100;
-    const int rshift  = (pcs->scs->static_config.sharpness > 0 ? pcs->scs->static_config.sharpness : 1) + 1;
+    const int rshift = (frm_hdr->frame_type == KEY_FRAME && pcs->scs->static_config.tune == 3 && pcs->scs->static_config.sharpness <= 5)
+    ? (pcs->scs->static_config.sharpness > 0 ? pcs->scs->static_config.sharpness : 1) + 3
+    : (pcs->scs->static_config.sharpness > 0 ? pcs->scs->static_config.sharpness : 1) + 1;
+
     if (use_sharpness && delta_q_present && plane == 0) {
         int diff = ctx->sb_ptr->qindex - quantizer_to_qindex[picture_qp];
         if (diff < 0) {
