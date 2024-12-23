@@ -1172,7 +1172,7 @@ static void svt_av1_optimize_b(ModeDecisionContext *ctx, int16_t txb_skip_contex
     // Boost rshift value +2 if a keyframe is present, if tune 3 is active, and if the sharpness below is <=5
     // Otherwise, assume default behavior for rshift through user selected sharpness value
     const int rshift = (frm_hdr->frame_type == KEY_FRAME && pcs->scs->static_config.tune == 3 && pcs->scs->static_config.sharpness <= 5)
-    ? (pcs->scs->static_config.sharpness > 0 ? pcs->scs->static_config.sharpness : 1) + 3
+    ? (pcs->scs->static_config.sharpness <= 1 ? 2 : (pcs->scs->static_config.sharpness > 0 ? pcs->scs->static_config.sharpness : 1) + 3)
     : (pcs->scs->static_config.sharpness > 0 ? pcs->scs->static_config.sharpness : 1) + 1;
 
     if (use_sharpness && delta_q_present && plane == 0) {
