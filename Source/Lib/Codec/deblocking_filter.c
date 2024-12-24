@@ -1197,8 +1197,8 @@ EbErrorType svt_av1_pick_filter_level(EbPictureBufferDesc *srcBuffer, // source 
     int32_t sharpness_val = pcs->scs->static_config.sharpness;
     uint8_t tune = pcs->scs->static_config.tune;
     //On KFs, we want slightly less blurry frames. Not sure if post-process with bitstream filter or in-encoder
-    if (frm_hdr->frame_type == KEY_FRAME && tune == 3 && pcs->scs->static_config.sharpness <= 5) {
-        lf->sharpness_level = sharpness_val + 2;
+    if (frm_hdr->frame_type == KEY_FRAME && tune == 3) {
+        lf->sharpness_level = MIN(7, sharpness_val + 2);
     } else {
         lf->sharpness_level = sharpness_val > 0 ? sharpness_val : 0;
     }
