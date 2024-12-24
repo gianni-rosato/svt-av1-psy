@@ -106,7 +106,7 @@ Adaptively varies temporal filtering strength based on 64x64 block error. This c
 
 - `--psy-rd` *0.0 to 6.0*
 
-Configures psychovisual rate distortion strength to improve perceived quality by measuring and attempting to preserve the visual energy distribution of high-frequency details and textures. The default is 0. PSY-RD is only supported by Tune 2, Tune 3, & Tune 4.
+Configures psychovisual rate distortion strength to improve perceived quality by measuring and attempting to preserve the visual energy distribution of high-frequency details and textures. The default is 0.
 
 ### Modified Defaults
 
