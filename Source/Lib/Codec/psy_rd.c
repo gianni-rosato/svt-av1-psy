@@ -245,8 +245,8 @@ uint64_t svt_psy_distor_hbd(const uint16_t* input, uint32_t input_stride,
                     (svt_psy_sad_nxn_hbd(8, 8, input + i * input_stride + j, input_stride, zero_buffer, 0) >> 2);
                     int recon_nrg = (svt_sa8d_8x8_hbd(recon + i * recon_stride + j, recon_stride, zero_buffer, 0) >> 8) -
                     (svt_psy_sad_nxn_hbd(8, 8, recon + i * recon_stride + j, recon_stride, zero_buffer, 0) >> 2);
-                // Apply SA8D scaling directly during the calculation, no need to do separate operation
-                total_nrg += ((uint32_t)abs(input_nrg - recon_nrg)) << psy_sa8d_shift;
+                // Apply SA8D scaling directly during the calculation, no need to do a separate operation
+                total_nrg += ((uint32_t)abs(input_nrg - recon_nrg)) >> psy_sa8d_shift;
             }
         }
     } else { /* 4x4 */
@@ -255,7 +255,7 @@ uint64_t svt_psy_distor_hbd(const uint16_t* input, uint32_t input_stride,
         int recon_nrg = svt_satd_4x4_hbd(recon, recon_stride, zero_buffer, 0) -
             (svt_psy_sad_nxn_hbd(4, 4, recon, recon_stride, zero_buffer, 0) >> 2);
         // Apply SATD scaling directly to the result, no need to do a separate opeartion
-        total_nrg = ((uint32_t)abs(input_nrg - recon_nrg)) << psy_satd_shift;
+        total_nrg = ((uint32_t)abs(input_nrg - recon_nrg)) >> psy_satd_shift;
     }
     return (total_nrg << 2);
 }
