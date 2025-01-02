@@ -233,6 +233,11 @@ uint64_t svt_psy_distor_hbd(const uint16_t* input, uint32_t input_stride,
 
     uint32_t total_nrg = 0;
 
+    // Define SATD and SA8D weights as bitwise shift factors for psy weighting
+    // TODO: Add corresponding user controllable parameters
+    uint32_t psy_sa8d_shift = 0; // Default: no shift for SA8D (equivalent to weight 1.0)
+    uint32_t psy_satd_shift = 0; // Default: no shift for SATD (equivalent to weight 1.0)
+
     if (count >= 64) { /* 8x8 or larger */
         for (uint64_t i = 0; i < height; i += 8) {
             for (uint64_t j = 0; j < width; j += 8) {
@@ -240,7 +245,8 @@ uint64_t svt_psy_distor_hbd(const uint16_t* input, uint32_t input_stride,
                     (svt_psy_sad_nxn_hbd(8, 8, input + i * input_stride + j, input_stride, zero_buffer, 0) >> 2);
                     int recon_nrg = (svt_sa8d_8x8_hbd(recon + i * recon_stride + j, recon_stride, zero_buffer, 0) >> 8) -
                     (svt_psy_sad_nxn_hbd(8, 8, recon + i * recon_stride + j, recon_stride, zero_buffer, 0) >> 2);
-                total_nrg += (uint32_t)abs(input_nrg - recon_nrg);
+                // Apply SA8D scaling directly during the calculation, no need to do separate operation
+                total_nrg += ((uint32_t)abs(input_nrg - recon_nrg)) << psy_sa8d_shift;
             }
         }
     } else { /* 4x4 */
@@ -248,7 +254,8 @@ uint64_t svt_psy_distor_hbd(const uint16_t* input, uint32_t input_stride,
             (svt_psy_sad_nxn_hbd(4, 4, input, input_stride, zero_buffer, 0) >> 2);
         int recon_nrg = svt_satd_4x4_hbd(recon, recon_stride, zero_buffer, 0) -
             (svt_psy_sad_nxn_hbd(4, 4, recon, recon_stride, zero_buffer, 0) >> 2);
-        total_nrg = (uint32_t)abs(input_nrg - recon_nrg);
+        // Apply SATD scaling directly to the result, no need to do a separate opeartion
+        total_nrg = ((uint32_t)abs(input_nrg - recon_nrg)) << psy_satd_shift;
     }
     return (total_nrg << 2);
 }
